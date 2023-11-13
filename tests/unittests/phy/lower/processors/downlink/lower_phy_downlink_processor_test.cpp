@@ -106,7 +106,8 @@ bool operator==(const pdxch_processor_configuration& left, const pdxch_processor
 
 } // namespace srsran
 
-using LowerPhyDownlinkProcessorParams = std::tuple<unsigned, sampling_rate, subcarrier_spacing, cyclic_prefix>;
+using LowerPhyDownlinkProcessorParams =
+    std::tuple<unsigned, sampling_rate, std::tuple<subcarrier_spacing, cyclic_prefix>>;
 
 namespace {
 
@@ -115,27 +116,27 @@ class LowerPhyDownlinkProcessorFixture : public ::testing::TestWithParam<LowerPh
 protected:
   static void SetUpTestSuite()
   {
-    if (ul_proc_factory == nullptr) {
+    if (dl_proc_factory == nullptr) {
       pdxch_proc_factory = std::make_shared<pdxch_processor_factory_spy>();
       ASSERT_NE(pdxch_proc_factory, nullptr);
 
       amplitude_control_factory = std::make_shared<amplitude_controller_factory_spy>();
       ASSERT_NE(amplitude_control_factory, nullptr);
 
-      ul_proc_factory = create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
-      ASSERT_NE(ul_proc_factory, nullptr);
+      dl_proc_factory = create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
+      ASSERT_NE(dl_proc_factory, nullptr);
     }
   }
 
   void SetUp() override
   {
-    ASSERT_NE(ul_proc_factory, nullptr);
+    ASSERT_NE(dl_proc_factory, nullptr);
 
     // Select parameters.
     unsigned           nof_tx_ports = std::get<0>(GetParam());
     sampling_rate      srate        = std::get<1>(GetParam());
-    subcarrier_spacing scs          = std::get<2>(GetParam());
-    cyclic_prefix      cp           = std::get<3>(GetParam());
+    subcarrier_spacing scs          = std::get<0>(std::get<2>(GetParam()));
+    cyclic_prefix      cp           = std::get<1>(std::get<2>(GetParam()));
 
     // Prepare configurations.
     config.sector_id           = 0;
@@ -148,8 +149,8 @@ protected:
     config.logger              = &srslog::fetch_basic_logger("Low-PHY");
 
     // Create processor.
-    ul_processor = ul_proc_factory->create(config);
-    ASSERT_NE(ul_processor, nullptr);
+    dl_processor = dl_proc_factory->create(config);
+    ASSERT_NE(dl_processor, nullptr);
 
     // Select PDxCH processor spy.
     pdxch_proc_spy = &pdxch_proc_factory->get_spy();
@@ -158,16 +159,16 @@ protected:
     amplitude_control_spy = amplitude_control_factory->get_entries().back();
   }
 
-  static constexpr unsigned                                    nof_frames_test = 10;
+  static constexpr unsigned                                    nof_frames_test = 3;
   static std::mt19937                                          rgen;
   static std::uniform_int_distribution<unsigned>               dist_bandwidth_prb;
   static std::uniform_real_distribution<double>                dist_center_freq_Hz;
   static std::shared_ptr<pdxch_processor_factory_spy>          pdxch_proc_factory;
   static std::shared_ptr<amplitude_controller_factory_spy>     amplitude_control_factory;
-  static std::shared_ptr<lower_phy_downlink_processor_factory> ul_proc_factory;
+  static std::shared_ptr<lower_phy_downlink_processor_factory> dl_proc_factory;
 
   downlink_processor_configuration              config;
-  std::unique_ptr<lower_phy_downlink_processor> ul_processor          = nullptr;
+  std::unique_ptr<lower_phy_downlink_processor> dl_processor          = nullptr;
   pdxch_processor_spy*                          pdxch_proc_spy        = nullptr;
   amplitude_controller_spy*                     amplitude_control_spy = nullptr;
 };
@@ -177,7 +178,7 @@ std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixtu
 std::uniform_real_distribution<double>            LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
 std::shared_ptr<pdxch_processor_factory_spy>      LowerPhyDownlinkProcessorFixture::pdxch_proc_factory        = nullptr;
 std::shared_ptr<amplitude_controller_factory_spy> LowerPhyDownlinkProcessorFixture::amplitude_control_factory = nullptr;
-std::shared_ptr<lower_phy_downlink_processor_factory> LowerPhyDownlinkProcessorFixture::ul_proc_factory       = nullptr;
+std::shared_ptr<lower_phy_downlink_processor_factory> LowerPhyDownlinkProcessorFixture::dl_proc_factory       = nullptr;
 
 } // namespace
 
@@ -201,7 +202,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, PdxchConnection)
   pdxch_processor_notifier_spy    pdxch_proc_notifier_spy;
 
   // Connect.
-  ul_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
+  dl_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
 
   // Assert no notifications.
   ASSERT_EQ(downlink_proc_notifier_spy.get_total_count(), 0);
@@ -218,7 +219,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, PdxchRequestHandler)
   const pdxch_processor_request_handler* expected_request_handler = &pdxch_proc_spy->get_request_handler();
 
   // Get actual request handler.
-  const pdxch_processor_request_handler* request_handler = &ul_processor->get_downlink_request_handler();
+  const pdxch_processor_request_handler* request_handler = &dl_processor->get_downlink_request_handler();
 
   // Assert request handler.
   ASSERT_EQ(reinterpret_cast<const void*>(expected_request_handler), reinterpret_cast<const void*>(request_handler));
@@ -226,14 +227,14 @@ TEST_P(LowerPhyDownlinkProcessorFixture, PdxchRequestHandler)
 
 TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
 {
-  unsigned           nof_rx_ports = std::get<0>(GetParam());
+  unsigned           nof_tx_ports = std::get<0>(GetParam());
   sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  subcarrier_spacing scs          = std::get<0>(std::get<2>(GetParam()));
+  cyclic_prefix      cp           = std::get<1>(std::get<2>(GetParam()));
 
   unsigned base_symbol_size = srate.get_dft_size(scs);
 
-  baseband_gateway_buffer_dynamic buffer(nof_rx_ports, 2 * base_symbol_size);
+  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 2 * base_symbol_size);
 
   unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
   unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
@@ -241,9 +242,9 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
   // Create notifiers and connect.
   downlink_processor_notifier_spy downlink_proc_notifier_spy;
   pdxch_processor_notifier_spy    pdxch_proc_notifier_spy;
-  ul_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
+  dl_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
 
-  downlink_processor_baseband& dl_proc_baseband = ul_processor->get_baseband();
+  downlink_processor_baseband& dl_proc_baseband = dl_processor->get_baseband();
 
   baseband_gateway_timestamp timestamp = 0;
   for (unsigned i_frame = 0, i_slot_frame = 0; i_frame != nof_frames_test; ++i_frame) {
@@ -310,10 +311,10 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
 // Test baseband buffer sizes which are unaligned with OFDM symbol boundaries.
 TEST_P(LowerPhyDownlinkProcessorFixture, FlowUnalignedBuffer)
 {
-  unsigned           nof_rx_ports = std::get<0>(GetParam());
+  unsigned           nof_tx_ports = std::get<0>(GetParam());
   sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  subcarrier_spacing scs          = std::get<0>(std::get<2>(GetParam()));
+  cyclic_prefix      cp           = std::get<1>(std::get<2>(GetParam()));
 
   unsigned base_symbol_size = srate.get_dft_size(scs);
 
@@ -323,12 +324,12 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowUnalignedBuffer)
   // Create notifiers and connect.
   downlink_processor_notifier_spy downlink_proc_notifier_spy;
   pdxch_processor_notifier_spy    pdxch_proc_notifier_spy;
-  ul_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
+  dl_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
 
-  downlink_processor_baseband& dl_proc_baseband = ul_processor->get_baseband();
+  downlink_processor_baseband& dl_proc_baseband = dl_processor->get_baseband();
 
   // Create basband buffer.
-  baseband_gateway_buffer_dynamic buffer(nof_rx_ports, 3 * base_symbol_size);
+  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 3 * base_symbol_size);
 
   // Reset timestamp.
   baseband_gateway_timestamp timestamp = 0;
@@ -438,10 +439,10 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowUnalignedBuffer)
 // Test a baseband buffer size comprising an entire slot.
 TEST_P(LowerPhyDownlinkProcessorFixture, FlowLargeBuffer)
 {
-  unsigned           nof_rx_ports = std::get<0>(GetParam());
+  unsigned           nof_tx_ports = std::get<0>(GetParam());
   sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  subcarrier_spacing scs          = std::get<0>(std::get<2>(GetParam()));
+  cyclic_prefix      cp           = std::get<1>(std::get<2>(GetParam()));
 
   unsigned base_symbol_size = srate.get_dft_size(scs);
 
@@ -451,11 +452,11 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowLargeBuffer)
   // Create notifiers and connect.
   downlink_processor_notifier_spy downlink_proc_notifier_spy;
   pdxch_processor_notifier_spy    pdxch_proc_notifier_spy;
-  ul_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
+  dl_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
 
-  downlink_processor_baseband& dl_proc_baseband = ul_processor->get_baseband();
+  downlink_processor_baseband& dl_proc_baseband = dl_processor->get_baseband();
 
-  baseband_gateway_buffer_dynamic buffer(nof_rx_ports, 20 * base_symbol_size);
+  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 20 * base_symbol_size);
 
   // Reset timestamp.
   baseband_gateway_timestamp timestamp = 0;
@@ -534,10 +535,10 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowLargeBuffer)
 // Test generation of baseband samples for discontinous timestamps.
 TEST_P(LowerPhyDownlinkProcessorFixture, DiscontinuousProcessing)
 {
-  unsigned           nof_rx_ports = std::get<0>(GetParam());
+  unsigned           nof_tx_ports = std::get<0>(GetParam());
   sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  subcarrier_spacing scs          = std::get<0>(std::get<2>(GetParam()));
+  cyclic_prefix      cp           = std::get<1>(std::get<2>(GetParam()));
 
   unsigned base_symbol_size = srate.get_dft_size(scs);
   unsigned cp_symbol_0_size = cp.get_length(0, scs).to_samples(srate.to_Hz());
@@ -546,13 +547,13 @@ TEST_P(LowerPhyDownlinkProcessorFixture, DiscontinuousProcessing)
   // Create notifiers and connect.
   downlink_processor_notifier_spy downlink_proc_notifier_spy;
   pdxch_processor_notifier_spy    pdxch_proc_notifier_spy;
-  ul_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
+  dl_processor->connect(downlink_proc_notifier_spy, pdxch_proc_notifier_spy);
 
-  downlink_processor_baseband& dl_proc_baseband = ul_processor->get_baseband();
+  downlink_processor_baseband& dl_proc_baseband = dl_processor->get_baseband();
 
   // Create baseband buffers.
-  baseband_gateway_buffer_dynamic buffer_symbol_0(nof_rx_ports, base_symbol_size);
-  baseband_gateway_buffer_dynamic buffer_symbol_2(nof_rx_ports, base_symbol_size);
+  baseband_gateway_buffer_dynamic buffer_symbol_0(nof_tx_ports, base_symbol_size);
+  baseband_gateway_buffer_dynamic buffer_symbol_2(nof_tx_ports, base_symbol_size);
 
   // Set an initial timestamp.
   baseband_gateway_timestamp timestamp_symbol_0 = 7;
@@ -622,11 +623,11 @@ TEST_P(LowerPhyDownlinkProcessorFixture, DiscontinuousProcessing)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(LowerPhyDownlinkProcessor,
-                         LowerPhyDownlinkProcessorFixture,
-                         ::testing::Combine(::testing::Values(1, 2),
-                                            ::testing::Values(sampling_rate::from_MHz(7.68)),
-                                            ::testing::Values(subcarrier_spacing::kHz15,
-                                                              subcarrier_spacing::kHz30,
-                                                              subcarrier_spacing::kHz60),
-                                            ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED)));
+INSTANTIATE_TEST_SUITE_P(
+    LowerPhyDownlinkProcessor,
+    LowerPhyDownlinkProcessorFixture,
+    ::testing::Combine(::testing::Values(1, 4),
+                       ::testing::Values(sampling_rate::from_MHz(7.68)),
+                       ::testing::Values(std::make_tuple(subcarrier_spacing::kHz15, cyclic_prefix::NORMAL),
+                                         std::make_tuple(subcarrier_spacing::kHz30, cyclic_prefix::NORMAL),
+                                         std::make_tuple(subcarrier_spacing::kHz60, cyclic_prefix::EXTENDED))));

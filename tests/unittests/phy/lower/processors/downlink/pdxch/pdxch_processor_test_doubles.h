@@ -31,15 +31,36 @@ public:
     symbol_context                    context;
   };
 
-  pdxch_processor_baseband_spy() : sample_dist(-1, 1) {}
+  pdxch_processor_baseband_spy() : random_data(1009)
+  {
+    std::mt19937                          rgen;
+    std::uniform_real_distribution<float> sample_dist(-1, 1);
+    std::generate(random_data.begin(), random_data.end(), [&sample_dist, &rgen]() {
+      return cf_t(sample_dist(rgen), sample_dist(rgen));
+    });
+  }
 
   void process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override
   {
-    for (unsigned i_channel = 0, i_channel_end = samples.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-      span<cf_t> channel_samples = samples.get_channel_buffer(i_channel);
-      std::generate(channel_samples.begin(), channel_samples.end(), [this]() {
-        return cf_t(sample_dist(rgen), sample_dist(rgen));
-      });
+    // Counter for the remaining samples to generate.
+    std::size_t remaining = samples.get_nof_samples();
+    span<cf_t>  random_data_view(random_data);
+
+    while (remaining > 0) {
+      // Number of samples to copy for this iteration.
+      unsigned   nof_copied_samples = std::min(random_data.size() - random_data_index, remaining);
+      span<cf_t> random_samples     = random_data_view.subspan(random_data_index, nof_copied_samples);
+
+      for (unsigned i_ch = 0, i_channel_end = samples.get_nof_channels(); i_ch != i_channel_end; ++i_ch) {
+        span<cf_t> channel_samples =
+            samples.get_channel_buffer(i_ch).subspan(samples.get_nof_samples() - remaining, nof_copied_samples);
+
+        srsvec::copy(channel_samples, random_samples);
+      }
+
+      // Update remaining samples and buffer index.
+      remaining -= nof_copied_samples;
+      random_data_index = (random_data_index + nof_copied_samples) % random_data.size();
     }
 
     entries.emplace_back();
@@ -53,9 +74,9 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  std::vector<entry_t>                  entries;
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> sample_dist;
+  unsigned             random_data_index = 0;
+  std::vector<cf_t>    random_data;
+  std::vector<entry_t> entries;
 };
 
 class pdxch_processor_request_handler_spy : public pdxch_processor_request_handler
