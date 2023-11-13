@@ -18,7 +18,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: zmq
     - type: license
@@ -41,7 +40,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: zmq
   shared_files:
@@ -61,4 +59,3 @@
       requests: "3G"
       limit: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  mode: grpc

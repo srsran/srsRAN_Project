@@ -20,7 +20,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: android
       model: one-plus-9-pro
@@ -39,7 +38,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   taints: ["retina"]
   resources:
     - type: sdr
@@ -63,4 +61,3 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
