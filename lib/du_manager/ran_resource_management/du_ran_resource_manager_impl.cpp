@@ -63,8 +63,10 @@ du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_i
 ///////////////////////////
 
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
+                                                           const std::map<srb_id_t, du_srb_config>&  srbs_,
                                                            const std::map<five_qi_t, du_qos_config>& qos_) :
   cell_cfg_list(cell_cfg_list_),
+  srb_config(srbs_),
   qos_config(qos_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
   pucch_res_mng(cell_cfg_list)
@@ -130,10 +132,16 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     // >> New or Modified SRB.
     lcid_t lcid = srb_id_to_lcid(srb_id);
     ue_mcg.rlc_bearers.emplace_back();
-    ue_mcg.rlc_bearers.back().lcid    = lcid;
-    ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
-    // TODO: Parameterize SRB config.
+    ue_mcg.rlc_bearers.back().lcid = lcid;
+
+    auto srb_it = srb_config.find(srb_id);
+    if (srb_it != srb_config.end()) {
+      ue_mcg.rlc_bearers.back().rlc_cfg = srb_it->second.rlc;
+      ue_mcg.rlc_bearers.back().mac_cfg = srb_it->second.mac;
+    } else {
+      ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
+    }
   }
   for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
     // >> New or Modified DRB.

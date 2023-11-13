@@ -10,17 +10,15 @@
 
 #pragma once
 
-#include "srsran/f1u/du/f1u_config.h"
 #include "srsran/mac/mac_lc_config.h"
 #include "srsran/rlc/rlc_config.h"
 
 namespace srsran {
 
-/// \brief QoS Configuration, i.e. 5QI and the associated RLC configuration for DRBs
-struct du_qos_config {
-  rlc_config         rlc;
-  srs_du::f1u_config f1u;
-  mac_lc_config      mac;
+/// \brief SRB Configuration, i.e. associated RLC and MAC configuration for SRBs in the DU
+struct du_srb_config {
+  rlc_config    rlc;
+  mac_lc_config mac;
 };
 
 } // namespace srsran

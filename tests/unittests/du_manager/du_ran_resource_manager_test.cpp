@@ -29,7 +29,7 @@ protected:
     cell_cfg_list({config_helpers::make_default_du_cell_config(params)}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config(params)),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, qos_cfg_list))
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, srb_cfg_list, qos_cfg_list))
   {
   }
 
@@ -105,6 +105,7 @@ protected:
   }
 
   std::vector<du_cell_config>                                 cell_cfg_list;
+  std::map<srb_id_t, du_srb_config>                           srb_cfg_list;
   std::map<five_qi_t, du_qos_config>                          qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
   std::unique_ptr<du_ran_resource_manager>                    res_mng;
@@ -254,7 +255,7 @@ protected:
     cell_cfg_list({make_custom_du_cell_config(GetParam())}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, qos_cfg_list))
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, srb_cfg_list, qos_cfg_list))
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
@@ -392,6 +393,7 @@ protected:
   }
 
   std::vector<du_cell_config>                                            cell_cfg_list;
+  std::map<srb_id_t, du_srb_config>                                      srb_cfg_list;
   std::map<five_qi_t, du_qos_config>                                     qos_cfg_list;
   const serving_cell_config                                              default_ue_cell_cfg;
   srsran::csi_report_config::periodic_or_semi_persistent_report_on_pucch default_csi_pucch_res_cfg;

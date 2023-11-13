@@ -46,6 +46,7 @@ class du_ran_resource_manager_impl : public du_ran_resource_manager
 {
 public:
   du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
+                               const std::map<srb_id_t, du_srb_config>&  srbs,
                                const std::map<five_qi_t, du_qos_config>& qos);
   du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
   du_ran_resource_manager_impl(const du_ran_resource_manager_impl&)            = delete;
@@ -76,6 +77,7 @@ private:
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
 
   span<const du_cell_config>                cell_cfg_list;
+  const std::map<srb_id_t, du_srb_config>&  srb_config;
   const std::map<five_qi_t, du_qos_config>& qos_config;
   srslog::basic_logger&                     logger;
 
