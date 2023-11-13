@@ -204,7 +204,9 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
     }
 
     // Update UE state.
-    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx, pucch_snr);
+    std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
+        ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx, pucch_snr);
+    const dl_harq_process* h_dl = result.first;
     if (h_dl != nullptr) {
       // HARQ was found.
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
@@ -213,9 +215,10 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
 
-      if (ack_value != mac_harq_ack_report_status::dtx) {
-        // Notify metric.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack, tbs);
+      if (result.second == dl_harq_process::status_update::acked or
+          result.second == dl_harq_process::status_update::nacked) {
+        // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.second == dl_harq_process::status_update::acked, tbs);
       }
     }
   }
