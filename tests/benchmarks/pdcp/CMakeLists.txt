@@ -12,3 +12,6 @@ include_directories(../../..)
 
 add_executable(pdcp_tx_benchmark pdcp_tx_benchmark.cpp)
 target_link_libraries(pdcp_tx_benchmark srsran_pdcp srsran_security srslog)
+
+add_executable(pdcp_rx_benchmark pdcp_rx_benchmark.cpp)
+target_link_libraries(pdcp_rx_benchmark srsran_pdcp srsran_security srslog)
