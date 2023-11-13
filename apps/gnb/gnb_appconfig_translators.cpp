@@ -1482,6 +1482,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
+  out_cfg.ue.max_nof_harq_retxs                = pdsch.max_nof_harq_retxs;
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
   out_cfg.ue.max_pdcch_alloc_attempts_per_slot = pdsch.max_pdcch_alloc_attempts_per_slot;
   out_cfg.ue.pdsch_nof_rbs                     = {pdsch.min_rb_size, pdsch.max_rb_size};

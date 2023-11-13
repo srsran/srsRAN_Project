@@ -151,6 +151,8 @@ struct pdsch_appconfig {
   unsigned fixed_sib1_mcs = 5;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
+  /// Maximum number of times an HARQ process can be retransmitted, before it gets discarded.
+  unsigned max_nof_harq_retxs = 4;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.

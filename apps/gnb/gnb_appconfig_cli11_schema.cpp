@@ -544,6 +544,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
+  app.add_option("--max_nof_harq_retxs",
+                 pdsch_params.max_nof_harq_retxs,
+                 "Maximum number of times a DL HARQ can be retransmitted, before it gets discarded")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 4));
   app.add_option("--max_consecutive_kos",
                  pdsch_params.max_consecutive_kos,
                  "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
