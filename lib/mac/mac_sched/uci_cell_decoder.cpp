@@ -166,6 +166,12 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
       if (pusch.csi_part1_info.has_value()) {
         pdu.csi = decode_csi(pusch.csi_part1_info->csi_status, pusch.csi_part1_info->payload, pusch.ri, pusch.pmi);
+        // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
+        // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
+        // need to reset the CSI KOs counter.
+        if (pusch.csi_part1_info->csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          rlf_handler.handle_csi(ind.ucis[i].ue_index, true);
+        }
       }
 
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
@@ -192,24 +198,29 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       // Check if the UCI has been correctly decoded.
-      if (pucch.uci_part1_or_csi_part1_info.has_value() and
-          pucch.uci_part1_or_csi_part1_info->status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        // Decode CSI bits given the CSI report config previously stored in the grid.
-        const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
+      if (pucch.uci_part1_or_csi_part1_info.has_value()) {
+        if (pucch.uci_part1_or_csi_part1_info->status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          // Decode CSI bits given the CSI report config previously stored in the grid.
+          const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
 
-        // Search for CSI report config with matching RNTI.
-        for (const auto& expected_slot_uci : slot_ucis) {
-          if (expected_slot_uci.rnti == uci_pdu.crnti) {
-            pdu.csi = decode_csi_bits(pucch, expected_slot_uci.csi_rep_cfg);
-            break;
+          // Search for CSI report config with matching RNTI.
+          for (const auto& expected_slot_uci : slot_ucis) {
+            if (expected_slot_uci.rnti == uci_pdu.crnti) {
+              pdu.csi = decode_csi_bits(pucch, expected_slot_uci.csi_rep_cfg);
+              break;
+            }
+          }
+          if (not pdu.csi.has_value()) {
+            logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
+                           cell_index,
+                           uci_pdu.ue_index,
+                           uci_pdu.crnti);
           }
         }
-        if (not pdu.csi.has_value()) {
-          logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
-                         cell_index,
-                         uci_pdu.ue_index,
-                         uci_pdu.crnti);
-        }
+        // We consider any status other than "crc_pass" as non-decoded CSI.
+        rlf_handler.handle_csi(ind.ucis[i].ue_index,
+                               pucch.uci_part1_or_csi_part1_info->status ==
+                                   uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass);
       }
     }
   }
