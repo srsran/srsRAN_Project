@@ -991,6 +991,15 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
   return out_cfg;
 }
 
+std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appconfig& config)
+{
+  std::map<srb_id_t, du_srb_config> srb_cfg;
+
+  // TODO: Set SRB parameters based on the gNB appconfig.
+
+  return srb_cfg;
+}
+
 /// Fills the given low PHY configuration from the given gnb configuration.
 static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
                                     const cell_appconfig&              config,

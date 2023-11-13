@@ -14,6 +14,7 @@
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_srb_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/mac/mac_config.h"
@@ -60,8 +61,11 @@ generate_preferred_integrity_algorithms_list(const gnb_appconfig& config);
 srsran::security::preferred_ciphering_algorithms
 generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application QoS configuration to a DU configuration.
+/// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application QoS configuration to a DU SRB list configuration.
+std::map<srb_id_t, du_srb_config> generate_du_srb_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a mac expert configuration.
 mac_expert_config generate_mac_expert_config(const gnb_appconfig& config);
