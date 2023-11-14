@@ -100,6 +100,24 @@ TEST_P(multi_cell_scheduler_tester, test_slot_indication_for_multiple_cells)
   }
 }
 
+TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
+{
+  std::vector<bool> is_ssb_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
+  // Run for arbitrary nof. slots and ensure all cells are running.
+  for (unsigned slot_count = 0; slot_count < 100; ++slot_count) {
+    for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+      if (last_sched_res_list[cell_idx] != nullptr and not is_ssb_scheduled_atleast_once[cell_idx]) {
+        is_ssb_scheduled_atleast_once[cell_idx] = not last_sched_res_list[cell_idx]->dl.bc.ssb_info.empty();
+      }
+    }
+    run_slot_all_cells();
+  }
+  for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+    ASSERT_TRUE(is_ssb_scheduled_atleast_once[cell_idx])
+        << fmt::format("SSB not scheduled for cell with index={}", cell_idx);
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(multi_cell_scheduler_test,
                          multi_cell_scheduler_tester,
                          testing::Values(multi_cell_scheduler_test_params{srsran::duplex_mode::FDD, 3},
