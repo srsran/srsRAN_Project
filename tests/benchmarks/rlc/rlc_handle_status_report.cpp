@@ -76,11 +76,11 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-void benchmark_status_pdu_handling(rlc_am_status_pdu status)
+void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params& params)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "Benchmark status report handling. {}", status);
-  std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), 100);
+  std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   // Set Tx config
   rlc_tx_am_config config;
@@ -123,7 +123,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status)
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 2048; i++) {
       rlc_sdu     sdu;
       byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
       byte_buffer sdu_buf      = {0x00, 0x01, 0x02, 0x04};
@@ -133,6 +133,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status)
       rlc->handle_sdu(std::move(sdu));
       rlc->pull_pdu(100);
     }
+    timers.tick();
   };
   auto measure = [&rlc, &status]() mutable { rlc->on_status_pdu(status); };
   bm->new_measure_with_context("Handling status pdu", 1, context, measure);
@@ -152,15 +153,53 @@ int main(int argc, char** argv)
 
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
-    status.ack_sn = 1000;
-    benchmark_status_pdu_handling(status);
+    status.ack_sn = 1024;
+    benchmark_status_pdu_handling(status, params);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
-    status.ack_sn           = 1000;
+    status.ack_sn = 2048;
+    benchmark_status_pdu_handling(status, params);
+  }
+  {
+    rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
+    status.ack_sn           = 2048;
     rlc_am_status_nack nack = {}; // NACK SN=0
     status.push_nack(nack);
-    benchmark_status_pdu_handling(status);
+    benchmark_status_pdu_handling(status, params);
+  }
+  {
+    rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
+    status.ack_sn = 2048;
+    {
+      rlc_am_status_nack nack = {};
+      nack.nack_sn            = 0;
+      nack.has_nack_range     = true;
+      nack.nack_range         = 255;
+      status.push_nack(nack);
+    }
+    {
+      rlc_am_status_nack nack = {};
+      nack.nack_sn            = 256;
+      nack.has_nack_range     = true;
+      nack.nack_range         = 255;
+      status.push_nack(nack);
+    }
+    {
+      rlc_am_status_nack nack = {};
+      nack.nack_sn            = 512;
+      nack.has_nack_range     = true;
+      nack.nack_range         = 255;
+      status.push_nack(nack);
+    }
+    {
+      rlc_am_status_nack nack = {};
+      nack.nack_sn            = 768;
+      nack.has_nack_range     = true;
+      nack.nack_range         = 255;
+      status.push_nack(nack);
+    }
+    benchmark_status_pdu_handling(status, params);
   }
   srslog::flush();
 }
