@@ -40,6 +40,18 @@ metrics version changed:
       changes:
         - docker/metrics_server/**/*
 
+metrics version check in retina:
+  extends: metrics version changed
+  script:
+    - |
+      VERSION_IN_PYPROJECT=$(cat docker/metrics_server/pyproject.toml | grep '^version' | cut -d'"' -f2)
+      VERSION_IN_RETINA=$(cat .gitlab/ci/e2e/.env | grep METRICS_SERVER_VERSION | cut -d'=' -f2)
+      echo "pyproject.toml version: $VERSION_IN_PYPROJECT -- retina .env version: $VERSION_IN_RETINA"
+    - |
+      export VERSION_IN_PYPROJECT
+      export VERSION_IN_RETINA
+    - python3 -c "import semver; import os; exit(semver.compare(os.environ['VERSION_IN_RETINA'], os.environ['VERSION_IN_PYPROJECT']))"
+
 ################################################################################
 # Docker Compose
 ################################################################################

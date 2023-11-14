@@ -115,6 +115,9 @@ load retina variables:
       echo "srsGNB sources+build size is" $(du -hs .)
     # Remove any existing retina resource for this group
     - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
+    # Add extra secret env variables to the .env file
+    - |
+      cat $RETINA_SECRET_ENV >> .gitlab/ci/e2e/.env
     # Set username for retina
     - |
       cd tests/e2e
