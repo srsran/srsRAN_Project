@@ -555,6 +555,8 @@ smoke release update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
@@ -588,6 +590,8 @@ smoke rhel update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -599,6 +603,8 @@ smoke archlinux update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -674,6 +680,8 @@ package:
   stage: build and unit tests
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
@@ -720,7 +728,7 @@ export on amd64:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     COMPILER: gcc
@@ -751,7 +759,7 @@ ubuntu-23.10 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 270 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
@@ -766,7 +774,7 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 120 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
@@ -781,7 +789,7 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 130 minutes
+      start_in: 210 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
@@ -813,7 +821,7 @@ ubuntu-22.04 amd64 no isa release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -829,7 +837,7 @@ ubuntu-22.04 amd64 avx512 release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -848,7 +856,7 @@ ubuntu-22.04 arm no isa release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -864,7 +872,7 @@ ubuntu-22.04 arm neon release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -882,7 +890,7 @@ smoke dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 180 minutes
+      start_in: 90 minutes
   interruptible: false
   variables:
     COMPILER: clang
@@ -1218,7 +1226,7 @@ ubuntu-23.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 240 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
