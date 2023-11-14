@@ -79,6 +79,9 @@ private:
 
   bool check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metrics_defs);
 
+  // Helper functions.
+  float bytes_to_kbits(float value);
+
   // Measurement getter functions.
   metric_meas_getter_func_t get_cqi;
   metric_meas_getter_func_t get_rsrp;
@@ -87,6 +90,7 @@ private:
   metric_meas_getter_func_t get_drb_rlc_packet_drop_rate_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_ul;
+  metric_meas_getter_func_t get_drb_dl_mean_throughput;
   metric_meas_getter_func_t get_drb_ul_mean_throughput;
 
   srslog::basic_logger&                              logger;
