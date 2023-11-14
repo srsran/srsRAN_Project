@@ -18,6 +18,33 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
+bool verify_ho_command(const cu_cp_inter_du_handover_request& command,
+                       du_processor_ue_manager&               ue_manager,
+                       const srslog::basic_logger&            logger)
+{
+  if (command.target_pci == INVALID_PCI) {
+    logger.error("Target PCI must not be invalid");
+    return false;
+  }
+
+  if (command.target_du_index == du_index_t::invalid) {
+    logger.error("Target DU index must not be invalid");
+    return false;
+  }
+
+  if (command.source_ue_index == ue_index_t::invalid) {
+    logger.error("Source UE index must not be invalid");
+    return false;
+  }
+
+  if (!ue_manager.find_du_ue(command.source_ue_index)) {
+    logger.error("Can't find source UE index {}");
+    return false;
+  }
+
+  return true;
+}
+
 inter_du_handover_routine::inter_du_handover_routine(
     const cu_cp_inter_du_handover_request&        command_,
     du_processor_cu_cp_notifier&                  cu_cp_notifier_,
@@ -35,17 +62,24 @@ inter_du_handover_routine::inter_du_handover_routine(
   ue_manager(ue_manager_),
   logger(logger_)
 {
-  source_ue = ue_manager.find_du_ue(command.source_ue_index);
-  srsran_assert(source_ue != nullptr, "Can't find source UE index {}.", command.source_ue_index);
-
-  source_rrc_context = source_ue->get_rrc_ue_notifier().get_transfer_context();
-
-  next_config = to_config_update(source_rrc_context.up_ctx);
 }
 
 void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_du_handover_response>>& ctx)
 {
   CORO_BEGIN(ctx);
+
+  {
+    // Verify input.
+    if (!verify_ho_command(command, ue_manager, logger)) {
+      logger.error("ue={}: \"{}\" - invalid input parameters", command.source_ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+
+    // Retrieve source UE context.
+    source_ue          = ue_manager.find_du_ue(command.source_ue_index);
+    source_rrc_context = source_ue->get_rrc_ue_notifier().get_transfer_context();
+    next_config        = to_config_update(source_rrc_context.up_ctx);
+  }
 
   logger.debug("ue={}: \"{}\" initialized.", command.source_ue_index, name());
 
