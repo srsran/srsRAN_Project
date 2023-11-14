@@ -96,7 +96,7 @@ void stress_stack::start()
 
   // Schedule the TTI when the thread are started.
   bool result = pcell_executor->defer([this]() { run_lower_tti(0); });
-  srsran_assert(result, "Failed to dispatch run_lower_tti");
+  report_error_if_not(result, "Failed to dispatch run_lower_tti");
 }
 
 void stress_stack::wait_for_finish()
@@ -136,7 +136,7 @@ void stress_stack::run_upper_tti(uint32_t tti)
     cv_ue.notify_all();
   }
   bool result = pcell_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
-  srsran_assert(result, "Failed to dispatch run_lower_tti");
+  report_error_if_not(result, "Failed to dispatch run_lower_tti");
   logger.log_debug("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
 }
 
@@ -147,7 +147,7 @@ void stress_stack::run_lower_tti(uint32_t tti)
     std::vector<byte_buffer_chain> pdu_list = mac->run_tx_tti(tti);
     logger.log_debug("Generated PDU list size={}", pdu_list.size());
     bool result = ue_executor->defer([this, tti]() { run_upper_tti(tti); });
-    srsran_assert(result, "Failed to dispatch run_upper_tti");
+    report_error_if_not(result, "Failed to dispatch run_upper_tti");
     peer_stack->push_pdus(std::move(pdu_list));
     tti++;
     pthread_barrier_wait(&barrier); // wait for other stack to finish
@@ -166,7 +166,7 @@ void stress_stack::push_pdus(std::vector<byte_buffer_chain> list_pdus)
   auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
   if (!stopping_pcell.load() && !stopping_ue.load()) {
     bool result = ue_executor->defer(std::move(push_fnc));
-    srsran_assert(result, "Failed to push PDUs");
+    report_error_if_not(result, "Failed to push PDUs");
   }
 }
 
