@@ -88,7 +88,6 @@ void pcap_file_base::write_pcap_pdu(srsran::const_span<uint8_t> pdu)
       logger.error("Failed to write to pcap: {}", strerror(errno));
       return;
     }
-    pcap_fstream.flush();
   }
 }
 
