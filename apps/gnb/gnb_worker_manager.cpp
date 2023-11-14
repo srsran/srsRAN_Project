@@ -123,8 +123,8 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, false},
-       {"ue_dl_exec", task_priority::max - 2, false}},
+       {"ue_ul_exec", task_priority::max - 1, nullopt, false},
+       {"ue_dl_exec", task_priority::max - 2, nullopt, false}},
       os_thread_realtime_priority::max() - 30,
       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
@@ -165,7 +165,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, true, is_blocking_mode_active}},
+         {"slot_exec#" + cell_id_str, task_priority::max, nullopt, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 

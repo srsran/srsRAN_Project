@@ -127,4 +127,25 @@ inline std::unique_ptr<strand_executor<Executor, queue_policy>> make_strand_exec
   return std::make_unique<strand_executor<Executor, queue_policy>>(std::forward<Executor>(executor), strand_queue_size);
 }
 
+template <typename Executor>
+inline std::unique_ptr<task_executor>
+make_strand_executor_ptr(Executor&& executor, concurrent_queue_policy queue_policy, unsigned strand_queue_size)
+{
+  switch (queue_policy) {
+    case concurrent_queue_policy::lockfree_spsc:
+      return make_strand_executor_ptr<Executor, concurrent_queue_policy::lockfree_spsc>(
+          std::forward<Executor>(executor), strand_queue_size);
+    case concurrent_queue_policy::lockfree_mpmc:
+      return make_strand_executor_ptr<Executor, concurrent_queue_policy::lockfree_mpmc>(
+          std::forward<Executor>(executor), strand_queue_size);
+    case concurrent_queue_policy::locking_mpmc:
+      break;
+    case concurrent_queue_policy::locking_mpsc:
+      break;
+    default:
+      break;
+  }
+  return nullptr;
+}
+
 } // namespace srsran
