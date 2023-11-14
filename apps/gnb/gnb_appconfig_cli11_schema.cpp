@@ -212,7 +212,13 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
+  app.add_option("--bind_addr",
+                 amf_params.bind_addr,
+                 "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
   app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");

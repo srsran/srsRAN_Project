@@ -69,8 +69,12 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   out_cfg.connection_name = "AMF";
   out_cfg.connect_address = config.amf_cfg.ip_addr;
   out_cfg.connect_port    = config.amf_cfg.port;
-  out_cfg.bind_address    = config.amf_cfg.bind_addr;
-  out_cfg.ppid            = NGAP_PPID;
+  if (config.amf_cfg.n2_bind_addr == "auto") {
+    out_cfg.bind_address = config.amf_cfg.bind_addr;
+  } else {
+    out_cfg.bind_address = config.amf_cfg.n2_bind_addr;
+  }
+  out_cfg.ppid = NGAP_PPID;
 
   if (config.amf_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;
@@ -254,6 +258,13 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
 
+  if (config.amf_cfg.n3_bind_addr == "auto") {
+    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
+  } else {
+    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
+  }
+  out_cfg.net_cfg.n3_rx_max_mmsg = config.amf_cfg.udp_rx_max_msgs;
+  out_cfg.net_cfg.f1u_bind_addr  = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
   return out_cfg;
 }
 
