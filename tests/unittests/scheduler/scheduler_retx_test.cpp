@@ -29,7 +29,7 @@ protected:
   {
     for (unsigned i = 0; i != max_slot_delay; ++i) {
       bench.run_slot();
-      const ul_sched_info* grant = find_ue_pusch(ue_rnti, bench.last_sched_res->ul.puschs);
+      const ul_sched_info* grant = find_ue_pusch(ue_rnti, bench.last_sched_res_list[to_du_cell_index(0)]->ul.puschs);
       if (grant != nullptr) {
         return grant;
       }
@@ -110,7 +110,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
   slot_point crc_slot = bench.last_result_slot();
   while (bench.next_slot_rx() != crc_slot) {
     bench.run_slot();
-    ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res), nullptr);
+    ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res_list[to_du_cell_index(0)]), nullptr);
   }
 
   // Notify ACK/NACK.
@@ -128,7 +128,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
     crc_slot = bench.last_result_slot();
     while (bench.next_slot_rx() != crc_slot) {
       bench.run_slot();
-      ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res), nullptr);
+      ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res_list[to_du_cell_index(0)]), nullptr);
     }
 
     // Notify ACK/NACK.

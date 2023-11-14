@@ -118,11 +118,11 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     // For every DL slot.
     if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res->dl.ue_grants.empty())
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty())
           << "The UE configuration is leading to some DL slots staying empty";
     }
 
-    for (const pucch_info& pucch : this->last_sched_res->ul.pucchs) {
+    for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
       if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
@@ -162,11 +162,11 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
     // Note: Skip special slots in test for now.
     if (cell_cfg_list[0].is_fully_ul_enabled(this->last_result_slot())) {
       // Ensure UE PUSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res->ul.puschs.empty())
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty())
           << "The UE configuration is leading to some UL slots staying empty";
     }
 
-    for (const ul_sched_info& pusch : this->last_sched_res->ul.puschs) {
+    for (const ul_sched_info& pusch : this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs) {
       ul_crc_indication crc{};
       crc.cell_index = to_du_cell_index(0);
       crc.sl_rx      = this->last_result_slot();

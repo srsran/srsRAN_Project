@@ -69,8 +69,8 @@ protected:
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
-      last_sched_res = &sched->slot_indication(next_slot, to_du_cell_index(cell_idx));
-      test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res);
+      last_sched_res_list[cell_idx] = &sched->slot_indication(next_slot, to_du_cell_index(cell_idx));
+      test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res_list[cell_idx]);
     }
     ++next_slot;
   }
