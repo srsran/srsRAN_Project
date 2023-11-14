@@ -38,13 +38,13 @@ public:
   void capture_drb(bool drb_enabled_) override;
 
 private:
-  void                      write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
-  std::vector<uint8_t>      tmp_mem;
-  os_sched_affinity_bitmask cpu_mask;
-  task_worker               worker;
-  pcap_file_base            writter;
-  std::atomic<bool>         is_open{false};
-  bool                      drb_enabled = true;
-  bool                      srb_enabled = true;
+  void                         write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
+  std::vector<uint8_t>         tmp_mem;
+  os_sched_affinity_bitmask    cpu_mask;
+  std::unique_ptr<task_worker> worker = nullptr;
+  pcap_file_base               writter;
+  std::atomic<bool>            is_open{false};
+  bool                         drb_enabled = true;
+  bool                         srb_enabled = true;
 };
 } // namespace srsran

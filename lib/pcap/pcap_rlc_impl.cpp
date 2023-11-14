@@ -30,13 +30,12 @@ constexpr uint32_t pcap_rlc_max_pdu_len = 131072;
 
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length);
 
-pcap_rlc_impl::pcap_rlc_impl() : worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+pcap_rlc_impl::pcap_rlc_impl()
 {
   tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
 
-pcap_rlc_impl::pcap_rlc_impl(const srsran::os_sched_affinity_bitmask& mask) :
-  cpu_mask(mask), worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+pcap_rlc_impl::pcap_rlc_impl(const srsran::os_sched_affinity_bitmask& mask) : cpu_mask(mask)
 {
   tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
@@ -50,21 +49,23 @@ void pcap_rlc_impl::open(const std::string& filename_)
 {
   uint16_t dlt = UDP_DLT;
 
+  worker = std::make_unique<task_worker>("rlc_pcap", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask);
+
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, dlt, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
-  worker.push_task_blocking(fn);
+  worker->push_task_blocking(fn);
   is_open.store(true, std::memory_order_relaxed);
 }
 
 void pcap_rlc_impl::close()
 {
   if (is_open.load(std::memory_order_relaxed)) {
-    worker.wait_pending_tasks();
+    worker->wait_pending_tasks();
     is_open.store(false, std::memory_order_relaxed); // any further tasks will see it closed
     auto fn = [this]() { writter.dlt_pcap_close(); };
-    worker.push_task_blocking(fn);
-    worker.wait_pending_tasks(); // make sure dlt_pcap_close is processed
-    worker.stop();
+    worker->push_task_blocking(fn);
+    worker->wait_pending_tasks(); // make sure dlt_pcap_close is processed
+    worker->stop();
   }
 }
 
@@ -76,7 +77,6 @@ bool pcap_rlc_impl::is_write_enabled()
 void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
-    // skip
     return;
   }
 
@@ -92,7 +92,7 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
 
   byte_buffer buffer = pdu.deep_copy(); // TODO: optimize copy
   auto        fn     = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
-  if (not worker.push_task(fn)) {
+  if (not worker->push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
   }
 }
@@ -100,7 +100,6 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
 void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
-    // skip
     return;
   }
 
@@ -117,7 +116,7 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   byte_buffer buffer;
   buffer.append(pdu); // TODO: optimize copy
   auto fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
-  if (not worker.push_task(fn)) {
+  if (not worker->push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
   }
 }
@@ -125,7 +124,6 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
 void pcap_rlc_impl::write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& buf)
 {
   if (!is_write_enabled() || buf.empty()) {
-    // skip
     return;
   }
 

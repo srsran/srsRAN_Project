@@ -323,23 +323,23 @@ int main(int argc, char** argv)
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
-  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP", low_prio_cpu_mask);
+  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "ngap", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
     ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename);
   }
-  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP", low_prio_cpu_mask);
+  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "e1ap", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e1ap.enabled) {
     e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename);
   }
-  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP", low_prio_cpu_mask);
+  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "f1ap", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.f1ap.enabled) {
     f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename);
   }
-  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP", low_prio_cpu_mask);
+  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "e2ap", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e2ap.enabled) {
     e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename);
   }
-  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU", low_prio_cpu_mask);
+  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "gtpu", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.gtpu.enabled) {
     gtpu_p->open(gnb_cfg.pcap_cfg.gtpu.filename);
   }

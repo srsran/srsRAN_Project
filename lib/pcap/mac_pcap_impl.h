@@ -44,12 +44,12 @@ public:
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
 
 private:
-  void                      write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
-  mac_pcap_type             type;
-  std::vector<uint8_t>      tmp_mem;
-  os_sched_affinity_bitmask cpu_mask;
-  task_worker               worker;
-  pcap_file_base            writter;
-  std::atomic<bool>         is_open{false};
+  void                         write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  mac_pcap_type                type;
+  std::vector<uint8_t>         tmp_mem;
+  os_sched_affinity_bitmask    cpu_mask;
+  std::unique_ptr<task_worker> worker = nullptr;
+  pcap_file_base               writter;
+  std::atomic<bool>            is_open{false};
 };
 } // namespace srsran

@@ -23,13 +23,12 @@ constexpr uint32_t pcap_mac_max_pdu_len = 131072;
 
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
-mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+mac_pcap_impl::mac_pcap_impl()
 {
   tmp_mem.resize(pcap_mac_max_pdu_len);
 }
 
-mac_pcap_impl::mac_pcap_impl(const srsran::os_sched_affinity_bitmask& mask) :
-  cpu_mask(mask), worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+mac_pcap_impl::mac_pcap_impl(const srsran::os_sched_affinity_bitmask& mask) : cpu_mask(mask)
 {
   tmp_mem.resize(pcap_mac_max_pdu_len);
 }
@@ -46,21 +45,22 @@ void mac_pcap_impl::open(const std::string& filename_, mac_pcap_type type_)
   if (type == mac_pcap_type::dlt) {
     dlt = MAC_DLT;
   }
+  worker = std::make_unique<task_worker>("mac_pcap", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask);
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, dlt, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
-  worker.push_task_blocking(fn);
+  worker->push_task_blocking(fn);
   is_open.store(true, std::memory_order_relaxed);
 }
 
 void mac_pcap_impl::close()
 {
   if (is_open.load(std::memory_order_relaxed)) {
-    worker.wait_pending_tasks();
+    worker->wait_pending_tasks();
     is_open.store(false, std::memory_order_relaxed); // any further tasks will see it closed
     auto fn = [this]() { writter.dlt_pcap_close(); };
-    worker.push_task_blocking(fn);
-    worker.wait_pending_tasks(); // make sure dlt_pcap_close is processed
-    worker.stop();
+    worker->push_task_blocking(fn);
+    worker->wait_pending_tasks(); // make sure dlt_pcap_close is processed
+    worker->stop();
   }
 }
 
@@ -71,25 +71,32 @@ bool mac_pcap_impl::is_write_enabled()
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::const_span<uint8_t> pdu)
 {
+  if (!is_write_enabled() || pdu.empty()) {
+    return;
+  }
+
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
-  if (not worker.push_task(fn)) {
+  if (not worker->push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
   }
 }
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
 {
+  if (!is_write_enabled() || pdu.empty()) {
+    return;
+  }
+
   auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
-  if (not worker.push_task(fn)) {
+  if (not worker->push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
   }
 }
 
-void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_buffer buf)
+void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
-    // skip
     return;
   }
 

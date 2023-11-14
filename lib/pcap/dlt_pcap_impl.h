@@ -34,14 +34,14 @@ public:
   void push_pdu(srsran::const_span<uint8_t> pdu) override;
 
 private:
-  unsigned                  dlt;
-  std::string               layer_name;
-  void                      write_pdu(srsran::byte_buffer buf);
-  os_sched_affinity_bitmask cpu_mask;
-  task_worker               worker;
-  std::vector<uint8_t>      tmp_mem;
-  pcap_file_base            writter;
-  std::atomic<bool>         is_open{false};
+  unsigned                     dlt;
+  std::string                  layer_name;
+  void                         write_pdu(srsran::byte_buffer buf);
+  os_sched_affinity_bitmask    cpu_mask;
+  std::unique_ptr<task_worker> worker = nullptr;
+  std::vector<uint8_t>         tmp_mem;
+  pcap_file_base               writter;
+  std::atomic<bool>            is_open{false};
 };
 
 } // namespace srsran
