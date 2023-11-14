@@ -179,7 +179,6 @@ zmq_srsue:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      allow_failure: true
   interruptible: false
   variables:
     TESTBED: "zmq_srsue"
