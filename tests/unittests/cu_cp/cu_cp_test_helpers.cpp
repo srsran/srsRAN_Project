@@ -144,27 +144,21 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
 }
 
-void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
+void cu_cp_test::test_amf_connection()
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response();
   cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+}
 
-  // Create a new DU connection to the CU-CP, creating a new DU processor in the CU-CP in the process.
-  f1c_gw.request_new_du_connection();
-  ASSERT_EQ(f1c_gw.nof_connections(), 1U);
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1U);
-
+void cu_cp_test::test_e1ap_attach()
+{
   // Create a new CU-UP connection to the CU-CP, creating a new CU-UP processor in the CU-CP in the process.
   e1ap_gw.request_new_cu_up_connection();
   ASSERT_EQ(e1ap_gw.nof_connections(), 1U);
   ASSERT_EQ(cu_cp_obj->get_connected_cu_ups().get_nof_cu_ups(), 1U);
-
-  // Pass F1SetupRequest to the CU-CP
-  f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, pci);
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Pass E1SetupRequest to the CU-CP
   e1ap_message e1setup_msg = generate_valid_cu_up_e1_setup_request();
@@ -172,6 +166,32 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
       .get_cu_up(uint_to_cu_up_index(0))
       .get_e1ap_message_handler()
       .handle_message(e1setup_msg);
+}
+
+void cu_cp_test::test_du_attach(du_index_t du_index, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci)
+{
+  // Store current number of DUs.
+  size_t nof_dus = cu_cp_obj->get_connected_dus().get_nof_dus();
+
+  // Create a new DU connection to the CU-CP, creating a new DU processor in the CU-CP in the process.
+  f1c_gw.request_new_du_connection();
+
+  size_t expected_nof_dus = nof_dus + 1;
+  ASSERT_EQ(f1c_gw.nof_connections(), expected_nof_dus);
+  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), expected_nof_dus);
+
+  // Pass F1SetupRequest to the CU-CP
+  f1ap_message f1setup_msg = generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
+  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
+}
+
+void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
+{
+  test_amf_connection();
+
+  test_e1ap_attach();
+
+  test_du_attach(du_index, 0x11, 6576, pci);
 }
 
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,

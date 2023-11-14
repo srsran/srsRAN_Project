@@ -81,11 +81,13 @@ struct du_wrapper {
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   std::unique_ptr<du_processor_interface>               du_processor_obj;
 
+  du_index_t get_du_index() { return du_processor_obj->get_du_index(); }
+
   f1ap_mobility_test_adapter test_adapter;
 };
 
 /// Fixture class for CU-CP mobility tests
-class mobility_test : public cu_cp_test // ::testing::Test
+class mobility_test : public cu_cp_test
 {
 protected:
   mobility_test();
@@ -93,7 +95,7 @@ protected:
 
   du_wrapper* create_du(const du_processor_config_t& du_cfg);
   void        attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci);
-  void        attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id, pci_t pci);
+  void        attach_ue_to_du(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id, pci_t pci);
 
   ue_manager* get_ue_manager() { return &ue_mng; }
 

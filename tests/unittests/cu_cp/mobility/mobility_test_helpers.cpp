@@ -72,8 +72,9 @@ void mobility_test::attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned
   du.du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 }
 
-void mobility_test::attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id, pci_t pci)
+void mobility_test::attach_ue_to_du(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id, pci_t pci)
 {
+#if 0
   // Test preamble
   du_index_t          du_index  = uint_to_du_index(0);
   gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
@@ -84,7 +85,23 @@ void mobility_test::attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrce
   ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+#endif
 
-  test_preamble_ue_full_attach(
-      du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+  // Note: Skip test_preamble_ue_full_attach() that does F1/E1 setup, etc.
+
+  test_amf_connection();
+
+  // test_f1c_gw();
+
+  // test_e1ap_gw();
+
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+
+  rnti_t crnti = to_rnti(0x4601);
+
+  attach_ue(du_ue_id, cu_ue_id, crnti, du.get_du_index());
+
+  // test_preamble_ue_full_attach(
+  //   du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 }

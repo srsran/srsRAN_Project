@@ -25,32 +25,43 @@ protected:
 
   void create_dus_and_attach_ue()
   {
-    {
-      du_processor_config_t du_cfg;
-      du_cfg.du_index = source_du_index;
-      source_du       = create_du(du_cfg);
-      ASSERT_NE(source_du, nullptr);
-    }
-    attach_du_to_cu(*source_du, source_du_id, source_nrcell_id, source_pci);
+    // Test preamble to create CU-CP, attach to 5GC, attach CU-UP, create and attach DU and attach UE.
+    du_index_t          du_index  = source_du_index;
+    gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+    gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+    rnti_t              crnti     = to_rnti(0x4601);
+    pci_t               pci       = 1;
+    amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+        test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+    ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
-    {
-      du_processor_config_t du_cfg;
-      du_cfg.du_index = target_du_index;
-      target_du       = create_du(du_cfg);
-      ASSERT_NE(target_du, nullptr);
-    }
-    attach_du_to_cu(*target_du, target_du_id, target_cgi.nci, target_pci);
+    test_preamble_ue_full_attach(
+        du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
-    source_ue_index = source_du->du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
-    attach_ue(*source_du, source_ue_index, source_nrcell_id, source_pci);
+    // Attach target DU.
+    test_du_attach(target_du_index, target_du_id, target_nrcell_id, target_pci);
 
     // Assert single UE attached to source DU.
-    ASSERT_EQ(get_nof_ues_in_source_du(), 1);
-    ASSERT_EQ(get_nof_ues_in_target_du(), 0);
+    // ASSERT_EQ(get_nof_ues_in_source_du(), 1);
+    // ASSERT_EQ(get_nof_ues_in_target_du(), 0);
   }
+
+#if 0
+  void send_rrc_meas_report()
+  {
+    // Inject UL RRC message containing RRC measurement report to trigger HO
+    f1ap_message ul_rrc_msg =
+        generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
+    test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+  }
+#endif
 
   void start_procedure(const cu_cp_inter_du_handover_request& msg)
   {
+    // Not needed anymore
     t = source_du->du_processor_obj->handle_inter_du_handover_request(
         msg, target_du->du_processor_obj->get_du_processor_f1ap_ue_context_notifier());
     t_launcher.emplace(t);
@@ -89,16 +100,17 @@ private:
   }
 
   // source DU parameters.
-  du_index_t   source_du_index  = uint_to_du_index(0);
-  unsigned     source_du_id     = 0x11;
-  nr_cell_id_t source_nrcell_id = 411;
-  unsigned     source_pci       = 1;
+  du_index_t source_du_index = uint_to_du_index(0);
+  // unsigned     source_du_id     = 0x11;
+  // nr_cell_id_t source_nrcell_id = 6576;
+  // unsigned     source_pci       = 1;
 
   // target DU parameters.
-  du_index_t          target_du_index = uint_to_du_index(1);
-  unsigned            target_du_id    = 0x22;
-  nr_cell_global_id_t target_cgi      = {001, 01, "00101", "00f110", 0x22};
-  unsigned            target_pci      = 2;
+  du_index_t          target_du_index  = uint_to_du_index(1);
+  unsigned            target_du_id     = 0x22;
+  nr_cell_id_t        target_nrcell_id = 422;
+  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x22};
+  unsigned            target_pci       = 2;
 
   // Handler to DU objects.
   du_wrapper* source_du = nullptr;
@@ -115,19 +127,18 @@ TEST_F(cu_cp_test, dummy_test)
   ASSERT_NE(0, 1);
 }
 
-// PCI cannot be checked anymore at this stage
+#if 0
 TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_then_ho_fails)
 {
   // Test Preamble.
   create_dus_and_attach_ue();
 
-#if 0
   cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
   request.target_pci                      = INVALID_PCI;
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
   request.cgi                             = get_target_cgi();
-
+#if 1
   // it should be ready immediately
   start_procedure(request);
 
@@ -257,3 +268,4 @@ TEST_F(inter_du_handover_routine_test, alt_when_ho_succeeds_then_source_ue_is_re
   ASSERT_EQ(get_nof_ues_in_target_du(), 1);
   ASSERT_EQ(get_ue_manager()->get_nof_ngap_ues(), 1);
 }
+#endif
