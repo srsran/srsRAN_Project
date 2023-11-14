@@ -85,4 +85,7 @@ srsran::sctp_network_gateway_config generate_e2ap_nw_config(const gnb_appconfig&
 /// Converts and returns the given gnb application configuration to a E2 configuration.
 e2ap_configuration generate_e2_config(const gnb_appconfig& config);
 
+/// Augments RLC parameters based on NTN configuration.
+void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs);
+
 } // namespace srsran

@@ -1050,7 +1050,9 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
   // Make SRB2/SRB3 config equal to SRB1.
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, srb_cfg.at(srb_id_t::srb1)));
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, srb_cfg.at(srb_id_t::srb1)));
-
+  if (config.ntn_cfg.has_value()) {
+    ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
+  }
   return srb_cfg;
 }
 
@@ -1651,5 +1653,31 @@ void srsran::derive_auto_params(gnb_appconfig& gnb_params)
 
   for (auto& cell : gnb_params.cells_cfg) {
     derive_cell_auto_params(cell.cell);
+  }
+}
+
+void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs)
+{
+  // NTN is enabled, so we need to augment the RLC parameters for the NTN cell.
+  for (auto& srb : srb_cfgs) {
+    if (ntn_cfg.cell_specific_koffset > 1000) {
+      srb.second.rlc.am.tx.t_poll_retx = 4000;
+    } else if (ntn_cfg.cell_specific_koffset > 800) {
+      srb.second.rlc.am.tx.t_poll_retx = 2000;
+    } else if (ntn_cfg.cell_specific_koffset > 500) {
+      srb.second.rlc.am.tx.t_poll_retx = 2000;
+    } else if (ntn_cfg.cell_specific_koffset > 300) {
+      srb.second.rlc.am.tx.t_poll_retx = 1000;
+    } else if (ntn_cfg.cell_specific_koffset > 200) {
+      srb.second.rlc.am.tx.t_poll_retx = 800;
+    } else if (ntn_cfg.cell_specific_koffset > 100) {
+      srb.second.rlc.am.tx.t_poll_retx = 400;
+    } else if (ntn_cfg.cell_specific_koffset > 50) {
+      srb.second.rlc.am.tx.t_poll_retx = 200;
+    } else if (ntn_cfg.cell_specific_koffset > 10) {
+      srb.second.rlc.am.tx.t_poll_retx = 100;
+    } else {
+      srb.second.rlc.am.tx.t_poll_retx = 50;
+    }
   }
 }
