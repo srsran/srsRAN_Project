@@ -24,7 +24,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   res_grid(cell_cfg),
   event_logger(ev_logger),
   metrics(metrics_handler),
-  result_logger(sched_cfg.log_broadcast_messages),
+  result_logger(sched_cfg.log_broadcast_messages, cell_cfg.cell_index),
   logger(srslog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
