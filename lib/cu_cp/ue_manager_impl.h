@@ -67,10 +67,18 @@ public:
   rrc_ue_task_scheduler& get_task_sched() override { return *task_sched; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
-  du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override { return *rrc_ue_notifier; }
+  du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override
+  {
+    srsran_assert(rrc_ue_notifier != nullptr, "ue={}: RRC UE notifier was not set", ue_index);
+    return *rrc_ue_notifier;
+  }
 
   /// \brief Get the RRC UE SRB control notifier of the UE.
-  du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() override { return *rrc_ue_srb_notifier; }
+  du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() override
+  {
+    srsran_assert(rrc_ue_srb_notifier != nullptr, "ue={}: RRC UE SRB notifier was not set", ue_index);
+    return *rrc_ue_srb_notifier;
+  }
 
   /// \brief Get the PCI of the UE.
   pci_t get_pci() override { return pci; };
