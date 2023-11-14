@@ -34,12 +34,12 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 
-void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
+void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
   // Update all UEs state.
   ue_db.slot_indication(slot_tx);
 
-  if (not ue_res_grid_view.get_cell_cfg_common(to_du_cell_index(0)).is_dl_enabled(slot_tx)) {
+  if (not ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
     // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
     // only allocates PDCCHs for the current slot_tx.
@@ -51,7 +51,7 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
   // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
   // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
-  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
+  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[cell_index]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
     sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db);
   }
   sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db);
@@ -158,7 +158,8 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
-  sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });
+  sync_point.wait(
+      slot_tx, ue_alloc.nof_cells(), [this, slot_tx, cell_index]() { run_sched_strategy(slot_tx, cell_index); });
 
   // Update the PUCCH counter after the UE DL and UL scheduler.
   update_harq_pucch_counter(*cells[cell_index]->cell_res_alloc);
