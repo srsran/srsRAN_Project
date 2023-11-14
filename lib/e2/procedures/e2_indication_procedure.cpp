@@ -92,6 +92,6 @@ void e2_indication_procedure::send_e2_indication(e2_indication_message& e2_ind)
   e2_msg.pdu.set_init_msg();
   e2_msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_RI_CIND);
   e2_msg.pdu.init_msg().value.ri_cind() = e2_ind.indication;
-  e2_msg.pdu.init_msg().crit            = e2_ind.indication->ri_cind_msg.crit;
+  e2_msg.pdu.init_msg().crit            = asn1::crit_opts::ignore;
   notifier.on_new_message(e2_msg);
 }
