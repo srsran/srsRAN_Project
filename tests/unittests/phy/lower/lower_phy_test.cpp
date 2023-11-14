@@ -313,10 +313,18 @@ protected:
     std::thread stop_thread([&lphy_controller = lphy->get_controller()]() { lphy_controller.stop(); });
 
     // Flush pending tasks until no task is left.
-    while (rx_task_executor.try_run_next() || dl_task_executor.try_run_next()) {
-      tx_task_executor.run_pending_tasks();
-      ul_task_executor.run_pending_tasks();
-    }
+    bool rx_task;
+    bool dl_task;
+    do {
+      rx_task = rx_task_executor.try_run_next();
+      dl_task = dl_task_executor.try_run_next();
+      if (rx_task) {
+        ul_task_executor.run_pending_tasks();
+      }
+      if (dl_task) {
+        tx_task_executor.run_pending_tasks();
+      }
+    } while (rx_task || dl_task);
 
     // Join asynchronous thread.
     stop_thread.join();
