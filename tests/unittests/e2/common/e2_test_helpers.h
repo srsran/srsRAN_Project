@@ -417,9 +417,13 @@ public:
     return outcome;
   };
 
-  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override {}
+  void start_subscription(const asn1::e2ap::ri_crequest_id_s& ric_request_id,
+                          e2_event_manager&                   ev_mng,
+                          uint16_t                            ran_func_id) override
+  {
+  }
 
-  void stop_subscription(int                                                 ric_instance_id,
+  void stop_subscription(const asn1::e2ap::ri_crequest_id_s&                 ric_request_id,
                          e2_event_manager&                                   ev_mng,
                          const asn1::e2ap::ricsubscription_delete_request_s& msg) override
   {

@@ -28,12 +28,12 @@ public:
   constexpr static size_t                    MAX_NOF_TRANSACTIONS = 256;
   protocol_transaction_manager<e2ap_outcome> transactions;
 
-  std::map<int, std::unique_ptr<protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s>>>
+  std::map<uint32_t, std::unique_ptr<protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s>>>
       sub_del_reqs;
 
-  void add_sub_del_req(int ric_instance_id, timer_factory timer)
+  void add_sub_del_req(const asn1::e2ap::ri_crequest_id_s& ric_request_id, timer_factory timer)
   {
-    sub_del_reqs[ric_instance_id] =
+    sub_del_reqs[ric_request_id.ric_requestor_id] =
         std::make_unique<protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s>>(timer);
   }
   explicit e2_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}

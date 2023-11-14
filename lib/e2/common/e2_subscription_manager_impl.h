@@ -37,24 +37,27 @@ public:
   handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
 
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
-  /// \param[in] ric_instance_id  The ric instance id.
-  /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
-  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
+  /// \param[in] ric_request_id  The ric request id.
+  /// \param[in] ev_mng The event manager that will be used to start the subscription procedure.
+  void start_subscription(const asn1::e2ap::ri_crequest_id_s& ric_request_id,
+                          e2_event_manager&                   ev_mng,
+                          uint16_t                            ran_func_id) override;
 
   /// @brief  Stops the subscription procedure associated with the given ric instance id.
-  /// @param[in] ric_instance_id  The ric instance id.
-  void stop_subscription(int                                                 ric_instance_id,
+  /// @param[in] ric_request_id  The ric request id.
+  /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
+  void stop_subscription(const asn1::e2ap::ri_crequest_id_s&                 ric_request_id,
                          e2_event_manager&                                   ev_mng,
                          const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.
   /// \param[in] ran_func_id The ran function id.
-  /// \param[in] ric_instance_id associated with the subscription.
+  /// \param[in] ri_crequest_id_s associated with the subscription.
   /// \return true if the action is supported, false otherwise.
   bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& action,
                         uint16_t                                         ran_func_id,
-                        uint32_t                                         ric_instance_id);
+                        const asn1::e2ap::ri_crequest_id_s&              ric_request_id);
 
   /// \brief  Gets the subscription outcome based on the subscription.
   /// \param[in]  ran_func_id The ran function id.
@@ -82,7 +85,7 @@ public:
   void add_ran_function_oid(uint16_t ran_func_id, std::string oid) override;
 
 private:
-  std::map<int, e2_subscription_t>                       subscriptions;
+  std::map<uint32_t, e2_subscription_t>                  subscriptions;
   std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
   std::map<uint16_t, std::string>                        supported_ran_functions;
   e2_message_notifier&                                   notif;

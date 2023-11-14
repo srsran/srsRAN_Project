@@ -84,7 +84,7 @@ TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
   sub_info.action_list.push_back(
       {action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report, std::move(report_service)});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
-  ev_mng->add_sub_del_req(sub_info.request_id.ric_instance_id, factory);
+  ev_mng->add_sub_del_req(sub_info.request_id, factory);
   auto task = launch_async<e2_indication_procedure>(*msg_notifier, *ev_mng, sub_info, test_logger);
 
   ASSERT_FALSE(task.ready());
@@ -131,7 +131,7 @@ TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
             e2_ap_elem_procs_o::successful_outcome_c::types_opts::ricsubscription_resp);
 
   uint8_t     sub_del_req[] = {0x00, 0x09, 0x00, 0x12, 0x00, 0x00, 0x02, 0x00, 0x1d, 0x00, 0x05,
-                               0x00, 0x03, 0xfd, 0x00, 0x15, 0x00, 0x05, 0x00, 0x02, 0x00, 0x93};
+                               0x00, 0x00, 0x7b, 0x00, 0x15, 0x00, 0x05, 0x00, 0x02, 0x00, 0x93};
   byte_buffer sub_del_req_buf(sub_del_req, sub_del_req + sizeof(sub_del_req));
 
   packer->handle_packed_pdu(std::move(sub_del_req_buf));
