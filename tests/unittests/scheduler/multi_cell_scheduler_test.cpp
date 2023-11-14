@@ -31,8 +31,8 @@ protected:
     cell_config_builder_params params{};
     params.scs_common =
         test_params.dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
-    params.dl_arfcn         = test_params.dplx_mode == duplex_mode::FDD ? 365000 : 520002;
-    params.band             = test_params.dplx_mode == duplex_mode::FDD ? nr_band::n3 : nr_band::n41;
+    params.dl_arfcn         = test_params.dplx_mode == duplex_mode::FDD ? 530000 : 520002;
+    params.band             = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
     params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
@@ -92,19 +92,14 @@ public:
   multi_cell_scheduler_tester() : base_multi_cell_scheduler_tester(GetParam()) {}
 };
 
-TEST_P(multi_cell_scheduler_tester, test_slot_indication_for_multiple_cells)
-{
-  // Run for arbitrary nof. slots and ensure all cells are running.
-  for (unsigned slot_idx; slot_idx < 100; ++slot_idx) {
-    run_slot_all_cells();
-  }
-}
-
 TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
 {
+  const auto ssb_period_slots =
+      ssb_periodicity_to_value(cell_cfg_list[to_du_cell_index(0)].ssb_cfg.ssb_period) *
+      get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
+
   std::vector<bool> is_ssb_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
-  // Run for arbitrary nof. slots and ensure all cells are running.
-  for (unsigned slot_count = 0; slot_count < 100; ++slot_count) {
+  for (unsigned slot_count = 0; slot_count < ssb_period_slots * 10; ++slot_count) {
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
       if (last_sched_res_list[cell_idx] != nullptr and not is_ssb_scheduled_atleast_once[cell_idx]) {
         is_ssb_scheduled_atleast_once[cell_idx] = not last_sched_res_list[cell_idx]->dl.bc.ssb_info.empty();
@@ -115,6 +110,28 @@ TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_ssb_scheduled_atleast_once[cell_idx])
         << fmt::format("SSB not scheduled for cell with index={}", cell_idx);
+  }
+}
+
+TEST_P(multi_cell_scheduler_tester, test_sib1_allocation_for_multiple_cells)
+{
+  const auto sib1_period_slots =
+      std::max(ssb_periodicity_to_value(cell_cfg_list[to_du_cell_index(0)].ssb_cfg.ssb_period),
+               sib1_rtx_periodicity_to_value(sched_cfg.si.sib1_retx_period)) *
+      get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
+
+  std::vector<bool> is_sib1_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
+  for (unsigned slot_count = 0; slot_count < sib1_period_slots * 2; ++slot_count) {
+    for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+      if (last_sched_res_list[cell_idx] != nullptr and not is_sib1_scheduled_atleast_once[cell_idx]) {
+        is_sib1_scheduled_atleast_once[cell_idx] = not last_sched_res_list[cell_idx]->dl.bc.sibs.empty();
+      }
+    }
+    run_slot_all_cells();
+  }
+  for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+    ASSERT_TRUE(is_sib1_scheduled_atleast_once[cell_idx])
+        << fmt::format("SIB1 not scheduled for cell with index={}", cell_idx);
   }
 }
 
