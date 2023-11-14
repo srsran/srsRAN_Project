@@ -485,7 +485,6 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
       // TODO
     } break;
     case sib_type::sib19: {
-      printf("SIB19\n");
       const sib19_info& cfg     = variant_get<sib19_info>(sib);
       sib19_r17_s&      out_sib = ret.set_sib19_v1700();
       out_sib                   = make_asn1_rrc_cell_sib19(cfg);
