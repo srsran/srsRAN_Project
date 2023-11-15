@@ -17,7 +17,7 @@ using namespace srsran;
 const std::string e2sm_rc_asn1_packer::short_name       = "ORAN-E2SM-RC";
 const std::string e2sm_rc_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.1.2.3";
 const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
-const uint32_t    e2sm_rc_asn1_packer::ran_func_id      = 148;
+const uint32_t    e2sm_rc_asn1_packer::ran_func_id      = 3;
 const uint32_t    e2sm_rc_asn1_packer::revision         = 0;
 
 e2sm_rc_asn1_packer::e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider_) : rc_provider(rc_provider_) {}
