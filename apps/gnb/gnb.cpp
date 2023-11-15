@@ -322,29 +322,44 @@ int main(int argc, char** argv)
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
-  std::unique_ptr<dlt_pcap> ngap_p = create_dlt_pcap(
-      PCAP_NGAP_DLT, "NGAP", gnb_cfg.pcap_cfg.ngap.enabled ? gnb_cfg.pcap_cfg.ngap.filename : "", *workers.pcap_exec);
-  std::unique_ptr<dlt_pcap> e1ap_p = create_dlt_pcap(
-      PCAP_E1AP_DLT, "E1AP", gnb_cfg.pcap_cfg.e1ap.enabled ? gnb_cfg.pcap_cfg.e1ap.filename : "", *workers.pcap_exec);
-  std::unique_ptr<dlt_pcap> f1ap_p = create_dlt_pcap(
-      PCAP_F1AP_DLT, "F1AP", gnb_cfg.pcap_cfg.f1ap.enabled ? gnb_cfg.pcap_cfg.f1ap.filename : "", *workers.pcap_exec);
-  std::unique_ptr<dlt_pcap> e2ap_p = create_dlt_pcap(
-      PCAP_E2AP_DLT, "E2AP", gnb_cfg.pcap_cfg.e2ap.enabled ? gnb_cfg.pcap_cfg.e2ap.filename : "", *workers.pcap_exec);
-  std::unique_ptr<dlt_pcap> gtpu_p = create_dlt_pcap(
-      PCAP_GTPU_DLT, "GTPU", gnb_cfg.pcap_cfg.gtpu.enabled ? gnb_cfg.pcap_cfg.gtpu.filename : "", *workers.pcap_exec);
+  std::unique_ptr<dlt_pcap> ngap_p =
+      create_dlt_pcap(PCAP_NGAP_DLT,
+                      "NGAP",
+                      gnb_cfg.pcap_cfg.ngap.enabled ? gnb_cfg.pcap_cfg.ngap.filename : "",
+                      workers.find_executor("pcap_exec"));
+  std::unique_ptr<dlt_pcap> e1ap_p =
+      create_dlt_pcap(PCAP_E1AP_DLT,
+                      "E1AP",
+                      gnb_cfg.pcap_cfg.e1ap.enabled ? gnb_cfg.pcap_cfg.e1ap.filename : "",
+                      workers.find_executor("pcap_exec"));
+  std::unique_ptr<dlt_pcap> f1ap_p =
+      create_dlt_pcap(PCAP_F1AP_DLT,
+                      "F1AP",
+                      gnb_cfg.pcap_cfg.f1ap.enabled ? gnb_cfg.pcap_cfg.f1ap.filename : "",
+                      workers.find_executor("pcap_exec"));
+  std::unique_ptr<dlt_pcap> e2ap_p =
+      create_dlt_pcap(PCAP_E2AP_DLT,
+                      "E2AP",
+                      gnb_cfg.pcap_cfg.e2ap.enabled ? gnb_cfg.pcap_cfg.e2ap.filename : "",
+                      workers.find_executor("pcap_exec"));
+  std::unique_ptr<dlt_pcap> gtpu_p =
+      create_dlt_pcap(PCAP_GTPU_DLT,
+                      "GTPU",
+                      gnb_cfg.pcap_cfg.gtpu.enabled ? gnb_cfg.pcap_cfg.gtpu.filename : "",
+                      workers.find_executor("gtpu_pcap_exec"));
   if (gnb_cfg.pcap_cfg.mac.type != "dlt" and gnb_cfg.pcap_cfg.mac.type != "udp") {
     report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
   }
   std::unique_ptr<mac_pcap> mac_p =
       create_mac_pcap(gnb_cfg.pcap_cfg.mac.enabled ? gnb_cfg.pcap_cfg.mac.filename : "",
                       gnb_cfg.pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
-                      *workers.pcap_exec);
+                      workers.find_executor("mac_pcap_exec"));
   if (gnb_cfg.pcap_cfg.rlc.rb_type != "all" and gnb_cfg.pcap_cfg.rlc.rb_type != "srb" and
       gnb_cfg.pcap_cfg.rlc.rb_type != "drb") {
     report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
   }
   std::unique_ptr<rlc_pcap> rlc_p = create_rlc_pcap(gnb_cfg.pcap_cfg.rlc.enabled ? gnb_cfg.pcap_cfg.rlc.filename : "",
-                                                    *workers.pcap_exec,
+                                                    workers.find_executor("rlc_pcap_exec"),
                                                     gnb_cfg.pcap_cfg.rlc.rb_type != "drb",
                                                     gnb_cfg.pcap_cfg.rlc.rb_type != "srb"
 

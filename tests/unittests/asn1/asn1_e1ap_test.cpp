@@ -51,7 +51,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
   logger.set_level(srslog::basic_levels::debug);
   logger.set_hex_dump_max_size(-1);
 
-  auto pcap_writer = create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "e1ap_e1_setup.pcap" : "", pcap_worker);
+  auto pcap_writer = create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_setup.pcap" : "", &pcap_worker);
 
   asn1::e1ap::e1ap_pdu_c pdu;
   pdu.set_init_msg();
@@ -93,7 +93,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_successful)
 {
   auto pcap_writer = create_dlt_pcap(
-      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "e1ap_e1_bearer_context_setup_request.pcap" : "", pcap_worker);
+      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_bearer_context_setup_request.pcap" : "", &pcap_worker);
 
   uint8_t rx_msg[] = {0x00, 0x08, 0x00, 0x69, 0x00, 0x00, 0x07, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x0d, 0x00,
                       0x13, 0x00, 0x00, 0x10, 0xa6, 0xae, 0x39, 0xef, 0xbe, 0x0d, 0x42, 0x4c, 0xd8, 0x5f, 0x4a, 0x9c,
@@ -158,7 +158,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking_successful)
 {
   auto pcap_writer = create_dlt_pcap(
-      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "e1ap_e1_bearer_context_setup_response.pcap" : "", pcap_worker);
+      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_bearer_context_setup_response.pcap" : "", &pcap_worker);
 
   uint8_t rx_msg[] = {0x20, 0x08, 0x00, 0x37, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x03,
                       0x00, 0x03, 0x40, 0x02, 0x80, 0x00, 0x10, 0x40, 0x23, 0x40, 0x00, 0x01, 0x00, 0x2e, 0x40,

@@ -107,21 +107,29 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
 
-  task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
+  task_queue                         strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
+  std::vector<worker_pool::executor> executors = {{"pcap_exec", strand_cfg}};
+  if (appcfg.pcap_cfg.gtpu.enabled) {
+    executors.push_back({"gtpu_pcap_exec", strand_cfg});
+  }
+  if (appcfg.pcap_cfg.mac.enabled) {
+    executors.push_back({"mac_pcap_exec", strand_cfg});
+  }
+  if (appcfg.pcap_cfg.rlc.enabled) {
+    executors.push_back({"rlc_pcap_exec", strand_cfg});
+  }
 
   const worker_pool pool{
       "non_rt_worker_pool",
       2,
       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-      {{"pcap_exec", strand_cfg}},
+      executors,
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
       std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
     report_fatal_error("Failed to instantiate {} execution context", pool.name);
   }
-
-  pcap_exec = exec_mng.executors().at("pcap_exec");
 }
 
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)

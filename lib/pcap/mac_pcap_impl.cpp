@@ -152,10 +152,11 @@ int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8
 }
 
 std::unique_ptr<mac_pcap>
-srsran::create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec)
+srsran::create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor* backend_exec)
 {
   if (filename.empty()) {
     return std::make_unique<null_mac_pcap>();
   }
-  return std::make_unique<mac_pcap_impl>(filename, pcap_type, backend_exec);
+  srsran_assert(backend_exec != nullptr, "Backend executor must not be null");
+  return std::make_unique<mac_pcap_impl>(filename, pcap_type, *backend_exec);
 }

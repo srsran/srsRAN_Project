@@ -76,10 +76,11 @@ void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_base& pcap_file)
 std::unique_ptr<dlt_pcap> srsran::create_dlt_pcap(unsigned           dlt,
                                                   const std::string& layer_name,
                                                   const std::string& filename,
-                                                  task_executor&     backend_exec)
+                                                  task_executor*     backend_exec)
 {
   if (filename.empty()) {
     return std::make_unique<null_dlt_pcap>();
   }
-  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, backend_exec);
+  srsran_assert(backend_exec != nullptr, "Backend executor must not be null");
+  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, *backend_exec);
 }

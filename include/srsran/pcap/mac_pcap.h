@@ -71,7 +71,7 @@ public:
 
 /// Creates a MAC pcap writer to a file.
 std::unique_ptr<mac_pcap>
-create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec);
+create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor* backend_exec);
 
 /// Null sink for MAC pcap messages. This is useful in unit tests and when the application disables pcaps.
 class null_mac_pcap : public mac_pcap

@@ -59,12 +59,19 @@ struct worker_manager {
   task_executor*                           cu_cp_e2_exec    = nullptr;
   task_executor*                           cu_up_e2_exec    = nullptr;
   task_executor*                           metrics_hub_exec = nullptr;
-  task_executor*                           pcap_exec        = nullptr;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
   // Gets the DU-low downlink executors.
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
+
+  /// Get executor based on the name.
+  task_executor* find_executor(const std::string& name) const
+  {
+    auto it = exec_mng.executors().find(name);
+    return it != exec_mng.executors().end() ? it->second : nullptr;
+  }
+  task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
 
 private:
   struct du_high_executor_storage {

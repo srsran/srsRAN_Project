@@ -140,7 +140,7 @@ protected:
 
 TEST_F(pcap_rlc_test, write_rlc_am_pdu)
 {
-  auto pcap_writer = create_rlc_pcap("/tmp/write_rlc_am_pdu.pcap", *pcap_exec);
+  auto pcap_writer = create_rlc_pcap("/tmp/write_rlc_am_pdu.pcap", pcap_exec.get());
 
   uint32_t sn_state = 0;
   uint32_t sdu_size = 1;
