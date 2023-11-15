@@ -46,7 +46,7 @@ protected:
 
 TEST_F(pcap_mac_test, write_pdu)
 {
-  auto mac_pcap_writer       = create_mac_pcap("mac_write_pdu.pcap", srsran::mac_pcap_type::udp, *pcap_exec);
+  auto mac_pcap_writer       = create_mac_pcap("/tmp/mac_write_pdu.pcap", srsran::mac_pcap_type::udp, *pcap_exec);
   std::array<uint8_t, 17> tv = {
       0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
   int                         crnti   = 0x01011;
@@ -67,7 +67,7 @@ TEST_F(pcap_mac_test, write_pdu)
 
 TEST_F(pcap_mac_test, write_many_spans)
 {
-  auto mac_pcap_writer = create_mac_pcap("mac_write_many_spans.pcap", mac_pcap_type::udp, *pcap_exec);
+  auto mac_pcap_writer = create_mac_pcap("/tmp/mac_write_many_spans.pcap", mac_pcap_type::udp, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -89,7 +89,7 @@ TEST_F(pcap_mac_test, write_many_spans)
 
 TEST_F(pcap_mac_test, write_many_byte_buffers)
 {
-  auto mac_pcap_writer = create_mac_pcap("mac_write_many_byte_buffers.pcap", mac_pcap_type::udp, *pcap_exec);
+  auto mac_pcap_writer = create_mac_pcap("/tmp/mac_write_many_byte_buffers.pcap", mac_pcap_type::udp, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -111,9 +111,9 @@ TEST_F(pcap_mac_test, write_many_byte_buffers)
 
 TEST_F(pcap_mac_test, write_dlt_pdu)
 {
-  auto                    mac_pcap_writer = create_mac_pcap("mac_write_dlt_pdu.pcap", mac_pcap_type::dlt, *pcap_exec);
-  std::array<uint8_t, 17> tv              = {
-                   0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
+  auto mac_pcap_writer       = create_mac_pcap("/tmp/mac_write_dlt_pdu.pcap", mac_pcap_type::dlt, *pcap_exec);
+  std::array<uint8_t, 17> tv = {
+      0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
   int                         crnti   = 0x01011;
   int                         ue_id   = 2;
   int                         harqid  = 0;
@@ -132,7 +132,7 @@ TEST_F(pcap_mac_test, write_dlt_pdu)
 
 TEST_F(pcap_mac_test, write_many_dlt_spans)
 {
-  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
+  auto mac_pcap_writer = create_mac_pcap("/tmp/mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -154,7 +154,7 @@ TEST_F(pcap_mac_test, write_many_dlt_spans)
 
 TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
 {
-  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
+  auto mac_pcap_writer = create_mac_pcap("/tmp/mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -176,7 +176,7 @@ TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
 
 TEST_F(pcap_mac_test, write_large_byte_buffers)
 {
-  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_large_buffers.pcap", mac_pcap_type::dlt, *pcap_exec);
+  auto mac_pcap_writer = create_mac_pcap("/tmp/mac_write_many_dlt_large_buffers.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 2;
