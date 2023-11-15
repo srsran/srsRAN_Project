@@ -18,68 +18,82 @@ namespace srsran {
 namespace srsvec {
 namespace detail {
 
-void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, cf_t y)
+void multiplicate_and_accumulate(span<float> out, span<const float> x, span<const float> y)
 {
-  unsigned  i        = 0;
-  simd_cf_t y_vector = srsran_simd_cf_set1(y);
-  simd_cf_t x_vector, out_vector, result_vector;
+  unsigned y_mid     = y.size() / 2;
+  unsigned out_start = y_mid - (y.size() % 2 == 0 ? 1 : 0);
 
-  for (unsigned i_end = (x.size() / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
-    x_vector      = srsran_simd_cfi_loadu(&x[i]);
-    out_vector    = srsran_simd_cfi_loadu(&out[i]);
-    result_vector = srsran_simd_cf_prod(x_vector, y_vector);
-    result_vector = srsran_simd_cf_add(out_vector, result_vector);
-    srsran_simd_cfi_storeu(&out[i], result_vector);
-  }
+  for (unsigned m = 0, m_end = y.size(); m != m_end; ++m) {
+    int y_index = y.size() - 1 - m;
 
-  for (unsigned i_end = x.size(); i != i_end; ++i) {
-    out[i] += x[i] * y;
+    unsigned x_start = m;
+    unsigned x_end   = std::min(x.size(), x.size() - y.size() + m + 1);
+
+    span<const float> x_chunk = x.subspan(x_start, x_end - x_start);
+
+    unsigned i = 0;
+
+    for (unsigned i_end = x_chunk.size(); i != i_end; ++i) {
+      out[i + out_start] += x_chunk[i] * y[y_index];
+    }
   }
 }
 
-void multiplicate_and_accumulate(span<float> out, span<const float> x, float y)
+void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const float> y)
 {
-  unsigned i        = 0;
-  simd_f_t y_vector = srsran_simd_f_set1(y);
-  simd_f_t x_vector, out_vector, result_vector;
+  unsigned y_mid     = y.size() / 2;
+  unsigned out_start = (y_mid - (y.size() % 2 == 0 ? 1 : 0)) * 2;
+  unsigned out_end   = (x.size() - y.size()) * 2;
 
-  for (unsigned i_end = (x.size() / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
-    x_vector      = srsran_simd_f_loadu(&x[i]);
-    out_vector    = srsran_simd_f_loadu(&out[i]);
-    result_vector = srsran_simd_f_fma(out_vector, x_vector, y_vector);
-    srsran_simd_f_storeu(&out[i], result_vector);
-  }
-
-  for (unsigned i_end = x.size(); i != i_end; ++i) {
-    out[i] += x[i] * y;
-  }
-}
-
-void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, float y)
-{
-  simd_f_t y_simd = srsran_simd_f_set1(y);
+  span<float> out_float(reinterpret_cast<float*>(out.data()), 2 * out.size());
 
   span<const float> x_float(reinterpret_cast<const float*>(x.data()), 2 * x.size());
-  span<float>       out_float(reinterpret_cast<float*>(out.data()), 2 * out.size());
+  unsigned          i_x = 0;
+  for (unsigned i_x_end = (out_end / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i_x != i_x_end;
+       i_x += SRSRAN_SIMD_F_SIZE) {
+    simd_f_t result = srsran_simd_f_zero();
 
-  unsigned i = 0;
-  for (unsigned i_end = (x.size() / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
-    simd_f_t x_vals   = srsran_simd_f_loadu(&x_float[i]);
-    simd_f_t result   = srsran_simd_f_mul(x_vals, y_simd);
-    simd_f_t out_vals = srsran_simd_f_loadu(&out_float[i]);
-    out_vals          = srsran_simd_f_add(out_vals, result);
-    srsran_simd_f_storeu(&out_float[i], out_vals);
+    for (unsigned i_y = 0, i_y_end = y.size(); i_y != i_y_end; ++i_y) {
+      int      y_index  = y.size() - 1 - i_y;
+      simd_f_t y_vector = srsran_simd_f_set1(y[y_index]);
+      simd_f_t x_vals   = srsran_simd_f_loadu(&x_float[i_x + (i_y * 2)]);
+      simd_f_t partial  = srsran_simd_f_mul(x_vals, y_vector);
+      result            = srsran_simd_f_add(result, partial);
+    }
+    srsran_simd_f_storeu(&out_float[out_start + i_x], result);
   }
-  for (unsigned i_end = x_float.size(); i != i_end; ++i) {
-    out_float[i] += x_float[i] * y;
+  unsigned extra = out_start + i_x;
+  for (unsigned i_y = 0, i_y_end = y.size(); i_y != i_y_end; ++i_y) {
+    unsigned y_index = y.size() - 1 - i_y;
+    unsigned x_start = (extra - out_start) + (i_y * 2);
+    unsigned x_end   = (std::min(x.size(), x.size() - y.size() + i_y + 1)) * 2;
+    unsigned count   = 0;
+    i_x              = x_start;
+    for (unsigned i_end = x_end; i_x != i_end; ++i_x) {
+      out_float[extra + count] += x_float[i_x] * y[y_index];
+      ++count;
+    }
   }
 }
 
-void multiplicate_and_accumulate(span<cf_t> out, span<const float> x, cf_t y)
+void multiplicate_and_accumulate(span<cf_t> out, span<const float> x, span<const cf_t> y)
 {
-  unsigned i = 0;
-  for (unsigned i_end = x.size(); i != i_end; ++i) {
-    out[i] += x[i] * y;
+  unsigned y_mid     = y.size() / 2;
+  unsigned out_start = y_mid - (y.size() % 2 == 0 ? 1 : 0);
+
+  for (unsigned m = 0, m_end = y.size(); m != m_end; ++m) {
+    int y_index = y.size() - 1 - m;
+
+    unsigned x_start = m;
+    unsigned x_end   = std::min(x.size(), x.size() - y.size() + m + 1);
+
+    span<const float> x_chunk = x.subspan(x_start, x_end - x_start);
+
+    unsigned i = 0;
+
+    for (unsigned i_end = x_chunk.size(); i != i_end; ++i) {
+      out[i + out_start] += x_chunk[i] * y[y_index];
+    }
   }
 }
 
