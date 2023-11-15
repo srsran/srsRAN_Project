@@ -969,6 +969,43 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
   return out_cfg;
 }
 
+srsran::rlc_am_config srsran::generate_rlc_am_config(const rlc_am_appconfig& in_cfg)
+{
+  rlc_am_config out_rlc;
+  // AM Config
+  //<  TX SN
+  if (!from_number(out_rlc.tx.sn_field_length, in_cfg.tx.sn_field_length)) {
+    report_error("Invalid RLC AM TX SN: SN={}\n", in_cfg.tx.sn_field_length);
+  }
+  out_rlc.tx.t_poll_retx     = in_cfg.tx.t_poll_retx;
+  out_rlc.tx.max_retx_thresh = in_cfg.tx.max_retx_thresh;
+  out_rlc.tx.poll_pdu        = in_cfg.tx.poll_pdu;
+  out_rlc.tx.poll_byte       = in_cfg.tx.poll_byte;
+  out_rlc.tx.max_window      = in_cfg.tx.max_window;
+  out_rlc.tx.queue_size      = in_cfg.tx.queue_size;
+  //< RX SN
+  if (!from_number(out_rlc.rx.sn_field_length, in_cfg.rx.sn_field_length)) {
+    report_error("Invalid RLC AM RX SN: SN={}\n", in_cfg.rx.sn_field_length);
+  }
+  out_rlc.rx.t_reassembly      = in_cfg.rx.t_reassembly;
+  out_rlc.rx.t_status_prohibit = in_cfg.rx.t_status_prohibit;
+  return out_rlc;
+}
+
+srsran::mac_lc_config srsran::generate_mac_lc_config(const mac_lc_appconfig& in_cfg)
+{
+  mac_lc_config out_mac;
+
+  out_mac.priority            = in_cfg.priority;
+  out_mac.lcg_id              = uint_to_lcg_id(in_cfg.lc_group_id);
+  out_mac.pbr                 = to_prioritized_bit_rate(in_cfg.prioritized_bit_rate_kBps);
+  out_mac.bsd                 = to_bucket_size_duration(in_cfg.bucket_size_duration_ms);
+  out_mac.lc_sr_mask          = false;
+  out_mac.lc_sr_delay_applied = false;
+  out_mac.sr_id               = uint_to_sched_req_id(0);
+  return out_mac;
+}
+
 std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appconfig& config)
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
@@ -1002,22 +1039,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
-      //<  TX SN
-      if (!from_number(out_rlc.am.tx.sn_field_length, qos.rlc.am.tx.sn_field_length)) {
-        report_error("Invalid RLC AM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
-      }
-      out_rlc.am.tx.t_poll_retx     = qos.rlc.am.tx.t_poll_retx;
-      out_rlc.am.tx.max_retx_thresh = qos.rlc.am.tx.max_retx_thresh;
-      out_rlc.am.tx.poll_pdu        = qos.rlc.am.tx.poll_pdu;
-      out_rlc.am.tx.poll_byte       = qos.rlc.am.tx.poll_byte;
-      out_rlc.am.tx.max_window      = qos.rlc.am.tx.max_window;
-      out_rlc.am.tx.queue_size      = qos.rlc.am.tx.queue_size;
-      //< RX SN
-      if (!from_number(out_rlc.am.rx.sn_field_length, qos.rlc.am.rx.sn_field_length)) {
-        report_error("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
-      }
-      out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
-      out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
+      out_rlc.am = generate_rlc_am_config(qos.rlc.am);
     }
     out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc_report_period);
 
@@ -1027,14 +1049,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     out_f1u.t_notify = qos.f1u_du.t_notify;
 
     // Convert MAC config
-    auto& out_mac               = out_cfg[qos.five_qi].mac;
-    out_mac.priority            = qos.mac.priority;
-    out_mac.lcg_id              = uint_to_lcg_id(qos.mac.lc_group_id);
-    out_mac.pbr                 = to_prioritized_bit_rate(qos.mac.prioritized_bit_rate_kBps);
-    out_mac.bsd                 = to_bucket_size_duration(qos.mac.bucket_size_duration_ms);
-    out_mac.lc_sr_mask          = false;
-    out_mac.lc_sr_delay_applied = false;
-    out_mac.sr_id               = uint_to_sched_req_id(0);
+    out_cfg[qos.five_qi].mac = generate_mac_lc_config(qos.mac);
   }
   return out_cfg;
 }
@@ -1043,13 +1058,39 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
 {
   std::map<srb_id_t, du_srb_config> srb_cfg;
 
+  // SRB1
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
+  }
   srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
-  srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
 
-  // Make SRB2/SRB3 config equal to SRB1.
-  srb_cfg.insert(std::make_pair(srb_id_t::srb2, srb_cfg.at(srb_id_t::srb1)));
-  srb_cfg.insert(std::make_pair(srb_id_t::srb3, srb_cfg.at(srb_id_t::srb1)));
+  // SRB2
+  srb_cfg.insert(std::make_pair(srb_id_t::srb2, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+  }
+  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
+
+  // SRB3
+  srb_cfg.insert(std::make_pair(srb_id_t::srb3, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+  }
+  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB3);
+
   if (config.ntn_cfg.has_value()) {
     ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
   }

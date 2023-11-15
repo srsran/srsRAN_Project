@@ -693,6 +693,17 @@ static bool validate_qos_appconfig(span<const qos_appconfig> config)
   return true;
 }
 
+/// Validates the given SRB configuration. Returns true on success, otherwise false.
+static bool validate_qos_appconfig(span<const srb_appconfig> config)
+{
+  for (const auto& srb : config) {
+    if (!validate_rlc_am_appconfig({}, srb.rlc)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Validates the given security configuration. Returns true on success, otherwise false.
 static bool validate_security_appconfig(const security_appconfig& config)
 {

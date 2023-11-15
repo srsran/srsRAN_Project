@@ -1454,6 +1454,20 @@ static void configure_cli11_mac_args(CLI::App& app, mac_lc_appconfig& mac_params
       ->check(CLI::IsMember({0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 2768, 65536, 65537}));
 }
 
+static void configure_cli11_srb_args(CLI::App& app, srb_appconfig& srb_params)
+{
+  app.add_option("--srb_id", srb_params.srb_id, "SRB Id")->capture_default_str()->check(CLI::IsMember({1, 2}));
+  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
+  configure_cli11_rlc_am_args(*rlc_subcmd, srb_params.rlc);
+  auto verify_callback = [&]() {
+    CLI::App* rlc = app.get_subcommand("rlc");
+    if (rlc->count_all() == 0) {
+      report_error("Error parsing SRB config for SRB{}. RLC configuration not present.\n", srb_params.srb_id);
+    }
+  };
+  app.callback(verify_callback);
+}
+
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
@@ -2282,6 +2296,22 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   };
   app.add_option_function<std::vector<std::string>>(
       "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // SRB parameters.
+  auto srb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    // Format every SRB setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("SRB parameters");
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
+      srb_appconfig srb_cfg;
+      configure_cli11_srb_args(subapp, srb_cfg);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+      gnb_cfg.srb_cfg[static_cast<srb_id_t>(srb_cfg.srb_id)] = srb_cfg;
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--srbs", srb_lambda, "Configures signaling radio bearers.");
 
   // Slicing parameters.
   auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {

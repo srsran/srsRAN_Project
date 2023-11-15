@@ -26,6 +26,8 @@
 namespace srsran {
 
 struct gnb_appconfig;
+struct rlc_am_appconfig;
+struct mac_lc_appconfig;
 
 /// This function takes the appconfig and generates the values for the parameters set to be auto-configured.
 void derive_auto_params(gnb_appconfig& gnb_params);
@@ -60,6 +62,12 @@ generate_preferred_integrity_algorithms_list(const gnb_appconfig& config);
 /// configuration.
 srsran::security::preferred_ciphering_algorithms
 generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb RLC AM configuration to a RLC configuration.
+srsran::rlc_am_config generate_rlc_am_config(const rlc_am_appconfig& in_cfg);
+
+/// Converts and returns the given gnb MAC LC configuration to a MAC LC configuration.
+srsran::mac_lc_config generate_mac_lc_config(const mac_lc_appconfig& in_cfg);
 
 /// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
