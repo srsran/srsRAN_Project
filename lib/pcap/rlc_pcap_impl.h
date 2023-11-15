@@ -11,7 +11,7 @@
 #pragma once
 
 #include "backend_pcap_writer.h"
-#include "pcap_file_base.h"
+#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/executors/task_worker.h"
@@ -34,12 +34,10 @@ public:
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
 private:
-  void write_pdu(pcap_file_base& file, const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
+  void write_pdu(pcap_file_writer& file, const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
 
   bool srb_enabled = true;
   bool drb_enabled = true;
-
-  std::vector<uint8_t> tmp_mem;
 
   backend_pcap_writer writer;
 };

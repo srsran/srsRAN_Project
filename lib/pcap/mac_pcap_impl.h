@@ -42,13 +42,11 @@ public:
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
 
 private:
-  void write_pdu(pcap_file_base& file, const mac_nr_context_info& context, const byte_buffer& pdu);
+  void write_pdu(pcap_file_writer& file, const mac_nr_context_info& context, const byte_buffer& pdu);
 
   mac_pcap_type type;
 
   backend_pcap_writer writer;
-
-  std::vector<uint8_t> tmp_mem;
 };
 
 } // namespace srsran

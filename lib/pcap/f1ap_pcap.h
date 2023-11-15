@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "pcap_file_writer.h"
 
 namespace srsran {
 
-class f1ap_pcap : pcap_file_base
+class f1ap_pcap : pcap_file_writer
 {
 public:
   f1ap_pcap() = default;

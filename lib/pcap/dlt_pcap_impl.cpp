@@ -14,15 +14,12 @@
 
 using namespace srsran;
 
-constexpr uint16_t pcap_dlt_max_pdu_len = 9000;
-
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
                              const std::string& filename,
                              task_executor&     backend_exec_) :
   layer_name(layer_name_), logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, backend_exec_)
 {
-  tmp_mem.resize(pcap_dlt_max_pdu_len);
 }
 
 dlt_pcap_impl::~dlt_pcap_impl()
@@ -47,30 +44,20 @@ void dlt_pcap_impl::push_pdu(byte_buffer pdu)
     return;
   }
 
-  writer.dispatch([this, pdu = std::move(pdu)](pcap_file_base& pcap_file) { write_pdu(pdu, pcap_file); });
+  writer.dispatch([this, pdu = std::move(pdu)](pcap_file_writer& pcap_file) { write_pdu(pdu, pcap_file); });
   if (is_write_enabled()) {
     logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
   }
 }
 
-void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_base& pcap_file)
+void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_writer& pcap_file)
 {
-  unsigned length = pdu.length();
-
-  if (length > tmp_mem.size()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: PDU is too big (pdu_len={} > max_size={}).",
-                   layer_name,
-                   pdu.length(),
-                   tmp_mem.size());
-    return;
-  }
-
   // write packet header
-  pcap_file.write_pcap_header(length);
+  unsigned length = pdu.length();
+  pcap_file.write_pdu_header(length);
 
   // write PDU payload
-  span<const uint8_t> linearized_pdu = to_span(pdu, span<uint8_t>(tmp_mem).first(pdu.length()));
-  pcap_file.write_pcap_pdu(linearized_pdu);
+  pcap_file.write_pdu(pdu);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_dlt_pcap(unsigned           dlt,

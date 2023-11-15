@@ -26,8 +26,6 @@ constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
 // Other constants
 constexpr uint16_t UDP_DLT = 149;
 
-constexpr uint32_t pcap_rlc_max_pdu_len = 131072;
-
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length);
 
 rlc_pcap_impl::rlc_pcap_impl(const std::string& filename,
@@ -36,7 +34,6 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename,
                              task_executor&     backend_exec) :
   srb_enabled(capture_srb), drb_enabled(capture_drb), writer(UDP_DLT, "RLC", filename, backend_exec)
 {
-  tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
 
 rlc_pcap_impl::~rlc_pcap_impl()
@@ -69,11 +66,7 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
 
   byte_buffer buffer;
   buffer.append(pdu.begin(), pdu.end()); // TODO: optimize copy
-  writer.dispatch([this, pdu = std::move(buffer), context](pcap_file_base& file) { write_pdu(file, context, pdu); });
-  if (!is_write_enabled() || pdu.empty()) {
-    // skip
-    return;
-  }
+  writer.dispatch([this, pdu = std::move(buffer), context](pcap_file_writer& file) { write_pdu(file, context, pdu); });
 }
 
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
@@ -81,18 +74,9 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   push_pdu(context, byte_buffer_chain{pdu.copy()});
 }
 
-void rlc_pcap_impl::write_pdu(pcap_file_base& file, const pcap_rlc_pdu_context& context, const byte_buffer& buf)
+void rlc_pcap_impl::write_pdu(pcap_file_writer& file, const pcap_rlc_pdu_context& context, const byte_buffer& buf)
 {
-  if (buf.length() > pcap_rlc_max_pdu_len) {
-    srslog::fetch_basic_logger("ALL").warning(
-        "Dropped RLC PCAP PDU. PDU is too big. pdu_len={} max_size={}", buf.length(), pcap_rlc_max_pdu_len);
-    return;
-  }
-
-  span<const uint8_t> pdu = to_span(buf, span<uint8_t>(tmp_mem).first(buf.length()));
-
-  uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
-  const uint16_t length                                  = pdu.size();
+  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
 
   struct udphdr* udp_header;
   int            offset = 0;
@@ -116,14 +100,16 @@ void rlc_pcap_impl::write_pdu(pcap_file_base& file, const pcap_rlc_pdu_context& 
 
   offset += nr_pcap_pack_rlc_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
-  udp_header->len = htons(offset + length);
+  unsigned buf_len = buf.length();
+  srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
+  udp_header->len = htons(offset + buf_len);
 
   // Write header
-  file.write_pcap_header(offset + pdu.size());
+  file.write_pdu_header(offset + buf_len);
   // Write context
-  file.write_pcap_pdu(span<uint8_t>(context_header, offset));
+  file.write_pdu(span<uint8_t>(context_header, offset));
   // Write PDU
-  file.write_pcap_pdu(pdu);
+  file.write_pdu(buf);
 }
 
 /// Helper function to serialize RLC NR context
@@ -133,7 +119,7 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
   uint16_t tmp16  = {};
 
   if (buffer == nullptr || length < PCAP_CONTEXT_HEADER_MAX) {
-    printf("Error: Writing buffer null or length to small\n");
+    srslog::fetch_basic_logger("ALL").error("Writing buffer null or length to small\n");
     return -1;
   }
 

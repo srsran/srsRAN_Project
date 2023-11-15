@@ -12,7 +12,7 @@ set(SOURCES
         e2ap_pcap.cpp
         f1ap_pcap.cpp
         mac_pcap_impl.cpp
-        pcap_file_base.cpp
+        pcap_file_writer.cpp
         rlc_pcap_impl.cpp
         pcap_rlc_pdu_context.cpp
 )

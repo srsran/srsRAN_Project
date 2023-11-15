@@ -11,7 +11,7 @@
 #pragma once
 
 #include "backend_pcap_writer.h"
-#include "pcap_file_base.h"
+#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_worker.h"
@@ -37,14 +37,12 @@ public:
   void push_pdu(const_span<uint8_t> pdu) override;
 
 private:
-  void write_pdu(const byte_buffer& pdu, pcap_file_base& pcap_file);
+  void write_pdu(const byte_buffer& pdu, pcap_file_writer& pcap_file);
 
   std::string           layer_name;
   srslog::basic_logger& logger;
 
   backend_pcap_writer writer;
-
-  std::vector<uint8_t> tmp_mem;
 };
 
 } // namespace srsran

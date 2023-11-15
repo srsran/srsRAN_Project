@@ -19,7 +19,7 @@ backend_pcap_writer::backend_pcap_writer(uint32_t           dlt,
                                          task_executor&     backend_exec_) :
   layer_name(layer_name_), backend_exec(backend_exec_), logger(srslog::fetch_basic_logger("ALL"))
 {
-  writer.dlt_pcap_open(dlt, filename);
+  writer.open(dlt, filename);
 }
 
 backend_pcap_writer::~backend_pcap_writer()
@@ -41,7 +41,7 @@ void backend_pcap_writer::close()
     const unsigned nof_dispatch_attempts = 20;
     unsigned       count                 = 0;
     auto           close_task            = [this]() {
-      writer.dlt_pcap_close();
+      writer.close();
       is_open = false;
     };
     for (; count < nof_dispatch_attempts and not sync_exec->execute(close_task); ++count) {

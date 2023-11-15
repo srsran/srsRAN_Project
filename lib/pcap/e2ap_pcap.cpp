@@ -30,29 +30,30 @@ e2ap_pcap::~e2ap_pcap()
 
 void e2ap_pcap::open(const char* filename_)
 {
-  dlt_pcap_open(E2AP_DLT, filename_);
+  pcap_file_writer::open(E2AP_DLT, filename_);
 }
+
 void e2ap_pcap::close()
 {
-  dlt_pcap_close();
+  pcap_file_writer::close();
 }
 
 void e2ap_pcap::write_pdu(srsran::const_span<uint8_t> pdu)
 {
-  if (!is_write_enabled() || pdu.empty()) {
+  if (!pcap_file_writer::is_write_enabled() || pdu.empty()) {
     // skip
     return;
   }
 
   // write packet header
-  write_pcap_header(pdu.size_bytes());
+  pcap_file_writer::write_pdu_header(pdu.size_bytes());
 
   // E2AP context currently not required for Wireshark
   // e2ap_context_info_t context = {};
   // fwrite(&context, 1, sizeof(context), pcap_file);
 
   // write PDU payload
-  write_pcap_pdu(pdu);
+  pcap_file_writer::write_pdu(pdu);
 }
 
 } // namespace srsran

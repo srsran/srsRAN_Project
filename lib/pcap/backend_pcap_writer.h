@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/unique_function.h"
 
@@ -56,7 +56,7 @@ private:
   task_executor&        backend_exec;
   srslog::basic_logger& logger;
 
-  pcap_file_base    writer;
+  pcap_file_writer  writer;
   std::atomic<bool> is_open{true};
 
   std::mutex close_mutex;

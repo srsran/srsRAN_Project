@@ -23,25 +23,26 @@ f1ap_pcap::~f1ap_pcap()
 
 void f1ap_pcap::open(const char* filename_)
 {
-  dlt_pcap_open(F1AP_DLT, filename_);
+  pcap_file_writer::open(F1AP_DLT, filename_);
 }
+
 void f1ap_pcap::close()
 {
-  dlt_pcap_close();
+  pcap_file_writer::close();
 }
 
 void f1ap_pcap::write_pdu(srsran::const_span<uint8_t> pdu)
 {
-  if (!is_write_enabled() || pdu.empty()) {
+  if (!pcap_file_writer::is_write_enabled() || pdu.empty()) {
     // skip
     return;
   }
 
   // write packet header
-  write_pcap_header(pdu.size_bytes());
+  pcap_file_writer::write_pdu_header(pdu.size_bytes());
 
   // write PDU payload
-  write_pcap_pdu(pdu);
+  pcap_file_writer::write_pdu(pdu);
 }
 
 } // namespace srsran

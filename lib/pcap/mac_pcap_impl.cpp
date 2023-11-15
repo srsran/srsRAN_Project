@@ -17,14 +17,11 @@ using namespace srsran;
 constexpr uint16_t UDP_DLT = 149;
 constexpr uint16_t MAC_DLT = 157;
 
-constexpr uint32_t pcap_mac_max_pdu_len = 131072;
-
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
 mac_pcap_impl::mac_pcap_impl(const std::string& filename, mac_pcap_type type_, task_executor& backend_exec_) :
   type(type_), writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT, "MAC", filename, backend_exec_)
 {
-  tmp_mem.resize(pcap_mac_max_pdu_len);
 }
 
 mac_pcap_impl::~mac_pcap_impl()
@@ -49,21 +46,12 @@ void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pd
     return;
   }
 
-  writer.dispatch([this, pdu = std::move(pdu), context](pcap_file_base& file) { write_pdu(file, context, pdu); });
+  writer.dispatch([this, pdu = std::move(pdu), context](pcap_file_writer& file) { write_pdu(file, context, pdu); });
 }
 
-void mac_pcap_impl::write_pdu(pcap_file_base& file, const mac_nr_context_info& context, const byte_buffer& buf)
+void mac_pcap_impl::write_pdu(pcap_file_writer& file, const mac_nr_context_info& context, const byte_buffer& buf)
 {
-  if (buf.length() > pcap_mac_max_pdu_len) {
-    srslog::fetch_basic_logger("ALL").warning(
-        "Dropped MAC PCAP PDU. PDU is too big. pdu_len={} max_size={}", buf.length(), pcap_mac_max_pdu_len);
-    return;
-  }
-
-  span<const uint8_t> pdu = to_span(buf, span<uint8_t>(tmp_mem).first(buf.length()));
-
-  uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
-  const uint16_t length                                  = pdu.size();
+  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
 
   struct udphdr* udp_header;
   int            offset = 0;
@@ -89,16 +77,18 @@ void mac_pcap_impl::write_pdu(pcap_file_base& file, const mac_nr_context_info& c
 
   offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
+  const size_t buf_len = buf.length();
   if (type == mac_pcap_type::udp) {
-    udp_header->len = htons(offset + length);
+    srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
+    udp_header->len = htons(offset + buf_len);
   }
 
   // Write header
-  file.write_pcap_header(offset + pdu.size());
+  file.write_pdu_header(offset + buf_len);
   // Write context
-  file.write_pcap_pdu(span<uint8_t>(context_header, offset));
+  file.write_pdu(span<uint8_t>(context_header, offset));
   // Write PDU
-  file.write_pcap_pdu(pdu);
+  file.write_pdu(buf);
 }
 
 /// Helper function to serialize MAC NR context
