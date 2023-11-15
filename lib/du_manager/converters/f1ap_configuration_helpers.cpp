@@ -312,30 +312,29 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           const auto& cfg_si                = du_cfg.si_config->si_sched_info[i];
           auto&       asn1_si               = sib1.si_sched_info.sched_info_list[i];
           asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
-          ret                               = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
+          ret = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
           asn1_si.sib_map_info.resize(cfg_si.sib_mapping_info.size());
           for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
-            const uint8_t sib_id = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
-            ret                  = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
+            const uint8_t sib_id                      = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
+            ret                                       = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
             asn1_si.sib_map_info[j].value_tag_present = true;
             asn1_si.sib_map_info[j].value_tag         = 0;
             srsran_assert(ret, "Invalid SIB id {}", sib_id);
           }
         }
       } else if (variant_holds_alternative<sib19_info>(sib)) {
-        sib1.non_crit_ext_present = true;
-        sib1.non_crit_ext.non_crit_ext_present = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext_present = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext.non_crit_ext_present = false;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present  = true;
+        sib1.non_crit_ext_present                                               = true;
+        sib1.non_crit_ext.non_crit_ext_present                                  = true;
+        sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
+        sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present = true;
         auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
         si_sched_info_r17.sched_info_list2_r17.resize(du_cfg.si_config->si_sched_info.size());
         for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
-          auto& asn1_si_r17  = si_sched_info_r17.sched_info_list2_r17[0];
-          const auto& cfg_si = du_cfg.si_config->si_sched_info[i];
+          auto&       asn1_si_r17                   = si_sched_info_r17.sched_info_list2_r17[0];
+          const auto& cfg_si                        = du_cfg.si_config->si_sched_info[i];
           asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
-          bool ret                                  = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
+          bool ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
           asn1_si_r17.sib_map_info_r17.resize(cfg_si.sib_mapping_info.size());
           for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
@@ -378,7 +377,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   return sib1;
 }
 
-asn1::rrc_nr::sib2_s make_asn1_rrc_cell_sib2(const sib2_info& sib2_params) {
+asn1::rrc_nr::sib2_s make_asn1_rrc_cell_sib2(const sib2_info& sib2_params)
+{
   using namespace asn1::rrc_nr;
   sib2_s sib2;
 
@@ -417,13 +417,18 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
 
   if (sib19_params.ephemeris_info.has_value()) {
     sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = sib19_params.ephemeris_info.value().position_x;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = sib19_params.ephemeris_info.value().position_y;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = sib19_params.ephemeris_info.value().position_z;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = sib19_params.ephemeris_info.value().velocity_vx;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = sib19_params.ephemeris_info.value().velocity_vy;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = sib19_params.ephemeris_info.value().velocity_vz;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17 =
+        sib19_params.ephemeris_info.value().position_x;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17 =
+        sib19_params.ephemeris_info.value().position_y;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17 =
+        sib19_params.ephemeris_info.value().position_z;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 =
+        sib19_params.ephemeris_info.value().velocity_vx;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 =
+        sib19_params.ephemeris_info.value().velocity_vy;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 =
+        sib19_params.ephemeris_info.value().velocity_vz;
   }
   if (sib19_params.epoch_time.has_value()) {
     sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
@@ -444,7 +449,7 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17_present = false;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_r17                       = sib19_params.ta_info.value().ta_common;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17                 = sib19_params.ta_info.value().ta_common_drift;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17         = sib19_params.ta_info.value().ta_common_drift_variant;
+    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17 = sib19_params.ta_info.value().ta_common_drift_variant;
   }
   sib19.ntn_cfg_r17.ta_report_r17_present = false;
 

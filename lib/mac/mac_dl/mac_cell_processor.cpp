@@ -338,16 +338,16 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     pcap.push_pdu(context, pg_pdu.pdu);
   }
   for (unsigned i = 0; i < dl_res.sib1_pdus.size(); ++i) {
-    const mac_dl_data_result::dl_pdu& sib1_pdu       = dl_res.sib1_pdus[i];
-    const srsran::dl_broadcast_allocation  sib_alloc = sl_res.dl.bc;
-    srsran::mac_nr_context_info             context  = {};
-    context.radioType                                = PCAP_FDD_RADIO;
-    context.direction                                = PCAP_DIRECTION_DOWNLINK;
-    context.rntiType                                 = PCAP_SI_RNTI;
-    context.rnti                                     = SI_RNTI;
-    context.system_frame_number                      = sl_tx.sfn();
-    context.sub_frame_number                         = sl_tx.subframe_index();
-    context.length                                   = sib1_pdu.pdu.size();
+    const mac_dl_data_result::dl_pdu&     sib1_pdu  = dl_res.sib1_pdus[i];
+    const srsran::dl_broadcast_allocation sib_alloc = sl_res.dl.bc;
+    srsran::mac_nr_context_info           context   = {};
+    context.radioType                               = PCAP_FDD_RADIO;
+    context.direction                               = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType                                = PCAP_SI_RNTI;
+    context.rnti                                    = SI_RNTI;
+    context.system_frame_number                     = sl_tx.sfn();
+    context.sub_frame_number                        = sl_tx.subframe_index();
+    context.length                                  = sib1_pdu.pdu.size();
     pcap.push_pdu(context, sib1_pdu.pdu);
   }
 }
