@@ -13,7 +13,7 @@
 #include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"

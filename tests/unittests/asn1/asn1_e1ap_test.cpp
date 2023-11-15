@@ -9,8 +9,8 @@
  */
 
 #include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/pcap/pcap.h"
-#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
@@ -23,8 +23,8 @@ class asn1_e1ap_test : public ::testing::Test
 protected:
   asn1_e1ap_test()
   {
-    srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("ASN1").set_hex_dump_max_size(-1);
+    logger.set_level(srslog::basic_levels::debug);
+    logger.set_hex_dump_max_size(-1);
 
     test_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_hex_dump_max_size(-1);
@@ -37,21 +37,17 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-    pcap_worker.run_pending_tasks();
   }
 
-  manual_task_worker    pcap_worker{1024};
+  task_worker           pcap_worker{"pcap_worker", 128};
+  task_worker_executor  pcap_exec{pcap_worker};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  srslog::basic_logger& logger      = srslog::fetch_basic_logger("ASN1");
 };
 
 TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 {
-  auto& logger = srslog::fetch_basic_logger("ASN1", false);
-  logger.set_level(srslog::basic_levels::debug);
-  logger.set_hex_dump_max_size(-1);
-
-  auto pcap_writer = create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_setup.pcap" : "", &pcap_worker);
+  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_setup.pcap", pcap_exec) : create_null_dlt_pcap();
 
   asn1::e1ap::e1ap_pdu_c pdu;
   pdu.set_init_msg();
@@ -92,8 +88,8 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_successful)
 {
-  auto pcap_writer = create_dlt_pcap(
-      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_bearer_context_setup_request.pcap" : "", &pcap_worker);
+  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_bearer_context_setup_request.pcap", pcap_exec)
+                                 : create_null_dlt_pcap();
 
   uint8_t rx_msg[] = {0x00, 0x08, 0x00, 0x69, 0x00, 0x00, 0x07, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x0d, 0x00,
                       0x13, 0x00, 0x00, 0x10, 0xa6, 0xae, 0x39, 0xef, 0xbe, 0x0d, 0x42, 0x4c, 0xd8, 0x5f, 0x4a, 0x9c,
@@ -157,8 +153,8 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking_successful)
 {
-  auto pcap_writer = create_dlt_pcap(
-      PCAP_E1AP_DLT, "E1AP", JSON_OUTPUT ? "/tmp/e1ap_e1_bearer_context_setup_response.pcap" : "", &pcap_worker);
+  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_bearer_context_setup_response.pcap", pcap_exec)
+                                 : create_null_dlt_pcap();
 
   uint8_t rx_msg[] = {0x20, 0x08, 0x00, 0x37, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x03,
                       0x00, 0x03, 0x40, 0x02, 0x80, 0x00, 0x10, 0x40, 0x23, 0x40, 0x00, 0x01, 0x00, 0x2e, 0x40,

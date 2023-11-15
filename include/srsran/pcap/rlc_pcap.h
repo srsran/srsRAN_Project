@@ -126,9 +126,10 @@ constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_18_BITS = 18;
 
 /// Creates an RLC pcap writer to a file.
 std::unique_ptr<rlc_pcap> create_rlc_pcap(const std::string& filename,
-                                          task_executor*     backend_exec,
+                                          task_executor&     backend_exec,
                                           bool               srb_pdus_enabled = true,
                                           bool               drb_pdus_enabled = true);
+std::unique_ptr<rlc_pcap> create_null_rlc_pcap();
 
 } // namespace srsran
 

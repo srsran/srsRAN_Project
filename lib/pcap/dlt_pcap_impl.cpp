@@ -14,6 +14,13 @@
 
 using namespace srsran;
 
+// DLT PCAP values for different layers
+constexpr uint16_t PCAP_NGAP_DLT = 152;
+constexpr uint16_t PCAP_E1AP_DLT = 153;
+constexpr uint16_t PCAP_F1AP_DLT = 154;
+constexpr uint16_t PCAP_E2AP_DLT = 155;
+constexpr uint16_t PCAP_GTPU_DLT = 156;
+
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
                              const std::string& filename,
@@ -60,14 +67,39 @@ void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_writer& pcap_fil
   pcap_file.write_pdu(pdu);
 }
 
-std::unique_ptr<dlt_pcap> srsran::create_dlt_pcap(unsigned           dlt,
-                                                  const std::string& layer_name,
-                                                  const std::string& filename,
-                                                  task_executor*     backend_exec)
+static std::unique_ptr<dlt_pcap>
+create_dlt_pcap(unsigned dlt, const std::string& layer_name, const std::string& filename, task_executor& backend_exec)
 {
-  if (filename.empty()) {
-    return std::make_unique<null_dlt_pcap>();
-  }
-  srsran_assert(backend_exec != nullptr, "Backend executor must not be null");
-  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, *backend_exec);
+  srsran_assert(not filename.empty(), "File name is empty");
+  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, backend_exec);
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_null_dlt_pcap()
+{
+  return std::make_unique<null_dlt_pcap>();
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_ngap_pcap(const std::string& filename, task_executor& backend_exec)
+{
+  return create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", filename, backend_exec);
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_f1ap_pcap(const std::string& filename, task_executor& backend_exec)
+{
+  return create_dlt_pcap(PCAP_F1AP_DLT, "F1AP", filename, backend_exec);
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_e1ap_pcap(const std::string& filename, task_executor& backend_exec)
+{
+  return create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", filename, backend_exec);
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_gtpu_pcap(const std::string& filename, task_executor& backend_exec)
+{
+  return create_dlt_pcap(PCAP_GTPU_DLT, "GTPU", filename, backend_exec);
+}
+
+std::unique_ptr<dlt_pcap> srsran::create_e2ap_pcap(const std::string& filename, task_executor& backend_exec)
+{
+  return create_dlt_pcap(PCAP_E2AP_DLT, "E2AP", filename, backend_exec);
 }

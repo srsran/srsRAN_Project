@@ -14,7 +14,7 @@
 #include "gtpu_tunnel_ngu_tx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {

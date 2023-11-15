@@ -152,13 +152,15 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
 }
 
 std::unique_ptr<rlc_pcap> srsran::create_rlc_pcap(const std::string& filename,
-                                                  task_executor*     backend_exec,
+                                                  task_executor&     backend_exec,
                                                   bool               srb_pdus_enabled,
                                                   bool               drb_pdus_enabled)
 {
-  if (filename.empty()) {
-    return std::make_unique<null_rlc_pcap>();
-  }
-  srsran_assert(backend_exec != nullptr, "Backend executor must not be null");
-  return std::make_unique<rlc_pcap_impl>(filename, srb_pdus_enabled, drb_pdus_enabled, *backend_exec);
+  srsran_assert(not filename.empty(), "File name is empty");
+  return std::make_unique<rlc_pcap_impl>(filename, srb_pdus_enabled, drb_pdus_enabled, backend_exec);
+}
+
+std::unique_ptr<rlc_pcap> srsran::create_null_rlc_pcap()
+{
+  return std::make_unique<null_rlc_pcap>();
 }

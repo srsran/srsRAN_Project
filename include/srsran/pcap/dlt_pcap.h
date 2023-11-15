@@ -18,14 +18,7 @@ namespace srsran {
 
 class task_executor;
 
-// DLT PCAP values for different layers
-constexpr uint16_t PCAP_NGAP_DLT = 152;
-constexpr uint16_t PCAP_E1AP_DLT = 153;
-constexpr uint16_t PCAP_F1AP_DLT = 154;
-constexpr uint16_t PCAP_E2AP_DLT = 155;
-constexpr uint16_t PCAP_GTPU_DLT = 156;
-
-/// @brief Interface class for writing a DLT PCAP to a file.
+/// \brief Interface class for writing a DLT PCAP to a file.
 class dlt_pcap
 {
 public:
@@ -37,11 +30,13 @@ public:
   virtual void push_pdu(byte_buffer pdu)         = 0;
 };
 
-/// \brief Creates a generic DLT PCAP message sink that writes the incoming PDUs to a file.
-///
-/// If the provided filename is empty, the returned pcap writer will not be enabled.
-std::unique_ptr<dlt_pcap>
-create_dlt_pcap(unsigned dlt, const std::string& layer_name, const std::string& filename, task_executor* backend_exec);
+/// \brief Creates a layer DLT PCAP sink that writes the incoming PDUs to a pcap file.
+std::unique_ptr<dlt_pcap> create_null_dlt_pcap();
+std::unique_ptr<dlt_pcap> create_ngap_pcap(const std::string& filename, task_executor& backend_exec);
+std::unique_ptr<dlt_pcap> create_f1ap_pcap(const std::string& filename, task_executor& backend_exec);
+std::unique_ptr<dlt_pcap> create_e1ap_pcap(const std::string& filename, task_executor& backend_exec);
+std::unique_ptr<dlt_pcap> create_gtpu_pcap(const std::string& filename, task_executor& backend_exec);
+std::unique_ptr<dlt_pcap> create_e2ap_pcap(const std::string& filename, task_executor& backend_exec);
 
 /// Null sink for DLT pcap messages. This is useful in unit tests and when the application disables pcaps.
 class null_dlt_pcap : public dlt_pcap

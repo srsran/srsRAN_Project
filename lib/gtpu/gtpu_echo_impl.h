@@ -14,7 +14,7 @@
 #include "gtpu_echo_tx_impl.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 
 namespace srsran {
 

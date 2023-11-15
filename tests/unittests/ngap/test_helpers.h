@@ -13,7 +13,7 @@
 #include "ngap_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"

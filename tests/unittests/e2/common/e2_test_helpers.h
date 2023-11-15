@@ -26,7 +26,7 @@
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/network_gateway.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>

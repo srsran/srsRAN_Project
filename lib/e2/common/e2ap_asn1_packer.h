@@ -13,7 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/e2/e2.h"
 #include "srsran/gateways/sctp_network_gateway.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {

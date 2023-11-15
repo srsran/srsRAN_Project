@@ -19,7 +19,7 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 

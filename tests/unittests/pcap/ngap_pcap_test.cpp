@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
@@ -38,14 +38,14 @@ protected:
     srslog::flush();
   }
 
-  task_worker                    worker{"pcap", 1024};
-  std::unique_ptr<task_executor> pcap_exec   = make_task_executor_ptr(worker);
-  srslog::basic_logger&          test_logger = srslog::fetch_basic_logger("TEST");
+  task_worker           worker{"pcap", 1024};
+  task_worker_executor  pcap_exec{worker};
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 TEST_F(pcap_ngap_test, write_pdu)
 {
-  auto ngap_pcap_writer      = create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", "ngap_write_pdu.pcap", pcap_exec.get());
+  auto                    ngap_pcap_writer = create_ngap_pcap("/tmp/ngap_write_pdu.pcap", pcap_exec);
   std::array<uint8_t, 55> tv = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
                                 0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x73, 0x72, 0x73,
                                 0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
@@ -55,7 +55,7 @@ TEST_F(pcap_ngap_test, write_pdu)
 
 TEST_F(pcap_ngap_test, write_many_spans)
 {
-  auto ngap_pcap_writer = create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", "ngap_write_many_spans.pcap", pcap_exec.get());
+  auto ngap_pcap_writer = create_ngap_pcap("/tmp/ngap_write_many_spans.pcap", pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -77,7 +77,7 @@ TEST_F(pcap_ngap_test, write_many_spans)
 
 TEST_F(pcap_ngap_test, write_many_byte_buffers)
 {
-  auto ngap_pcap_writer = create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", "ngap_write_many_byte_buffers.pcap", pcap_exec.get());
+  auto ngap_pcap_writer = create_ngap_pcap("/tmp/ngap_write_many_byte_buffers.pcap", pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
