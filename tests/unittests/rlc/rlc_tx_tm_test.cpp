@@ -76,7 +76,7 @@ protected:
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_tm_test_frame> tester;
-  pcap_rlc_dummy                        pcap;
+  null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_tx_tm_entity>     rlc;
 };
 

@@ -241,7 +241,7 @@ protected:
   manual_task_worker                 ue_worker{128};
   manual_task_worker                 pcell_worker{128};
   rlc_test_frame                     tester1, tester2;
-  pcap_rlc_dummy                     pcap1, pcap2;
+  null_rlc_pcap                      pcap1, pcap2;
   std::unique_ptr<rlc_um_entity>     rlc1, rlc2;
   rlc_rx_lower_layer_interface*      rlc1_rx_lower = nullptr;
   rlc_tx_upper_layer_data_interface* rlc1_tx_upper = nullptr;

@@ -108,7 +108,7 @@ private:
   srsran::rlc_bearer_logger logger;
 
   // PCAP
-  pcap_rlc_dummy pcap;
+  null_rlc_pcap pcap;
 };
 
 } // namespace srsran

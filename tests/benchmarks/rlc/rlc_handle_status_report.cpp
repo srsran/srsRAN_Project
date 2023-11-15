@@ -104,7 +104,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   auto& logger = srslog::fetch_basic_logger("RLC");
   logger.set_level(srslog::str_to_basic_level("warning"));
 
-  pcap_rlc_dummy pcap;
+  null_rlc_pcap pcap;
 
   // Run benchmark
   auto context = [&rlc, &tester, config, &timers, &pcell_worker, &ue_worker, &pcap]() {

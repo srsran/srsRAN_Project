@@ -8,8 +8,9 @@
  *
  */
 
-#include "lib/pcap/pcap_rlc_impl.h"
 #include "lib/rlc/rlc_am_pdu.h"
+#include "srsran/pcap/rlc_pcap.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
 
@@ -38,8 +39,6 @@ protected:
 
   void TearDown() override
   {
-    logger.info("Closing PCAP handle");
-    pcap_writer.close();
     // flush logger after each test
     srslog::flush();
   }
@@ -133,14 +132,15 @@ protected:
     } while (rest.length() > 0);
   }
 
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-  rlc_rx_am_config      config;
-  srsran::pcap_rlc_impl pcap_writer;
+  srslog::basic_logger&          logger = srslog::fetch_basic_logger("TEST");
+  rlc_rx_am_config               config;
+  task_worker                    worker{"pcap_worker", 1024};
+  std::unique_ptr<task_executor> pcap_exec = make_task_executor_ptr(worker);
 };
 
 TEST_F(pcap_rlc_test, write_rlc_am_pdu)
 {
-  pcap_writer.open("/tmp/write_rlc_am_pdu.pcap");
+  auto pcap_writer = create_rlc_pcap("/tmp/write_rlc_am_pdu.pcap", *pcap_exec);
 
   uint32_t sn_state = 0;
   uint32_t sdu_size = 1;
@@ -153,5 +153,5 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   tx_cfg.sn_field_length               = config.sn_field_length;
   srsran::pcap_rlc_pdu_context context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
-  pcap_writer.push_pdu(context, pdu_list.front().deep_copy());
+  pcap_writer->push_pdu(context, pdu_list.front().deep_copy());
 }

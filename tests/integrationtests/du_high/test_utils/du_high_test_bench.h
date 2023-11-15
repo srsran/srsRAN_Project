@@ -57,7 +57,7 @@ public:
   srs_du::cu_up_simulator cu_up_sim;
   phy_test_dummy          phy;
   null_mac_pcap           mac_pcap;
-  pcap_rlc_dummy          rlc_pcap;
+  null_rlc_pcap           rlc_pcap;
   timer_manager           timers;
 
   du_high_configuration    du_high_cfg;

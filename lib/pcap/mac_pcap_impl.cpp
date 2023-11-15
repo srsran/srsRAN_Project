@@ -12,7 +12,7 @@
 #include <linux/udp.h>
 #include <netinet/in.h>
 
-namespace srsran {
+using namespace srsran;
 
 constexpr uint16_t UDP_DLT = 149;
 constexpr uint16_t MAC_DLT = 157;
@@ -44,7 +44,7 @@ void mac_pcap_impl::push_pdu(mac_nr_context_info context, const_span<uint8_t> pd
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
 {
-  if (pdu.empty()) {
+  if (!is_write_enabled() || pdu.empty()) {
     // skip.
     return;
   }
@@ -151,4 +151,11 @@ int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8
   return offset;
 }
 
-} // namespace srsran
+std::unique_ptr<mac_pcap>
+srsran::create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec)
+{
+  if (filename.empty()) {
+    return std::make_unique<null_mac_pcap>();
+  }
+  return std::make_unique<mac_pcap_impl>(filename, pcap_type, backend_exec);
+}

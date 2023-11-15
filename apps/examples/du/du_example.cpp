@@ -10,7 +10,6 @@
 
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
-#include "lib/pcap/pcap_rlc_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
@@ -27,6 +26,7 @@
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_generic_configuration.h"
 #include "srsran/ru/ru_generic_factory.h"
+#include "srsran/support/executors/task_worker.h"
 #include <atomic>
 #include <csignal>
 #include <getopt.h>
@@ -774,18 +774,18 @@ int main(int argc, char** argv)
   dummy_cu_cp_handler f1c_client;
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
-  timer_manager             app_timers{256};
-  null_mac_pcap             mac_p;
-  std::unique_ptr<rlc_pcap> rlc_p     = std::make_unique<pcap_rlc_impl>();
-  du_high_configuration     du_hi_cfg = {};
-  du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;
-  du_hi_cfg.f1c_client                = &f1c_client;
-  du_hi_cfg.phy_adapter               = &phy;
-  du_hi_cfg.timers                    = &app_timers;
-  du_hi_cfg.cells                     = {config_helpers::make_default_du_cell_config(cell_config)};
-  du_hi_cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
-  du_hi_cfg.mac_p                     = &mac_p;
-  du_hi_cfg.rlc_p                     = rlc_p.get();
+  timer_manager         app_timers{256};
+  null_mac_pcap         mac_p;
+  null_rlc_pcap         rlc_p;
+  du_high_configuration du_hi_cfg = {};
+  du_hi_cfg.exec_mapper           = &workers.du_high_exec_mapper;
+  du_hi_cfg.f1c_client            = &f1c_client;
+  du_hi_cfg.phy_adapter           = &phy;
+  du_hi_cfg.timers                = &app_timers;
+  du_hi_cfg.cells                 = {config_helpers::make_default_du_cell_config(cell_config)};
+  du_hi_cfg.sched_cfg             = config_helpers::make_default_scheduler_expert_config();
+  du_hi_cfg.mac_p                 = &mac_p;
+  du_hi_cfg.rlc_p                 = &rlc_p;
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;

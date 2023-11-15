@@ -287,7 +287,7 @@ protected:
   manual_task_worker                    ue_worker{128};
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;
-  pcap_rlc_dummy                        pcap;
+  null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_tx_am_entity>     rlc;
 };
 

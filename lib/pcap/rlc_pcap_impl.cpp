@@ -8,7 +8,7 @@
  *
  */
 
-#include "pcap_rlc_impl.h"
+#include "rlc_pcap_impl.h"
 #include <linux/udp.h>
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -30,53 +30,29 @@ constexpr uint32_t pcap_rlc_max_pdu_len = 131072;
 
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length);
 
-pcap_rlc_impl::pcap_rlc_impl()
+rlc_pcap_impl::rlc_pcap_impl(const std::string& filename,
+                             bool               capture_srb,
+                             bool               capture_drb,
+                             task_executor&     backend_exec) :
+  srb_enabled(capture_srb), drb_enabled(capture_drb), writer(UDP_DLT, "RLC", filename, backend_exec)
 {
   tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
 
-pcap_rlc_impl::pcap_rlc_impl(const srsran::os_sched_affinity_bitmask& mask) : cpu_mask(mask)
-{
-  tmp_mem.resize(pcap_rlc_max_pdu_len);
-}
-
-pcap_rlc_impl::~pcap_rlc_impl()
+rlc_pcap_impl::~rlc_pcap_impl()
 {
   close();
 }
 
-void pcap_rlc_impl::open(const std::string& filename_)
+void rlc_pcap_impl::close()
 {
-  uint16_t dlt = UDP_DLT;
-
-  worker = std::make_unique<task_worker>("rlc_pcap", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask);
-
-  // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
-  auto fn = [this, dlt, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
-  worker->push_task_blocking(fn);
-  is_open.store(true, std::memory_order_relaxed);
+  writer.close();
 }
 
-void pcap_rlc_impl::close()
-{
-  if (is_open.load(std::memory_order_relaxed)) {
-    worker->wait_pending_tasks();
-    is_open.store(false, std::memory_order_relaxed); // any further tasks will see it closed
-    auto fn = [this]() { writter.dlt_pcap_close(); };
-    worker->push_task_blocking(fn);
-    worker->wait_pending_tasks(); // make sure dlt_pcap_close is processed
-    worker->stop();
-  }
-}
-
-bool pcap_rlc_impl::is_write_enabled() const
-{
-  return is_open.load(std::memory_order_relaxed);
-}
-
-void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
+void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
+    // skip
     return;
   }
 
@@ -84,29 +60,7 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   if (!drb_enabled && context.bearer_type == PCAP_RLC_BEARER_TYPE_DRB) {
     return;
   }
-  // Filter SRBs if disabled
-  if (!srb_enabled &&
-      (context.bearer_type == PCAP_RLC_BEARER_TYPE_SRB || context.bearer_type == PCAP_RLC_BEARER_TYPE_CCCH)) {
-    return;
-  }
 
-  byte_buffer buffer = pdu.deep_copy(); // TODO: optimize copy
-  auto        fn     = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
-  if (not worker->push_task(fn)) {
-    srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
-  }
-}
-
-void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
-{
-  if (!is_write_enabled() || pdu.empty()) {
-    return;
-  }
-
-  // Filter DRBs if disabled
-  if (!drb_enabled && context.bearer_type == PCAP_RLC_BEARER_TYPE_DRB) {
-    return;
-  }
   // Filter SRBs if disabled
   if (!srb_enabled &&
       (context.bearer_type == PCAP_RLC_BEARER_TYPE_SRB || context.bearer_type == PCAP_RLC_BEARER_TYPE_CCCH)) {
@@ -114,19 +68,21 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   }
 
   byte_buffer buffer;
-  buffer.append(pdu); // TODO: optimize copy
-  auto fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
-  if (not worker->push_task(fn)) {
-    srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
+  buffer.append(pdu.begin(), pdu.end()); // TODO: optimize copy
+  writer.dispatch([this, pdu = std::move(buffer), context](pcap_file_base& file) { write_pdu(file, context, pdu); });
+  if (!is_write_enabled() || pdu.empty()) {
+    // skip
+    return;
   }
 }
 
-void pcap_rlc_impl::write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& buf)
+void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
 {
-  if (!is_write_enabled() || buf.empty()) {
-    return;
-  }
+  push_pdu(context, byte_buffer_chain{pdu.copy()});
+}
 
+void rlc_pcap_impl::write_pdu(pcap_file_base& file, const pcap_rlc_pdu_context& context, const byte_buffer& buf)
+{
   if (buf.length() > pcap_rlc_max_pdu_len) {
     srslog::fetch_basic_logger("ALL").warning(
         "Dropped RLC PCAP PDU. PDU is too big. pdu_len={} max_size={}", buf.length(), pcap_rlc_max_pdu_len);
@@ -163,11 +119,11 @@ void pcap_rlc_impl::write_pdu(const pcap_rlc_pdu_context& context, const byte_bu
   udp_header->len = htons(offset + length);
 
   // Write header
-  writter.write_pcap_header(offset + pdu.size());
+  file.write_pcap_header(offset + pdu.size());
   // Write context
-  writter.write_pcap_pdu(span<uint8_t>(context_header, offset));
+  file.write_pcap_pdu(span<uint8_t>(context_header, offset));
   // Write PDU
-  writter.write_pcap_pdu(pdu);
+  file.write_pcap_pdu(pdu);
 }
 
 /// Helper function to serialize RLC NR context
@@ -209,12 +165,13 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
   return offset;
 }
 
-void pcap_rlc_impl::capture_drb(bool drb_enabled_)
+std::unique_ptr<rlc_pcap> srsran::create_rlc_pcap(const std::string& filename,
+                                                  task_executor&     backend_exec,
+                                                  bool               srb_pdus_enabled,
+                                                  bool               drb_pdus_enabled)
 {
-  drb_enabled = drb_enabled_;
-}
-
-void pcap_rlc_impl::capture_srb(bool srb_enabled_)
-{
-  srb_enabled = srb_enabled_;
+  if (filename.empty()) {
+    return std::make_unique<null_rlc_pcap>();
+  }
+  return std::make_unique<rlc_pcap_impl>(filename, srb_pdus_enabled, drb_pdus_enabled, backend_exec);
 }

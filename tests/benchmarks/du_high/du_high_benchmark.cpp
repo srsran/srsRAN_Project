@@ -353,7 +353,7 @@ public:
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count = 0;
   null_mac_pcap                      mac_pcap;
-  pcap_rlc_dummy                     rlc_pcap;
+  null_rlc_pcap                      rlc_pcap;
 
   byte_buffer pdcp_pdu;
 };

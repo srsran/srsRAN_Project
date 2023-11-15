@@ -342,7 +342,7 @@ public:
   f1ap_test_dummy                        f1ap;
   f1u_gateway_dummy                      f1u_gw;
   mac_test_dummy                         mac;
-  pcap_rlc_dummy                         rlc_pcap;
+  null_rlc_pcap                          rlc_pcap;
   du_manager_params                      params;
   dummy_ue_resource_configurator_factory cell_res_alloc;
   srslog::basic_logger&                  logger;

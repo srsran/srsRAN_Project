@@ -12,7 +12,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/support/executors/sync_task_executor.h"
 
-namespace srsran {
+using namespace srsran;
 
 constexpr uint16_t pcap_dlt_max_pdu_len = 9000;
 
@@ -73,4 +73,13 @@ void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_base& pcap_file)
   pcap_file.write_pcap_pdu(linearized_pdu);
 }
 
-} // namespace srsran
+std::unique_ptr<dlt_pcap> srsran::create_dlt_pcap(unsigned           dlt,
+                                                  const std::string& layer_name,
+                                                  const std::string& filename,
+                                                  task_executor&     backend_exec)
+{
+  if (filename.empty()) {
+    return std::make_unique<null_dlt_pcap>();
+  }
+  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, backend_exec);
+}
