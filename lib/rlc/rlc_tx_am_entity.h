@@ -134,7 +134,7 @@ public:
                    timer_factory                        timers,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
-                   pcap_rlc&                            pcap_);
+                   rlc_pcap&                            pcap_);
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }

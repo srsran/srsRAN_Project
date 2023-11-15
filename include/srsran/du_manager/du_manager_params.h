@@ -18,7 +18,7 @@
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <map>
@@ -56,7 +56,7 @@ struct du_manager_params {
     mac_ue_control_information_handler&          mac_ue_info_handler;
     f1ap_message_handler&                        f1ap_rx_msg_handler;
     f1ap_rrc_message_transfer_procedure_handler& f1ap_rx_proc_handler;
-    pcap_rlc&                                    rlc_pcap;
+    rlc_pcap&                                    pcap_writer;
     rlc_metrics_notifier*                        rlc_metrics_notif = nullptr;
   };
   struct mac_config_params {

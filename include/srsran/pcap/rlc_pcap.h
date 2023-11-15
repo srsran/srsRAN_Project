@@ -23,10 +23,10 @@ namespace srsran {
 struct pcap_rlc_pdu_context;
 
 /// \brief Interface class for writing a RLC PCAP to a file.
-class pcap_rlc
+class rlc_pcap
 {
 public:
-  virtual ~pcap_rlc() = default;
+  virtual ~rlc_pcap() = default;
 
   virtual void open(const std::string& filename_)                                          = 0;
   virtual void close()                                                                     = 0;
@@ -96,7 +96,7 @@ private:
 };
 
 /// \brief Dummy implementation RLC PCAP for testing
-class pcap_rlc_dummy : public pcap_rlc
+class pcap_rlc_dummy : public rlc_pcap
 {
 public:
   ~pcap_rlc_dummy() = default;

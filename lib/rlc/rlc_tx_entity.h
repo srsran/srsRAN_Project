@@ -12,7 +12,7 @@
 
 #include "rlc_bearer_logger.h"
 #include "rlc_tx_metrics_container.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
@@ -32,7 +32,7 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
-                pcap_rlc&                            pcap_) :
+                rlc_pcap&                            pcap_) :
     logger("RLC", {du_index, ue_index, rb_id, "DL"}),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
@@ -46,7 +46,7 @@ protected:
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;
-  pcap_rlc&                            pcap;
+  rlc_pcap&                            pcap;
 
 public:
   rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }

@@ -15,7 +15,7 @@
 #include "helpers/metrics_hub.h"
 #include "srsran/du/du.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 
 namespace srsran {
 
@@ -43,7 +43,7 @@ std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&              
                                               srs_du::f1u_du_gateway&               f1u_gw,
                                               timer_manager&                        timer_mng,
                                               mac_pcap&                             mac_p,
-                                              pcap_rlc&                             rlc_p,
+                                              rlc_pcap&                             rlc_p,
                                               gnb_console_helper&                   console_helper,
                                               e2_connection_client&                 e2_client_handler,
                                               e2_metric_connector_manager&          e2_metric_connectors,

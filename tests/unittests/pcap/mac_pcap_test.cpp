@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 

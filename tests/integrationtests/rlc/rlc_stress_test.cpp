@@ -77,7 +77,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   rlc_msg.timers                       = &timers;
   rlc_msg.pcell_executor               = pcell_executor.get();
   rlc_msg.ue_executor                  = ue_executor.get();
-  rlc_msg.rlc_pcap                     = &pcap;
+  rlc_msg.pcap_writer                  = &pcap;
   rlc                                  = create_rlc_entity(rlc_msg);
   f1ap->set_rlc_tx_upper_data(rlc->get_tx_upper_layer_data_interface());
 

@@ -12,7 +12,7 @@
 
 #include "backend_pcap_writer.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {

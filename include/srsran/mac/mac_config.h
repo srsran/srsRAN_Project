@@ -14,7 +14,7 @@
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_pdu_handler.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/mac_pcap.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 

@@ -131,7 +131,7 @@ public:
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_factory                     timers,
                    task_executor&                    ue_executor,
-                   pcap_rlc&                         pcap_);
+                   rlc_pcap&                         pcap_);
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }

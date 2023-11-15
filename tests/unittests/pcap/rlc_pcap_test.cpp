@@ -15,9 +15,9 @@
 
 using namespace srsran;
 
-void write_pcap_nr_thread_function_byte_buffer(srsran::pcap_rlc* pcap, uint32_t num_pdus);
-void write_pcap_nr_thread_function_large_byte_buffer(srsran::pcap_rlc* pcap, uint32_t num_pdus);
-void write_pcap_nr_thread_function_spans(srsran::pcap_rlc* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_byte_buffer(srsran::rlc_pcap* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_large_byte_buffer(srsran::rlc_pcap* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_spans(srsran::rlc_pcap* pcap, uint32_t num_pdus);
 
 class pcap_rlc_test : public ::testing::Test
 {

@@ -42,7 +42,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t           
                                                              du_ue_srb&                               bearer,
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                             pcap_rlc&                                rlc_pcap);
+                                                             rlc_pcap&                                rlc_pcap);
 
 /// \brief Create configuration for RLC DRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t                                 du_index,
@@ -52,7 +52,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t           
                                                              const du_manager_params::service_params& du_services,
                                                              rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
                                                              rlc_metrics_notifier*                    rlc_metrics_notif,
-                                                             pcap_rlc&                                rlc_pcap);
+                                                             rlc_pcap&                                rlc_pcap);
 
 } // namespace srs_du
 } // namespace srsran

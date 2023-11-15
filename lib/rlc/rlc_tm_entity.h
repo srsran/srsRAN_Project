@@ -31,7 +31,7 @@ public:
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
-                pcap_rlc&                            pcap) :
+                rlc_pcap&                            pcap) :
     rlc_base_entity(du_index_,
                     ue_index_,
                     rb_id_,

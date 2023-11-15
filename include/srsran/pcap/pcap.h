@@ -18,57 +18,6 @@ namespace srsran {
 
 class task_executor;
 
-// Radio Type
-constexpr uint8_t PCAP_FDD_RADIO = 1;
-constexpr uint8_t PCAP_TDD_RADIO = 2;
-
-// Direction
-constexpr uint8_t PCAP_DIRECTION_UPLINK   = 0;
-constexpr uint8_t PCAP_DIRECTION_DOWNLINK = 1;
-
-// RNTI types
-constexpr uint8_t PCAP_NO_RNTI     = 0; // Used for BCH-BCH
-constexpr uint8_t PCAP_P_RNTI      = 1;
-constexpr uint8_t PCAP_RA_RNTI     = 2;
-constexpr uint8_t PCAP_C_RNTI      = 3;
-constexpr uint8_t PCAP_SI_RNTI     = 4;
-constexpr uint8_t PCAP_SPS_RNTI    = 5;
-constexpr uint8_t PCAP_M_RNTI      = 6;
-constexpr uint8_t PCAP_SL_BCH_RNTI = 7;
-constexpr uint8_t PCAP_SL_RNTI     = 8;
-constexpr uint8_t PCAP_SC_RNTI     = 9;
-constexpr uint8_t PCAP_G_RNTI      = 10;
-
-// Context information for every MAC NR PDU that will be logged
-struct mac_nr_context_info {
-  uint8_t  radioType;
-  uint8_t  direction;
-  uint8_t  rntiType;
-  uint16_t rnti;
-  uint16_t ueid;
-  uint8_t  harqid;
-
-  uint8_t phr_type2_othercell;
-
-  uint16_t system_frame_number;
-  uint8_t  sub_frame_number;
-  uint16_t length;
-};
-
-enum class mac_pcap_type { udp, dlt };
-
-/// @brief Interface class for writing a MAC PCAP to a file.
-class mac_pcap
-{
-public:
-  virtual ~mac_pcap() = default;
-
-  virtual void close()                                                        = 0;
-  virtual bool is_write_enabled() const                                       = 0;
-  virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
-  virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
-};
-
 // DLT PCAP values for different layers
 constexpr uint16_t PCAP_NGAP_DLT = 152;
 constexpr uint16_t PCAP_E1AP_DLT = 153;
@@ -102,20 +51,6 @@ public:
   bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
-};
-
-/// Creates a MAC pcap writer to a file.
-std::unique_ptr<mac_pcap>
-create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec);
-
-/// Null sink for MAC pcap messages. This is useful in unit tests and when the application disables pcaps.
-class dummy_mac_pcap : public mac_pcap
-{
-public:
-  void close() override {}
-  bool is_write_enabled() const override { return false; }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
 } // namespace srsran

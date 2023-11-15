@@ -20,7 +20,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(uint32_t                          du_index,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
                                    task_executor&                    ue_executor,
-                                   pcap_rlc&                         pcap_) :
+                                   rlc_pcap&                         pcap_) :
   rlc_rx_entity(du_index, ue_index, rb_id, upper_dn_, pcap_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),

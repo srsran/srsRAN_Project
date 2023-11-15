@@ -176,7 +176,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                                        du_params.services,
                                                                        rlc_rlf_notifier,
                                                                        du_params.rlc.rlc_metrics_notif,
-                                                                       du_params.rlc.rlc_pcap));
+                                                                       du_params.rlc.pcap_writer));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
     du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);

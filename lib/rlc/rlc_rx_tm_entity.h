@@ -24,7 +24,7 @@ public:
                    du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   pcap_rlc&                         pcap_);
+                   rlc_pcap&                         pcap_);
 
   // Interfaces for higher layers
   void handle_pdu(byte_buffer_slice buf) override;

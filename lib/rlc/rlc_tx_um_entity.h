@@ -78,7 +78,7 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    task_executor&                       pcell_executor_,
-                   pcap_rlc&                            pcap_);
+                   rlc_pcap&                            pcap_);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu_) override;

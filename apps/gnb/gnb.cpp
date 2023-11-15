@@ -339,7 +339,7 @@ int main(int argc, char** argv)
       create_mac_pcap(gnb_cfg.pcap_cfg.mac.enabled ? gnb_cfg.pcap_cfg.mac.filename : "",
                       gnb_cfg.pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
                       *workers.pcap_exec);
-  std::unique_ptr<pcap_rlc> rlc_p = std::make_unique<pcap_rlc_impl>(low_prio_cpu_mask);
+  std::unique_ptr<rlc_pcap> rlc_p = std::make_unique<pcap_rlc_impl>(low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.rlc.enabled) {
     if (gnb_cfg.pcap_cfg.rlc.rb_type == "all") {
       rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);

@@ -12,12 +12,12 @@
 
 #include "pcap_file_base.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
 
-class pcap_rlc_impl final : public pcap_rlc
+class pcap_rlc_impl final : public rlc_pcap
 {
 public:
   pcap_rlc_impl();
