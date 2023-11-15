@@ -20,45 +20,10 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <thread>
 
 using namespace srsran;
-
-class dummy_sched : public mac_scheduler
-{
-public:
-  srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
-  sched_configuration_notifier& notifier;
-  sched_result                  sched_res = {};
-
-  explicit dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
-
-  bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
-  void handle_rach_indication(const rach_indication_message& msg) override {}
-  void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override
-  {
-    logger.info("ueId={} Creation", ue_request.ue_index);
-    notifier.on_ue_config_complete(ue_request.ue_index, true);
-  }
-  void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override
-  {
-    logger.info("ueId={} Reconfiguration", ue_request.ue_index);
-    notifier.on_ue_config_complete(ue_request.ue_index, true);
-  }
-  void handle_ue_removal_request(du_ue_index_t ue_index) override
-  {
-    logger.info("ueId={} Deletion", ue_index);
-    notifier.on_ue_delete_response(ue_index);
-  }
-
-  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return sched_res; }
-  void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
-  void                handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
-  void                handle_crc_indication(const ul_crc_indication& crc) override {}
-  void                handle_uci_indication(const uci_indication& msg) override {}
-  void                handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override {}
-  void                handle_paging_information(const sched_paging_information& pi) override {}
-};
 
 /// Enum used to track the progress of the test task
 enum class test_task_event { ue_created, ue_reconfigured, ue_deleted };
@@ -120,7 +85,7 @@ struct add_reconf_delete_ue_test_task {
 };
 
 /// In this test, we verify the correct executors are called during creation, reconfiguration and deletion of a UE.
-void test_dl_ue_procedure_execution_contexts()
+TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
 {
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
 
@@ -149,10 +114,8 @@ void test_dl_ue_procedure_execution_contexts()
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
-  // Action: Add Cell.
-  mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_config();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  mac_dl.add_cell(mac_cell_cfg);
+  mac_dl.add_cell(test_helpers::make_default_mac_cell_config());
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
@@ -176,7 +139,7 @@ void test_dl_ue_procedure_execution_contexts()
   TESTASSERT(not t.empty() and t.ready());
 }
 
-void test_dl_ue_procedure_tsan()
+TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
@@ -224,15 +187,4 @@ void test_dl_ue_procedure_tsan()
 
   ctrl_worker.run();
   TESTASSERT(not t.empty() and t.ready());
-}
-
-int main()
-{
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-
-  srslog::init();
-
-  test_dl_ue_procedure_execution_contexts();
-  test_dl_ue_procedure_tsan();
 }

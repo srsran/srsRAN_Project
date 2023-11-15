@@ -14,7 +14,6 @@
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
