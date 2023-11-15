@@ -44,7 +44,7 @@ std::unique_ptr<dlt_pcap>
 create_dlt_pcap(unsigned dlt, const std::string& layer_name, const std::string& filename, task_executor& backend_exec);
 
 /// Null sink for DLT pcap messages. This is useful in unit tests and when the application disables pcaps.
-class dummy_dlt_pcap : public dlt_pcap
+class null_dlt_pcap : public dlt_pcap
 {
 public:
   void close() override {}

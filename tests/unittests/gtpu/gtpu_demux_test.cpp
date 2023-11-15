@@ -53,7 +53,7 @@ protected:
 
   task_worker          worker{"GTP-U demux#0", 128};
   task_worker_executor exec{worker};
-  dummy_dlt_pcap       dummy_pcap;
+  null_dlt_pcap        dummy_pcap;
 
   std::unique_ptr<gtpu_demux> dut;
   srslog::basic_logger&       test_logger = srslog::fetch_basic_logger("TEST", false);

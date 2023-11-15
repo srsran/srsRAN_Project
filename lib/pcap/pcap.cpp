@@ -20,7 +20,7 @@ std::unique_ptr<dlt_pcap> srsran::create_dlt_pcap(unsigned           dlt,
                                                   task_executor&     backend_exec)
 {
   if (filename.empty()) {
-    return std::make_unique<dummy_dlt_pcap>();
+    return std::make_unique<null_dlt_pcap>();
   }
   return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, backend_exec);
 }
@@ -29,7 +29,7 @@ std::unique_ptr<mac_pcap>
 srsran::create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec)
 {
   if (filename.empty()) {
-    return std::make_unique<dummy_mac_pcap>();
+    return std::make_unique<null_mac_pcap>();
   }
   return std::make_unique<mac_pcap_impl>(filename, pcap_type, backend_exec);
 }

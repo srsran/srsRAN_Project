@@ -775,7 +775,7 @@ int main(int argc, char** argv)
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
   timer_manager             app_timers{256};
-  dummy_mac_pcap            mac_p;
+  null_mac_pcap             mac_p;
   std::unique_ptr<rlc_pcap> rlc_p     = std::make_unique<pcap_rlc_impl>();
   du_high_configuration     du_hi_cfg = {};
   du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;

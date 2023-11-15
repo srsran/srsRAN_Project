@@ -51,7 +51,7 @@ public:
   struct du_sim {
     srs_du::du_high_configuration       du_high_cfg;
     phy_test_dummy                      phy;
-    dummy_mac_pcap                      mac_pcap;
+    null_mac_pcap                       mac_pcap;
     pcap_rlc_dummy                      rlc_pcap;
     dummy_scheduler_ue_metrics_notifier ue_metrics_notifier;
     std::unique_ptr<du_high>            du_high_inst;

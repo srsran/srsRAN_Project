@@ -69,7 +69,7 @@ protected:
   dummy_dl_executor_mapper  dl_exec_mapper{&worker};
   dummy_mac_event_indicator du_mng_notif;
   dummy_mac_result_notifier phy_notifier;
-  dummy_mac_pcap            pcap;
+  null_mac_pcap             pcap;
 
   // Create a MAC config object.
   mac_control_config          mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker};

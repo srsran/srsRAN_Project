@@ -352,7 +352,7 @@ public:
   std::unique_ptr<du_high_impl>      du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count = 0;
-  dummy_mac_pcap                     mac_pcap;
+  null_mac_pcap                      mac_pcap;
   pcap_rlc_dummy                     rlc_pcap;
 
   byte_buffer pdcp_pdu;
