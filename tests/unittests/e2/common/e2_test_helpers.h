@@ -83,7 +83,7 @@ class dummy_e2ap_pcap : public dlt_pcap
 {
 public:
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
 };

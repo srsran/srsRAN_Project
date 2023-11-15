@@ -37,7 +37,7 @@ public:
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
 
   void close() override;
-  bool is_write_enabled() override { return writer.is_write_enabled(); }
+  bool is_write_enabled() const override { return writer.is_write_enabled(); }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override;
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
 

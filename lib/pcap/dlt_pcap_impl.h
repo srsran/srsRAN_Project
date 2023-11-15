@@ -32,7 +32,7 @@ public:
   dlt_pcap_impl& operator=(dlt_pcap_impl&& other)      = delete;
 
   void close() override;
-  bool is_write_enabled() override { return writer.is_write_enabled(); }
+  bool is_write_enabled() const override { return writer.is_write_enabled(); }
   void push_pdu(byte_buffer pdu) override;
   void push_pdu(const_span<uint8_t> pdu) override;
 

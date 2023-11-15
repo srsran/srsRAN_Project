@@ -69,7 +69,7 @@ void pcap_rlc_impl::close()
   }
 }
 
-bool pcap_rlc_impl::is_write_enabled()
+bool pcap_rlc_impl::is_write_enabled() const
 {
   return is_open.load(std::memory_order_relaxed);
 }

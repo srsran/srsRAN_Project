@@ -303,14 +303,5 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_ngap_pcap : public dlt_pcap
-{
-public:
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(const_span<uint8_t> pdu) override {}
-  void push_pdu(byte_buffer pdu) override {}
-};
-
 } // namespace srs_cu_cp
 } // namespace srsran

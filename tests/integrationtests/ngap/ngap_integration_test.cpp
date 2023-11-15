@@ -69,7 +69,7 @@ private:
   std::unique_ptr<sctp_network_gateway> gw;
   ngap_asn1_packer                      packer;
   ngap_interface*                       ngap = nullptr;
-  dummy_ngap_pcap                       pcap;
+  dummy_dlt_pcap                        pcap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

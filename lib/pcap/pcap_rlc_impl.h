@@ -30,7 +30,7 @@ public:
 
   void open(const std::string& filename_) override;
   void close() override;
-  bool is_write_enabled() override;
+  bool is_write_enabled() const override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 

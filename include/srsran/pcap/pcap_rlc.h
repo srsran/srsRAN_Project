@@ -30,7 +30,7 @@ public:
 
   virtual void open(const std::string& filename_)                                          = 0;
   virtual void close()                                                                     = 0;
-  virtual bool is_write_enabled()                                                          = 0;
+  virtual bool is_write_enabled() const                                                    = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) = 0;
 
@@ -104,7 +104,7 @@ public:
 
   void open(const std::string& filename_) override {}
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
 

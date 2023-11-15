@@ -64,7 +64,7 @@ public:
   virtual ~mac_pcap() = default;
 
   virtual void close()                                                        = 0;
-  virtual bool is_write_enabled()                                             = 0;
+  virtual bool is_write_enabled() const                                       = 0;
   virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
   virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
 };
@@ -83,7 +83,7 @@ public:
   virtual ~dlt_pcap() = default;
 
   virtual void close()                           = 0;
-  virtual bool is_write_enabled()                = 0;
+  virtual bool is_write_enabled() const          = 0;
   virtual void push_pdu(const_span<uint8_t> pdu) = 0;
   virtual void push_pdu(byte_buffer pdu)         = 0;
 };
@@ -99,7 +99,7 @@ class dummy_dlt_pcap : public dlt_pcap
 {
 public:
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
 };
@@ -113,7 +113,7 @@ class dummy_mac_pcap : public mac_pcap
 {
 public:
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
