@@ -10,7 +10,6 @@
 
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
-#include "lib/pcap/mac_pcap_impl.h"
 #include "lib/pcap/pcap_rlc_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
@@ -776,7 +775,7 @@ int main(int argc, char** argv)
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
   timer_manager             app_timers{256};
-  std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
+  dummy_mac_pcap            mac_p;
   std::unique_ptr<pcap_rlc> rlc_p     = std::make_unique<pcap_rlc_impl>();
   du_high_configuration     du_hi_cfg = {};
   du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;
@@ -785,7 +784,7 @@ int main(int argc, char** argv)
   du_hi_cfg.timers                    = &app_timers;
   du_hi_cfg.cells                     = {config_helpers::make_default_du_cell_config(cell_config)};
   du_hi_cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
-  du_hi_cfg.mac_p                     = mac_p.get();
+  du_hi_cfg.mac_p                     = &mac_p;
   du_hi_cfg.rlc_p                     = rlc_p.get();
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();

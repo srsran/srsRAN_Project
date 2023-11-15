@@ -306,7 +306,6 @@ private:
 class dummy_ngap_pcap : public dlt_pcap
 {
 public:
-  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}

@@ -17,7 +17,6 @@
 #include "lib/e2/e2sm/e2sm_param_provider.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2.h"
@@ -27,6 +26,7 @@
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/network_gateway.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
@@ -82,7 +82,6 @@ private:
 class dummy_e2ap_pcap : public dlt_pcap
 {
 public:
-  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
@@ -868,4 +867,5 @@ class e2_test_setup : public e2_test_base
     srslog::flush();
   }
 };
+
 } // namespace srsran

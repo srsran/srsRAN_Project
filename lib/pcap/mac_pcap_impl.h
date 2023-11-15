@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "backend_pcap_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_worker.h"
@@ -29,27 +29,26 @@ constexpr uint8_t     MAC_NR_HARQID                  = 0x06;
 class mac_pcap_impl final : public mac_pcap
 {
 public:
-  mac_pcap_impl();
-  explicit mac_pcap_impl(const os_sched_affinity_bitmask& mask);
+  explicit mac_pcap_impl(const std::string& filename, mac_pcap_type type, task_executor& backend_exec);
   ~mac_pcap_impl() override;
   mac_pcap_impl(const mac_pcap_impl& other)            = delete;
   mac_pcap_impl& operator=(const mac_pcap_impl& other) = delete;
   mac_pcap_impl(mac_pcap_impl&& other)                 = delete;
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
 
-  void open(const std::string& filename_, mac_pcap_type type) override;
   void close() override;
-  bool is_write_enabled() override;
+  bool is_write_enabled() override { return writer.is_write_enabled(); }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override;
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
 
 private:
-  void                         write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
-  mac_pcap_type                type;
-  std::vector<uint8_t>         tmp_mem;
-  os_sched_affinity_bitmask    cpu_mask;
-  std::unique_ptr<task_worker> worker = nullptr;
-  pcap_file_base               writter;
-  std::atomic<bool>            is_open{false};
+  void write_pdu(pcap_file_base& file, const mac_nr_context_info& context, const byte_buffer& pdu);
+
+  mac_pcap_type type;
+
+  backend_pcap_writer writer;
+
+  std::vector<uint8_t> tmp_mem;
 };
+
 } // namespace srsran

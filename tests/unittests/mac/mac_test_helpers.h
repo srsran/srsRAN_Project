@@ -167,18 +167,6 @@ struct mac_test_ue {
   mac_ue_create_request make_ue_create_request();
 };
 
-class dummy_mac_pcap : public mac_pcap
-{
-public:
-  ~dummy_mac_pcap() override = default;
-
-  void open(const std::string& filename_, mac_pcap_type type) override {}
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
-};
-
 } // namespace test_helpers
 
 } // namespace srsran

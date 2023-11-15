@@ -19,7 +19,6 @@
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
-#include "srsran/cu_cp/cu_cp_types.h"
 
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
@@ -43,8 +42,6 @@
 #include "helpers/metrics_hub.h"
 
 #include "gnb_du_factory.h"
-#include "lib/pcap/dlt_pcap_impl.h"
-#include "lib/pcap/mac_pcap_impl.h"
 #include "lib/pcap/pcap_rlc_impl.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
@@ -320,41 +317,28 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
+  worker_manager workers{gnb_cfg};
+
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
-  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "ngap", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.ngap.enabled) {
-    ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename);
+  std::unique_ptr<dlt_pcap> ngap_p = create_dlt_pcap(
+      PCAP_NGAP_DLT, "NGAP", gnb_cfg.pcap_cfg.ngap.enabled ? gnb_cfg.pcap_cfg.ngap.filename : "", *workers.pcap_exec);
+  std::unique_ptr<dlt_pcap> e1ap_p = create_dlt_pcap(
+      PCAP_E1AP_DLT, "E1AP", gnb_cfg.pcap_cfg.e1ap.enabled ? gnb_cfg.pcap_cfg.e1ap.filename : "", *workers.pcap_exec);
+  std::unique_ptr<dlt_pcap> f1ap_p = create_dlt_pcap(
+      PCAP_F1AP_DLT, "F1AP", gnb_cfg.pcap_cfg.f1ap.enabled ? gnb_cfg.pcap_cfg.f1ap.filename : "", *workers.pcap_exec);
+  std::unique_ptr<dlt_pcap> e2ap_p = create_dlt_pcap(
+      PCAP_E2AP_DLT, "E2AP", gnb_cfg.pcap_cfg.e2ap.enabled ? gnb_cfg.pcap_cfg.e2ap.filename : "", *workers.pcap_exec);
+  std::unique_ptr<dlt_pcap> gtpu_p = create_dlt_pcap(
+      PCAP_GTPU_DLT, "GTPU", gnb_cfg.pcap_cfg.gtpu.enabled ? gnb_cfg.pcap_cfg.gtpu.filename : "", *workers.pcap_exec);
+  if (gnb_cfg.pcap_cfg.mac.type != "dlt" and gnb_cfg.pcap_cfg.mac.type != "udp") {
+    report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
   }
-  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "e1ap", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.e1ap.enabled) {
-    e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename);
-  }
-  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "f1ap", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.f1ap.enabled) {
-    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename);
-  }
-  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "e2ap", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.e2ap.enabled) {
-    e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename);
-  }
-  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "gtpu", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.gtpu.enabled) {
-    gtpu_p->open(gnb_cfg.pcap_cfg.gtpu.filename);
-  }
-
-  std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>(low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.mac.enabled) {
-    if (gnb_cfg.pcap_cfg.mac.type == "dlt") {
-      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::dlt);
-    } else if (gnb_cfg.pcap_cfg.mac.type == "udp") {
-      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::udp);
-    } else {
-      report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
-    }
-  }
-
+  std::unique_ptr<mac_pcap> mac_p =
+      create_mac_pcap(gnb_cfg.pcap_cfg.mac.enabled ? gnb_cfg.pcap_cfg.mac.filename : "",
+                      gnb_cfg.pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
+                      *workers.pcap_exec);
   std::unique_ptr<pcap_rlc> rlc_p = std::make_unique<pcap_rlc_impl>(low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.rlc.enabled) {
     if (gnb_cfg.pcap_cfg.rlc.rb_type == "all") {
@@ -373,8 +357,6 @@ int main(int argc, char** argv)
       report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
     }
   }
-
-  worker_manager workers{gnb_cfg};
 
   f1c_gateway_local_connector  f1c_gw{*f1ap_p};
   e1ap_gateway_local_connector e1ap_gw{*e1ap_p};

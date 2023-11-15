@@ -1098,7 +1098,7 @@ inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem
     return *src.segments().begin();
   }
   // non-contiguous: copy required
-  srsran_assert(src.length() <= tmp_mem.size_bytes(),
+  srsran_assert(src.length() <= tmp_mem.size(),
                 "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
                 src.length(),
                 tmp_mem.size());

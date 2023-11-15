@@ -16,6 +16,8 @@
 
 namespace srsran {
 
+class task_executor;
+
 // Radio Type
 constexpr uint8_t PCAP_FDD_RADIO = 1;
 constexpr uint8_t PCAP_TDD_RADIO = 2;
@@ -61,7 +63,6 @@ class mac_pcap
 public:
   virtual ~mac_pcap() = default;
 
-  virtual void open(const std::string& filename_, mac_pcap_type type)         = 0;
   virtual void close()                                                        = 0;
   virtual bool is_write_enabled()                                             = 0;
   virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
@@ -81,22 +82,40 @@ class dlt_pcap
 public:
   virtual ~dlt_pcap() = default;
 
-  virtual void open(const std::string& filename_) = 0;
-  virtual void close()                            = 0;
-  virtual bool is_write_enabled()                 = 0;
-  virtual void push_pdu(const_span<uint8_t> pdu)  = 0;
-  virtual void push_pdu(byte_buffer pdu)          = 0;
+  virtual void close()                           = 0;
+  virtual bool is_write_enabled()                = 0;
+  virtual void push_pdu(const_span<uint8_t> pdu) = 0;
+  virtual void push_pdu(byte_buffer pdu)         = 0;
 };
 
-/// @brief dummy pcap class that can be used for unit tests.
+/// \brief Creates a generic DLT PCAP message sink that writes the incoming PDUs to a file.
+///
+/// If the provided filename is empty, the returned pcap writer will not be enabled.
+std::unique_ptr<dlt_pcap>
+create_dlt_pcap(unsigned dlt, const std::string& layer_name, const std::string& filename, task_executor& backend_exec);
+
+/// Null sink for DLT pcap messages. This is useful in unit tests and when the application disables pcaps.
 class dummy_dlt_pcap : public dlt_pcap
 {
 public:
-  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
+};
+
+/// Creates a MAC pcap writer to a file.
+std::unique_ptr<mac_pcap>
+create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec);
+
+/// Null sink for MAC pcap messages. This is useful in unit tests and when the application disables pcaps.
+class dummy_mac_pcap : public mac_pcap
+{
+public:
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
+  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
 } // namespace srsran

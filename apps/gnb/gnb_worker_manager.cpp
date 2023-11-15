@@ -52,6 +52,8 @@ static std::vector<gnb_os_sched_affinity_config> build_affinity_manager_dependen
 
 worker_manager::worker_manager(const gnb_appconfig& appcfg) : affinity_mng(build_affinity_manager_dependencies(appcfg))
 {
+  create_non_rt_worker_pool(appcfg);
+
   create_du_cu_executors(appcfg);
 
   create_ru_executors(appcfg);
@@ -99,6 +101,27 @@ void worker_manager::create_prio_worker(const std::string&                      
   if (not exec_mng.add_execution_context(create_execution_context(worker_desc))) {
     report_fatal_error("Failed to instantiate {} execution context", worker_desc.name);
   }
+}
+
+void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+
+  task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
+
+  const worker_pool pool{
+      "non_rt_worker_pool",
+      2,
+      {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+      {{"pcap_exec", strand_cfg}},
+      std::chrono::microseconds{100},
+      os_thread_realtime_priority::no_realtime(),
+      std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
+  if (not exec_mng.add_execution_context(create_execution_context(pool))) {
+    report_fatal_error("Failed to instantiate {} execution context", pool.name);
+  }
+
+  pcap_exec = exec_mng.executors().at("pcap_exec");
 }
 
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)

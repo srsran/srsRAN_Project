@@ -51,9 +51,9 @@ private:
 /// \param callable function that is called at scope exit
 /// \return object that has to be stored in a local variable
 template <typename Callable>
-detail::scope_exit<typename std::decay<Callable>::type> make_scope_exit(Callable&& callable)
+detail::scope_exit<std::decay_t<Callable>> make_scope_exit(Callable&& callable)
 {
-  return detail::scope_exit<typename std::decay<Callable>::type>{std::forward<Callable>(callable)};
+  return detail::scope_exit<std::decay_t<Callable>>{std::forward<Callable>(callable)};
 }
 
 #define DEFER(FUNC) auto on_exit_call##__LINE__ = srsran::make_scope_exit([&]() { FUNC })

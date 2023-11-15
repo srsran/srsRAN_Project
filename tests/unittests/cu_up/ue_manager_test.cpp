@@ -10,7 +10,6 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>

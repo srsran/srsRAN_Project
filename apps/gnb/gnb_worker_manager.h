@@ -59,6 +59,7 @@ struct worker_manager {
   task_executor*                           cu_cp_e2_exec    = nullptr;
   task_executor*                           cu_up_e2_exec    = nullptr;
   task_executor*                           metrics_hub_exec = nullptr;
+  task_executor*                           pcap_exec        = nullptr;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
@@ -92,6 +93,8 @@ private:
                           const std::vector<execution_config_helper::worker_pool::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
+
+  void create_non_rt_worker_pool(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the Control and Distributed Units executors.
   void create_du_cu_executors(const gnb_appconfig& appcfg);

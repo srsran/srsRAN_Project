@@ -44,14 +44,14 @@ struct pcaprec_hdr_t {
 class pcap_file_base
 {
 public:
-  pcap_file_base() : logger(srslog::fetch_basic_logger("PCAP")){};
+  pcap_file_base() : logger(srslog::fetch_basic_logger("PCAP")) {}
   ~pcap_file_base()                                      = default;
   pcap_file_base(const pcap_file_base& other)            = delete;
   pcap_file_base& operator=(const pcap_file_base& other) = delete;
   pcap_file_base(pcap_file_base&& other)                 = delete;
   pcap_file_base& operator=(pcap_file_base&& other)      = delete;
 
-  bool is_write_enabled();
+  bool is_write_enabled() const { return write_enabled.load(std::memory_order_relaxed); }
 
   bool dlt_pcap_open(uint32_t dlt, const std::string& filename);
   void dlt_pcap_close();
@@ -65,4 +65,5 @@ private:
   std::string           filename;
   uint32_t              dlt = 0;
 };
+
 } // namespace srsran

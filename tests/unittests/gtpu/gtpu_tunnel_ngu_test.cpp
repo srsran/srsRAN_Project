@@ -109,7 +109,7 @@ protected:
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  dummy_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
@@ -127,7 +127,7 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
 TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  dummy_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
@@ -155,7 +155,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 /// \brief Test correct transmission of GTP-U packet
 TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  dummy_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};

@@ -8,8 +8,11 @@
  *
  */
 
-#include "lib/pcap/mac_pcap_impl.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
+
+using namespace srsran;
 
 void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus);
 void write_pcap_nr_thread_function_large_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus);
@@ -32,19 +35,18 @@ protected:
 
   void TearDown() override
   {
-    test_logger.info("Closing PCAP handle");
-    mac_pcap_writer.close();
     // flush logger after each test
     srslog::flush();
   }
 
-  srsran::mac_pcap_impl mac_pcap_writer;
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  task_worker                    worker{"pcap", 1024};
+  std::unique_ptr<task_executor> pcap_exec   = make_task_executor_ptr(worker);
+  srslog::basic_logger&          test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 TEST_F(pcap_mac_test, write_pdu)
 {
-  mac_pcap_writer.open("mac_write_pdu.pcap", srsran::mac_pcap_type::udp);
+  auto mac_pcap_writer       = create_mac_pcap("mac_write_pdu.pcap", srsran::mac_pcap_type::udp, *pcap_exec);
   std::array<uint8_t, 17> tv = {
       0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
   int                         crnti   = 0x01011;
@@ -60,12 +62,12 @@ TEST_F(pcap_mac_test, write_pdu)
   context.harqid                      = harqid;
   context.system_frame_number         = tti / 10;
   context.sub_frame_number            = tti % 10;
-  mac_pcap_writer.push_pdu(context, tv);
+  mac_pcap_writer->push_pdu(context, tv);
 }
 
 TEST_F(pcap_mac_test, write_many_spans)
 {
-  mac_pcap_writer.open("mac_write_many_spans.pcap", srsran::mac_pcap_type::udp);
+  auto mac_pcap_writer = create_mac_pcap("mac_write_many_spans.pcap", mac_pcap_type::udp, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -74,7 +76,8 @@ TEST_F(pcap_mac_test, write_many_spans)
   test_logger.info("Start writer_threads");
 
   for (uint32_t i = 0; i < num_threads; i++) {
-    writer_threads.push_back(std::thread(write_pcap_nr_thread_function_spans, &mac_pcap_writer, num_pdus_per_thread));
+    writer_threads.push_back(
+        std::thread(write_pcap_nr_thread_function_spans, mac_pcap_writer.get(), num_pdus_per_thread));
   }
 
   test_logger.info("Wait for writer_threads to finish");
@@ -86,7 +89,7 @@ TEST_F(pcap_mac_test, write_many_spans)
 
 TEST_F(pcap_mac_test, write_many_byte_buffers)
 {
-  mac_pcap_writer.open("mac_write_many_byte_buffers.pcap", srsran::mac_pcap_type::udp);
+  auto mac_pcap_writer = create_mac_pcap("mac_write_many_byte_buffers.pcap", mac_pcap_type::udp, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -96,7 +99,7 @@ TEST_F(pcap_mac_test, write_many_byte_buffers)
 
   for (uint32_t i = 0; i < num_threads; i++) {
     writer_threads.push_back(
-        std::thread(write_pcap_nr_thread_function_byte_buffer, &mac_pcap_writer, num_pdus_per_thread));
+        std::thread(write_pcap_nr_thread_function_byte_buffer, mac_pcap_writer.get(), num_pdus_per_thread));
   }
 
   test_logger.info("Wait for writer_threads to finish");
@@ -108,9 +111,9 @@ TEST_F(pcap_mac_test, write_many_byte_buffers)
 
 TEST_F(pcap_mac_test, write_dlt_pdu)
 {
-  mac_pcap_writer.open("mac_write_dlt_pdu.pcap", srsran::mac_pcap_type::dlt);
-  std::array<uint8_t, 17> tv = {
-      0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
+  auto                    mac_pcap_writer = create_mac_pcap("mac_write_dlt_pdu.pcap", mac_pcap_type::dlt, *pcap_exec);
+  std::array<uint8_t, 17> tv              = {
+                   0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
   int                         crnti   = 0x01011;
   int                         ue_id   = 2;
   int                         harqid  = 0;
@@ -124,12 +127,12 @@ TEST_F(pcap_mac_test, write_dlt_pdu)
   context.harqid                      = harqid;
   context.system_frame_number         = tti / 10;
   context.sub_frame_number            = tti % 10;
-  mac_pcap_writer.push_pdu(context, tv);
+  mac_pcap_writer->push_pdu(context, tv);
 }
 
 TEST_F(pcap_mac_test, write_many_dlt_spans)
 {
-  mac_pcap_writer.open("mac_write_many_dlt_spans.pcap", srsran::mac_pcap_type::dlt);
+  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -138,7 +141,8 @@ TEST_F(pcap_mac_test, write_many_dlt_spans)
   test_logger.info("Start writer_threads");
 
   for (uint32_t i = 0; i < num_threads; i++) {
-    writer_threads.push_back(std::thread(write_pcap_nr_thread_function_spans, &mac_pcap_writer, num_pdus_per_thread));
+    writer_threads.push_back(
+        std::thread(write_pcap_nr_thread_function_spans, mac_pcap_writer.get(), num_pdus_per_thread));
   }
 
   test_logger.info("Wait for writer_threads to finish");
@@ -150,7 +154,7 @@ TEST_F(pcap_mac_test, write_many_dlt_spans)
 
 TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
 {
-  mac_pcap_writer.open("mac_write_many_dlt_spans.pcap", srsran::mac_pcap_type::dlt);
+  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_spans.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 100;
@@ -160,7 +164,7 @@ TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
 
   for (uint32_t i = 0; i < num_threads; i++) {
     writer_threads.push_back(
-        std::thread(write_pcap_nr_thread_function_byte_buffer, &mac_pcap_writer, num_pdus_per_thread));
+        std::thread(write_pcap_nr_thread_function_byte_buffer, mac_pcap_writer.get(), num_pdus_per_thread));
   }
 
   test_logger.info("Wait for writer_threads to finish");
@@ -172,7 +176,7 @@ TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
 
 TEST_F(pcap_mac_test, write_large_byte_buffers)
 {
-  mac_pcap_writer.open("mac_write_many_dlt_large_buffers.pcap", srsran::mac_pcap_type::dlt);
+  auto mac_pcap_writer = create_mac_pcap("mac_write_many_dlt_large_buffers.pcap", mac_pcap_type::dlt, *pcap_exec);
 
   uint32_t num_threads         = 10;
   uint32_t num_pdus_per_thread = 2;
@@ -182,7 +186,7 @@ TEST_F(pcap_mac_test, write_large_byte_buffers)
 
   for (uint32_t i = 0; i < num_threads; i++) {
     writer_threads.push_back(
-        std::thread(write_pcap_nr_thread_function_large_byte_buffer, &mac_pcap_writer, num_pdus_per_thread));
+        std::thread(write_pcap_nr_thread_function_large_byte_buffer, mac_pcap_writer.get(), num_pdus_per_thread));
   }
 
   test_logger.info("Wait for writer_threads to finish");

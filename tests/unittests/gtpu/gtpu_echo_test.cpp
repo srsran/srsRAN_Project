@@ -103,7 +103,7 @@ protected:
 /// \brief Test correct creation of echo entity
 TEST_F(gtpu_echo_test, entity_creation)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  dummy_dlt_pcap dummy_pcap;
   // init echo entity
   gtpu_echo_creation_message msg = {};
   msg.gtpu_pcap                  = &dummy_pcap;
@@ -116,7 +116,7 @@ TEST_F(gtpu_echo_test, entity_creation)
 /// \brief Test correct reception of an echo message and check for the response
 TEST_F(gtpu_echo_test, rx_echo_req_tx_echo_rep)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  dummy_dlt_pcap dummy_pcap;
   // init echo entity
   gtpu_echo_creation_message msg = {};
   msg.gtpu_pcap                  = &dummy_pcap;
