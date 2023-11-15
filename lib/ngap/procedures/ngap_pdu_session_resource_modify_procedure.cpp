@@ -32,11 +32,13 @@ ngap_pdu_session_resource_modify_procedure::ngap_pdu_session_resource_modify_pro
     const ngap_ue_ids&                               ue_ids_,
     ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
     ngap_message_notifier&                           amf_notif_,
+    ngap_control_message_handler&                    ngap_ctrl_handler_,
     ngap_ue_logger&                                  logger_) :
   request(request_),
   ue_ids(ue_ids_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
+  ngap_ctrl_handler(ngap_ctrl_handler_),
   logger(logger_)
 {
 }
@@ -53,6 +55,11 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
   // TODO: Handle optional IEs
 
   send_pdu_session_resource_modify_response();
+
+  // Request UE release in case of a failure to cleanup CU-CP
+  if (!response.pdu_session_res_failed_to_modify_list.empty()) {
+    send_ue_context_release_request();
+  }
 
   logger.log_debug("\"{}\" finalized", name());
 
@@ -75,4 +82,11 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
 
   logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);
+}
+
+void ngap_pdu_session_resource_modify_procedure::send_ue_context_release_request()
+{
+  cu_cp_ue_context_release_request ue_context_release_request{
+      ue_ids.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason};
+  ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request);
 }

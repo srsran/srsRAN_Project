@@ -123,7 +123,7 @@ struct sector_dependencies {
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// User-Plane received symbol notifier.
-  uplane_rx_symbol_notifier* notifier = nullptr;
+  std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
   /// Ethernet gateway.
   std::unique_ptr<ether::gateway> eth_gateway;
 };

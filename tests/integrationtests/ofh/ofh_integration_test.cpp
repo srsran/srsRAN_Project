@@ -566,13 +566,13 @@ private:
   ru_compression_params compr_params;
   unsigned              nof_prb;
   units::bytes          prb_size;
-  // Ethernet structures.
-  int         socket_fd = -1;
-  sockaddr_ll socket_address;
   // Stores byte arrays for each antenna.
   std::vector<std::vector<std::vector<uint8_t>>>               test_data;
   circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>         ul_eaxc;
+  // Ethernet structures.
+  int         socket_fd = -1;
+  sockaddr_ll socket_address;
 };
 
 /// DU emulator that pushes resource grids to the OFH RU implementation.

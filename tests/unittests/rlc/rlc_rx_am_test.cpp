@@ -83,7 +83,8 @@ protected:
     tester = std::make_unique<rlc_rx_am_test_frame>(config.sn_field_length);
 
     // Create RLC AM RX entity
-    rlc = std::make_unique<rlc_rx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+    rlc = std::make_unique<rlc_rx_am_entity>(0,
+                                             du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
                                              config,
                                              *tester,

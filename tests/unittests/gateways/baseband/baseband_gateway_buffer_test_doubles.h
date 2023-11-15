@@ -89,11 +89,13 @@ public:
 
   /// Constructor from a writer interface.
   baseband_gateway_buffer_read_only(baseband_gateway_buffer_writer& other) noexcept :
-    nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
+    nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples())
   {
+    data.clear();
+    data.reserve(nof_channels * nof_samples);
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
-      span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
-      srsvec::copy(buffer, other[channel]);
+      span<const cf_t> source = other[channel];
+      data.insert(data.end(), source.begin(), source.end());
     }
   }
 

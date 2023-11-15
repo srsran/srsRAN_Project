@@ -86,21 +86,11 @@ private:
                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                    const pdu_t&                                                 pdu);
 
-  /// \brief Asserts PDU.
-  ///
-  /// It triggers an assertion if the PDU is not valid for this processor.
-  void assert_pdu() const;
-
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
 
   /// Processes PDSCH DM-RS.
   void process_dmrs();
-
-  /// \brief Maps the PDSCH resource elements.
-  /// \param[in]  buffer  Symbols after modulation mapping.
-  /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
-  void map(span<const ci8_t> codeword);
 
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;

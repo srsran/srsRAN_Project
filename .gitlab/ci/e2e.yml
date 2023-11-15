@@ -20,7 +20,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "13"
+    ref: "14"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -191,7 +191,6 @@ zmq_srsue:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      allow_failure: true
   interruptible: false
   variables:
     TESTBED: "zmq_srsue"

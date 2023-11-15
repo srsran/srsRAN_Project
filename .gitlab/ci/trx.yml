@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "13"
+    ref: "14"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci/build.yml
 

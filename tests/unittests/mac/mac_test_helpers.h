@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_sched/mac_scheduler_adapter.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/pcap/pcap.h"

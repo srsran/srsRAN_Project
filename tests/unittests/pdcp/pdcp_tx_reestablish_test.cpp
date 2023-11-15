@@ -21,11 +21,8 @@
  */
 
 #include "pdcp_tx_reestablish_test.h"
-#include "lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/bit_encoding.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -54,6 +51,9 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
   ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
   pdcp_tx->reestablish({});
   ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+
+  // Check the state is reset
+  ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
 }
 
 /// Test DRB UM reestablishment
@@ -75,6 +75,9 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
   pdcp_tx->reestablish(sec_cfg);
   ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+
+  // Check the state is reset
+  ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
 }
 
 /// Test DRB AM reestablishment
@@ -96,16 +99,45 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   tick_all(5);
   ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
 
+  // Confirm transmission of all PDUs (up to and including SN=4)
+  pdcp_tx->handle_transmit_notification(4);
+
+  {
+    // Check the expected state: tx_trans awaits SN=5; tx_next_ack still awaits delivery of SN=0
+    pdcp_tx_state expected_state = {5, 5, 0};
+    ASSERT_EQ(pdcp_tx->get_state(), expected_state);
+  }
+
   // Check that non-ACKed SDUs are retransmitted.
   ASSERT_EQ(5, test_frame.pdu_queue.size());
   pdcp_tx->handle_delivery_notification(1); // ACK SN=0 and 1.
+
+  {
+    // Check the expected state: tx_trans awaits SN=5; tx_next_ack is advanced to SN=2
+    pdcp_tx_state expected_state = {5, 5, 2};
+    ASSERT_EQ(pdcp_tx->get_state(), expected_state);
+  }
+
   pdcp_tx->reestablish(sec_cfg);
   ASSERT_EQ(8, test_frame.pdu_queue.size()); // SN=2, 3 and 4 RETXed
 
   // Check if discard timer was not reset.
   ASSERT_EQ(3, pdcp_tx->nof_discard_timers());
+
+  {
+    // Check the expected state: not reset, but tx_trans shall be rewinded to tx_next_ack
+    pdcp_tx_state expected_state = {5, 2, 2};
+    ASSERT_EQ(pdcp_tx->get_state(), expected_state);
+  }
+
   tick_all(5);
   ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+
+  {
+    // Check the expected state: everything advanced to 5
+    pdcp_tx_state expected_state = {5, 5, 5};
+    ASSERT_EQ(pdcp_tx->get_state(), expected_state);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////

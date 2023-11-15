@@ -57,3 +57,5 @@ In [open5gs.env](open5gs/open5gs.env) the following parameters can be set:
 - OPEN5GS_IP: This must be set to the IP of the container (here: 10.53.1.2).
 - UE_IP_BASE: Defines the IP base used for connected UEs (here: 10.45.0).
 - DEBUG (default: false): This can be set to true to run Open5GS in debug mode.
+
+For more info, please check it's own [README.md](open5gs/README.md).

@@ -65,7 +65,7 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
 static std::unique_ptr<data_flow_uplane_uplink_prach>
 create_uplink_prach_data_flow(const receiver_config&                            receiver_cfg,
                               srslog::basic_logger&                             logger,
-                              uplane_rx_symbol_notifier&                        notifier,
+                              std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
                               std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
 {
@@ -75,7 +75,7 @@ create_uplink_prach_data_flow(const receiver_config&                            
 
   data_flow_uplane_uplink_prach_impl_dependencies dependencies;
   dependencies.logger                     = &logger;
-  dependencies.notifier                   = &notifier;
+  dependencies.notifier                   = notifier;
   dependencies.ul_cplane_context_repo_ptr = ul_cp_context_repo;
   dependencies.prach_context_repo         = prach_context_repo;
   dependencies.uplane_decoder             = create_uplane_decoder(receiver_cfg, logger);
@@ -86,7 +86,7 @@ create_uplink_prach_data_flow(const receiver_config&                            
 static std::unique_ptr<data_flow_uplane_uplink_data>
 create_uplink_data_flow(const receiver_config&                            receiver_cfg,
                         srslog::basic_logger&                             logger,
-                        uplane_rx_symbol_notifier&                        notifier,
+                        std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                         std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
 {
@@ -95,7 +95,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 
   data_flow_uplane_uplink_data_impl_dependencies dependencies;
   dependencies.logger                     = &logger;
-  dependencies.notifier                   = &notifier;
+  dependencies.notifier                   = notifier;
   dependencies.ul_cplane_context_repo_ptr = ul_cp_context_repo;
   dependencies.ul_context_repo            = ul_slot_context_repo;
   dependencies.uplane_decoder             = create_uplane_decoder(receiver_cfg, logger);
@@ -106,7 +106,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 static receiver_impl_dependencies
 resolve_receiver_dependencies(const receiver_config&                            receiver_cfg,
                               srslog::basic_logger&                             logger,
-                              uplane_rx_symbol_notifier&                        notifier,
+                              std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
                               std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                               std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
@@ -131,10 +131,10 @@ resolve_receiver_dependencies(const receiver_config&                            
   return dependencies;
 }
 
-std::unique_ptr<receiver>
+std::unique_ptr<receiver_impl>
 srsran::ofh::create_receiver(const receiver_config&                            receiver_cfg,
                              srslog::basic_logger&                             logger,
-                             uplane_rx_symbol_notifier&                        notifier,
+                             std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                              std::shared_ptr<prach_context_repository>         prach_context_repo,
                              std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)

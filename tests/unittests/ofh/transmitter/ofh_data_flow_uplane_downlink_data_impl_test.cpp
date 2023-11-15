@@ -94,7 +94,7 @@ protected:
     nof_symbols(3),
     ru_nof_prbs(273),
     du_nof_prbs(273),
-    data_flow(get_config()),
+    data_flow(get_config(), generate_data_flow_dependencies()),
     rg_reader_spy(1, nof_symbols, du_nof_prbs)
   {
     initialize_grid_reader();
@@ -103,32 +103,38 @@ protected:
   data_flow_uplane_downlink_data_impl_config get_config()
   {
     data_flow_uplane_downlink_data_impl_config config;
-
-    config.logger         = &srslog::fetch_basic_logger("TEST");
-    config.ru_nof_prbs    = ru_nof_prbs;
-    config.vlan_params    = vlan_params;
-    config.compr_params   = comp_params;
-    config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
-    config.frame_pool     = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
-
-    {
-      auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();
-      uplane_builder    = temp.get();
-      config.up_builder = std::move(temp);
-    }
-    {
-      auto temp          = std::make_unique<ether::testing::vlan_frame_builder_spy>();
-      vlan_builder       = temp.get();
-      config.eth_builder = std::move(temp);
-    }
-    {
-      auto temp            = std::make_unique<ecpri::testing::packet_builder_spy>();
-      ecpri_builder        = temp.get();
-      config.ecpri_builder = std::move(temp);
-    }
+    config.ru_nof_prbs  = ru_nof_prbs;
+    config.vlan_params  = vlan_params;
+    config.compr_params = comp_params;
 
     return config;
   };
+
+  data_flow_uplane_downlink_data_impl_dependencies generate_data_flow_dependencies()
+  {
+    data_flow_uplane_downlink_data_impl_dependencies dependencies;
+    dependencies.logger         = &srslog::fetch_basic_logger("TEST");
+    dependencies.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
+    dependencies.frame_pool     = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
+
+    {
+      auto temp               = std::make_unique<ofh_uplane_packet_builder_spy>();
+      uplane_builder          = temp.get();
+      dependencies.up_builder = std::move(temp);
+    }
+    {
+      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+      vlan_builder             = temp.get();
+      dependencies.eth_builder = std::move(temp);
+    }
+    {
+      auto temp                  = std::make_unique<ecpri::testing::packet_builder_spy>();
+      ecpri_builder              = temp.get();
+      dependencies.ecpri_builder = std::move(temp);
+    }
+
+    return dependencies;
+  }
 
   void initialize_grid_reader()
   {
@@ -226,11 +232,14 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
   context.symbol_range = {0, 3};
 
   data_flow_uplane_downlink_data_impl_config config;
-  config.logger         = &srslog::fetch_basic_logger("TEST");
-  config.ru_nof_prbs    = 273;
-  config.vlan_params    = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
-  config.compr_params   = {compression_type::BFP, 9};
-  config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
+
+  config.ru_nof_prbs  = 273;
+  config.vlan_params  = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
+  config.compr_params = {compression_type::BFP, 9};
+
+  data_flow_uplane_downlink_data_impl_dependencies dependencies;
+  dependencies.logger         = &srslog::fetch_basic_logger("TEST");
+  dependencies.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
 
   unsigned prb_size   = 28;
   unsigned frame_size = prb_size * config.ru_nof_prbs;
@@ -240,21 +249,21 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
   {
     auto temp = std::make_unique<ofh_uplane_packet_builder_spy>();
     frame_size += temp->get_header_size(config.compr_params).value();
-    uplane_builder    = temp.get();
-    config.up_builder = std::move(temp);
+    uplane_builder          = temp.get();
+    dependencies.up_builder = std::move(temp);
   }
   {
     auto temp = std::make_unique<ether::testing::vlan_frame_builder_spy>();
     frame_size += temp->get_header_size().value();
-    config.eth_builder = std::move(temp);
+    dependencies.eth_builder = std::move(temp);
   }
   {
     auto temp = std::make_unique<ecpri::testing::packet_builder_spy>();
     frame_size += temp->get_header_size(ecpri::message_type::iq_data).value();
-    config.ecpri_builder = std::move(temp);
+    dependencies.ecpri_builder = std::move(temp);
   }
 
-  config.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(frame_size), 2);
+  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(frame_size), 2);
 
   resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
   for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
@@ -264,7 +273,7 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
     }
   }
 
-  data_flow_uplane_downlink_data_impl data_flow(std::move(config));
+  data_flow_uplane_downlink_data_impl data_flow(config, std::move(dependencies));
   data_flow.enqueue_section_type_1_message(context, rg_reader_spy);
 
   // Assert number of packets.
@@ -281,30 +290,33 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
   context.symbol_range = {0, 3};
 
   data_flow_uplane_downlink_data_impl_config config;
-  config.logger         = &srslog::fetch_basic_logger("TEST");
-  config.ru_nof_prbs    = 273;
-  config.vlan_params    = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
-  config.compr_params   = {compression_type::BFP, 9};
-  config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
+
+  config.ru_nof_prbs  = 273;
+  config.vlan_params  = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
+  config.compr_params = {compression_type::BFP, 9};
+
+  data_flow_uplane_downlink_data_impl_dependencies dependencies;
+  dependencies.logger         = &srslog::fetch_basic_logger("TEST");
+  dependencies.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
 
   unsigned prb_size  = 28;
   unsigned prbs_size = prb_size * config.ru_nof_prbs;
 
-  config.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(prbs_size), 2);
+  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(prbs_size), 2);
   ofh_uplane_packet_builder_spy* uplane_builder;
 
   {
-    auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();
-    uplane_builder    = temp.get();
-    config.up_builder = std::move(temp);
+    auto temp               = std::make_unique<ofh_uplane_packet_builder_spy>();
+    uplane_builder          = temp.get();
+    dependencies.up_builder = std::move(temp);
   }
   {
-    auto temp          = std::make_unique<ether::testing::vlan_frame_builder_spy>();
-    config.eth_builder = std::move(temp);
+    auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+    dependencies.eth_builder = std::move(temp);
   }
   {
-    auto temp            = std::make_unique<ecpri::testing::packet_builder_spy>();
-    config.ecpri_builder = std::move(temp);
+    auto temp                  = std::make_unique<ecpri::testing::packet_builder_spy>();
+    dependencies.ecpri_builder = std::move(temp);
   }
   resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
   for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
@@ -314,7 +326,7 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
     }
   }
 
-  data_flow_uplane_downlink_data_impl data_flow(std::move(config));
+  data_flow_uplane_downlink_data_impl data_flow(config, std::move(dependencies));
   data_flow.enqueue_section_type_1_message(context, rg_reader_spy);
 
   // Assert number of packets. As the packet should not fit in the frame, check that it generated 2 packets per symbol.

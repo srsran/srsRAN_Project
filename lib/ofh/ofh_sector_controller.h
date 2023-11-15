@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_controller.h"
+#include "srsran/ofh/receiver/ofh_receiver.h"
 
 namespace srsran {
 namespace ofh {
@@ -32,7 +32,7 @@ namespace ofh {
 class sector_controller : public controller
 {
 public:
-  explicit sector_controller(ether::receiver& receiver_) : receiver(receiver_) {}
+  explicit sector_controller(receiver& ofh_rx_) : ofh_rx(ofh_rx_) {}
 
   // See interface for documentation.
   void start() override;
@@ -41,7 +41,7 @@ public:
   void stop() override;
 
 private:
-  ether::receiver& receiver;
+  receiver& ofh_rx;
 };
 
 } // namespace ofh

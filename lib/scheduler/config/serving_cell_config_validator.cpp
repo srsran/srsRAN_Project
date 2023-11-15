@@ -230,7 +230,9 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
     unsigned       sr_offset       = pucch_cfg.sr_res_list.front().offset;
     // If SR and CSI are reported within the same slot, 1 SR bit can be multiplexed with CSI within the same PUCCH
     // resource.
-    unsigned sr_bits_mplexed_with_csi = sr_offset != csi.report_slot_offset ? 0U : 1U;
+    const unsigned csi_period    = csi_report_periodicity_to_uint(csi.report_slot_period);
+    const unsigned lowest_period = std::min(sr_periodicity_to_slot(pucch_cfg.sr_res_list.front().period), csi_period);
+    unsigned sr_bits_mplexed_with_csi = sr_offset % lowest_period != csi.report_slot_offset % lowest_period ? 0U : 1U;
     // In the PUCCH resource for CSI, there are no HARQ-ACK bits being reported; therefore we only need to check where
     // the CSI + SR bits fit into the max payload.
     const unsigned uci_bits_pucch_resource = csi_report_size + sr_bits_mplexed_with_csi;

@@ -163,6 +163,8 @@ struct pdsch_appconfig {
   unsigned fixed_sib1_mcs = 5;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
+  /// Maximum number of times an HARQ process can be retransmitted, before it gets discarded.
+  unsigned max_nof_harq_retxs = 4;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
@@ -574,6 +576,22 @@ struct pdcp_appconfig {
   pdcp_tx_appconfig tx;
   pdcp_rx_appconfig rx;
 };
+
+struct mac_lc_appconfig {
+  /// Logical channel priority. Values {1,...,16}. An increasing priority value indicates a lower priority level.
+  /// [Implementation-Defined] Only priority > 3 are allowed for DRBs.
+  uint8_t priority;
+  /// Logical channel group ID. Values {0,...,7}.
+  /// [Implementation-Defined] Only LCG ID > 0 are allowed for DRBs.
+  uint8_t lc_group_id;
+  /// Bucket size duration in milliseconds. Values {5, 10, 20, 50, 100, 150, 300, 500, 1000}. See TS 38.331, \c
+  /// bucketSizeDuration.
+  unsigned bucket_size_duration_ms;
+  /// Prioritized Bit rate value in kiloBytes/s. Values {0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
+  /// 32768, 65536, 65537}. Value 65537 means infinity. See TS 38.331, \c prioritisedBitRate.
+  unsigned prioritized_bit_rate_kBps;
+};
+
 /// QoS configuration
 struct qos_appconfig {
   five_qi_t           five_qi = uint_to_five_qi(9);
@@ -581,6 +599,7 @@ struct qos_appconfig {
   f1u_du_appconfig    f1u_du;
   f1u_cu_up_appconfig f1u_cu_up;
   pdcp_appconfig      pdcp;
+  mac_lc_appconfig    mac;
 };
 
 struct amf_appconfig {

@@ -22,16 +22,15 @@
 
 #pragma once
 
-#include "srsran/mac/cell_configuration.h"
+#include "srsran/mac/mac_lc_config.h"
+#include "srsran/rlc/rlc_config.h"
 
 namespace srsran {
 
-struct du_cell_config;
-
-/// Derives MAC Cell Configuration from DU Cell Configuration.
-mac_cell_creation_request make_mac_cell_config(du_cell_index_t                                 cell_index,
-                                               const du_cell_config&                           du_cfg,
-                                               std::vector<byte_buffer>                        bcch_dl_sch_payloads,
-                                               const sched_cell_configuration_request_message& sched_cell_cfg);
+/// \brief SRB Configuration, i.e. associated RLC and MAC configuration for SRBs in the DU
+struct du_srb_config {
+  rlc_config    rlc;
+  mac_lc_config mac;
+};
 
 } // namespace srsran

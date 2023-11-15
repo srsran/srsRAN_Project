@@ -3,6 +3,7 @@
 
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_srb_config.h"
 #include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/e2/e2.h"
@@ -42,6 +43,7 @@ struct du_high_configuration {
   uint64_t                           gnb_du_id;
   transport_layer_address            du_bind_addr;
   std::vector<du_cell_config>        cells;
+  std::map<srb_id_t, du_srb_config>  srbs;
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   mac_expert_config                  mac_cfg;
   scheduler_expert_config            sched_cfg;

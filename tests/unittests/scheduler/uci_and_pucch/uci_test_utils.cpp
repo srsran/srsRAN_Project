@@ -128,6 +128,7 @@ test_bench::test_bench(const test_bench_params& params) :
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   ues(mac_notif),
+  pucch_f2_more_prbs{params.pucch_f2_more_prbs},
   pucch_alloc{cell_cfg},
   uci_alloc(pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
@@ -150,8 +151,21 @@ test_bench::test_bench(const test_bench_params& params) :
   // Add custom PUCCH config from this test file.
   ue_req.cfg.cells->back().serv_cell_cfg.ul_config = test_helpers::make_test_ue_uplink_config(cfg_params);
 
-  ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
-  ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
+  auto& ul_cfg = ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value();
+
+  ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
+  ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
+
+  // Change the number of PRBs for PUCCH format 2 if the test bench parameter is set.
+  if (pucch_f2_more_prbs) {
+    const unsigned pucch_f2_nof_prbs = 3U;
+    for (auto& pucch_res : ul_cfg.init_ul_bwp.pucch_cfg.value().pucch_res_list) {
+      if (pucch_res.format == pucch_format::FORMAT_2 and
+          variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
+        variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_nof_prbs;
+      }
+    }
+  }
 
   auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
       ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
@@ -185,8 +199,7 @@ void test_bench::add_ue()
   ue_req.ue_index = last_allocated_ue_idx;
 
   ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.reset();
-  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(
-      test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
+  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(test_helpers::make_test_ue_uplink_config(cfg_params));
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
   ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, harq_timeout_handler));

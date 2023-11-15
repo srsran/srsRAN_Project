@@ -28,7 +28,7 @@
 
 using namespace srsran;
 
-constexpr uint32_t pool_size = 32;
+constexpr uint32_t pool_size = 128;
 
 /// Fixture class for PDCP TX tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size

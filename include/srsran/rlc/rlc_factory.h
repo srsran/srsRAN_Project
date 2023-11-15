@@ -34,6 +34,7 @@
 namespace srsran {
 
 struct rlc_entity_creation_message {
+  uint32_t                             du_index;
   du_ue_index_t                        ue_index;
   rb_id_t                              rb_id;
   rlc_config                           config;

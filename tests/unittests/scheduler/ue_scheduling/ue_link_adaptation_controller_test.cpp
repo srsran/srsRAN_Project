@@ -72,7 +72,7 @@ TEST_F(ue_link_adaptation_controller_test, starts_with_no_snr_offset)
 
 TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
 {
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
+  controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table);
   ASSERT_GT(controller.dl_cqi_offset(), 0);
 
   controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64);
@@ -81,7 +81,7 @@ TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
 
 TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
 {
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::nack, sch_mcs_index{5}, dl_mcs_table);
+  controller.handle_dl_ack_info(false, sch_mcs_index{5}, dl_mcs_table);
   ASSERT_LT(controller.dl_cqi_offset(), 0);
 
   controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64);
@@ -91,7 +91,7 @@ TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
 TEST_F(ue_link_adaptation_controller_test, cqi_0_reports_empty_mcs)
 {
   // make offset different than zero.
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
+  controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table);
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{0};
@@ -104,7 +104,7 @@ TEST_F(ue_link_adaptation_controller_test, cqi_0_reports_empty_mcs)
 TEST_F(ue_link_adaptation_controller_test, cqi_positive_reports_non_empty_mcs)
 {
   // make offset different than zero.
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
+  controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table);
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{test_rgen::uniform_int<uint8_t>(1, 15)};
@@ -139,7 +139,7 @@ TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
   sch_mcs_index mcs = mcs_prev;
   while (mcs != mcs_ub) {
     // Increase offset.
-    controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
+    controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table);
 
     mcs = controller.calculate_dl_mcs(dl_mcs_table).value();
     ASSERT_LE(mcs - mcs_prev, 1U);

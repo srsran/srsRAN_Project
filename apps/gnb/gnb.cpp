@@ -471,8 +471,13 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->amf_is_connected()) {
-    report_error("CU-CP failed to connect to AMF");
+  if (gnb_cfg.amf_cfg.no_core) {
+    // Signal AMF connection so test UEs do not get rejected
+    cu_cp_obj->handle_amf_connection();
+  } else {
+    if (not cu_cp_obj->amf_is_connected()) {
+      report_error("CU-CP failed to connect to AMF");
+    }
   }
 
   // Create CU-UP config.

@@ -76,7 +76,7 @@ protected:
 
     // Create RLC TM TX entity
     rlc = std::make_unique<rlc_tx_tm_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester, pcell_worker, pcap);
+        0, du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester, pcell_worker, pcap);
   }
 
   void TearDown() override

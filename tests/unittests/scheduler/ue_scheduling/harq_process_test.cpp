@@ -112,9 +112,10 @@ TEST_F(dl_harq_process_tester, retx_of_empty_harq_asserts)
 }
 #endif
 
-TEST_F(dl_harq_process_tester, ack_of_empty_harq_is_noop)
+TEST_F(dl_harq_process_tester, ack_of_empty_harq_is_failure)
 {
-  ASSERT_FALSE(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt)) << "ACK of empty HARQ should fail";
+  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt), dl_harq_process::status_update::error)
+      << "ACK of empty HARQ should fail";
 }
 
 class dl_harq_process_timeout_tester : public dl_harq_process_tester
@@ -131,10 +132,10 @@ TEST_F(dl_harq_process_timeout_tester, when_max_retx_exceeded_and_nack_is_receiv
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0, 15, 1);
   h_dl.slot_indication(++sl_tx);
   ASSERT_FALSE(h_dl.has_pending_retx(0));
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack, nullopt));
+  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack, nullopt), dl_harq_process::status_update::nacked);
   h_dl.new_retx(sl_tx, k1, 0);
   h_dl.slot_indication(++sl_tx);
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack, nullopt));
+  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack, nullopt), dl_harq_process::status_update::nacked);
   ASSERT_TRUE(h_dl.empty());
   ASSERT_FALSE(h_dl.has_pending_retx());
 }
@@ -193,7 +194,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
     ASSERT_FALSE(h_dl.has_pending_retx());
     slot_indication();
   }
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt));
+  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt), dl_harq_process::status_update::acked);
   ASSERT_TRUE(h_dl.empty()) << "HARQ was not reset after ACK";
   ASSERT_FALSE(h_dl.has_pending_retx()) << "HARQ was not reset after ACK";
 }
@@ -236,7 +237,7 @@ TEST_P(dl_harq_process_param_tester, harq_newtxs_flip_ndi)
   }
 
   bool prev_ndi = h_dl.tb(0).ndi;
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt));
+  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::ack, nullopt), dl_harq_process::status_update::acked);
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0, 15, 1);
   ASSERT_NE(prev_ndi, h_dl.tb(0).ndi);
 }
@@ -305,7 +306,7 @@ TEST_F(dl_harq_process_multi_harq_ack_timeout_test,
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     // Notify HARQ process with DTX (ACK not decoded).
     if (i == first_ack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, ack_val, random_snr()));
+      ASSERT_EQ(h_dl.ack_info(0, ack_val, random_snr()), dl_harq_process::status_update::no_update);
     }
 
     // Before reaching the ack_wait_slots, the HARQ should be neither empty nor have pending reTX.
@@ -357,10 +358,12 @@ TEST_P(dl_harq_process_multi_harq_ack_test, two_harq_acks_received)
 
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == first_ack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, static_cast<mac_harq_ack_report_status>(params.ack[0]), params.snr[0]));
+      ASSERT_EQ(h_dl.ack_info(0, static_cast<mac_harq_ack_report_status>(params.ack[0]), params.snr[0]),
+                dl_harq_process::status_update::no_update);
     }
     if (i == second_ack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, static_cast<mac_harq_ack_report_status>(params.ack[1]), params.snr[1]));
+      ASSERT_EQ(h_dl.ack_info(0, static_cast<mac_harq_ack_report_status>(params.ack[1]), params.snr[1]),
+                params.outcome ? dl_harq_process::status_update::acked : dl_harq_process::status_update::nacked);
     }
 
     if (i < second_ack_slot) {

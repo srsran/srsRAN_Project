@@ -21,6 +21,8 @@
  */
 
 #include "pseudo_random_generator_impl.h"
+#include "pseudo_random_generator_fast_advance.h"
+#include "pseudo_random_generator_initializers.h"
 #include "pseudo_random_generator_sequence.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
@@ -35,52 +37,23 @@
 
 using namespace srsran;
 
-const pseudo_random_generator_impl::x1_init_s pseudo_random_generator_impl::x1_init =
-    pseudo_random_generator_impl::x1_init_s();
+/// \brief Parameter \f$N_{\textup{C}}\f$, as defined in TS38.211 Section 5.2.1.
+///
+/// Corresponds to the delay between the state sequences \f$x_1(n), x_2(n)\f$ and the output sequence \f$c(n) =
+/// x_1(n + N_{\textup{C}}) \oplus x_2(n + N_{\textup{C}})\f$.
+static constexpr unsigned pseudo_random_generator_Nc = 1600;
 
-const pseudo_random_generator_impl::x2_init_s pseudo_random_generator_impl::x2_init =
-    pseudo_random_generator_impl::x2_init_s();
+/// Maximum number of steps that can be the state advanced using the pseudo-random generator fast advance.
+static constexpr unsigned pseudo_random_state_fast_advance_max_steps = 1U << 15U;
 
-pseudo_random_generator_impl::x1_init_s::x1_init_s() : x1(1)
-{
-  pseudo_random_generator_sequence sequence(1, 0);
-  // Compute transition step.
-  for (uint32_t n = 0; n != SEQUENCE_NC; ++n) {
-    sequence.step(1);
-  }
-  x1 = sequence.get_x1();
-}
+/// Sequence \f$x_1(n)\f$ initializer object.
+static const pseudo_random_initializer_x1 x1_init(pseudo_random_generator_Nc);
 
-unsigned pseudo_random_generator_impl::x1_init_s::get() const
-{
-  return x1;
-}
+/// Sequence \f$x_2(n)\f$ initializer object.
+static const pseudo_random_initializer_x2 x2_init(pseudo_random_generator_Nc);
 
-pseudo_random_generator_impl::x2_init_s::x2_init_s() : x2()
-{
-  // For each bit of the seed.
-  for (uint32_t i = 0; i != SEQUENCE_SEED_LEN; ++i) {
-    // Compute transition step.
-    pseudo_random_generator_sequence sequence(0, 1 << i);
-    for (uint32_t n = 0; n != SEQUENCE_NC; ++n) {
-      sequence.step(1);
-    }
-    x2[i] = sequence.get_x2();
-  }
-}
-
-unsigned pseudo_random_generator_impl::x2_init_s::get(unsigned c_init) const
-{
-  unsigned ret = 0;
-
-  for (unsigned i = 0; i != SEQUENCE_SEED_LEN; ++i) {
-    if ((c_init >> i) & 1UL) {
-      ret ^= x2[i];
-    }
-  }
-
-  return ret;
-}
+/// Sequence state fast advance instance.
+static const pseudo_random_generator_fast_advance<pseudo_random_state_fast_advance_max_steps> fast_advance;
 
 void pseudo_random_generator_impl::init(unsigned c_init)
 {
@@ -96,27 +69,16 @@ void pseudo_random_generator_impl::init(const state_s& state)
 
 void pseudo_random_generator_impl::advance(unsigned count)
 {
-  unsigned i = 0;
+  while (count != 0) {
+    // Ceil the number of steps to advance to the maximum number of steps.
+    unsigned n = std::min(pseudo_random_state_fast_advance_max_steps, count);
 
-  static constexpr unsigned max_step_size = pseudo_random_generator_sequence::get_max_step_size();
+    // Advance sequence states.
+    fast_advance.advance(x1, x2, n);
 
-  // Create sequence with the current x1 and x2 states.
-  pseudo_random_generator_sequence sequence(x1, x2);
-
-  // Advance sequence states with the maximum parallel bits.
-  for (unsigned i_end = (count / max_step_size) * max_step_size; i != i_end; i += max_step_size) {
-    sequence.step<max_step_size>();
+    // Decrement count.
+    count -= n;
   }
-
-  // Advance the remainder in a smaller step.
-  unsigned remainder = count % max_step_size;
-  if (remainder != 0) {
-    sequence.step(remainder);
-  }
-
-  // Update x1 and x2 states.
-  x1 = sequence.get_x1();
-  x2 = sequence.get_x2();
 }
 
 void pseudo_random_generator_impl::generate(bit_buffer& data)

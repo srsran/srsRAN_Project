@@ -138,9 +138,6 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = gnb_cfg.cells_cfg[i];
 
-    // DU QoS config
-    std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
-
     du_config                   du_cfg = {};
     std::vector<task_executor*> du_low_dl_exec;
     workers.get_du_low_dl_executors(du_low_dl_exec, i);
@@ -163,7 +160,8 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.phy_adapter                    = nullptr;
     du_hi_cfg.timers                         = &timer_mng;
     du_hi_cfg.cells                          = {du_cells[i]};
-    du_hi_cfg.qos                            = du_qos_cfg;
+    du_hi_cfg.srbs                           = generate_du_srb_config(gnb_cfg);
+    du_hi_cfg.qos                            = generate_du_qos_config(gnb_cfg);
     du_hi_cfg.mac_p                          = &mac_p;
     du_hi_cfg.rlc_p                          = &rlc_p;
     du_hi_cfg.gnb_du_id                      = du_insts.size() + 1;

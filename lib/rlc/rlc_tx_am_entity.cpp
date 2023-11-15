@@ -31,7 +31,8 @@
 
 using namespace srsran;
 
-rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
+rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index,
+                                   du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id,
                                    const rlc_tx_am_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
@@ -41,7 +42,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    task_executor&                       pcell_executor_,
                                    task_executor&                       ue_executor_,
                                    pcap_rlc&                            pcap_) :
-  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
@@ -55,7 +56,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_),
-  pcap_context(du_index, rb_id, config)
+  pcap_context(ue_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 

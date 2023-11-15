@@ -21,10 +21,10 @@
  */
 
 #include "pdsch_processor_concurrent_impl.h"
+#include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/tx_buffer.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
-#include "srsran/ran/dmrs.h"
 
 using namespace srsran;
 
@@ -38,7 +38,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   save_inputs(mapper_, std::move(softbuffer_), notifier_, data_, pdu_);
 
   // Makes sure the PDU is valid.
-  assert_pdu();
+  pdsch_processor_validator_impl::assert_pdu(config);
 
   // Set the number of asynchronous tasks. It counts as CB processing and DM-RS generation.
   async_task_counter = 2;
@@ -209,80 +209,34 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   precoding *= scaling;
 }
 
-void pdsch_processor_concurrent_impl::assert_pdu() const
-{
-  // Deduce parameters from the config.
-  unsigned         nof_layers       = config.precoding.get_nof_layers();
-  unsigned         nof_symbols_slot = get_nsymb_per_slot(config.cp);
-  dmrs_config_type dmrs_config = (config.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
-
-  srsran_assert(config.dmrs_symbol_mask.size() == nof_symbols_slot,
-                "The DM-RS symbol mask size (i.e., {}), must be equal to the number of symbols in the slot (i.e., {}).",
-                config.dmrs_symbol_mask.size(),
-                nof_symbols_slot);
-  srsran_assert(config.dmrs_symbol_mask.any(),
-                "The number of OFDM symbols carrying DM-RS RE must be greater than zero.");
-  srsran_assert(
-      static_cast<unsigned>(config.dmrs_symbol_mask.find_lowest(true)) >= config.start_symbol_index,
-      "The index of the first OFDM symbol carrying DM-RS (i.e., {}) must be equal to or greater than the first symbol "
-      "allocated to transmission (i.e., {}).",
-      config.dmrs_symbol_mask.find_lowest(true),
-      config.start_symbol_index);
-  srsran_assert(static_cast<unsigned>(config.dmrs_symbol_mask.find_highest(true)) <
-                    (config.start_symbol_index + config.nof_symbols),
-                "The index of the last OFDM symbol carrying DM-RS (i.e., {}) must be less than or equal to the last "
-                "symbol allocated to transmission (i.e., {}).",
-                config.dmrs_symbol_mask.find_highest(true),
-                config.start_symbol_index + config.nof_symbols - 1);
-  srsran_assert((config.start_symbol_index + config.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation [{}, {}) exceeds the slot boundary of {} symbols.",
-                config.start_symbol_index,
-                config.start_symbol_index + config.nof_symbols,
-                nof_symbols_slot);
-  srsran_assert(config.freq_alloc.is_bwp_valid(config.bwp_start_rb, config.bwp_size_rb),
-                "Invalid BWP configuration [{}, {}) for the given frequency allocation {}.",
-                config.bwp_start_rb,
-                config.bwp_start_rb + config.bwp_size_rb,
-                config.freq_alloc);
-  srsran_assert(config.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-  srsran_assert(config.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
-  srsran_assert(config.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
-                "The number of CDM groups without data (i.e., {}) must not exceed the maximum supported by the DM-RS "
-                "type (i.e., {}).",
-                config.nof_cdm_groups_without_data,
-                get_max_nof_cdm_groups_without_data(dmrs_config));
-  srsran_assert(nof_layers != 0, "No transmit layers are active.");
-  srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
-
-  srsran_assert(config.codewords.size() == 1, "Only one codeword is currently supported.");
-  srsran_assert(config.tbs_lbrm_bytes > 0 && config.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
-                config.tbs_lbrm_bytes,
-                ldpc::MAX_CODEBLOCK_SIZE / 8);
-}
-
 unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& config)
 {
-  // Copy reserved RE and merge DMRS pattern.
-  re_pattern_list reserved_re = config.reserved;
-  reserved_re.merge(config.dmrs.get_dmrs_pattern(
-      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask));
-
-  // Generate allocation mask.
+  // Get PRB mask.
   bounded_bitset<MAX_RB> prb_mask = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
+  // Get number of PRB.
+  unsigned nof_prb = prb_mask.count();
+
   // Calculate the number of RE allocated in the grid.
-  unsigned nof_grid_re = config.freq_alloc.get_nof_rb() * NRE * config.nof_symbols;
+  unsigned nof_grid_re = nof_prb * NRE * config.nof_symbols;
+
+  // Generate DM-RS pattern.
+  re_pattern dmrs_pattern = config.dmrs.get_dmrs_pattern(
+      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask);
+
+  // Calculate the number of RE used by DM-RS. It assumes it does not overlap with reserved elements.
+  unsigned nof_grid_dmrs = nof_prb * dmrs_pattern.re_mask.count() * dmrs_pattern.symbols.count();
 
   // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved_re.get_inclusion_count(config.start_symbol_index, config.nof_symbols, prb_mask);
+  unsigned nof_reserved_re =
+      config.reserved.get_inclusion_count(config.start_symbol_index, config.nof_symbols, prb_mask);
 
   // Subtract the number of reserved RE from the number of allocated RE.
   srsran_assert(nof_grid_re > nof_reserved_re,
                 "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
                 nof_grid_re,
                 nof_reserved_re);
-  return nof_grid_re - nof_reserved_re;
+  return nof_grid_re - nof_reserved_re - nof_grid_dmrs;
 }
 
 void pdsch_processor_concurrent_impl::fork_cb_batches()
@@ -382,8 +336,10 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     }
 
     // Advance scrambling sequence for the next batch.
-    for (unsigned i = 0; i != cb_batch_size; ++i) {
-      scrambler->advance(rm_length[i_cb + i].value());
+    if (i_cb_batch != nof_cb_batches - 1) {
+      units::bits sequence_advance_count =
+          std::accumulate(rm_length.begin() + i_cb, rm_length.begin() + i_cb + cb_batch_size, units::bits(0));
+      scrambler->advance(sequence_advance_count.value());
     }
   }
 }

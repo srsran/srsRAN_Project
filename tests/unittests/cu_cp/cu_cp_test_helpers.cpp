@@ -303,9 +303,9 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // check that the PDU Session Resource Setup Response was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(),
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
             asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type().value,
             asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp);
 }
 

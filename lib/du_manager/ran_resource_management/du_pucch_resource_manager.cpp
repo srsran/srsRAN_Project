@@ -21,6 +21,10 @@
  */
 
 #include "du_pucch_resource_manager.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/scheduler/scheduler_pucch_format.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -179,16 +183,42 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
 
-    // Update the CSI report with the correct PUCCH_res_id.
-    target_csi_cfg.pucch_csi_res_list.front().pucch_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
-
     // Chose the optimal CSI-RS slot offset.
     scheduling_request_resource_config sr_candidate = sr_res_list.front();
     sr_candidate.offset                             = sr_res_offset.second;
     auto optimal_res_it                             = find_optimal_csi_report_slot_offset(
         free_csi_list, sr_candidate, *cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
 
+    // This is the case of no suitable CSI offset found.
     if (optimal_res_it == free_csi_list.end()) {
+      // Allocation failed, exit without allocating the UE resources.
+      return false;
+    }
+
+    // > Check if the configuration with SR on the same slot as CSI is allowed.
+
+    // Set temporarily CSI report with a default PUCCH_res_id.
+    target_csi_cfg.pucch_csi_res_list.front().pucch_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
+
+    const unsigned csi_period          = csi_report_periodicity_to_uint(target_csi_cfg.report_slot_period);
+    const unsigned lowest_period       = std::min(sr_periodicity_to_slot(sr_candidate.period), csi_period);
+    const bool sr_csi_on_the_same_slot = sr_candidate.offset % lowest_period == optimal_res_it->second % lowest_period;
+
+    const auto csi_report_cfg =
+        create_csi_report_configuration(cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value());
+    const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
+
+    const sr_nof_bits sr_bits_to_report  = sr_csi_on_the_same_slot ? sr_nof_bits::one : sr_nof_bits::no_sr;
+    const unsigned    candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_to_report) + csi_report_size.value();
+
+    const float max_pucch_code_rate = to_max_code_rate_float(target_pucch_cfg.format_2_common_param.value().max_c_rate);
+    const unsigned max_payload      = get_pucch_format2_max_payload(user_defined_pucch_cfg.f2_params.max_nof_rbs,
+                                                               user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
+                                                               max_pucch_code_rate);
+
+    // This is the case of suitable CSI offset found, but the CSI offset would result in exceeding the PUCCH F2 max
+    // payload.
+    if (candidate_uci_bits > max_payload) {
       // Allocation failed, exit without allocating the UE resources.
       return false;
     }

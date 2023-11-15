@@ -27,10 +27,10 @@ using namespace ofh;
 
 void sector_controller::start()
 {
-  receiver.start();
+  ofh_rx.get_controller().start();
 }
 
 void sector_controller::stop()
 {
-  receiver.stop();
+  ofh_rx.get_controller().stop();
 }

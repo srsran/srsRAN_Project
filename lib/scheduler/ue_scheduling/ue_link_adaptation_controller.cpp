@@ -41,13 +41,13 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
   }
 }
 
-void ue_link_adaptation_controller::handle_dl_ack_info(mac_harq_ack_report_status ack_value,
-                                                       sch_mcs_index              used_mcs,
-                                                       pdsch_mcs_table            mcs_table)
+void ue_link_adaptation_controller::handle_dl_ack_info(bool            ack_value,
+                                                       sch_mcs_index   used_mcs,
+                                                       pdsch_mcs_table mcs_table)
 {
   static constexpr unsigned MAX_CQI = 15;
 
-  if (ack_value == mac_harq_ack_report_status::dtx or not dl_olla.has_value()) {
+  if (not dl_olla.has_value()) {
     return;
   }
 
@@ -55,7 +55,7 @@ void ue_link_adaptation_controller::handle_dl_ack_info(mac_harq_ack_report_statu
   const interval<sch_mcs_index, true> mcs_bounds{cell_cfg.expert_cfg.ue.dl_mcs.start(),
                                                  std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
 
-  dl_olla->update(ack_value == mac_harq_ack_report_status::ack, used_mcs, mcs_bounds);
+  dl_olla->update(ack_value, used_mcs, mcs_bounds);
 }
 
 void ue_link_adaptation_controller::handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table)

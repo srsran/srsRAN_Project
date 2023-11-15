@@ -76,17 +76,18 @@ static span<cf_t> get_temp_iq_data_buffer(unsigned nof_subcarriers)
 }
 
 data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
-    data_flow_uplane_downlink_data_impl_config&& config) :
-  logger(*config.logger),
+    const data_flow_uplane_downlink_data_impl_config&  config,
+    data_flow_uplane_downlink_data_impl_dependencies&& dependencies) :
+  logger(*dependencies.logger),
   ru_nof_prbs(config.ru_nof_prbs),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
-  frame_pool_ptr(config.frame_pool),
+  frame_pool_ptr(dependencies.frame_pool),
   frame_pool(*frame_pool_ptr),
-  compressor_sel(std::move(config.compressor_sel)),
-  eth_builder(std::move(config.eth_builder)),
-  ecpri_builder(std::move(config.ecpri_builder)),
-  up_builder(std::move(config.up_builder))
+  compressor_sel(std::move(dependencies.compressor_sel)),
+  eth_builder(std::move(dependencies.eth_builder)),
+  ecpri_builder(std::move(dependencies.ecpri_builder)),
+  up_builder(std::move(dependencies.up_builder))
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");

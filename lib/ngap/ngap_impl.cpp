@@ -406,6 +406,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                                                               ue->get_rrc_ue_pdu_notifier(),
                                                               ue->get_du_processor_control_notifier(),
                                                               ngap_notifier,
+                                                              get_ngap_control_message_handler(),
                                                               ue_ctxt.logger));
 }
 
@@ -447,8 +448,12 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // start routine
   task_sched.schedule_async_task(
       ue_ctxt.ue_ids.ue_index,
-      launch_async<ngap_pdu_session_resource_modify_procedure>(
-          msg, ue_ctxt.ue_ids, ue->get_du_processor_control_notifier(), ngap_notifier, ue_ctxt.logger));
+      launch_async<ngap_pdu_session_resource_modify_procedure>(msg,
+                                                               ue_ctxt.ue_ids,
+                                                               ue->get_du_processor_control_notifier(),
+                                                               ngap_notifier,
+                                                               get_ngap_control_message_handler(),
+                                                               ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)

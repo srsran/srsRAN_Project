@@ -61,20 +61,25 @@ void ue_cell::handle_resource_allocation_reconfiguration_request(const sched_ue_
   ue_res_alloc_cfg = ra_cfg;
 }
 
-const dl_harq_process* ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
-                                                   mac_harq_ack_report_status ack_value,
-                                                   unsigned                   harq_bit_idx,
-                                                   optional<float>            pucch_snr)
+std::pair<const dl_harq_process*, dl_harq_process::status_update>
+ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
+                            mac_harq_ack_report_status ack_value,
+                            unsigned                   harq_bit_idx,
+                            optional<float>            pucch_snr)
 {
-  const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx, pucch_snr);
+  std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
+      harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx, pucch_snr);
+  const dl_harq_process* h_dl = result.first;
 
-  if (h_dl != nullptr) {
-    // Consider the feedback in the link adaptation controller.
-    ue_mcs_calculator.handle_dl_ack_info(
-        ack_value, h_dl->last_alloc_params().tb[0]->mcs, h_dl->last_alloc_params().tb[0]->mcs_table);
+  if (result.second == dl_harq_process::status_update::acked or
+      result.second == dl_harq_process::status_update::nacked) {
+    // HARQ is not expecting more ACK bits. Consider the feedback in the link adaptation controller.
+    ue_mcs_calculator.handle_dl_ack_info(result.second == dl_harq_process::status_update::acked,
+                                         h_dl->last_alloc_params().tb[0]->mcs,
+                                         h_dl->last_alloc_params().tb[0]->mcs_table);
   }
 
-  return h_dl;
+  return result;
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,

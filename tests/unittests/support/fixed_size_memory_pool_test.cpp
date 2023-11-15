@@ -31,8 +31,8 @@ TEST(fixed_memory_block_pool_test, correct_instantiation)
 {
   struct test_tag_id {};
 
-  auto& pool = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(32, 256);
-  ASSERT_EQ(pool.nof_memory_blocks(), 32);
+  auto& pool = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(128, 256);
+  ASSERT_EQ(pool.nof_memory_blocks(), 128);
   ASSERT_EQ(pool.memory_block_size(), 256);
   pool.print_all_buffers();
 }
@@ -40,7 +40,7 @@ TEST(fixed_memory_block_pool_test, correct_instantiation)
 TEST(fixed_memory_block_pool_test, allocated_block_is_valid)
 {
   struct test_tag_id {};
-  auto& pool  = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(32, 256);
+  auto& pool  = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(128, 256);
   void* block = pool.allocate_node(256);
   ASSERT_NE(block, nullptr);
   pool.deallocate_node(block);
@@ -49,7 +49,7 @@ TEST(fixed_memory_block_pool_test, allocated_block_is_valid)
 TEST(fixed_memory_block_pool_test, number_of_alloc_blocks_matches_pool_size)
 {
   struct test_tag_id {};
-  auto& pool = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(32, 256);
+  auto& pool = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(128, 256);
 
   std::vector<void*> blocks;
 

@@ -119,8 +119,7 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
-  auto receiver =
-      create_receiver(rx_config, *sector_deps.logger, *sector_deps.notifier, prach_repo, slot_repo, cp_repo);
+  auto receiver = create_receiver(rx_config, *sector_deps.logger, sector_deps.notifier, prach_repo, slot_repo, cp_repo);
 
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
@@ -151,10 +150,9 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                              *sector_deps.logger);
 #endif
 
-  return std::make_unique<sector_impl>(std::move(receiver),
-                                       std::move(transmitter),
-                                       std::move(cp_repo),
-                                       std::move(prach_repo),
-                                       std::move(slot_repo),
-                                       std::move(eth_receiver));
+  // OFH receiver manages the Ethernet receiver lifecycle.
+  receiver->set_ethernet_receiver(std::move(eth_receiver));
+
+  return std::make_unique<sector_impl>(
+      std::move(receiver), std::move(transmitter), std::move(cp_repo), std::move(prach_repo), std::move(slot_repo));
 }

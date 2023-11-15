@@ -153,7 +153,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    rrc_ue_up_resource_manager,
                                    default_security_indication,
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }

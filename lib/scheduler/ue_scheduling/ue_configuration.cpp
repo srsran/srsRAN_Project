@@ -466,9 +466,10 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
     std::array<std::array<bounded_bitset<maximum_nof_cces>, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>, MAX_NOF_CORESETS_PER_BWP>
         cce_bitmap_per_coreset_per_first_pdcch_symb;
     for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
-      std::fill(cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].begin(),
-                cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].end(),
-                bounded_bitset<maximum_nof_cces>(maximum_nof_cces));
+      for (unsigned symb = 0; symb < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
+        cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].resize(maximum_nof_cces);
+        cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].reset();
+      }
     }
     auto get_cce_monitored_sum = [&cce_bitmap_per_coreset_per_first_pdcch_symb]() {
       unsigned monitored_cces = 0;

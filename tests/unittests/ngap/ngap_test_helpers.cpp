@@ -78,7 +78,7 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   ngap->handle_initial_ue_message(msg);
 
   new_test_ue.ran_ue_id =
-      uint_to_ran_ue_id(msg_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
+      uint_to_ran_ue_id(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
 
   return ue_index;
 }

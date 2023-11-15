@@ -589,7 +589,7 @@ def test_rf(
         bitrate=MEDIUM_BITRATE,
         direction=direction,
         global_timing_advance=-1,
-        time_alignment_calibration="auto",
+        time_alignment_calibration="264",
         always_download_artifacts=False,
         warning_as_errors=False,
     )

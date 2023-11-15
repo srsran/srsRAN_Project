@@ -29,14 +29,6 @@
 
 namespace srsran {
 
-/// Implements a parameter validator for \ref pdsch_processor_impl.
-class pdsch_processor_validator_impl : public pdsch_pdu_validator
-{
-public:
-  // See interface for documentation.
-  bool is_valid(const pdsch_processor::pdu_t& pdu) const override;
-};
-
 /// Implements a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {
@@ -61,8 +53,6 @@ public:
                const pdu_t&                                                 pdu) override;
 
 private:
-  void assert_pdu(const pdu_t& pdu) const;
-
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
   /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.

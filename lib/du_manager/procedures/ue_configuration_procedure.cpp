@@ -95,8 +95,13 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-        ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlf_notifier, du_params.rlc.rlc_pcap));
+    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                        ue->ue_index,
+                                                                        ue->pcell_index,
+                                                                        srb,
+                                                                        du_params.services,
+                                                                        *ue->rlf_notifier,
+                                                                        du_params.rlc.rlc_pcap));
   }
 
   // > Create F1-C bearers.
@@ -161,6 +166,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.drb_id,
                                                 it->lcid,
                                                 it->rlc_cfg,
+                                                it->mac_cfg,
                                                 f1u_cfg_it->second.f1u,
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),

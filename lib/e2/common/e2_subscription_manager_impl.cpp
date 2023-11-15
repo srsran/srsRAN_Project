@@ -45,7 +45,11 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
     e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(msg->ra_nfunction_id.value);
-    event_trigger_def    = e2sm->get_e2sm_packer().handle_packed_event_trigger_definition(
+    if (e2sm == nullptr) {
+      logger.error("Failed to get E2SM interface, RAN function {} not in allowed list", msg->ra_nfunction_id.value);
+      return outcome;
+    }
+    event_trigger_def = e2sm->get_e2sm_packer().handle_packed_event_trigger_definition(
         msg->ricsubscription_details->ric_event_trigger_definition);
     subscription.subscription_info.report_period = event_trigger_def.report_period;
     outcome.request_id.ric_requestor_id          = subscription.subscription_info.request_id.ric_requestor_id;

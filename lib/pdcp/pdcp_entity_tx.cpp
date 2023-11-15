@@ -21,6 +21,7 @@
  */
 
 #include "pdcp_entity_tx.h"
+#include "../support/sdu_window_impl.h"
 #include "srsran/security/ciphering.h"
 #include "srsran/security/integrity.h"
 #include "srsran/support/bit_encoding.h"
@@ -98,22 +99,31 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   }
   byte_buffer protected_buf = std::move(exp_buf.value());
 
-  // Start discard timer. If using RLC AM, we store
-  // the PDU to use later in the data recovery procedure.
-  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-    unique_timer discard_timer = timers.create_timer();
-    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
-                      discard_callback{this, st.tx_next});
-    discard_timer.run();
-    discard_info info;
-    if (cfg.rlc_mode == pdcp_rlc_mode::um) {
-      info = {st.tx_next, {}, std::move(discard_timer)};
-    } else {
-      info = {st.tx_next, std::move(sdu), std::move(discard_timer)};
+  // Create a discard timer and put into tx_window. For AM, also store the SDU for a possible data recovery procedure.
+  if (cfg.discard_timer.has_value()) {
+    unique_timer discard_timer = {};
+    // Only start for finite durations
+    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
+      discard_timer = timers.create_timer();
+      discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
+                        discard_callback{this, st.tx_next});
+      discard_timer.run();
     }
-    discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
-    logger.log_debug(
-        "Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer.value()));
+
+    // If the place in the tx_window is occupied by an old element from previous wrap, discard that element first.
+    if (tx_window->has_sn(st.tx_next)) {
+      uint32_t old_count = (*tx_window)[st.tx_next].count;
+      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
+      discard_pdu(old_count);
+    }
+
+    pdcp_tx_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
+    sdu_info.count             = st.tx_next;
+    sdu_info.discard_timer     = std::move(discard_timer);
+    if (is_am()) {
+      sdu_info.sdu = std::move(sdu);
+    }
+    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
 
   // Write to lower layers
@@ -134,12 +144,11 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   // - for UM DRBs and SRBs, set TX_NEXT to the initial value;
   // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
   if (is_srb() || is_um()) {
-    st = {};
-    discard_all_pdus(); // While not explicitly stated in the spec,
-                        // there is no point in storing PDCP UM PDUs.
-                        // They cannot be RETXed and RLC already discarded them.
-                        // Also, this avoids having multiple discard timers
-                        // associated with the with the same COUNT.
+    reset(); // While not explicitly stated in the spec,
+             // there is no point in storing PDCP UM PDUs.
+             // They cannot be RETXed and RLC already discarded them.
+             // Also, this avoids having multiple discard timers
+             // associated with the with the same COUNT.
   }
 
   // - apply the ciphering algorithm and key provided by upper layers during the PDCP entity re-establishment
@@ -235,14 +244,8 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
   logger.log_info("Status report. fmc={}", fmc);
 
   // Discard any SDU with COUNT < FMC
-  for (auto it = discard_timers_map.begin(); it != discard_timers_map.end();) {
-    if (it->first < fmc) {
-      logger.log_debug("SDU discarded. count={}", it->first);
-      lower_dn.on_discard_pdu(SN(it->first));
-      it = discard_timers_map.erase(it);
-    } else {
-      ++it;
-    }
+  for (uint32_t count = st.tx_next_ack; count < fmc; count++) {
+    discard_pdu(count);
   }
 
   // Evaluate bitmap: discard any SDU with the bit in the bitmap set to 1
@@ -252,9 +255,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
     if (bit == 1) {
-      logger.log_debug("SDU discarded. count={}", fmc);
-      lower_dn.on_discard_pdu(SN(fmc));
-      discard_timers_map.erase(fmc);
+      discard_pdu(fmc);
     }
   }
 }
@@ -409,42 +410,62 @@ void pdcp_entity_tx::data_recovery()
   retransmit_all_pdus();
 }
 
-void pdcp_entity_tx::discard_all_pdus()
+void pdcp_entity_tx::reset()
 {
-  discard_timers_map.clear();
+  st = {};
+  tx_window->clear();
+  logger.log_debug("Entity was reset. {}", st);
 }
 
 void pdcp_entity_tx::retransmit_all_pdus()
 {
-  for (const std::pair<const uint32_t, discard_info>& info : discard_timers_map) {
-    // Prepare header
-    pdcp_data_pdu_header hdr = {};
-    hdr.sn                   = SN(info.second.count);
+  if (!cfg.discard_timer.has_value()) {
+    logger.log_debug("Cannot retransmit. No discard timer configured.");
+    return;
+  }
+  if (!is_am()) {
+    logger.log_error("Cannot retransmit. Not an AM bearer.");
+    return;
+  }
 
-    // Pack header
-    byte_buffer header_buf = {};
-    if (not write_data_pdu_header(header_buf, hdr)) {
-      logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
-      upper_cn.on_protocol_failure();
-      return;
+  // Since we are retransmitting, rewind tx_trans to tx_next_ack
+  st.tx_trans = st.tx_next_ack;
+
+  for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
+    if (tx_window->has_sn(count)) {
+      pdcp_tx_sdu_info& sdu_info = (*tx_window)[count];
+
+      // Prepare header
+      pdcp_data_pdu_header hdr = {};
+      hdr.sn                   = SN(sdu_info.count);
+
+      // Pack header
+      byte_buffer header_buf = {};
+      if (not write_data_pdu_header(header_buf, hdr)) {
+        logger.log_error(
+            "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+
+      // Perform header compression if required
+      // (TODO)
+
+      // Perform integrity protection and ciphering
+      expected<byte_buffer> exp_buf =
+          apply_ciphering_and_integrity_protection(std::move(header_buf), sdu_info.sdu, sdu_info.count);
+      if (exp_buf.is_error()) {
+        logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
+                         "notifying RRC. count={} {}",
+                         sdu_info.count,
+                         st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+
+      byte_buffer protected_buf = std::move(exp_buf.value());
+      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf));
     }
-
-    // Perform header compression if required
-    // (TODO)
-
-    // Perform integrity protection and ciphering
-    expected<byte_buffer> exp_buf =
-        apply_ciphering_and_integrity_protection(std::move(header_buf), info.second.sdu, info.second.count);
-    if (exp_buf.is_error()) {
-      logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
-                       "notifying RRC. count={}",
-                       info.second.count);
-      upper_cn.on_protocol_failure();
-      return;
-    }
-
-    byte_buffer protected_buf = std::move(exp_buf.value());
-    write_data_pdu_to_lower_layers(info.first, std::move(protected_buf));
   }
 }
 
@@ -464,13 +485,19 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
         "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
-  if (notif_count > st.tx_next) {
+  if (notif_count >= st.tx_next) {
     logger.log_error(
         "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
-  st.tx_trans = notif_count;
-  logger.log_debug("Updated lower end of the tx window. {}", st);
+  st.tx_trans = notif_count + 1;
+  logger.log_debug("Updated tx_trans. {}", st);
+
+  // Stop discard timers if required
+  if (!cfg.discard_timer.has_value()) {
+    return;
+  }
+
   if (is_um()) {
     stop_discard_timer(notif_count);
   }
@@ -478,16 +505,22 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 {
-  logger.log_debug("Handling delivery notification for highest_sn={}", notif_sn);
+  logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count > st.tx_next) {
+  if (notif_count >= st.tx_next) {
     logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
     return;
   }
+
+  // Stop discard timers if required
+  if (!cfg.discard_timer.has_value()) {
+    return;
+  }
+
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
@@ -497,11 +530,11 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 {
-  // Get lower edge of the window. If discard timer is enabled, this will be lower edge of the discard timer map.
-  // If discard timer not configured, use TX_TRANS as lower edge of window.
-  uint32_t tx_lower = {};
-  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-    tx_lower = discard_timers_map.begin()->first;
+  // Get lower edge of the window. If discard timer is enabled, use the lower edge of the tx_window, i.e. TX_NEXT_ACK.
+  // If discard timer is not configured, use TX_TRANS as lower edge of window.
+  uint32_t tx_lower;
+  if (cfg.discard_timer.has_value()) {
+    tx_lower = st.tx_next_ack;
   } else {
     tx_lower = st.tx_trans;
   }
@@ -517,7 +550,7 @@ uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
    *   - NOTIFICATION_HFN = HFN(TX_LOWER);
    * - NOTIFICATION_COUNT = [NOTIFICATION_HFN, NOTIFICATION_SN].
    */
-  uint32_t notification_hfn = {};
+  uint32_t notification_hfn;
   if ((int64_t)notification_sn < (int64_t)SN(tx_lower) - (int64_t)window_size) {
     notification_hfn = HFN(tx_lower) + 1;
   } else if (notification_sn >= SN(tx_lower) + window_size) {
@@ -581,28 +614,81 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
  */
 void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
 {
-  if (!(cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity)) {
-    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_count);
+  if (!cfg.discard_timer.has_value()) {
+    logger.log_debug("Cannot stop discard timers. No discard timer configured. highest_count={}", highest_count);
     return;
   }
-  if (discard_timers_map.empty()) {
-    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_count);
-    return;
-  }
-
-  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
-  if (highest_count < tx_next_deliv) {
-    logger.log_warning(
-        "Could not stop discard timers. highest_count={} tx_next_deliv={}", highest_count, tx_next_deliv);
+  if (highest_count < st.tx_next_ack || highest_count >= st.tx_next) {
+    logger.log_warning("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
     return;
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
-  // Remove timers from map
-  for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {
-    discard_timers_map.erase(count);
-    logger.log_debug("Stopped discard timer. count={}", count);
+  // Stop discard timers and update TX_NEXT_ACK to oldest element in tx_window
+  while (st.tx_next_ack <= highest_count) {
+    if (tx_window->has_sn(st.tx_next_ack)) {
+      tx_window->remove_sn(st.tx_next_ack);
+      logger.log_debug("Stopped discard timer. count={}", st.tx_next_ack);
+    }
+    st.tx_next_ack++;
   }
+
+  // Update TX_TRANS if it falls out of the tx_window
+  if (st.tx_trans < st.tx_next_ack) {
+    st.tx_trans = st.tx_next_ack;
+  }
+}
+
+void pdcp_entity_tx::discard_pdu(uint32_t count)
+{
+  if (!cfg.discard_timer.has_value()) {
+    logger.log_debug("Cannot discard PDU. No discard timer configured. count={}", count);
+    return;
+  }
+  if (count < st.tx_next_ack || count >= st.tx_next) {
+    logger.log_warning("Cannot discard PDU. The PDU is outside tx_window. count={} {}", count, st);
+    return;
+  }
+  if (!tx_window->has_sn(count)) {
+    logger.log_warning("Cannot discard PDU. The PDU is missing in tx_window. count={} {}", count, st);
+    return;
+  }
+  logger.log_debug("Discarding PDU. count={}", count);
+
+  // Notify lower layers of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
+  lower_dn.on_discard_pdu(SN(count));
+
+  tx_window->remove_sn(count);
+
+  // Update TX_NEXT_ACK to oldest element in tx_window
+  while (st.tx_next_ack < st.tx_next && !tx_window->has_sn(st.tx_next_ack)) {
+    st.tx_next_ack++;
+  }
+
+  // Update TX_TRANS if it falls out of the tx_window
+  if (st.tx_trans < st.tx_next_ack) {
+    st.tx_trans = st.tx_next_ack;
+  }
+}
+
+std::unique_ptr<sdu_window<pdcp_entity_tx::pdcp_tx_sdu_info>> pdcp_entity_tx::create_tx_window(pdcp_sn_size sn_size_)
+{
+  std::unique_ptr<sdu_window<pdcp_tx_sdu_info>> tx_window_;
+  switch (sn_size_) {
+    case pdcp_sn_size::size12bits:
+      tx_window_ = std::make_unique<sdu_window_impl<pdcp_tx_sdu_info,
+                                                    pdcp_window_size(pdcp_sn_size_to_uint(pdcp_sn_size::size12bits)),
+                                                    pdcp_bearer_logger>>(logger);
+      break;
+    case pdcp_sn_size::size18bits:
+      tx_window_ = std::make_unique<sdu_window_impl<pdcp_tx_sdu_info,
+                                                    pdcp_window_size(pdcp_sn_size_to_uint(pdcp_sn_size::size18bits)),
+                                                    pdcp_bearer_logger>>(logger);
+      break;
+    default:
+      srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", pdcp_sn_size_to_uint(sn_size_));
+  }
+  return tx_window_;
 }
 
 // Discard Timer Callback (discardTimer)
@@ -610,19 +696,10 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
 {
   parent->logger.log_debug("Discard timer expired. count={}", discard_count);
 
-  // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
-  parent->lower_dn.on_discard_pdu(pdcp_compute_sn(discard_count, parent->sn_size));
-
   // Add discard to metrics
   parent->metrics_add_discard_timouts(1);
 
-  if (parent->st.tx_trans < discard_count) {
-    // We are discarding a PDU, it can no longer be in the RLC SDU queue.
-    // Advance TX_TRANS accordingly
-    parent->st.tx_trans = discard_count + 1;
-  }
-
-  // Remove timer from map
+  // Discard PDU
   // NOTE: this will delete the callback. It *must* be the last instruction.
-  parent->discard_timers_map.erase(discard_count);
+  parent->discard_pdu(discard_count);
 }

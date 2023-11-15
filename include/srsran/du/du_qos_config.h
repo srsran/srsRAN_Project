@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/f1u/du/f1u_config.h"
+#include "srsran/mac/mac_lc_config.h"
 #include "srsran/rlc/rlc_config.h"
-#include <cstdint>
 
 namespace srsran {
 
@@ -32,6 +32,7 @@ namespace srsran {
 struct du_qos_config {
   rlc_config         rlc;
   srs_du::f1u_config f1u;
+  mac_lc_config      mac;
 };
 
 } // namespace srsran

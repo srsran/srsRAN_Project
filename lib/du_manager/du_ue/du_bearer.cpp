@@ -119,6 +119,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                       drb_id_t                             drb_id,
                                                       lcid_t                               lcid,
                                                       const rlc_config&                    rlc_cfg,
+                                                      const mac_lc_config&                 mac_cfg,
                                                       const f1u_config&                    f1u_cfg,
                                                       span<const up_transport_layer_info>  uluptnl_info_list,
                                                       gtpu_teid_pool&                      teid_pool,
@@ -146,6 +147,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->lcid    = lcid;
   drb->rlc_cfg = rlc_cfg;
   drb->f1u_cfg = f1u_cfg;
+  drb->mac_cfg = mac_cfg;
 
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
@@ -179,7 +181,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
-  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue_index,
+  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                       ue_index,
                                                                        pcell_index,
                                                                        *drb,
                                                                        du_params.services,

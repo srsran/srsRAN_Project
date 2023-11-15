@@ -26,6 +26,7 @@
 #include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_message_receiver.h"
+#include "ofh_receiver_controller.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -63,9 +64,19 @@ public:
   // See interface for documentation.
   ota_symbol_handler& get_ota_symbol_handler() override;
 
+  // See interface for documentation.
+  controller& get_controller() override;
+
+  /// Sets the Ethernet receiver for this Open Fronthaul receiver.
+  void set_ethernet_receiver(std::unique_ptr<ether::receiver> eth_rx)
+  {
+    msg_receiver.set_ethernet_receiver(std::move(eth_rx));
+  }
+
 private:
-  rx_window_checker window_checker;
-  message_receiver  msg_receiver;
+  rx_window_checker   window_checker;
+  message_receiver    msg_receiver;
+  receiver_controller ctrl;
 };
 
 } // namespace ofh

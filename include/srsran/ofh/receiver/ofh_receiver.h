@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
+#include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_ota_symbol_handler.h"
 
 namespace srsran {
@@ -39,6 +40,9 @@ public:
 
   /// Returns the OTA symbol handler of this Open Fronthaul receiver.
   virtual ota_symbol_handler& get_ota_symbol_handler() = 0;
+
+  /// Returns the controller of this Open Fronthaul receiver.
+  virtual controller& get_controller() = 0;
 };
 
 } // namespace ofh
