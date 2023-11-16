@@ -42,6 +42,8 @@
   resources:
     - type: sdr
       model: x300
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin

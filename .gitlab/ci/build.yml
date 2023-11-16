@@ -292,6 +292,11 @@ variables:
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
         rm -Rf build_time_metrics.txt
+      else
+        mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
+        cd build
+        make clean
+        mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
       fi
   timeout: 4h
   artifacts: &build_artifacts
@@ -302,8 +307,7 @@ variables:
         path: ${CI_JOB_ID}_coverage.xml
     paths:
       - ${CI_JOB_ID}_coverage.xml
-      - build/apps/gnb/gnb
-      - build/Testing/Temporary/MemoryChecker.*.log
+      - build/
       - build_time_metrics.txt
     expire_in: 10 minutes
   cache:
