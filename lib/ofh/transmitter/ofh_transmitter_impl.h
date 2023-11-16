@@ -13,6 +13,7 @@
 #include "ofh_data_flow_cplane_scheduling_commands_impl.h"
 #include "ofh_data_flow_uplane_downlink_data_impl.h"
 #include "ofh_downlink_handler_impl.h"
+#include "ofh_downlink_manager.h"
 #include "ofh_message_transmitter_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
@@ -28,12 +29,10 @@ namespace ofh {
 struct transmitter_impl_dependencies {
   /// Log.
   srslog::basic_logger* logger = nullptr;
-  /// OTA symbol handler for the transmission window checker.
-  ota_symbol_boundary_notifier* window_handler = nullptr;
   /// Transmitter task executor.
   task_executor* executor = nullptr;
-  /// Downlink handler.
-  std::unique_ptr<downlink_handler> dl_handler;
+  /// Downlink manager.
+  std::unique_ptr<downlink_manager> dl_manager;
   /// Uplink request handler.
   std::unique_ptr<uplink_request_handler> ul_request_handler;
   /// Ethernet gateway.
@@ -57,7 +56,7 @@ public:
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 
 private:
-  std::unique_ptr<downlink_handler>       dl_handler;
+  std::unique_ptr<downlink_manager>       dl_manager;
   std::unique_ptr<uplink_request_handler> ul_request_handler;
   message_transmitter_impl                msg_transmitter;
   transmitter_ota_symbol_task_dispatcher  ota_dispatcher;
