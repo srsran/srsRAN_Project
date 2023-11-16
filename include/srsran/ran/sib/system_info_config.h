@@ -170,7 +170,6 @@ struct sib19_info {
   optional<epoch_time_t>        epoch_time;
   optional<uint16_t>            k_mac;
   optional<ta_common_t>         ta_info;
-  // TODO
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.

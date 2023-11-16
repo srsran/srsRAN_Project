@@ -934,7 +934,7 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
   return true;
 }
 
-static bool validate_ntn_config(const ntn_config ntn_cfg)
+static bool validate_ntn_config(const ntn_config& ntn_cfg)
 {
   bool valid = true;
 

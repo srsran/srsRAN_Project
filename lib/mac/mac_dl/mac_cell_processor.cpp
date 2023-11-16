@@ -304,10 +304,23 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   if (not pcap.is_write_enabled() or sl_res.dl.nof_dl_symbols == 0) {
     return;
   }
-
+  for (unsigned i = 0; i < dl_res.sib1_pdus.size(); ++i) {
+    const mac_dl_data_result::dl_pdu&     sib1_pdu  = dl_res.sib1_pdus[i];
+    const srsran::dl_broadcast_allocation sib_alloc = sl_res.dl.bc;
+    srsran::mac_nr_context_info           context   = {};
+    context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+    context.direction           = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType            = PCAP_SI_RNTI;
+    context.rnti                = SI_RNTI;
+    context.system_frame_number = sl_tx.sfn();
+    context.sub_frame_number    = sl_tx.subframe_index();
+    context.length              = sib1_pdu.pdu.size();
+    pcap.push_pdu(context, sib1_pdu.pdu);
+  }
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
     const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
+
     if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
       srsran::mac_nr_context_info context = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
@@ -336,18 +349,5 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     context.sub_frame_number    = sl_tx.subframe_index();
     context.length              = pg_pdu.pdu.size();
     pcap.push_pdu(context, pg_pdu.pdu);
-  }
-  for (unsigned i = 0; i < dl_res.sib1_pdus.size(); ++i) {
-    const mac_dl_data_result::dl_pdu&     sib1_pdu  = dl_res.sib1_pdus[i];
-    const srsran::dl_broadcast_allocation sib_alloc = sl_res.dl.bc;
-    srsran::mac_nr_context_info           context   = {};
-    context.radioType                               = PCAP_FDD_RADIO;
-    context.direction                               = PCAP_DIRECTION_DOWNLINK;
-    context.rntiType                                = PCAP_SI_RNTI;
-    context.rnti                                    = SI_RNTI;
-    context.system_frame_number                     = sl_tx.sfn();
-    context.sub_frame_number                        = sl_tx.subframe_index();
-    context.length                                  = sib1_pdu.pdu.size();
-    pcap.push_pdu(context, sib1_pdu.pdu);
   }
 }

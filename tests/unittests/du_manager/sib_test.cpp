@@ -25,9 +25,9 @@ TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
   sib19.cell_specific_koffset.emplace();
   sib19.cell_specific_koffset.value() = 260;
   sib19.ephemeris_info.emplace();
-  sib19.ephemeris_info.value().position_x = 1;
-  sib19.ephemeris_info.value().position_y = 2;
-  sib19.ephemeris_info.value().position_z = 3;
+  sib19.ephemeris_info.value().position_x  = 1;
+  sib19.ephemeris_info.value().position_y  = 2;
+  sib19.ephemeris_info.value().position_z  = 3;
   sib19.ephemeris_info.value().velocity_vx = 4;
   sib19.ephemeris_info.value().velocity_vy = 5;
   sib19.ephemeris_info.value().velocity_vz = 6;
@@ -51,5 +51,6 @@ TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
   EXPECT_TRUE(sib19_decoded.ntn_cfg_r17_present);
   EXPECT_EQ(sib19_decoded.ntn_cfg_r17.cell_specific_koffset_r17, sib19.cell_specific_koffset);
   EXPECT_TRUE(sib19_decoded.ntn_cfg_r17.ephemeris_info_r17_present);
-  EXPECT_EQ(sib19_decoded.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17, sib19.ephemeris_info.value().position_x);
+  EXPECT_EQ(sib19_decoded.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17,
+            sib19.ephemeris_info.value().position_x);
 }

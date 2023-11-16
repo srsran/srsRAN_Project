@@ -62,7 +62,7 @@ public:
   uint8_t          L_max;
   // NTN/CS koffset
   unsigned ntn_cs_koffset;
-  bool is_tdd() const { return tdd_cfg_common.has_value(); }
+  bool     is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// Checks if DL/UL is active for current slot
   bool is_fully_dl_enabled(slot_point sl) const

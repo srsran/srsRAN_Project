@@ -217,10 +217,10 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       // Assumes that first entry in the PUSCH Time Domain resource list contains the k2 value which is less than or
       // equal to minimum value of k1(s).
-      const unsigned                               time_res   = 0;
-      const pusch_time_domain_resource_allocation& pusch_td   = ss->pusch_time_domain_list[time_res];
-      const slot_point pusch_slot = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
-      const unsigned                               start_ul_symbols =
+      const unsigned                               time_res = 0;
+      const pusch_time_domain_resource_allocation& pusch_td = ss->pusch_time_domain_list[time_res];
+      const slot_point pusch_slot                           = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
+      const unsigned   start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
       // the first transmission.

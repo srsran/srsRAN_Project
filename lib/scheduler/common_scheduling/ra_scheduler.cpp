@@ -589,11 +589,11 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
-    const auto&                   msg3_candidate = msg3_candidates[i];
-    const auto&                   pusch_res      = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
-    const unsigned msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs) + res_alloc.cfg.ntn_cs_koffset;
-    cell_slot_resource_allocator& msg3_alloc     = res_alloc[msg3_delay];
-    const vrb_interval            vrbs           = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
+    const auto&    msg3_candidate = msg3_candidates[i];
+    const auto&    pusch_res      = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
+    const unsigned msg3_delay     = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs) + res_alloc.cfg.ntn_cs_koffset;
+    cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
+    const vrb_interval            vrbs       = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
 
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
     srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
