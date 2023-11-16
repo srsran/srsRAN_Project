@@ -360,8 +360,6 @@ asn1::rrc_nr::bwp_dl_common_s srsran::srs_du::make_asn1_init_dl_bwp(const dl_con
   }
   pdcch.search_space_sib1_present           = true;
   pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
-  pdcch.search_space_other_sys_info_present = true;
-  pdcch.search_space_other_sys_info         = 1;
   pdcch.paging_search_space_present         = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.has_value();
   if (pdcch.paging_search_space_present) {
     pdcch.paging_search_space = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.value();
