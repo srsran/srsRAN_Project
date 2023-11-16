@@ -30,7 +30,11 @@ public:
 
   /// \brief Handle the incoming PDU.
   /// \param[in]  put Byte-buffer with new PDU.
-  virtual void handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr) = 0;
+
+  /// \brief handle_pdu Transmit a new PDU.
+  /// \param pdu The PDU to be transmitted.
+  /// \param dest_addr The destination address of that PDU.
+  virtual void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) = 0;
 };
 
 /// Interface to trigger bind/listen/connect operations on gateway socket.

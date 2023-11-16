@@ -45,7 +45,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
   ngu_gw_config.rx_max_mmsg                = cfg.net_cfg.n3_rx_max_mmsg;
   // other params
-  udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter};
+  udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter, *cfg.io_executor};
   ngu_gw                                          = create_udp_network_gateway(ngu_gw_msg);
 
   // Create GTP-U demux

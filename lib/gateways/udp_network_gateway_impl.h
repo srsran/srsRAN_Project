@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/support/executors/task_executor.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -24,15 +25,19 @@ class udp_network_gateway_impl final : public udp_network_gateway
 {
 public:
   explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
-                                    network_gateway_data_notifier_with_src_addr& data_notifier_);
+                                    network_gateway_data_notifier_with_src_addr& data_notifier_,
+                                    task_executor&                               io_executor_);
   ~udp_network_gateway_impl() override { close_socket(); }
 
 private:
   bool is_initialized();
   bool set_sockopts();
 
-  // udp_network_gateway_data_handler interface
-  void handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr) override;
+  // udp_network_gateway_data_handler interface, called from CU-UP executor.
+  void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override;
+
+  // Actual PDU handling, shall run in IO executor.
+  void handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr);
 
   // udp_network_gateway_controller interface
   bool create_and_bind() override;
@@ -50,6 +55,7 @@ private:
   udp_network_gateway_config                   config; // configuration
   network_gateway_data_notifier_with_src_addr& data_notifier;
   srslog::basic_logger&                        logger;
+  task_executor&                               io_executor;
 
   int sock_fd = -1;
 
