@@ -38,11 +38,11 @@ public:
 
   void close() override;
   bool is_write_enabled() const override { return writer.is_write_enabled(); }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override;
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
+  void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) override;
+  void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override;
 
 private:
-  void write_pdu(pcap_file_writer& file, const mac_nr_context_info& context, const byte_buffer& pdu);
+  byte_buffer pack_context(const mac_nr_context_info& context, const byte_buffer& pdu) const;
 
   mac_pcap_type type;
 

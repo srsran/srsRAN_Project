@@ -46,25 +46,11 @@ void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
 
 void dlt_pcap_impl::push_pdu(byte_buffer pdu)
 {
-  if (pdu.empty()) {
+  if (not is_write_enabled() or pdu.empty()) {
     // skip.
     return;
   }
-
-  writer.dispatch([this, pdu = std::move(pdu)](pcap_file_writer& pcap_file) { write_pdu(pdu, pcap_file); });
-  if (is_write_enabled()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
-  }
-}
-
-void dlt_pcap_impl::write_pdu(const byte_buffer& pdu, pcap_file_writer& pcap_file)
-{
-  // write packet header
-  unsigned length = pdu.length();
-  pcap_file.write_pdu_header(length);
-
-  // write PDU payload
-  pcap_file.write_pdu(pdu);
+  writer.write_pdu(std::move(pdu));
 }
 
 static std::unique_ptr<dlt_pcap>

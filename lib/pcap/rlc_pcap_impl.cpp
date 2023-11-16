@@ -64,9 +64,16 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
     return;
   }
 
-  byte_buffer buffer;
-  buffer.append(pdu.begin(), pdu.end()); // TODO: optimize copy
-  writer.dispatch([this, pdu = std::move(buffer), context](pcap_file_writer& file) { write_pdu(file, context, pdu); });
+  byte_buffer buffer = pack_context(context, pdu);
+  if (buffer.empty()) {
+    return srslog::fetch_basic_logger("ALL").error("Failed to generate RLC PCAP PDU");
+  }
+  for (const auto& slice : pdu.slices()) { // TODO: optimize copy
+    if (not buffer.append(slice)) {
+      return srslog::fetch_basic_logger("ALL").error("Failed to generate RLC PCAP PDU");
+    }
+  }
+  writer.write_pdu(std::move(buffer));
 }
 
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
@@ -74,7 +81,7 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   push_pdu(context, byte_buffer_chain{pdu.copy()});
 }
 
-void rlc_pcap_impl::write_pdu(pcap_file_writer& file, const pcap_rlc_pdu_context& context, const byte_buffer& buf)
+byte_buffer rlc_pcap_impl::pack_context(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) const
 {
   uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
 
@@ -100,16 +107,11 @@ void rlc_pcap_impl::write_pdu(pcap_file_writer& file, const pcap_rlc_pdu_context
 
   offset += nr_pcap_pack_rlc_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
-  unsigned buf_len = buf.length();
+  unsigned buf_len = pdu.length();
   srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
   udp_header->len = htons(offset + buf_len);
 
-  // Write header
-  file.write_pdu_header(offset + buf_len);
-  // Write context
-  file.write_pdu(span<uint8_t>(context_header, offset));
-  // Write PDU
-  file.write_pdu(buf);
+  return byte_buffer{span<uint8_t>(context_header, offset)};
 }
 
 /// Helper function to serialize RLC NR context

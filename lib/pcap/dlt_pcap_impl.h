@@ -37,8 +37,6 @@ public:
   void push_pdu(const_span<uint8_t> pdu) override;
 
 private:
-  void write_pdu(const byte_buffer& pdu, pcap_file_writer& pcap_file);
-
   std::string           layer_name;
   srslog::basic_logger& logger;
 

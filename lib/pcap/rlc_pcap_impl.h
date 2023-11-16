@@ -34,7 +34,7 @@ public:
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
 private:
-  void write_pdu(pcap_file_writer& file, const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
+  byte_buffer pack_context(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) const;
 
   bool srb_enabled = true;
   bool drb_enabled = true;

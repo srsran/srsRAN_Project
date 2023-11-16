@@ -34,23 +34,30 @@ void mac_pcap_impl::close()
   writer.close();
 }
 
-void mac_pcap_impl::push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu)
+void mac_pcap_impl::push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu)
 {
   push_pdu(context, byte_buffer{pdu});
 }
 
-void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
+void mac_pcap_impl::push_pdu(const mac_nr_context_info& context, byte_buffer pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
     // skip.
     return;
   }
 
-  writer.dispatch([this, pdu = std::move(pdu), context](pcap_file_writer& file) { write_pdu(file, context, pdu); });
+  byte_buffer buffer = pack_context(context, pdu);
+  if (buffer.empty() or not buffer.append(std::move(pdu))) {
+    srslog::fetch_basic_logger("ALL").error("Failed to generate MAC PCAP PDU");
+    return;
+  }
+  writer.write_pdu(std::move(buffer));
 }
 
-void mac_pcap_impl::write_pdu(pcap_file_writer& file, const mac_nr_context_info& context, const byte_buffer& buf)
+byte_buffer mac_pcap_impl::pack_context(const mac_nr_context_info& context, const byte_buffer& pdu) const
 {
+  const size_t buf_len = pdu.length();
+
   uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
 
   struct udphdr* udp_header;
@@ -73,28 +80,25 @@ void mac_pcap_impl::write_pdu(pcap_file_writer& file, const mac_nr_context_info&
     // Start magic string
     memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
     offset += strlen(MAC_NR_START_STRING);
-  }
 
-  offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
+    // pack MAC context.
+    offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
-  const size_t buf_len = buf.length();
-  if (type == mac_pcap_type::udp) {
+    // Set length in UDP header.
     srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
     udp_header->len = htons(offset + buf_len);
+  } else {
+    // pack MAC context.
+    offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
   }
 
-  // Write header
-  file.write_pdu_header(offset + buf_len);
-  // Write context
-  file.write_pdu(span<uint8_t>(context_header, offset));
-  // Write PDU
-  file.write_pdu(buf);
+  return byte_buffer{span<uint8_t>(context_header, offset)};
 }
 
 /// Helper function to serialize MAC NR context
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
 {
-  int      offset = {};
+  int      offset = 0;
   uint16_t tmp16  = {};
 
   if (buffer == nullptr || length < PCAP_CONTEXT_HEADER_MAX) {

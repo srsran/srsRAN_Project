@@ -36,21 +36,10 @@ public:
   void close();
   bool is_write_enabled() const { return is_open.load(std::memory_order_relaxed); }
 
-  template <typename WriteFunc>
-  void dispatch(WriteFunc&& write_func)
-  {
-    unique_task t = [this, write_func = std::forward<WriteFunc>(write_func)]() mutable {
-      if (!is_write_enabled()) {
-        logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
-        return;
-      }
-      write_func(writer);
-    };
-    dispatch_impl(std::move(t));
-  }
+  void write_pdu(byte_buffer pdu);
 
 private:
-  void dispatch_impl(unique_task t);
+  void write_pdu_impl(const byte_buffer& pdu);
 
   std::string           layer_name;
   task_executor&        backend_exec;

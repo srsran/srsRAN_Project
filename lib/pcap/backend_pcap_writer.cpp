@@ -56,12 +56,33 @@ void backend_pcap_writer::close()
     }
   }
 }
-void backend_pcap_writer::dispatch_impl(unique_task t)
+
+void backend_pcap_writer::write_pdu(byte_buffer pdu)
+{
+  if (pdu.empty()) {
+    // skip.
+    return;
+  }
+  if (not is_write_enabled()) {
+    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    return;
+  }
+  if (not backend_exec.defer([this, pdu = std::move(pdu)]() { write_pdu_impl(pdu); })) {
+    logger.warning("Dropped {} PCAP PDU. Cause: Task executor queue is full", layer_name);
+  }
+}
+
+void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 {
   if (not is_write_enabled()) {
     logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    return;
   }
-  if (not backend_exec.defer(std::move(t))) {
-    logger.warning("Dropped {} PCAP PDU. Cause: Task executor queue is full", layer_name);
-  }
+
+  // write packet header
+  unsigned length = pdu.length();
+  writer.write_pdu_header(length);
+
+  // write PDU payload
+  writer.write_pdu(pdu);
 }
