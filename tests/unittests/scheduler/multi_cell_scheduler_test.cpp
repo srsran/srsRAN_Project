@@ -75,6 +75,51 @@ protected:
     ++next_slot;
   }
 
+  void add_ue(uint16_t cell_idx, uint16_t ue_idx)
+  {
+    // Add UE
+    auto ue_cfg =
+        test_helpers::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx], {LCID_MIN_DRB});
+    ue_cfg.ue_index                                 = to_du_ue_index(ue_idx);
+    ue_cfg.crnti                                    = to_rnti(0x4601 + ue_idx);
+    (*ue_cfg.cfg.cells)[0].serv_cell_cfg.cell_index = to_du_cell_index(cell_idx);
+    (*ue_cfg.cfg.cells)[0].serv_cell_idx            = to_serv_cell_index(cell_idx);
+
+    scheduler_test_bench::add_ue(ue_cfg);
+  }
+
+  rach_indication_message::preamble create_preamble()
+  {
+    static unsigned       next_rnti = test_rgen::uniform_int<unsigned>(MIN_CRNTI, MAX_CRNTI);
+    static const unsigned rnti_inc  = test_rgen::uniform_int<unsigned>(1, 5);
+
+    rach_indication_message::preamble preamble{};
+    preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);
+    preamble.time_advance =
+        phy_time_unit::from_seconds(std::uniform_real_distribution<double>{0, 2005e-6}(test_rgen::get()));
+    preamble.tc_rnti = to_rnti(next_rnti);
+    next_rnti += rnti_inc;
+    return preamble;
+  }
+
+  rach_indication_message create_rach_indication(unsigned nof_preambles, du_cell_index_t cell_idx)
+  {
+    rach_indication_message rach_ind{};
+    rach_ind.cell_index = cell_idx;
+    rach_ind.slot_rx    = next_slot_rx() - 1;
+    if (nof_preambles == 0) {
+      return rach_ind;
+    }
+    rach_ind.occasions.emplace_back();
+    rach_ind.occasions.back().start_symbol    = 0;
+    rach_ind.occasions.back().frequency_index = 0;
+
+    for (unsigned i = 0; i != nof_preambles; ++i) {
+      rach_ind.occasions.back().preambles.emplace_back(create_preamble());
+    }
+    return rach_ind;
+  }
+
   std::vector<cell_config_builder_params> cell_cfg_builder_params_list;
 };
 
@@ -132,6 +177,41 @@ TEST_P(multi_cell_scheduler_tester, test_sib1_allocation_for_multiple_cells)
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_sib1_scheduled_atleast_once[cell_idx])
         << fmt::format("SIB1 not scheduled for cell with index={}", cell_idx);
+  }
+}
+
+TEST_P(multi_cell_scheduler_tester, test_rar_scheduling_for_ues_in_different_cells)
+{
+  // Number of slots to run the test.
+  static const unsigned test_run_nof_slots                = 200;
+  static const unsigned nof_preambles_per_rach_indication = 1;
+
+  auto run_slot_until_next_rach_opportunity_condition = [this]() {
+    return not cell_cfg_list[to_du_cell_index(0)].is_fully_ul_enabled(next_slot_rx() - 1);
+  };
+  run_slot_until(run_slot_until_next_rach_opportunity_condition);
+
+  // Send one RACH indication per cell.
+  for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+    sched->handle_rach_indication(
+        create_rach_indication(nof_preambles_per_rach_indication, to_du_cell_index(cell_idx)));
+  }
+
+  std::vector<bool> is_rar_scheduled(cell_cfg_builder_params_list.size(), false);
+  for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
+    for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+      if (last_sched_res_list[cell_idx] != nullptr and not is_rar_scheduled[cell_idx]) {
+        is_rar_scheduled[cell_idx] = std::any_of(last_sched_res_list[cell_idx]->dl.dl_pdcchs.begin(),
+                                                 last_sched_res_list[cell_idx]->dl.dl_pdcchs.end(),
+                                                 [](const pdcch_dl_information& dl_pdcch) {
+                                                   return dl_pdcch.dci.type == srsran::dci_dl_rnti_config_type::ra_f1_0;
+                                                 });
+      }
+    }
+    run_slot_all_cells();
+  }
+  for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
+    ASSERT_TRUE(is_rar_scheduled[cell_idx]) << fmt::format("RAR not scheduled for cell with index={}", cell_idx);
   }
 }
 
