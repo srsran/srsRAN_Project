@@ -53,6 +53,8 @@ private:
 
   timer_manager& timers;
 
+  std::atomic<bool> is_running{true};
+
   // Connection between DU-high layers.
   std::unique_ptr<layer_connector> adapters;
 
