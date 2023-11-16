@@ -865,6 +865,11 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  "latency, but place a stricter requirement on the UE decode latency.")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+
+  app.add_option("--max_consecutive_kos",
+                 pucch_params.max_consecutive_kos,
+                 "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
+      ->capture_default_str();
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)

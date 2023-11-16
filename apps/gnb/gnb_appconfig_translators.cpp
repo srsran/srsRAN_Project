@@ -1582,8 +1582,9 @@ mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config
   mac_expert_config          out_cfg = {};
   const base_cell_appconfig& cell    = config.cells_cfg.front().cell;
 
-  out_cfg.max_consecutive_dl_kos = cell.pdsch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_ul_kos = cell.pusch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_dl_kos  = cell.pdsch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_ul_kos  = cell.pusch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_csi_dtx = cell.pucch_cfg.max_consecutive_kos;
 
   return out_cfg;
 }
