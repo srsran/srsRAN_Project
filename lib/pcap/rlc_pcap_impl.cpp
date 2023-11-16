@@ -32,7 +32,10 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename,
                              bool               capture_srb,
                              bool               capture_drb,
                              task_executor&     backend_exec) :
-  srb_enabled(capture_srb), drb_enabled(capture_drb), writer(UDP_DLT, "RLC", filename, backend_exec)
+  srb_enabled(capture_srb),
+  drb_enabled(capture_drb),
+  logger(srslog::fetch_basic_logger("ALL")),
+  writer(UDP_DLT, "RLC", filename, backend_exec)
 {
 }
 
@@ -64,54 +67,31 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
     return;
   }
 
-  byte_buffer buffer = pack_context(context, pdu);
-  if (buffer.empty()) {
-    return srslog::fetch_basic_logger("ALL").error("Failed to generate RLC PCAP PDU");
+  byte_buffer buf;
+
+  // Encode RLC header.
+  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
+  int     offset = nr_pcap_pack_rlc_context_to_buffer(context, &context_header[0], PCAP_CONTEXT_HEADER_MAX);
+  if (offset < 0) {
+    logger.warning("Discarding RLC PCAP PDU. Cause: Failed to generate header.");
+    return;
   }
-  for (const auto& slice : pdu.slices()) { // TODO: optimize copy
-    if (not buffer.append(slice)) {
-      return srslog::fetch_basic_logger("ALL").error("Failed to generate RLC PCAP PDU");
+
+  // Copy byte buffer.
+  for (const auto& slice : pdu.slices()) { // TODO: optimize copy.
+    if (not buf.append(slice)) {
+      logger.warning("Discarding RLC PCAP PDU. Cause: Failed to allocate memory for PCAP PDU.");
+      return;
     }
   }
-  writer.write_pdu(std::move(buffer));
+
+  writer.write_pdu(pcap_pdu_data{
+      0xbeef, 0xdead, PCAP_RLC_NR_START_STRING, span<const uint8_t>(context_header, offset), std::move(buf)});
 }
 
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
 {
   push_pdu(context, byte_buffer_chain{pdu.copy()});
-}
-
-byte_buffer rlc_pcap_impl::pack_context(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) const
-{
-  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
-
-  struct udphdr* udp_header;
-  int            offset = 0;
-
-  // Add dummy UDP header, start with src and dest port
-  udp_header       = (struct udphdr*)context_header;
-  udp_header->dest = htons(0xdead);
-  offset += 2;
-  udp_header->source = htons(0xbeef);
-  offset += 2;
-  // length to be filled later
-  udp_header->len = 0x0000;
-  offset += 2;
-  // dummy CRC
-  udp_header->check = 0x0000;
-  offset += 2;
-
-  // Start magic string
-  memcpy(&context_header[offset], PCAP_RLC_NR_START_STRING, strlen(PCAP_RLC_NR_START_STRING));
-  offset += strlen(PCAP_RLC_NR_START_STRING);
-
-  offset += nr_pcap_pack_rlc_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
-
-  unsigned buf_len = pdu.length();
-  srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
-  udp_header->len = htons(offset + buf_len);
-
-  return byte_buffer{span<uint8_t>(context_header, offset)};
 }
 
 /// Helper function to serialize RLC NR context

@@ -9,7 +9,6 @@
  */
 
 #include "mac_pcap_impl.h"
-#include <linux/udp.h>
 #include <netinet/in.h>
 
 using namespace srsran;
@@ -20,7 +19,9 @@ constexpr uint16_t MAC_DLT = 157;
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
 mac_pcap_impl::mac_pcap_impl(const std::string& filename, mac_pcap_type type_, task_executor& backend_exec_) :
-  type(type_), writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT, "MAC", filename, backend_exec_)
+  type(type_),
+  logger(srslog::fetch_basic_logger("ALL")),
+  writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT, "MAC", filename, backend_exec_)
 {
 }
 
@@ -46,53 +47,20 @@ void mac_pcap_impl::push_pdu(const mac_nr_context_info& context, byte_buffer pdu
     return;
   }
 
-  byte_buffer buffer = pack_context(context, pdu);
-  if (buffer.empty() or not buffer.append(std::move(pdu))) {
-    srslog::fetch_basic_logger("ALL").error("Failed to generate MAC PCAP PDU");
+  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
+  int     offset = nr_pcap_pack_mac_context_to_buffer(context, &context_header[0], PCAP_CONTEXT_HEADER_MAX);
+  if (offset < 0) {
+    logger.warning("Discarding MAC PCAP PDU. Cause: Failed to generate header.");
     return;
   }
-  writer.write_pdu(std::move(buffer));
-}
-
-byte_buffer mac_pcap_impl::pack_context(const mac_nr_context_info& context, const byte_buffer& pdu) const
-{
-  const size_t buf_len = pdu.length();
-
-  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
-
-  struct udphdr* udp_header;
-  int            offset = 0;
 
   if (type == mac_pcap_type::udp) {
-    // Add dummy UDP header, start with src and dest port
-    udp_header       = (struct udphdr*)context_header;
-    udp_header->dest = htons(0xdead);
-    offset += 2;
-    udp_header->source = htons(0xbeef);
-    offset += 2;
-    // length to be filled later
-    udp_header->len = 0x0000;
-    offset += 2;
-    // dummy CRC
-    udp_header->check = 0x0000;
-    offset += 2;
-
-    // Start magic string
-    memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
-    offset += strlen(MAC_NR_START_STRING);
-
-    // pack MAC context.
-    offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
-
-    // Set length in UDP header.
-    srsran_assert(offset + buf_len < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
-    udp_header->len = htons(offset + buf_len);
+    pcap_pdu_data buf{0xbeef, 0xdead, MAC_NR_START_STRING, span<const uint8_t>(context_header, offset), std::move(pdu)};
+    writer.write_pdu(std::move(buf));
   } else {
-    // pack MAC context.
-    offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
+    pcap_pdu_data buf{span<const uint8_t>(context_header, offset), std::move(pdu)};
+    writer.write_pdu(std::move(buf));
   }
-
-  return byte_buffer{span<uint8_t>(context_header, offset)};
 }
 
 /// Helper function to serialize MAC NR context

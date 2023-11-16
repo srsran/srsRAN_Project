@@ -46,6 +46,8 @@ private:
 
   mac_pcap_type type;
 
+  srslog::basic_logger& logger;
+
   backend_pcap_writer writer;
 };
 

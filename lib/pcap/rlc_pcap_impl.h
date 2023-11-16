@@ -39,6 +39,8 @@ private:
   bool srb_enabled = true;
   bool drb_enabled = true;
 
+  srslog::basic_logger& logger;
+
   backend_pcap_writer writer;
 };
 } // namespace srsran
