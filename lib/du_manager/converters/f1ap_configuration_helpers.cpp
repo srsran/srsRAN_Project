@@ -417,6 +417,7 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
 
   if (sib19_params.ephemeris_info.has_value()) {
     sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
+    sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
     sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17 =
         sib19_params.ephemeris_info.value().position_x;
     sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17 =

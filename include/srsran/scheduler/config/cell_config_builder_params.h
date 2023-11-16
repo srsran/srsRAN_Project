@@ -59,6 +59,8 @@ struct cell_config_builder_params {
   uint8_t min_k2 = 4;
   /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
   optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+  /// Defines the maximum allowable channel delay in slots when runnning in NTN mode (TS 38.300 section 16.14.2)
+  unsigned ntn_cs_koffset = 0;
 };
 
 } // namespace srsran

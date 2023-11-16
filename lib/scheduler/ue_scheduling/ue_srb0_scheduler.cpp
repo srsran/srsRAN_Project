@@ -200,13 +200,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
   optional<unsigned>                  pucch_res_indicator;
   for (const auto k1_candidate : dci_1_0_k1_values) {
-    unsigned ntn_cs_koffset = 0;
-    if (cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
-      const auto& pusch_cfg_common = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value();
-      ntn_cs_koffset               = pusch_cfg_common.pusch_td_alloc_list[0].ntn_cs_koffset;
-    }
-    pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, ntn_cs_koffset, *pdcch);
+    pucch_res_indicator =
+        pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;

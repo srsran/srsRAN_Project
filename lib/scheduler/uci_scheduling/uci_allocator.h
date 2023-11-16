@@ -50,7 +50,6 @@ public:
                                                      const ue_cell_configuration& ue_cell_cfg,
                                                      unsigned                     k0,
                                                      span<const uint8_t>          k1_list,
-                                                     unsigned                     ntn_cs_koffset    = 0,
                                                      const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.

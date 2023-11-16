@@ -155,6 +155,9 @@ struct du_cell_config {
 
   /// Parameters for PUCCH-Config generation.
   pucch_builder_params pucch_cfg;
+
+  /// Defines the maximum allowable channel delay in slots when runnning in NTN mode. seee (TS 38.300 section 16.14.2)
+  unsigned ntn_cs_koffset = 0;
 };
 
 } // namespace srsran

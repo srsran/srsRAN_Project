@@ -37,8 +37,7 @@ unsigned srsran::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
   // Given the assumption mu_PUSCH == mu_PDCCH, MSG3_delay simplifies to MSG3_delay =  k2 + Delta
   // [TS 38.214, Section 6.1.2.1 and 6.1.2.1.1].
 
-  return static_cast<int>(pusch_td_res_alloc.ntn_cs_koffset + pusch_td_res_alloc.k2 +
-                          DELTAS[to_numerology_value(pusch_scs)]);
+  return static_cast<int>(pusch_td_res_alloc.k2 + DELTAS[to_numerology_value(pusch_scs)]);
 }
 
 uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigned frequency_index, bool is_sul)
@@ -349,7 +348,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Ensure there are UL slots where Msg3s can be allocated.
   bool pusch_slots_available = false;
   for (const auto& pusch_td_alloc : get_pusch_time_domain_resource_table(get_pusch_cfg())) {
-    const unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs);
+    const unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs) + res_alloc.cfg.ntn_cs_koffset;
     const unsigned start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pdcch_slot + msg3_delay);
     if (cell_cfg.is_ul_enabled(pdcch_slot + msg3_delay) and pusch_td_alloc.symbols.start() >= start_ul_symbols) {
@@ -497,7 +496,8 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     unsigned pusch_res_max_allocs = max_nof_allocs - msg3_candidates.size();
 
     // >> Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.
-    const unsigned                      msg3_delay = get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs);
+    const unsigned msg3_delay =
+        get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs) + res_alloc.cfg.ntn_cs_koffset;
     const cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
     const unsigned                      start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(msg3_alloc.slot);
@@ -591,7 +591,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
     const auto&                   pusch_res      = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
-    const unsigned                msg3_delay     = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
+    const unsigned msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs) + res_alloc.cfg.ntn_cs_koffset;
     cell_slot_resource_allocator& msg3_alloc     = res_alloc[msg3_delay];
     const vrb_interval            vrbs           = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
 

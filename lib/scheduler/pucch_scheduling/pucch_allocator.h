@@ -51,7 +51,6 @@ public:
                                                             rnti_t                      tcrnti,
                                                             unsigned                    k0,
                                                             unsigned                    k1,
-                                                            unsigned                    ntn_cs_koffset,
                                                             const pdcch_dl_information& dci_info) = 0;
 
   /// Allocate the PUCCH resource for a UE's SR opportunity.
@@ -77,8 +76,7 @@ public:
                                                          rnti_t                       crnti,
                                                          const ue_cell_configuration& ue_cell_cfg,
                                                          unsigned                     k0,
-                                                         unsigned                     k1,
-                                                         unsigned                     ntn_cs_koffset = 0) = 0;
+                                                         unsigned                     k1) = 0;
 
   /// Allocate the PUCCH grant for a UE's CSI opportunity.
   /// \param[out,in] slot_alloc struct with scheduling results.

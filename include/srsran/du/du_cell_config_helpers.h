@@ -88,6 +88,7 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   cfg.cell_barred             = false;
   cfg.intra_freq_resel        = false;
   cfg.ue_timers_and_constants = make_default_ue_timers_and_constants_config();
+  cfg.ntn_cs_koffset          = params.ntn_cs_koffset;
 
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
