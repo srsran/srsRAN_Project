@@ -198,7 +198,7 @@ public:
     srsran_assert(count <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
     srsran_assume(count <= MAX_N);
-    for (size_type i = this->sz; i != count; ++i) {
+    for (size_type i = 0; i != count; ++i) {
       this->construct_(i);
     }
     this->sz = count;

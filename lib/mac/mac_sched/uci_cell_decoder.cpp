@@ -152,8 +152,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
     } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu)) {
-      const auto&                            pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
-      uci_indication::uci_pdu::uci_pusch_pdu pdu{};
+      const auto& pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
+      auto&       pdu   = ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
       if (pusch.harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().harq_status, pusch.harq_info->payload);
@@ -168,11 +168,9 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         pdu.csi = decode_csi(pusch.csi_part1_info->csi_status, pusch.csi_part1_info->payload, pusch.ri, pusch.pmi);
       }
 
-      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
-
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
-      uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
+      auto&       pdu   = ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
 
       if (pucch.ul_sinr.has_value()) {
         pdu.ul_sinr.emplace(pucch.ul_sinr.value());
@@ -213,8 +211,6 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                          uci_pdu.crnti);
         }
       }
-
-      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);
     }
   }
 
