@@ -308,10 +308,7 @@ unit coverage:
     expire_in: 10 minutes
   retry: 2
   needs:
-    - job: smoke release cached
-      optional: true
-      artifacts: true
-    - job: smoke release clean
+    - job: intermediate commits
       optional: true
       artifacts: true
     - job: smoke release update cache

@@ -363,6 +363,20 @@ variables:
     ENABLE_AVX512: "False"
   tags: ["${AMD64_TAG}"]
 
+.smoke dpdk:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-23.10 # If we change it to 22.04, the cache will be the same as .smoke tsan
+    COMPILER: clang
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    ASSERT_LEVEL: PARANOID
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    DPDK_VERSION: "23.07"
+  tags: ["${AMD64_TAG}"]
+
 # Combinations to use in schedules matrix
 
 .combinations: &basic_combinations
@@ -375,17 +389,6 @@ variables:
 ######
 
 # Smoke builds in PR: with or without cache
-
-smoke release cached:
-  extends: .smoke release
-  timeout: 45 min
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
-    - if: $ON_MR
-  cache:
-    - !reference [.fetch_src_cache, cache]
-    - *cache_build_get
 
 smoke tsan cached:
   extends: .smoke tsan
@@ -430,12 +433,20 @@ smoke archlinux cached:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
-smoke release clean:
-  extends: .smoke release
+smoke dpdk cached:
+  extends: .smoke dpdk
+  stage: manual
+  timeout: 45 min
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+    - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
     - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
 
 smoke tsan clean:
   extends: .smoke tsan
@@ -452,32 +463,26 @@ smoke archlinux clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
 
+smoke dpdk clean:
+  extends: .smoke dpdk
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+
 # Intermediate commits
 
 intermediate commits:
-  extends: .build_and_unit
-  stage: manual
+  extends: .smoke release
+  stage: build and unit tests
   rules:
-    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
-      when: manual
-      allow_failure: false
   timeout: 45 min
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: none
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    ASSERT_LEVEL: PARANOID
-    ENABLE_GCOV: "True"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
-    ENABLE_WERROR: "False"
   tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
+      TEST_MODE=none
+      ENABLE_WERROR=False
       for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
       do
         echo "##################################################"
@@ -486,6 +491,15 @@ intermediate commits:
         git checkout $rev
         build_srsgnb
       done
+    - |
+      TEST_MODE=coverage
+      ENABLE_WERROR=True
+      git checkout $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      echo "##################################################"
+      echo "#### $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
+      echo "##################################################"
+      build_srsgnb
+    - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
@@ -599,6 +613,19 @@ smoke rhel update cache:
 
 smoke archlinux update cache:
   extends: .smoke archlinux
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
+
+smoke dpdk update cache:
+  extends: .smoke dpdk
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
