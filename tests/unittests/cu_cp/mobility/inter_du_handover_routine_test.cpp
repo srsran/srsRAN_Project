@@ -78,20 +78,44 @@ protected:
     source_du->e1ap_ctrl_notifier.set_first_message_outcome(outcome);
   }
 
-  bool procedure_ready() const { return t.ready(); }
+  bool procedure_ready() const
+  {
+    return t.ready();
+  }
 
-  const cu_cp_inter_du_handover_response& get_result() { return t.get(); }
+  const cu_cp_inter_du_handover_response& get_result()
+  {
+    return t.get();
+  }
 
-  ue_index_t get_source_ue() { return source_ue_index; }
+  ue_index_t get_source_ue()
+  {
+    return source_ue_index;
+  }
 
-  unsigned get_target_pci() { return target_pci; }
+  unsigned get_target_pci()
+  {
+    return target_pci;
+  }
 
-  du_index_t get_target_du_index() { return target_du_index; }
+  du_index_t get_target_du_index()
+  {
+    return target_du_index;
+  }
 
-  nr_cell_global_id_t get_target_cgi() { return target_cgi; }
+  nr_cell_global_id_t get_target_cgi()
+  {
+    return target_cgi;
+  }
 
-  size_t get_nof_ues_in_target_du() { return get_nof_ues(target_du); }
-  size_t get_nof_ues_in_source_du() { return get_nof_ues(source_du); }
+  size_t get_nof_ues_in_target_du()
+  {
+    return get_nof_ues(target_du);
+  }
+  size_t get_nof_ues_in_source_du()
+  {
+    return get_nof_ues(source_du);
+  }
 
 private:
   size_t get_nof_ues(du_wrapper* du_obj)
