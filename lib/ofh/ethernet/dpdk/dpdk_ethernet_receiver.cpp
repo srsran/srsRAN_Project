@@ -23,7 +23,9 @@ static constexpr unsigned MAX_BUFFER_SIZE = 9600;
 void dpdk_receiver_impl::start()
 {
   logger.info("Starting the DPDK ethernet frame receiver");
-  executor.defer([this]() { receive_loop(); });
+  if (not executor.defer([this]() { receive_loop(); })) {
+    report_error("Unable to start the DPDK ethernet frame receiver");
+  }
 }
 
 void dpdk_receiver_impl::stop()
@@ -36,11 +38,10 @@ void dpdk_receiver_impl::receive_loop()
 {
   receive();
 
-  if (is_stop_requested.load(std::memory_order_relaxed)) {
-    return;
+  while (not is_stop_requested.load(std::memory_order_relaxed) and not executor.defer([this]() { receive_loop(); })) {
+    // Keep trying to dispatch the receive loop task.
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-
-  executor.defer([this]() { receive_loop(); });
 }
 
 void dpdk_receiver_impl::receive()
