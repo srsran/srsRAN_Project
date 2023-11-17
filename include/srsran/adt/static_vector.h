@@ -191,7 +191,10 @@ public:
   using base_type::end;
   using base_type::front;
 
-  constexpr static_vector() noexcept = default;
+  /// \brief Construct an empty static_vector.
+  ///
+  /// Note: The ctor needs to be user-defined to forbid zero-initialization of the storage via = {}.
+  constexpr static_vector() noexcept {}
   explicit constexpr static_vector(size_type count) noexcept(std::is_nothrow_default_constructible<T>::value)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");

@@ -99,6 +99,9 @@ struct uci_indication {
   };
   using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;
 
+  // Note: user-defined ctor to avoid zero-initialization of uci_pdu_list.
+  uci_indication() {}
+
   du_cell_index_t cell_index;
   slot_point      slot_rx;
   uci_pdu_list    ucis;
