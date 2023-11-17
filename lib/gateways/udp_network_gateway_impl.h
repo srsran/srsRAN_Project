@@ -70,6 +70,9 @@ private:
   std::vector<::sockaddr_storage>   rx_srcaddr;
   std::vector<::mmsghdr>            rx_msghdr;
   std::vector<::iovec>              rx_iovecs;
+
+  // Temporary Tx buffer for transmission.
+  std::array<uint8_t, network_gateway_udp_max_len> tx_mem;
 };
 
 } // namespace srsran

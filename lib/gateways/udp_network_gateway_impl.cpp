@@ -72,10 +72,7 @@ void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const soc
     return;
   }
 
-  // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
-
-  span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
+  span<const uint8_t> pdu_span = to_span(pdu, tx_mem);
 
   int bytes_sent =
       sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, (sockaddr*)&dest_addr, sizeof(sockaddr_storage));
