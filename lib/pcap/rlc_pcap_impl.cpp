@@ -52,7 +52,6 @@ void rlc_pcap_impl::close()
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
-    // skip
     return;
   }
 

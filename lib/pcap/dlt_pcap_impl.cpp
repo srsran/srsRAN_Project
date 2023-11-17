@@ -41,7 +41,11 @@ void dlt_pcap_impl::close()
 
 void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
 {
-  push_pdu(byte_buffer{pdu});
+  if (not is_write_enabled() or pdu.empty()) {
+    // skip.
+    return;
+  }
+  writer.write_pdu(byte_buffer(pdu));
 }
 
 void dlt_pcap_impl::push_pdu(byte_buffer pdu)

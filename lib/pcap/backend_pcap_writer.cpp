@@ -32,7 +32,7 @@ pcap_pdu_data::pcap_pdu_data(uint16_t            src,
   srsran_assert(length < std::numeric_limits<uint16_t>::max(), "PDU length is too large");
   udp_header.len = htons(length);
   // dummy CRC
-  udp_header.check = 0x0000;
+  udp_header.check = 0x0101;
 
   if (not header_buf.append(span<const uint8_t>{(const uint8_t*)&udp_header, sizeof(udphdr)}) or
       not header_buf.append(span<const uint8_t>{(const uint8_t*)layer_str, layer_str_len}) or
@@ -90,7 +90,6 @@ void backend_pcap_writer::close()
 void backend_pcap_writer::write_pdu(byte_buffer pdu)
 {
   if (pdu.empty()) {
-    // skip.
     return;
   }
   if (not is_write_enabled()) {
@@ -105,7 +104,6 @@ void backend_pcap_writer::write_pdu(byte_buffer pdu)
 void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
 {
   if (pdu.payload().empty()) {
-    // skip.
     return;
   }
   if (not is_write_enabled()) {
