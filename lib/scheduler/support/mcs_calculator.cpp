@@ -46,8 +46,20 @@ static const int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
 
 // TODO: This table is temporary. Note that we might eventually change this table for a SNR vs Spectral Efficiency
 //       table.
-// This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
-// table is the minimum SNR for MCS index n.
+// TODO: Revise the tables if BLER is too high.
+// The ul_snr_mcs_table and ul_snr_256qam_mcs_table tables contain the minimum required SNR for a given MCS index; the
+// n-th (n = {0, ..., size - 1}) element of the table is the minimum SNR for MCS index n.
+//
+// The minimum required SNR for a given MCS index is derived by following steps:
+//  1. Connect gNB to UE over ZMQ and introduce an AWGN channel with varying UL SNR (gnuradio)
+//  2. Start UL traffic from UE to 5GC
+//  3. Observe the BLER at times when SNR remains constant (not during transition) and ensure BLER is 0% for the MCS
+//  chosen
+//  4. If the BLER is not 0% in step 3 then, increase the SNR value in the table corresponding to the MCS chosen
+//
+//  NOTE: Following values were computed using SISO configuration over 20Mhz Bandwidth and TDD configuration
+
+// For 64QAM PUSCH MCS table.
 static const std::array<double, 29> ul_snr_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
@@ -59,9 +71,7 @@ static const std::array<double, 29> ul_snr_mcs_table = {
     // clang-format on
 };
 
-// TODO: Compute correct values based on 256QAM MCS table in TS 38.214, Table 5.1.3.1-2.
-// This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
-// table is the minimum SNR for MCS index n.
+// For 256QAM PUSCH MCS table.
 static const std::array<double, 28> ul_snr_256qam_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
