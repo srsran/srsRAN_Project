@@ -18,7 +18,7 @@ services:
         OS_VERSION: "22.04"
         OPEN5GS_VERSION: "v2.6.1"
     env_file:
-      - open5gs/open5gs.env
+      - ${OPEN_5GS_ENV_FILE:-open5gs/open5gs.env}
     privileged: true
     ports:
       - "3000:3000/tcp"
