@@ -1087,9 +1087,9 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
     out_rlc.mode  = rlc_mode::am;
     out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
   } else {
-    srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+    srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
   }
-  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB3);
+  srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
 
   if (config.ntn_cfg.has_value()) {
     ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
