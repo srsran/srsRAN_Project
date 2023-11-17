@@ -318,11 +318,13 @@ public:
           mac_uci_pdu::pucch_f0_or_f1_type f1{};
           if (pucch.format_1.harq_ack_nof_bits > 0) {
             f1.harq_info.emplace();
+            // Set PUCCHs with SR as DTX.
             const uci_pucch_f0_or_f1_harq_values ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr
                                                                ? uci_pucch_f0_or_f1_harq_values::ack
                                                                : uci_pucch_f0_or_f1_harq_values::dtx;
             f1.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
           }
+          // Do not forward positive SRs to scheduler.
           if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
             f1.sr_info.emplace();
             f1.sr_info->sr_detected = false;
