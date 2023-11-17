@@ -166,6 +166,18 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   gtpu_pdu_exec = exec_mng.executors().at("ue_dl_exec");
   cu_up_e2_exec = exec_mng.executors().at("ue_up_ctrl_exec");
 
+  // Worker for IO of UE PDU traffic
+  const single_worker gnb_ue_io_worker{"gnb_ue_io",
+                                       {concurrent_queue_policy::lockfree_spsc, 256},
+                                       {{"ue_io_exec"}},
+                                       std::chrono::microseconds{0},
+                                       os_thread_realtime_priority::max() - 10,
+                                       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
+  if (!exec_mng.add_execution_context(create_execution_context(gnb_ue_io_worker))) {
+    report_fatal_error("Failed to instantiate {} execution context", gnb_ue_io_worker.name);
+  }
+  io_exec = exec_mng.executors().at("ue_io_exec");
+
   // Worker for handling DU, CU and UE control procedures.
   const priority_multiqueue_worker gnb_ctrl_worker{
       "gnb_ctrl",

@@ -457,7 +457,7 @@ int main(int argc, char** argv)
   cu_up_cfg.cu_up_executor                         = workers.cu_up_exec;
   cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
   cu_up_cfg.gtpu_pdu_executor                      = workers.gtpu_pdu_exec;
-  cu_up_cfg.io_executor                            = workers.gtpu_pdu_exec; // TODO: use independent worker
+  cu_up_cfg.io_executor                            = workers.io_exec;
   cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
   cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
