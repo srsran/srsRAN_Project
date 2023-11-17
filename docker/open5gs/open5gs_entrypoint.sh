@@ -35,6 +35,7 @@ then
 fi
 
 # Add subscriber data to open5gs mongo db
+echo "SUBSCRIBER_DB=${SUBSCRIBER_DB}"
 python3 add_users.py --mongodb ${MONGODB_IP} --subscriber_data ${SUBSCRIBER_DB}
 if [ $? -ne 0 ]
 then
