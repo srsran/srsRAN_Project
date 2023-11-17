@@ -45,8 +45,8 @@ public:
 
   void add_cell(const sched_cell_configuration_request_message& cell_cfg_req)
   {
-    cell_cfg_list.emplace(cell_cfg_req.cell_index, sched_cfg, cell_cfg_req);
-    last_sched_res_list.emplace(cell_cfg_req.cell_index, nullptr);
+    cell_cfg_list.emplace_back(sched_cfg, cell_cfg_req);
+    last_sched_res_list.emplace_back(nullptr);
     sched->handle_cell_configuration_request(cell_cfg_req);
   }
 
@@ -120,10 +120,10 @@ public:
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;
 
-  slotted_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
+  static_vector<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
 
   slot_point                                           next_slot;
-  slotted_array<const sched_result*, MAX_NOF_DU_CELLS> last_sched_res_list;
+  static_vector<const sched_result*, MAX_NOF_DU_CELLS> last_sched_res_list;
 };
 
 } // namespace srsran
