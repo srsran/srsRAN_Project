@@ -11,6 +11,7 @@
 
 #include "srsran/srsvec/convolution.h"
 #include "simd.h"
+
 using namespace srsran;
 using namespace srsvec;
 
@@ -18,7 +19,7 @@ namespace srsran {
 namespace srsvec {
 namespace detail {
 
-void multiplicate_and_accumulate(span<float> out, span<const float> x, span<const float> y)
+void multiply_and_accumulate(span<float> out, span<const float> x, span<const float> y)
 {
   unsigned y_mid     = y.size() / 2;
   unsigned out_start = y_mid - (y.size() % 2 == 0 ? 1 : 0);
@@ -39,7 +40,7 @@ void multiplicate_and_accumulate(span<float> out, span<const float> x, span<cons
   }
 }
 
-void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const float> y)
+void multiply_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const float> y)
 {
   unsigned y_mid     = y.size() / 2;
   unsigned out_start = (y_mid - (y.size() % 2 == 0 ? 1 : 0)) * 2;
@@ -49,19 +50,20 @@ void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const 
 
   span<const float> x_float(reinterpret_cast<const float*>(x.data()), 2 * x.size());
   unsigned          i_x = 0;
+#if SRSRAN_SIMD_F_SIZE
   for (unsigned i_x_end = (out_end / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i_x != i_x_end;
        i_x += SRSRAN_SIMD_F_SIZE) {
     simd_f_t result = srsran_simd_f_zero();
-
+    auto     y_it   = y.rbegin();
     for (unsigned i_y = 0, i_y_end = y.size(); i_y != i_y_end; ++i_y) {
-      int      y_index  = y.size() - 1 - i_y;
-      simd_f_t y_vector = srsran_simd_f_set1(y[y_index]);
+      simd_f_t y_vector = srsran_simd_f_set1(*y_it++);
       simd_f_t x_vals   = srsran_simd_f_loadu(&x_float[i_x + (i_y * 2)]);
       simd_f_t partial  = srsran_simd_f_mul(x_vals, y_vector);
       result            = srsran_simd_f_add(result, partial);
     }
     srsran_simd_f_storeu(&out_float[out_start + i_x], result);
   }
+#endif
   unsigned extra = out_start + i_x;
   for (unsigned i_y = 0, i_y_end = y.size(); i_y != i_y_end; ++i_y) {
     unsigned y_index = y.size() - 1 - i_y;
@@ -76,7 +78,7 @@ void multiplicate_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const 
   }
 }
 
-void multiplicate_and_accumulate(span<cf_t> out, span<const float> x, span<const cf_t> y)
+void multiply_and_accumulate(span<cf_t> out, span<const float> x, span<const cf_t> y)
 {
   unsigned y_mid     = y.size() / 2;
   unsigned out_start = y_mid - (y.size() % 2 == 0 ? 1 : 0);

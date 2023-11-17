@@ -37,9 +37,9 @@ bool check_different(const T& in1, const T& in2)
   return (in1.data() != in2.data());
 }
 
-void multiplicate_and_accumulate(span<float> out_chunk, span<const float> x_chunk, span<const float> y);
-void multiplicate_and_accumulate(span<cf_t> out_chunk, span<const float> x_chunk, span<const cf_t> y);
-void multiplicate_and_accumulate(span<cf_t> out_chunk, span<const cf_t> x_chunk, span<const float> y);
+void multiply_and_accumulate(span<float> out, span<const float> x, span<const float> y);
+void multiply_and_accumulate(span<cf_t> out, span<const float> x, span<const cf_t> y);
+void multiply_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const float> y);
 
 } // namespace detail
 
@@ -94,8 +94,9 @@ void convolution_same(V&& out, const T& x_v, const U& y_v)
     // Note that y_local is reversed.
     out[i_out++] = std::inner_product(x_local.begin(), x_local.end(), y_local.rbegin(), init);
   }
+
   // In the central part, y fully overlaps with x.
-  detail::multiplicate_and_accumulate(out, x, y);
+  detail::multiply_and_accumulate(out, x, y);
 
   // For the final part, we again take into account the partial overlap.
   unsigned start = i_out;
