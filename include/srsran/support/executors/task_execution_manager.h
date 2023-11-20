@@ -84,9 +84,8 @@ struct worker_pool {
   task_queue queue;
   /// Executors associated with this execution context.
   std::vector<executor> executors;
-  /// \brief Wait time in microseconds, when task queue has no pending tasks. This value should be set when the queue
-  /// policy is lockfree MPMC.
-  optional<std::chrono::microseconds> sleep_time;
+  /// \brief Wait time in microseconds, when task queue has no pending tasks.
+  std::chrono::microseconds sleep_time;
   /// OS priority of the worker thread.
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Array of CPU bitmasks to assign to each worker in the pool.

@@ -256,9 +256,8 @@ private:
   std::atomic<bool>         running{true};
 };
 
-// Specialization for lock-based MPMC, using a condition variable as blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
+class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
 public:
   explicit queue_impl(size_t qsize) : queue(qsize) {}
@@ -267,8 +266,6 @@ public:
 
   bool try_push(const T& elem) { return queue.try_push(elem); }
   bool try_push(T&& elem) { return not queue.try_push(std::move(elem)).is_error(); }
-  bool push_blocking(const T& elem) { return queue.push_blocking(elem); }
-  bool push_blocking(T&& elem) { return not queue.push_blocking(std::move(elem)).is_error(); }
 
   optional<T> try_pop()
   {
@@ -293,25 +290,6 @@ public:
     return false;
   }
 
-  bool pop_blocking(T& elem)
-  {
-    bool success = false;
-    elem         = queue.pop_blocking(&success);
-    return success;
-  }
-
-  template <typename PoppingFunc>
-  bool call_on_pop_blocking(PoppingFunc&& func)
-  {
-    bool success = false;
-    T    elem    = queue.pop_blocking(&success);
-    if (success) {
-      func(elem);
-      return true;
-    }
-    return false;
-  }
-
   void clear() { queue.clear(); }
 
   size_t size() const { return queue.size(); }
@@ -320,8 +298,41 @@ public:
 
   size_t capacity() const { return queue.max_size(); }
 
-private:
+protected:
   blocking_queue<T> queue;
+};
+
+// Specialization for lock-based MPMC, using a condition variable as blocking mechanism.
+template <typename T>
+class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
+  : public queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
+{
+  using base_type = queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
+public:
+  explicit queue_impl(size_t qsize) : base_type(qsize) {}
+
+  bool push_blocking(const T& elem) { return this->queue.push_blocking(elem); }
+  bool push_blocking(T&& elem) { return not this->queue.push_blocking(std::move(elem)).is_error(); }
+
+  bool pop_blocking(T& elem)
+  {
+    bool success = false;
+    elem         = this->queue.pop_blocking(&success);
+    return success;
+  }
+
+  template <typename PoppingFunc>
+  bool call_on_pop_blocking(PoppingFunc&& func)
+  {
+    bool success = false;
+    T    elem    = this->queue.pop_blocking(&success);
+    if (success) {
+      func(elem);
+      return true;
+    }
+    return false;
+  }
 };
 
 // Barrier implementation based on sleep.
@@ -798,10 +809,31 @@ public:
     return std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues).capacity();
   }
 
+  /// \brief Get specified priority queue size.
+  template <enqueue_priority Priority>
+  SRSRAN_NODISCARD size_t size() const
+  {
+    return std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues).size();
+  }
+
+  /// \brief Get sum of all queue sizes.
+  SRSRAN_NODISCARD size_t size() const { return this->size_sum(std::make_index_sequence<sizeof...(QueuePolicies)>{}); }
+
   /// Number of priority levels supported by this queue.
   static constexpr size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
 
 private:
+  template <size_t... I>
+  size_t size_sum(std::index_sequence<I...> /*unused*/) const
+  {
+    std::array<size_t, sizeof...(I)> a{std::get<I>(queues).size()...};
+    size_t                           sz = 0;
+    for (unsigned v : a) {
+      sz += v;
+    }
+    return sz;
+  }
+
   std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
 
   // Time that thread spends sleeping when there are no pending tasks.

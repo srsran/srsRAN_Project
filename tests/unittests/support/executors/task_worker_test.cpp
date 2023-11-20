@@ -75,18 +75,12 @@ class task_worker_pool_test : public ::testing::Test
 protected:
   using pool_type = TaskWorkerPool;
 
-  template <typename T = TaskWorkerPool, std::enable_if_t<std::is_same<T, task_worker_pool<true>>::value, int> = 0>
-  task_worker_pool_test() : pool{4, 128, "POOL", std::chrono::microseconds{100}}
-  {
-  }
-  template <typename T = TaskWorkerPool, std::enable_if_t<not std::is_same<T, task_worker_pool<true>>::value, int> = 0>
-  task_worker_pool_test() : pool{4, 128, "POOL"}
-  {
-  }
+  task_worker_pool_test() : pool{4, 128, "POOL", std::chrono::microseconds{100}} {}
 
   pool_type pool;
 };
-using worker_pool_types = ::testing::Types<task_worker_pool<false>, task_worker_pool<true>>;
+using worker_pool_types = ::testing::Types<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>,
+                                           task_worker_pool<concurrent_queue_policy::locking_mpmc>>;
 TYPED_TEST_SUITE(task_worker_pool_test, worker_pool_types);
 
 TYPED_TEST(task_worker_pool_test, correct_initialization)
@@ -104,6 +98,7 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
     fmt::print("Finished in {}\n", this_thread_name());
   }));
   f.get();
+  this->pool.stop();
 }
 
 TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)

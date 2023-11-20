@@ -73,8 +73,9 @@ TEST(strand_executor_test, dispatch_to_worker_pool_causes_no_race_conditions)
   static const unsigned nof_increments = 4096 * 4;
   static const unsigned nof_pushers    = 4;
 
-  task_worker_pool<false>        pool{nof_workers, nof_increments, "POOL"};
-  auto                           pool_exec = task_worker_pool_executor<false>(pool);
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{
+      nof_workers, nof_increments, "POOL", std::chrono::microseconds{100}};
+  auto                           pool_exec = task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool);
   std::unique_ptr<task_executor> strand    = make_strand_executor_ptr(pool_exec, nof_increments);
 
   run_count_test(*strand, nof_increments, nof_pushers, [&pool]() { pool.wait_pending_tasks(); });

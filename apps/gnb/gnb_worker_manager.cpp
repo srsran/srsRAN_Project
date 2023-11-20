@@ -80,8 +80,7 @@ void worker_manager::create_worker_pool(const std::string&                      
                          nof_workers,
                          {queue_policy, queue_size},
                          execs,
-                         queue_policy == concurrent_queue_policy::locking_mpmc ? optional<std::chrono::microseconds>{}
-                                                                               : std::chrono::microseconds{10},
+                         std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 10},
                          prio,
                          std::vector<os_sched_affinity_bitmask>{cpu_masks.begin(), cpu_masks.end()}};
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
