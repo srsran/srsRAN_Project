@@ -243,7 +243,7 @@ TEST_P(multi_cell_scheduler_tester, test_dl_scheduling_for_ues_in_different_cell
         // should not be scheduled in this cell.
         if (ue_idx != cell_idx) {
           ASSERT_FALSE(is_ue_scheduled) << fmt::format(
-              "UE with index={} should not be scheduled in cell with index={}", ue_idx, cell_idx);
+              "DL data for UE with index={} should not be scheduled in cell with index={}", ue_idx, cell_idx);
         } else if (not is_ue_dl_scheduled_in_cell[cell_idx]) {
           is_ue_dl_scheduled_in_cell[cell_idx] = is_ue_scheduled;
         }
@@ -254,7 +254,52 @@ TEST_P(multi_cell_scheduler_tester, test_dl_scheduling_for_ues_in_different_cell
   // Check whether all UEs DL traffic got scheduled in their respective cell.
   for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
     ASSERT_TRUE(is_ue_dl_scheduled_in_cell[cell_idx])
-        << fmt::format("UE with index={} was not scheduled in cell with index={}", ue_idx, cell_idx);
+        << fmt::format("DL data for UE with index={} was not scheduled in cell with index={}", ue_idx, cell_idx);
+  }
+}
+
+TEST_P(multi_cell_scheduler_tester, test_ul_scheduling_for_ues_in_different_cells)
+{
+  // Number of slots to run the test.
+  static const unsigned test_run_nof_slots = 100;
+
+  // Add one UE per cell and enqueue bytes for UL tx.
+  // NOTE: We add DU UE index 0 to DU cell index 0 and DU UE index 1 to DU cell index and so forth for easier validation
+  // of scheduling results.
+  for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+    add_ue(cell_idx, ue_idx);
+    ul_bsr_indication_message bsr{to_du_cell_index(cell_idx),
+                                  to_du_ue_index(ue_idx),
+                                  get_ue_crnti(ue_idx),
+                                  bsr_format::SHORT_BSR,
+                                  {ul_bsr_lcg_report{uint_to_lcg_id(1), 100}}};
+    push_bsr(bsr);
+  }
+
+  std::vector<bool> is_ue_ul_scheduled_in_cell(cell_cfg_builder_params_list.size(), false);
+  for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
+    for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+      if (last_sched_res_list[cell_idx] != nullptr) {
+        const bool is_ue_scheduled = std::any_of(
+            last_sched_res_list[cell_idx]->dl.ul_pdcchs.begin(),
+            last_sched_res_list[cell_idx]->dl.ul_pdcchs.end(),
+            [this, ue_idx](const pdcch_ul_information& ul_pdcch) { return ul_pdcch.ctx.rnti == get_ue_crnti(ue_idx); });
+        // Since only one UE is added by per cell, no other UEs should be scheduled in this cell i.e. ue_idx != cell_idx
+        // should not be scheduled in this cell.
+        if (ue_idx != cell_idx) {
+          ASSERT_FALSE(is_ue_scheduled) << fmt::format(
+              "UL data for UE with index={} should not be scheduled in cell with index={}", ue_idx, cell_idx);
+        } else if (not is_ue_ul_scheduled_in_cell[cell_idx]) {
+          is_ue_ul_scheduled_in_cell[cell_idx] = is_ue_scheduled;
+        }
+      }
+    }
+    run_slot_all_cells();
+  }
+  // Check whether all UEs UL traffic got scheduled in their respective cell.
+  for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+    ASSERT_TRUE(is_ue_ul_scheduled_in_cell[cell_idx])
+        << fmt::format("UL data for UE with index={} was not scheduled in cell with index={}", ue_idx, cell_idx);
   }
 }
 
