@@ -108,8 +108,11 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
 
-  task_queue                         strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
-  std::vector<worker_pool::executor> executors = {{"pcap_exec", strand_cfg}};
+  std::vector<worker_pool::executor> executors;
+
+  // Configure PCAP executors.
+  task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
+  executors.push_back({"pcap_exec", strand_cfg});
   if (appcfg.pcap_cfg.gtpu.enabled) {
     executors.push_back({"gtpu_pcap_exec", strand_cfg});
   }
@@ -120,6 +123,15 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
     executors.push_back({"rlc_pcap_exec", strand_cfg});
   }
 
+  // Configure CU-UP executors.
+  // Note: The IO-broker is currently single threaded, so we can use a SPSC.
+  const task_queue ue_strand_cfg{concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size};
+  const unsigned   nof_ue_strands = 64;
+  for (unsigned i = 0; i != nof_ue_strands; ++i) {
+    executors.push_back({fmt::format("ue_up_exec#{}", i), ue_strand_cfg});
+  }
+
+  // Configure non-real time worker.
   const worker_pool pool{
       "non_rt_pool",
       2,
@@ -131,6 +143,15 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
     report_fatal_error("Failed to instantiate {} execution context", pool.name);
   }
+
+  // Setup CU-UP executor mapper.
+  std::vector<task_executor*> ue_up_data_execs;
+  std::vector<task_executor*> ue_up_ctrl_execs;
+  for (unsigned i = 0; i != nof_ue_strands; ++i) {
+    ue_up_data_execs.push_back(exec_mng.executors().at(fmt::format("ue_up_exec#{}", i)));
+    ue_up_ctrl_execs.push_back(exec_mng.executors().at(fmt::format("ue_up_exec#{}", i)));
+  }
+  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_data_execs, ue_up_ctrl_execs);
 }
 
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)

@@ -13,6 +13,7 @@
 #include "gnb_appconfig.h"
 #include "gnb_os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
+#include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
@@ -60,6 +61,8 @@ struct worker_manager {
   task_executor*                           cu_cp_e2_exec    = nullptr;
   task_executor*                           cu_up_e2_exec    = nullptr;
   task_executor*                           metrics_hub_exec = nullptr;
+
+  std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
