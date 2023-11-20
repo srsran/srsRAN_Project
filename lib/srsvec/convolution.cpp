@@ -44,13 +44,13 @@ void multiply_and_accumulate(span<cf_t> out, span<const cf_t> x, span<const floa
 {
   unsigned y_mid     = y.size() / 2;
   unsigned out_start = (y_mid - (y.size() % 2 == 0 ? 1 : 0)) * 2;
-  unsigned out_end   = (x.size() - y.size()) * 2;
 
   span<float> out_float(reinterpret_cast<float*>(out.data()), 2 * out.size());
 
   span<const float> x_float(reinterpret_cast<const float*>(x.data()), 2 * x.size());
   unsigned          i_x = 0;
 #if SRSRAN_SIMD_F_SIZE
+  unsigned out_end = (x.size() - y.size()) * 2;
   for (unsigned i_x_end = (out_end / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i_x != i_x_end;
        i_x += SRSRAN_SIMD_F_SIZE) {
     simd_f_t result = srsran_simd_f_zero();
