@@ -300,7 +300,7 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
         if (get_active_tdd_ul_symbols(tdd_cfg, idx + k2, cp).length() == SYMBOLS_PER_SLOT) {
           if (std::none_of(result.begin(), result.end(), [k2](const auto& res) { return res.k2 == k2; })) {
             result.emplace_back(pusch_time_domain_resource_allocation{
-                k2, 0, sch_mapping_type::typeA, ofdm_symbol_range{0, SYMBOLS_PER_SLOT}});
+                k2, sch_mapping_type::typeA, ofdm_symbol_range{0, SYMBOLS_PER_SLOT}});
           }
           break;
         }
@@ -375,7 +375,7 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::FDD) {
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
-        pusch_time_domain_resource_allocation{4, 0, sch_mapping_type::typeA, ofdm_symbol_range{0, 14}}};
+        pusch_time_domain_resource_allocation{4, sch_mapping_type::typeA, ofdm_symbol_range{0, 14}}};
   } else {
     // TDD
     // - [Implementation-defined] Ensure k2 value which is less than or equal to minimum value of k1(s) exist in the

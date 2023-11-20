@@ -446,7 +446,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.min_k2                = base_cell.pusch_cfg.min_k2;
     param.coreset0_index        = base_cell.pdcch_cfg.common.coreset0_index;
     param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration;
-    param.ntn_cs_koffset        = config.ntn_cfg ? config.ntn_cfg.value().cell_specific_koffset : 0;
     const unsigned nof_crbs     = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
@@ -623,9 +622,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
 
     if (config.ntn_cfg.has_value()) {
-      for (auto& item : out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list) {
-        item.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
-      }
+      out_cell.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
     }
     // Parameters for PUCCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
