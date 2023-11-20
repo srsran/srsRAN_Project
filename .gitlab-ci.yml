@@ -311,7 +311,7 @@ unit coverage:
     - job: intermediate commits
       optional: true
       artifacts: true
-    - job: smoke release update cache
+    - job: smoke relwithdeb update cache
       optional: true
       artifacts: true
 

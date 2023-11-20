@@ -122,7 +122,7 @@ load retina variables:
     # Change sharing gnb file for complete src + build (With gnb) folder
     - |
       sed -i "s|- local_path: ../../build/apps/gnb/gnb|- local_path: ../../|; s|remote_path: /usr/local/bin|remote_path: $CI_PROJECT_DIR|; s|is_executable: true|is_executable: false|" ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
-  # Run Retina
+    # Run Retina
     - |
       E2E_CMD="retina-launcher --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} --reruns 3 --only-rerun ErrorReportedByAgent --only-rerun ValidationError -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}"
       echo "${E2E_CMD}"
@@ -148,7 +148,7 @@ custom-e2e:
     - custom-build
     - build trx driver
 
-smoke-zmq-tsan:
+smoke-zmq:
   extends: .e2e-run
   stage: manual
   rules:
@@ -163,10 +163,10 @@ smoke-zmq-tsan:
     RETINA_ARGS: "gnb.all.pcap=True"
     E2E_LOG_LEVEL: "debug"
   needs:
-    - job: "smoke tsan cached"
+    - job: "smoke relwithdeb cached"
       artifacts: true
       optional: true
-    - job: "smoke tsan clean"
+    - job: "smoke relwithdeb clean"
       artifacts: true
       optional: true
     - *txrx-lib
@@ -182,7 +182,7 @@ zmq:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -197,7 +197,7 @@ zmq_srsue:
     MARKERS: "zmq_srsue"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -213,7 +213,7 @@ zmq-alternative-configs:
     E2E_LOG_LEVEL: "info"
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -228,7 +228,7 @@ zmq_4x4_mimo:
     MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -241,6 +241,18 @@ zmq-asan:
   interruptible: false
   needs:
     - job: "basic asan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+zmq-tsan:
+  extends: zmq
+  variables:
+    MARKERS: "smoke"
+    RETINA_ARGS: "gnb.all.pcap=True"
+  interruptible: false
+  needs:
+    - job: "smoke tsan update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -273,7 +285,7 @@ zmq-valgrind:
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *retina-needs
 
@@ -343,7 +355,7 @@ android:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *retina-needs
 
@@ -358,7 +370,7 @@ android-x300:
     E2E_LOG_LEVEL: "info"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
-    - job: "basic rel with deb info"
+    - job: "smoke relwithdeb update cache"
       artifacts: true
     - *retina-needs
 
