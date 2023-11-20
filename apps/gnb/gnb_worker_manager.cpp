@@ -170,7 +170,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   const single_worker gnb_ue_io_worker{"gnb_ue_io",
                                        {concurrent_queue_policy::lockfree_spsc, 256},
                                        {{"ue_io_exec"}},
-                                       std::chrono::microseconds{0},
+                                       std::chrono::microseconds{200},
                                        os_thread_realtime_priority::max() - 10,
                                        affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
   if (!exec_mng.add_execution_context(create_execution_context(gnb_ue_io_worker))) {
