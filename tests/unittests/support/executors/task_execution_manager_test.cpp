@@ -42,7 +42,7 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{"WORKER_POOL", 4, {concurrent_queue_policy::locking_mpmc, 8}, {{"EXEC"}}};
+  worker_pool cfg{"WORKER_POOL", 4, {{concurrent_queue_policy::locking_mpmc, 8}}, {{"EXEC"}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));

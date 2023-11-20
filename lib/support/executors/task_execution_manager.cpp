@@ -200,14 +200,65 @@ srsran::create_execution_context(const execution_config_helper::single_worker& p
 
 namespace {
 
+/// Execution context for a task worker pool with multiple QueuePolicies.
+template <concurrent_queue_policy... QueuePolicies>
+struct worker_pool_context final
+  : public common_task_execution_context<task_worker_pool<QueuePolicies...>, execution_config_helper::worker_pool> {
+  using worker_type = task_worker_pool<QueuePolicies...>;
+  template <enqueue_priority Prio>
+  using executor_type = priority_task_worker_executor<Prio, QueuePolicies...>;
+  using base_type     = common_task_execution_context<worker_type, execution_config_helper::worker_pool>;
+
+  worker_pool_context(const execution_config_helper::worker_pool& params) :
+    base_type(
+        params.tracer,
+        params.nof_workers,
+        [&params]() {
+          report_error_if_not(params.queues.size() != sizeof...(QueuePolicies),
+                              "Invalid number of queues for the specified policies");
+          std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
+          for (unsigned i = 0; i != params.queues.size(); ++i) {
+            qsizes[i] = params.queues[i].size;
+          }
+          return qsizes;
+        }(),
+        params.name,
+        params.sleep_time,
+        params.prio,
+        params.masks)
+  {
+  }
+
+  static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
+  {
+    auto ctxt = std::make_unique<worker_pool_context<QueuePolicies...>>(params);
+    if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
+      return nullptr;
+    }
+    return ctxt;
+  }
+
+  std::string name() const final { return this->worker.name(); }
+
+private:
+  using base_type::base_type;
+
+  std::unique_ptr<task_executor> create_executor(const execution_config_helper::worker_pool::executor& desc) override
+  {
+    std::unique_ptr<task_executor> exec;
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &exec, &desc](auto&& prio_exec) {
+      exec = this->task_tracer == nullptr
+                 ? decorate_executor(desc, std::move(prio_exec))
+                 : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
+    });
+    return exec;
+  }
+};
+
 /// Execution context for a task worker pool.
 template <concurrent_queue_policy QueuePolicy>
-struct worker_pool_context final
+struct worker_pool_context<QueuePolicy> final
   : public common_task_execution_context<task_worker_pool<QueuePolicy>, execution_config_helper::worker_pool> {
-  static_assert(QueuePolicy == concurrent_queue_policy::lockfree_mpmc or
-                    QueuePolicy == concurrent_queue_policy::locking_mpmc,
-                "Invalid queue policy");
-
   using worker_type   = task_worker_pool<QueuePolicy>;
   using executor_type = task_worker_pool_executor<QueuePolicy>;
   using base_type     = common_task_execution_context<worker_type, execution_config_helper::worker_pool>;
@@ -215,17 +266,18 @@ struct worker_pool_context final
   worker_pool_context(const execution_config_helper::worker_pool& params) :
     base_type(params.tracer,
               params.nof_workers,
-              params.queue.size,
+              params.queues[0].size,
               params.name,
               params.sleep_time,
               params.prio,
               params.masks)
   {
+    report_error_if_not(params.queues.size() != 1, "Invalid number of queues for the specified policies");
   }
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
   {
-    auto ctxt = std::make_unique<worker_pool_context>(params);
+    auto ctxt = std::make_unique<worker_pool_context<QueuePolicy>>(params);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }
@@ -251,15 +303,47 @@ private:
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::worker_pool& params)
 {
-  switch (params.queue.policy) {
+  report_error_if_not(params.queues.size() > 0 and params.queues.size() <= 2,
+                      "Invalid number of prioritized queues {}",
+                      params.queues.size());
+
+  // TODO: Use visit.
+  switch (params.queues[0].policy) {
     case concurrent_queue_policy::locking_mpmc:
-      return worker_pool_context<concurrent_queue_policy::locking_mpmc>::create(params);
+      if (params.queues.size() == 1) {
+        return worker_pool_context<concurrent_queue_policy::locking_mpmc>::create(params);
+      } else {
+        switch (params.queues[1].policy) {
+          case concurrent_queue_policy::lockfree_mpmc:
+            return worker_pool_context<concurrent_queue_policy::locking_mpmc,
+                                       concurrent_queue_policy::lockfree_mpmc>::create(params);
+          case concurrent_queue_policy::locking_mpmc:
+            return worker_pool_context<concurrent_queue_policy::locking_mpmc,
+                                       concurrent_queue_policy::locking_mpmc>::create(params);
+          default:
+            break;
+        }
+      }
+      break;
     case concurrent_queue_policy::lockfree_mpmc:
-      return worker_pool_context<concurrent_queue_policy::lockfree_mpmc>::create(params);
+      if (params.queues.size() == 1) {
+        return worker_pool_context<concurrent_queue_policy::lockfree_mpmc>::create(params);
+      } else {
+        switch (params.queues[1].policy) {
+          case concurrent_queue_policy::lockfree_mpmc:
+            return worker_pool_context<concurrent_queue_policy::lockfree_mpmc,
+                                       concurrent_queue_policy::lockfree_mpmc>::create(params);
+          case concurrent_queue_policy::locking_mpmc:
+            return worker_pool_context<concurrent_queue_policy::lockfree_mpmc,
+                                       concurrent_queue_policy::locking_mpmc>::create(params);
+          default:
+            break;
+        }
+      }
     default:
-      srslog::fetch_basic_logger("ALL").error("Only MPMC queue policies are supported for worker pools");
       break;
   }
+  srslog::fetch_basic_logger("ALL").error("Only MPMC queue policies are supported for worker pools");
   return nullptr;
 }
 

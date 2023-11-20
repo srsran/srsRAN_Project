@@ -24,6 +24,8 @@ class file_event_tracer;
 
 namespace execution_config_helper {
 
+using task_priority = enqueue_priority;
+
 /// Parameters of a queue of tasks.
 struct task_queue {
   /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
@@ -35,9 +37,11 @@ struct task_queue {
 namespace detail {
 
 /// Parameters of the task executor, including name and decorators.
-struct executor_common {
+struct executor {
   /// Name of the executor.
   std::string name;
+  /// Task priority within {min, max}.
+  task_priority priority = task_priority::min;
   /// In case of non-empty, the executor is instantiated as a strand executor.
   optional<task_queue> strand{};
   /// Whether to log when task fails to be dispatched.
@@ -45,6 +49,22 @@ struct executor_common {
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
+
+  executor(const std::string&   name_,
+           optional<task_queue> strand_            = {},
+           bool                 report_on_failure_ = true,
+           bool                 synchronous_       = false) :
+    name(name_), strand(strand_), report_on_failure(report_on_failure_), synchronous(synchronous_)
+  {
+  }
+  executor(const std::string&   name_,
+           task_priority        priority_,
+           optional<task_queue> strand_            = {},
+           bool                 report_on_failure_ = true,
+           bool                 synchronous_       = false) :
+    name(name_), priority(priority_), strand(strand_), report_on_failure(report_on_failure_), synchronous(synchronous_)
+  {
+  }
 };
 
 } // namespace detail
@@ -52,7 +72,7 @@ struct executor_common {
 /// Arguments for a single task worker creation.
 struct single_worker {
   /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor_common;
+  using executor = detail::executor;
 
   /// Worker name.
   std::string name;
@@ -74,14 +94,14 @@ struct single_worker {
 /// Arguments for a task worker pool creation.
 struct worker_pool {
   /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor_common;
+  using executor = detail::executor;
 
   /// Worker Pool prefix name. Workers will be named as name#0, name#1, etc.
   std::string name;
   /// Number of workers in the pool.
   unsigned nof_workers;
-  /// Queue used by the task worker.
-  task_queue queue;
+  /// Queue(s) used by the task worker. The lower the index, the higher the priority.
+  std::vector<task_queue> queues;
   /// Executors associated with this execution context.
   std::vector<executor> executors;
   /// \brief Wait time in microseconds, when task queue has no pending tasks.
@@ -94,24 +114,9 @@ struct worker_pool {
   file_event_tracer<true>* tracer = nullptr;
 };
 
-using task_priority = enqueue_priority;
-
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue_worker {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  struct executor : public detail::executor_common {
-    /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
-    task_priority priority;
-
-    executor(const std::string&   name_,
-             task_priority        priority_,
-             optional<task_queue> strand_            = {},
-             bool                 report_on_failure_ = true,
-             bool                 synchronous_       = false) :
-      executor_common{name_, strand_, report_on_failure_, synchronous_}, priority(priority_)
-    {
-    }
-  };
+  using executor = detail::executor;
 
   /// Worker name.
   std::string name;

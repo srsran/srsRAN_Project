@@ -78,7 +78,7 @@ void worker_manager::create_worker_pool(const std::string&                      
 
   const worker_pool pool{name,
                          nof_workers,
-                         {queue_policy, queue_size},
+                         {{queue_policy, queue_size}},
                          execs,
                          std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 10},
                          prio,
@@ -125,8 +125,10 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   // Configure CU-UP executors.
   // Note: The IO-broker is currently single threaded, so we can use a SPSC.
   const task_queue ue_strand_cfg{concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size};
-  const unsigned   nof_ue_strands = 64;
+  // TODO: For now, CU-UP cannot be parallelized.
+  const unsigned nof_ue_strands = 1;
   for (unsigned i = 0; i != nof_ue_strands; ++i) {
+    // Note: We use low priority to avoid overflowing control task queue.
     executors.push_back({fmt::format("ue_up_exec#{}", i), ue_strand_cfg});
   }
 
@@ -134,7 +136,7 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   const worker_pool pool{
       "non_rt_pool",
       2,
-      {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
       executors,
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),

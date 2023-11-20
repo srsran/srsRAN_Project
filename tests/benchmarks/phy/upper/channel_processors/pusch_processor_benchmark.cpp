@@ -555,9 +555,11 @@ static void thread_process(pusch_processor&              proc,
 
     // Process PDU.
     if (executor) {
-      executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
-        proc.process(data, std::move(softbuffer), result_notifier, grid, config);
-      });
+      if (not executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
+            proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+          })) {
+        fmt::print("Failed to enqueue task.\n");
+      }
     } else {
       proc.process(data, std::move(softbuffer), result_notifier, grid, config);
     }
