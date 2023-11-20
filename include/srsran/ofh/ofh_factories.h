@@ -11,15 +11,15 @@
 #pragma once
 
 #include "srsran/ofh/ofh_controller.h"
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
-#include "srsran/ofh/ofh_timing_manager.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/ofh_timing_manager.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include <memory>

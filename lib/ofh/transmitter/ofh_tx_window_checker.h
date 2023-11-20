@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include <atomic>
 
 namespace srsran {

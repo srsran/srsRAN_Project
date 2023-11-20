@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 
 namespace srsran {
 namespace ofh {

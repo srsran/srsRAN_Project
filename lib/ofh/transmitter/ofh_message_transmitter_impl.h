@@ -12,7 +12,7 @@
 
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 
 namespace srsran {

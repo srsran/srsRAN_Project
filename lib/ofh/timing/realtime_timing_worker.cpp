@@ -9,7 +9,7 @@
  */
 
 #include "realtime_timing_worker.h"
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include <thread>
 
 using namespace srsran;

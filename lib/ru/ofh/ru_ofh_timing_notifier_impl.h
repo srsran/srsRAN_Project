@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
-#include "srsran/ofh/slot_symbol_point.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/ru/ru_timing_notifier.h"
 
 namespace srsran {

@@ -12,7 +12,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ofh/ofh_controller.h"
-#include "srsran/ofh/ofh_ota_symbol_boundary_notifier_manager.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/support/executors/task_executor.h"

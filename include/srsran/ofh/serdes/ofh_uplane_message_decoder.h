@@ -12,7 +12,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
-#include "srsran/ofh/slot_symbol_point.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 
 namespace srsran {
 namespace ofh {

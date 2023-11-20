@@ -11,7 +11,7 @@
 #pragma once
 
 #include "realtime_timing_worker.h"
-#include "srsran/ofh/ofh_timing_manager.h"
+#include "srsran/ofh/timing/ofh_timing_manager.h"
 
 namespace srsran {
 namespace ofh {
