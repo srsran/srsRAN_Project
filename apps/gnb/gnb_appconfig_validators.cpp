@@ -166,8 +166,15 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
+static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, const csi_appconfig& csi_cfg)
 {
+  if ((not csi_cfg.csi_rs_enabled) and config.min_ue_mcs != config.max_ue_mcs) {
+    fmt::print("When CSI-RS and CSI report are disabled, the min UE PDSCH MCS must be equal to the max UE PDSCH MCS.\n",
+               config.min_ue_mcs,
+               config.max_ue_mcs);
+    return false;
+  }
+
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
                config.min_ue_mcs,
@@ -210,8 +217,15 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, subcarrier_spacing scs_common)
 {
   const pucch_appconfig& pucch_cfg = config.pucch_cfg;
-  if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
-    fmt::print("Number of PUCCH Format 1 cell resources for CSI must be zero when a fixed MCS is used.\n");
+  if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
+    fmt::print(
+        "Number of PUCCH Format 2 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
+    return false;
+  }
+
+  if (config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources == 0) {
+    fmt::print("Number of PUCCH Format 2 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
+               "enabled.\n");
     return false;
   }
 
@@ -444,7 +458,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
+  if (!validate_pdsch_cell_app_config(config.pdsch_cfg, config.csi_cfg)) {
     return false;
   }
 

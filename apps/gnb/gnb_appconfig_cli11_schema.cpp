@@ -1154,6 +1154,8 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
 
 static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
 {
+  app.add_option("--csi_rs_enabled", csi_params.csi_rs_enabled, "Enable CSI-RS resources and CSI reporting")
+      ->capture_default_str();
   app.add_option("--csi_rs_period", csi_params.csi_rs_period_msec, "CSI-RS period in milliseconds")
       ->capture_default_str()
       ->check(CLI::IsMember({10, 20, 40, 80}));

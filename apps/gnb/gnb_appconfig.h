@@ -376,6 +376,8 @@ struct sib_appconfig {
 };
 
 struct csi_appconfig {
+  /// \brief Enable CSI-RS and CSI reporting in the cell.
+  bool csi_rs_enabled = true;
   /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
   unsigned csi_rs_period_msec = 20;
   /// \brief Slot offset for measurement CSI-RS resources. If not set, it is automatically derived to avoid collisions
