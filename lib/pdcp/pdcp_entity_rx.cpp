@@ -46,24 +46,24 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 }
 
-void pdcp_entity_rx::handle_pdu(byte_buffer_chain pdu)
+void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 {
-  metrics_add_pdus(1, pdu.length());
+  metrics_add_pdus(1, buf.length());
 
   // Log PDU
-  logger.log_debug(pdu.begin(), pdu.end(), "RX PDU. pdu_len={}", pdu.length());
+  logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
   // Sanity check
-  if (pdu.length() == 0) {
+  if (buf.length() == 0) {
     metrics_add_dropped_pdus(1);
     logger.log_error("Dropping empty PDU.");
     return;
   }
 
-  pdcp_dc_field dc = pdcp_pdu_get_dc(*(pdu.begin()));
+  pdcp_dc_field dc = pdcp_pdu_get_dc(*(buf.begin()));
   if (is_srb() || dc == pdcp_dc_field::data) {
-    handle_data_pdu(std::move(pdu));
+    handle_data_pdu(std::move(buf));
   } else {
-    handle_control_pdu(std::move(pdu));
+    handle_control_pdu(std::move(buf));
   }
 }
 
@@ -144,7 +144,8 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
    *   - RCVD_HFN = HFN(RX_DELIV);
    * - RCVD_COUNT = [RCVD_HFN, RCVD_SN].
    */
-  uint32_t rcvd_hfn, rcvd_count;
+  uint32_t rcvd_hfn;
+  uint32_t rcvd_count;
   if ((int64_t)hdr.sn < (int64_t)SN(st.rx_deliv) - (int64_t)window_size) {
     rcvd_hfn = HFN(st.rx_deliv) + 1;
   } else if (hdr.sn >= SN(st.rx_deliv) + window_size) {
@@ -185,7 +186,8 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
   byte_buffer sdu;
-  if (ciphering_enabled == security::ciphering_enabled::on) {
+  if (ciphering_enabled == security::ciphering_enabled::on &&
+      sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
     sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
     std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
