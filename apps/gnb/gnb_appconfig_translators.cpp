@@ -534,6 +534,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         }
         out_cell.si_config->sibs.push_back(item);
       }
+      // Enable otherSI search space.
+      out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(1);
     }
 
     // UE timers and constants config.

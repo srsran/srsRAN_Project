@@ -105,8 +105,8 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
     }
 
     // Check if the searchSpaceOtherSystemInformation has monitored PDCCH candidates.
-    const search_space_id             ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id;
-    const search_space_configuration& ss    = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
+    const search_space_id ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+    const search_space_configuration& ss = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
     if (not pdcch_helper::is_pdcch_monitoring_active(res_grid.slot, ss)) {
       continue;
     }
@@ -149,8 +149,9 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
                                                                            nof_layers});
 
   // > Find available RBs in PDSCH for SI message BCCH grant.
-  const search_space_id other_si_ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id;
-  crb_interval          si_crbs;
+  const search_space_id other_si_ss_id =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+  crb_interval si_crbs;
   {
     const crb_interval crb_lims =
         pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, other_si_ss_id);

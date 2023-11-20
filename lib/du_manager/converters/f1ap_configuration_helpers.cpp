@@ -260,11 +260,6 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
     cell.tdd_ul_dl_cfg_common_present = true;
     cell.tdd_ul_dl_cfg_common         = srs_du::make_asn1_rrc_tdd_ul_dl_cfg_common(du_cfg.tdd_ul_dl_cfg_common.value());
   }
-  // if si config present, enable other search spaces
-  if (du_cfg.si_config.has_value()) {
-    cell.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().search_space_other_sys_info_present = true;
-    cell.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().search_space_other_sys_info         = 1;
-  }
   // TODO: Fill remaining fields.
 
   return cell;

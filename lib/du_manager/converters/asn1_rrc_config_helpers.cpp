@@ -364,9 +364,12 @@ asn1::rrc_nr::bwp_dl_common_s srsran::srs_du::make_asn1_init_dl_bwp(const dl_con
   if (pdcch.paging_search_space_present) {
     pdcch.paging_search_space = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.value();
   }
-  pdcch.ra_search_space_present = true;
-  pdcch.ra_search_space         = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
-
+  pdcch.ra_search_space_present             = true;
+  pdcch.ra_search_space                     = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch.search_space_other_sys_info_present = cfg.init_dl_bwp.pdcch_common.other_si_search_space_id.has_value();
+  if (pdcch.search_space_other_sys_info_present) {
+    pdcch.search_space_other_sys_info = cfg.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+  }
   // > PDSCH-ConfigCommon.
   init_dl_bwp.pdsch_cfg_common_present = true;
   pdsch_cfg_common_s& pdsch            = init_dl_bwp.pdsch_cfg_common.set_setup();

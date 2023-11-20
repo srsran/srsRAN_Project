@@ -262,17 +262,16 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
   cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config(params));
   cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_search_space_zero_config(params));
   cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_common_search_space_config(params));
-  cfg.init_dl_bwp.pdcch_common.sib1_search_space_id     = to_search_space_id(0);
-  cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(1);
-  cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);
-  cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list      = make_pdsch_time_domain_resource(
+  cfg.init_dl_bwp.pdcch_common.sib1_search_space_id   = to_search_space_id(0);
+  cfg.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(1);
+  cfg.init_dl_bwp.pdcch_common.ra_search_space_id     = to_search_space_id(1);
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list    = make_pdsch_time_domain_resource(
       params.search_space0_index,
       cfg.init_dl_bwp.pdcch_common,
       nullopt,
       band_helper::get_duplex_mode(cfg.freq_info_dl.freq_band_list.back().band) == duplex_mode::TDD
-               ? *params.tdd_ul_dl_cfg_common
-               : optional<tdd_ul_dl_config_common>{});
+             ? *params.tdd_ul_dl_cfg_common
+             : optional<tdd_ul_dl_config_common>{});
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
