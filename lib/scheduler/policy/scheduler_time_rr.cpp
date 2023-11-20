@@ -61,11 +61,11 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
     return alloc_outcome::skip_ue;
   }
-  const slot_point pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+    const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
+    const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
 
     // UE is already allocated in the PDCCH for this slot (e.g. we should skip a newTx if a reTx has already been
     // allocated for this UE).
@@ -175,11 +175,11 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       return alloc_outcome::skip_ue;
     }
   }
-  const slot_point pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+    const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
+    const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
 
     // UE is already allocated resources.
     if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti)) {

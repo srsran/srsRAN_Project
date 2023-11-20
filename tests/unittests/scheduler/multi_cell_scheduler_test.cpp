@@ -75,23 +75,25 @@ protected:
     ++next_slot;
   }
 
+  rnti_t get_ue_crnti(uint16_t ue_idx) { return to_rnti(0x4601 + ue_idx); }
+
   void add_ue(uint16_t cell_idx, uint16_t ue_idx)
   {
     // Add UE
     auto ue_cfg =
         test_helpers::create_default_sched_ue_creation_request(cell_cfg_builder_params_list[cell_idx], {LCID_MIN_DRB});
     ue_cfg.ue_index                                 = to_du_ue_index(ue_idx);
-    ue_cfg.crnti                                    = to_rnti(0x4601 + ue_idx);
+    ue_cfg.crnti                                    = get_ue_crnti(ue_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.cell_index = to_du_cell_index(cell_idx);
     (*ue_cfg.cfg.cells)[0].serv_cell_idx            = to_serv_cell_index(cell_idx);
 
     scheduler_test_bench::add_ue(ue_cfg);
   }
 
-  rach_indication_message::preamble create_preamble()
+  static rach_indication_message::preamble create_preamble()
   {
-    static unsigned       next_rnti = test_rgen::uniform_int<unsigned>(MIN_CRNTI, MAX_CRNTI);
-    static const unsigned rnti_inc  = test_rgen::uniform_int<unsigned>(1, 5);
+    static auto       next_rnti = test_rgen::uniform_int<unsigned>(MIN_CRNTI, MAX_CRNTI);
+    static const auto rnti_inc  = test_rgen::uniform_int<unsigned>(1, 5);
 
     rach_indication_message::preamble preamble{};
     preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);
@@ -212,6 +214,47 @@ TEST_P(multi_cell_scheduler_tester, test_rar_scheduling_for_ues_in_different_cel
   }
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_rar_scheduled[cell_idx]) << fmt::format("RAR not scheduled for cell with index={}", cell_idx);
+  }
+}
+
+TEST_P(multi_cell_scheduler_tester, test_dl_scheduling_for_ues_in_different_cells)
+{
+  // Number of slots to run the test.
+  static const unsigned test_run_nof_slots = 100;
+
+  // Add one UE per cell and enqueue bytes for DL tx.
+  // NOTE: We add DU UE index 0 to DU cell index 0 and DU UE index 1 to DU cell index and so forth for easier validation
+  // of scheduling results.
+  for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+    add_ue(cell_idx, ue_idx);
+    dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(ue_idx), LCID_MIN_DRB, 100};
+    push_dl_buffer_state(dl_buf_st);
+  }
+
+  std::vector<bool> is_ue_dl_scheduled_in_cell(cell_cfg_builder_params_list.size(), false);
+  for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
+    for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+      if (last_sched_res_list[cell_idx] != nullptr) {
+        const bool is_ue_scheduled = std::any_of(
+            last_sched_res_list[cell_idx]->dl.dl_pdcchs.begin(),
+            last_sched_res_list[cell_idx]->dl.dl_pdcchs.end(),
+            [this, ue_idx](const pdcch_dl_information& dl_pdcch) { return dl_pdcch.ctx.rnti == get_ue_crnti(ue_idx); });
+        // Since only one UE is added by per cell, no other UEs should be scheduled in this cell i.e. ue_idx != cell_idx
+        // should not be scheduled in this cell.
+        if (ue_idx != cell_idx) {
+          ASSERT_FALSE(is_ue_scheduled) << fmt::format(
+              "UE with index={} should not be scheduled in cell with index={}", ue_idx, cell_idx);
+        } else if (not is_ue_dl_scheduled_in_cell[cell_idx]) {
+          is_ue_dl_scheduled_in_cell[cell_idx] = is_ue_scheduled;
+        }
+      }
+    }
+    run_slot_all_cells();
+  }
+  // Check whether all UEs DL traffic got scheduled in their respective cell.
+  for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
+    ASSERT_TRUE(is_ue_dl_scheduled_in_cell[cell_idx])
+        << fmt::format("UE with index={} was not scheduled in cell with index={}", ue_idx, cell_idx);
   }
 }
 
