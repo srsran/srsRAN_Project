@@ -73,6 +73,9 @@ protected:
     auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
     ue_cfg.ue_index = ue_idx;
     ue_cfg.crnti    = ue_rnti;
+    // Increase PUCCH Format 2 code rate to support TDD configuration of DDDDDDDDSU.
+    (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->format_2_common_param->max_c_rate =
+        srsran::max_pucch_code_rate::dot_35;
 
     // find valid CSI report slot offset.
     if ((*ue_cfg.cfg.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {

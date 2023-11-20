@@ -602,12 +602,14 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >>> SR Resources.
   // Use 40msec SR period by default.
-  const unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  const unsigned           sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  const optional<unsigned> sr_offset =
+      params.tdd_ul_dl_cfg_common.has_value() ? find_next_tdd_full_ul_slot(params.tdd_ul_dl_cfg_common.value()) : 0;
   pucch_cfg.sr_res_list.push_back(
       scheduling_request_resource_config{.sr_res_id    = 1,
                                          .sr_id        = uint_to_sched_req_id(0),
                                          .period       = (sr_periodicity)sr_period,
-                                         .offset       = 0,
+                                         .offset       = *sr_offset,
                                          .pucch_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U});
 
   pucch_cfg.format_1_common_param.emplace();
