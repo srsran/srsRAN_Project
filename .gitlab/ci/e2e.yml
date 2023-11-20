@@ -110,7 +110,7 @@ load retina variables:
     # Clean LFS files
     - |
       while read -r line; do
-        git rm --cached "$line"
+        git rm --cached "$line" >/dev/null
       done < <(git lfs ls-files | sed -r 's/^.{13}//')
       echo "srsGNB sources+build size is" $(du -hs .)
     # Remove any existing retina resource for this group
