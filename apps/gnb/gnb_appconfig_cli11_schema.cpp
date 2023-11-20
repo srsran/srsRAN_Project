@@ -2197,8 +2197,9 @@ static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
-void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
+void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
   app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
@@ -2251,11 +2252,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
-  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
+  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_parsed_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
-  common_cell_subcmd->parse_complete_callback([&gnb_cfg, &app]() {
-    for (auto& cell : gnb_cfg.cells_cfg) {
-      cell.cell = gnb_cfg.common_cell_cfg;
+  common_cell_subcmd->parse_complete_callback([&gnb_parsed_cfg, &app]() {
+    for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+      cell.cell = gnb_parsed_cfg.common_cell_cfg;
     };
     // Run the callback again for the cells if the option callback is already run once.
     if (app.get_option("--cells")->get_callback_run()) {
@@ -2266,11 +2267,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
-      [&gnb_cfg](const std::vector<std::string>& values) {
+      [&gnb_parsed_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        gnb_cfg.cells_cfg.resize(values.size());
-        for (auto& cell : gnb_cfg.cells_cfg) {
-          cell.cell = gnb_cfg.common_cell_cfg;
+        gnb_parsed_cfg.config.cells_cfg.resize(values.size());
+        for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+          cell.cell = gnb_parsed_cfg.common_cell_cfg;
         }
 
         // Format every cell.
@@ -2278,7 +2279,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
           CLI::App subapp("srsGNB application");
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_cells_args(subapp, gnb_cfg.cells_cfg[i]);
+          configure_cli11_cells_args(subapp, gnb_parsed_cfg.config.cells_cfg[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }

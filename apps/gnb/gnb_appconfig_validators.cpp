@@ -908,12 +908,12 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
                  nof_crbs);
       return false;
     }
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
-        config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+    if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
+        base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
       return false;
     }
-    if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
+    if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
         base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
         base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
       // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
@@ -927,14 +927,15 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
 
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
-  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+  if ((config.test_mode_cfg.test_ue.ri > 1) and
+      not config.cells_cfg.front().cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
     fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }
-  if (config.test_mode_cfg.test_ue.ri > config.common_cell_cfg.nof_antennas_dl) {
+  if (config.test_mode_cfg.test_ue.ri > config.cells_cfg.front().cell.nof_antennas_dl) {
     fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports ({} > {})\n",
                config.test_mode_cfg.test_ue.ri,
-               config.common_cell_cfg.nof_antennas_dl);
+               config.cells_cfg.front().cell.nof_antennas_dl);
     return false;
   }
 
@@ -1084,7 +1085,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.common_cell_cfg.sib_cfg)) {
+  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
     return false;
   }
 
@@ -1093,10 +1094,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!config.log_cfg.phy_rx_symbols_filename.empty() && config.log_cfg.phy_rx_symbols_port.has_value() &&
-      (config.log_cfg.phy_rx_symbols_port.value() >= config.common_cell_cfg.nof_antennas_ul)) {
+      (config.log_cfg.phy_rx_symbols_port.value() >= config.cells_cfg.front().cell.nof_antennas_ul)) {
     fmt::print("Requested IQ dump from Rx port {}, valid Rx ports are 0-{}.\n",
                config.log_cfg.phy_rx_symbols_port.value(),
-               config.common_cell_cfg.nof_antennas_ul - 1);
+               config.cells_cfg.front().cell.nof_antennas_ul - 1);
     return false;
   }
 
@@ -1141,10 +1142,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (sdr_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
+    if (sdr_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.cells_cfg.front().cell.channel_bw_mhz)) {
       fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
                  sdr_cfg.srate_MHz,
-                 bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
+                 bs_channel_bandwidth_to_MHz(config.cells_cfg.front().cell.channel_bw_mhz));
       return false;
     }
   }

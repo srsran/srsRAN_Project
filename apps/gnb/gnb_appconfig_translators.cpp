@@ -97,11 +97,13 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
 
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
   srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
   out_cfg.ngap_config.gnb_id               = config.gnb_id;
   out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
-  out_cfg.ngap_config.plmn                 = config.common_cell_cfg.plmn;
-  out_cfg.ngap_config.tac                  = config.common_cell_cfg.tac;
+  out_cfg.ngap_config.plmn                 = cell.plmn;
+  out_cfg.ngap_config.tac                  = cell.tac;
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
@@ -711,7 +713,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-        (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
+        (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
 
@@ -1573,9 +1575,11 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
 
 mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config)
 {
-  mac_expert_config out_cfg      = {};
-  out_cfg.max_consecutive_dl_kos = config.common_cell_cfg.pdsch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_ul_kos = config.common_cell_cfg.pusch_cfg.max_consecutive_kos;
+  mac_expert_config          out_cfg = {};
+  const base_cell_appconfig& cell    = config.cells_cfg.front().cell;
+
+  out_cfg.max_consecutive_dl_kos = cell.pdsch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_ul_kos = cell.pusch_cfg.max_consecutive_kos;
 
   return out_cfg;
 }
@@ -1584,8 +1588,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();
 
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
   // UE parameters.
-  const pdsch_appconfig& pdsch = config.common_cell_cfg.pdsch_cfg;
+  const pdsch_appconfig& pdsch = cell.pdsch_cfg;
   out_cfg.ue.dl_mcs            = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
@@ -1598,7 +1604,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
 
-  const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
+  const pusch_appconfig& pusch = cell.pusch_cfg;
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
@@ -1608,7 +1614,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
 
   // RA parameters.
-  const prach_appconfig& prach = config.common_cell_cfg.prach_cfg;
+  const prach_appconfig& prach = cell.prach_cfg;
 
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
@@ -1662,7 +1668,7 @@ e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config)
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
   out_cfg.gnb_id             = config.gnb_id;
   out_cfg.ran_node_name      = config.ran_node_name;
-  out_cfg.plmn               = config.common_cell_cfg.plmn;
+  out_cfg.plmn               = config.cells_cfg.front().cell.plmn;
   out_cfg.e2sm_kpm_enabled   = config.e2_cfg.e2sm_kpm_enabled;
   out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
 
@@ -1701,8 +1707,6 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
 
 void srsran::derive_auto_params(gnb_appconfig& gnb_params)
 {
-  derive_cell_auto_params(gnb_params.common_cell_cfg);
-
   for (auto& cell : gnb_params.cells_cfg) {
     derive_cell_auto_params(cell.cell);
   }

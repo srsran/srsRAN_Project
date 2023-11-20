@@ -164,12 +164,14 @@ int main(int argc, char** argv)
   // Fill the generic application arguments to parse.
   populate_cli11_generic_args(app);
 
-  gnb_appconfig gnb_cfg;
+  gnb_parsed_appconfig gnb_parsed_cfg;
   // Configure CLI11 with the gNB application configuration schema.
-  configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
+  configure_cli11_with_gnb_appconfig_schema(app, gnb_parsed_cfg);
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
+
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
 
   // Derive the parameters that were set to be derived automatically.
   derive_auto_params(gnb_cfg);

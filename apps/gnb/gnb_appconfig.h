@@ -1130,11 +1130,6 @@ struct gnb_appconfig {
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
   variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
-  /// \brief Base cell application configuration.
-  ///
-  /// \note When a cell is added, it will use the values of this base cell as default values for its base cell
-  /// configuration. This parameter usage is restricted for filling cell information in the \remark cell_cfg variable.
-  base_cell_appconfig common_cell_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
@@ -1166,6 +1161,19 @@ struct gnb_appconfig {
 
   /// \brief HAL configuration.
   optional<hal_appconfig> hal_config;
+};
+
+/// \brief Monolithic gnb parsed application configuration.
+///
+/// Parsed configuration includes the common cell support.
+struct gnb_parsed_appconfig {
+  /// gNB application configuration.
+  gnb_appconfig config;
+  /// \brief Base cell application configuration.
+  ///
+  /// \note When a cell is added, it will use the values of this base cell as default values for its base cell
+  /// configuration. This parameter usage is restricted for filling cell information in the \remark cell_cfg variable.
+  base_cell_appconfig common_cell_cfg;
 };
 
 } // namespace srsran
