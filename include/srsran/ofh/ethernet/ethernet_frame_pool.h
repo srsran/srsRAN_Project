@@ -26,8 +26,8 @@ namespace ether {
 /// Storage for one Ethernet frame buffer.
 class frame_buffer
 {
-  size_t               sz     = 0;
-  std::vector<uint8_t> buffer = {};
+  size_t               sz = 0;
+  std::vector<uint8_t> buffer;
 
 public:
   /// Constructors.

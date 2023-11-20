@@ -64,7 +64,7 @@ public:
   }
 
 private:
-  std::atomic<unsigned>                                        last_used = {0};
+  std::atomic<unsigned>                                        last_used{0};
   std::vector<data_flow_cplane_downlink_task_dispatcher_entry> dispatchers;
 };
 
