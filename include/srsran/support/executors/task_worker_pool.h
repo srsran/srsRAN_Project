@@ -116,9 +116,9 @@ class base_task_queue<QueuePolicy, QueuePolicies...>
   using queue_type = concurrent_priority_queue<unique_task, QueuePolicy, QueuePolicies...>;
 
 public:
-  base_task_queue(std::string                                           pool_name_,
-                  const std::array<unsigned, sizeof...(QueuePolicies)>& task_queue_sizes,
-                  std::chrono::microseconds                             wait_sleep_time) :
+  base_task_queue(std::string                                               pool_name_,
+                  const std::array<unsigned, sizeof...(QueuePolicies) + 1>& task_queue_sizes,
+                  std::chrono::microseconds                                 wait_sleep_time) :
     pool_name(std::move(pool_name_)),
     logger(srslog::fetch_basic_logger("ALL")),
     pending_tasks(task_queue_sizes, wait_sleep_time)
@@ -132,7 +132,7 @@ public:
   template <enqueue_priority Priority>
   SRSRAN_NODISCARD bool push_task(unique_task task)
   {
-    bool success = pending_tasks.try_push<Priority>(std::move(task));
+    bool success = pending_tasks.template try_push<Priority>(std::move(task));
     if (not success) {
       logger.error("Cannot push anymore tasks into the {} worker pool queue. Maximum size is {}",
                    pool_name,
@@ -147,7 +147,7 @@ public:
   template <enqueue_priority Priority>
   void push_task_blocking(unique_task task)
   {
-    bool success = pending_tasks.push_blocking<Priority>(std::move(task));
+    bool success = pending_tasks.template push_blocking<Priority>(std::move(task));
     if (not success) {
       logger.debug("Cannot push anymore tasks into the {} worker queue because it was closed", pool_name);
       return;

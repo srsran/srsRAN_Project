@@ -98,7 +98,6 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
     fmt::print("Finished in {}\n", this_thread_name());
   }));
   f.get();
-  this->pool.stop();
 }
 
 TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
@@ -136,6 +135,38 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
   }
 
   this->pool.stop();
+}
+
+template <typename TaskWorkerPool>
+class prio_task_worker_pool_test : public ::testing::Test
+{
+protected:
+  using pool_type = TaskWorkerPool;
+
+  prio_task_worker_pool_test() : pool{4, std::array<unsigned, 2>{128, 256}, "POOL", std::chrono::microseconds{100}} {}
+
+  pool_type pool;
+};
+using prio_worker_pool_types =
+    ::testing::Types<task_worker_pool<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc>,
+                     task_worker_pool<concurrent_queue_policy::locking_mpmc, concurrent_queue_policy::locking_mpmc>>;
+TYPED_TEST_SUITE(prio_task_worker_pool_test, prio_worker_pool_types);
+
+TYPED_TEST(prio_task_worker_pool_test, correct_initialization)
+{
+  ASSERT_EQ(this->pool.nof_workers(), 4);
+  ASSERT_EQ(this->pool.nof_pending_tasks(), 0);
+}
+
+TYPED_TEST(prio_task_worker_pool_test, prio_worker_pool_runs_single_task)
+{
+  std::promise<void> p;
+  std::future<void>  f = p.get_future();
+  ASSERT_TRUE(this->pool.template push_task<enqueue_priority::max>([&p]() {
+    p.set_value();
+    fmt::print("Finished in {}\n", this_thread_name());
+  }));
+  f.get();
 }
 
 TEST(spsc_task_worker_test, correct_initialization)
