@@ -34,7 +34,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
     // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user->get_pcell();
 
-    if (not ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
+    if (not ue_cell.is_active() or not ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
       continue;
     }
 

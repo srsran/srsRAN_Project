@@ -64,9 +64,7 @@ void ue::deactivate()
   // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
-      for (unsigned hid = 0; hid != ue_du_cells[i]->harqs.nof_ul_harqs(); ++hid) {
-        ue_du_cells[i]->harqs.ul_harq(hid).cancel_harq();
-      }
+      ue_du_cells[i]->deactivate();
     }
   }
 }
