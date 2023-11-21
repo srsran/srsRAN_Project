@@ -268,7 +268,7 @@ zmq-valgrind:
     RETINA_ARGS: "gnb.all.pcap=True"
   interruptible: false
   needs:
-    - job: "basic valgrind"
+    - job: "smoke valgrind update cache"
       artifacts: true
     - *txrx-lib
     - *retina-needs
