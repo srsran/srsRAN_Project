@@ -93,6 +93,8 @@ private:
   enum class cell_state { inactive, active } state = cell_state::active;
 
   mac_pcap& pcap;
+
+  bool sib1_pcap_dumped = false;
 };
 
 } // namespace srsran
