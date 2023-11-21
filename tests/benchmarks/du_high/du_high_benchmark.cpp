@@ -26,26 +26,34 @@
 using namespace srsran;
 using namespace srs_du;
 
+// TEST_RGEN_SET_SEED(2878423255);
+
 /// \brief Parameters of the benchmark.
 struct bench_params {
   /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
   unsigned nof_repetitions = 100;
+  /// \brief Number to DU UEs to consider for benchmark.
+  unsigned nof_ues = 1;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
+  fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'U':
+        params.nof_ues = std::strtol(optarg, nullptr, 10);
         break;
       case 'h':
       default:
@@ -59,6 +67,15 @@ static void parse_args(int argc, char** argv, bench_params& params)
 /// that the DU sends in order for the DU normal operation to proceed.
 class cu_cp_simulator : public srs_du::f1c_connection_client
 {
+public:
+  cu_cp_simulator() : du_rx_pdu_notifier(nullptr)
+  {
+    for (auto& flag : ue_created_flag_list) {
+      flag.store(false, std::memory_order_relaxed);
+    }
+  }
+
+private:
   class f1ap_du_tx_pdu_notifier : public f1ap_message_notifier
   {
   public:
@@ -71,8 +88,9 @@ class cu_cp_simulator : public srs_du::f1c_connection_client
   };
 
 public:
-  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
-  std::atomic<bool>                      ue_created{false};
+  std::unique_ptr<f1ap_message_notifier>        du_rx_pdu_notifier;
+  std::array<std::atomic<bool>, MAX_NOF_DU_UES> ue_created_flag_list;
+  unsigned                                      next_gnb_cu_ue_f1ap_id = 0;
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
@@ -82,6 +100,8 @@ public:
   }
 
 private:
+  unsigned get_next_gnb_cu_ue_f1ap_id() { return next_gnb_cu_ue_f1ap_id++; }
+
   void handle_message(const f1ap_message& msg)
   {
     switch (msg.pdu.type().value) {
@@ -117,6 +137,9 @@ private:
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
         drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
             7; // UM in default configs
+        msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id = get_next_gnb_cu_ue_f1ap_id();
+        msg.pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id =
+            init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
         du_rx_pdu_notifier->on_new_message(msg);
       } break;
       default:
@@ -128,7 +151,8 @@ private:
   {
     switch (succ_outcome.value.type().value) {
       case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-        ue_created = true;
+        ue_created_flag_list[succ_outcome.value.ue_context_mod_resp()->gnb_du_ue_f1ap_id].store(
+            true, std::memory_order_relaxed);
       } break;
       default:
         report_fatal_error("Unreachable code in this benchmark");
@@ -157,8 +181,8 @@ public:
 class cu_up_simulator : public f1u_du_gateway
 {
 public:
-  f1u_dummy_bearer             bearer;
-  srs_du::f1u_rx_sdu_notifier* du_notif = nullptr;
+  static_vector<f1u_dummy_bearer, MAX_NOF_DU_UES>             bearer_list;
+  static_vector<srs_du::f1u_rx_sdu_notifier*, MAX_NOF_DU_UES> du_notif_list;
 
   f1u_bearer* create_du_bearer(uint32_t                       ue_index,
                                drb_id_t                       drb_id,
@@ -168,11 +192,12 @@ public:
                                srs_du::f1u_rx_sdu_notifier&   du_rx,
                                timer_factory                  timers) override
   {
-    du_notif = &du_rx;
-    return &bearer;
+    du_notif_list.push_back(&du_rx);
+    bearer_list.emplace_back();
+    return &bearer_list.back();
   }
 
-  void remove_du_bearer(const up_transport_layer_info& dl_tnl) override { du_notif = nullptr; }
+  void remove_du_bearer(const up_transport_layer_info& dl_tnl) override {}
 };
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.
@@ -366,7 +391,7 @@ public:
   }
 
   /// \brief Add a UE to the DU-high and wait for the DU-high to finish the setup of the UE.
-  void add_ue(rnti_t rnti)
+  void add_ue(du_ue_index_t ue_idx)
   {
     using namespace std::chrono_literals;
 
@@ -374,11 +399,12 @@ public:
     mac_rx_data_indication rx_ind;
     rx_ind.sl_rx      = next_sl_tx - 4;
     rx_ind.cell_index = to_du_cell_index(0);
-    rx_ind.pdus.push_back(mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
+    rx_ind.pdus.push_back(
+        mac_rx_pdu{to_rnti(0x4601 + ue_idx), 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
     du_hi->get_pdu_handler().handle_rx_data_indication(std::move(rx_ind));
 
     // Wait for UE Context Modification Response to arrive to CU.
-    while (not sim_cu_cp.ue_created) {
+    while (not sim_cu_cp.ue_created_flag_list[ue_idx]) {
       // Need to run one slot for scheduler to handle pending events.
       run_slot();
       process_results();
@@ -389,8 +415,10 @@ public:
   // \brief Push a DL PDUs to DU-high via F1-U interface.
   void push_pdcp_pdus()
   {
-    for (unsigned i = 0; i != 10; ++i) {
-      sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0});
+    for (const auto& du_notif : sim_cu_up.du_notif_list) {
+      for (unsigned i = 0; i != 10; ++i) {
+        du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0});
+      }
     }
   }
 
@@ -410,13 +438,15 @@ public:
   byte_buffer pdcp_pdu;
 };
 
-/// \brief Benchmark DU-high for 1 UE, DL only traffic using an RLC UM bearer.
-void benchmark_one_ue_dl_only_rlc_um(benchmarker& bm)
+/// \brief Benchmark DU-high with DL only traffic using an RLC UM bearer.
+void benchmark_dl_only_rlc_um(benchmarker& bm, unsigned nof_ues)
 {
-  std::string         benchname = "DL only, 1 UE, RLC UM";
+  auto                benchname = fmt::format("DL only, {} UE, RLC UM", nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
   du_high_bench       bench;
-  bench.add_ue(to_rnti(0x4601));
+  for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
+    bench.add_ue(to_du_ue_index(ue_count));
+  }
 
   // Run benchmark.
   bm.new_measure(
@@ -464,7 +494,7 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_one_ue_dl_only_rlc_um(bm);
+  benchmark_dl_only_rlc_um(bm, params.nof_ues);
 
   // Output results.
   bm.print_percentiles_time();
