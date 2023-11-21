@@ -34,15 +34,15 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
   ric_control_config process_request();
-  void send_e2_ric_control_acknowledge(ric_control_config ctrl_request, ric_control_config_response ctrl_response);
-  void send_e2_ric_control_failure(ric_control_config ctrl_request, ric_control_config_response ctrl_response);
+  void               send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
+                                                     const e2_ric_control_response& ctrl_response);
+  void send_e2_ric_control_failure(const e2_ric_control_request&, const e2_ric_control_response& ctrl_response);
 
 private:
   srslog::basic_logger&        logger;
   e2_message_notifier&         ric_notif;
   e2sm_manager&                e2sm_mng;
   const e2_ric_control_request request;
-  ric_control_config           ctrl_config_request;
-  ric_control_config_response  ctrl_config_response;
+  e2_ric_control_response      response;
 };
 } // namespace srsran

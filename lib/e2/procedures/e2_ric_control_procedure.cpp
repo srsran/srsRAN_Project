@@ -26,15 +26,34 @@ void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   ri_cctrl_request_s ctrl_req   = request.request;
   e2sm_interface*    e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
+
+  if (!e2sm_iface) {
+    logger.error("RAN function ID not supported");
+    return;
+  }
+
+  e2sm_handler&               packer          = e2sm_iface->get_e2sm_packer();
+  e2_sm_ric_control_request_s ric_ctrl_req    = packer.handle_packed_ric_control_request(ctrl_req);
+  e2sm_control_service*       control_service = e2sm_iface->get_e2sm_control_service(ric_ctrl_req);
+
+  if (!control_service) {
+    logger.error("RIC Control Service not supported");
+    return;
+  }
+
+  if (!control_service->control_request_supported(ric_ctrl_req)) {
+    logger.error("RIC Control Request not supported");
+    return;
+  }
+
   CORO_BEGIN(ctx);
-  ctrl_config_request = process_request();
-  CORO_AWAIT_VALUE(ctrl_config_response,
-                   e2sm_iface->get_param_configurator()->configure_ue_mac_scheduler(ctrl_config_request));
-  if (ctrl_config_response.harq_processes_result and ctrl_config_response.max_prb_alloc_result and
-      ctrl_config_response.min_prb_alloc_result) {
-    send_e2_ric_control_acknowledge(ctrl_config_request, ctrl_config_response);
-  } else {
-    send_e2_ric_control_failure(ctrl_config_request, ctrl_config_response);
+  CORO_AWAIT_VALUE(response, control_service->execute_control_request(ric_ctrl_req));
+  if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
+    if (response.success) {
+      send_e2_ric_control_acknowledge(request, response);
+    } else {
+      send_e2_ric_control_failure(request, response);
+    }
   }
   CORO_RETURN();
 }
@@ -61,8 +80,8 @@ ric_control_config e2_ric_control_procedure::process_request()
   return ctrl_config;
 }
 
-void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_config          ctrl_request,
-                                                               ric_control_config_response ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
+                                                               const e2_ric_control_response& ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_successful_outcome();
@@ -76,8 +95,8 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_confi
   ric_notif.on_new_message(msg);
 }
 
-void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config          ctrl_request,
-                                                           ric_control_config_response ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_control_request&  ctrl_request,
+                                                           const e2_ric_control_response& ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_unsuccessful_outcome();
@@ -88,5 +107,6 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config   
   fail->ri_crequest_id              = request.request->ri_crequest_id;
   fail->ri_ccall_process_id_present = false;
   fail->ri_cctrl_outcome_present    = false;
+  fail->cause->set_misc().value     = cause_misc_e::options::unspecified;
   ric_notif.on_new_message(msg);
 }

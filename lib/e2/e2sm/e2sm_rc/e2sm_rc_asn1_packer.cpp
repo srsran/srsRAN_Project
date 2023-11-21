@@ -34,6 +34,37 @@ e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buf
   return action_def;
 }
 
+e2_sm_ric_control_request_s
+e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req)
+{
+  e2_sm_ric_control_request_s ric_control_request  = {};
+  ric_control_request.service_model                = e2sm_service_model_t::RC;
+  ric_control_request.ric_call_process_id_present  = req->ri_ccall_process_id_present;
+  ric_control_request.ric_ctrl_ack_request_present = req->ri_cctrl_ack_request_present;
+
+  if (ric_control_request.ric_call_process_id_present) {
+    ric_control_request.ric_call_process_id = req->ri_ccall_process_id->to_number();
+  }
+
+  asn1::cbit_ref bref_hdr(req->ri_cctrl_hdr.value);
+  asn1::cbit_ref bref_msg(req->ri_cctrl_msg.value);
+  if (variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s>(ric_control_request.request_ctrl_hdr).unpack(bref_hdr) !=
+      asn1::SRSASN_SUCCESS) {
+    printf("Failed to unpack E2SM RC Control Request Header\n");
+  }
+
+  if (variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s>(ric_control_request.request_ctrl_msg).unpack(bref_msg) !=
+      asn1::SRSASN_SUCCESS) {
+    printf("Failed to unpack E2SM RC Control Request Message\n");
+  }
+
+  if (ric_control_request.ric_ctrl_ack_request_present) {
+    ric_control_request.ric_ctrl_ack_request =
+        req->ri_cctrl_ack_request->value == asn1::e2ap::ri_cctrl_ack_request_e::ack;
+  }
+  return ric_control_request;
+};
+
 e2_sm_event_trigger_definition_s
 e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {

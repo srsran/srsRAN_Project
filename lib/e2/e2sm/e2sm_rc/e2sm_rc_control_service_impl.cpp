@@ -1,0 +1,205 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "e2sm_rc_control_service_impl.h"
+#include <algorithm>
+
+using namespace asn1::e2ap;
+using namespace asn1::e2sm_rc;
+using namespace srsran;
+
+e2sm_rc_control_service_base::e2sm_rc_control_service_base(uint32_t style_id_) :
+  logger(srslog::fetch_basic_logger("E2SM-RC")), style_id(style_id_)
+{
+  if (!get_e2sm_rc_control_style_def(style_id_, control_service_def)) {
+    logger.error("Control Service Style %i does not exist\n", style_id_);
+  }
+}
+
+uint32_t e2sm_rc_control_service_base::get_style_type()
+{
+  return style_id;
+}
+
+bool e2sm_rc_control_service_base::add_e2sm_rc_control_action_executor(
+    std::unique_ptr<e2sm_control_action_executor> config_req_executor)
+{
+  config_req_executors.emplace(config_req_executor->get_action_id(), std::move(config_req_executor));
+  return true;
+}
+
+e2sm_rc_control_service::e2sm_rc_control_service(uint32_t style_id_) : e2sm_rc_control_service_base(style_id_) {}
+
+bool e2sm_rc_control_service::control_request_supported(const e2_sm_ric_control_request_s& req)
+{
+  const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+
+  // All styles 1 - 10 use hdr and msg format 1
+  if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
+      e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format1) {
+    return false;
+  }
+
+  if (ctrl_msg.ric_ctrl_msg_formats.type().value !=
+      e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format1) {
+    return false;
+  }
+
+  const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr_f1 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1();
+
+  if (ctrl_hdr_f1.ric_style_type != style_id) {
+    return false;
+  }
+  // TODO: check if UE supported
+  // ctrl_hdr_f1.ue_id
+
+  if (ctrl_hdr_f1.ric_ctrl_decision_present) {
+    // TODO: check if ric_ctrl_decision supported
+  }
+
+  // If call process id not supported, then it cannot be provided in the request.
+  if (control_service_def.call_process_id_format == 0) {
+    if (req.ric_call_process_id_present) {
+      return false;
+    }
+  }
+
+  if (config_req_executors.find(ctrl_hdr_f1.ric_ctrl_action_id) != config_req_executors.end()) {
+    if (!config_req_executors.at(ctrl_hdr_f1.ric_ctrl_action_id)->ric_control_action_supported(req)) {
+      return false;
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
+async_task<e2_ric_control_response>
+e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
+{
+  const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
+      variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+  return config_req_executors[ctrl_hdr.ric_ctrl_action_id]->execute_ric_control_action(req);
+}
+
+e2sm_rc_control_service_style_255::e2sm_rc_control_service_style_255() : e2sm_rc_control_service_base(255) {}
+
+e2_sm_ric_control_request_s e2sm_rc_control_service_style_255::create_req_f1_from_req_f2(
+    const e2_sm_rc_ctrl_hdr_format2_s&                                ctrl_hdr_f2,
+    const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_style_item_s       style,
+    const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_ctrl_action_item_s action)
+{
+  e2_sm_ric_control_request_s req_f1;
+  req_f1.ric_call_process_id_present  = false;
+  req_f1.ric_ctrl_ack_request_present = false;
+  req_f1.ric_ctrl_ack_request         = false;
+
+  e2_sm_rc_ctrl_hdr_format1_s& hdr_f1 = variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s>(req_f1.request_ctrl_hdr)
+                                            .ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+
+  e2_sm_rc_ctrl_msg_format1_s& msg_f1 = variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s>(req_f1.request_ctrl_msg)
+                                            .ric_ctrl_msg_formats.set_ctrl_msg_format1();
+
+  hdr_f1.ric_style_type     = style.indicated_ctrl_style_type;
+  hdr_f1.ric_ctrl_action_id = action.ric_ctrl_action_id;
+
+  if (ctrl_hdr_f2.ue_id_present) {
+    hdr_f1.ue_id = ctrl_hdr_f2.ue_id;
+  } else {
+    // TODO: what if there is no UE?
+    hdr_f1.ue_id.set(); // set nulltype
+  }
+
+  if (ctrl_hdr_f2.ric_ctrl_decision_present) {
+    hdr_f1.ric_ctrl_decision_present = true;
+    if (ctrl_hdr_f2.ric_ctrl_decision == e2_sm_rc_ctrl_hdr_format2_s::ric_ctrl_decision_e_::accept) {
+      hdr_f1.ric_ctrl_decision = e2_sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::accept;
+    } else {
+      hdr_f1.ric_ctrl_decision = e2_sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::reject;
+    }
+  }
+  msg_f1.ran_p_list = action.ran_p_list.ran_p_list;
+
+  return req_f1;
+}
+
+bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ric_control_request_s& req)
+{
+  const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+
+  if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
+      e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format2) {
+    return false;
+  }
+
+  if (ctrl_msg.ric_ctrl_msg_formats.type().value !=
+      e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format2) {
+    return false;
+  }
+
+  const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2();
+  const e2_sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2();
+
+  if (ctrl_hdr_f2.ue_id_present) {
+    // TODO: check if UE supported
+    // ctrl_hdr_f2.ue_id
+  }
+
+  if (ctrl_hdr_f2.ric_ctrl_decision_present) {
+    // TODO: check if ric_ctrl_decision supported
+  }
+
+  for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
+    if (style.indicated_ctrl_style_type > 10) {
+      return false;
+    }
+
+    if (e2sm_rc_control_services.find(style.indicated_ctrl_style_type) == e2sm_rc_control_services.end()) {
+      return false;
+    }
+
+    for (auto& action : style.ric_ctrl_action_list) {
+      // Create a control request with format 1 to match the API of control service styles 1-10.
+      e2_sm_ric_control_request_s tmp_req_f1 = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
+
+      if (!e2sm_rc_control_services.at(style.indicated_ctrl_style_type)->control_request_supported(tmp_req_f1)) {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+async_task<e2_ric_control_response>
+e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_control_request_s& req)
+{
+  e2_ric_control_response aggregated_response;
+  aggregated_response.success = false;
+
+  const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
+      variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format2();
+  const e2_sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 =
+      variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format2();
+
+  for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
+    for (auto& action : style.ric_ctrl_action_list) {
+      // Create a control request with format 1 to match the API of control service styles 1-10.
+      e2_sm_ric_control_request_s tmp_req = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
+      // TODO: execute all actions and aggregate the response
+    }
+  }
+
+  return launch_async([aggregated_response](coro_context<async_task<e2_ric_control_response>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN(aggregated_response);
+  });
+}

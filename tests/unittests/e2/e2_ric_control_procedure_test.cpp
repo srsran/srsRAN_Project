@@ -19,7 +19,7 @@ using namespace srsran;
 
 TEST_F(e2_test_setup, ric_control_procedure_setup)
 {
-  e2_message request_msg = generate_ric_control_request(test_logger);
+  e2_message request_msg = generate_ric_control_request_style2_action6(test_logger);
   e2->handle_message(request_msg);
   asn1::cbit_ref bref(gw->last_pdu);
   e2_message     msg = {};

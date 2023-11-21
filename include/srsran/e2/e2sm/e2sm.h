@@ -16,9 +16,12 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
+#include "srsran/e2/e2_messages.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
+
+enum e2sm_service_model_t { KPM, RC, UNKNOWN_SM };
 
 struct e2_sm_event_trigger_definition_s {
   enum e2sm_ric_service_type_t { REPORT, INSERT, POLICY, UNKNOWN };
@@ -27,9 +30,36 @@ struct e2_sm_event_trigger_definition_s {
 };
 
 struct e2_sm_action_definition_s {
-  enum e2sm_service_model_t { KPM, RC, UNKNOWN };
   e2sm_service_model_t                                                                                service_model;
   variant<asn1::e2sm_kpm::e2_sm_kpm_action_definition_s, asn1::e2sm_rc::e2_sm_rc_action_definition_s> action_definition;
+};
+
+struct e2_sm_ric_control_request_s {
+  e2sm_service_model_t                        service_model;
+  bool                                        ric_call_process_id_present  = false;
+  bool                                        ric_ctrl_ack_request_present = false;
+  uint64_t                                    ric_call_process_id;
+  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s> request_ctrl_hdr;
+  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s> request_ctrl_msg;
+  bool                                        ric_ctrl_ack_request;
+};
+
+/// RIC control action executor maps an control action request to the proper stack functions.
+class e2sm_control_action_executor
+{
+public:
+  virtual ~e2sm_control_action_executor() = default;
+  /// \brief get action id associated with the control action executor.
+  /// \return Returns action id.
+  virtual uint32_t get_action_id() = 0;
+  /// \brief check if the requested RIC control action is supported.
+  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \return Returns true if action supported by control action executor.
+  virtual bool ric_control_action_supported(const e2_sm_ric_control_request_s& req) = 0;
+  /// \brief trigger execution of the RIC control action.
+  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \return Returns RIC control response.
+  virtual async_task<e2_ric_control_response> execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
 };
 
 class e2sm_report_service
@@ -50,6 +80,27 @@ public:
   virtual srsran::byte_buffer get_indication_header() = 0;
 };
 
+class e2sm_control_service
+{
+public:
+  virtual ~e2sm_control_service() = default;
+  /// \brief get style type id associated with the control service.
+  /// \return Returns style type id.
+  virtual uint32_t get_style_type() = 0;
+  /// \brief add an RIC control action executor associated with a specific action id.
+  /// \param[in] act_executor is a RIC control action executor that maps RIC action to the proper stack functions.
+  /// \return Returns true if action executor successfully added.
+  virtual bool add_e2sm_rc_control_action_executor(std::unique_ptr<e2sm_control_action_executor> act_executor) = 0;
+  /// \brief check if the requested RIC control action is supported.
+  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \return Returns true if the action supported by control service.
+  virtual bool control_request_supported(const e2_sm_ric_control_request_s& req) = 0;
+  /// \brief trigger execution of the RIC control action.
+  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \return Returns RIC control response.
+  virtual async_task<e2_ric_control_response> execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
+};
+
 class e2sm_handler
 {
 public:
@@ -62,6 +113,10 @@ public:
   /// \param[in] buf
   /// \return Returns the E2SM Event Trigger Definition.
   virtual e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
+  /// \brief Handle the packed E2SM Event Trigger Definition.
+  /// \param[in] buf
+  /// \return Returns the E2SM Event Trigger Definition.
+  virtual e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) = 0;
   /// @brief Pack the RAN function description.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };
@@ -73,15 +128,23 @@ public:
   /// \brief gets a reference to the packer for this service model.
   /// \return Returns a reference to the packer.
   virtual e2sm_handler& get_e2sm_packer() = 0;
-  /// \brief Check if the requested RIC action is supported
-  /// \param[in] ric_action
-  /// \return Returns true if action suppored by E2SM
+  /// \brief Check if the requested RIC action is supported.
+  /// \param[in] ric_action is a RIC action to be setup.
+  /// \return Returns true if action supported by E2SM.
   virtual bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) = 0;
-  /// \brief gets a unique_ptr to the e2sm report service for an action
-  /// \param[in] action
-  /// \return Returns a unique_ptr to the e2sm report service
+  /// \brief gets a unique_ptr to the e2sm report service for an action.
+  /// \param[in] action is a RIC action to be setup (in binary form).
+  /// \return Returns a unique_ptr to the e2sm report service.
   virtual std::unique_ptr<e2sm_report_service>
   get_e2sm_report_service(const srsran::byte_buffer& action_definition) = 0;
+  /// \brief add an RIC control service associated with a specific style id.
+  /// \param[in] control_service is a RIC control service.
+  /// \return Returns true if the control service successfully added.
+  virtual bool add_e2sm_control_service(std::unique_ptr<e2sm_control_service> control_service) = 0;
+  /// \brief gets a unique_ptr to the e2sm control service for a control msg.
+  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \return Returns a unique_ptr to the e2sm report service.
+  virtual e2sm_control_service* get_e2sm_control_service(const e2_sm_ric_control_request_s& req) = 0;
   /// \brief gets a reference to the param configurator for this service model.
   /// \return Returns a reference to the param configurator.
   virtual e2sm_param_configurator* get_param_configurator() = 0;

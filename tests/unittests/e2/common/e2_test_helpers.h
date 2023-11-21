@@ -16,6 +16,8 @@
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_param_provider.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_service_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
@@ -137,6 +139,72 @@ inline e2_message generate_e2_setup_request(std::string oid)
   e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.from_string("72657170617274");
   e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.from_string("72657370617274");
 
+  return e2_msg;
+}
+
+inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logger& logger)
+{
+  using namespace asn1::e2ap;
+  e2_message  e2_msg;
+  init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
+  initmsg.load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
+
+  ri_cctrl_request_s& ric_control_request           = initmsg.value.ri_cctrl_request();
+  ric_control_request->ri_ccall_process_id_present  = false;
+  ric_control_request->ri_cctrl_ack_request_present = true;
+  ric_control_request->ri_cctrl_ack_request.value   = ri_cctrl_ack_request_e::options::ack;
+
+  ric_control_request->ra_nfunction_id.value.value           = 1;
+  ric_control_request->ri_crequest_id.value.ric_requestor_id = 3;
+  ric_control_request->ri_crequest_id.value.ric_instance_id  = 0;
+
+  asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s ctrl_hdr;
+  ctrl_hdr.ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_decision_present = false;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_style_type            = 2;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_action_id        = 6;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.set_gnb_ue_id();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id = 4;
+
+  srsran::byte_buffer ctrl_hdr_buff;
+  asn1::bit_ref       bref_msg(ctrl_hdr_buff);
+  if (ctrl_hdr.pack(bref_msg) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack E2SM RC control header\n");
+  }
+
+  ric_control_request->ri_cctrl_hdr.value.resize(ctrl_hdr_buff.length());
+  std::copy(ctrl_hdr_buff.begin(), ctrl_hdr_buff.end(), ric_control_request->ri_cctrl_hdr.value.begin());
+
+  asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s ctrl_msg;
+  ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list.resize(2);
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list[0].ran_param_id = 11;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
+      .ran_p_list[0]
+      .ran_param_value_type.set_ran_p_choice_elem_false()
+      .ran_param_value_present = true;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
+      .ran_p_list[0]
+      .ran_param_value_type.ran_p_choice_elem_false()
+      .ran_param_value.set_value_int()                                        = 5;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list[1].ran_param_id = 12;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
+      .ran_p_list[1]
+      .ran_param_value_type.set_ran_p_choice_elem_false()
+      .ran_param_value_present = true;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
+      .ran_p_list[1]
+      .ran_param_value_type.ran_p_choice_elem_false()
+      .ran_param_value.set_value_int() = 12;
+
+  srsran::byte_buffer ctrl_msg_buff;
+  asn1::bit_ref       bref_msg1(ctrl_msg_buff);
+  if (ctrl_msg.pack(bref_msg1) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack E2SM RC control message\n");
+  }
+
+  ric_control_request->ri_cctrl_msg.value.resize(ctrl_msg_buff.length());
+  std::copy(ctrl_msg_buff.begin(), ctrl_msg_buff.end(), ric_control_request->ri_cctrl_msg.value.begin());
   return e2_msg;
 }
 
@@ -624,6 +692,11 @@ class dummy_e2sm_handler : public e2sm_handler
     e2_sm_kpm_action_definition.action_definition_formats.action_definition_format3().granul_period = 10;
     return action_def;
   }
+  e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override
+  {
+    e2_sm_ric_control_request_s ric_control_request = {};
+    return ric_control_request;
+  }
   e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
   {
     e2_sm_event_trigger_definition_s e2sm_event_trigger_def;
@@ -696,6 +769,8 @@ protected:
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<e2sm_interface>                     e2sm_kpm_iface;
   std::unique_ptr<e2sm_interface>                     e2sm_rc_iface;
+  std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style2;
+  std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
   std::unique_ptr<e2sm_handler>                       e2sm_rc_packer;
   std::unique_ptr<e2sm_param_provider>                rc_provider;
@@ -850,7 +925,11 @@ class e2_test_setup : public e2_test_base
     e2sm_rc_packer        = std::make_unique<e2sm_rc_asn1_packer>(*rc_provider);
     rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
     e2sm_rc_iface = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer, *rc_param_configurator, *rc_provider);
-    e2sm_mngr     = std::make_unique<e2sm_manager>(test_logger);
+    e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
+    rc_control_action_2_6_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*rc_param_configurator);
+    e2sm_rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
+    e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style2));
+    e2sm_mngr = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
     e2sm_mngr->add_supported_ran_function(1, "1.3.6.1.4.1.53148.1.1.2.3");

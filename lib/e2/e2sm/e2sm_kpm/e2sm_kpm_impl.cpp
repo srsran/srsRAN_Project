@@ -234,6 +234,18 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
   }
 }
 
+bool e2sm_kpm_impl::add_e2sm_control_service(std::unique_ptr<e2sm_control_service> control_service)
+{
+  logger.warning("Control Service not supported");
+  return false;
+}
+
+e2sm_control_service* e2sm_kpm_impl::get_e2sm_control_service(const e2_sm_ric_control_request_s& req)
+{
+  logger.warning("Control Service not supported");
+  return nullptr;
+}
+
 e2sm_handler& e2sm_kpm_impl::get_e2sm_packer()
 {
   return e2sm_packer;

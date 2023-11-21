@@ -33,6 +33,14 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
   return action_def;
 }
 
+e2_sm_ric_control_request_s
+e2sm_kpm_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req)
+{
+  printf("Failure - RIC control not available in e2sm_kpm.\n");
+  e2_sm_ric_control_request_s control_request = {};
+  return control_request;
+}
+
 e2_sm_event_trigger_definition_s
 e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
