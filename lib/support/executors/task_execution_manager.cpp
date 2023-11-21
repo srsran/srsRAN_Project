@@ -272,7 +272,7 @@ struct worker_pool_context<QueuePolicy> final
               params.prio,
               params.masks)
   {
-    report_error_if_not(params.queues.size() != 1, "Invalid number of queues for the specified policies");
+    report_error_if_not(params.queues.size() == 1, "Invalid number of queues for the specified policies");
   }
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)

@@ -149,7 +149,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
 
   // Worker for handling UE PDU traffic.
-  const priority_multiqueue_worker gnb_ue_worker{
+  priority_multiqueue_worker gnb_ue_worker{
       "gnb_ue",
       // Three queues, one for UE UP maintenance tasks, one for UL PDUs and one for DL PDUs.
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
@@ -162,19 +162,29 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {"ue_dl_exec", task_priority::max - 2, nullopt, false}},
       os_thread_realtime_priority::max() - 30,
       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
+
+  const unsigned nof_ue_dl_queues = 64;
+  for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
+    task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size};
+    gnb_ue_worker.executors.push_back({fmt::format("ue_dl_strand#{}", i), strand_cfg, false});
+  }
+
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }
   cu_up_ctrl_exec = exec_mng.executors().at("ue_up_ctrl_exec");
-  cu_up_dl_exec   = exec_mng.executors().at("ue_dl_exec");
   cu_up_ul_exec   = exec_mng.executors().at("ue_ul_exec");
+  cu_up_dl_exec   = exec_mng.executors().at("ue_dl_strand#0");
   cu_up_e2_exec   = exec_mng.executors().at("ue_up_ctrl_exec");
 
   // Create CU-UP execution mapper object.
-  std::vector<task_executor*> ue_up_dl_execs   = {exec_mng.executors().at("ue_dl_exec")};
+  std::vector<task_executor*> ue_up_dl_execs(nof_ue_dl_queues, nullptr);
+  for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
+    ue_up_dl_execs[i] = exec_mng.executors().at(fmt::format("ue_dl_strand#{}", i));
+  }
   std::vector<task_executor*> ue_up_ul_execs   = {exec_mng.executors().at("ue_ul_exec")};
   std::vector<task_executor*> ue_up_ctrl_execs = {exec_mng.executors().at("ue_up_ctrl_exec")};
-  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_dl_execs, ue_up_ctrl_execs);
+  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
 
   // Worker for handling DU, CU and UE control procedures.
   const priority_multiqueue_worker gnb_ctrl_worker{
