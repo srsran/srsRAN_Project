@@ -322,9 +322,10 @@ variables:
     COMPILER: gcc
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
-    TEST_MODE: default
+    TEST_MODE: coverage
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    ENABLE_GCOV: "True"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke relwithdeb:
@@ -509,11 +510,9 @@ smoke dpdk clean:
 
 intermediate commits:
   extends: .smoke release
-  stage: build and unit tests
   rules:
     - if: $ON_MR
   timeout: 45 min
-  tags: ["${AMD64_TAG}"]
   variables:
     SAVE_ARTIFACTS: "True"
   script:
@@ -521,7 +520,6 @@ intermediate commits:
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
       TEST_MODE=none
-      ENABLE_WERROR=False
       for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)
       do
         echo "##################################################"
@@ -531,9 +529,7 @@ intermediate commits:
         build_srsgnb
       done
     - |
-      ENABLE_GCOV=True
       TEST_MODE=coverage
-      ENABLE_WERROR=True
       git checkout $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
       echo "##################################################"
       echo "#### $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
@@ -613,6 +609,8 @@ smoke release update cache:
       start_in: 30 minutes
   retry: 2
   interruptible: false
+  variables:
+    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
