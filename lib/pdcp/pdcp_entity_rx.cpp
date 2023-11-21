@@ -10,6 +10,7 @@
 
 #include "pdcp_entity_rx.h"
 #include "../support/sdu_window_impl.h"
+#include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/security/ciphering.h"
 #include "srsran/security/integrity.h"
 #include "srsran/support/bit_encoding.h"
@@ -48,6 +49,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 {
+  trace_point rx_tp = up_tracer.now();
   metrics_add_pdus(1, buf.length());
 
   // Log PDU
@@ -65,6 +67,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   } else {
     handle_control_pdu(std::move(buf));
   }
+  up_tracer << trace_event{"pdcp_rx_pdu", rx_tp};
 }
 
 void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)

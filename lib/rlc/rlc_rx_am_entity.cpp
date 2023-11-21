@@ -11,6 +11,7 @@
 #include "rlc_rx_am_entity.h"
 #include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
+#include "srsran/instrumentation/traces/up_traces.h"
 
 using namespace srsran;
 
@@ -62,6 +63,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(uint32_t                          du_index,
 // Interfaces for lower layers
 void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
 {
+  trace_point rx_tp = up_tracer.now();
   metrics.metrics_add_pdus(1, buf.length());
   if (buf.empty()) {
     logger.log_warning("Dropped empty PDU.");
@@ -76,6 +78,7 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
   } else {
     handle_data_pdu(std::move(buf));
   }
+  up_tracer << trace_event{"rlc_rx_pdu", rx_tp};
 }
 
 void rlc_rx_am_entity::handle_control_pdu(byte_buffer_slice buf)

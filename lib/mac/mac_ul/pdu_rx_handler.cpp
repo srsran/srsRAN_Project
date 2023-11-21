@@ -9,6 +9,7 @@
  */
 
 #include "pdu_rx_handler.h"
+#include "srsran/instrumentation/traces/up_traces.h"
 
 using namespace srsran;
 
@@ -69,6 +70,7 @@ pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&          ccch_notifier_,
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
+  trace_point rx_tp = up_tracer.now();
   // > Store PCAP
   write_pcap_rx_pdu(sl_rx, pdu);
 
@@ -107,7 +109,9 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   }
 
   // > Handle remaining MAC UL subPDUs.
-  return handle_rx_subpdus(ctx);
+  bool pdu_ret = handle_rx_subpdus(ctx);
+  up_tracer << trace_event{"mac_rx_pdu", rx_tp};
+  return pdu_ret;
 }
 
 bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccch_msg)

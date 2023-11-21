@@ -12,6 +12,7 @@
 
 #include "rlc_bearer_logger.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
@@ -66,12 +67,15 @@ private:
   /// \brief Deletes the stored PDUs. This function shall be called from the executor in \c clear_by_executor.
   void clear()
   { // swap recycle bins under a lock
+    trace_point clear_tp = up_tracer.now();
     {
       std::lock_guard<std::mutex> lock(recycle_bin_swap_mutex);
       std::swap(recycle_bin_to_swap, recycle_bin_to_dump);
     }
     // delete all PDUs to return their memory segments to the pool
     recycle_bin_to_dump->clear();
+
+    up_tracer << trace_event{"rlc_clear_pdus", clear_tp};
   }
 
   rlc_bearer_logger& logger;

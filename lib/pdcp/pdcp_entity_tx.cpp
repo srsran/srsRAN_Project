@@ -10,6 +10,7 @@
 
 #include "pdcp_entity_tx.h"
 #include "../support/sdu_window_impl.h"
+#include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/security/ciphering.h"
 #include "srsran/security/integrity.h"
 #include "srsran/support/bit_encoding.h"
@@ -25,6 +26,7 @@ using namespace srsran;
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
+  trace_point tx_tp = up_tracer.now();
   // Avoid TX'ing if we are close to overload RLC SDU queue
   if (st.tx_trans > st.tx_next) {
     logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
@@ -119,6 +121,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Increment TX_NEXT
   st.tx_next++;
+
+  up_tracer << trace_event{"pdcp_tx_pdu", tx_tp};
 }
 
 void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
