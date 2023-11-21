@@ -9,12 +9,12 @@ srbs:
     rlc:
       tx:
         sn: 12
-        t-poll-retransmit: 80
-        max-retx-threshold: 4
-        poll-pdu: 64
-        poll-byte: 125
-        queue-size: 4096
+        t-poll-retransmit: 45
+        max-retx-threshold: 8
+        poll-pdu: -1
+        poll-byte: -1
+        queue-size: 256
       rx:
         sn: 12
-        t-reassembly: 80
-        t-status-prohibit: 10
+        t-reassembly: 35
+        t-status-prohibit: 0
