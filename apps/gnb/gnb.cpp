@@ -571,6 +571,7 @@ int main(int argc, char** argv)
 
   gnb_logger.info("Closing PCAP files...");
   ngap_p->close();
+  gtpu_p->close();
   e1ap_p->close();
   f1ap_p->close();
   e2ap_p->close();
