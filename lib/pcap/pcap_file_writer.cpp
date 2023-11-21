@@ -59,9 +59,10 @@ bool pcap_file_writer::open(uint32_t dlt_, const std::string& filename_)
 void pcap_file_writer::close()
 {
   if (pcap_fstream.is_open()) {
-    logger.info("Saving PCAP file (DLT={}) to {}", dlt, filename);
+    logger.debug("Saving PCAP (DLT={}) to \"{}\"", dlt, filename);
     pcap_fstream.flush();
     pcap_fstream.close();
+    logger.info("PCAP (DLT={}) successfully written to \"{}\" and closed.", dlt, filename);
   }
 }
 

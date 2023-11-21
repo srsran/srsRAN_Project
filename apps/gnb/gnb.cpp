@@ -569,16 +569,18 @@ int main(int argc, char** argv)
     gnb_logger.info("E2 Network connections closed successfully");
   }
 
+  gnb_logger.info("Closing PCAP files...");
   ngap_p->close();
   e1ap_p->close();
   f1ap_p->close();
   e2ap_p->close();
   mac_p->close();
   rlc_p->close();
+  gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");
   workers.stop();
-  gnb_logger.info("Executors notify_stop successfully");
+  gnb_logger.info("Executors closed successfully.");
 
   srslog::flush();
 
