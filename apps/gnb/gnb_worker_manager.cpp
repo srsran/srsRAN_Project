@@ -122,16 +122,6 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
     executors.push_back({"rlc_pcap_exec", strand_cfg});
   }
 
-  // Configure CU-UP executors.
-  // Note: The IO-broker is currently single threaded, so we can use a SPSC.
-  const task_queue ue_strand_cfg{concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size};
-  // TODO: For now, CU-UP cannot be parallelized.
-  const unsigned nof_ue_strands = 1;
-  for (unsigned i = 0; i != nof_ue_strands; ++i) {
-    // Note: We use low priority to avoid overflowing control task queue.
-    executors.push_back({fmt::format("ue_up_exec#{}", i), ue_strand_cfg});
-  }
-
   // Configure non-real time worker.
   const worker_pool pool{
       "non_rt_pool",
@@ -144,15 +134,6 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
     report_fatal_error("Failed to instantiate {} execution context", pool.name);
   }
-
-  // Setup CU-UP executor mapper.
-  std::vector<task_executor*> ue_up_data_execs;
-  std::vector<task_executor*> ue_up_ctrl_execs;
-  for (unsigned i = 0; i != nof_ue_strands; ++i) {
-    ue_up_data_execs.push_back(exec_mng.executors().at(fmt::format("ue_up_exec#{}", i)));
-    ue_up_ctrl_execs.push_back(exec_mng.executors().at(fmt::format("ue_up_exec#{}", i)));
-  }
-  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_data_execs, ue_up_ctrl_execs);
 }
 
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
@@ -188,6 +169,12 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   cu_up_dl_exec   = exec_mng.executors().at("ue_dl_exec");
   cu_up_ul_exec   = exec_mng.executors().at("ue_ul_exec");
   cu_up_e2_exec   = exec_mng.executors().at("ue_up_ctrl_exec");
+
+  // Create CU-UP execution mapper object.
+  std::vector<task_executor*> ue_up_dl_execs   = {exec_mng.executors().at("ue_dl_exec")};
+  std::vector<task_executor*> ue_up_ul_execs   = {exec_mng.executors().at("ue_ul_exec")};
+  std::vector<task_executor*> ue_up_ctrl_execs = {exec_mng.executors().at("ue_up_ctrl_exec")};
+  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_dl_execs, ue_up_ctrl_execs);
 
   // Worker for handling DU, CU and UE control procedures.
   const priority_multiqueue_worker gnb_ctrl_worker{

@@ -25,17 +25,23 @@ public:
 
   virtual ~cu_up_executor_pool() = default;
 
-  /// \brief Creates a task executor appropriate for the data plane.
+  /// \brief Creates a task executor to handle UL PDUs in the user plane.
   ///
   /// The returned executor should be of low priority, but optimized for high computational loads.
-  virtual ptr create_pdu_executor() = 0;
+  virtual ptr create_ul_pdu_executor() = 0;
+
+  /// \brief Creates a task executor to handle DL PDUs in the user plane.
+  ///
+  /// The returned executor should be of low priority, but optimized for high computational loads.
+  virtual ptr create_dl_pdu_executor() = 0;
 
   /// \brief Creates a task executor appropriate for the control plane.
   virtual ptr create_ctrl_executor() = 0;
 };
 
 /// \brief Creates an executor mapper for the CU-UP.
-std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_mapper(span<task_executor*> data_executors,
+std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_mapper(span<task_executor*> dl_pdu_executors,
+                                                                span<task_executor*> ul_pdu_executors,
                                                                 span<task_executor*> ctrl_executors);
 
 } // namespace srsran

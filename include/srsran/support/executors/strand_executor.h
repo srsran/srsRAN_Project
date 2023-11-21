@@ -32,14 +32,6 @@ public:
 private:
   bool dispatch_impl(unique_task task, bool is_execute)
   {
-    // Check if the adapted executor gives us permission to run pending tasks inline. An example of when this may happen
-    // is when the caller is running in the same execution context of the underlying task worker or task worker pool.
-    // However, this permission is still not a sufficient condition to simply call the task inline. For instance, if the
-    // execution context is a thread pool, we have to ensure that the strand is not already acquired by another thread
-    // of the same pool. If we do not do this, running the task inline would conflict with the strand strict
-    // serialization requirements. For this reason, we will always enqueue the task and try to acquire the strand.
-    bool can_run_inline = is_execute and detail::executor_lets_run_task_inline(executor);
-
     // Enqueue task in strand queue.
     if (not queue.try_push(std::move(task))) {
       return false;
@@ -55,6 +47,14 @@ private:
 
     // We were able to acquire the strand. That means that no other thread is running the pending tasks and we need
     // to dispatch a job to run them.
+
+    // Check if the adapted executor gives us permission to run pending tasks inline. An example of when this may happen
+    // is when the caller is running in the same execution context of the underlying task worker or task worker pool.
+    // However, this permission is still not a sufficient condition to simply call the task inline. For instance, if the
+    // execution context is a thread pool, we have to ensure that the strand is not already acquired by another thread
+    // of the same pool. If we do not do this, running the task inline would conflict with the strand strict
+    // serialization requirements. For this reason, we will always enqueue the task and try to acquire the strand.
+    bool can_run_inline = is_execute and detail::executor_lets_run_task_inline(executor);
 
     if (can_run_inline) {
       // Adapted executor gave us permission to run the task inline and we acquired the strand.
