@@ -107,12 +107,15 @@ public:
     });
 
     return std::make_unique<dmrs_pucch_processor_format1_impl>(
-        prg_factory->create(), lpc_factory->create(m, delta, alphas), ch_estimator_factory->create());
+        prg_factory->create(),
+        lpc_factory->create(m, delta, alphas),
+        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean));
   }
 
   std::unique_ptr<dmrs_pucch_processor> create_format2() override
   {
-    return std::make_unique<dmrs_pucch_processor_format2_impl>(prg_factory->create(), ch_estimator_factory->create());
+    return std::make_unique<dmrs_pucch_processor_format2_impl>(
+        prg_factory->create(), ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
   }
 
 private:
@@ -134,7 +137,8 @@ public:
 
   std::unique_ptr<dmrs_pusch_estimator> create() override
   {
-    return std::make_unique<dmrs_pusch_estimator_impl>(prg_factory->create(), ch_estimator_factory->create());
+    return std::make_unique<dmrs_pusch_estimator_impl>(
+        prg_factory->create(), ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter));
   }
 
 private:
@@ -172,7 +176,8 @@ public:
     srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
-  std::unique_ptr<port_channel_estimator> create() override
+  std::unique_ptr<port_channel_estimator>
+  create(port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy) override
   {
     std::unique_ptr<interpolator> interp = create_interpolator();
 
@@ -181,7 +186,8 @@ public:
     idft_config.dir                          = dft_processor::direction::INVERSE;
     std::unique_ptr<dft_processor> idft_proc = dft_factory->create(idft_config);
 
-    return std::make_unique<port_channel_estimator_average_impl>(std::move(interp), std::move(idft_proc));
+    return std::make_unique<port_channel_estimator_average_impl>(
+        std::move(interp), std::move(idft_proc), fd_smoothing_strategy);
   }
 
 private:

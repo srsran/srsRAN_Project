@@ -13,6 +13,7 @@
 #include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/support/interpolator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 
 namespace srsran {
 
@@ -35,8 +36,10 @@ public:
   static constexpr float MAX_SINR_DB = 100;
 
   /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
-  port_channel_estimator_average_impl(std::unique_ptr<interpolator> interp, std::unique_ptr<dft_processor> idft_proc) :
-    freq_interpolator(std::move(interp)), idft(std::move(idft_proc))
+  port_channel_estimator_average_impl(std::unique_ptr<interpolator>                interp,
+                                      std::unique_ptr<dft_processor>               idft_proc,
+                                      port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy_) :
+    fd_smoothing_strategy(fd_smoothing_strategy_), freq_interpolator(std::move(interp)), idft(std::move(idft_proc))
   {
     srsran_assert(freq_interpolator, "Invalid interpolator.");
     srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE,
@@ -63,6 +66,9 @@ private:
                          const configuration&        cfg,
                          unsigned                    hop,
                          unsigned                    layer);
+
+  /// Frequency domain smoothing strategy.
+  port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy;
 
   /// \brief Interpolator.
   ///
