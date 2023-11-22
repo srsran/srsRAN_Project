@@ -34,35 +34,53 @@ struct task_queue {
   unsigned size;
 };
 
+/// Parameters of a strand executor.
+struct strand {
+  struct executor {
+    /// \brief Name of the strand executor.
+    std::string name;
+    /// \brief Queueing policy associated with this strand executor.
+    concurrent_queue_policy policy;
+    /// \brief Size of the queue used.
+    unsigned size;
+  };
+  /// Queues of different priorities. The lower the index, the higher the priority.
+  std::vector<executor> queues;
+};
+
 namespace detail {
 
 /// Parameters of the task executor, including name and decorators.
 struct executor {
   /// Name of the executor.
   std::string name;
-  /// Task priority within {min, max}.
+  /// Priority assigned to the tasks dispatched through this executor.
   task_priority priority = task_priority::min;
-  /// In case of non-empty, the executor is instantiated as a strand executor.
-  optional<task_queue> strand{};
+  /// Strands instantiated on top of this executor.
+  std::vector<strand> strands;
   /// Whether to log when task fails to be dispatched.
   bool report_on_failure = true;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
 
-  executor(const std::string&   name_,
-           optional<task_queue> strand_            = {},
-           bool                 report_on_failure_ = true,
-           bool                 synchronous_       = false) :
-    name(name_), strand(strand_), report_on_failure(report_on_failure_), synchronous(synchronous_)
+  executor(const std::string&         name_,
+           const std::vector<strand>& strands_           = {},
+           bool                       report_on_failure_ = true,
+           bool                       synchronous_       = false) :
+    name(name_), strands(strands_), report_on_failure(report_on_failure_), synchronous(synchronous_)
   {
   }
-  executor(const std::string&   name_,
-           task_priority        priority_,
-           optional<task_queue> strand_            = {},
-           bool                 report_on_failure_ = true,
-           bool                 synchronous_       = false) :
-    name(name_), priority(priority_), strand(strand_), report_on_failure(report_on_failure_), synchronous(synchronous_)
+  executor(const std::string&         name_,
+           task_priority              priority_,
+           const std::vector<strand>& strands_           = {},
+           bool                       report_on_failure_ = true,
+           bool                       synchronous_       = false) :
+    name(name_),
+    priority(priority_),
+    strands(strands_),
+    report_on_failure(report_on_failure_),
+    synchronous(synchronous_)
   {
   }
 };

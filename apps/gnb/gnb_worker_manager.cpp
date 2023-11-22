@@ -108,18 +108,23 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   using namespace execution_config_helper;
 
   std::vector<worker_pool::executor> executors;
+  executors.push_back({"non_rt_exec", task_priority::min});
+  std::vector<strand>& strands = executors.back().strands;
 
   // Configure PCAP executors.
-  task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
-  executors.push_back({"pcap_exec", strand_cfg});
+  strand strand_cfg{{{"pcap_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  strands.emplace_back(strand_cfg);
   if (appcfg.pcap_cfg.gtpu.enabled) {
-    executors.push_back({"gtpu_pcap_exec", strand_cfg});
+    strand_cfg.queues[0].name = "gtpu_pcap_exec";
+    strands.emplace_back(strand_cfg);
   }
   if (appcfg.pcap_cfg.mac.enabled) {
-    executors.push_back({"mac_pcap_exec", strand_cfg});
+    strand_cfg.queues[0].name = "mac_pcap_exec";
+    strands.emplace_back(strand_cfg);
   }
   if (appcfg.pcap_cfg.rlc.enabled) {
-    executors.push_back({"rlc_pcap_exec", strand_cfg});
+    strand_cfg.queues[0].name = "rlc_pcap_exec";
+    strands.emplace_back(strand_cfg);
   }
 
   // Configure non-real time worker.
@@ -158,15 +163,17 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, nullopt, false},
-       {"ue_dl_exec", task_priority::max - 2, nullopt, false}},
+       {"ue_ul_exec", task_priority::max - 1, {}, false},
+       {"ue_dl_exec", task_priority::max - 2, {}, false}},
       os_thread_realtime_priority::max() - 30,
       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
 
   const unsigned nof_ue_dl_queues = 64;
   for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
-    task_queue strand_cfg{concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size};
-    gnb_ue_worker.executors.push_back({fmt::format("ue_dl_strand#{}", i), strand_cfg, false});
+    strand st_cfg{{{fmt::format("ue_dl_strand#{}", i),
+                    concurrent_queue_policy::lockfree_mpmc,
+                    appcfg.cu_up_cfg.gtpu_queue_size}}};
+    gnb_ue_worker.executors[2].strands.push_back(st_cfg);
   }
 
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
@@ -217,7 +224,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, nullopt, true, is_blocking_mode_active}},
+         {"slot_exec#" + cell_id_str, task_priority::max, {}, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 

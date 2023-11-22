@@ -21,29 +21,65 @@ using namespace srsran;
 
 namespace {
 
+// Metafunction to derive parameter types based on the execution context type.
+template <typename ExecutionContext>
+struct execution_context_traits;
+template <typename ExecutionContext>
+using execution_context_params_t = typename execution_context_traits<ExecutionContext>::params;
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+struct execution_context_traits<general_task_worker<QueuePolicy, WaitPolicy>> {
+  using params          = execution_config_helper::worker_pool;
+  using executor_params = typename params::executor;
+};
+template <concurrent_queue_policy... QueuePolicies>
+struct execution_context_traits<task_worker_pool<QueuePolicies...>> {
+  using params          = execution_config_helper::worker_pool;
+  using executor_params = typename params::executor;
+};
+template <concurrent_queue_policy... QueuePolicies>
+struct execution_context_traits<priority_task_worker<QueuePolicies...>> {
+  using params          = execution_config_helper::priority_multiqueue_worker;
+  using executor_params = typename params::executor;
+};
+
+template <typename Exec>
+std::unique_ptr<task_executor> exec_to_ptr(Exec exec)
+{
+  return std::make_unique<std::decay_t<Exec>>(std::move(exec));
+}
+std::unique_ptr<task_executor> exec_to_ptr(std::unique_ptr<task_executor> exec)
+{
+  return exec;
+}
+
 // Helper to instantiate decorated executors for different execution environments.
 template <typename ExecConfig, typename Exec>
 std::unique_ptr<task_executor> decorate_executor(const ExecConfig& desc, Exec&& exec)
 {
-  std::unique_ptr<task_executor> ret;
-  if (desc.strand.has_value()) {
-    ret = make_strand_executor_ptr(std::forward<Exec>(exec), desc.strand->policy, desc.strand->size);
-  } else {
-    ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
-  }
   if (desc.synchronous) {
-    ret = make_sync_executor(std::move(ret));
+    return make_sync_executor(std::move(exec));
   }
-  return ret;
+  return exec_to_ptr(std::move(exec));
+}
+template <typename ExecConfig, typename Exec>
+std::unique_ptr<task_executor>
+decorate_executor(const ExecConfig& desc, Exec&& exec, file_event_tracer<true>* exec_tracer)
+{
+  // In case tracing is enabled, decorate the executor with a tracer.
+  if (exec_tracer != nullptr) {
+    return decorate_executor(desc, make_trace_executor(desc.name, std::forward<Exec>(exec), *exec_tracer));
+  }
+  return decorate_executor(desc, std::forward<Exec>(exec));
 }
 
 /// Functionality shared across single worker, prioritized multiqueue worker and worker pool task execution contexts.
-template <typename WorkerType, typename WorkerParams>
+template <typename WorkerType>
 class common_task_execution_context : public task_execution_context
 {
 public:
   using worker_type     = WorkerType;
-  using executor_params = typename WorkerParams::executor;
+  using worker_params   = typename execution_context_traits<worker_type>::params;
+  using executor_params = typename worker_params::executor;
 
   template <typename... Args>
   common_task_execution_context(file_event_tracer<true>* tracer, Args&&... args) :
@@ -65,31 +101,51 @@ public:
   void stop() final { this->worker.stop(); }
 
 protected:
+  using task_executor_list = std::vector<std::pair<std::string, std::unique_ptr<task_executor>>>;
+  virtual task_executor_list create_strands(const executor_params& params) = 0;
+
   virtual std::unique_ptr<task_executor> create_executor(const executor_params& params) = 0;
 
   bool add_executors(span<const executor_params> execs)
   {
     for (const auto& exec_params : execs) {
-      if (exec_params.name.empty()) {
-        logger.error("Failed to create executor in context \"{}\". Cause: Executor name is emtpy");
-        executor_list.clear();
-        return false;
-      }
       auto exec = create_executor(exec_params);
-      if (exec == nullptr or not executor_list.insert(std::make_pair(exec_params.name, std::move(exec))).second) {
-        if (exec == nullptr) {
-          logger.error("Failed to create executor \"{}\" in context \"{}\". Cause: Executor parameters are invalid",
-                       exec_params.name,
-                       name());
-        } else {
-          logger.error("Failed to create executor \"{}\" in context \"{}\". Cause: Executor with the same "
-                       "name already exists in the context",
-                       exec_params.name,
-                       name());
-        }
-        executor_list.clear();
+      if (not store_executor(exec_params.name, std::move(exec))) {
         return false;
       }
+      if (not exec_params.strands.empty()) {
+        task_executor_list strands = create_strands(exec_params);
+        for (auto& p : strands) {
+          if (not store_executor(p.first, std::move(p.second))) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  SRSRAN_NODISCARD bool store_executor(const std::string& exec_name, std::unique_ptr<task_executor> exec)
+  {
+    if (exec_name.empty()) {
+      logger.error("Failed to create executor in context \"{}\". Cause: Executor name is emtpy.");
+      executor_list.clear();
+      return false;
+    }
+    if (exec == nullptr) {
+      logger.error("Failed to create executor \"{}\" in context \"{}\". Cause: Executor parameters are invalid",
+                   exec_name,
+                   name());
+      executor_list.clear();
+      return false;
+    }
+    if (not executor_list.insert(std::make_pair(exec_name, std::move(exec))).second) {
+      logger.error("Failed to create executor \"{}\" in context \"{}\". Cause: Executor with the same "
+                   "name already exists in the context",
+                   exec_name,
+                   name());
+      executor_list.clear();
+      return false;
     }
     return true;
   }
@@ -110,10 +166,9 @@ protected:
 
 /// Execution context for the generate_task_worker class (single worker).
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-struct single_worker_context final : public common_task_execution_context<general_task_worker<QueuePolicy, WaitPolicy>,
-                                                                          execution_config_helper::single_worker> {
-  using base_type     = common_task_execution_context<general_task_worker<QueuePolicy, WaitPolicy>,
-                                                  execution_config_helper::single_worker>;
+struct single_worker_context final
+  : public common_task_execution_context<general_task_worker<QueuePolicy, WaitPolicy>> {
+  using base_type     = common_task_execution_context<general_task_worker<QueuePolicy, WaitPolicy>>;
   using context_type  = single_worker_context<QueuePolicy, WaitPolicy>;
   using executor_type = general_task_worker_executor<QueuePolicy, WaitPolicy>;
 
@@ -143,12 +198,25 @@ struct single_worker_context final : public common_task_execution_context<genera
   std::string name() const final { return this->worker.worker_name(); }
 
 private:
+  typename base_type::task_executor_list
+  create_strands(const execution_config_helper::single_worker::executor& desc) override
+  {
+    typename base_type::task_executor_list execs;
+
+    executor_type basic_exec(this->worker, desc.report_on_failure);
+    for (const auto& strand_cfg : desc.strands) {
+      // only one queue supported for now.
+      auto& queue_desc  = strand_cfg.queues[0];
+      auto  strand_exec = make_strand_executor_ptr(basic_exec, queue_desc.policy, queue_desc.size);
+      strand_exec       = decorate_executor(desc, std::move(strand_exec), this->task_tracer);
+      execs.emplace_back(queue_desc.name, std::move(strand_exec));
+    }
+    return execs;
+  }
+
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::single_worker::executor& desc) override
   {
-    executor_type exec(this->worker, desc.report_on_failure);
-    return this->task_tracer == nullptr
-               ? decorate_executor(desc, std::move(exec))
-               : decorate_executor(desc, make_trace_executor(desc.name, std::move(exec), *this->task_tracer));
+    return decorate_executor(desc, executor_type{this->worker, desc.report_on_failure}, this->task_tracer);
   }
 };
 
@@ -202,12 +270,11 @@ namespace {
 
 /// Execution context for a task worker pool with multiple QueuePolicies.
 template <concurrent_queue_policy... QueuePolicies>
-struct worker_pool_context final
-  : public common_task_execution_context<task_worker_pool<QueuePolicies...>, execution_config_helper::worker_pool> {
+struct worker_pool_context final : public common_task_execution_context<task_worker_pool<QueuePolicies...>> {
   using worker_type = task_worker_pool<QueuePolicies...>;
   template <enqueue_priority Prio>
   using executor_type = priority_task_worker_executor<Prio, QueuePolicies...>;
-  using base_type     = common_task_execution_context<worker_type, execution_config_helper::worker_pool>;
+  using base_type     = common_task_execution_context<worker_type>;
 
   worker_pool_context(const execution_config_helper::worker_pool& params) :
     base_type(
@@ -247,21 +314,35 @@ private:
   {
     std::unique_ptr<task_executor> exec;
     visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &exec, &desc](auto&& prio_exec) {
-      exec = this->task_tracer == nullptr
-                 ? decorate_executor(desc, std::move(prio_exec))
-                 : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
+      exec = decorate_executor(desc, std::move(prio_exec), this->task_tracer);
     });
     return exec;
+  }
+
+  typename base_type::task_executor_list
+  create_strands(const execution_config_helper::worker_pool::executor& desc) override
+  {
+    typename base_type::task_executor_list execs;
+
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto&& prio_exec) {
+      for (const auto& strand_cfg : desc.strands) {
+        // only one queue supported for now.
+        auto& queue_desc  = strand_cfg.queues[0];
+        auto  strand_exec = make_strand_executor_ptr(prio_exec, queue_desc.policy, queue_desc.size);
+        strand_exec       = decorate_executor(desc, std::move(strand_exec), this->task_tracer);
+        execs.emplace_back(queue_desc.name, std::move(strand_exec));
+      }
+    });
+    return execs;
   }
 };
 
 /// Execution context for a task worker pool.
 template <concurrent_queue_policy QueuePolicy>
-struct worker_pool_context<QueuePolicy> final
-  : public common_task_execution_context<task_worker_pool<QueuePolicy>, execution_config_helper::worker_pool> {
+struct worker_pool_context<QueuePolicy> final : public common_task_execution_context<task_worker_pool<QueuePolicy>> {
   using worker_type   = task_worker_pool<QueuePolicy>;
   using executor_type = task_worker_pool_executor<QueuePolicy>;
-  using base_type     = common_task_execution_context<worker_type, execution_config_helper::worker_pool>;
+  using base_type     = common_task_execution_context<worker_type>;
 
   worker_pool_context(const execution_config_helper::worker_pool& params) :
     base_type(params.tracer,
@@ -291,10 +372,21 @@ private:
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::worker_pool::executor& desc) override
   {
-    executor_type exec(this->worker);
-    return this->task_tracer == nullptr
-               ? decorate_executor(desc, std::move(exec))
-               : decorate_executor(desc, make_trace_executor(desc.name, std::move(exec), *this->task_tracer));
+    return decorate_executor(desc, executor_type(this->worker), this->task_tracer);
+  }
+
+  typename base_type::task_executor_list
+  create_strands(const execution_config_helper::worker_pool::executor& desc) override
+  {
+    typename base_type::task_executor_list execs;
+
+    for (const auto& strand_cfg : desc.strands) {
+      // only one queue supported for now.
+      auto& queue_desc  = strand_cfg.queues[0];
+      auto  strand_exec = make_strand_executor_ptr(executor_type(this->worker), queue_desc.policy, queue_desc.size);
+      execs.emplace_back(queue_desc.name, std::move(strand_exec));
+    }
+    return execs;
   }
 };
 
@@ -353,10 +445,8 @@ namespace {
 
 template <concurrent_queue_policy... QueuePolicies>
 struct priority_multiqueue_worker_context
-  : public common_task_execution_context<priority_task_worker<QueuePolicies...>,
-                                         execution_config_helper::priority_multiqueue_worker> {
-  using base_type = common_task_execution_context<priority_task_worker<QueuePolicies...>,
-                                                  execution_config_helper::priority_multiqueue_worker>;
+  : public common_task_execution_context<priority_task_worker<QueuePolicies...>> {
+  using base_type = common_task_execution_context<priority_task_worker<QueuePolicies...>>;
 
   static std::unique_ptr<task_execution_context>
   create(const execution_config_helper::priority_multiqueue_worker& params)
@@ -383,11 +473,25 @@ private:
   {
     std::unique_ptr<task_executor> exec;
     visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &exec, &desc](auto&& prio_exec) {
-      exec = this->task_tracer == nullptr
-                 ? decorate_executor(desc, std::move(prio_exec))
-                 : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
+      exec = decorate_executor(desc, prio_exec, this->task_tracer);
     });
     return exec;
+  }
+
+  typename base_type::task_executor_list
+  create_strands(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
+  {
+    typename base_type::task_executor_list execs;
+
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [&execs, &desc](auto&& prio_exec) {
+      for (const auto& strand_cfg : desc.strands) {
+        // only one queue supported for now.
+        auto& queue_desc  = strand_cfg.queues[0];
+        auto  strand_exec = make_strand_executor_ptr(prio_exec, queue_desc.policy, queue_desc.size);
+        execs.emplace_back(queue_desc.name, std::move(strand_exec));
+      }
+    });
+    return execs;
   }
 };
 
