@@ -13,6 +13,8 @@
 #include "../support/pucch/pucch_default_resource.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_pusch_size.h"
 
 using namespace srsran;
 
@@ -27,42 +29,44 @@ uci_allocator_impl::~uci_allocator_impl() = default;
 
 ////////////    Static functions    ////////////
 
-static void
-fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_nof_bits, unsigned csi_part1_nof_bits)
+static void update_uci_on_pusch_harq_offsets(uci_info::harq_info& uci_harq, const uci_on_pusch& uci_cfg)
 {
-  // [Implementation-defined] CSI Part 2 reporting not supported.
-  const unsigned CSI_PART2_NOF_BITS = 0;
-
-  uci.harq_ack_nof_bits  = harq_ack_nof_bits;
-  uci.csi_part1_nof_bits = csi_part1_nof_bits;
-  uci.csi_part2_nof_bits = CSI_PART2_NOF_BITS;
-
-  // Set parameters of UCI-HARQ.
-  uci.alpha = uci_cfg.scaling;
-
   // We assume the configuration contains the values for beta_offsets.
   const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
   // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
-  if (uci.harq_ack_nof_bits <= 2) {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value();
-  }
-  if (uci.harq_ack_nof_bits > 2 and uci.harq_ack_nof_bits <= 11) {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_2.value();
+  const uint16_t harq_ack_nof_bits = uci_harq.harq_ack_nof_bits;
+  if (harq_ack_nof_bits <= 2) {
+    uci_harq.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value();
+  } else if (harq_ack_nof_bits > 2 and harq_ack_nof_bits <= 11) {
+    uci_harq.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_2.value();
   } else {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value();
+    uci_harq.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value();
+  }
+}
+
+static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_configuration& ue_cell_cfg)
+{
+  uci_csi.csi_rep_cfg            = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+  csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
+  uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
+
+  const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+
+  // We assume the configuration contains the values for beta_offsets.
+  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+  if (uci_csi.csi_part1_nof_bits <= 11) {
+    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+  } else {
+    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
   }
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
-  if (uci.csi_part1_nof_bits <= 11) {
-    uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
-  } else {
-    uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+  if (csi_size.part2_min_size.value() > 0U) {
+    srsran_assert(csi_size.part2_max_size.value() <= 11U, "CSI Part 2 on UCI-PUSCH is only supported up to 11 bits");
+    uci_csi.beta_offset_csi_2.emplace(beta_offsets.beta_offset_csi_p2_idx_1.value());
   }
-
-  // When this allocation is done, there is no CSI Part 2 to be reported. Therefore, as per Section 9.3, TS38.213, the
-  // \c beta_offsets values to be used are those with index 1.
-  uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value();
 }
 
 ////////////    Private functions    ////////////
@@ -139,20 +143,21 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
                    crnti);
       return {};
     }
-    // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
-    unsigned nof_harq_ack_bits = 1;
-    unsigned nof_csi_part1_bits{0};
     // If we reach this point, we expect no allocated PUCCH grants.
     if (not existing_pusch->uci.has_value()) {
       existing_pusch->uci.emplace();
-    } else {
-      nof_harq_ack_bits += existing_pusch->uci.value().harq_ack_nof_bits;
-      nof_csi_part1_bits += existing_pusch->uci.value().csi_part1_nof_bits;
+      existing_pusch->uci.value().alpha =
+          ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
     }
-    fill_uci_on_pusch(existing_pusch->uci.value(),
-                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-                      nof_harq_ack_bits,
-                      nof_csi_part1_bits);
+    if (not existing_pusch->uci.value().harq.has_value()) {
+      existing_pusch->uci.value().harq.emplace();
+    }
+    // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
+    ++existing_pusch->uci.value().harq->harq_ack_nof_bits;
+
+    update_uci_on_pusch_harq_offsets(
+        existing_pusch->uci.value().harq.value(),
+        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
     logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
     return {uci_allocation{}};
   }
@@ -279,41 +284,24 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
   // In case there are no UCI bits from PUCCH, then there is no UCI to be multiplexed on the PUSCH.
   if (pucch_uci.harq_ack_nof_bits == 0 and pucch_uci.csi_part1_bits == 0) {
-    // TODO: This is a tmp check for debugging purposes. Remove it when the issue of simultaneous PUSCH/PUCCH is solved.
-    auto* it_pucch = std::find_if(slot_alloc.result.ul.pucchs.begin(),
-                                  slot_alloc.result.ul.pucchs.end(),
-                                  [crnti](pucch_info& pucch) { return pucch.crnti == crnti; });
-    if (it_pucch != slot_alloc.result.ul.pucchs.end()) {
-      unsigned harq_bits = 0;
-      unsigned csi_bits  = 0;
-      unsigned sr_bits   = 0;
-      if (it_pucch->format == pucch_format::FORMAT_1) {
-        harq_bits = it_pucch->format_1.harq_ack_nof_bits;
-        sr_bits   = sr_nof_bits_to_uint(it_pucch->format_1.sr_bits);
-      } else if (it_pucch->format == pucch_format::FORMAT_2) {
-        harq_bits = it_pucch->format_2.harq_ack_nof_bits;
-        csi_bits  = it_pucch->format_2.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(it_pucch->format_2.sr_bits);
-      }
-      logger.error("rnti={:#x}: multiplexing of UCI on PUSCH didn't catch existing PUCCH grant format={} with nof "
-                   "harq-bits={} csi-1 bits={} sr-bits={} allocated at slot={} ",
-                   crnti,
-                   it_pucch->format,
-                   harq_bits,
-                   csi_bits,
-                   sr_bits,
-                   slot_alloc.slot);
-    }
-
     return;
   }
 
   // We assume that at this point, there are no existing UCI grants in the PUSCH; allocate a new one.
   uci_info& uci = pusch_grant.uci.emplace();
-  fill_uci_on_pusch(uci,
-                    ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-                    pucch_uci.harq_ack_nof_bits,
-                    pucch_uci.csi_part1_bits);
+  uci.alpha     = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
+
+  if (pucch_uci.csi_part1_bits != 0) {
+    // The number of bits is computed based on the CSI report configuration.
+    add_csi_to_uci_on_pusch(uci.csi.emplace(), ue_cell_cfg);
+  }
+
+  if (pucch_uci.harq_ack_nof_bits != 0) {
+    uci.harq.emplace();
+    uci.harq.value().harq_ack_nof_bits = pucch_uci.harq_ack_nof_bits;
+    update_uci_on_pusch_harq_offsets(
+        uci.harq.value(), ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
+  }
 
   logger.debug("rnti={:#x}: UCI mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot);
 }
@@ -343,9 +331,6 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
                                                       rnti_t                        crnti,
                                                       const ue_cell_configuration&  ue_cell_cfg)
 {
-  const auto csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
-  const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
-
   auto&          puschs         = slot_alloc.result.ul.puschs;
   ul_sched_info* existing_pusch = std::find_if(
       puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
@@ -355,34 +340,26 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
 
   // If there is a PUSCH allocated for this UE, allocate the CSI on the UCI on PUSCH.
   if (has_pusch_grants) {
-    // No HARQ bits to be reported when the UCI is initiated by the CSI.
-    unsigned nof_harq_ack_bits  = 0;
-    unsigned nof_csi_part1_bits = csi_report_size.value();
     // If there is UCI grant allocated, allocate it.
-    if (not existing_pusch->uci.has_value()) {
-      existing_pusch->uci.emplace();
-    }
-    // Else, update the number of bits to be reported.
-    else {
-      nof_harq_ack_bits += existing_pusch->uci.value().harq_ack_nof_bits;
-      nof_csi_part1_bits += existing_pusch->uci.value().csi_part1_nof_bits;
-    }
+    srsran_assert(not existing_pusch->uci.has_value(), "UCI on PUSCH grant for CSI cannot be already allocated");
+    existing_pusch->uci.emplace();
+    existing_pusch->uci.value().alpha =
+        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
 
-    fill_uci_on_pusch(existing_pusch->uci.value(),
-                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-                      nof_harq_ack_bits,
-                      nof_csi_part1_bits);
-    logger.debug("rnti={:#x} UCI with {} H-ACK, {} CSI-p1, {} CSI-p2 bits for slot={} allocated on PUSCH.",
-                 existing_pusch->uci.value().harq_ack_nof_bits,
-                 existing_pusch->uci.value().csi_part1_nof_bits,
-                 existing_pusch->uci.value().csi_part2_nof_bits,
+    add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(), ue_cell_cfg);
+
+    logger.debug("rnti={:#x} UCI with 0 H-ACK, {} CSI-p1 and {} CSI-p2 bits for slot={} allocated on PUSCH",
                  crnti,
+                 existing_pusch->uci.value().csi.value().csi_part1_nof_bits,
+                 existing_pusch->uci.value().csi.value().beta_offset_csi_2.has_value() ? "up to 11" : "0",
                  slot_alloc.slot);
     return;
   }
 
   // Else, allocate the CSI on the PUCCH.
-  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value());
+  const auto& csi_report_cfg = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+  pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_alloc, crnti, ue_cell_cfg, get_csi_report_pucch_size(csi_report_cfg).value());
 }
 
 uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc,

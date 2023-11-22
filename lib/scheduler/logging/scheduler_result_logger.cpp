@@ -228,11 +228,13 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
 
     if (ul_info.uci.has_value()) {
-      fmt::format_to(fmtbuf,
-                     " uci: harq_bits={} csi-1_bits={} csi-2_bits={}",
-                     ul_info.uci.value().harq_ack_nof_bits,
-                     ul_info.uci.value().csi_part1_nof_bits,
-                     ul_info.uci.value().csi_part2_nof_bits);
+      fmt::format_to(
+          fmtbuf,
+          " uci: harq_bits={} csi-1_bits={} csi-2_present={}",
+          ul_info.uci.value().harq.has_value() ? ul_info.uci.value().harq.value().harq_ack_nof_bits : 0U,
+          ul_info.uci.value().csi.has_value() ? ul_info.uci.value().csi.value().csi_part1_nof_bits : 0U,
+          ul_info.uci.value().csi.has_value() and ul_info.uci.value().csi.value().beta_offset_csi_2.has_value() ? "Yes"
+                                                                                                                : "No");
     }
   }
 

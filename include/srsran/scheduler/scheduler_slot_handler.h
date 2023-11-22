@@ -274,21 +274,33 @@ struct pusch_information {
 };
 
 struct uci_info {
-  /// Number of bits of ACK to be reported.
-  uint16_t harq_ack_nof_bits;
-  /// Number of bits of CSI Part 1 to be reported.
-  uint16_t csi_part1_nof_bits;
-  /// Number of bits of CSI Part 2 to be reported.
-  uint16_t csi_part2_nof_bits;
+  /// Contains the HARQ-ACK information for UCI on PUSCH.
+  struct harq_info {
+    /// Number of bits of ACK to be reported.
+    uint16_t harq_ack_nof_bits = 0;
+    /// \f$\beta^{HARQ-ACK}_{offset}\f$ parameter, as per Section 9.3, TS 38.213. The default value is defined in \c
+    /// BetaOffsets, TS 38.331.
+    uint8_t beta_offset_harq_ack = 11;
+  };
 
+  /// Contains the CSI part 1 and part 2 information for UCI on PUSCH.
+  struct csi_info {
+    /// Contains information how the CSI bits are to be decoded.
+    csi_report_configuration csi_rep_cfg;
+    /// Number of bits of CSI Part 1 to be reported.
+    uint16_t csi_part1_nof_bits = 0;
+    /// \f$\beta^{CSI-1}_{offset}\f$ parameter, as per Section 9.3, TS 38.213. The default value is defined in \c
+    /// BetaOffsets, TS 38.331.
+    uint8_t beta_offset_csi_1 = 13;
+    /// \f$\beta^{CSI-2}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
+    /// If set, the CSI report includes CSI Part 2.
+    optional<uint8_t> beta_offset_csi_2;
+  };
+
+  optional<harq_info> harq;
+  optional<csi_info>  csi;
   /// \f$\alpha\f$ parameter, as per Section 6.3.2.4.1.1-3, TS 38.212.
   alpha_scaling_opt alpha;
-  /// \f$\beta^{HARQ-ACK}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
-  uint8_t beta_offset_harq_ack;
-  /// \f$\beta^{CSI-1}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
-  uint8_t beta_offset_csi_1;
-  /// \f$\beta^{CSI-2}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
-  uint8_t beta_offset_csi_2;
 };
 
 /// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,

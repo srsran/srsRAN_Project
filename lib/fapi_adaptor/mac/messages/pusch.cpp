@@ -29,13 +29,14 @@ static void fill_optional_uci_parameters(fapi::ul_pusch_pdu_builder& builder, co
     return;
   }
 
-  builder.add_optional_pusch_uci(uci->harq_ack_nof_bits,
-                                 uci->csi_part1_nof_bits,
-                                 uci->csi_part2_nof_bits,
-                                 uci->alpha,
-                                 uci->beta_offset_harq_ack,
-                                 uci->beta_offset_csi_1,
-                                 uci->beta_offset_csi_2);
+  builder.add_optional_pusch_uci(
+      uci->harq.has_value() ? uci->harq->harq_ack_nof_bits : 0U,
+      uci->csi.has_value() ? uci->csi->csi_part1_nof_bits : 0U,
+      uci->csi.has_value() and uci->csi->beta_offset_csi_2.has_value() ? 65535U : 0U,
+      uci->alpha,
+      uci->harq.has_value() ? uci->harq->beta_offset_harq_ack : 0U,
+      uci->csi.has_value() ? uci->csi->beta_offset_csi_1 : 0U,
+      uci->csi.has_value() and uci->csi->beta_offset_csi_2.has_value() ? *uci->csi->beta_offset_csi_2 : 0U);
 }
 
 void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu)
