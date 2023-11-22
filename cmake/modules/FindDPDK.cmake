@@ -16,40 +16,30 @@
 # DPDK requires PkgConfig
 find_package(PkgConfig REQUIRED)
 
+# Set search path
+if (DEFINED ENV{DPDK_DIR})
+    file(TO_CMAKE_PATH "$ENV{DPDK_DIR}" DPDK_SEARCH_PATH)
+    set(CMAKE_PREFIX_PATH "${DPDK_SEARCH_PATH}")
+endif (DEFINED ENV{DPDK_DIR})
+
 # Find DPDK
-find_path(DPDK_INCLUDE_DIRS
-        NAMES         rte_config.h
-        PATH_SUFFIXES dpdk
-        HINTS         $ENV{DPDK_DIR}/include
-        PATHS         /usr/local/include
-        )
+unset(DPDK_FOUND CACHE)
+pkg_check_modules(DPDK libdpdk>=${DPDK_MIN_VERSION})
 
-# Set required DPDK components
-set(DPDK_COMPONENTS
-        acl bbdev bpf cmdline cryptodev dmadev eal efd ethdev eventdev graph hash ipsec ip_frag 
-        jobstats latencystats kvargs lpm mbuf member mempool meter metrics net node pcapng pci 
-        pdump pipeline port rawdev rcu ring sched security stack table telemetry timer vhost)
+if (DPDK_FOUND)
+    # In case a specific path was provided, check that the library was not relocated after installation.
+    if (DEFINED ENV{DPDK_DIR})
+        if (NOT ${DPDK_PREFIX} STREQUAL ${DPDK_SEARCH_PATH})
+            message(WARNING
+                    "DPDK prefix detected by pkg-config (${DPDK_PREFIX}) does not match the requested DPDK path "
+                    "(${DPDK_SEARCH_PATH}), the resulting libraries and headers path might be incorrect. "
+                    "Please check whether the library was relocated from its original installation directory")
+        endif()
+    endif(DEFINED ENV{DPDK_DIR})
+endif (DPDK_FOUND)
 
-# Find DPDK libraries
-foreach(c ${DPDK_COMPONENTS})
-    find_library(DPDK_rte_${c}_LIBRARY rte_${c}
-    HINTS $ENV{DPDK_DIR}/lib/*
-    PATHS /usr/local/lib/*/dpdk)
-endforeach()
-
-foreach(c ${DPDK_COMPONENTS})
-    list(APPEND CHECK_LIBRARIES "${DPDK_rte_${c}_LIBRARY}")
-endforeach()
-
-mark_as_advanced(DPDK_INCLUDE_DIRS ${CHECK_LIBRARIES})
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(DPDK DEFAULT_MSG DPDK_INCLUDE_DIRS CHECK_LIBRARIES)
-
-if(DPDK_FOUND)
-    set(DPDK_LIBRARIES
-            -Wl,--whole-archive ${CHECK_LIBRARIES} -lpthread -lnuma -ldl -Wl,--no-whole-archive)
-endif(DPDK_FOUND)
-
-message(STATUS "DPDK LIBRARIES: " ${DPDK_LIBRARIES})
-message(STATUS "DPDK INCLUDE DIRS: " ${DPDK_INCLUDE_DIRS})
+if (DPDK_FOUND)
+    set(DPDK_LIBRARIES ${DPDK_LDFLAGS})
+    message(STATUS "DPDK LIBRARIES: " ${DPDK_LIBRARIES})
+    message(STATUS "DPDK INCLUDE DIRS: ${DPDK_INCLUDE_DIRS}")
+endif (DPDK_FOUND)
