@@ -171,14 +171,8 @@ protected:
   /// \param[in] reverse_sdus Inject PDUs in reverse SDU order
   void rx_full_sdus(uint32_t& sn_state, uint32_t n_sdus, uint32_t sdu_size = 1, bool reverse_sdus = false)
   {
-    // check status report
-    rlc_am_status_pdu status_report = rlc->get_status_pdu();
-    EXPECT_EQ(status_report.ack_sn, sn_state);
-    EXPECT_EQ(status_report.get_nacks().size(), 0);
-    EXPECT_EQ(status_report.get_packed_size(), 3);
-    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
-
     uint32_t expected_sn_state = sn_state;
+    uint32_t pdu_counter       = 0;
 
     // Create SDUs and PDUs with full SDUs
     std::list<byte_buffer> pdu_originals = {};
@@ -203,13 +197,6 @@ protected:
 
     // Push PDUs into RLC
     for (byte_buffer& pdu_buf : pdu_originals) {
-      // check status report
-      status_report = rlc->get_status_pdu();
-      EXPECT_EQ(status_report.ack_sn, expected_sn_state);
-      EXPECT_EQ(status_report.get_nacks().size(), 0);
-      EXPECT_EQ(status_report.get_packed_size(), 3);
-      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
-
       // write PDU into lower end
       byte_buffer_slice pdu = {std::move(pdu_buf)};
       rlc->handle_pdu(std::move(pdu));
@@ -218,20 +205,22 @@ protected:
         // According to 5.2.3.2.3, when transmitting in order:
         // st.rx_highest_status is advanced on each fully-received SDU.
         ++expected_sn_state;
+      } else {
+        // According to 5.2.3.2.3, when transmitting in reverse order:
+        // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
+        ++pdu_counter;
+        if (pdu_counter == n_sdus) {
+          expected_sn_state += n_sdus;
+        }
       }
-    }
 
-    if (reverse_sdus) {
-      // According to 5.2.3.2.3, when transmitting in reverse order:
-      // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
-      expected_sn_state = sn_state;
+      // check status report
+      rlc_am_status_pdu& status_report = rlc->get_status_pdu();
+      EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+      EXPECT_EQ(status_report.get_nacks().size(), 0);
+      EXPECT_EQ(status_report.get_packed_size(), 3);
+      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
     }
-    // check status report
-    status_report = rlc->get_status_pdu();
-    EXPECT_EQ(status_report.ack_sn, expected_sn_state);
-    EXPECT_EQ(status_report.get_nacks().size(), 0);
-    EXPECT_EQ(status_report.get_packed_size(), 3);
-    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
     // Read "n_pdus" SDUs from upper layer
     ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
@@ -259,14 +248,8 @@ protected:
                        bool      reverse_sdus     = false,
                        bool      reverse_segments = false)
   {
-    // check status report
-    rlc_am_status_pdu status_report = rlc->get_status_pdu();
-    EXPECT_EQ(status_report.ack_sn, sn_state);
-    EXPECT_EQ(status_report.get_nacks().size(), 0);
-    EXPECT_EQ(status_report.get_packed_size(), 3);
-    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
-
     uint32_t expected_sn_state = sn_state;
+    uint32_t pdu_counter       = 0;
 
     // Create SDUs and PDUs
     std::list<std::list<byte_buffer>> pdu_originals = {};
@@ -298,13 +281,6 @@ protected:
     // Push PDUs into RLC
     for (std::list<byte_buffer>& segment_list : pdu_originals) {
       for (byte_buffer& pdu_buf : segment_list) {
-        // check status report
-        status_report = rlc->get_status_pdu();
-        EXPECT_EQ(status_report.ack_sn, expected_sn_state);
-        EXPECT_EQ(status_report.get_nacks().size(), 0);
-        EXPECT_EQ(status_report.get_packed_size(), 3);
-        EXPECT_EQ(rlc->get_status_pdu_length(), 3);
-
         byte_buffer_slice pdu = {std::move(pdu_buf)};
         rlc->handle_pdu(std::move(pdu));
       }
@@ -313,20 +289,22 @@ protected:
         // According to 5.2.3.2.3, when transmitting in order:
         // st.rx_highest_status is advanced on each fully-received SDU.
         ++expected_sn_state;
+      } else {
+        // According to 5.2.3.2.3, when transmitting in reverse order:
+        // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
+        ++pdu_counter;
+        if (pdu_counter == n_sdus) {
+          expected_sn_state += n_sdus;
+        }
       }
-    }
 
-    if (reverse_sdus) {
-      // According to 5.2.3.2.3, when transmitting in reverse order:
-      // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
-      expected_sn_state = sn_state;
+      // check status report
+      rlc_am_status_pdu& status_report = rlc->get_status_pdu();
+      EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+      EXPECT_EQ(status_report.get_nacks().size(), 0);
+      EXPECT_EQ(status_report.get_packed_size(), 3);
+      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
     }
-    // check status report
-    status_report = rlc->get_status_pdu();
-    EXPECT_EQ(status_report.ack_sn, expected_sn_state);
-    EXPECT_EQ(status_report.get_nacks().size(), 0);
-    EXPECT_EQ(status_report.get_packed_size(), 3);
-    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
     // Read "n_sdus" SDUs from upper layer
     ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
