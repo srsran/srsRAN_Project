@@ -26,28 +26,29 @@
 using namespace srsran;
 using namespace srs_du;
 
-// TEST_RGEN_SET_SEED(2878423255);
-
 /// \brief Parameters of the benchmark.
 struct bench_params {
   /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
   unsigned nof_repetitions = 100;
   /// \brief Number to DU UEs to consider for benchmark.
   unsigned nof_ues = 1;
+  /// \brief Set duplex mode (FDD or TDD) to use for benchmark.
+  duplex_mode dplx_mode = duplex_mode::FDD;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-s silent]\n", prog);
+  fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
+  fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -55,6 +56,17 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'U':
         params.nof_ues = std::strtol(optarg, nullptr, 10);
         break;
+      case 'D': {
+        if (std::string(optarg) == "FDD") {
+          params.dplx_mode = duplex_mode::FDD;
+        } else if (std::string(optarg) == "TDD") {
+          params.dplx_mode = duplex_mode::TDD;
+        } else {
+          usage(argv[0], params);
+          exit(0);
+        }
+        break;
+      }
       case 'h':
       default:
         usage(argv[0], params);
@@ -242,6 +254,12 @@ public:
   unsigned nof_dl_grants = 0;
   uint64_t nof_dl_bytes  = 0;
 
+  void clear_previous_scheduler_results()
+  {
+    slot_dl_result.dl_res = nullptr;
+    slot_ul_result.ul_res = nullptr;
+  }
+
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return *this; }
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { slot_dl_result = dl_res; }
@@ -284,8 +302,11 @@ public:
 class du_high_bench
 {
 public:
-  du_high_bench()
+  du_high_bench(const cell_config_builder_params& builder_params = {}) : params(builder_params)
   {
+    // Set slot point based on the SCS.
+    next_sl_tx = slot_point{to_numerology_value(params.scs_common), 0};
+
     // Instantiate a DU-high object.
     cfg.gnb_du_id    = 1;
     cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
@@ -323,6 +344,9 @@ public:
   /// \brief Run a slot indication until completion.
   void run_slot()
   {
+    // Clear results.
+    sim_phy.clear_previous_scheduler_results();
+
     // Push slot indication to DU-high.
     du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_sl_tx);
 
@@ -330,60 +354,83 @@ public:
     sim_phy.wait_slot_complete();
   }
 
+  template <typename StopCondition>
+  bool run_slot_until(const StopCondition& cond_func, unsigned slot_timeout = 1000)
+  {
+    unsigned count = 0;
+    for (; count < slot_timeout; ++count) {
+      run_slot();
+      process_results();
+      if (cond_func()) {
+        break;
+      }
+    }
+    return count < slot_timeout;
+  }
+
   void process_results()
   {
     // Forwards HARQ-ACKs to the DU-High given the scheduled PUCCHs.
     mac_uci_indication_message uci{};
     uci.sl_rx = sim_phy.slot_ul_result.slot;
-    for (const pucch_info& pucch : sim_phy.slot_ul_result.ul_res->pucchs) {
-      mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
-      uci_pdu.rnti         = pucch.crnti;
-      switch (pucch.format) {
-        case pucch_format::FORMAT_1: {
-          mac_uci_pdu::pucch_f0_or_f1_type f1{};
-          if (pucch.format_1.harq_ack_nof_bits > 0) {
-            f1.harq_info.emplace();
-            // Set PUCCHs with SR as DTX.
-            const uci_pucch_f0_or_f1_harq_values ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr
-                                                               ? uci_pucch_f0_or_f1_harq_values::ack
-                                                               : uci_pucch_f0_or_f1_harq_values::dtx;
-            f1.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
-          }
-          // Do not forward positive SRs to scheduler.
-          if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
-            f1.sr_info.emplace();
-            f1.sr_info->sr_detected = false;
-          }
-          uci_pdu.pdu = f1;
-        } break;
-        case pucch_format::FORMAT_2: {
-          mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
-          if (pucch.format_2.harq_ack_nof_bits > 0) {
-            f2.harq_info.emplace();
-            f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-            f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
-            f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
-          }
-          if (pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
-            f2.sr_info.emplace();
-            f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
-            f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
-          }
-          if (pucch.csi_rep_cfg.has_value()) {
-            f2.uci_part1_or_csi_part1_info.emplace();
-            f2.uci_part1_or_csi_part1_info->status       = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-            f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
-                uci_payload_or_csi_information::payload_type_t::csi_part_payload;
-            f2.uci_part1_or_csi_part1_info->payload.resize(4);
-            f2.uci_part1_or_csi_part1_info->payload.fill(0, 4, true);
-          }
-          uci_pdu.pdu = f2;
-        } break;
-        default:
-          report_fatal_error("PUCCH format not supported");
+    if (sim_phy.slot_ul_result.ul_res != nullptr) {
+      for (const pucch_info& pucch : sim_phy.slot_ul_result.ul_res->pucchs) {
+        mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
+        uci_pdu.rnti         = pucch.crnti;
+        switch (pucch.format) {
+          case pucch_format::FORMAT_1: {
+            mac_uci_pdu::pucch_f0_or_f1_type f1{};
+            if (pucch.format_1.harq_ack_nof_bits > 0) {
+              f1.harq_info.emplace();
+              // Set PUCCHs with SR as DTX.
+              const uci_pucch_f0_or_f1_harq_values ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr
+                                                                 ? uci_pucch_f0_or_f1_harq_values::ack
+                                                                 : uci_pucch_f0_or_f1_harq_values::dtx;
+              f1.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
+            }
+            // Do not forward positive SRs to scheduler.
+            if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+              f1.sr_info.emplace();
+              f1.sr_info->sr_detected = false;
+            }
+            uci_pdu.pdu = f1;
+          } break;
+          case pucch_format::FORMAT_2: {
+            mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
+            if (pucch.format_2.harq_ack_nof_bits > 0) {
+              f2.harq_info.emplace();
+              f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+              f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
+              f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
+            }
+            if (pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
+              f2.sr_info.emplace();
+              f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
+              f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
+            }
+            if (pucch.csi_rep_cfg.has_value()) {
+              f2.uci_part1_or_csi_part1_info.emplace();
+              f2.uci_part1_or_csi_part1_info->status       = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+              f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
+                  uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+              f2.uci_part1_or_csi_part1_info->payload.resize(4);
+              f2.uci_part1_or_csi_part1_info->payload.fill(0, 4, true);
+            }
+            uci_pdu.pdu = f2;
+          } break;
+          default:
+            report_fatal_error("PUCCH format not supported");
+        }
+      }
+      if (not sim_phy.slot_ul_result.ul_res->pucchs.empty()) {
+        pending_ucis.push_back(uci);
       }
     }
-    du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
+    for (const auto& uci_ind : pending_ucis) {
+      if (uci_ind.sl_rx == next_sl_tx - tx_rx_delay) {
+        du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+      }
+    }
 
     // Advance slot.
     ++next_sl_tx;
@@ -395,9 +442,17 @@ public:
   {
     using namespace std::chrono_literals;
 
+    // Wait until it's a full UL slot to send Msg3.
+    auto next_msg3_opportunity_condition = [this]() {
+      return not cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
+             not is_tdd_full_ul_slot(cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
+                                     slot_point(next_sl_tx - tx_rx_delay - 1).slot_index());
+    };
+    run_slot_until(next_msg3_opportunity_condition);
+
     // Received Msg3 with UL-CCCH message.
     mac_rx_data_indication rx_ind;
-    rx_ind.sl_rx      = next_sl_tx - 4;
+    rx_ind.sl_rx      = next_sl_tx - tx_rx_delay;
     rx_ind.cell_index = to_du_cell_index(0);
     rx_ind.pdus.push_back(
         mac_rx_pdu{to_rnti(0x4601 + ue_idx), 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
@@ -422,28 +477,60 @@ public:
     }
   }
 
-  cell_config_builder_params         params{};
-  du_high_configuration              cfg{};
-  cu_cp_simulator                    sim_cu_cp;
-  cu_up_simulator                    sim_cu_up;
-  phy_simulator                      sim_phy;
-  timer_manager                      timers;
-  du_high_single_cell_worker_manager workers;
-  std::unique_ptr<du_high_impl>      du_hi;
-  slot_point                         next_sl_tx{0, 0};
-  unsigned                           slot_count = 0;
-  null_mac_pcap                      mac_pcap;
-  null_rlc_pcap                      rlc_pcap;
+  unsigned                               tx_rx_delay = 4;
+  cell_config_builder_params             params;
+  du_high_configuration                  cfg{};
+  cu_cp_simulator                        sim_cu_cp;
+  cu_up_simulator                        sim_cu_up;
+  phy_simulator                          sim_phy;
+  timer_manager                          timers;
+  du_high_single_cell_worker_manager     workers;
+  std::unique_ptr<du_high_impl>          du_hi;
+  slot_point                             next_sl_tx{0, 0};
+  unsigned                               slot_count = 0;
+  null_mac_pcap                          mac_pcap;
+  null_rlc_pcap                          rlc_pcap;
+  std::deque<mac_uci_indication_message> pending_ucis;
 
   byte_buffer pdcp_pdu;
 };
 
+/// \brief Generate custom cell configuration builder params based on duplex mode.
+static cell_config_builder_params generate_custom_cell_config_builder_params(duplex_mode dplx_mode)
+{
+  cell_config_builder_params params{};
+  params.scs_common       = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
+  params.dl_arfcn         = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
+  params.band             = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
+  static const uint8_t                              ss0_idx = 0;
+  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+      band_helper::get_ssb_coreset0_freq_location(params.dl_arfcn,
+                                                  *params.band,
+                                                  nof_crbs,
+                                                  params.scs_common,
+                                                  params.scs_common,
+                                                  ss0_idx,
+                                                  params.max_coreset0_duration);
+  if (!ssb_freq_loc.has_value()) {
+    report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
+  }
+  params.offset_to_point_a   = (*ssb_freq_loc).offset_to_point_A;
+  params.k_ssb               = (*ssb_freq_loc).k_ssb;
+  params.coreset0_index      = (*ssb_freq_loc).coreset0_idx;
+  params.search_space0_index = ss0_idx;
+
+  return params;
+}
+
 /// \brief Benchmark DU-high with DL only traffic using an RLC UM bearer.
-void benchmark_dl_only_rlc_um(benchmarker& bm, unsigned nof_ues)
+void benchmark_dl_only_rlc_um(benchmarker& bm, unsigned nof_ues, duplex_mode dplx_mode)
 {
   auto                benchname = fmt::format("DL only, {} UE, RLC UM", nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
-  du_high_bench       bench;
+  du_high_bench       bench{generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
   }
@@ -494,7 +581,7 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_dl_only_rlc_um(bm, params.nof_ues);
+  benchmark_dl_only_rlc_um(bm, params.nof_ues, params.dplx_mode);
 
   // Output results.
   bm.print_percentiles_time();
