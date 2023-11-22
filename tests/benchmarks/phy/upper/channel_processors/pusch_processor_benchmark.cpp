@@ -103,6 +103,9 @@ static benchmark_modes                    benchmark_mode              = benchmar
 static unsigned                           nof_rx_ports                = 1;
 static constexpr unsigned                 max_nof_rx_ports            = 4;
 static unsigned                           nof_tx_layers               = 1;
+static unsigned                           nof_harq_ack                = 0;
+static unsigned                           nof_csi_part1               = 0;
+static unsigned                           nof_csi_part2               = 0;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
@@ -338,9 +341,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       config.mcs_descr              = mcs;
       config.codeword.emplace(pusch_processor::codeword_description{
           0, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
-      config.uci           = {};
-      config.n_id          = 0;
-      config.nof_tx_layers = nof_tx_layers;
+      config.uci.alpha_scaling         = 1.0;
+      config.uci.beta_offset_harq_ack  = 5.0;
+      config.uci.beta_offset_csi_part1 = 5.0;
+      config.uci.beta_offset_csi_part2 = 5.0;
+      config.uci.nof_harq_ack          = nof_harq_ack;
+      config.uci.nof_csi_part1         = nof_csi_part1;
+      config.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
+      config.n_id                      = 0;
+      config.nof_tx_layers             = nof_tx_layers;
       config.rx_ports.resize(nof_rx_ports);
       std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
       config.dmrs_symbol_mask            = dmrs_symbol_mask;
