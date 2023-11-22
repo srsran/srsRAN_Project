@@ -58,28 +58,6 @@ void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-ric_control_config e2_ric_control_procedure::process_request()
-{
-  ri_cctrl_request_s      ctrl_req = request.request;
-  e2_sm_rc_ctrl_outcome_s outcome;
-  e2sm_interface*         e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
-  if (!e2sm_iface) {
-    logger.error("RAN function ID not supported");
-    return {};
-  }
-
-  ric_control_config ctrl_config;
-
-  if (!(ctrl_req->ri_cctrl_hdr.value.to_number() == 0)) {
-    e2sm_iface->process_control_header(ctrl_req->ri_cctrl_hdr.value, ctrl_config);
-  } else {
-    logger.warning("Control header not present");
-    ctrl_config.ue_id = 1;
-  }
-  e2sm_iface->process_control_message(ctrl_req->ri_cctrl_msg.value, ctrl_config);
-  return ctrl_config;
-}
-
 void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
                                                                const e2_ric_control_response& ctrl_response)
 {

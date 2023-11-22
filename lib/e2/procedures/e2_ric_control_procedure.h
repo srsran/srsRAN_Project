@@ -33,9 +33,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
-  ric_control_config process_request();
-  void               send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
-                                                     const e2_ric_control_response& ctrl_response);
+  void send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
+                                       const e2_ric_control_response& ctrl_response);
   void send_e2_ric_control_failure(const e2_ric_control_request&, const e2_ric_control_response& ctrl_response);
 
 private:

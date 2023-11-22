@@ -250,18 +250,3 @@ e2sm_handler& e2sm_kpm_impl::get_e2sm_packer()
 {
   return e2sm_packer;
 }
-
-e2sm_param_configurator* e2sm_kpm_impl::get_param_configurator()
-{
-  return nullptr;
-}
-
-void e2sm_kpm_impl::process_control_header(const srsran::byte_buffer& ctrl_header_buff, ric_control_config& ctrl_config)
-{
-  logger.warning("Control Service not supported");
-}
-
-void e2sm_kpm_impl::process_control_message(const srsran::byte_buffer& ctrl_msg_buff, ric_control_config& ctrl_config)
-{
-  logger.warning("Control Service not supported");
-}
