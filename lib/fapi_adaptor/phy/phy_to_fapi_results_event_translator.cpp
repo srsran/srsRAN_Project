@@ -162,39 +162,36 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   if (result.harq_ack.has_value()) {
     const pusch_uci_field&                     harq   = result.harq_ack.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(harq.status);
-    builder_pdu.set_harq_parameters(
-        status,
-        harq.payload.size(),
-        (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
-         status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
-            ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
-            : bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(harq.payload.begin(), harq.payload.end()));
+    builder_pdu.set_harq_parameters(status,
+                                    harq.payload.size(),
+                                    (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                                     status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
+                                        ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
+                                        : harq.payload);
   }
 
   // Add the CSI1 section.
   if (result.csi1.has_value()) {
     const pusch_uci_field&                     csi1   = result.csi1.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(csi1.status);
-    builder_pdu.set_csi_part1_parameters(
-        status,
-        csi1.payload.size(),
-        (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
-         status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
-            ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
-            : bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(csi1.payload.begin(), csi1.payload.end()));
+    builder_pdu.set_csi_part1_parameters(status,
+                                         csi1.payload.size(),
+                                         (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                                          status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
+                                             ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
+                                             : csi1.payload);
   }
 
   // Add the CSI2 section.
   if (result.csi2.has_value()) {
     const pusch_uci_field&                     csi2   = result.csi2.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(csi2.status);
-    builder_pdu.set_csi_part2_parameters(
-        status,
-        csi2.payload.size(),
-        (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
-         status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
-            ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
-            : bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(csi2.payload.begin(), csi2.payload.end()));
+    builder_pdu.set_csi_part2_parameters(status,
+                                         csi2.payload.size(),
+                                         (status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                                          status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure)
+                                             ? bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>()
+                                             : csi2.payload);
   }
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);

@@ -40,7 +40,7 @@ public:
 
   void connect_notifier(pusch_processor_notifier_adaptor& notifier_) { notifier = &notifier_; }
 
-  void on_csi_part1(span<const uint8_t> part1) override
+  void on_csi_part1(const uci_payload_type& part1) override
   {
     srsran_assert(notifier != nullptr, "Notifier not connected.");
 

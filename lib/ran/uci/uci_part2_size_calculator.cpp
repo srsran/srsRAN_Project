@@ -9,11 +9,37 @@
  */
 
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
-#include "srsran/srsvec/bit.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 
-unsigned srsran::uci_part2_get_size(span<const uint8_t> part1, const uci_part2_size_description& descr)
+static unsigned extract_parameter(unsigned offset, unsigned width, const uci_payload_type& payload)
+{
+  // Verify the payload read range is valid.
+  srsran_assert(offset + width <= payload.size(),
+                "The offset (i.e., {}) plus the width (i.e., {}) exceeds the payload size (i.e., {}).",
+                offset,
+                width,
+                payload.size());
+
+  // Ignore for zero width.
+  if (width == 0) {
+    return 0;
+  }
+
+  // Get slice of the CSI Part 1.
+  uci_payload_type slice = payload.slice(offset, offset + width);
+
+  // Extract parameter value.
+  uint64_t param = slice.to_uint64();
+
+  // Reverse parameter bits.
+  param = bit_reverse(param) >> (64 - width);
+
+  return static_cast<unsigned>(param);
+}
+
+unsigned srsran::uci_part2_get_size(const uci_payload_type& part1, const uci_part2_size_description& descr)
 {
   unsigned result = 0;
 
@@ -24,7 +50,7 @@ unsigned srsran::uci_part2_get_size(span<const uint8_t> part1, const uci_part2_s
 
     for (const uci_part2_size_description::parameter& parameter : entry.parameters) {
       // Extract the value of the parameter.
-      unsigned value = srsvec::bit_pack(part1.subspan(parameter.offset, parameter.width));
+      unsigned value = extract_parameter(parameter.offset, parameter.width, part1);
 
       // Combine the parameter value with the current index.
       index = (index << parameter.width) | value;

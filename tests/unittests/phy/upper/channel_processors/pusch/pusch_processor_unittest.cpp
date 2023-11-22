@@ -468,9 +468,11 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
               span<const log_likelihood_ratio>(uci_dec_entry.llr));
     ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
+    uci_payload_type packed_harq_ack(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
+
     ASSERT_EQ(uci_entries.size(), 1);
     const auto& uci_entry = uci_entries.back();
-    ASSERT_EQ(span<const uint8_t>(uci_entry.harq_ack.payload), span<const uint8_t>(uci_dec_entry.message));
+    ASSERT_EQ(uci_entry.harq_ack.payload, packed_harq_ack);
     ASSERT_EQ(uci_entry.harq_ack.status, uci_dec_entry.status);
   } else if (!uci_entries.empty()) {
     const auto& uci_entry = uci_entries.back();
@@ -485,9 +487,11 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
               span<const log_likelihood_ratio>(uci_dec_entry.llr));
     ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
+    uci_payload_type packed_csi_part1(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
+
     ASSERT_EQ(uci_entries.size(), 1);
     const auto& uci_entry = uci_entries.back();
-    ASSERT_EQ(span<const uint8_t>(uci_entry.csi_part1.payload), span<const uint8_t>(uci_dec_entry.message));
+    ASSERT_EQ(uci_entry.csi_part1.payload, packed_csi_part1);
     ASSERT_EQ(uci_entry.csi_part1.status, uci_dec_entry.status);
   } else if (!uci_entries.empty()) {
     const auto& uci_entry = uci_entries.back();

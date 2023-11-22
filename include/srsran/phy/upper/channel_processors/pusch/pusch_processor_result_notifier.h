@@ -11,23 +11,23 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 #include "srsran/phy/upper/channel_processors/uci/uci_status.h"
 #include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/ran/uci/uci_constants.h"
+#include "srsran/ran/uci/uci_payload_type.h"
 
 namespace srsran {
 
 /// Collects the results of UCI field decoding.
 struct pusch_uci_field {
-  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> payload;
-  uci_status                                                  status;
+  uci_payload_type payload;
+  uci_status       status;
 
   /// Clears the contents of the field.
   void clear()
   {
-    payload.clear();
+    payload.resize(0);
     status = uci_status::unknown;
   }
 };

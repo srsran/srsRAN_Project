@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "pusch_uci_decoder_notifier.h"
 #include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
@@ -49,7 +50,7 @@ class pusch_processor_csi_part1_feedback
 public:
   virtual ~pusch_processor_csi_part1_feedback() = default;
 
-  virtual void on_csi_part1(span<const uint8_t> part1) = 0;
+  virtual void on_csi_part1(const uci_payload_type& part1) = 0;
 };
 
 /// \brief Adapts the notifiers of each PUSCH decoder to the PUSCH processor notifier.
@@ -175,9 +176,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_harq_ack(field);
     }
 
@@ -195,9 +195,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_csi_part1(field);
     }
 
@@ -215,9 +214,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_csi_part2(field);
     }
 
