@@ -60,6 +60,46 @@ cu_cp_test::cu_cp_test()
   // periodic statistic logging
   cfg.statistics_report_period = std::chrono::seconds(1);
 
+  // mobility config
+  cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
+  rrc_report_cfg_nr periodic_rep_cfg                                             = {};
+  periodic_rep_cfg.periodical.emplace();
+  periodic_rep_cfg.periodical.value().report_interv = 1024;
+  cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_rep_cfg);
+  rrc_report_cfg_nr ev_triggered_rep_cfg = {};
+  ev_triggered_rep_cfg.event_triggered.emplace();
+  ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.emplace();
+  ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().a3_offset.rsrp.emplace(6);
+  ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().hysteresis      = 0;
+  ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().time_to_trigger = 100;
+  ev_triggered_rep_cfg.event_triggered.value().report_interv                             = 1024;
+  cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(2), ev_triggered_rep_cfg);
+
+  cell_meas_config cell_cfg_1;
+  cell_cfg_1.periodic_report_cfg_id = uint_to_report_cfg_id(1);
+  neighbor_cell_meas_config ncell_1;
+  ncell_1.nci = 0x19c0;
+  ncell_1.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
+  cell_cfg_1.ncells.push_back(ncell_1);
+  cell_cfg_1.serving_cell_cfg.nci = 0x19b0;
+  cfg.mobility_config.meas_manager_config.cells.emplace(0x19b0, cell_cfg_1);
+
+  cell_meas_config cell_cfg_2;
+  cell_cfg_2.periodic_report_cfg_id = uint_to_report_cfg_id(1);
+  neighbor_cell_meas_config ncell_2;
+  ncell_2.nci = 0x19b0;
+  ncell_2.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
+  cell_cfg_2.ncells.push_back(ncell_2);
+  cell_cfg_2.serving_cell_cfg.nci       = 0x19c0;
+  cell_cfg_2.serving_cell_cfg.gnb_id    = 412;
+  cell_cfg_2.serving_cell_cfg.ssb_arfcn = 632628;
+  cell_cfg_2.serving_cell_cfg.band      = nr_band::n78;
+  cell_cfg_2.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz30;
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.emplace();
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().periodicity_and_offset.sf20.emplace(0);
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().dur = 5;
+  cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_2);
+
   // create and start CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
   cu_cp_obj->handle_amf_connection();
