@@ -22,7 +22,7 @@ handover_reconfiguration_routine::handover_reconfiguration_routine(
   request(request_), source_ue(source_ue_), target_ue(target_ue_), logger(logger_)
 {
   srsran_assert(
-      source_ue.get_ue_index() != ue_index_t::invalid, "Invalid source UE index {}.", source_ue.get_ue_index());
+      source_ue.get_ue_index() != ue_index_t::invalid, "Invalid source UE index {}", source_ue.get_ue_index());
 }
 
 void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>& ctx)
@@ -30,7 +30,7 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   CORO_BEGIN(ctx);
 
   logger.debug(
-      "source_ue={} target_ue={}: \"{}\" initialized.", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
+      "source_ue={} target_ue={}: \"{}\" initialized", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
 
   // Send RRC Reconfiguration to source UE
   transaction_id = send_rrc_reconfiguration();
@@ -40,10 +40,10 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
 
   if (procedure_result) {
     logger.debug(
-        "source_ue={} target_ue={}: \"{}\" finalized.", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
+        "source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
   } else {
     logger.debug(
-        "source_ue={} target_ue={}: \"{}\" failed.", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
+        "source_ue={} target_ue={}: \"{}\" failed", source_ue.get_ue_index(), target_ue.get_ue_index(), name());
   }
 
   CORO_RETURN(procedure_result);
