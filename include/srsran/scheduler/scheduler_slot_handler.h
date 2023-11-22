@@ -333,8 +333,8 @@ struct sib_information {
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
 struct dl_broadcast_allocation {
-  static_vector<ssb_information, MAX_SSB_PER_SLOT>       ssb_info;
-  static_vector<sib_information, MAX_SI_PDUS_PER_SLOT>   sibs;
+  static_vector<ssb_information, MAX_SSB_PER_SLOT>     ssb_info;
+  static_vector<sib_information, MAX_SI_PDUS_PER_SLOT> sibs;
 };
 
 struct paging_ue_info {

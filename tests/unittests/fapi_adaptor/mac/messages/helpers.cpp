@@ -499,7 +499,7 @@ mac_dl_data_result srsran::unittests::build_valid_mac_data_result()
 {
   mac_dl_data_result result;
 
-  result.sib1_pdus.push_back({1, {}});
+  result.si_pdus.push_back({1, {}});
 
   return result;
 }
