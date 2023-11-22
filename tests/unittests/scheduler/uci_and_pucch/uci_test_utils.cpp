@@ -155,6 +155,17 @@ test_bench::test_bench(const test_bench_params& params) :
     }
   }
 
+  if (params.cfg_for_mimo_4x4) {
+    ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
+        csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
+    auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()
+                                                                                 .serv_cell_cfg.ul_config.value()
+                                                                                 .init_ul_bwp.pusch_cfg.value()
+                                                                                 .uci_cfg.value()
+                                                                                 .beta_offsets_cfg.value());
+    beta_offsets.beta_offset_csi_p2_idx_1.value() = 6;
+  }
+
   auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
       ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   csi_report.report_slot_period = params.csi_period;

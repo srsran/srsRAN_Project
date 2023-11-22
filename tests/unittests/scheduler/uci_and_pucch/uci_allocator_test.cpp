@@ -21,6 +21,7 @@ struct expected_output_cfg_params {
   alpha_scaling_opt alpha{alpha_scaling_opt::f1};
   uint8_t           beta_offset_harq_ack{9};
   uint8_t           beta_offset_csi_part1{9};
+  uint8_t           beta_offset_csi_part2{6};
 };
 
 class test_uci_allocator : public ::testing::Test
@@ -565,4 +566,94 @@ TEST_F(test_tdd_uci_allocator, test_tdd_harq_ack_multiplexing)
   ASSERT_EQ(3, slot_grid_3.result.ul.puschs.back().uci.value().harq.value().harq_ack_nof_bits);
   ASSERT_TRUE(slot_grid_2.result.ul.puschs.back().uci.value().csi.has_value());
   ASSERT_EQ(4, slot_grid_2.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+}
+
+class test_uci_allocator_mimo_4x4 : public ::testing::Test
+{
+public:
+  test_uci_allocator_mimo_4x4() : t_bench(test_bench_params{.cfg_for_mimo_4x4 = true}), k2{t_bench.k0 + t_bench.k1} {}
+
+protected:
+  test_bench                 t_bench;
+  unsigned                   k2;
+  expected_output_cfg_params output_params{};
+
+  bool check_pusch_out_param(const ul_sched_info& pusch_pdu) const
+  {
+    if (not pusch_pdu.uci.has_value()) {
+      return false;
+    }
+    const bool harq_beta_offset_ok =
+        pusch_pdu.uci.value().harq.has_value()
+            ? pusch_pdu.uci.value().harq.value().beta_offset_harq_ack == output_params.beta_offset_harq_ack
+            : true;
+    const bool csi_p1_beta_offset_ok =
+        pusch_pdu.uci.value().csi.has_value()
+            ? pusch_pdu.uci.value().csi.value().beta_offset_csi_1 == output_params.beta_offset_csi_part1
+            : true;
+    const bool csi_p2_beta_offset_ok =
+        pusch_pdu.uci.value().csi.has_value() and pusch_pdu.uci.value().csi.value().beta_offset_csi_2.has_value()
+            ? pusch_pdu.uci.value().csi.value().beta_offset_csi_2.value() == output_params.beta_offset_csi_part2
+            : true;
+
+    return pusch_pdu.uci.value().alpha == output_params.alpha and harq_beta_offset_ok and csi_p1_beta_offset_ok and
+           csi_p2_beta_offset_ok;
+  }
+
+  void add_pusch_alloc(unsigned pusch_slot_number)
+  {
+    auto& puschs = t_bench.res_grid[pusch_slot_number].result.ul.puschs;
+    puschs.emplace_back(ul_sched_info{});
+    puschs.back().pusch_cfg.rnti = t_bench.get_main_ue().crnti;
+  }
+};
+
+TEST_F(test_uci_allocator_mimo_4x4, uci_alloc_csi_part2_over_existing_pusch)
+{
+  add_pusch_alloc(t_bench.k0 + k2);
+  auto& slot_grid = t_bench.res_grid[k2];
+  t_bench.uci_alloc.uci_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  // No grants expected on PUCCH.
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
+  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+}
+
+TEST_F(test_uci_allocator_mimo_4x4, uci_mplex_csi_part2_over_existing_pusch)
+{
+  add_pusch_alloc(t_bench.k0 + k2);
+  auto& slot_grid = t_bench.res_grid[k2];
+
+  // Add manually the PUCCH grant and force the number of CSI bits to 11.
+  auto& pucch_csi                   = slot_grid.result.ul.pucchs.emplace_back();
+  pucch_csi.crnti                   = t_bench.get_main_ue().crnti;
+  pucch_csi.format                  = srsran::pucch_format::FORMAT_2;
+  pucch_csi.format_2.csi_part1_bits = 11;
+
+  // 1 PUSCH grant (without UCI) and 2 PUCCH grants expected before multiplexing.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.has_value());
+
+  t_bench.uci_alloc.multiplex_uci_on_pusch(slot_grid.result.ul.puschs.back(),
+                                           slot_grid,
+                                           t_bench.get_main_ue().get_pcell().cfg(),
+                                           t_bench.get_main_ue().crnti);
+
+  // No grants expected on PUCCH.
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  // 1 expected PUSCH grant.
+  ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
+  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+  ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
 }
