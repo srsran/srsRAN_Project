@@ -44,9 +44,9 @@ public:
   void on_buffer_state_update(unsigned bsr_) override {}
 
   // rlc_rx_am_status_provider interface
-  rlc_am_status_pdu get_status_pdu() override { return status; }
-  uint32_t          get_status_pdu_length() override { return status.get_packed_size(); }
-  bool              status_report_required() override { return status_required; }
+  rlc_am_status_pdu& get_status_pdu() override { return status; }
+  uint32_t           get_status_pdu_length() override { return status.get_packed_size(); }
+  bool               status_report_required() override { return status_required; }
 };
 
 struct bench_params {

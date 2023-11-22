@@ -101,7 +101,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
       logger.log_debug("Cannot fit status PDU into small grant_len={}.", grant_len);
       return {};
     }
-    rlc_am_status_pdu status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
+    rlc_am_status_pdu& status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
