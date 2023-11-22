@@ -223,33 +223,15 @@ public:
   std::condition_variable cvar;
   bool                    slot_ended = false;
 
+  mac_dl_sched_result slot_dl_result;
+  mac_ul_sched_result slot_ul_result;
+
   unsigned nof_dl_grants = 0;
   uint64_t nof_dl_bytes  = 0;
 
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return *this; }
 
-  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
-  {
-    static constexpr unsigned k1 = 4;
-
-    if (dl_res.dl_res->ue_grants.empty()) {
-      return;
-    }
-
-    // Forwards HARQ-ACK to the DU-High "k1" slots after the current tx slot.
-    mac_uci_indication_message uci{};
-    uci.sl_rx = dl_res.slot + k1;
-    for (const dl_msg_alloc& ue_grant : dl_res.dl_res->ue_grants) {
-      mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
-      uci_pdu.rnti         = ue_grant.pdsch_cfg.rnti;
-      srsran::mac_uci_pdu::pucch_f0_or_f1_type pucch{};
-      pucch.harq_info.emplace();
-      pucch.harq_info->harqs.resize(1);
-      pucch.harq_info->harqs[0] = srsran::uci_pucch_f0_or_f1_harq_values::ack;
-      uci_pdu.pdu               = pucch;
-    }
-    ctrl_info_handler->handle_uci(uci);
-  }
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { slot_dl_result = dl_res; }
 
   /// Notifies scheduled PDSCH PDUs.
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override
@@ -262,7 +244,7 @@ public:
   }
 
   /// Notifies slot scheduled PUCCH/PUSCH grants.
-  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { slot_ul_result = ul_res; }
 
   /// \brief Notifies the completion of all cell results for the given slot.
   void on_cell_results_completion(slot_point slot) override
@@ -300,7 +282,7 @@ public:
     cfg.f1u_gw       = &sim_cu_up;
     cfg.phy_adapter  = &sim_phy;
     cfg.timers       = &timers;
-    cfg.cells        = {config_helpers::make_default_du_cell_config()};
+    cfg.cells        = {config_helpers::make_default_du_cell_config(params)};
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
     cfg.mac_p        = &mac_pcap;
@@ -308,7 +290,7 @@ public:
     du_hi            = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
-    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(1000));
+    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(1500));
 
     // Start DU-high operation.
     du_hi->start();
@@ -317,7 +299,13 @@ public:
     sim_phy.ctrl_info_handler = &du_hi->get_control_info_handler(to_du_cell_index(0));
   }
 
-  ~du_high_bench() { workers.stop(); }
+  void stop()
+  {
+    du_hi->stop();
+    workers.stop();
+  }
+
+  ~du_high_bench() { stop(); }
 
   /// \brief Run a slot indication until completion.
   void run_slot()
@@ -327,7 +315,64 @@ public:
 
     // Wait DU-high to finish handling the slot.
     sim_phy.wait_slot_complete();
+  }
 
+  void process_results()
+  {
+    // Forwards HARQ-ACKs to the DU-High given the scheduled PUCCHs.
+    mac_uci_indication_message uci{};
+    uci.sl_rx = sim_phy.slot_ul_result.slot;
+    for (const pucch_info& pucch : sim_phy.slot_ul_result.ul_res->pucchs) {
+      mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
+      uci_pdu.rnti         = pucch.crnti;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_1: {
+          mac_uci_pdu::pucch_f0_or_f1_type f1{};
+          if (pucch.format_1.harq_ack_nof_bits > 0) {
+            f1.harq_info.emplace();
+            // Set PUCCHs with SR as DTX.
+            const uci_pucch_f0_or_f1_harq_values ack_val = pucch.format_1.sr_bits == sr_nof_bits::no_sr
+                                                               ? uci_pucch_f0_or_f1_harq_values::ack
+                                                               : uci_pucch_f0_or_f1_harq_values::dtx;
+            f1.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
+          }
+          // Do not forward positive SRs to scheduler.
+          if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+            f1.sr_info.emplace();
+            f1.sr_info->sr_detected = false;
+          }
+          uci_pdu.pdu = f1;
+        } break;
+        case pucch_format::FORMAT_2: {
+          mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
+          if (pucch.format_2.harq_ack_nof_bits > 0) {
+            f2.harq_info.emplace();
+            f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+            f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
+            f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
+          }
+          if (pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
+            f2.sr_info.emplace();
+            f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
+            f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
+          }
+          if (pucch.csi_rep_cfg.has_value()) {
+            f2.uci_part1_or_csi_part1_info.emplace();
+            f2.uci_part1_or_csi_part1_info->status       = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+            f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
+                uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+            f2.uci_part1_or_csi_part1_info->payload.resize(4);
+            f2.uci_part1_or_csi_part1_info->payload.fill(0, 4, true);
+          }
+          uci_pdu.pdu = f2;
+        } break;
+        default:
+          report_fatal_error("PUCCH format not supported");
+      }
+    }
+    du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
+
+    // Advance slot.
     ++next_sl_tx;
     slot_count++;
   }
@@ -348,13 +393,20 @@ public:
     while (not sim_cu_cp.ue_created) {
       // Need to run one slot for scheduler to handle pending events.
       run_slot();
+      process_results();
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
   }
 
-  // \brief Push a DL PDU to DU-high via F1-U interface.
-  void push_pdcp_pdu() { sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0}); }
+  // \brief Push a DL PDUs to DU-high via F1-U interface.
+  void push_pdcp_pdus()
+  {
+    for (unsigned i = 0; i != 10; ++i) {
+      sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0});
+    }
+  }
 
+  cell_config_builder_params         params{};
   du_high_configuration              cfg{};
   cu_cp_simulator                    sim_cu_cp;
   cu_up_simulator                    sim_cu_up;
@@ -364,8 +416,8 @@ public:
   std::unique_ptr<du_high_impl>      du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count = 0;
-  test_helpers::dummy_mac_pcap       mac_pcap;
-  pcap_rlc_dummy                     rlc_pcap;
+  null_mac_pcap                      mac_pcap;
+  null_rlc_pcap                      rlc_pcap;
 
   byte_buffer pdcp_pdu;
 };
@@ -379,18 +431,30 @@ void benchmark_one_ue_dl_only_rlc_um(benchmarker& bm)
   bench.add_ue(to_rnti(0x4601));
 
   // Run benchmark.
-  bm.new_measure(benchname, 1, [&bench]() mutable {
-    // Push DL PDU.
-    bench.push_pdcp_pdu();
+  bm.new_measure(
+      benchname,
+      1,
+      [&bench]() mutable {
+        // Run slot to completion.
+        bench.run_slot();
+      },
+      [&bench]() {
+        // Push DL PDUs.
+        bench.push_pdcp_pdus();
 
-    // Run slot to completion.
-    bench.run_slot();
-  });
+        // Advance slot
+        bench.process_results();
+      });
 
-  fmt::print("Stats: slots={}, #PDSCHs={}, Tx={} MB\n",
+  // Stop benchmark.
+  bench.stop();
+  srslog::flush();
+
+  const unsigned sim_time_msec = bench.slot_count / get_nof_slots_per_subframe(bench.cfg.cells[0].scs_common);
+  fmt::print("Stats: slots={}, #PDSCHs={}, dl_bitrate={:.2} Mbps\n",
              bench.slot_count,
              bench.sim_phy.nof_dl_grants,
-             bench.sim_phy.nof_dl_bytes / 1.0e6);
+             bench.sim_phy.nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3));
 }
 
 int main(int argc, char** argv)

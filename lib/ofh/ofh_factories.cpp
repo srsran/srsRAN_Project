@@ -23,8 +23,7 @@
 #include "srsran/ofh/ofh_factories.h"
 #include "ofh_sector_impl.h"
 #include "receiver/ofh_receiver_factories.h"
-#include "timing/ofh_ota_symbol_dispatcher.h"
-#include "timing/realtime_timing_worker.h"
+#include "timing/ofh_timing_manager_impl.h"
 #include "transmitter/ofh_transmitter_factories.h"
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 
@@ -35,21 +34,13 @@
 using namespace srsran;
 using namespace ofh;
 
-std::unique_ptr<controller> srsran::ofh::create_ofh_timing_controller(const controller_config& config)
+std::unique_ptr<timing_manager> srsran::ofh::create_ofh_timing_manager(const controller_config& config,
+                                                                       srslog::basic_logger&    logger,
+                                                                       task_executor&           executor)
 {
   realtime_worker_cfg rt_cfg = {config.cp, config.scs, config.gps_Alpha, config.gps_Beta};
 
-  return std::make_unique<realtime_timing_worker>(*config.logger, *config.notifier, *config.executor, rt_cfg);
-}
-
-std::unique_ptr<ota_symbol_boundary_notifier>
-srsran::ofh::create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
-                                            unsigned                         nof_symbols_per_slot,
-                                            std::unique_ptr<timing_notifier> timing_notifier,
-                                            span<ota_symbol_handler*>        symbol_handlers)
-{
-  return std::make_unique<ota_symbol_dispatcher>(
-      nof_slot_offset_du_ru, nof_symbols_per_slot, std::move(timing_notifier), symbol_handlers);
+  return std::make_unique<timing_manager_impl>(logger, executor, rt_cfg);
 }
 
 static receiver_config generate_receiver_config(const sector_configuration& config)

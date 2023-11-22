@@ -22,35 +22,28 @@
 
 #pragma once
 
-#include "srsran/ran/slot_point.h"
+#include "ofh_downlink_handler_impl.h"
+#include "ofh_downlink_manager.h"
 
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul interface to notify timing related events.
-class timing_notifier
+/// Open Fronthaul downlink manager implementation.
+class downlink_manager_impl : public downlink_manager
 {
+  downlink_handler_impl handler;
+
 public:
-  /// Default destructor.
-  virtual ~timing_notifier() = default;
+  downlink_manager_impl(const downlink_handler_impl_config& config, downlink_handler_impl_dependencies&& dependencies) :
+    handler(config, std::move(dependencies))
+  {
+  }
 
-  /// \brief Notifies a new TTI boundary event.
-  ///
-  /// Notifies that the processing of a new slot has started. It indicates in \c slot the next slot available for
-  /// transmission.
-  ///
-  /// \param[in] slot Current slot.
-  virtual void on_tti_boundary(slot_point slot) = 0;
+  // See interface for documentation.
+  downlink_handler& get_downlink_handler() override;
 
-  /// \brief Notifies that an uplink half slot has been received and processed by the Open Fronthaul.
-  ///
-  /// \param[in] slot Current slot.
-  virtual void on_ul_half_slot_boundary(slot_point slot) = 0;
-
-  /// \brief Notifies that an uplink full slot has been received and processed by the Open Fronthaul.
-  ///
-  /// \param[in] slot Current slot.
-  virtual void on_ul_full_slot_boundary(slot_point slot) = 0;
+  // See interface for documentation.
+  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 };
 
 } // namespace ofh

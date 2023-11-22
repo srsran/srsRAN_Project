@@ -98,7 +98,8 @@ TEST_F(scheduler_conres_without_pdu_test,
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Ensure the ConRes CEU is not scheduled without a Msg4 SDU.
-  ASSERT_FALSE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
+  ASSERT_FALSE(this->run_slot_until(
+      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -148,8 +149,9 @@ TEST_P(scheduler_con_res_msg4_test,
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Ensure the Msg4 is scheduled together with the ConRes CE.
-  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
-  const dl_msg_alloc* msg4_alloc = find_ue_pdsch(rnti, *this->last_sched_res);
+  ASSERT_TRUE(this->run_slot_until(
+      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
+  const dl_msg_alloc* msg4_alloc = find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
   ASSERT_EQ(msg4_alloc->tb_list.size(), 1);
   ASSERT_EQ(msg4_alloc->tb_list[0].lc_chs_to_sched.size(), 2);
   ASSERT_EQ(msg4_alloc->tb_list[0].lc_chs_to_sched[0].lcid, lcid_dl_sch_t::UE_CON_RES_ID);
@@ -165,7 +167,7 @@ TEST_P(scheduler_con_res_msg4_test,
   ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
 
   // Ensure no PDSCH multiplexing with CSI-RS.
-  ASSERT_TRUE(this->last_sched_res->dl.csi_rs.empty());
+  ASSERT_TRUE(this->last_sched_res_list[to_du_cell_index(0)]->dl.csi_rs.empty());
 }
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is_used)
@@ -181,7 +183,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
   ASSERT_TRUE(this->run_slot_until([this]() {
-    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res);
+    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
     return pucch != nullptr and pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0;
   }));
 
@@ -189,16 +191,17 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});
 
   // Ensure common resources for PDCCH and PDSCH are used rather than UE-dedicated.
-  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
+  ASSERT_TRUE(this->run_slot_until(
+      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
   const pdcch_dl_information& dl_pdcch = *find_ue_dl_pdcch(rnti);
   ASSERT_EQ(dl_pdcch.dci.type, dci_dl_rnti_config_type::c_rnti_f1_0) << "Invalid format used for UE in fallback mode";
   ASSERT_EQ(dl_pdcch.ctx.coreset_cfg->id, to_coreset_id(0));
-  const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_res);
+  const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
   ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
 
   // Ensure common PUCCH resources are used.
   ASSERT_TRUE(this->run_slot_until([this]() {
-    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res);
+    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
     if (pucch == nullptr) {
       return false;
     }
@@ -210,7 +213,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   //                          [this](const pucch_info& pucch) { return pucch.crnti == rnti; }),
   //            1)
   //      << "In case of common PUCCH scheduling, multiplexing with SR or CSI should be avoided";
-  const pucch_info& pucch = *find_ue_pucch(rnti, *this->last_sched_res);
+  const pucch_info& pucch = *find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
   ASSERT_EQ(pucch.format, pucch_format::FORMAT_1);
   ASSERT_EQ(pucch.format_1.sr_bits, sr_nof_bits::no_sr);
   ASSERT_FALSE(pucch.resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";

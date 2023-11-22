@@ -89,6 +89,8 @@ trigger docker:
   trigger:
     include: .gitlab/ci/docker.yml
     strategy: depend
+  variables:
+    PY_DIR: docker/metrics_server
 
 ################################################################################
 ## Static
@@ -320,13 +322,10 @@ unit coverage:
     expire_in: 10 minutes
   retry: 2
   needs:
-    - job: smoke release cached
+    - job: intermediate commits
       optional: true
       artifacts: true
-    - job: smoke release clean
-      optional: true
-      artifacts: true
-    - job: smoke release update cache
+    - job: smoke relwithdeb update cache
       optional: true
       artifacts: true
 

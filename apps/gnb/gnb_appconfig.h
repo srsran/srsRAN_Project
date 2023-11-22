@@ -29,6 +29,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pci.h"
@@ -43,6 +44,7 @@
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/unique_thread.h"
 #include "srsran/support/units.h"
+#include <map>
 #include <string>
 #include <thread>
 #include <vector>
@@ -590,6 +592,13 @@ struct mac_lc_appconfig {
   /// Prioritized Bit rate value in kiloBytes/s. Values {0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
   /// 32768, 65536, 65537}. Value 65537 means infinity. See TS 38.331, \c prioritisedBitRate.
   unsigned prioritized_bit_rate_kBps;
+};
+
+/// QoS configuration
+struct srb_appconfig {
+  unsigned         srb_id;
+  rlc_am_appconfig rlc;
+  mac_lc_appconfig mac;
 };
 
 /// QoS configuration
@@ -1143,6 +1152,9 @@ struct gnb_appconfig {
 
   /// \brief QoS configuration.
   std::vector<qos_appconfig> qos_cfg;
+
+  /// \brief QoS configuration.
+  std::map<srb_id_t, srb_appconfig> srb_cfg;
 
   /// \brief Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};

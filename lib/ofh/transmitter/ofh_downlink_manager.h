@@ -22,24 +22,25 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 
 namespace srsran {
+namespace ofh {
 
-class e2ap_pcap : pcap_file_base
+/// Open Fronthaul downlink manager.
+class downlink_manager
 {
 public:
-  e2ap_pcap() = default;
-  ~e2ap_pcap();
-  e2ap_pcap(const e2ap_pcap& other)            = delete;
-  e2ap_pcap& operator=(const e2ap_pcap& other) = delete;
-  e2ap_pcap(e2ap_pcap&& other)                 = delete;
-  e2ap_pcap& operator=(e2ap_pcap&& other)      = delete;
+  /// Default destructor.
+  virtual ~downlink_manager() = default;
 
-  void enable();
-  void open(const char* filename_);
-  void close();
-  void write_pdu(srsran::const_span<uint8_t> pdu);
+  /// Returns the downlink handler of this downlink manager.
+  virtual downlink_handler& get_downlink_handler() = 0;
+
+  /// Returns the OTA symbol boundary notifier of this downlink manager.
+  virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;
 };
 
+} // namespace ofh
 } // namespace srsran

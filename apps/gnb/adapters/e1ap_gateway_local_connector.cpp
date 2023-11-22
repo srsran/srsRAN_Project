@@ -22,7 +22,7 @@
 
 #include "e1ap_gateway_local_connector.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

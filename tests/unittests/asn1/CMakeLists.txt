@@ -34,12 +34,12 @@ target_include_directories(asn1_e1ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_e1ap_test)
 
 add_executable(asn1_e2ap_test asn1_e2ap_test.cpp)
-target_link_libraries(asn1_e2ap_test e2ap_asn1 srslog srsran_pcap gtest gtest_main)
+target_link_libraries(asn1_e2ap_test e2ap_asn1 srslog srsran_support srsran_pcap gtest gtest_main)
 target_include_directories(asn1_e2ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_e2ap_test)
 
 add_executable(asn1_f1ap_test asn1_f1ap_test.cpp)
-target_link_libraries(asn1_f1ap_test f1ap_asn1 srslog srsran_pcap gtest gtest_main)
+target_link_libraries(asn1_f1ap_test f1ap_asn1 srslog srsran_support srsran_pcap gtest gtest_main)
 target_include_directories(asn1_f1ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_f1ap_test)
 

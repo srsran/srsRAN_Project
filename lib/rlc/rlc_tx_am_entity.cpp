@@ -41,7 +41,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
                                    timer_factory                        timers,
                                    task_executor&                       pcell_executor_,
                                    task_executor&                       ue_executor_,
-                                   pcap_rlc&                            pcap_) :
+                                   rlc_pcap&                            pcap_) :
   rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size),
@@ -416,6 +416,7 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   const rlc_tx_amd_retx retx = retx_queue.front(); // local copy, since front may change below
   logger.log_debug("Processing RETX. {}", retx);
+  retx_sn = retx.sn;
 
   // Get sdu_info info from tx_window
   rlc_tx_am_sdu_info& sdu_info = (*tx_window)[retx.sn];
@@ -612,7 +613,6 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       if (sdu_info.pdcp_sn.has_value()) {
         max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
-      retx_queue.remove_sn(sn); // remove any pending retx for that SN
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
         // recycle bin is full and the PDU was deleted on the spot, which may slow down this worker. Warn later.
@@ -633,7 +633,20 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     logger.log_warning("Could not postpone recycling of PDU byte_buffers. Performance can be impaired.");
   }
 
-  // Process NACKs
+  // Clear ReTx queue and rewind retx_counter (once per SN unless not started to ReTx)
+  while (!retx_queue.empty()) {
+    const rlc_tx_amd_retx& retx = retx_queue.front();
+    if (retx_sn != retx.sn) {
+      if (tx_window->has_sn(retx.sn)) {
+        decrement_retx_count(retx.sn);
+      }
+      retx_sn = retx.sn;
+    }
+    retx_queue.pop();
+  }
+  retx_sn = INVALID_RLC_SN;
+
+  // Rebuild ReTx queue by processing the NACKs
   uint32_t prev_retx_sn = INVALID_RLC_SN; // Stores the most recent SN that was considered for ReTx
   for (uint32_t nack_idx = 0; nack_idx < status.get_nacks().size(); nack_idx++) {
     if (status.get_nacks()[nack_idx].has_nack_range) {
@@ -736,26 +749,17 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   }
 
   // Enqueue RETX
-  bool retx_enqueued = false;
-  if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
-    rlc_tx_amd_retx retx = {};
-    retx.so              = nack.so_start;
-    retx.sn              = nack.nack_sn;
-    retx.length          = nack.so_end - nack.so_start + 1;
-    retx_enqueued        = retx_queue.try_push(retx);
-    if (retx_enqueued) {
-      logger.log_debug("Scheduled RETX for nack={}. {} retx_queue_len={}", nack, retx, retx_queue.size());
-    } else {
-      logger.log_warning(
-          "Failed to schedule RETX for nack={}. Queue is full. {} retx_queue_len={}", nack, retx, retx_queue.size());
-    }
-  } else {
-    logger.log_info(
-        "NACK'ed SDU or SDU segment is already queued for RETX. nack={} retx_queue_len={}", nack, retx_queue.size());
+  rlc_tx_amd_retx retx = {};
+  retx.so              = nack.so_start;
+  retx.sn              = nack.nack_sn;
+  retx.length          = nack.so_end - nack.so_start + 1;
+  if (!retx_queue.try_push(retx)) {
+    logger.log_warning(
+        "Failed to schedule RETX for nack={}. Queue is full. {} retx_queue_len={}", nack, retx, retx_queue.size());
     return false;
   }
-
-  return retx_enqueued;
+  logger.log_debug("Scheduled RETX for nack={}. {} retx_queue_len={}", nack, retx, retx_queue.size());
+  return true;
 }
 
 void rlc_tx_am_entity::increment_retx_count(uint32_t sn)
@@ -772,6 +776,19 @@ void rlc_tx_am_entity::increment_retx_count(uint32_t sn)
 
   // Inform upper layers if needed
   check_sn_reached_max_retx(sn);
+}
+
+void rlc_tx_am_entity::decrement_retx_count(uint32_t sn)
+{
+  auto& pdu = (*tx_window)[sn];
+  if (pdu.retx_count == RETX_COUNT_NOT_STARTED) {
+    return;
+  }
+  if (pdu.retx_count == 0) {
+    pdu.retx_count = RETX_COUNT_NOT_STARTED;
+    return;
+  }
+  pdu.retx_count--;
 }
 
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)

@@ -22,24 +22,24 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "srsran/adt/span.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 
 namespace srsran {
+namespace ofh {
 
-class f1ap_pcap : pcap_file_base
+/// \brief OTA symbol boundary notifier manager.
+///
+/// Interface to subscribe OTA symbol boundary notifiers.
+class ota_symbol_boundary_notifier_manager
 {
 public:
-  f1ap_pcap() = default;
-  ~f1ap_pcap();
-  f1ap_pcap(const f1ap_pcap& other)            = delete;
-  f1ap_pcap& operator=(const f1ap_pcap& other) = delete;
-  f1ap_pcap(f1ap_pcap&& other)                 = delete;
-  f1ap_pcap& operator=(f1ap_pcap&& other)      = delete;
+  /// Default destructor.
+  virtual ~ota_symbol_boundary_notifier_manager() = default;
 
-  void enable();
-  void open(const char* filename_);
-  void close();
-  void write_pdu(const_span<uint8_t> pdu);
+  /// Subscribes the given notifiers to listen to OTA symbol boundary events.
+  virtual void subscribe(span<ota_symbol_boundary_notifier*> notifiers) = 0;
 };
 
+} // namespace ofh
 } // namespace srsran

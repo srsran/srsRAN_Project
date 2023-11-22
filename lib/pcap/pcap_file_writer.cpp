@@ -20,15 +20,22 @@
  *
  */
 
-#include "pcap_file_base.h"
+#include "pcap_file_writer.h"
 #include <sys/time.h>
 
 using namespace srsran;
 
-bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const std::string& filename_)
+pcap_file_writer::pcap_file_writer() : logger(srslog::fetch_basic_logger("ALL")) {}
+
+pcap_file_writer::~pcap_file_writer()
+{
+  close();
+}
+
+bool pcap_file_writer::open(uint32_t dlt_, const std::string& filename_)
 {
   if (pcap_fstream.is_open()) {
-    logger.error("PCAP {} already open", filename);
+    logger.error("Failed to open PCAP file \"{}\". Cause: File is already open", filename);
     return false;
   }
 
@@ -58,22 +65,20 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const std::string& filename_)
     return false;
   }
 
-  write_enabled = true;
-
   return true;
 }
 
-void pcap_file_base::dlt_pcap_close()
+void pcap_file_writer::close()
 {
   if (pcap_fstream.is_open()) {
-    logger.info("Saving PCAP file (DLT={}) to {}", dlt, filename.c_str());
-    write_enabled = false;
+    logger.debug("Saving PCAP (DLT={}) to \"{}\"", dlt, filename);
     pcap_fstream.flush();
     pcap_fstream.close();
+    logger.info("PCAP (DLT={}) successfully written to \"{}\" and closed.", dlt, filename);
   }
 }
 
-void pcap_file_base::write_pcap_header(uint32_t length)
+void pcap_file_writer::write_pdu_header(uint32_t length)
 {
   pcaprec_hdr_t packet_header = {};
 
@@ -92,19 +97,30 @@ void pcap_file_base::write_pcap_header(uint32_t length)
   }
 }
 
-void pcap_file_base::write_pcap_pdu(srsran::const_span<uint8_t> pdu)
+void pcap_file_writer::write_pdu(srsran::const_span<uint8_t> pdu)
 {
-  if (write_enabled) {
-    pcap_fstream.write((char*)pdu.data(), pdu.size_bytes());
+  if (not is_write_enabled()) {
+    return;
+  }
+
+  pcap_fstream.write((char*)pdu.data(), pdu.size());
+  if (pcap_fstream.fail()) {
+    logger.error("Failed to write to pcap: {}", strerror(errno));
+    return;
+  }
+}
+
+void pcap_file_writer::write_pdu(const byte_buffer& pdu)
+{
+  if (not is_write_enabled()) {
+    return;
+  }
+
+  for (span<const uint8_t> seg : pdu.segments()) {
+    pcap_fstream.write((char*)seg.data(), seg.size());
     if (pcap_fstream.fail()) {
       logger.error("Failed to write to pcap: {}", strerror(errno));
       return;
     }
-    pcap_fstream.flush();
   }
-}
-
-bool pcap_file_base::is_write_enabled()
-{
-  return write_enabled;
 }

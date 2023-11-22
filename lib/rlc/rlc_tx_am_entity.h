@@ -92,6 +92,7 @@ private:
 
   // RETX buffers
   rlc_retx_queue retx_queue;
+  uint32_t       retx_sn = INVALID_RLC_SN; // SN of the most recent ReTx since last status report
 
   // Mutexes
   std::mutex mutex;
@@ -145,7 +146,7 @@ public:
                    timer_factory                        timers,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
-                   pcap_rlc&                            pcap_);
+                   rlc_pcap&                            pcap_);
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -296,6 +297,12 @@ private:
   /// Caller _must_ hold the mutex when calling the function.
   /// \param sn The SN of the SDU for which the retx_counter shall be incremented.
   void increment_retx_count(uint32_t sn);
+
+  /// \brief Decrements the retx_count for a given SN if applicable.
+  ///
+  /// Caller _must_ hold the mutex when calling the function.
+  /// \param sn The SN of the SDU for which the retx_counter shall be decremented.
+  void decrement_retx_count(uint32_t sn);
 
   /// \brief Helper to check if a SN has reached the max RETX threshold
   ///

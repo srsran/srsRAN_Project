@@ -22,7 +22,7 @@
 
 #include "f1c_gateway_local_connector.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

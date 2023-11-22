@@ -28,8 +28,8 @@
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_ue_configurator.h"
-#include "srsran/pcap/pcap.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
@@ -177,18 +177,6 @@ struct mac_test_ue {
 
   void                  add_bearer(lcid_t lcid);
   mac_ue_create_request make_ue_create_request();
-};
-
-class dummy_mac_pcap : public mac_pcap
-{
-public:
-  ~dummy_mac_pcap() override = default;
-
-  void open(const std::string& filename_, mac_pcap_type type) override {}
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
 } // namespace test_helpers

@@ -153,7 +153,7 @@ private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
   /// allocated.
   static const size_t RES_MANAGER_RING_BUFFER_SIZE =
-      get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1);
+      get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
 
   static const unsigned PUCCH_HARQ_F1_RES_SET_ID = 0;
   static const unsigned PUCCH_HARQ_F2_RES_SET_ID = 1;

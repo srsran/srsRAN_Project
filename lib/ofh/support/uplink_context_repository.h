@@ -25,7 +25,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
-#include "srsran/ofh/slot_symbol_point.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"

@@ -20,13 +20,13 @@
  *
  */
 
-#include "ofh_ota_symbol_dispatcher.h"
+#include "ru_ofh_timing_notifier_impl.h"
+#include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
-using namespace ofh;
 
-void ota_symbol_dispatcher::notify_new_slot(slot_symbol_point symbol_point)
+void ru_ofh_timing_notifier_impl::notify_new_slot(ofh::slot_symbol_point symbol_point)
 {
   // First incoming slot, update the current slot and exit. Exiting in this point will make to notify to the upper
   // layers when a new slot starts, instead of notifying in a random time point of the slot.
@@ -42,37 +42,29 @@ void ota_symbol_dispatcher::notify_new_slot(slot_symbol_point symbol_point)
   }
 
   current_slot = symbol_point.get_slot();
-  time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
+  timing_notifier.on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 }
 
-void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+void ru_ofh_timing_notifier_impl::on_new_symbol(ofh::slot_symbol_point symbol_point)
 {
   // First task, notify the new slot.
   notify_new_slot(symbol_point);
 
   if (symbol_point.get_symbol_index() == half_slot_symbol) {
-    time_notifier->on_ul_half_slot_boundary(symbol_point.get_slot());
+    timing_notifier.on_ul_half_slot_boundary(symbol_point.get_slot());
   }
 
   if (symbol_point.get_symbol_index() == full_slot_symbol) {
-    time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
-  }
-
-  // Last, handle the new symbol.
-  for (auto* handler : symbol_handlers) {
-    handler->handle_new_ota_symbol(symbol_point);
+    timing_notifier.on_ul_full_slot_boundary(symbol_point.get_slot());
   }
 }
 
-ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         nof_slot_offset_du_ru_,
-                                             unsigned                         nof_symbols_per_slot,
-                                             std::unique_ptr<timing_notifier> timing_notifier_,
-                                             span<ota_symbol_handler*>        symbol_handlers_) :
+ru_ofh_timing_notifier_impl::ru_ofh_timing_notifier_impl(unsigned            nof_slot_offset_du_ru_,
+                                                         unsigned            nof_symbols_per_slot,
+                                                         ru_timing_notifier& timing_notifier_) :
   nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
   half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
   full_slot_symbol(nof_symbols_per_slot - 1U),
-  time_notifier(std::move(timing_notifier_)),
-  symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end())
+  timing_notifier(timing_notifier_)
 {
-  srsran_assert(time_notifier, "Invalid timing notifier");
 }

@@ -22,9 +22,10 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "backend_pcap_writer.h"
+#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
@@ -32,28 +33,26 @@ namespace srsran {
 class dlt_pcap_impl final : public dlt_pcap
 {
 public:
-  dlt_pcap_impl(unsigned dlt_, const std::string& layer_name_, os_sched_affinity_bitmask cpu_mask = {});
+  dlt_pcap_impl(unsigned           dlt_,
+                const std::string& layer_name_,
+                const std::string& filename,
+                task_executor&     backend_exec_);
   ~dlt_pcap_impl() override;
   dlt_pcap_impl(const dlt_pcap_impl& other)            = delete;
   dlt_pcap_impl& operator=(const dlt_pcap_impl& other) = delete;
   dlt_pcap_impl(dlt_pcap_impl&& other)                 = delete;
   dlt_pcap_impl& operator=(dlt_pcap_impl&& other)      = delete;
 
-  void open(const std::string& filename_) override;
   void close() override;
-  bool is_write_enabled() override;
-  void push_pdu(srsran::byte_buffer pdu) override;
-  void push_pdu(srsran::const_span<uint8_t> pdu) override;
+  bool is_write_enabled() const override { return writer.is_write_enabled(); }
+  void push_pdu(byte_buffer pdu) override;
+  void push_pdu(const_span<uint8_t> pdu) override;
 
 private:
-  unsigned                  dlt;
-  std::string               layer_name;
-  void                      write_pdu(srsran::byte_buffer buf);
-  os_sched_affinity_bitmask cpu_mask;
-  task_worker               worker;
-  std::vector<uint8_t>      tmp_mem;
-  pcap_file_base            writter;
-  std::atomic<bool>         is_open{false};
+  std::string           layer_name;
+  srslog::basic_logger& logger;
+
+  backend_pcap_writer writer;
 };
 
 } // namespace srsran

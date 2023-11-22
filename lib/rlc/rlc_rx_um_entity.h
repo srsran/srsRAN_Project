@@ -107,7 +107,7 @@ public:
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_factory                     timers,
                    task_executor&                    ue_executor,
-                   pcap_rlc&                         pcap_);
+                   rlc_pcap&                         pcap_);
 
   void on_expired_reassembly_timer();
 

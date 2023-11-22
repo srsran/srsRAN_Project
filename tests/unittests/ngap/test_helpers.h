@@ -25,7 +25,7 @@
 #include "ngap_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -313,16 +313,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-};
-
-class dummy_ngap_pcap : public dlt_pcap
-{
-public:
-  void open(const std::string& filename_) override {}
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(const_span<uint8_t> pdu) override {}
-  void push_pdu(byte_buffer pdu) override {}
 };
 
 } // namespace srs_cu_cp

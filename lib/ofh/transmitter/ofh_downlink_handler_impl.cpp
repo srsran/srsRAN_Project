@@ -21,6 +21,7 @@
  */
 
 #include "ofh_downlink_handler_impl.h"
+#include "helpers.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 
@@ -33,13 +34,16 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   cp(config.cp),
   tdd_config(config.tdd_config),
   dl_eaxc(config.dl_eaxc),
-  window_checker(std::move(dependencies.window_checker)),
+  window_checker(
+      *dependencies.logger,
+      calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
+      get_nsymb_per_slot(config.cp),
+      to_numerology_value(config.scs)),
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
   frame_pool_ptr(dependencies.frame_pool_ptr),
   frame_pool(*frame_pool_ptr)
 {
-  srsran_assert(window_checker, "Invalid transmission window checker");
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
   srsran_assert(frame_pool_ptr, "Invalid frame pool");
@@ -55,7 +59,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   // Clear any stale buffers associated with the context slot.
   frame_pool.clear_slot(context.slot);
 
-  if (window_checker->is_late(context.slot)) {
+  if (window_checker.is_late(context.slot)) {
     logger.warning(
         "Dropping downlink resource grid at slot={} and sector={} as it arrived late", context.slot, context.sector);
 

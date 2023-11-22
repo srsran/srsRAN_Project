@@ -68,10 +68,6 @@ public:
 
   /// \brief Configures the MAC cell CRC handler to the given one.
   virtual void set_cell_crc_handler(mac_cell_control_information_handler& handler) = 0;
-
-  // :TODO: add the rest of the MAC handlers.
-
-  // :TODO: should provide access to the cell interface.
 };
 
 } // namespace fapi_adaptor

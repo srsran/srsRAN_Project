@@ -73,7 +73,7 @@ protected:
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
   std::unique_ptr<rlc_rx_tm_test_frame> tester;
-  pcap_rlc_dummy                        pcap;
+  null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_rx_tm_entity>     rlc;
 };
 

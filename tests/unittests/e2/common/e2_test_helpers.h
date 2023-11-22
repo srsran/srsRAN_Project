@@ -29,7 +29,6 @@
 #include "lib/e2/e2sm/e2sm_param_provider.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2.h"
@@ -39,6 +38,7 @@
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/network_gateway.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
@@ -94,9 +94,8 @@ private:
 class dummy_e2ap_pcap : public dlt_pcap
 {
 public:
-  void open(const std::string& filename_) override {}
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
 };
@@ -429,9 +428,13 @@ public:
     return outcome;
   };
 
-  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override {}
+  void start_subscription(const asn1::e2ap::ri_crequest_id_s& ric_request_id,
+                          e2_event_manager&                   ev_mng,
+                          uint16_t                            ran_func_id) override
+  {
+  }
 
-  void stop_subscription(int                                                 ric_instance_id,
+  void stop_subscription(const asn1::e2ap::ri_crequest_id_s&                 ric_request_id,
                          e2_event_manager&                                   ev_mng,
                          const asn1::e2ap::ricsubscription_delete_request_s& msg) override
   {
@@ -536,7 +539,7 @@ inline asn1::e2ap::ri_caction_to_be_setup_item_s generate_e2sm_kpm_ric_action(e2
 inline e2_message generate_e2sm_kpm_subscription_request(asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
 {
   asn1::e2ap::ricsubscription_request_s ric_subscript_reqs;
-  ric_subscript_reqs->ra_nfunction_id->value           = 147;
+  ric_subscript_reqs->ra_nfunction_id->value           = e2sm_kpm_asn1_packer::ran_func_id;
   ric_subscript_reqs->ri_crequest_id->ric_requestor_id = 1;
   ric_subscript_reqs->ri_crequest_id->ric_instance_id  = 0;
   ric_subscript_reqs->ricsubscription_details->ric_action_to_be_setup_list.resize(1);
@@ -569,7 +572,7 @@ inline e2_message generate_e2_ind_msg(byte_buffer& ind_hdr_bytes, byte_buffer& i
   e2_ind.indication->ri_cind_msg.crit                 = asn1::crit_opts::reject;
   e2_ind.indication->ri_crequest_id->ric_requestor_id = 1;
   e2_ind.indication->ri_crequest_id->ric_instance_id  = 0;
-  e2_ind.indication->ra_nfunction_id.value            = 147;
+  e2_ind.indication->ra_nfunction_id.value            = e2sm_kpm_asn1_packer::ran_func_id;
   e2_ind.indication->ri_caction_id.value              = 4;
   e2_ind.indication->ri_cind_sn_present               = true;
   e2_ind.indication->ri_cind_sn->value                = 1234;
@@ -876,4 +879,5 @@ class e2_test_setup : public e2_test_base
     srslog::flush();
   }
 };
+
 } // namespace srsran

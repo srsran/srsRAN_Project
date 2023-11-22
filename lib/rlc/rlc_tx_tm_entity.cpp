@@ -32,7 +32,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(uint32_t                             du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    task_executor&                       pcell_executor_,
-                                   pcap_rlc&                            pcap_) :
+                                   rlc_pcap&                            pcap_) :
   rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id, /* is_uplink */ false)

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
 #include <fstream>
@@ -53,28 +54,29 @@ struct pcaprec_hdr_t {
 /// @brief Base class for PCAP writing to files.
 /// The class in *not* thread-safe. Proper protection from multiple threads
 /// needs to be implemented by the user of the class.
-class pcap_file_base
+class pcap_file_writer
 {
 public:
-  pcap_file_base() : logger(srslog::fetch_basic_logger("PCAP")){};
-  ~pcap_file_base()                                      = default;
-  pcap_file_base(const pcap_file_base& other)            = delete;
-  pcap_file_base& operator=(const pcap_file_base& other) = delete;
-  pcap_file_base(pcap_file_base&& other)                 = delete;
-  pcap_file_base& operator=(pcap_file_base&& other)      = delete;
+  pcap_file_writer();
+  ~pcap_file_writer();
+  pcap_file_writer(const pcap_file_writer& other)            = delete;
+  pcap_file_writer& operator=(const pcap_file_writer& other) = delete;
+  pcap_file_writer(pcap_file_writer&& other)                 = delete;
+  pcap_file_writer& operator=(pcap_file_writer&& other)      = delete;
 
-  bool is_write_enabled();
+  bool is_write_enabled() const { return pcap_fstream.is_open(); }
 
-  bool dlt_pcap_open(uint32_t dlt, const std::string& filename);
-  void dlt_pcap_close();
-  void write_pcap_header(uint32_t length);
-  void write_pcap_pdu(srsran::const_span<uint8_t> pdu);
+  bool open(uint32_t dlt, const std::string& filename);
+  void close();
+  void write_pdu_header(uint32_t length);
+  void write_pdu(srsran::const_span<uint8_t> pdu);
+  void write_pdu(const byte_buffer& pdu);
 
 private:
   srslog::basic_logger& logger;
-  std::atomic<bool>     write_enabled{false};
   std::ofstream         pcap_fstream;
   std::string           filename;
   uint32_t              dlt = 0;
 };
+
 } // namespace srsran

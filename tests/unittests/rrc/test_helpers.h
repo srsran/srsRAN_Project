@@ -142,7 +142,8 @@ private:
 class dummy_cell_meas_manager : public cell_meas_manager
 {
 public:
-  optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t nci) override
+  optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t           nci,
+                                                optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;

@@ -398,6 +398,42 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
+static sib2_info create_sib2_info(const gnb_appconfig& config)
+{
+  sib2_info sib2;
+  sib2.q_hyst_db                 = 3;
+  sib2.q_rx_lev_min              = -70;
+  sib2.s_intra_search_p          = 31;
+  sib2.t_reselection_nr          = 1;
+  sib2.cell_reselection_priority = 6;
+  sib2.thresh_serving_low_p      = 0;
+  return sib2;
+}
+
+static sib19_info create_sib19_info(const gnb_appconfig& config)
+{
+  sib19_info sib19;
+  sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
+  sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
+
+  if (config.ntn_cfg.value().distance_threshold.has_value()) {
+    sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
+  }
+  if (config.ntn_cfg.value().epoch_time.has_value()) {
+    sib19.epoch_time = config.ntn_cfg.value().epoch_time.value();
+  }
+  if (config.ntn_cfg.value().k_mac.has_value()) {
+    sib19.k_mac = config.ntn_cfg.value().k_mac.value();
+  }
+  if (config.ntn_cfg.value().ta_info.has_value()) {
+    sib19.ta_info = config.ntn_cfg.value().ta_info.value();
+  }
+  if (config.ntn_cfg.value().reference_location.has_value()) {
+    sib19.ref_location = config.ntn_cfg.value().reference_location.value();
+  }
+  return sib19;
+}
+
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -422,8 +458,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.min_k2                = base_cell.pusch_cfg.min_k2;
     param.coreset0_index        = base_cell.pdcch_cfg.common.coreset0_index;
     param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration;
-
-    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+    const unsigned nof_crbs     = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
@@ -496,14 +531,23 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       for (const uint8_t sib_id : sibs_included) {
         sib_info item;
         switch (sib_id) {
+          case 2: {
+            item = create_sib2_info(config);
+          } break;
           case 19: {
-            item = base_cell.sib_cfg.sib19;
+            if (config.ntn_cfg.has_value()) {
+              item = create_sib19_info(config);
+            } else {
+              report_error("SIB19 is not configured, NTN fields required\n");
+            }
           } break;
           default:
             report_error("SIB{} not supported\n", sib_id);
         }
         out_cell.si_config->sibs.push_back(item);
       }
+      // Enable otherSI search space.
+      out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(1);
     }
 
     // UE timers and constants config.
@@ -591,6 +635,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         base_cell.pusch_cfg.p0_nominal_with_grant;
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
 
+    if (config.ntn_cfg.has_value()) {
+      out_cell.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
+    }
     // Parameters for PUCCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
@@ -934,6 +981,43 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
   return out_cfg;
 }
 
+srsran::rlc_am_config srsran::generate_rlc_am_config(const rlc_am_appconfig& in_cfg)
+{
+  rlc_am_config out_rlc;
+  // AM Config
+  //<  TX SN
+  if (!from_number(out_rlc.tx.sn_field_length, in_cfg.tx.sn_field_length)) {
+    report_error("Invalid RLC AM TX SN: SN={}\n", in_cfg.tx.sn_field_length);
+  }
+  out_rlc.tx.t_poll_retx     = in_cfg.tx.t_poll_retx;
+  out_rlc.tx.max_retx_thresh = in_cfg.tx.max_retx_thresh;
+  out_rlc.tx.poll_pdu        = in_cfg.tx.poll_pdu;
+  out_rlc.tx.poll_byte       = in_cfg.tx.poll_byte;
+  out_rlc.tx.max_window      = in_cfg.tx.max_window;
+  out_rlc.tx.queue_size      = in_cfg.tx.queue_size;
+  //< RX SN
+  if (!from_number(out_rlc.rx.sn_field_length, in_cfg.rx.sn_field_length)) {
+    report_error("Invalid RLC AM RX SN: SN={}\n", in_cfg.rx.sn_field_length);
+  }
+  out_rlc.rx.t_reassembly      = in_cfg.rx.t_reassembly;
+  out_rlc.rx.t_status_prohibit = in_cfg.rx.t_status_prohibit;
+  return out_rlc;
+}
+
+srsran::mac_lc_config srsran::generate_mac_lc_config(const mac_lc_appconfig& in_cfg)
+{
+  mac_lc_config out_mac;
+
+  out_mac.priority            = in_cfg.priority;
+  out_mac.lcg_id              = uint_to_lcg_id(in_cfg.lc_group_id);
+  out_mac.pbr                 = to_prioritized_bit_rate(in_cfg.prioritized_bit_rate_kBps);
+  out_mac.bsd                 = to_bucket_size_duration(in_cfg.bucket_size_duration_ms);
+  out_mac.lc_sr_mask          = false;
+  out_mac.lc_sr_delay_applied = false;
+  out_mac.sr_id               = uint_to_sched_req_id(0);
+  return out_mac;
+}
+
 std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appconfig& config)
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
@@ -967,22 +1051,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
-      //<  TX SN
-      if (!from_number(out_rlc.am.tx.sn_field_length, qos.rlc.am.tx.sn_field_length)) {
-        report_error("Invalid RLC AM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
-      }
-      out_rlc.am.tx.t_poll_retx     = qos.rlc.am.tx.t_poll_retx;
-      out_rlc.am.tx.max_retx_thresh = qos.rlc.am.tx.max_retx_thresh;
-      out_rlc.am.tx.poll_pdu        = qos.rlc.am.tx.poll_pdu;
-      out_rlc.am.tx.poll_byte       = qos.rlc.am.tx.poll_byte;
-      out_rlc.am.tx.max_window      = qos.rlc.am.tx.max_window;
-      out_rlc.am.tx.queue_size      = qos.rlc.am.tx.queue_size;
-      //< RX SN
-      if (!from_number(out_rlc.am.rx.sn_field_length, qos.rlc.am.rx.sn_field_length)) {
-        report_error("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
-      }
-      out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
-      out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
+      out_rlc.am = generate_rlc_am_config(qos.rlc.am);
     }
     out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc_report_period);
 
@@ -992,14 +1061,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     out_f1u.t_notify = qos.f1u_du.t_notify;
 
     // Convert MAC config
-    auto& out_mac               = out_cfg[qos.five_qi].mac;
-    out_mac.priority            = qos.mac.priority;
-    out_mac.lcg_id              = uint_to_lcg_id(qos.mac.lc_group_id);
-    out_mac.pbr                 = to_prioritized_bit_rate(qos.mac.prioritized_bit_rate_kBps);
-    out_mac.bsd                 = to_bucket_size_duration(qos.mac.bucket_size_duration_ms);
-    out_mac.lc_sr_mask          = false;
-    out_mac.lc_sr_delay_applied = false;
-    out_mac.sr_id               = uint_to_sched_req_id(0);
+    out_cfg[qos.five_qi].mac = generate_mac_lc_config(qos.mac);
   }
   return out_cfg;
 }
@@ -1008,14 +1070,42 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
 {
   std::map<srb_id_t, du_srb_config> srb_cfg;
 
+  // SRB1
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
+  }
   srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
-  srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
 
-  // Make SRB2/SRB3 config equal to SRB1.
-  srb_cfg.insert(std::make_pair(srb_id_t::srb2, srb_cfg.at(srb_id_t::srb1)));
-  srb_cfg.insert(std::make_pair(srb_id_t::srb3, srb_cfg.at(srb_id_t::srb1)));
+  // SRB2
+  srb_cfg.insert(std::make_pair(srb_id_t::srb2, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
+  }
+  srb_cfg.at(srb_id_t::srb2).mac = make_default_srb_mac_lc_config(LCID_SRB2);
 
+  // SRB3
+  srb_cfg.insert(std::make_pair(srb_id_t::srb3, du_srb_config{}));
+  if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
+    auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
+    out_rlc.mode  = rlc_mode::am;
+    out_rlc.am    = generate_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+  } else {
+    srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
+  }
+  srb_cfg.at(srb_id_t::srb3).mac = make_default_srb_mac_lc_config(LCID_SRB3);
+
+  if (config.ntn_cfg.has_value()) {
+    ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
+  }
   return srb_cfg;
 }
 
@@ -1616,5 +1706,31 @@ void srsran::derive_auto_params(gnb_appconfig& gnb_params)
 
   for (auto& cell : gnb_params.cells_cfg) {
     derive_cell_auto_params(cell.cell);
+  }
+}
+
+void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs)
+{
+  // NTN is enabled, so we need to augment the RLC parameters for the NTN cell.
+  for (auto& srb : srb_cfgs) {
+    if (ntn_cfg.cell_specific_koffset > 1000) {
+      srb.second.rlc.am.tx.t_poll_retx = 4000;
+    } else if (ntn_cfg.cell_specific_koffset > 800) {
+      srb.second.rlc.am.tx.t_poll_retx = 2000;
+    } else if (ntn_cfg.cell_specific_koffset > 500) {
+      srb.second.rlc.am.tx.t_poll_retx = 2000;
+    } else if (ntn_cfg.cell_specific_koffset > 300) {
+      srb.second.rlc.am.tx.t_poll_retx = 1000;
+    } else if (ntn_cfg.cell_specific_koffset > 200) {
+      srb.second.rlc.am.tx.t_poll_retx = 800;
+    } else if (ntn_cfg.cell_specific_koffset > 100) {
+      srb.second.rlc.am.tx.t_poll_retx = 400;
+    } else if (ntn_cfg.cell_specific_koffset > 50) {
+      srb.second.rlc.am.tx.t_poll_retx = 200;
+    } else if (ntn_cfg.cell_specific_koffset > 10) {
+      srb.second.rlc.am.tx.t_poll_retx = 100;
+    } else {
+      srb.second.rlc.am.tx.t_poll_retx = 50;
+    }
   }
 }

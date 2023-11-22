@@ -64,6 +64,8 @@ static std::vector<gnb_os_sched_affinity_config> build_affinity_manager_dependen
 
 worker_manager::worker_manager(const gnb_appconfig& appcfg) : affinity_mng(build_affinity_manager_dependencies(appcfg))
 {
+  create_non_rt_worker_pool(appcfg);
+
   create_du_cu_executors(appcfg);
 
   create_ru_executors(appcfg);
@@ -113,6 +115,35 @@ void worker_manager::create_prio_worker(const std::string&                      
   }
 }
 
+void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+
+  task_queue                         strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
+  std::vector<worker_pool::executor> executors = {{"pcap_exec", strand_cfg}};
+  if (appcfg.pcap_cfg.gtpu.enabled) {
+    executors.push_back({"gtpu_pcap_exec", strand_cfg});
+  }
+  if (appcfg.pcap_cfg.mac.enabled) {
+    executors.push_back({"mac_pcap_exec", strand_cfg});
+  }
+  if (appcfg.pcap_cfg.rlc.enabled) {
+    executors.push_back({"rlc_pcap_exec", strand_cfg});
+  }
+
+  const worker_pool pool{
+      "non_rt_worker_pool",
+      2,
+      {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+      executors,
+      std::chrono::microseconds{100},
+      os_thread_realtime_priority::no_realtime(),
+      std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
+  if (not exec_mng.add_execution_context(create_execution_context(pool))) {
+    report_fatal_error("Failed to instantiate {} execution context", pool.name);
+  }
+}
+
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
@@ -135,8 +166,8 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, false},
-       {"ue_dl_exec", task_priority::max - 2, false}},
+       {"ue_ul_exec", task_priority::max - 1, nullopt, false},
+       {"ue_dl_exec", task_priority::max - 2, nullopt, false}},
       os_thread_realtime_priority::max() - 30,
       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
@@ -177,7 +208,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, true, is_blocking_mode_active}},
+         {"slot_exec#" + cell_id_str, task_priority::max, nullopt, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 

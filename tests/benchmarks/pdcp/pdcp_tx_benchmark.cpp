@@ -92,10 +92,10 @@ void benchmark_pdcp_tx(security::integrity_enabled   int_enabled,
   // Set TX config
   pdcp_tx_config config         = {};
   config.rb_type                = pdcp_rb_type::drb;
-  config.rlc_mode               = pdcp_rlc_mode::am;
+  config.rlc_mode               = pdcp_rlc_mode::um;
   config.sn_size                = pdcp_sn_size::size18bits;
   config.direction              = pdcp_security_direction::downlink;
-  config.discard_timer          = pdcp_discard_timer::ms10;
+  config.discard_timer          = pdcp_discard_timer::infinity;
   config.status_report_required = false;
 
   security::sec_128_as_config sec_cfg = {};
@@ -142,10 +142,13 @@ void benchmark_pdcp_tx(security::integrity_enabled   int_enabled,
     pdcp_tx->handle_sdu(sdu_list[pdcp_sn].copy());
     pdcp_sn++;
   };
-  bm->new_measure("Handling status pdu", 1, measure);
+  bm->new_measure("PDCP TX", 1500 * 8, measure);
 
   // Output results.
   bm->print_percentiles_time();
+
+  // Output results.
+  bm->print_percentiles_throughput(" bps");
 }
 
 int main(int argc, char** argv)

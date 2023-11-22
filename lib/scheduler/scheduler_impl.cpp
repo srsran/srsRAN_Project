@@ -39,6 +39,11 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 {
   srsran_assert(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
   srsran_assert(not cells.contains(msg.cell_index), "cell={} already exists", msg.cell_index);
+  // Cell group index must be unique since carrier Aggregation is not supported.
+  srsran_assert(not groups.contains(msg.cell_group_index),
+                "cell={} with cell group index={} already exists",
+                msg.cell_index,
+                msg.cell_group_index);
   srsran_assert(
       not config_validators::validate_sched_cell_configuration_request_message(msg, expert_params).is_error(),
       "Invalid cell configuration request message. Cause: {}",

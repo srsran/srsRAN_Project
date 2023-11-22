@@ -85,14 +85,15 @@ public:
   void handle_ue_removal_request(ue_index_t ue_index) override;
 
   // cu_cp interface
-  du_repository&                    get_connected_dus() override { return du_db; }
-  cu_up_repository&                 get_connected_cu_ups() override { return cu_up_db; }
-  cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() override { return *this; }
-  cu_cp_e1ap_handler&               get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
-  cu_cp_ngap_handler&               get_cu_cp_ngap_handler() override { return *this; }
-  cu_cp_rrc_ue_interface&           get_cu_cp_rrc_ue_interface() override { return *this; }
-  cu_cp_ue_removal_handler&         get_cu_cp_ue_removal_handler() override { return *this; }
+  du_repository&                         get_connected_dus() override { return du_db; }
+  cu_up_repository&                      get_connected_cu_ups() override { return cu_up_db; }
+  cu_cp_cu_up_connection_interface&      get_cu_cp_cu_up_connection_interface() override { return *this; }
+  cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
+  cu_cp_ngap_connection_interface&       get_cu_cp_ngap_connection_interface() override { return *this; }
+  cu_cp_ngap_handler&                    get_cu_cp_ngap_handler() override { return *this; }
+  cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
+  cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
 
 private:
   // Handling of DU events.

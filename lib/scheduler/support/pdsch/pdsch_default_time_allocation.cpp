@@ -173,8 +173,23 @@ srsran::get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_c
 span<const pdsch_time_domain_resource_allocation>
 srsran::get_si_rnti_pdsch_time_domain_list(cyclic_prefix cp, dmrs_typeA_position dmrs_typeA_pos)
 {
-  // TODO: Check for multiplexing pattern and SearchSpace type (Type0 common or Type0A common).
+  // TODO: Check for multiplexing pattern and SearchSpace type (Type0 common).
   // NOTE: Type0 common PDCCH and multiplexing pattern 1 is assumed to fetch applicable PDSCH time domain resource
+  // allocation.
+  return pdsch_default_time_allocations_default_A_table(cp, dmrs_typeA_pos);
+}
+
+span<const pdsch_time_domain_resource_allocation>
+srsran::get_si_rnti_type0A_common_pdsch_time_domain_list(const pdsch_config_common& pdsch_common,
+                                                         cyclic_prefix              cp,
+                                                         dmrs_typeA_position        dmrs_typeA_pos)
+{
+  // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for SI-RNTI Type0A common.
+  if (not pdsch_common.pdsch_td_alloc_list.empty()) {
+    return pdsch_common.pdsch_td_alloc_list;
+  }
+  // TODO: Check for multiplexing pattern and SearchSpace type (Type0A common).
+  // NOTE: Type0A common PDCCH and multiplexing pattern 1 is assumed to fetch applicable PDSCH time domain resource
   // allocation.
   return pdsch_default_time_allocations_default_A_table(cp, dmrs_typeA_pos);
 }

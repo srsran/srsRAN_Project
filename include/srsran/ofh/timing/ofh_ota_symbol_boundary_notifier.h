@@ -22,21 +22,23 @@
 
 #pragma once
 
-#include "srsran/ofh/slot_symbol_point.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 
 namespace srsran {
 namespace ofh {
 
-/// \brief Open Fronthaul interface to handle OTA symbol-based timing events.
-class ota_symbol_handler
+/// This interface notifies the timing boundary of an OFDM symbol over the air.
+class ota_symbol_boundary_notifier
 {
 public:
-  /// Default destructor.
-  virtual ~ota_symbol_handler() = default;
+  virtual ~ota_symbol_boundary_notifier() = default;
 
-  /// \brief Callback function called on a new OFDM symbol timing event.
+  /// \brief Notifies a new OTA symbol boundary event.
+  ///
+  /// Notifies that the beginning of a new OTA symbol has started.
+  ///
   /// \param[in] symbol_point Current slot and symbol point.
-  virtual void handle_new_ota_symbol(slot_symbol_point symbol_point) = 0;
+  virtual void on_new_symbol(slot_symbol_point symbol_point) = 0;
 };
 
 } // namespace ofh

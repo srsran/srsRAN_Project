@@ -203,14 +203,17 @@ public:
   using base_type::end;
   using base_type::front;
 
-  constexpr static_vector() noexcept = default;
+  /// \brief Construct an empty static_vector.
+  ///
+  /// Note: The ctor needs to be user-defined to forbid zero-initialization of the storage via = {}.
+  constexpr static_vector() noexcept {}
   explicit constexpr static_vector(size_type count) noexcept(std::is_nothrow_default_constructible<T>::value)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
     srsran_assert(count <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
     srsran_assume(count <= MAX_N);
-    for (size_type i = this->sz; i != count; ++i) {
+    for (size_type i = 0; i != count; ++i) {
       this->construct_(i);
     }
     this->sz = count;

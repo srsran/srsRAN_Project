@@ -22,41 +22,37 @@
 
 #pragma once
 
-#include "pcap_file_base.h"
+#include "backend_pcap_writer.h"
+#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
 
-class pcap_rlc_impl final : public pcap_rlc
+class rlc_pcap_impl final : public rlc_pcap
 {
 public:
-  pcap_rlc_impl();
-  explicit pcap_rlc_impl(const os_sched_affinity_bitmask& mask);
-  ~pcap_rlc_impl() override;
-  pcap_rlc_impl(const pcap_rlc_impl& other)            = delete;
-  pcap_rlc_impl& operator=(const pcap_rlc_impl& other) = delete;
-  pcap_rlc_impl(pcap_rlc_impl&& other)                 = delete;
-  pcap_rlc_impl& operator=(pcap_rlc_impl&& other)      = delete;
+  rlc_pcap_impl(const std::string& filename, bool capture_srb, bool capture_drb, task_executor& backend_exec);
+  ~rlc_pcap_impl() override;
+  rlc_pcap_impl(const rlc_pcap_impl& other)            = delete;
+  rlc_pcap_impl& operator=(const rlc_pcap_impl& other) = delete;
+  rlc_pcap_impl(rlc_pcap_impl&& other)                 = delete;
+  rlc_pcap_impl& operator=(rlc_pcap_impl&& other)      = delete;
 
-  void open(const std::string& filename_) override;
   void close() override;
-  bool is_write_enabled() override;
+  bool is_write_enabled() const override { return writer.is_write_enabled(); }
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
-  void capture_srb(bool srb_enabled_) override;
-  void capture_drb(bool drb_enabled_) override;
-
 private:
-  void                      write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
-  std::vector<uint8_t>      tmp_mem;
-  os_sched_affinity_bitmask cpu_mask;
-  task_worker               worker;
-  pcap_file_base            writter;
-  std::atomic<bool>         is_open{false};
-  bool                      drb_enabled = true;
-  bool                      srb_enabled = true;
+  byte_buffer pack_context(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) const;
+
+  bool srb_enabled = true;
+  bool drb_enabled = true;
+
+  srslog::basic_logger& logger;
+
+  backend_pcap_writer writer;
 };
 } // namespace srsran

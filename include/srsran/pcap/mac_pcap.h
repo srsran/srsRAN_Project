@@ -28,6 +28,8 @@
 
 namespace srsran {
 
+class task_executor;
+
 // Radio Type
 constexpr uint8_t PCAP_FDD_RADIO = 1;
 constexpr uint8_t PCAP_TDD_RADIO = 2;
@@ -67,48 +69,31 @@ struct mac_nr_context_info {
 
 enum class mac_pcap_type { udp, dlt };
 
-/// @brief Interface class for writing a MAC PCAP to a file.
+/// \brief Interface class for writing a MAC PCAP to a file.
 class mac_pcap
 {
 public:
   virtual ~mac_pcap() = default;
 
-  virtual void open(const std::string& filename_, mac_pcap_type type)         = 0;
-  virtual void close()                                                        = 0;
-  virtual bool is_write_enabled()                                             = 0;
-  virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
-  virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
+  virtual void close()                                                               = 0;
+  virtual bool is_write_enabled() const                                              = 0;
+  virtual void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) = 0;
+  virtual void push_pdu(const mac_nr_context_info& context, byte_buffer pdu)         = 0;
 };
 
-// DLT PCAP values for different layers
-constexpr uint16_t PCAP_NGAP_DLT = 152;
-constexpr uint16_t PCAP_E1AP_DLT = 153;
-constexpr uint16_t PCAP_F1AP_DLT = 154;
-constexpr uint16_t PCAP_E2AP_DLT = 155;
-constexpr uint16_t PCAP_GTPU_DLT = 156;
+/// Creates a MAC pcap writer to a file.
+std::unique_ptr<mac_pcap>
+create_mac_pcap(const std::string& filename, mac_pcap_type pcap_type, task_executor& backend_exec);
+std::unique_ptr<mac_pcap> create_null_mac_pcap();
 
-/// @brief Interface class for writing a DLT PCAP to a file.
-class dlt_pcap
+/// Null sink for MAC pcap messages. This is useful in unit tests and when the application disables pcaps.
+class null_mac_pcap : public mac_pcap
 {
 public:
-  virtual ~dlt_pcap() = default;
-
-  virtual void open(const std::string& filename_) = 0;
-  virtual void close()                            = 0;
-  virtual bool is_write_enabled()                 = 0;
-  virtual void push_pdu(const_span<uint8_t> pdu)  = 0;
-  virtual void push_pdu(byte_buffer pdu)          = 0;
-};
-
-/// @brief dummy pcap class that can be used for unit tests.
-class dummy_dlt_pcap : public dlt_pcap
-{
-public:
-  void open(const std::string& filename_) override {}
   void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(const_span<uint8_t> pdu) override {}
-  void push_pdu(byte_buffer pdu) override {}
+  bool is_write_enabled() const override { return false; }
+  void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) override {}
+  void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override {}
 };
 
 } // namespace srsran

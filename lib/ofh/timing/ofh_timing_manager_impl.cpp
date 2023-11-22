@@ -20,21 +20,17 @@
  *
  */
 
-#pragma once
+#include "ofh_timing_manager_impl.h"
 
-#include "srsran/mac/mac_cell_result.h"
-#include "srsran/pcap/pcap.h"
+using namespace srsran;
+using namespace ofh;
 
-namespace srsran {
+ota_symbol_boundary_notifier_manager& timing_manager_impl::get_ota_symbol_boundary_notifier_manager()
+{
+  return worker;
+}
 
-/// Dummy pcap writer.
-struct mac_pcap_dummy : public mac_pcap {
-public:
-  void open(const std::string& filename_, mac_pcap_type type) override {}
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
-};
-
-} // namespace srsran
+controller& timing_manager_impl::get_controller()
+{
+  return worker;
+}

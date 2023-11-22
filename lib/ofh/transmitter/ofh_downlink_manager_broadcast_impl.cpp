@@ -20,40 +20,17 @@
  *
  */
 
-#include "f1ap_pcap.h"
-#include "srsran/adt/byte_buffer.h"
-#include <stdint.h>
+#include "ofh_downlink_manager_broadcast_impl.h"
 
-namespace srsran {
+using namespace srsran;
+using namespace ofh;
 
-#define F1AP_DLT 154
-
-f1ap_pcap::~f1ap_pcap()
+downlink_handler& downlink_manager_broadcast_impl::get_downlink_handler()
 {
-  close();
+  return handler;
 }
 
-void f1ap_pcap::open(const char* filename_)
+ota_symbol_boundary_notifier& downlink_manager_broadcast_impl::get_ota_symbol_boundary_notifier()
 {
-  dlt_pcap_open(F1AP_DLT, filename_);
+  return handler.get_ota_symbol_boundary_notifier();
 }
-void f1ap_pcap::close()
-{
-  dlt_pcap_close();
-}
-
-void f1ap_pcap::write_pdu(srsran::const_span<uint8_t> pdu)
-{
-  if (!is_write_enabled() || pdu.empty()) {
-    // skip
-    return;
-  }
-
-  // write packet header
-  write_pcap_header(pdu.size_bytes());
-
-  // write PDU payload
-  write_pcap_pdu(pdu);
-}
-
-} // namespace srsran

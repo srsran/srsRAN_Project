@@ -161,11 +161,11 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
-      if (context.is_inter_cu_handover) {
+      if (context.transfer_context.has_value() && context.transfer_context.value().is_inter_cu_handover) {
         logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
         ngap_ctrl_notifier.on_inter_cu_ho_rrc_recfg_complete_received(
             context.ue_index, context.cell.cgi, context.cell.tac);
-        context.is_inter_cu_handover = false;
+        context.transfer_context.value().is_inter_cu_handover = false;
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }
@@ -325,9 +325,22 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   return release_context;
 }
 
-optional<rrc_meas_cfg> rrc_ue_impl::get_rrc_ue_meas_config()
+optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(optional<rrc_meas_cfg> current_meas_config)
 {
-  return cell_meas_mng.get_measurement_config(context.cell.cgi.nci);
+  // (Re-)generate measurement config and return result.
+  context.meas_cfg = cell_meas_mng.get_measurement_config(context.cell.cgi.nci, current_meas_config);
+  return context.meas_cfg;
+}
+
+rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
+{
+  rrc_ue_transfer_context transfer_context;
+  transfer_context.sec_context               = context.sec_context;
+  transfer_context.meas_cfg                  = context.meas_cfg;
+  transfer_context.srbs                      = get_srbs();
+  transfer_context.up_ctx                    = up_resource_mng.get_up_context();
+  transfer_context.handover_preparation_info = get_packed_handover_preparation_message();
+  return transfer_context;
 }
 
 rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()

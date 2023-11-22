@@ -62,7 +62,7 @@ public:
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
 
 private:
-  void run_sched_strategy(slot_point sl_tx);
+  void run_sched_strategy(slot_point sl_tx, du_cell_index_t cell_index);
 
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);

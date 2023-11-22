@@ -124,15 +124,15 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
   unsigned K = (1000 * scs_to_khz(context.pusch_scs)) / ra_scs_to_Hz(preamble_info.scs);
 
-  data_flow_cplane_scheduling_prach_context cp_prach_context = {};
-  cp_prach_context.slot                                      = context.slot;
-  cp_prach_context.nof_repetitions                           = get_preamble_duration(context.format);
-  cp_prach_context.start_symbol                              = prach_start_symbol;
-  cp_prach_context.prach_scs                                 = preamble_info.scs;
-  cp_prach_context.scs                                       = context.pusch_scs;
-  cp_prach_context.prach_nof_rb                              = freq_mapping_info.nof_rb_ra * K;
-  cp_prach_context.time_offset                               = cp_length;
-  cp_prach_context.prach_start_re                            = context.rb_offset * K * NOF_SUBCARRIERS_PER_RB;
+  data_flow_cplane_scheduling_prach_context cp_prach_context;
+  cp_prach_context.slot            = context.slot;
+  cp_prach_context.nof_repetitions = get_preamble_duration(context.format);
+  cp_prach_context.start_symbol    = prach_start_symbol;
+  cp_prach_context.prach_scs       = preamble_info.scs;
+  cp_prach_context.scs             = context.pusch_scs;
+  cp_prach_context.prach_nof_rb    = freq_mapping_info.nof_rb_ra * K;
+  cp_prach_context.time_offset     = cp_length;
+  cp_prach_context.prach_start_re  = context.rb_offset * K * NOF_SUBCARRIERS_PER_RB;
 
   // Determine Open Fronthaul filter index.
   cp_prach_context.filter_type = get_prach_cplane_filter_index(context, preamble_info);

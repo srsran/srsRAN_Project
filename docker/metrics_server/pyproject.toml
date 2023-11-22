@@ -1,0 +1,106 @@
+#########
+# Build #
+#########
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools", "wheel"]
+
+###########
+# Project #
+###########
+[project]
+authors = [
+  {name = "Software Radio Systems"},
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Development Status :: 5 - Production/Stable",
+]
+dependencies = [
+  "influxdb-client < 2",
+]
+description = "srsRAN Metrics Server"
+name = "srs_metrics_server"
+readme = "README.md"
+requires-python = ">=3.7"
+version = "1.1.0"
+
+[project.scripts]
+metrics-server = "metrics_server.__main__:main"
+
+#############
+# Dev Tools #
+#############
+[tool.black]
+line-length = 120
+
+[tool.isort]
+atomic = true
+combine_as_imports = true
+float_to_top = true
+force_alphabetical_sort_within_sections = true
+include_trailing_comma = true
+line_length = 120
+profile = "black"
+remove_redundant_aliases = true
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pylint]
+ignore-signatures = true
+max-line-length = 120
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 4.4.0
+envlist = 
+  format
+  lint
+  type
+  build
+
+[testenv:format]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black --check --diff --color src
+  isort --check src
+
+[testenv:format_apply]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black src
+  isort src
+
+[testenv:lint]
+deps =
+  pylint
+commands =
+  pylint src
+
+[testenv:type]
+skip_install = true
+deps = 
+  mypy
+commands = 
+  mypy src
+
+[testenv:build]
+skip_install = true
+deps =
+  build
+commands =
+  python -m build
+"""

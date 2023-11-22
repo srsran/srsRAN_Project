@@ -128,6 +128,16 @@ public:
     }
   }
 
+  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    logger.info("Received UE transfer required");
+
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ue_transfer_outcome);
+    });
+  }
+
 private:
   srslog::basic_logger&                             logger = srslog::fetch_basic_logger("TEST");
   std::unique_ptr<dummy_ngap_du_processor_notifier> ngap_notifier;
@@ -135,6 +145,7 @@ private:
   cu_cp_du_event_handler*                           cu_cp_handler       = nullptr;
   cu_cp_ue_removal_handler*                         ue_removal_handler  = nullptr;
   rrc_ue_removal_handler*                           rrc_removal_handler = nullptr;
+  bool                                              ue_transfer_outcome = true;
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {
@@ -375,8 +386,9 @@ public:
 
   void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
-  async_task<f1ap_ue_context_setup_response> on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                                                         bool is_inter_cu_handover = false) override
+  async_task<f1ap_ue_context_setup_response>
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                              optional<rrc_ue_transfer_context>    rrc_context) override
   {
     logger.info("Received a new UE context setup request");
 
@@ -501,11 +513,13 @@ public:
     return release_context;
   }
 
-  optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     optional<rrc_meas_cfg> meas_config;
     return meas_config;
   }
+
+  rrc_ue_transfer_context get_transfer_context() override { return rrc_ue_transfer_context{}; }
 
   byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; }
 

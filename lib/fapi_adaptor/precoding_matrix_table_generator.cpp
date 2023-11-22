@@ -254,7 +254,7 @@ static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_confi
   generate_csi_rs(offset, nof_ports, repo_builder);
 }
 
-std::tuple<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
+std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
 srsran::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_ports)
 {
   srsran_assert(nof_antenna_ports > 0, "Invalid number of antenna ports={}", nof_antenna_ports);

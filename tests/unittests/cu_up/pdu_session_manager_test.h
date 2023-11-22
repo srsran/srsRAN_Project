@@ -79,7 +79,7 @@ protected:
   std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
   std::unique_ptr<dummy_gtpu_teid_pool>                f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
-  dummy_dlt_pcap                                       gtpu_pcap;
+  null_dlt_pcap                                        gtpu_pcap;
   security::sec_as_config                              security_info;
   network_interface_config                             net_config;
   n3_interface_config                                  n3_config = {};

@@ -43,7 +43,7 @@ byte_buffer make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg);
 /// \return byte buffer with packed cell SIB1.
 byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str = nullptr);
 
-byte_buffer make_asn1_rrc_cell_sib19_buffer(const ntn_config& ntn_cfg, std::string* js_str = nullptr);
+byte_buffer make_asn1_rrc_cell_sib19_buffer(const sib19_info& sib19_params, std::string* js_str = nullptr);
 
 /// \brief Generate packed cell BCCH-DL-SCH messages (SIB1 + SI messages) from DU cell configuration.
 /// \param[in] du_cfg DU Cell Configuration.

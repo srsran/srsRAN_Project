@@ -34,7 +34,7 @@ class f1ap_cu_ue_context_setup_test : public f1ap_cu_test
 protected:
   void start_procedure(const f1ap_ue_context_setup_request& req)
   {
-    t = f1ap->handle_ue_context_setup_request(req);
+    t = f1ap->handle_ue_context_setup_request(req, {});
     t_launcher.emplace(t);
 
     EXPECT_EQ(this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,

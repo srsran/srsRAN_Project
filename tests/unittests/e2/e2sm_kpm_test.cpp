@@ -143,7 +143,7 @@ TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
       .value.e2setup_resp()
       ->ra_nfunctions_accepted.value[0]
       ->ra_nfunction_id_item()
-      .ran_function_id = 147;
+      .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
 }

@@ -92,7 +92,8 @@ public:
 
   /// Notify F1AP to establish the UE context.
   virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover = false) = 0;
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                              optional<rrc_ue_transfer_context>    rrc_context) = 0;
 
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.
@@ -213,9 +214,14 @@ public:
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 
-  /// \brief Get the RRC measurement config for the current serving cell of the UE.
+  /// \brief Get all mobility related information of an UE required for reestablishment, handover, etc.
+  /// \returns The mobility context of the UE.
+  virtual rrc_ue_transfer_context get_transfer_context() = 0;
+
+  /// \brief (Re-)generate the RRC measurement config for the current serving cell of the UE.
+  /// \params[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 
@@ -384,6 +390,11 @@ public:
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+
+  /// \brief Notify the CU-CP to transfer and remove ue contexts.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
+  virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// DU processor Paging handler.

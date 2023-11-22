@@ -230,10 +230,10 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       // Assumes that first entry in the PUSCH Time Domain resource list contains the k2 value which is less than or
       // equal to minimum value of k1(s).
-      const unsigned                               time_res   = 0;
-      const pusch_time_domain_resource_allocation& pusch_td   = ss->pusch_time_domain_list[time_res];
-      const slot_point                             pusch_slot = pdcch_slot + pusch_td.k2;
-      const unsigned                               start_ul_symbols =
+      const unsigned                               time_res = 0;
+      const pusch_time_domain_resource_allocation& pusch_td = ss->pusch_time_domain_list[time_res];
+      const slot_point pusch_slot                           = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
+      const unsigned   start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
       // the first transmission.
@@ -245,8 +245,9 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2);
-      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2)) {
+      const cell_slot_resource_grid& grid =
+          res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2 + cell_cfg_common.ntn_cs_koffset);
+      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2 + cell_cfg_common.ntn_cs_koffset)) {
         // only one PUSCH per UE per slot.
         continue;
       }

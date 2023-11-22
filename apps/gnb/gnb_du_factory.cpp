@@ -27,7 +27,7 @@
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 
 using namespace srsran;
 
@@ -96,7 +96,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       srs_du::f1u_du_gateway&               f1u_gw,
                                                       timer_manager&                        timer_mng,
                                                       mac_pcap&                             mac_p,
-                                                      pcap_rlc&                             rlc_p,
+                                                      rlc_pcap&                             rlc_p,
                                                       gnb_console_helper&                   console_helper,
                                                       e2_connection_client&                 e2_client_handler,
                                                       e2_metric_connector_manager&          e2_metric_connectors,

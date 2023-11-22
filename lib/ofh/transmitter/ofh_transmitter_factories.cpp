@@ -23,7 +23,8 @@
 #include "ofh_transmitter_factories.h"
 #include "ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
 #include "ofh_data_flow_uplane_downlink_task_dispatcher.h"
-#include "ofh_downlink_handler_broadcast_impl.h"
+#include "ofh_downlink_manager_broadcast_impl.h"
+#include "ofh_downlink_manager_impl.h"
 #include "ofh_transmitter_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
 #include "ofh_uplink_request_handler_task_dispatcher.h"
@@ -109,25 +110,12 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   return std::make_unique<data_flow_uplane_downlink_data_impl>(config, std::move(dependencies));
 }
 
-/// Returns the maximum value between the minimum T1a values in symbol units.
-static unsigned get_biggest_min_tx_parameter_in_symbols(const du_tx_window_timing_parameters& tx_timing_params,
-                                                        unsigned                              nof_symbols,
-                                                        subcarrier_spacing                    scs)
-{
-  auto max_value = std::max(tx_timing_params.T1a_min_cp_dl, tx_timing_params.T1a_min_cp_ul);
-  max_value      = std::max(tx_timing_params.T1a_min_up, max_value);
-
-  return std::floor(max_value /
-                    std::chrono::duration<double, std::nano>(1e6 / (nof_symbols * get_nof_slots_per_subframe(scs))));
-}
-
-static std::unique_ptr<downlink_handler>
-create_downlink_handler(const transmitter_config&                         tx_config,
+static std::unique_ptr<downlink_manager>
+create_downlink_manager(const transmitter_config&                         tx_config,
                         srslog::basic_logger&                             logger,
                         std::shared_ptr<ether::eth_frame_pool>            frame_pool,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                        const std::vector<task_executor*>&                executors,
-                        std::unique_ptr<tx_window_checker>                window_checker)
+                        const std::vector<task_executor*>&                executors)
 {
   std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_uplane_task_dispatcher_cfg;
   std::vector<data_flow_cplane_downlink_task_dispatcher_entry> df_cplane_task_dispatcher_cfg;
@@ -143,28 +131,37 @@ create_downlink_handler(const transmitter_config&                         tx_con
       std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
 
   if (tx_config.downlink_broadcast) {
-    return std::make_unique<downlink_handler_broadcast_impl>(logger,
-                                                             tx_config.cp,
-                                                             tx_config.tdd_config,
-                                                             tx_config.dl_eaxc,
-                                                             std::move(data_flow_cplane),
-                                                             std::move(data_flow_uplane),
-                                                             std::move(window_checker));
+    downlink_handler_broadcast_impl_config dl_config;
+    dl_config.dl_eaxc            = tx_config.dl_eaxc;
+    dl_config.tdd_config         = tx_config.tdd_config;
+    dl_config.cp                 = tx_config.cp;
+    dl_config.scs                = tx_config.scs;
+    dl_config.dl_processing_time = tx_config.dl_processing_time;
+    dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
+
+    downlink_handler_broadcast_impl_dependencies dl_dependencies;
+    dl_dependencies.logger           = &logger;
+    dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
+    dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
+
+    return std::make_unique<downlink_manager_broadcast_impl>(dl_config, std::move(dl_dependencies));
   }
 
   downlink_handler_impl_config dl_config;
-  dl_config.dl_eaxc    = tx_config.dl_eaxc;
-  dl_config.tdd_config = tx_config.tdd_config;
-  dl_config.cp         = tx_config.cp;
+  dl_config.dl_eaxc            = tx_config.dl_eaxc;
+  dl_config.tdd_config         = tx_config.tdd_config;
+  dl_config.cp                 = tx_config.cp;
+  dl_config.scs                = tx_config.scs;
+  dl_config.dl_processing_time = tx_config.dl_processing_time;
+  dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
 
   downlink_handler_impl_dependencies dl_dependencies;
   dl_dependencies.logger           = &logger;
   dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
   dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-  dl_dependencies.window_checker   = std::move(window_checker);
   dl_dependencies.frame_pool_ptr   = frame_pool;
 
-  return std::make_unique<downlink_handler_impl>(dl_config, std::move(dl_dependencies));
+  return std::make_unique<downlink_manager_impl>(dl_config, std::move(dl_dependencies));
 }
 
 static std::unique_ptr<uplink_request_handler>
@@ -220,22 +217,6 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
   return std::make_shared<ether::eth_frame_pool>(tx_config.mtu_size, nof_frames_per_symbol);
 }
 
-static std::unique_ptr<tx_window_checker> create_window_checker(const transmitter_config& tx_config,
-                                                                srslog::basic_logger&     logger)
-{
-  unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
-  unsigned dl_processing_time_in_symbols =
-      std::floor(tx_config.dl_processing_time / std::chrono::duration<double, std::nano>(
-                                                    1e6 / (nof_symbols * get_nof_slots_per_subframe(tx_config.scs))));
-
-  unsigned nof_symbols_before_ota =
-      dl_processing_time_in_symbols + get_biggest_min_tx_parameter_in_symbols(
-                                          tx_config.symbol_handler_cfg.tx_timing_params, nof_symbols, tx_config.scs);
-
-  return std::make_unique<tx_window_checker>(
-      logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
-}
-
 static transmitter_impl_dependencies
 resolve_transmitter_dependencies(const transmitter_config&                         tx_config,
                                  srslog::basic_logger&                             logger,
@@ -253,12 +234,8 @@ resolve_transmitter_dependencies(const transmitter_config&                      
 
   auto frame_pool = create_eth_frame_pool(tx_config, logger);
 
-  // Window checker.
-  auto window_checker         = create_window_checker(tx_config, logger);
-  dependencies.window_handler = window_checker.get();
-
-  dependencies.dl_handler = create_downlink_handler(
-      tx_config, logger, frame_pool, ul_cp_context_repo, downlink_executors, std::move(window_checker));
+  dependencies.dl_manager =
+      create_downlink_manager(tx_config, logger, frame_pool, ul_cp_context_repo, downlink_executors);
 
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(

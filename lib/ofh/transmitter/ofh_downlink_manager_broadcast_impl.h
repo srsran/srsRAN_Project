@@ -22,23 +22,29 @@
 
 #pragma once
 
-#include "srsran/ofh/slot_symbol_point.h"
+#include "ofh_downlink_handler_broadcast_impl.h"
+#include "ofh_downlink_manager.h"
 
 namespace srsran {
 namespace ofh {
 
-/// This interface notifies the timing boundary of an OFDM symbol over the air.
-class ota_symbol_boundary_notifier
+/// Open Fronthaul downlink manager broadcast implementation.
+class downlink_manager_broadcast_impl : public downlink_manager
 {
-public:
-  virtual ~ota_symbol_boundary_notifier() = default;
+  downlink_handler_broadcast_impl handler;
 
-  /// \brief Notifies a new OTA symbol boundary event.
-  ///
-  /// Notifies that the beginning of a new OTA symbol has started.
-  ///
-  /// \param[in] symbol_point Current slot and symbol point.
-  virtual void on_new_symbol(slot_symbol_point symbol_point) = 0;
+public:
+  downlink_manager_broadcast_impl(const downlink_handler_broadcast_impl_config&  config,
+                                  downlink_handler_broadcast_impl_dependencies&& dependencies) :
+    handler(config, std::move(dependencies))
+  {
+  }
+
+  // See interface for documentation.
+  downlink_handler& get_downlink_handler() override;
+
+  // See interface for documentation.
+  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 };
 
 } // namespace ofh

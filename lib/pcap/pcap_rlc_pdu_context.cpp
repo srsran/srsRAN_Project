@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 
 using namespace srsran;
 

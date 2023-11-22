@@ -45,13 +45,13 @@ public:
 };
 
 struct rrc_ue_creation_message {
-  ue_index_t             ue_index;
-  rnti_t                 c_rnti;
-  rrc_cell_context       cell;
-  rrc_pdu_f1ap_notifier* f1ap_pdu_notifier;
-  byte_buffer            du_to_cu_container;
-  rrc_ue_task_scheduler* ue_task_sched;
-  bool                   is_inter_cu_handover = false;
+  ue_index_t                        ue_index;
+  rnti_t                            c_rnti;
+  rrc_cell_context                  cell;
+  rrc_pdu_f1ap_notifier*            f1ap_pdu_notifier;
+  byte_buffer                       du_to_cu_container;
+  rrc_ue_task_scheduler*            ue_task_sched;
+  optional<rrc_ue_transfer_context> rrc_context;
 };
 
 /// \brief Interface class for the main RRC DU object used by the RRC UE objects.
@@ -75,7 +75,7 @@ public:
   virtual ~rrc_du_ue_repository() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message msg) = 0;
+  virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg) = 0;
 
   /// Get a RRC UE object.
   virtual rrc_ue_interface* find_ue(ue_index_t ue_index) = 0;

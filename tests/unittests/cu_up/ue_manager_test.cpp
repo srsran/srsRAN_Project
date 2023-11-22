@@ -22,7 +22,6 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -74,7 +73,7 @@ protected:
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
   dummy_inner_f1u_bearer                               f1u_bearer;
-  dummy_dlt_pcap                                       gtpu_pcap;
+  null_dlt_pcap                                        gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   timer_manager                                        timers;
   ue_context_cfg                                       ue_cfg;

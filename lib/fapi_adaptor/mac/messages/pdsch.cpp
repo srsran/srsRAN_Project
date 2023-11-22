@@ -252,8 +252,11 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
-  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::subcarrier_0);
-
+  fill_codeword_information(builder,
+                            mac_pdu.pdsch_cfg.n_id,
+                            (mac_pdu.si_indicator == sib_information::other_si)
+                                ? fapi::pdsch_ref_point_type::point_a
+                                : fapi::pdsch_ref_point_type::subcarrier_0);
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
   builder.set_bwp_parameters(

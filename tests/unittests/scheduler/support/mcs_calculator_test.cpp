@@ -63,5 +63,5 @@ INSTANTIATE_TEST_SUITE_P(test_snr_range,
                          snr_to_ul_mcs_tester,
                          testing::Values(snr_to_ul_mcs_test_params{-20.0, srsran::pusch_mcs_table::qam64, {0}},
                                          snr_to_ul_mcs_test_params{40.0, srsran::pusch_mcs_table::qam64, {28}},
-                                         snr_to_ul_mcs_test_params{0.0133, srsran::pusch_mcs_table::qam64, {0}},
-                                         snr_to_ul_mcs_test_params{13.0, srsran::pusch_mcs_table::qam64, {15}}));
+                                         snr_to_ul_mcs_test_params{0.0133, srsran::pusch_mcs_table::qam64, {4}},
+                                         snr_to_ul_mcs_test_params{7.8, srsran::pusch_mcs_table::qam64, {13}}));

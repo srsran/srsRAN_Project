@@ -33,7 +33,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
                                                     Bearer&                                  bearer,
                                                     const du_manager_params::service_params& du_services,
                                                     rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                    pcap_rlc&                                rlc_pcap)
+                                                    rlc_pcap&                                pcap_writer)
 {
   msg.du_index       = du_index;
   msg.ue_index       = ue_index;
@@ -45,7 +45,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
   msg.timers         = &du_services.timers;
   msg.pcell_executor = &du_services.cell_execs.executor(pcell_index);
   msg.ue_executor    = &du_services.ue_execs.ctrl_executor(ue_index);
-  msg.rlc_pcap       = &rlc_pcap;
+  msg.pcap_writer    = &pcap_writer;
 }
 
 // for SRBs
@@ -56,11 +56,11 @@ srsran::srs_du::make_rlc_entity_creation_message(uint32_t                       
                                                  du_ue_srb&                               bearer,
                                                  const du_manager_params::service_params& du_services,
                                                  rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
-                                                 pcap_rlc&                                rlc_pcap)
+                                                 rlc_pcap&                                pcap_writer)
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(
-      msg, du_index, ue_index, pcell_index, bearer, du_services, rlc_rlf_notifier, rlc_pcap);
+      msg, du_index, ue_index, pcell_index, bearer, du_services, rlc_rlf_notifier, pcap_writer);
   msg.rb_id = bearer.srb_id;
   return msg;
 }
@@ -74,11 +74,11 @@ srsran::srs_du::make_rlc_entity_creation_message(uint32_t                       
                                                  const du_manager_params::service_params& du_services,
                                                  rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
                                                  rlc_metrics_notifier*                    rlc_metrics_notifier_,
-                                                 pcap_rlc&                                rlc_pcap)
+                                                 rlc_pcap&                                pcap_writer)
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(
-      msg, du_index, ue_index, pcell_index, bearer, du_services, rlc_rlf_notifier, rlc_pcap);
+      msg, du_index, ue_index, pcell_index, bearer, du_services, rlc_rlf_notifier, pcap_writer);
   msg.rb_id             = bearer.drb_id;
   msg.rlc_metrics_notif = rlc_metrics_notifier_;
   return msg;

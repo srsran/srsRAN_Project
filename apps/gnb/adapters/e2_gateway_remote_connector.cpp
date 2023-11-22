@@ -24,7 +24,7 @@
 #include "../adapters/e2ap_adapter.h"
 #include "srsran/e2/e2.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 
 namespace srsran {
 

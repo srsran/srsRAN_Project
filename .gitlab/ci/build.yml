@@ -304,6 +304,11 @@ variables:
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
         rm -Rf build_time_metrics.txt
+      else
+        mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
+        cd build
+        make clean
+        mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
       fi
   timeout: 4h
   artifacts: &build_artifacts
@@ -314,8 +319,7 @@ variables:
         path: ${CI_JOB_ID}_coverage.xml
     paths:
       - ${CI_JOB_ID}_coverage.xml
-      - build/apps/gnb/gnb
-      - build/Testing/Temporary/MemoryChecker.*.log
+      - build/
       - build_time_metrics.txt
     expire_in: 10 minutes
   cache:
@@ -330,11 +334,22 @@ variables:
     COMPILER: gcc
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
-    ENABLE_GCOV: "True"
     TEST_MODE: coverage
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    SAVE_ARTIFACTS: "True"
+    ENABLE_GCOV: "True"
+  tags: ["${AMD64_AVX2_TAG}"]
+
+.smoke relwithdeb:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: RelWithDebInfo
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke tsan:
@@ -375,6 +390,34 @@ variables:
     ENABLE_AVX512: "False"
   tags: ["${AMD64_TAG}"]
 
+.smoke dpdk:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-23.10
+    COMPILER: clang
+    BUILD_TYPE: Release
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    ASSERT_LEVEL: PARANOID
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    DPDK_VERSION: "23.07"
+  tags: ["${AMD64_TAG}"]
+
+.smoke valgrind:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: valgrind
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    BUILD_ARGS: -DEXIT_TIMEOUT=120
+  tags: ["${AMD64_AVX2_TAG}"]
+
 # Combinations to use in schedules matrix
 
 .combinations: &basic_combinations
@@ -388,26 +431,30 @@ variables:
 
 # Smoke builds in PR: with or without cache
 
-smoke release cached:
-  extends: .smoke release
+smoke relwithdeb cached:
+  extends: .smoke relwithdeb
   timeout: 45 min
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
+  variables:
+    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke tsan cached:
   extends: .smoke tsan
+  stage: manual
   timeout: 45 min
-  variables:
-    SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
@@ -442,12 +489,27 @@ smoke archlinux cached:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
-smoke release clean:
-  extends: .smoke release
+smoke dpdk cached:
+  extends: .smoke dpdk
+  stage: manual
+  timeout: 45 min
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+    - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
     - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
+
+smoke relwithdeb clean:
+  extends: .smoke relwithdeb
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  variables:
+    SAVE_ARTIFACTS: "True"
 
 smoke tsan clean:
   extends: .smoke tsan
@@ -464,33 +526,26 @@ smoke archlinux clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
 
+smoke dpdk clean:
+  extends: .smoke dpdk
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+
 # Intermediate commits
 
 intermediate commits:
-  extends: .build_and_unit
-  stage: manual
+  extends: .smoke release
   rules:
-    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
-      when: manual
-      allow_failure: false
   timeout: 45 min
   variables:
-    OS: ubuntu-22.04
-    TEST_MODE: none
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    ASSERT_LEVEL: PARANOID
-    ENABLE_GCOV: "True"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
-    ENABLE_WERROR: "False"
-  tags: ["${AMD64_TAG}"]
+    SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
-      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
+      TEST_MODE=none
+      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)
       do
         echo "##################################################"
         echo "#### $rev ####"
@@ -498,12 +553,20 @@ intermediate commits:
         git checkout $rev
         build_srsgnb
       done
+    - |
+      TEST_MODE=coverage
+      git checkout $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      echo "##################################################"
+      echo "#### $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
+      echo "##################################################"
+      build_srsgnb
+    - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 valgrind changed tests:
-  extends: .build_and_unit
+  extends: .smoke valgrind
   stage: manual
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
@@ -514,16 +577,9 @@ valgrind changed tests:
       allow_failure: true
   timeout: 2h
   variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
     CLEAN_BUILD: "False"
-    TEST_MODE: valgrind
     FINGERPRINT: "fingerprints.csv"
     SAVE_ARTIFACTS: "True"
-  tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
@@ -564,11 +620,25 @@ check builders ubuntu versions:
 smoke release update cache:
   extends: .smoke release
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  variables:
+    SAVE_ARTIFACTS: "True"
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+smoke relwithdeb update cache:
+  extends: .smoke relwithdeb
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  retry: 2
   interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
@@ -582,8 +652,6 @@ smoke release update cache:
 smoke tsan update cache:
   extends: .smoke tsan
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   retry: 2
@@ -599,11 +667,10 @@ smoke tsan update cache:
 smoke rhel update cache:
   extends: .smoke rhel
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 30 minutes
+  retry: 2
   interruptible: false
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -612,37 +679,43 @@ smoke rhel update cache:
 smoke archlinux update cache:
   extends: .smoke archlinux
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 30 minutes
+  retry: 2
   interruptible: false
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
-# High priority smoke checks. Some of them save the binary for e2e tests
+smoke dpdk update cache:
+  extends: .smoke dpdk
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
 
-basic rel with deb info:
-  extends: .build_and_unit
+smoke valgrind update cache:
+  extends: .smoke valgrind
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   retry: 2
   variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: RelWithDebInfo
-    ASSERT_LEVEL: PARANOID
-    TEST_MODE: none
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
-  tags: ["${AMD64_AVX2_TAG}"]
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
   artifacts:
     <<: *build_artifacts
     expire_in: 1 day
+
+# High priority smoke checks. Some of them save the binary for e2e tests
 
 basic asan:
   extends: .build_and_unit
@@ -661,26 +734,6 @@ basic asan:
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 1 day
-
-basic valgrind:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  retry: 2
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    BUILD_ARGS: -DEXIT_TIMEOUT=120
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
-    TEST_MODE: valgrind
-    SAVE_ARTIFACTS: "True"
-  tags: ["${AMD64_TAG}"]
   artifacts:
     <<: *build_artifacts
     expire_in: 1 day

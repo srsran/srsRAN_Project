@@ -30,6 +30,7 @@
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
@@ -43,6 +44,12 @@ struct downlink_handler_impl_config {
   optional<tdd_ul_dl_config_common> tdd_config;
   /// Cyclic prefix.
   cyclic_prefix cp;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
+  /// Downlink processing time in microseconds.
+  std::chrono::microseconds dl_processing_time;
+  /// Transmission window timing parameters for delay management.
+  du_tx_window_timing_parameters tx_timing_params;
 };
 
 /// Downlink handler implementation dependencies.
@@ -53,8 +60,6 @@ struct downlink_handler_impl_dependencies {
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   /// Data flow for User-Plane.
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
-  /// Transmission window checker.
-  std::unique_ptr<tx_window_checker> window_checker;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool_ptr;
 };
@@ -68,12 +73,15 @@ public:
   // See interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
 
+  /// Returns the OTA symbol boundary notifier of this downlink handler implementation.
+  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() { return window_checker; }
+
 private:
   srslog::basic_logger&                                 logger;
   const cyclic_prefix                                   cp;
   const optional<tdd_ul_dl_config_common>               tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
-  std::unique_ptr<tx_window_checker>                    window_checker;
+  tx_window_checker                                     window_checker;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;

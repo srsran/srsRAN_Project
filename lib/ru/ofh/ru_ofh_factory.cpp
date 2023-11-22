@@ -23,10 +23,7 @@
 #include "srsran/ru/ru_ofh_factory.h"
 #include "ru_ofh_impl.h"
 #include "ru_ofh_rx_symbol_handler_impl.h"
-#include "ru_ofh_timing_handler.h"
 #include "srsran/ofh/ofh_factories.h"
-#include "srsran/ofh/receiver/ofh_receiver.h"
-#include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -87,18 +84,21 @@ static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_depen
   return ofh_sector_dependencies;
 }
 
-std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config, ru_ofh_dependencies&& deps)
+std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config,
+                                                  ru_ofh_dependencies&&       dependencies)
 {
   report_fatal_error_if_not(config.max_processing_delay_slots >= 1,
                             "max_processing_delay_slots option should be greater or equal to 1");
+  report_fatal_error_if_not(dependencies.timing_notifier, "Invalid timing notifier");
 
-  ru_ofh_impl_dependencies ofh_deps;
+  ru_ofh_impl_dependencies ofh_dependencies;
+  ofh_dependencies.logger          = dependencies.logger;
+  ofh_dependencies.timing_notifier = dependencies.timing_notifier;
 
   // Create UL Rx symbol notifier.
-  auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*deps.rx_symbol_notifier);
+  auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*dependencies.rx_symbol_notifier);
 
   // Create sectors.
-  std::vector<ofh::ota_symbol_handler*> symbol_handlers;
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
     const auto& sector_cfg = config.sector_configs[i];
 
@@ -130,38 +130,28 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                    : fmt::format(""));
 
     // Create OFH sector.
-    auto sector =
-        ofh::create_ofh_sector(generate_sector_configuration(config, sector_cfg),
-                               generate_sector_dependencies(std::move(deps.sector_dependencies[i]), ul_data_notifier));
+    auto sector = ofh::create_ofh_sector(
+        generate_sector_configuration(config, sector_cfg),
+        generate_sector_dependencies(std::move(dependencies.sector_dependencies[i]), ul_data_notifier));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
-    ofh_deps.sectors.emplace_back(std::move(sector));
-
-    // Add the symbol handlers to the list of handlers.
-    symbol_handlers.push_back(&ofh_deps.sectors.back()->get_transmitter().get_ota_symbol_handler());
-    symbol_handlers.push_back(&ofh_deps.sectors.back()->get_receiver().get_ota_symbol_handler());
+    ofh_dependencies.sectors.emplace_back(std::move(sector));
   }
-
-  // Create OFH OTA symbol notifier.
-  ofh_deps.symbol_notifier =
-      ofh::create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
-                                          get_nsymb_per_slot(config.sector_configs.back().cp),
-                                          std::make_unique<ru_ofh_timing_handler>(*deps.timing_notifier),
-                                          symbol_handlers);
-  report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
 
   // Prepare OFH controller configuration.
   ofh::controller_config controller_cfg;
-  controller_cfg.logger    = deps.logger;
-  controller_cfg.notifier  = ofh_deps.symbol_notifier.get();
-  controller_cfg.executor  = deps.rt_timing_executor;
   controller_cfg.cp        = config.sector_configs.back().cp;
   controller_cfg.scs       = config.sector_configs.back().scs;
   controller_cfg.gps_Alpha = config.gps_Alpha;
   controller_cfg.gps_Beta  = config.gps_Beta;
 
   // Create OFH timing controller.
-  ofh_deps.timing_controller = ofh::create_ofh_timing_controller(controller_cfg);
-  report_fatal_error_if_not(ofh_deps.timing_controller, "Unable to create OFH timing controller");
+  ofh_dependencies.timing_mngr =
+      ofh::create_ofh_timing_manager(controller_cfg, *dependencies.logger, *dependencies.rt_timing_executor);
+  report_fatal_error_if_not(ofh_dependencies.timing_mngr, "Unable to create OFH timing manager");
 
-  return std::make_unique<ru_ofh_impl>(*deps.logger, std::move(ofh_deps));
+  ru_ofh_impl_config ru_config;
+  ru_config.nof_slot_offset_du_ru = config.max_processing_delay_slots;
+  ru_config.nof_symbols_per_slot  = get_nsymb_per_slot(config.sector_configs.back().cp);
+
+  return std::make_unique<ru_ofh_impl>(ru_config, std::move(ofh_dependencies));
 }

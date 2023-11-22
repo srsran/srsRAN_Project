@@ -23,6 +23,7 @@
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/executor_tracer.h"
 #include "srsran/support/executors/priority_task_worker.h"
+#include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -36,7 +37,12 @@ namespace {
 template <typename ExecConfig, typename Exec>
 std::unique_ptr<task_executor> decorate_executor(const ExecConfig& desc, Exec&& exec)
 {
-  std::unique_ptr<task_executor> ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
+  std::unique_ptr<task_executor> ret;
+  if (desc.strand.has_value()) {
+    ret = make_strand_executor_ptr(std::forward<Exec>(exec), desc.strand->policy, desc.strand->size);
+  } else {
+    ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
+  }
   if (desc.synchronous) {
     ret = make_sync_executor(std::move(ret));
   }

@@ -87,6 +87,7 @@ public:
 private:
   bool allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
+  void modify_rlc_for_ntn(cell_group_config& ue_mcg);
 
   span<const du_cell_config>                cell_cfg_list;
   const std::map<srb_id_t, du_srb_config>&  srb_config;

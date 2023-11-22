@@ -110,7 +110,7 @@ struct sib_test_bench {
                  duplex_mode          duplx_mode,
                  sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
                  ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
-    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_period})),
+    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, 10, aggregation_level::n4, sib1_rtx_period})),
     cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs,
                                             pdcch_config_sib1,
                                             ssb_bitmap,
@@ -127,7 +127,7 @@ struct sib_test_bench {
   // Test bench ctor for SIB1 scheduler test use in case of partial slot TDD configuration.
   sib_test_bench(sched_cell_configuration_request_message msg,
                  sib1_rtx_periodicity                     sib1_rtx_period = sib1_rtx_periodicity::ms160) :
-    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_period})),
+    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, 10, aggregation_level::n4, sib1_rtx_period})),
     cfg_msg{msg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
@@ -144,7 +144,8 @@ struct sib_test_bench {
                  subcarrier_spacing init_bwp_scs,
                  uint8_t            pdcch_config_sib1,
                  uint16_t           carrier_bw_mhz) :
-    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_periodicity::ms10})),
+    sched_cfg(
+        make_scheduler_expert_cfg({10, aggregation_level::n4, 10, aggregation_level::n4, sib1_rtx_periodicity::ms10})),
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
                                             k_ssb,

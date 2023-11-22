@@ -1,0 +1,29 @@
+# This file contains the configuration for the geo_ntn scenario
+ntn:
+  cell_specific_koffset: 260 # sets the maximum possible channel delay
+  ephemeris_info: # ephemeris information for the satellite
+    pos_x: 23508375
+    pos_y: 2211019
+    pos_z: 22224489
+    vel_x: 0
+    vel_y: 0
+    vel_z: 0
+
+cell_cfg:
+  sib: # system information block 19 scheduling, SIB19 is the NTN information block
+    si_window_length: 5
+    si_sched_info:
+      - si_period: 16
+        sib_mapping: 19
+  pucch: # increases the scheduling period of PUCCH to allow for the larger channel delay
+    sr_period_ms: 320
+  csi:
+    csi_rs_period: 80
+  pdsch: # disables HARQ processing
+    max_nof_harq_retxs: 0
+  prach:
+    max_msg3_harq_retx: 0
+
+cu_cp:
+  rrc: # sets the RRC timeout to 12.8 seconds to allow for the larger channel delay
+    rrc_procedure_timeout_ms: 12800

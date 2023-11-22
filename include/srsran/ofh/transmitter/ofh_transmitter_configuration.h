@@ -111,7 +111,6 @@ struct transmitter_config {
   /// IQ samples scaling factor.
   float iq_scaling;
   /// Downlink processing time in microseconds.
-  /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
   /// Optional TDD configuration.
   optional<tdd_ul_dl_config_common> tdd_config;

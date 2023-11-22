@@ -29,6 +29,7 @@
 #include <cstring>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <thread>
 #include <unistd.h>
 
 using namespace srsran;
@@ -75,7 +76,9 @@ receiver_impl::~receiver_impl()
 void receiver_impl::start()
 {
   logger.info("Starting the ethernet frame receiver");
-  executor.defer([this]() { receive_loop(); });
+  if (!executor.defer([this]() { receive_loop(); })) {
+    report_error("Unable to start the ethernet frame receiver");
+  }
 }
 
 void receiver_impl::stop()
@@ -92,7 +95,10 @@ void receiver_impl::receive_loop()
     return;
   }
 
-  executor.defer([this]() { receive_loop(); });
+  // Retry the task deferring when it fails.
+  while (!executor.defer([this]() { receive_loop(); })) {
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+  }
 }
 
 /// Blocking function that waits for incoming data over the socket or until the specified timeout expires.

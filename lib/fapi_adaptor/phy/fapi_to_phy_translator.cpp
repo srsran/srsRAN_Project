@@ -491,11 +491,9 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     unsigned nof_cb = ldpc::compute_nof_codeblocks(pdu.tlv_custom.length.to_bits(), pdsch_config.ldpc_base_graph);
 
     // Prepare buffer identifier.
-    tx_buffer_identifier id = {};
-    id.rnti                 = pdsch_config.rnti;
-    if (pdsch_config.context.has_value()) {
-      id.harq_ack_id = pdsch_config.context->get_h_id();
-    }
+    tx_buffer_identifier id;
+    id.rnti        = pdsch_config.rnti;
+    id.harq_ack_id = (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0;
 
     // Get transmit buffer.
     unique_tx_buffer buffer = (pdsch_config.context.has_value())

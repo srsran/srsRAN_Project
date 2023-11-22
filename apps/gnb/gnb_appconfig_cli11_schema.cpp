@@ -910,15 +910,41 @@ static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched
                  si_sched_info.sib_mapping_info,
                  "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->capture_default_str()
-      ->check(CLI::IsMember({19}));
+      ->check(CLI::IsMember({2, 19}));
 }
 
-static void configure_cli11_sib19_args(CLI::App& app, sib19_info& sib19)
+static void configure_cli11_ephemeris_info(CLI::App& app, position_velocity_t& ephemeris_info)
 {
-  app.add_option("--distance_thres", sib19.distance_thres, "Distance threshold for SIB19")
+  app.add_option("--pos_x", ephemeris_info.position_x, "X Position of the satellite")
       ->capture_default_str()
-      ->check(CLI::Range(0, 255));
-  // TODO: Add remaining parameters.
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_y", ephemeris_info.position_y, "Y Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_z", ephemeris_info.position_z, "Z Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--vel_x", ephemeris_info.velocity_vx, "X Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_y", ephemeris_info.velocity_vy, "Y Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_z", ephemeris_info.velocity_vz, "Z Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+}
+
+static void configure_cli11_ntn_args(CLI::App& app, optional<ntn_config>& ntn)
+{
+  ntn.emplace();
+  app.add_option("--cell_specific_koffset", ntn->cell_specific_koffset, "Cell-specific k-offset to be used for NTN.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1023));
+
+  // ephemeris configuration.
+  CLI::App* ephem_subcmd = app.add_subcommand("ephemeris_info", "ephermeris information of the satellite");
+  configure_cli11_ephemeris_info(*ephem_subcmd, ntn.value().ephemeris_info);
 }
 
 static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
@@ -930,9 +956,6 @@ static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
          "the SI message.")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 20, 40, 80, 160, 320, 640, 1280}));
-
-  CLI::App* sib19_subcmd = app.add_subcommand("sib19", "Content of SIB19");
-  configure_cli11_sib19_args(*sib19_subcmd, sib_params.sib19);
 
   // SI message scheduling parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -1441,6 +1464,20 @@ static void configure_cli11_mac_args(CLI::App& app, mac_lc_appconfig& mac_params
                  "Prioritized bit rate in kBps. Value 65537 means infinity")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 2768, 65536, 65537}));
+}
+
+static void configure_cli11_srb_args(CLI::App& app, srb_appconfig& srb_params)
+{
+  app.add_option("--srb_id", srb_params.srb_id, "SRB Id")->capture_default_str()->check(CLI::IsMember({1, 2}));
+  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
+  configure_cli11_rlc_am_args(*rlc_subcmd, srb_params.rlc);
+  auto verify_callback = [&]() {
+    CLI::App* rlc = app.get_subcommand("rlc");
+    if (rlc->count_all() == 0) {
+      report_error("Error parsing SRB config for SRB{}. RLC configuration not present.\n", srb_params.srb_id);
+    }
+  };
+  app.callback(verify_callback);
 }
 
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
@@ -2108,6 +2145,14 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
+static void manage_ntn_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // Clean the NTN optional.
+  if (app.get_subcommand("ntn")->count_all() == 0) {
+    gnb_cfg.ntn_cfg.reset();
+  }
+}
+
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
@@ -2194,6 +2239,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
 
+  /// NTN section
+  CLI::App* ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();
+  configure_cli11_ntn_args(*ntn_subcmd, gnb_cfg.ntn_cfg);
+
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
@@ -2260,6 +2309,22 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.add_option_function<std::vector<std::string>>(
       "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 
+  // SRB parameters.
+  auto srb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    // Format every SRB setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("SRB parameters");
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
+      srb_appconfig srb_cfg;
+      configure_cli11_srb_args(subapp, srb_cfg);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+      gnb_cfg.srb_cfg[static_cast<srb_id_t>(srb_cfg.srb_id)] = srb_cfg;
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--srbs", srb_lambda, "Configures signaling radio bearers.");
+
   // Slicing parameters.
   auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
@@ -2299,6 +2364,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_ntn_optional(app, gnb_cfg);
     manage_processing_delay(app, gnb_cfg);
     manage_expert_execution_threads(app, gnb_cfg);
   });

@@ -36,21 +36,21 @@ namespace srs_cu_cp {
 class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
-  rrc_ue_impl(up_resource_manager&             up_resource_mng_,
-              rrc_ue_du_processor_notifier&    du_proc_notif_,
-              rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier_,
-              rrc_ue_nas_notifier&             nas_notif_,
-              rrc_ue_control_notifier&         ngap_ctrl_notif_,
-              rrc_ue_reestablishment_notifier& cu_cp_notif_,
-              cell_meas_manager&               cell_meas_mng_,
-              const ue_index_t                 ue_index_,
-              const rnti_t                     c_rnti_,
-              const rrc_cell_context           cell_,
-              const rrc_ue_cfg_t&              cfg_,
-              const byte_buffer                du_to_cu_container,
-              rrc_ue_task_scheduler&           task_sched,
-              bool&                            reject_users_,
-              bool                             is_inter_cu_handover_ = false);
+  rrc_ue_impl(up_resource_manager&              up_resource_mng_,
+              rrc_ue_du_processor_notifier&     du_proc_notif_,
+              rrc_pdu_f1ap_notifier&            f1ap_pdu_notifier_,
+              rrc_ue_nas_notifier&              nas_notif_,
+              rrc_ue_control_notifier&          ngap_ctrl_notif_,
+              rrc_ue_reestablishment_notifier&  cu_cp_notif_,
+              cell_meas_manager&                cell_meas_mng_,
+              const ue_index_t                  ue_index_,
+              const rnti_t                      c_rnti_,
+              const rrc_cell_context            cell_,
+              const rrc_ue_cfg_t&               cfg_,
+              const byte_buffer                 du_to_cu_container,
+              rrc_ue_task_scheduler&            task_sched,
+              bool&                             reject_users_,
+              optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler
@@ -81,11 +81,12 @@ public:
   uint8_t          handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context get_rrc_ue_release_context() override;
-  optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
-  bool                   handle_new_security_context(const security::security_context& sec_context) override;
-  byte_buffer            get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
-                                                  unsigned                                     transaction_id) override;
+  rrc_ue_release_context  get_rrc_ue_release_context() override;
+  rrc_ue_transfer_context get_transfer_context() override;
+  optional<rrc_meas_cfg>  generate_meas_config(optional<rrc_meas_cfg> current_meas_config) override;
+  bool                    handle_new_security_context(const security::security_context& sec_context) override;
+  byte_buffer             get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
+                                                   unsigned                                     transaction_id) override;
 
   // rrc_ue_handover_preparation_handler
   byte_buffer get_packed_handover_preparation_message() override;

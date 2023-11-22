@@ -28,7 +28,7 @@
 #include "rlc_stress_test_rrc.h"
 #include "rlc_stress_test_traffic.h"
 #include "tests/unittests/rlc/rlc_test_helpers.h"
-#include "srsran/pcap/pcap_rlc.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/rlc/rlc_entity.h"
 #include "srsran/rlc/rlc_metrics.h"
@@ -120,7 +120,7 @@ private:
   srsran::rlc_bearer_logger logger;
 
   // PCAP
-  pcap_rlc_dummy pcap;
+  null_rlc_pcap pcap;
 };
 
 } // namespace srsran

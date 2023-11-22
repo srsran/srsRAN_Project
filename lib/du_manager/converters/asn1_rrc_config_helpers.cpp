@@ -370,16 +370,18 @@ asn1::rrc_nr::bwp_dl_common_s srsran::srs_du::make_asn1_init_dl_bwp(const dl_con
     const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
     pdcch.common_search_space_list.push_back(srsran::srs_du::make_asn1_rrc_search_space(ss));
   }
-  pdcch.search_space_sib1_present           = true;
-  pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
-  pdcch.search_space_other_sys_info_present = false;
-  pdcch.paging_search_space_present         = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.has_value();
+  pdcch.search_space_sib1_present   = true;
+  pdcch.search_space_sib1           = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
+  pdcch.paging_search_space_present = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.has_value();
   if (pdcch.paging_search_space_present) {
     pdcch.paging_search_space = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.value();
   }
-  pdcch.ra_search_space_present = true;
-  pdcch.ra_search_space         = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
-
+  pdcch.ra_search_space_present             = true;
+  pdcch.ra_search_space                     = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch.search_space_other_sys_info_present = cfg.init_dl_bwp.pdcch_common.other_si_search_space_id.has_value();
+  if (pdcch.search_space_other_sys_info_present) {
+    pdcch.search_space_other_sys_info = cfg.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+  }
   // > PDSCH-ConfigCommon.
   init_dl_bwp.pdsch_cfg_common_present = true;
   pdsch_cfg_common_s& pdsch            = init_dl_bwp.pdsch_cfg_common.set_setup();

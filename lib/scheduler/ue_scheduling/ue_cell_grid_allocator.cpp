@@ -492,7 +492,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
-  cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2];
+  cell_slot_resource_allocator& pusch_alloc =
+      get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset];
 
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",

@@ -77,8 +77,8 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
       "WORKER",
       {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
       std::chrono::microseconds{10},
-      {priority_multiqueue_worker::executor{"EXEC1", enqueue_priority::max, true, false},
-       priority_multiqueue_worker::executor{"EXEC2", enqueue_priority::min, true, false}}};
+      {priority_multiqueue_worker::executor{"EXEC1", enqueue_priority::max},
+       priority_multiqueue_worker::executor{"EXEC2", enqueue_priority::min}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -91,14 +91,14 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
   std::atomic<int> counter{0};
   std::vector<int> execs_called;
   mng.executors().at("EXEC1")->execute([&mng, &execs_called, &counter]() {
-    mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
+    ASSERT_TRUE(mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
       execs_called.push_back(2);
       counter++;
-    });
-    mng.executors().at("EXEC1")->defer([&execs_called, &counter]() {
+    }));
+    ASSERT_TRUE(mng.executors().at("EXEC1")->defer([&execs_called, &counter]() {
       execs_called.push_back(1);
       counter++;
-    });
+    }));
   });
 
   while (counter != 2) {
@@ -112,8 +112,10 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
 TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{
-      "WORKER", 2, {task_queue{concurrent_queue_policy::locking_mpmc, 8}}, {worker_pool::executor{"EXEC", true, true}}};
+  worker_pool cfg{"WORKER",
+                  2,
+                  {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
+                  {worker_pool::executor{"EXEC", nullopt, true, true}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));

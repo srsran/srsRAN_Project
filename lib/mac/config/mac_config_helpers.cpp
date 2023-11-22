@@ -42,6 +42,7 @@ mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t          
   mac_cfg.intra_freq_resel     = du_cfg.intra_freq_resel;
   mac_cfg.bcch_dl_sch_payloads = std::move(bcch_dl_sch_payloads);
   mac_cfg.sched_req            = sched_cell_cfg;
+
   return mac_cfg;
 }
 

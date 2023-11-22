@@ -150,7 +150,7 @@ protected:
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
-  dummy_dlt_pcap                 dummy_pcap = {};
+  null_dlt_pcap                  dummy_pcap;
 
   std::string upf_addr_str;
 

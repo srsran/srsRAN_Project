@@ -36,9 +36,7 @@ namespace srsran {
 class ru_ofh_controller_impl : public ru_controller
 {
 public:
-  ru_ofh_controller_impl(srslog::basic_logger&            logger_,
-                         std::unique_ptr<ofh::controller> timing_controller_,
-                         std::vector<ofh::controller*>    sector_controllers_);
+  ru_ofh_controller_impl(srslog::basic_logger& logger_, std::vector<ofh::controller*> sector_controllers_);
 
   // See interface for documentation.
   void start() override;
@@ -47,9 +45,8 @@ public:
   void stop() override;
 
 private:
-  srslog::basic_logger&            logger;
-  std::unique_ptr<ofh::controller> timing_controller;
-  std::vector<ofh::controller*>    sector_controllers;
+  srslog::basic_logger&         logger;
+  std::vector<ofh::controller*> sector_controllers;
 };
 
 } // namespace srsran

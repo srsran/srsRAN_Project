@@ -35,19 +35,15 @@ namespace srsran {
 struct pcap_rlc_pdu_context;
 
 /// \brief Interface class for writing a RLC PCAP to a file.
-class pcap_rlc
+class rlc_pcap
 {
 public:
-  virtual ~pcap_rlc() = default;
+  virtual ~rlc_pcap() = default;
 
-  virtual void open(const std::string& filename_)                                          = 0;
   virtual void close()                                                                     = 0;
-  virtual bool is_write_enabled()                                                          = 0;
+  virtual bool is_write_enabled() const                                                    = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) = 0;
-
-  virtual void capture_srb(bool srb_enabled_) = 0;
-  virtual void capture_drb(bool drb_enabled_) = 0;
 };
 
 /// \brief Context information for every RLC NR PDU that will be logged.
@@ -60,8 +56,6 @@ struct pcap_rlc_pdu_context {
   uint8_t  bearer_type;
   uint8_t  bearer_id;
   uint16_t ueid;
-
-  ~pcap_rlc_pdu_context() = default;
 
   /// \brief Create a PCAP PDU context for DL RLC AM PDUs
   /// \param ue_index UE index
@@ -108,20 +102,15 @@ private:
 };
 
 /// \brief Dummy implementation RLC PCAP for testing
-class pcap_rlc_dummy : public pcap_rlc
+class null_rlc_pcap : public rlc_pcap
 {
 public:
-  ~pcap_rlc_dummy() = default;
-  pcap_rlc_dummy()  = default;
+  ~null_rlc_pcap() override = default;
 
-  void open(const std::string& filename_) override {}
   void close() override {}
-  bool is_write_enabled() override { return false; }
+  bool is_write_enabled() const override { return false; }
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
-
-  void capture_srb(bool srb_enabled_) override {}
-  void capture_drb(bool drb_enabled_) override {}
 };
 
 // Pre-defined values for data fields of the PCAP PDU context as defined in Wireshark's "packet-rlc-nr.h"
@@ -146,6 +135,13 @@ constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_6_BITS  = 6;
 constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_12_BITS = 12;
 constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_12_BITS = 12;
 constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_18_BITS = 18;
+
+/// Creates an RLC pcap writer to a file.
+std::unique_ptr<rlc_pcap> create_rlc_pcap(const std::string& filename,
+                                          task_executor&     backend_exec,
+                                          bool               srb_pdus_enabled = true,
+                                          bool               drb_pdus_enabled = true);
+std::unique_ptr<rlc_pcap> create_null_rlc_pcap();
 
 } // namespace srsran
 

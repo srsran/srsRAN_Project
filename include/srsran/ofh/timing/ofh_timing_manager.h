@@ -22,28 +22,25 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_timing_notifier.h"
-#include "srsran/ru/ru_timing_notifier.h"
+#include "srsran/ofh/ofh_controller.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
 
 namespace srsran {
+namespace ofh {
 
-/// RU timing handler for the Open Fronthaul interface.
-class ru_ofh_timing_handler : public ofh::timing_notifier
+/// Open Fronthaul timing manager.
+class timing_manager
 {
 public:
-  explicit ru_ofh_timing_handler(ru_timing_notifier& notifier_) : notifier(notifier_) {}
+  /// Default destructor.
+  virtual ~timing_manager() = default;
 
-  // See interface for documentation.
-  void on_tti_boundary(slot_point slot) override { notifier.on_tti_boundary(slot); }
+  /// Returns the controller of this timing manager.
+  virtual controller& get_controller() = 0;
 
-  // See interface for documentation.
-  void on_ul_half_slot_boundary(slot_point slot) override { notifier.on_ul_half_slot_boundary(slot); }
-
-  // See interface for documentation.
-  void on_ul_full_slot_boundary(slot_point slot) override { notifier.on_ul_full_slot_boundary(slot); }
-
-private:
-  ru_timing_notifier& notifier;
+  /// Returns the OTA symbol boundary notifier manager of this timing manager.
+  virtual ota_symbol_boundary_notifier_manager& get_ota_symbol_boundary_notifier_manager() = 0;
 };
 
+} // namespace ofh
 } // namespace srsran

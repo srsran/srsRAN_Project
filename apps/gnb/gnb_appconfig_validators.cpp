@@ -571,7 +571,8 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig&
   return true;
 }
 
-static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig& config)
+template <typename id_type>
+static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config)
 {
   // Validate TX
   rlc_am_sn_size         tmp_sn_size;
@@ -583,12 +584,12 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   rlc_t_status_prohibit  tmp_t_status_prohibit;
 
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
-    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
+    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. {} sn_size={}\n", id, config.tx.sn_field_length);
     return false;
   }
 
   if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
-    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_retx={}\n", five_qi, config.tx.t_poll_retx);
+    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_retx={}\n", id, config.tx.t_poll_retx);
     fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70, ms75, ms80, ms85,"
                " ms90, ms95, ms100, ms105, ms110, ms115, ms120, ms125, ms130,"
@@ -600,13 +601,13 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
-    fmt::print("Invalid RLC AM TX max retx threshold. {} max_retx_threshold={}\n", five_qi, config.tx.max_retx_thresh);
+    fmt::print("Invalid RLC AM TX max retx threshold. {} max_retx_threshold={}\n", id, config.tx.max_retx_thresh);
     fmt::print(" Valid values are: t1, t2, t3, t4, t6, t8, t16, t32\n");
     return false;
   }
 
   if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
-    fmt::print("Invalid RLC AM TX PollPDU. {} poll_pdu={}\n", five_qi, config.tx.poll_pdu);
+    fmt::print("Invalid RLC AM TX PollPDU. {} poll_pdu={}\n", id, config.tx.poll_pdu);
     fmt::print(" Valid values are:"
                "p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048,"
                " p4096, p6144, p8192, p12288, p16384,p20480,"
@@ -615,7 +616,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (!rlc_poll_kilo_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
-    fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", five_qi, config.tx.poll_byte);
+    fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", id, config.tx.poll_byte);
     fmt::print(" Valid values are (in KBytes):"
                " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
                " kB100, kB125, kB250, kB375, kB500, kB750, kB1000,"
@@ -627,17 +628,17 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (config.tx.queue_size == 0) {
-    fmt::print("RLC AM TX queue size cannot be 0. {}\n", five_qi);
+    fmt::print("RLC AM TX queue size cannot be 0. {}\n", id);
     return false;
   }
 
   // Validate RX
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
-    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.rx.sn_field_length);
+    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. {} sn_size={}\n", id, config.rx.sn_field_length);
     return false;
   }
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
-    fmt::print("RLC AM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("RLC AM RX t-Reassembly is invalid. {} t_reassembly={}\n", id, config.rx.t_reassembly);
     fmt::print("Valid values are:"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
                " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
@@ -646,8 +647,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
     return false;
   }
   if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
-    fmt::print(
-        "RLC AM RX t-statusProhibit is invalid. {} t_status_prohibit={}\n", five_qi, config.rx.t_status_prohibit);
+    fmt::print("RLC AM RX t-statusProhibit is invalid. {} t_status_prohibit={}\n", id, config.rx.t_status_prohibit);
     fmt::print("Valid values are:"
                "ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
                "ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
@@ -699,6 +699,21 @@ static bool validate_qos_appconfig(span<const qos_appconfig> config)
       return false;
     }
     if (!validate_rlc_appconfig(qos.five_qi, qos.rlc)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// Validates the given SRB configuration. Returns true on success, otherwise false.
+static bool validate_srb_appconfig(const std::map<srb_id_t, srb_appconfig>& config)
+{
+  for (const auto& srb : config) {
+    if (srb.first != srb_id_t::srb1 && srb.first != srb_id_t::srb2 && srb.first != srb_id_t::srb3) {
+      fmt::print("Cannot configure SRB{}. Only SRB1, SRB2 and SRB3 can be configured", srb.first);
+      return false;
+    }
+    if (!validate_rlc_am_appconfig(srb.first, srb.second.rlc)) {
       return false;
     }
   }
@@ -946,7 +961,7 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
   return true;
 }
 
-static bool validate_ntn_config(const ntn_config ntn_cfg)
+static bool validate_ntn_config(const ntn_config& ntn_cfg)
 {
   bool valid = true;
 
@@ -954,33 +969,41 @@ static bool validate_ntn_config(const ntn_config ntn_cfg)
     fmt::print("Cell specific koffset must be in range [0, 1023].\n");
     valid = false;
   }
-  if (ntn_cfg.distance_threshold > 1000) {
-    fmt::print("Distance threshold must be in range [0, 1000].\n");
-    valid = false;
+  if (ntn_cfg.distance_threshold.has_value()) {
+    if (ntn_cfg.distance_threshold.value() > 1000) {
+      fmt::print("Distance threshold must be in range [0, 1000].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.epoch_time.sfn > 65535) {
-    fmt::print("Epoch time SFN must be in range [0, 65535].\n");
-    valid = false;
+  if (ntn_cfg.epoch_time.has_value()) {
+    if (ntn_cfg.epoch_time.value().sfn > 65535) {
+      fmt::print("Epoch time SFN must be in range [0, 65535].\n");
+      valid = false;
+    }
+    if (ntn_cfg.epoch_time.value().subframe_number > 9) {
+      fmt::print("Epoch time subframe number must be in range [0, 9].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.epoch_time.subframe_number > 9) {
-    fmt::print("Epoch time subframe number must be in range [0, 9].\n");
-    valid = false;
+  if (ntn_cfg.k_mac.has_value()) {
+    if (ntn_cfg.k_mac.value() > 512) {
+      fmt::print("K_MAC must be in range [0, 512].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.k_mac > 512) {
-    fmt::print("K_MAC must be in range [0, 512].\n");
-    valid = false;
-  }
-  if (ntn_cfg.ta_info.ta_common > 66485757) {
-    fmt::print("TA common must be in range [0, 66485757].\n");
-    valid = false;
-  }
-  if (std::abs(ntn_cfg.ta_info.ta_common_drift) > 257303) {
-    fmt::print("TA common drift must be in range [-257303, 257303].\n");
-    valid = false;
-  }
-  if (ntn_cfg.ta_info.ta_common_drift_variant > 28949) {
-    fmt::print("TA common drift variant must be in range [0, 28949].\n");
-    valid = false;
+  if (ntn_cfg.ta_info.has_value()) {
+    if (ntn_cfg.ta_info.value().ta_common > 66485757) {
+      fmt::print("TA common must be in range [0, 66485757].\n");
+      valid = false;
+    }
+    if (std::abs(ntn_cfg.ta_info.value().ta_common_drift) > 257303) {
+      fmt::print("TA common drift must be in range [-257303, 257303].\n");
+      valid = false;
+    }
+    if (ntn_cfg.ta_info.value().ta_common_drift_variant > 28949) {
+      fmt::print("TA common drift variant must be in range [0, 28949].\n");
+      valid = false;
+    }
   }
   return valid;
 }
@@ -1094,6 +1117,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_qos_appconfig(config.qos_cfg)) {
+    return false;
+  }
+
+  if (!validate_srb_appconfig(config.srb_cfg)) {
     return false;
   }
 

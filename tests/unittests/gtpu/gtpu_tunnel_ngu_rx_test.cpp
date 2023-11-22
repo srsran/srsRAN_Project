@@ -95,7 +95,7 @@ public:
   }
 
 private:
-  dummy_dlt_pcap                      dummy_pcap = {};
+  null_dlt_pcap                       dummy_pcap = {};
   gtpu_tunnel_tx_upper_dummy          tx_upper_dummy;
   std::unique_ptr<gtpu_tunnel_ngu_tx> tx;
   byte_buffer                         gen_pdu;

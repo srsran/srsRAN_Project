@@ -284,7 +284,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                                        srb0,
                                                                        du_params.services,
                                                                        *ue_ctx->rlf_notifier,
-                                                                       du_params.rlc.rlc_pcap));
+                                                                       du_params.rlc.pcap_writer));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
@@ -294,7 +294,7 @@ void ue_creation_procedure::create_rlc_srbs()
                                                                        srb1,
                                                                        du_params.services,
                                                                        *ue_ctx->rlf_notifier,
-                                                                       du_params.rlc.rlc_pcap));
+                                                                       du_params.rlc.pcap_writer));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
