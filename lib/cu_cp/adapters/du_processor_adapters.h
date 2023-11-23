@@ -61,13 +61,15 @@ private:
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_du_event_handler&             cu_cp_mng_,
-                     cu_cp_ue_removal_handler&           ue_removal_handler_,
-                     ngap_du_processor_control_notifier& ngap_du_notifier_)
+  void connect_cu_cp(cu_cp_du_event_handler&                cu_cp_mng_,
+                     cu_cp_ue_removal_handler&              ue_removal_handler_,
+                     ngap_du_processor_control_notifier&    ngap_du_notifier_,
+                     cu_cp_ue_context_manipulation_handler& ue_context_handler_)
   {
     cu_cp_handler      = &cu_cp_mng_;
     ue_removal_handler = &ue_removal_handler_;
     ngap_du_notifier   = &ngap_du_notifier_;
+    ue_context_handler = &ue_context_handler_;
   }
 
   void on_du_processor_created(du_index_t                       du_index,

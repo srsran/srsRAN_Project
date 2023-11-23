@@ -89,7 +89,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   srsran_assert(it.second, "Unable to insert DU in map");
   du_context& du_ctxt = it.first->second;
   du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(
-      cfg.cu_cp_du_handler, cfg.ue_removal_handler, du_ctxt.ngap_du_processor_notifier);
+      cfg.cu_cp_du_handler, cfg.ue_removal_handler, du_ctxt.ngap_du_processor_notifier, cfg.ue_context_handler);
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config

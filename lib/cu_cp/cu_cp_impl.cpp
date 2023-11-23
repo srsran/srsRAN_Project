@@ -38,6 +38,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
+                             get_cu_cp_ue_context_handler(),
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
                              f1ap_cu_cp_notifier,
