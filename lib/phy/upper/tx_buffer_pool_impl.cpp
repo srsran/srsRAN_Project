@@ -91,12 +91,11 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
 {
   std::unique_lock<std::mutex> lock(mutex);
   slot_point                   expire_slot = slot + 1;
-  tx_buffer_identifier         id          = {};
 
   // If no available buffer is available, return an invalid buffer.
   if (available_buffers.empty()) {
     logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
+    logger.warning("DL HARQ unknown: failed to reserve, insufficient buffers in the pool.");
     return unique_tx_buffer();
   }
 
@@ -107,12 +106,12 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
   tx_buffer_impl& buffer = *buffer_pool[buffer_i];
 
   // Try to reserve codeblocks.
-  tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
+  tx_buffer_status status = buffer.reserve(unknown_id, expire_slot, nof_codeblocks);
 
   // If the reservation failed, return an invalid buffer.
   if (status != tx_buffer_status::successful) {
     logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ {}: failed to reserve, {}.", id, to_string(status));
+    logger.warning("DL HARQ unknown: failed to reserve, {}.", to_string(status));
     return unique_tx_buffer();
   }
 

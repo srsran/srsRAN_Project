@@ -84,7 +84,7 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);
 
-  port_channel_estimator::configuration est_cfg = {};
+  port_channel_estimator::configuration est_cfg;
   est_cfg.dmrs_pattern.assign(coordinates.begin(), coordinates.end());
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.first_symbol;

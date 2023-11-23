@@ -22,10 +22,11 @@ namespace srsran {
 class amplitude_controller_scaling_impl : public amplitude_controller
 {
 private:
+  /// No metrics are reported by this implementation of the amplitude controller.
+  static constexpr amplitude_controller_metrics empty_metrics = {0.0F, 0.0F, 0.0F, 0.0F, 0UL, 0UL, 0.0, false};
+
   /// Gain factor applied to the input signal.
   float amplitude_gain;
-  /// No metrics are reported by this implementation of the amplitude controller.
-  amplitude_controller_metrics empty_metrics = {};
 
 public:
   /// \brief Constructs an amplitude controller.

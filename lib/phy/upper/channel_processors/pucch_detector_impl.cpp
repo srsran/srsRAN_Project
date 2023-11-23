@@ -234,16 +234,19 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // We don't set the SR bit here - this task is delegated to a higher-level function, based on the uci_status returned
   // by this detector and on the used PUCCH resource.
   // This format doesn't support CSI reports.
-  pucch_uci_message::configuration pucch_uci_message_config = {};
-  pucch_uci_message_config.nof_harq_ack                     = config.nof_harq_ack;
-  pucch_detection_result output                             = {pucch_uci_message(pucch_uci_message_config), 0};
+  pucch_uci_message::configuration pucch_uci_message_config;
+  pucch_uci_message_config.nof_sr        = 0;
+  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1 = 0;
+  pucch_uci_message_config.nof_csi_part2 = 0;
+  pucch_detection_result output          = {pucch_uci_message(pucch_uci_message_config), 0};
 
   // Select view of the payload.
   span<uint8_t> bits = output.uci_message.get_harq_ack_bits();
 
   // Recall that, when nof_harq_ack == 0, we still need to look for the positive SR indicator (i.e., a single, 0-valued
   // transmitted bit).
-  std::array<uint8_t, 1> temp_bits = {};
+  static_vector<uint8_t, 1> temp_bits(1);
   if (config.nof_harq_ack == 0) {
     bits = temp_bits;
   }
@@ -334,8 +337,8 @@ static void compute_alpha_indices(span<unsigned>           indices,
   prg.init(n_id);
   // Create the required PR numbers.
   prg.advance(CHIPS_PER_SYMBOL * (nof_symbols_per_slot * n_sf + start_symbol));
-  std::array<float, CHIPS_PER_SYMBOL* MAX_NSYMB_PER_SLOT> c_values_buffer = {};
-  span<float>                                             c_values_all(c_values_buffer);
+  std::array<float, CHIPS_PER_SYMBOL * MAX_NSYMB_PER_SLOT> c_values_buffer;
+  span<float>                                              c_values_all(c_values_buffer);
   prg.generate(c_values_all, 1.0F);
 
   unsigned offset = CHIPS_PER_SYMBOL;

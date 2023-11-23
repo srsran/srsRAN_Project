@@ -146,7 +146,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
 
   // Assign a valid view for the first stage llr0 and an invalid view for llr1.
   llr0[0] = llr_alloc.first(1);
-  llr1[0] = {};
+  llr1[0] = span<log_likelihood_ratio>();
 
   // Assign a valid view for the rest of stages llr0 and llr1.
   for (uint8_t s = 1; s != n_llr_all_stages; ++s) {

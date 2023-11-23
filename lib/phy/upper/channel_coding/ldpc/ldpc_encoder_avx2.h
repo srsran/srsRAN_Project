@@ -81,19 +81,19 @@ private:
   void ext_region_inner();
 
   /// Buffer containing the codeblock.
-  std::array<uint8_t, ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE> codeblock_buffer = {};
+  std::array<uint8_t, ldpc::MAX_BG_N_FULL * ldpc::MAX_LIFTING_SIZE> codeblock_buffer;
   /// Length of the portion of the codeblock buffer actually used for the current configuration (as a number of AVX2
   /// registers).
   size_t codeblock_used_size = 0;
 
   /// Auxiliary buffer for storing chunks of codeblocks (corresponds to the four redundancy nodes of the high-rate
   /// region).
-  std::array<uint8_t, bg_hr_parity_nodes* ldpc::MAX_LIFTING_SIZE> auxiliary_buffer = {};
+  std::array<uint8_t, bg_hr_parity_nodes * ldpc::MAX_LIFTING_SIZE> auxiliary_buffer;
   /// Length of the extended region actually used for the current configuration (as a number of AVX2 registers).
   size_t length_extended = 0;
 
   /// Auxiliary buffer for storing a single node during rotations.
-  std::array<uint8_t, ldpc::MAX_LIFTING_SIZE> rotated_node_buffer = {};
+  std::array<uint8_t, ldpc::MAX_LIFTING_SIZE> rotated_node_buffer;
 
   /// Node size as a number of AVX2 vectors.
   unsigned node_size_avx2 = 0;

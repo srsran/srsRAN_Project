@@ -212,9 +212,9 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
   // Buffer to store the second minimum (in absolute value) variable-to-check message for each base graph check node.
   std::array<log_likelihood_ratio, MAX_LIFTING_SIZE> second_min_var_to_check;
   // Buffer to store the index of the minimum-valued variable-to-check message.
-  std::array<uint8_t, MAX_LIFTING_SIZE> min_var_to_check_index = {};
+  std::array<uint8_t, MAX_LIFTING_SIZE> min_var_to_check_index;
   // Buffer to store the sign product of all variable-to-check messages.
-  std::array<uint8_t, MAX_LIFTING_SIZE> sign_prod_var_to_check = {};
+  std::array<uint8_t, MAX_LIFTING_SIZE> sign_prod_var_to_check;
 
   // Take views of the above buffers.
   span<log_likelihood_ratio> min_var_to_check_view = span<log_likelihood_ratio>(min_var_to_check).first(node_size_byte);

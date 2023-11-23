@@ -19,7 +19,7 @@
 
 namespace srsran {
 
-enum class rx_softbuffer_status { successful = 0, already_in_use, insuficient_cb };
+enum class rx_softbuffer_status { successful = 0, already_in_use, insufficient_cb };
 
 constexpr const char* to_string(rx_softbuffer_status status)
 {
@@ -29,7 +29,7 @@ constexpr const char* to_string(rx_softbuffer_status status)
       return "successful";
     case rx_softbuffer_status::already_in_use:
       return "HARQ already in use";
-    case rx_softbuffer_status::insuficient_cb:
+    case rx_softbuffer_status::insufficient_cb:
       return "insufficient CBs";
   }
 }
@@ -68,7 +68,7 @@ private:
   /// Current softbuffer state.
   state current_state = state::available;
   /// Reservation identifier.
-  rx_softbuffer_identifier reservation_id = {};
+  rx_softbuffer_identifier reservation_id = rx_softbuffer_identifier::unknown();
   /// Indicates the slot the softbuffer will expire at.
   slot_point reservation_expire_slot;
   /// Reference to the codeblock pool.
@@ -151,7 +151,7 @@ public:
       if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
         // Free the rest of the buffer.
         free();
-        return rx_softbuffer_status::insuficient_cb;
+        return rx_softbuffer_status::insufficient_cb;
       }
 
       // Append the codeblock identifier to the list.

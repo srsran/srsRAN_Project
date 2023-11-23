@@ -21,18 +21,18 @@ static std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> cre
 {
   short_block_encoder_impl encoder;
 
-  std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> table = {};
+  std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> table;
 
   // Encode all possible codewords corresponding to "even-valued" messages.
   for (unsigned idx = 0; idx != MAX_NOF_CODEWORDS_2; ++idx) {
     // Generate an "even-valued" message.
-    std::array<uint8_t, MAX_MSG_LENGTH> bits = {};
+    std::array<uint8_t, MAX_MSG_LENGTH> bits;
     srsvec::bit_unpack(bits, 2 * idx, MAX_MSG_LENGTH);
     std::reverse(bits.begin(), bits.end());
 
     // Encode the message. Note that, since the message is longer than 2 bits, all modulation schemes give the same
     // result.
-    std::array<uint8_t, MAX_BLOCK_LENGTH> cdwd = {};
+    std::array<uint8_t, MAX_BLOCK_LENGTH> cdwd;
     encoder.encode(cdwd, bits, modulation_scheme::BPSK);
     // Save the codeword in the (+1, -1) representation.
     std::transform(cdwd.cbegin(), cdwd.cend(), table[idx].begin(), [](uint8_t a) { return (1 - 2 * a); });
@@ -72,8 +72,8 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
 // ML detection for 2-bit messages.
 static double detect_2(span<uint8_t> output, span<const log_likelihood_ratio> input)
 {
-  constexpr unsigned        NOF_BITS   = 3;
-  std::array<int, NOF_BITS> llr_as_int = {};
+  constexpr unsigned        NOF_BITS = 3;
+  std::array<int, NOF_BITS> llr_as_int;
 
   unsigned in_size = input.size();
   if (in_size == NOF_BITS) {
@@ -159,7 +159,7 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
   validate_spans(output, input, bits_per_symbol);
 
-  static_vector<log_likelihood_ratio, MAX_BLOCK_LENGTH> tmp = {};
+  static_vector<log_likelihood_ratio, MAX_BLOCK_LENGTH> tmp;
 
   double   max_metric = 0;
   unsigned out_size   = output.size();

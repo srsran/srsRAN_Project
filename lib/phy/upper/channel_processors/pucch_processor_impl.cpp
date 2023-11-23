@@ -94,26 +94,31 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   pucch_processor_result result;
 
   // PUCCH UCI message configuration.
-  pucch_uci_message::configuration pucch_uci_message_config = {};
-  pucch_uci_message_config.nof_sr                           = config.nof_sr;
-  pucch_uci_message_config.nof_harq_ack                     = config.nof_harq_ack;
-  pucch_uci_message_config.nof_csi_part1                    = config.nof_csi_part1;
-  pucch_uci_message_config.nof_csi_part2                    = config.nof_csi_part2;
+  pucch_uci_message::configuration pucch_uci_message_config;
+  pucch_uci_message_config.nof_sr        = config.nof_sr;
+  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1 = config.nof_csi_part1;
+  pucch_uci_message_config.nof_csi_part2 = config.nof_csi_part2;
 
   result.message = pucch_uci_message(pucch_uci_message_config);
 
   // Channel estimator configuration.
-  dmrs_pucch_processor::config_t estimator_config = {};
-
-  estimator_config.format             = pucch_format::FORMAT_2;
-  estimator_config.slot               = config.slot;
-  estimator_config.cp                 = config.cp;
-  estimator_config.start_symbol_index = config.start_symbol_index;
-  estimator_config.nof_symbols        = config.nof_symbols;
-  estimator_config.starting_prb       = config.bwp_start_rb + config.starting_prb;
-  estimator_config.nof_prb            = config.nof_prb;
-  estimator_config.n_id               = config.n_id;
-  estimator_config.n_id_0             = config.n_id_0;
+  dmrs_pucch_processor::config_t estimator_config;
+  estimator_config.format               = pucch_format::FORMAT_2;
+  estimator_config.slot                 = config.slot;
+  estimator_config.cp                   = config.cp;
+  estimator_config.group_hopping        = pucch_group_hopping::NEITHER;
+  estimator_config.start_symbol_index   = config.start_symbol_index;
+  estimator_config.nof_symbols          = config.nof_symbols;
+  estimator_config.starting_prb         = config.bwp_start_rb + config.starting_prb;
+  estimator_config.intra_slot_hopping   = false;
+  estimator_config.second_hop_prb       = 0;
+  estimator_config.nof_prb              = config.nof_prb;
+  estimator_config.initial_cyclic_shift = 0;
+  estimator_config.time_domain_occ      = 0;
+  estimator_config.additional_dmrs      = false;
+  estimator_config.n_id                 = config.n_id;
+  estimator_config.n_id_0               = config.n_id_0;
   estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
   // Prepare channel estimate.
@@ -135,8 +140,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
                                                  config.nof_symbols * get_bits_per_symbol(modulation_scheme::QPSK));
 
   // PUCCH Format 2 demodulator configuration.
-  pucch_demodulator::format2_configuration demod_config = {};
-
+  pucch_demodulator::format2_configuration demod_config;
   demod_config.rx_ports           = config.ports;
   demod_config.first_prb          = config.bwp_start_rb + config.starting_prb;
   demod_config.nof_prb            = config.nof_prb;
@@ -149,8 +153,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   demodulator->demodulate(llr, grid, estimates, demod_config);
 
   // UCI decoder configuration.
-  uci_decoder::configuration decoder_config = {};
-  decoder_config.modulation                 = modulation_scheme::QPSK;
+  uci_decoder::configuration decoder_config;
+  decoder_config.modulation = modulation_scheme::QPSK;
 
   // Decode UCI payload.
   result.message.set_status(decoder->decode(result.message.get_full_payload(), llr, decoder_config));

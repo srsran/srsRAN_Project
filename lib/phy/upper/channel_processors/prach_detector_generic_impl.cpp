@@ -29,12 +29,12 @@ using namespace srsran;
 
 bool prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
 {
-  detail::threshold_params th_params = {};
-  th_params.nof_rx_ports             = config.nof_rx_ports;
-  th_params.scs                      = config.ra_scs;
-  th_params.format                   = config.format;
-  th_params.zero_correlation_zone    = config.zero_correlation_zone;
-  th_params.combine_symbols          = true;
+  detail::threshold_params th_params;
+  th_params.nof_rx_ports          = config.nof_rx_ports;
+  th_params.scs                   = config.ra_scs;
+  th_params.format                = config.format;
+  th_params.zero_correlation_zone = config.zero_correlation_zone;
+  th_params.combine_symbols       = true;
 
   static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
   auto                                             flag = threshold_and_margin_table.check_flag(th_params);
@@ -82,7 +82,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
                 config.nof_preamble_indices);
 
   // Get preamble information.
-  prach_preamble_information preamble_info = {};
+  prach_preamble_information preamble_info;
   if (is_long_preamble(config.format)) {
     preamble_info = get_prach_preamble_long_info(config.format);
   } else {
@@ -131,12 +131,12 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   win_width = (win_width * dft_size) / L_ra;
 
   // Select window margin and threshold.
-  detail::threshold_params th_params = {};
-  th_params.nof_rx_ports             = config.nof_rx_ports;
-  th_params.scs                      = config.ra_scs;
-  th_params.format                   = config.format;
-  th_params.zero_correlation_zone    = config.zero_correlation_zone;
-  th_params.combine_symbols          = combine_symbols;
+  detail::threshold_params th_params;
+  th_params.nof_rx_ports          = config.nof_rx_ports;
+  th_params.scs                   = config.ra_scs;
+  th_params.format                = config.format;
+  th_params.zero_correlation_zone = config.zero_correlation_zone;
+  th_params.combine_symbols       = combine_symbols;
 
   static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
   auto                                             th_and_margin = threshold_and_margin_table.get(th_params);
@@ -187,12 +187,12 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
   for (unsigned i_sequence = 0; i_sequence != nof_sequences; ++i_sequence) {
     // Prepare root sequence configuration.
-    prach_generator::configuration generator_config = {};
-    generator_config.format                         = config.format;
-    generator_config.root_sequence_index            = config.root_sequence_index;
-    generator_config.preamble_index                 = i_sequence * nof_shifts;
-    generator_config.restricted_set                 = config.restricted_set;
-    generator_config.zero_correlation_zone          = config.zero_correlation_zone;
+    prach_generator::configuration generator_config;
+    generator_config.format                = config.format;
+    generator_config.root_sequence_index   = config.root_sequence_index;
+    generator_config.preamble_index        = i_sequence * nof_shifts;
+    generator_config.restricted_set        = config.restricted_set;
+    generator_config.zero_correlation_zone = config.zero_correlation_zone;
 
     // Generate root sequence.
     span<const cf_t> root = generator->generate(generator_config);

@@ -24,15 +24,15 @@ namespace detail {
 /// Parameters that affect the detection threshold value.
 struct threshold_params {
   /// Number of receive antenna ports.
-  unsigned nof_rx_ports = {};
+  unsigned nof_rx_ports = 0;
   /// Subcarrier spacing.
-  prach_subcarrier_spacing scs = {};
+  prach_subcarrier_spacing scs = prach_subcarrier_spacing::invalid;
   /// PRACH format type.
-  prach_format_type format = {};
+  prach_format_type format = prach_format_type::invalid;
   /// Zero correlation zone.
-  unsigned zero_correlation_zone = {};
+  unsigned zero_correlation_zone = 0;
   /// Flag to activate non-coherent combining of PRACH symbols.
-  bool combine_symbols = {};
+  bool combine_symbols = false;
 };
 
 /// Overloaded less-than comparison operator.

@@ -78,23 +78,18 @@ public:
     const size_t max_seq_length  = 8U * MAX_NSYMB_PER_SLOT * NOF_SUBFRAMES_PER_FRAME * (1U << 4U);
     unsigned     sequence_length = 8U * get_nsymb_per_slot(cp) * slot.nof_slots_per_frame();
 
-    std::array<uint8_t, max_seq_length> cs = {};
-    // view on first sequence_length elements
-    span<uint8_t> cs_span(cs.data(), sequence_length);
+    // Create a zero array
+    static_bit_buffer<max_seq_length> cs(sequence_length);
 
     prg->init(cinit);
-    prg->apply_xor(cs_span, cs_span);
+    prg->generate(cs);
 
     // Slot number
     unsigned n_slot = slot.slot_index();
 
     // Create n_cs parameter
-    unsigned n_cs     = 0;
-    unsigned base_idx = 8U * get_nsymb_per_slot(cp) * n_slot + 8U * symbol;
-
-    for (uint32_t m = 0; m < 8; m++) {
-      n_cs += cs[base_idx + m] << m;
-    }
+    unsigned base_idx = get_nsymb_per_slot(cp) * n_slot + symbol;
+    unsigned n_cs     = reverse_byte(cs.get_byte(base_idx));
 
     unsigned alpha_idx = (m0 + m_cs + n_cs) % NRE;
     return alpha_idx;

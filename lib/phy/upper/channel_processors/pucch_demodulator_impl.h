@@ -121,7 +121,7 @@ private:
   const re_prb_mask format2_prb_re_mask = {true, false, true, true, false, true, true, false, true, true, false, true};
 
   /// PRB mask indicating the used PRB within the resource grid.
-  bounded_bitset<MAX_RB> prb_mask = {};
+  bounded_bitset<MAX_RB> prb_mask;
 };
 
 } // namespace srsran

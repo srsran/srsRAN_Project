@@ -99,9 +99,9 @@ public:
   std::unique_ptr<dmrs_pucch_processor> create_format1() override
   {
     // Prepare DM-RS for PUCCH Format 1 low PAPR sequence parameters.
-    unsigned               m      = 1;
-    unsigned               delta  = 0;
-    std::array<float, NRE> alphas = {};
+    unsigned               m     = 1;
+    unsigned               delta = 0;
+    std::array<float, NRE> alphas;
     std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
       return TWOPI * static_cast<float>(n++) / static_cast<float>(NRE);
     });
@@ -181,7 +181,7 @@ public:
   {
     std::unique_ptr<interpolator> interp = create_interpolator();
 
-    dft_processor::configuration idft_config = {};
+    dft_processor::configuration idft_config;
     idft_config.size                         = port_channel_estimator_average_impl::DFT_SIZE;
     idft_config.dir                          = dft_processor::direction::INVERSE;
     std::unique_ptr<dft_processor> idft_proc = dft_factory->create(idft_config);

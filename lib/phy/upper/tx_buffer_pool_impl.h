@@ -52,6 +52,9 @@ public:
   void run_slot(const slot_point& slot) override;
 
 private:
+  /// Buffer identifier for non specified RNTI and HARQ.
+  const tx_buffer_identifier unknown_id = {0, 16};
+
   /// Protects methods from concurrent calls.
   std::mutex mutex;
   /// General physical layer logger.

@@ -57,14 +57,14 @@ private:
   // See interface for documentation.
   void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override;
 
-  unsigned                                                nof_symbols_per_slot;
-  unsigned                                                nof_tx_ports;
-  pdxch_processor_notifier*                               notifier = nullptr;
-  std::unique_ptr<ofdm_symbol_modulator>                  modulator;
-  slot_point                                              current_slot = {};
-  const resource_grid_reader*                             current_grid = &empty_rg;
-  resource_grid_request_pool<const resource_grid_reader*> requests;
-  static const resource_grid_reader_empty                 empty_rg;
+  unsigned                                               nof_symbols_per_slot;
+  unsigned                                               nof_tx_ports;
+  pdxch_processor_notifier*                              notifier = nullptr;
+  std::unique_ptr<ofdm_symbol_modulator>                 modulator;
+  slot_point                                             current_slot;
+  std::reference_wrapper<const resource_grid_reader>     current_grid = empty_rg;
+  resource_grid_request_pool<const resource_grid_reader> requests;
+  static const resource_grid_reader_empty                empty_rg;
 };
 
 } // namespace srsran

@@ -79,8 +79,8 @@ public:
 
 private:
   // Auxiliary buffers.
-  std::array<float, MAX_FILTER_LENGTH>     filter_coefs     = {};
-  std::array<float, MAX_FILTER_LENGTH / 2> correction_coefs = {};
+  std::array<float, MAX_FILTER_LENGTH>     filter_coefs;
+  std::array<float, MAX_FILTER_LENGTH / 2> correction_coefs;
 };
 } // namespace
 

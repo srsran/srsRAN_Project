@@ -114,10 +114,10 @@ private:
   free_adaptor_queue&            queue;
   unsigned                       queue_identifier;
   upper_phy_rx_results_notifier* notifier = nullptr;
-  rnti_t                         rnti     = {};
-  slot_point                     slot     = {};
-  harq_id_t                      harq_id  = {};
-  span<const uint8_t>            payload  = {};
+  rnti_t                         rnti     = rnti_t::INVALID_RNTI;
+  slot_point                     slot     = slot_point();
+  harq_id_t                      harq_id  = harq_id_t::INVALID_HARQ_ID;
+  span<const uint8_t>            payload;
 };
 
 } // namespace detail

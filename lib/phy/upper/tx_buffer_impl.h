@@ -17,7 +17,7 @@
 namespace srsran {
 
 /// Transmit buffer reservation status.
-enum class tx_buffer_status { successful = 0, already_in_use, insuficient_cb };
+enum class tx_buffer_status { successful = 0, already_in_use, insufficient_cb };
 
 /// Converts the buffer reservation status to a string.
 constexpr const char* to_string(tx_buffer_status status)
@@ -28,7 +28,7 @@ constexpr const char* to_string(tx_buffer_status status)
       return "successful";
     case tx_buffer_status::already_in_use:
       return "HARQ already in use";
-    case tx_buffer_status::insuficient_cb:
+    case tx_buffer_status::insufficient_cb:
       return "insufficient CBs";
   }
 }
@@ -57,7 +57,7 @@ private:
   /// Current buffer state.
   state current_state = state::available;
   /// Reservation identifier.
-  tx_buffer_identifier reservation_id = {};
+  tx_buffer_identifier reservation_id = tx_buffer_identifier::unknown();
   /// Indicates the slot the buffer will expire at.
   slot_point reservation_expire_slot;
   /// Reference to the codeblock pool.
@@ -133,7 +133,7 @@ public:
       if (cb_id == tx_buffer_codeblock_pool::UNRESERVED_CB_ID) {
         // Free the rest of the buffer.
         free();
-        return tx_buffer_status::insuficient_cb;
+        return tx_buffer_status::insufficient_cb;
       }
 
       // Append the codeblock identifier to the list.
