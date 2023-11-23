@@ -52,9 +52,6 @@ public:
   /// e2sm_control_request_executor functions.
   bool                         ric_control_action_supported(const e2_sm_ric_control_request_s& req) override;
   e2_sm_ric_control_response_s execute_ric_control_action(const e2_sm_ric_control_request_s& req) override;
-
-  // Helper variables.
-  du_mac_sched_control_config ctrl_config;
 };
 
 } // namespace srsran

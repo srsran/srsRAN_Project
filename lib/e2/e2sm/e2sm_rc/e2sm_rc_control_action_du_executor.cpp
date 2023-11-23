@@ -82,6 +82,7 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
 e2_sm_ric_control_response_s
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_ric_control_request_s& req)
 {
+  du_mac_sched_control_config        ctrl_config;
   e2_sm_ric_control_response_s       e2_resp;
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
@@ -106,7 +107,7 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
   std::future<void>                    fut = p.get_future();
   du_mac_sched_control_config_response ctrl_response;
 
-  async_tasks.schedule([this, &p, &ctrl_response](coro_context<async_task<void>>& ctx) {
+  async_tasks.schedule([this, &p, &ctrl_config, &ctrl_response](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.configure_ue_mac_scheduler(ctrl_config));
