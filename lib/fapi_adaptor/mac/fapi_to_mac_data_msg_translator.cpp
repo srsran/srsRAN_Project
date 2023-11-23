@@ -153,8 +153,6 @@ static optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
 static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                                     const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
-  mac_pucch.is_f1 = fapi_pucch.pucch_format == fapi::uci_pucch_pdu_format_0_1::format_type::format_1;
-
   mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
   mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
   mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
