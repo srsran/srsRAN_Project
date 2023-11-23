@@ -2193,6 +2193,14 @@ public:
   {
     pdu.ul_dmrs_symb_pos = 0U;
     pdu.rb_bitmap.fill(0);
+
+    ul_pusch_uci& uci        = pdu.pusch_uci;
+    uci.harq_ack_bit_length  = 0U;
+    uci.beta_offset_harq_ack = 0U;
+    uci.csi_part1_bit_length = 0U;
+    uci.beta_offset_csi1     = 0U;
+    uci.flags_csi_part2      = 0U;
+    uci.beta_offset_csi2     = 0U;
   }
 
   /// Sets the PUSCH PDU basic parameters and returns a reference to the builder.
@@ -2412,27 +2420,54 @@ public:
     return *this;
   }
 
-  /// Adds optional PUSCH UCI information to the PUSCH PDU and returns a reference to the builder.
+  /// Adds optional PUSCH UCI alpha information to the PUSCH PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
-  ul_pusch_pdu_builder& add_optional_pusch_uci(uint16_t          harq_ack_bit_len,
-                                               uint16_t          csi_part1_bit_len,
-                                               uint16_t          flag_csi_part2_bit_len,
-                                               alpha_scaling_opt alpha_scaling,
-                                               uint8_t           beta_offset_harq_ack,
-                                               uint8_t           beta_offset_csi_1,
-                                               uint8_t           beta_offset_csi_2)
+  ul_pusch_pdu_builder& add_optional_pusch_uci_alpha(alpha_scaling_opt alpha_scaling)
+  {
+    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
+
+    auto& uci         = pdu.pusch_uci;
+    uci.alpha_scaling = alpha_scaling;
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH UCI HARQ information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
+  ul_pusch_pdu_builder& add_optional_pusch_uci_harq(uint16_t harq_ack_bit_len, uint8_t beta_offset_harq_ack)
   {
     pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
 
     auto& uci = pdu.pusch_uci;
 
     uci.harq_ack_bit_length  = harq_ack_bit_len;
-    uci.csi_part1_bit_length = csi_part1_bit_len;
-    uci.flags_csi_part2      = flag_csi_part2_bit_len;
-    uci.alpha_scaling        = alpha_scaling;
     uci.beta_offset_harq_ack = beta_offset_harq_ack;
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH UCI CSI1 information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
+  ul_pusch_pdu_builder& add_optional_pusch_uci_csi1(uint16_t csi_part1_bit_len, uint8_t beta_offset_csi_1)
+  {
+    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
+
+    auto& uci = pdu.pusch_uci;
+
+    uci.csi_part1_bit_length = csi_part1_bit_len;
     uci.beta_offset_csi1     = beta_offset_csi_1;
-    uci.beta_offset_csi2     = beta_offset_csi_2;
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH UCI CSI2 information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
+  ul_pusch_pdu_builder& add_optional_pusch_uci_csi2(uint8_t beta_offset_csi_2)
+  {
+    auto& uci = pdu.pusch_uci;
+
+    uci.flags_csi_part2  = std::numeric_limits<decltype(fapi::ul_pusch_uci::flags_csi_part2)>::max();
+    uci.beta_offset_csi2 = beta_offset_csi_2;
 
     return *this;
   }

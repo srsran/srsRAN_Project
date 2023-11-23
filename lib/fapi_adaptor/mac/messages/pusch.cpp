@@ -28,15 +28,20 @@ static void fill_optional_uci_parameters(fapi::ul_pusch_pdu_builder& builder, co
   if (!uci) {
     return;
   }
+  builder.add_optional_pusch_uci_alpha(uci->alpha);
 
-  builder.add_optional_pusch_uci(
-      uci->harq.has_value() ? uci->harq->harq_ack_nof_bits : 0U,
-      uci->csi.has_value() ? uci->csi->csi_part1_nof_bits : 0U,
-      uci->csi.has_value() and uci->csi->beta_offset_csi_2.has_value() ? 65535U : 0U,
-      uci->alpha,
-      uci->harq.has_value() ? uci->harq->beta_offset_harq_ack : 0U,
-      uci->csi.has_value() ? uci->csi->beta_offset_csi_1 : 0U,
-      uci->csi.has_value() and uci->csi->beta_offset_csi_2.has_value() ? *uci->csi->beta_offset_csi_2 : 0U);
+  if (uci->harq) {
+    const uci_info::harq_info& harq = *uci->harq;
+    builder.add_optional_pusch_uci_harq(harq.harq_ack_nof_bits, harq.beta_offset_harq_ack);
+  }
+
+  if (uci->csi) {
+    const uci_info::csi_info& csi = *uci->csi;
+    builder.add_optional_pusch_uci_csi1(csi.csi_part1_nof_bits, csi.beta_offset_csi_1);
+    if (csi.beta_offset_csi_2) {
+      builder.add_optional_pusch_uci_csi2(*csi.beta_offset_csi_2);
+    }
+  }
 }
 
 void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu)
