@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../common/e2ap_asn1_utils.h"
-#include "../e2sm/e2sm_param_provider.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2.h"

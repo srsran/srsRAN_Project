@@ -66,7 +66,6 @@ private:
   std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
   std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
   std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
-  std::unique_ptr<e2sm_param_provider>       rc_provider        = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 

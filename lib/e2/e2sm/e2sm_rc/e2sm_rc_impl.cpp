@@ -18,11 +18,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
 using namespace srsran;
 
-e2sm_rc_impl::e2sm_rc_impl(srslog::basic_logger&    logger_,
-                           e2sm_handler&            e2sm_packer_,
-                           e2sm_param_configurator& param_configurator_,
-                           e2sm_param_provider&     param_interface_) :
-  logger(logger_), e2sm_packer(e2sm_packer_), param_configurator(param_configurator_), param_interface(param_interface_)
+e2sm_rc_impl::e2sm_rc_impl(srslog::basic_logger& logger_, e2sm_handler& e2sm_packer_) :
+  logger(logger_), e2sm_packer(e2sm_packer_)
 {
 }
 

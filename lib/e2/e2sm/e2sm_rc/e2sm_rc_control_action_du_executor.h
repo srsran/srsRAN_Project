@@ -21,8 +21,11 @@ namespace srsran {
 class e2sm_rc_control_action_du_executor_base : public e2sm_control_action_executor
 {
 public:
-  e2sm_rc_control_action_du_executor_base(e2sm_param_configurator& param_configurator_);
+  e2sm_rc_control_action_du_executor_base() = delete;
+  e2sm_rc_control_action_du_executor_base(e2sm_param_configurator& param_configurator_, uint32_t action_id_);
   virtual ~e2sm_rc_control_action_du_executor_base() = default;
+
+  bool fill_ran_function_description(asn1::e2sm_rc::ran_function_definition_ctrl_action_item_s& action_item);
 
   /// e2sm_control_request_executor functions.
   uint32_t                            get_action_id() override;

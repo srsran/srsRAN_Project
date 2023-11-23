@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../e2sm_param_provider.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2.h"
@@ -22,10 +21,7 @@ namespace srsran {
 class e2sm_rc_impl : public e2sm_interface
 {
 public:
-  e2sm_rc_impl(srslog::basic_logger&    logger_,
-               e2sm_handler&            e2sm_packer_,
-               e2sm_param_configurator& param_configurator_,
-               e2sm_param_provider&     param_interface_);
+  e2sm_rc_impl(srslog::basic_logger& logger_, e2sm_handler& e2sm_packer_);
 
   e2sm_handler& get_e2sm_packer() override;
 
@@ -39,8 +35,6 @@ public:
 private:
   srslog::basic_logger&                                     logger;
   e2sm_handler&                                             e2sm_packer;
-  e2sm_param_configurator&                                  param_configurator;
-  e2sm_param_provider&                                      param_interface;
   std::map<uint32_t, std::unique_ptr<e2sm_control_service>> control_services;
 };
 } // namespace srsran

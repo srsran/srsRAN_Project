@@ -9,6 +9,7 @@
  */
 
 #include "e2sm_rc_control_service_impl.h"
+#include "e2sm_rc_control_action_du_executor.h"
 #include <algorithm>
 
 using namespace asn1::e2ap;
@@ -21,6 +22,44 @@ e2sm_rc_control_service_base::e2sm_rc_control_service_base(uint32_t style_id_) :
   if (!get_e2sm_rc_control_style_def(style_id_, control_service_def)) {
     logger.error("Control Service Style %i does not exist\n", style_id_);
   }
+}
+
+bool e2sm_rc_control_service_base::fill_ran_function_description(
+    asn1::e2sm_rc::ran_function_definition_ctrl_item_s& ctrl_item)
+{
+  ctrl_item.ric_call_process_id_format_type_present = false;
+  ctrl_item.ric_ctrl_style_type                     = style_id;
+  ctrl_item.ric_ctrl_style_name.from_string(control_service_def.style_name);
+
+  ctrl_item.ric_ctrl_hdr_format_type = control_service_def.ctrl_hdr_format;
+  ctrl_item.ric_ctrl_msg_format_type = control_service_def.ctrl_msg_format;
+  if (control_service_def.call_process_id_format) {
+    ctrl_item.ric_call_process_id_format_type_present = true;
+    ctrl_item.ric_call_process_id_format_type         = control_service_def.call_process_id_format;
+  }
+  ctrl_item.ric_ctrl_outcome_format_type = control_service_def.ctrl_outcome_format;
+
+  for (auto const& x : config_req_executors) {
+    e2sm_rc_control_action_du_executor_base* action_executor =
+        dynamic_cast<e2sm_rc_control_action_du_executor_base*>(x.second.get());
+
+    if (!action_executor) {
+      continue;
+    }
+
+    ran_function_definition_ctrl_action_item_s ran_function_definition_ctrl_action_item;
+    if (action_executor->fill_ran_function_description(ran_function_definition_ctrl_action_item)) {
+      ctrl_item.ric_ctrl_action_list.push_back(ran_function_definition_ctrl_action_item);
+    };
+
+    // TODO: fill outcome properly
+    ctrl_outcome_ran_param_item_s ctrl_outcome_ran_param_item;
+    ctrl_outcome_ran_param_item.ran_param_id = 1;
+    ctrl_outcome_ran_param_item.ran_param_name.from_string("test_outcome_ran_param");
+    ctrl_item.ran_ctrl_outcome_params_list.push_back(ctrl_outcome_ran_param_item);
+  }
+
+  return true;
 }
 
 uint32_t e2sm_rc_control_service_base::get_style_type()

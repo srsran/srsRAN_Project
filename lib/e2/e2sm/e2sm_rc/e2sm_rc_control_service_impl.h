@@ -60,6 +60,8 @@ public:
   e2sm_rc_control_service_base(uint32_t style_id_);
   virtual ~e2sm_rc_control_service_base() = default;
 
+  bool fill_ran_function_description(asn1::e2sm_rc::ran_function_definition_ctrl_item_s& ctrl_item);
+
   /// e2sm_control_service functions.
   uint32_t get_style_type() override;
   bool add_e2sm_rc_control_action_executor(std::unique_ptr<e2sm_control_action_executor> ctrl_act_executor) override;

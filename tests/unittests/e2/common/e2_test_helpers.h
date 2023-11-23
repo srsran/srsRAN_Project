@@ -14,7 +14,6 @@
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
-#include "lib/e2/e2sm/e2sm_param_provider.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_service_impl.h"
@@ -772,8 +771,7 @@ protected:
   std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style2;
   std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
-  std::unique_ptr<e2sm_handler>                       e2sm_rc_packer;
-  std::unique_ptr<e2sm_param_provider>                rc_provider;
+  std::unique_ptr<e2sm_rc_asn1_packer>                e2sm_rc_packer;
   std::unique_ptr<e2sm_param_configurator>            rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
@@ -915,19 +913,19 @@ class e2_test_setup : public e2_test_base
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    factory               = timer_factory{timers, task_worker};
-    msg_notifier          = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider      = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_kpm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_kpm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    rc_provider           = std::make_unique<e2sm_param_provider>();
-    e2sm_rc_packer        = std::make_unique<e2sm_rc_asn1_packer>(*rc_provider);
-    rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
-    e2sm_rc_iface = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer, *rc_param_configurator, *rc_provider);
+    factory                        = timer_factory{timers, task_worker};
+    msg_notifier                   = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+    du_metrics                     = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider               = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_kpm_packer                = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_kpm_iface                 = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
+    e2sm_rc_packer                 = std::make_unique<e2sm_rc_asn1_packer>();
+    rc_param_configurator          = std::make_unique<dummy_e2sm_param_configurator>();
+    e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
     rc_control_action_2_6_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*rc_param_configurator);
     e2sm_rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
+    e2sm_rc_packer->add_e2sm_control_service(e2sm_rc_control_service_style2.get());
     e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style2));
     e2sm_mngr = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));

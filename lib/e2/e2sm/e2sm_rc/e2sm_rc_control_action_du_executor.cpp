@@ -15,8 +15,9 @@ using namespace asn1::e2sm_rc;
 using namespace srsran;
 
 e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(
-    e2sm_param_configurator& param_configurator_) :
-  logger(srslog::fetch_basic_logger("E2SM-RC")), param_configurator(param_configurator_)
+    e2sm_param_configurator& param_configurator_,
+    uint32_t                 action_id_) :
+  logger(srslog::fetch_basic_logger("E2SM-RC")), action_id(action_id_), param_configurator(param_configurator_)
 {
 }
 
@@ -25,13 +26,28 @@ uint32_t e2sm_rc_control_action_du_executor_base::get_action_id()
   return action_id;
 }
 
+bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
+    asn1::e2sm_rc::ran_function_definition_ctrl_action_item_s& action_item)
+{
+  action_item.ric_ctrl_action_id = action_id;
+  action_item.ric_ctrl_action_name.from_string(action_name);
+
+  for (auto& ran_p : action_params) {
+    ctrl_action_ran_param_item_s ctrl_action_ran_param_item;
+    ctrl_action_ran_param_item.ran_param_id = ran_p.first;
+    ctrl_action_ran_param_item.ran_param_name.from_string(ran_p.second);
+    action_item.ran_ctrl_action_params_list.push_back(ctrl_action_ran_param_item);
+  }
+
+  return true;
+}
+
 e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(
     e2sm_param_configurator& param_configurator_) :
-  e2sm_rc_control_action_du_executor_base(param_configurator_)
+  e2sm_rc_control_action_du_executor_base(param_configurator_, 6)
 {
   // Control Action description:
   // To control the radio resource management policy for slice-specific PRB quota allocation
-  action_id   = 6;
   action_name = "Slice-level PRB quota";
   action_params.insert({1, "RRM Policy Ratio List"});
   action_params.insert({2, "RRM Policy Ratio Group"});

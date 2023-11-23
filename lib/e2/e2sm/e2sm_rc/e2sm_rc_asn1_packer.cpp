@@ -9,6 +9,7 @@
  */
 
 #include "e2sm_rc_asn1_packer.h"
+#include "e2sm_rc_control_service_impl.h"
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
@@ -20,7 +21,13 @@ const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
 const uint32_t    e2sm_rc_asn1_packer::ran_func_id      = 3;
 const uint32_t    e2sm_rc_asn1_packer::revision         = 0;
 
-e2sm_rc_asn1_packer::e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider_) : rc_provider(rc_provider_) {}
+e2sm_rc_asn1_packer::e2sm_rc_asn1_packer() {}
+
+bool e2sm_rc_asn1_packer::add_e2sm_control_service(e2sm_control_service* control_service)
+{
+  control_services.emplace(control_service->get_style_type(), control_service);
+  return true;
+}
 
 e2_sm_action_definition_s
 e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
@@ -72,31 +79,6 @@ e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_b
   return e2_sm_event_trigger_definition_s();
 }
 
-void e2sm_rc_asn1_packer::populate_control_ran_function_description(
-    e2sm_service_provider&              provider,
-    e2_sm_rc_ran_function_definition_s& ran_function_description)
-{
-  ran_function_description.ran_function_definition_ctrl_present = true;
-  for (auto& style_provider : provider.style_providers) {
-    ran_function_definition_ctrl_item_s ran_function_definition_ctrl_item;
-    ran_function_definition_ctrl_item.ric_ctrl_style_type = style_provider.first;
-    ran_function_definition_ctrl_item.ric_ctrl_style_name.from_string(style_provider.second.name);
-    for (auto& action_provider : style_provider.second.action_providers) {
-      ran_function_definition_ctrl_action_item_s ran_function_definition_ctrl_action_item;
-      ran_function_definition_ctrl_action_item.ric_ctrl_action_id = action_provider.first;
-      ran_function_definition_ctrl_action_item.ric_ctrl_action_name.from_string(action_provider.second.name);
-      for (auto& param : action_provider.second.action_params) {
-        ctrl_action_ran_param_item_s ran_param_item;
-        ran_param_item.ran_param_id = param.second.id;
-        ran_param_item.ran_param_name.from_string(param.second.name);
-        ran_function_definition_ctrl_action_item.ran_ctrl_action_params_list.push_back(ran_param_item);
-      }
-      ran_function_definition_ctrl_item.ric_ctrl_action_list.push_back(ran_function_definition_ctrl_action_item);
-    }
-    ran_function_description.ran_function_definition_ctrl.ric_ctrl_style_list.push_back(
-        ran_function_definition_ctrl_item);
-  }
-}
 asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_description()
 {
   e2_sm_rc_ran_function_definition_s ran_function_desc;
@@ -114,10 +96,18 @@ asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_descripti
   ran_function_desc.ran_function_name.ran_function_e2_sm_o_id.from_string(oid.c_str());
   ran_function_desc.ran_function_name.ran_function_description.from_string(func_description.c_str());
   ran_function_desc.ext = false;
-  for (auto& provider : rc_provider.service_providers) {
-    if (provider.second.name == "Control Service") {
-      ran_function_desc.ran_function_definition_ctrl_present = true;
-      populate_control_ran_function_description(provider.second, ran_function_desc);
+
+  for (auto const& x : control_services) {
+    ran_function_desc.ran_function_definition_ctrl_present = true;
+    e2sm_rc_control_service_base* control_service          = dynamic_cast<e2sm_rc_control_service_base*>(x.second);
+
+    if (!control_service) {
+      continue;
+    }
+
+    ran_function_definition_ctrl_item_s ran_function_definition_ctrl_item;
+    if (control_service->fill_ran_function_description(ran_function_definition_ctrl_item)) {
+      ran_function_desc.ran_function_definition_ctrl.ric_ctrl_style_list.push_back(ran_function_definition_ctrl_item);
     }
   }
   asn1::unbounded_octstring<true> ran_function_description;

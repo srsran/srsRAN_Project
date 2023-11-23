@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "../e2sm_param_provider.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2sm/e2sm.h"
+#include <map>
 
 namespace srsran {
 
@@ -27,7 +27,7 @@ public:
   static const std::string func_description;
   static const uint32_t    ran_func_id;
   static const uint32_t    revision;
-  e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider);
+  e2sm_rc_asn1_packer();
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition) override;
   e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override;
@@ -37,10 +37,9 @@ public:
 
   asn1::unbounded_octstring<true> pack_ran_function_description() override;
 
+  bool add_e2sm_control_service(e2sm_control_service* control_service);
+
 private:
-  void populate_control_ran_function_description(
-      e2sm_service_provider&                             provider,
-      asn1::e2sm_rc::e2_sm_rc_ran_function_definition_s& ran_function_description);
-  e2sm_param_provider& rc_provider;
+  std::map<uint32_t, e2sm_control_service*> control_services;
 };
 } // namespace srsran
