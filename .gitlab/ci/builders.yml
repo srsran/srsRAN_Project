@@ -16,6 +16,7 @@ stages:
   - dependencies
   - publish
   - manifest
+  - alt registries
 
 ################################################################################
 # UHD builder
@@ -473,3 +474,49 @@ docker manifest rhel 8:
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-amd64 \
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-arm64
       docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}
+
+tag alt registries:
+  extends: .docker manifest
+  stage: alt registries
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [archlinux, latest]
+      artifacts: false
+    - job: "docker-builder-publish [debian]: [11]"
+      artifacts: false
+    - job: "docker-builder-publish [debian]: [12]"
+      artifacts: false
+    - job: docker manifest ubuntu 20.04
+      artifacts: false
+    - job: docker manifest ubuntu 22.04
+      artifacts: false
+    - job: docker manifest ubuntu 23.04
+      artifacts: false
+    - job: docker manifest ubuntu 23.10
+      artifacts: false
+    - job: docker manifest rhel 8
+      artifacts: false
+  script:
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get update && \
+        apt-get install -y --no-install-recommends skopeo
+    - |
+      skopeo copy \
+        docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION} \
+        docker://${ALT_REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION}
+  parallel:
+    matrix:
+      - OS_NAME: ubuntu
+        OS_VERSION: ["20.04", "22.04", "23.04", "23.10"]
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: debian
+        OS_VERSION: ["11", "12"]
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: archlinux
+        OS_VERSION: latest
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: rhel
+        OS_VERSION: "8"
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
