@@ -65,8 +65,8 @@ public:
   /// e2sm_control_service functions.
   uint32_t get_style_type() override;
   bool add_e2sm_rc_control_action_executor(std::unique_ptr<e2sm_control_action_executor> ctrl_act_executor) override;
-  bool control_request_supported(const e2_sm_ric_control_request_s& req) override                          = 0;
-  virtual e2_ric_control_response execute_control_request(const e2_sm_ric_control_request_s& req) override = 0;
+  bool control_request_supported(const e2_sm_ric_control_request_s& req) override                               = 0;
+  virtual e2_sm_ric_control_response_s execute_control_request(const e2_sm_ric_control_request_s& req) override = 0;
 
 protected:
   srslog::basic_logger&                                             logger;
@@ -83,8 +83,8 @@ public:
   e2sm_rc_control_service(uint32_t style_id_);
   virtual ~e2sm_rc_control_service() = default;
 
-  bool                    control_request_supported(const e2_sm_ric_control_request_s& req) override;
-  e2_ric_control_response execute_control_request(const e2_sm_ric_control_request_s& req) override;
+  bool                         control_request_supported(const e2_sm_ric_control_request_s& req) override;
+  e2_sm_ric_control_response_s execute_control_request(const e2_sm_ric_control_request_s& req) override;
 };
 
 /// Class for e2sm_rc_control_service style 255 (Multiple actions)
@@ -94,8 +94,8 @@ public:
   e2sm_rc_control_service_style_255();
   virtual ~e2sm_rc_control_service_style_255() = default;
 
-  bool                    control_request_supported(const e2_sm_ric_control_request_s& req) override;
-  e2_ric_control_response execute_control_request(const e2_sm_ric_control_request_s& req) override;
+  bool                         control_request_supported(const e2_sm_ric_control_request_s& req) override;
+  e2_sm_ric_control_response_s execute_control_request(const e2_sm_ric_control_request_s& req) override;
 
 private:
   // Helper functions.

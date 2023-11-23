@@ -21,11 +21,12 @@ e2_ric_control_procedure::e2_ric_control_procedure(e2_message_notifier&  notif_,
 {
 }
 
-void e2_ric_control_procedure::run_e2_ric_control_procedure(const e2_ric_control_request& request_)
+void e2_ric_control_procedure::run_e2_ric_control_procedure(const e2_ric_control_request& e2_request)
 {
-  e2_ric_control_response response;
-  ri_cctrl_request_s      ctrl_req   = request_.request;
-  e2sm_interface*         e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
+  e2_ric_control_response      e2_response;
+  e2_sm_ric_control_response_s e2sm_response;
+  ri_cctrl_request_s           ctrl_req   = e2_request.request;
+  e2sm_interface*              e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
 
   if (!e2sm_iface) {
     logger.error("RAN function ID not supported");
@@ -46,12 +47,13 @@ void e2_ric_control_procedure::run_e2_ric_control_procedure(const e2_ric_control
     return;
   }
 
-  response = control_service->execute_control_request(ric_ctrl_req);
+  e2sm_response = control_service->execute_control_request(ric_ctrl_req);
   if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
-    if (response.success) {
-      send_e2_ric_control_acknowledge(request_, response);
+    e2_response = packer.pack_ric_control_response(e2sm_response);
+    if (e2_response.success) {
+      send_e2_ric_control_acknowledge(e2_request, e2_response);
     } else {
-      send_e2_ric_control_failure(request_, response);
+      send_e2_ric_control_failure(e2_request, e2_response);
     }
   }
 }
@@ -64,10 +66,18 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_cont
   logger.info("Sending E2 RIC Control Acknowledge");
   msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ri_cctrl_ack();
-  ack->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
   ack->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
+  ack->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
   ack->ri_ccall_process_id_present = false;
-  ack->ri_cctrl_outcome_present    = false;
+  if (ctrl_request.request->ri_ccall_process_id_present) {
+    ack->ri_ccall_process_id_present = true;
+    ack->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  }
+  ack->ri_cctrl_outcome_present = false;
+  if (ctrl_response.ack->ri_cctrl_outcome_present) {
+    ack->ri_cctrl_outcome_present = true;
+    ack->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  }
   ric_notif.on_new_message(msg);
 }
 
@@ -78,11 +88,18 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_control_
   msg.pdu.set_unsuccessful_outcome();
   logger.info("Sending E2 RIC Control Failure");
   msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
-  ri_cctrl_fail_s& fail             = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
-  fail->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
-  fail->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
-  fail->ri_ccall_process_id_present = false;
-  fail->ri_cctrl_outcome_present    = false;
-  fail->cause->set_misc().value     = cause_misc_e::options::unspecified;
+  ri_cctrl_fail_s& fail = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
+  fail->ri_crequest_id  = ctrl_request.request->ri_crequest_id;
+  fail->ra_nfunction_id = ctrl_request.request->ra_nfunction_id;
+  if (ctrl_request.request->ri_ccall_process_id_present) {
+    fail->ri_ccall_process_id_present = true;
+    fail->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  }
+  fail->cause                    = ctrl_response.failure->cause;
+  fail->ri_cctrl_outcome_present = false;
+  if (ctrl_response.ack->ri_cctrl_outcome_present) {
+    fail->ri_cctrl_outcome_present = true;
+    fail->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  }
   ric_notif.on_new_message(msg);
 }

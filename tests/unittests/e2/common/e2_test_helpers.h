@@ -696,6 +696,11 @@ class dummy_e2sm_handler : public e2sm_handler
     e2_sm_ric_control_request_s ric_control_request = {};
     return ric_control_request;
   }
+  e2_ric_control_response pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response) override
+  {
+    e2_ric_control_response ric_control_response = {};
+    return ric_control_response;
+  }
   e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
   {
     e2_sm_event_trigger_definition_s e2sm_event_trigger_def;

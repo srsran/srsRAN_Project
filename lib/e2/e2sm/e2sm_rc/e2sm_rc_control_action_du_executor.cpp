@@ -81,10 +81,10 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
   return true;
 };
 
-e2_ric_control_response
+e2_sm_ric_control_response_s
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_ric_control_request_s& req)
 {
-  e2_ric_control_response            e2_resp;
+  e2_sm_ric_control_response_s       e2_resp;
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
@@ -124,6 +124,35 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
 
   e2_resp.success =
       ctrl_response.harq_processes_result and ctrl_response.max_prb_alloc_result and ctrl_response.min_prb_alloc_result;
+
+  // Always fill outcome here, it will be decided later whether it should be included in the e2 response.
+  e2_resp.ric_ctrl_outcome_present              = true;
+  e2_sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2_sm_rc_ctrl_outcome_s>(e2_resp.ric_ctrl_outcome)
+                                                      .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
+
+  // TODO: fill outcome properly
+  e2_sm_rc_ctrl_outcome_format1_item_s test_outcome;
+  test_outcome.ran_param_id                    = 1;
+  test_outcome.ran_param_value.set_value_int() = 100;
+  ctrl_outcome.ran_p_list.push_back(test_outcome);
+
+  if (ctrl_config.min_prb_alloc.has_value()) {
+    e2_sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
+    min_prb_outcome.ran_param_id                    = 11;
+    min_prb_outcome.ran_param_value.set_value_int() = ctrl_config.min_prb_alloc.value();
+    ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
+  }
+
+  if (ctrl_config.max_prb_alloc.has_value()) {
+    e2_sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
+    max_prb_outcome.ran_param_id                    = 12;
+    max_prb_outcome.ran_param_value.set_value_int() = ctrl_config.max_prb_alloc.value();
+    ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
+  }
+
+  if (!e2_resp.success) {
+    e2_resp.cause.set_misc().value = cause_misc_e::options::unspecified;
+  }
 
   return e2_resp;
 };

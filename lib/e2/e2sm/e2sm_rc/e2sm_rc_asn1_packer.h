@@ -31,6 +31,7 @@ public:
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition) override;
   e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override;
+  e2_ric_control_response     pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response) override;
 
   e2_sm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition) override;

@@ -121,7 +121,7 @@ bool e2sm_rc_control_service::control_request_supported(const e2_sm_ric_control_
   return true;
 }
 
-e2_ric_control_response e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
+e2_sm_ric_control_response_s e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
 {
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
@@ -217,10 +217,10 @@ bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ri
   return false;
 }
 
-e2_ric_control_response
+e2_sm_ric_control_response_s
 e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_control_request_s& req)
 {
-  e2_ric_control_response aggregated_response;
+  e2_sm_ric_control_response_s aggregated_response;
   aggregated_response.success = false;
 
   const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
@@ -231,8 +231,8 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_contr
   for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
     for (auto& action : style.ric_ctrl_action_list) {
       // Create a control request with format 1 to match the API of control service styles 1-10.
-      e2_sm_ric_control_request_s tmp_req = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
-      e2_ric_control_response     tmp_response;
+      e2_sm_ric_control_request_s  tmp_req = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
+      e2_sm_ric_control_response_s tmp_response;
       tmp_response = config_req_executors[action.ric_ctrl_action_id]->execute_ric_control_action(tmp_req);
 
       // Aggregate RIC control action response.

@@ -44,6 +44,16 @@ struct e2_sm_ric_control_request_s {
   bool                                        ric_ctrl_ack_request;
 };
 
+struct e2_sm_ric_control_response_s {
+  e2sm_service_model_t                            service_model;
+  bool                                            success;
+  bool                                            ric_call_process_id_present = false;
+  bool                                            ric_ctrl_outcome_present    = false;
+  uint64_t                                        ric_call_process_id;
+  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_outcome_s> ric_ctrl_outcome;
+  asn1::e2ap::cause_c                             cause;
+};
+
 /// RIC control action executor maps an control action request to the proper stack functions.
 class e2sm_control_action_executor
 {
@@ -59,7 +69,7 @@ public:
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual e2_ric_control_response execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
+  virtual e2_sm_ric_control_response_s execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
 };
 
 class e2sm_report_service
@@ -98,7 +108,7 @@ public:
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual e2_ric_control_response execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
+  virtual e2_sm_ric_control_response_s execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
 };
 
 class e2sm_handler
@@ -113,10 +123,14 @@ public:
   /// \param[in] buf
   /// \return Returns the E2SM Event Trigger Definition.
   virtual e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
-  /// \brief Handle the packed E2SM Event Trigger Definition.
-  /// \param[in] buf
-  /// \return Returns the E2SM Event Trigger Definition.
+  /// \brief Handle the packed E2 RIC Control Request.
+  /// \param[in] req E2 RIC Control Request.
+  /// \return Returns the unpacked E2SM RIC Control Request.
   virtual e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) = 0;
+  /// \brief Pack the E2SM RIC Control Response.
+  /// \param[in] response E2SM RIC Control Response.
+  /// \return Returns the packed E2 RIC Control Response.
+  virtual e2_ric_control_response pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response) = 0;
   /// @brief Pack the RAN function description.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };

@@ -72,6 +72,41 @@ e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctr
   return ric_control_request;
 };
 
+e2_ric_control_response
+e2sm_rc_asn1_packer::pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response)
+{
+  e2_ric_control_response e2_control_response = {};
+
+  e2_control_response.success = e2sm_response.success;
+
+  if (e2_control_response.success) {
+    if (e2sm_response.ric_ctrl_outcome_present) {
+      e2_control_response.ack->ri_cctrl_outcome_present = true;
+      srsran::byte_buffer buf;
+      asn1::bit_ref       bref(buf);
+      if (variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
+        printf("Failed to pack E2SM RC RIC Control Outcome (Ack)\n");
+      }
+      e2_control_response.ack->ri_cctrl_outcome->resize(buf.length());
+      std::copy(buf.begin(), buf.end(), e2_control_response.ack->ri_cctrl_outcome->begin());
+    }
+  } else {
+    if (e2sm_response.ric_ctrl_outcome_present) {
+      e2_control_response.failure->ri_cctrl_outcome_present = true;
+      srsran::byte_buffer buf;
+      asn1::bit_ref       bref(buf);
+      if (variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
+        printf("Failed to pack E2SM RC RIC Control Outcome (Failure)\n");
+      }
+      e2_control_response.failure->ri_cctrl_outcome->resize(buf.length());
+      std::copy(buf.begin(), buf.end(), e2_control_response.failure->ri_cctrl_outcome->begin());
+    }
+    e2_control_response.failure->cause.value = e2sm_response.cause;
+  }
+
+  return e2_control_response;
+}
+
 e2_sm_event_trigger_definition_s
 e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {

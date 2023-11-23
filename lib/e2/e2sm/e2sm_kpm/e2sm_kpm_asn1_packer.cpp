@@ -41,6 +41,14 @@ e2sm_kpm_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cct
   return control_request;
 }
 
+e2_ric_control_response
+e2sm_kpm_asn1_packer::pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response)
+{
+  printf("Failure - RIC control not available in e2sm_kpm.\n");
+  e2_ric_control_response control_response = {};
+  return control_response;
+}
+
 e2_sm_event_trigger_definition_s
 e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
