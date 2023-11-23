@@ -59,7 +59,7 @@ public:
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual async_task<e2_ric_control_response> execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
+  virtual e2_ric_control_response execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
 };
 
 class e2sm_report_service
@@ -98,7 +98,7 @@ public:
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual async_task<e2_ric_control_response> execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
+  virtual e2_ric_control_response execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
 };
 
 class e2sm_handler

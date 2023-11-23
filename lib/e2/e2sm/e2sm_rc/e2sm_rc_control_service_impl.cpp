@@ -121,8 +121,7 @@ bool e2sm_rc_control_service::control_request_supported(const e2_sm_ric_control_
   return true;
 }
 
-async_task<e2_ric_control_response>
-e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
+e2_ric_control_response e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
 {
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
@@ -218,7 +217,7 @@ bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ri
   return false;
 }
 
-async_task<e2_ric_control_response>
+e2_ric_control_response
 e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_control_request_s& req)
 {
   e2_ric_control_response aggregated_response;
@@ -237,8 +236,5 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_contr
     }
   }
 
-  return launch_async([aggregated_response](coro_context<async_task<e2_ric_control_response>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_RETURN(aggregated_response);
-  });
+  return aggregated_response;
 }

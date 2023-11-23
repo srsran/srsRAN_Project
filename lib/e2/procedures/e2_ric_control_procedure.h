@@ -25,22 +25,17 @@ namespace srsran {
 class e2_ric_control_procedure
 {
 public:
-  e2_ric_control_procedure(const e2_ric_control_request& request_,
-                           e2_message_notifier&          notif_,
-                           e2sm_manager&                 e2sm_mng_,
-                           srslog::basic_logger&         logger);
+  e2_ric_control_procedure(e2_message_notifier& notif_, e2sm_manager& e2sm_mng_, srslog::basic_logger& logger);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void run_e2_ric_control_procedure(const e2_ric_control_request& request);
 
   void send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
                                        const e2_ric_control_response& ctrl_response);
   void send_e2_ric_control_failure(const e2_ric_control_request&, const e2_ric_control_response& ctrl_response);
 
 private:
-  srslog::basic_logger&        logger;
-  e2_message_notifier&         ric_notif;
-  e2sm_manager&                e2sm_mng;
-  const e2_ric_control_request request;
-  e2_ric_control_response      response;
+  srslog::basic_logger& logger;
+  e2_message_notifier&  ric_notif;
+  e2sm_manager&         e2sm_mng;
 };
 } // namespace srsran

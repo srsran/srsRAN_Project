@@ -14,18 +14,18 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
 
-e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request& request_,
-                                                   e2_message_notifier&          notif_,
-                                                   e2sm_manager&                 e2sm_mng_,
-                                                   srslog::basic_logger&         logger_) :
-  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), request(request_)
+e2_ric_control_procedure::e2_ric_control_procedure(e2_message_notifier&  notif_,
+                                                   e2sm_manager&         e2sm_mng_,
+                                                   srslog::basic_logger& logger_) :
+  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_)
 {
 }
 
-void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
+void e2_ric_control_procedure::run_e2_ric_control_procedure(const e2_ric_control_request& request_)
 {
-  ri_cctrl_request_s ctrl_req   = request.request;
-  e2sm_interface*    e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
+  e2_ric_control_response response;
+  ri_cctrl_request_s      ctrl_req   = request_.request;
+  e2sm_interface*         e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
 
   if (!e2sm_iface) {
     logger.error("RAN function ID not supported");
@@ -46,16 +46,14 @@ void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
     return;
   }
 
-  CORO_BEGIN(ctx);
-  CORO_AWAIT_VALUE(response, control_service->execute_control_request(ric_ctrl_req));
+  response = control_service->execute_control_request(ric_ctrl_req);
   if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
     if (response.success) {
-      send_e2_ric_control_acknowledge(request, response);
+      send_e2_ric_control_acknowledge(request_, response);
     } else {
-      send_e2_ric_control_failure(request, response);
+      send_e2_ric_control_failure(request_, response);
     }
   }
-  CORO_RETURN();
 }
 
 void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
@@ -66,8 +64,8 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_cont
   logger.info("Sending E2 RIC Control Acknowledge");
   msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ri_cctrl_ack();
-  ack->ra_nfunction_id             = request.request->ra_nfunction_id;
-  ack->ri_crequest_id              = request.request->ri_crequest_id;
+  ack->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
+  ack->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
   ack->ri_ccall_process_id_present = false;
   ack->ri_cctrl_outcome_present    = false;
   ric_notif.on_new_message(msg);
@@ -81,8 +79,8 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_control_
   logger.info("Sending E2 RIC Control Failure");
   msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_fail_s& fail             = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
-  fail->ra_nfunction_id             = request.request->ra_nfunction_id;
-  fail->ri_crequest_id              = request.request->ri_crequest_id;
+  fail->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
+  fail->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
   fail->ri_ccall_process_id_present = false;
   fail->ri_cctrl_outcome_present    = false;
   fail->cause->set_misc().value     = cause_misc_e::options::unspecified;

@@ -102,6 +102,7 @@ private:
   e2sm_manager&                                        e2sm_mngr;
   e2_subscription_setup_procedure                      subscribe_proc;
   e2_subscription_delete_procedure                     subscribe_delete_proc;
+  e2_ric_control_procedure                             ric_control_proc;
   std::unique_ptr<e2_event_manager>                    events;
   fifo_async_task_scheduler                            async_tasks;
   unsigned                                             current_transaction_id = 0; // store current E2AP transaction id

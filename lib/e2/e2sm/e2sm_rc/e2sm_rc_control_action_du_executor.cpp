@@ -9,6 +9,7 @@
  */
 
 #include "e2sm_rc_control_action_du_executor.h"
+#include <future>
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
@@ -17,7 +18,10 @@ using namespace srsran;
 e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(
     e2sm_param_configurator& param_configurator_,
     uint32_t                 action_id_) :
-  logger(srslog::fetch_basic_logger("E2SM-RC")), action_id(action_id_), param_configurator(param_configurator_)
+  logger(srslog::fetch_basic_logger("E2SM-RC")),
+  action_id(action_id_),
+  param_configurator(param_configurator_),
+  async_tasks(10)
 {
 }
 
@@ -77,9 +81,10 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
   return true;
 };
 
-async_task<e2_ric_control_response>
+e2_ric_control_response
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_ric_control_request_s& req)
 {
+  e2_ric_control_response            e2_resp;
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
@@ -99,13 +104,26 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
     }
   }
 
-  return launch_async([this](coro_context<async_task<e2_ric_control_response>>& ctx) {
+  std::promise<void>          p;
+  std::future<void>           fut = p.get_future();
+  ric_control_config_response ctrl_response;
+
+  async_tasks.schedule([this, &p, &ctrl_response](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    ric_control_config_response ctrl_response;
+
     CORO_AWAIT_VALUE(ctrl_response, param_configurator.configure_ue_mac_scheduler(ctrl_config));
-    e2_ric_control_response e2_resp;
-    e2_resp.success = ctrl_response.harq_processes_result and ctrl_response.max_prb_alloc_result and
-                      ctrl_response.min_prb_alloc_result;
-    CORO_RETURN(e2_resp);
+
+    // Signal caller thread that the operation is complete.
+    p.set_value();
+
+    CORO_RETURN();
   });
+
+  // Block waiting for reconfiguration to complete.
+  fut.wait();
+
+  e2_resp.success =
+      ctrl_response.harq_processes_result and ctrl_response.max_prb_alloc_result and ctrl_response.min_prb_alloc_result;
+
+  return e2_resp;
 };
