@@ -187,6 +187,9 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
     }
     srsran_assert(ue_cfg_req.cells.has_value(), "CRC received for test mode which is not yet created");
 
+    // Force UL SINR.
+    crc.ul_sinr_metric = 100;
+
     // Force CRC=OK for test UE.
     crc.tb_crc_success = true;
 
