@@ -283,7 +283,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
     // Update UE HARQ state with received HARQ-ACK.
     dl_harq_process::dl_ack_info_result result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
-
     if (result.h_id != INVALID_HARQ_ID) {
       // Respective HARQ was found.
       const units::bytes tbs{result.tbs_bytes};
@@ -291,7 +290,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result.h_id, harq_bits[harq_idx], tbs});
-
       if (result.update == dl_harq_process::status_update::acked or
           result.update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.

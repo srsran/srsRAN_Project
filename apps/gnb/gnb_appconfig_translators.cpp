@@ -1656,8 +1656,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_dl_target_bler               = pdsch.olla_target_bler;
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
-
-  const pusch_appconfig& pusch = cell.pusch_cfg;
+  const pusch_appconfig& pusch                 = cell.pusch_cfg;
+  if (config.ntn_cfg.has_value()) {
+    out_cfg.ue.auto_ack_harq = true;
+  }
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
