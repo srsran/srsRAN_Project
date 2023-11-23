@@ -1,8 +1,8 @@
 
 #pragma once
 
+#include "du_configurator.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"

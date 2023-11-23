@@ -12,9 +12,9 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/du_manager/du_configurator.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
-#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 
