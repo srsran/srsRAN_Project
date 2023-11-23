@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "e2sm_du.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/asn1/e2ap/e2ap.h"

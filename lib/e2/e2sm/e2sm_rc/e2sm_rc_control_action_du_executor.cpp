@@ -15,12 +15,11 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
 using namespace srsran;
 
-e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(
-    e2sm_param_configurator& param_configurator_,
-    uint32_t                 action_id_) :
+e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(du_configurator& du_configurator_,
+                                                                                 uint32_t         action_id_) :
   logger(srslog::fetch_basic_logger("E2SM-RC")),
   action_id(action_id_),
-  param_configurator(param_configurator_),
+  du_param_configurator(du_configurator_),
   async_tasks(10)
 {
 }
@@ -46,9 +45,8 @@ bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
   return true;
 }
 
-e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(
-    e2sm_param_configurator& param_configurator_) :
-  e2sm_rc_control_action_du_executor_base(param_configurator_, 6)
+e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(du_configurator& du_configurator_) :
+  e2sm_rc_control_action_du_executor_base(du_configurator_, 6)
 {
   // Control Action description:
   // To control the radio resource management policy for slice-specific PRB quota allocation
@@ -104,14 +102,14 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
     }
   }
 
-  std::promise<void>          p;
-  std::future<void>           fut = p.get_future();
-  ric_control_config_response ctrl_response;
+  std::promise<void>                   p;
+  std::future<void>                    fut = p.get_future();
+  du_mac_sched_control_config_response ctrl_response;
 
   async_tasks.schedule([this, &p, &ctrl_response](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    CORO_AWAIT_VALUE(ctrl_response, param_configurator.configure_ue_mac_scheduler(ctrl_config));
+    CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.configure_ue_mac_scheduler(ctrl_config));
 
     // Signal caller thread that the operation is complete.
     p.set_value();

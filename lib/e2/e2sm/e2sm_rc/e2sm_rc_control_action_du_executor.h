@@ -14,6 +14,7 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 
@@ -23,7 +24,7 @@ class e2sm_rc_control_action_du_executor_base : public e2sm_control_action_execu
 {
 public:
   e2sm_rc_control_action_du_executor_base() = delete;
-  e2sm_rc_control_action_du_executor_base(e2sm_param_configurator& param_configurator_, uint32_t action_id_);
+  e2sm_rc_control_action_du_executor_base(du_configurator& du_configurator_, uint32_t action_id_);
   virtual ~e2sm_rc_control_action_du_executor_base() = default;
 
   bool fill_ran_function_description(asn1::e2sm_rc::ran_function_definition_ctrl_action_item_s& action_item);
@@ -38,14 +39,14 @@ protected:
   uint32_t                        action_id;
   std::string                     action_name;
   std::map<uint32_t, std::string> action_params;
-  e2sm_param_configurator&        param_configurator;
+  du_configurator&                du_param_configurator;
   fifo_async_task_scheduler       async_tasks;
 };
 
 class e2sm_rc_control_action_2_6_du_executor : public e2sm_rc_control_action_du_executor_base
 {
 public:
-  e2sm_rc_control_action_2_6_du_executor(e2sm_param_configurator& param_configurator_);
+  e2sm_rc_control_action_2_6_du_executor(du_configurator& du_configurator_);
   virtual ~e2sm_rc_control_action_2_6_du_executor() = default;
 
   /// e2sm_control_request_executor functions.
@@ -53,7 +54,7 @@ public:
   e2_sm_ric_control_response_s execute_ric_control_action(const e2_sm_ric_control_request_s& req) override;
 
   // Helper variables.
-  ric_control_config ctrl_config;
+  du_mac_sched_control_config ctrl_config;
 };
 
 } // namespace srsran

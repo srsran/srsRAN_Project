@@ -141,7 +141,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                                    cfg.e2_client,
                                    *cfg.e2_du_metric_iface,
                                    *f1ap,
-                                   get_e2sm_configurator(),
+                                   get_du_configurator(),
                                    timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
                                    cfg.exec_mapper->du_e2_executor());
   }
@@ -215,7 +215,7 @@ mac_cell_control_information_handler& du_high_impl::get_control_info_handler(du_
   return mac->get_control_info_handler(cell_index);
 }
 
-e2sm_param_configurator& du_high_impl::get_e2sm_configurator()
+du_configurator& du_high_impl::get_du_configurator()
 {
   return *du_manager;
 }

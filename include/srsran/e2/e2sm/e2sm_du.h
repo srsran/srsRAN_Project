@@ -15,7 +15,7 @@
 
 namespace srsran {
 
-struct ric_control_config {
+struct du_mac_sched_control_config {
   uint64_t           ue_id;
   optional<unsigned> num_harq_processes;
   optional<unsigned> num_harq_retransmissions;
@@ -23,18 +23,19 @@ struct ric_control_config {
   optional<unsigned> max_prb_alloc;
 };
 
-struct ric_control_config_response {
+struct du_mac_sched_control_config_response {
   bool harq_processes_result;
   bool min_prb_alloc_result;
   bool max_prb_alloc_result;
 };
 
-class e2sm_param_configurator
+class du_configurator
 {
 public:
-  virtual ~e2sm_param_configurator() = default;
+  virtual ~du_configurator() = default;
 
-  virtual async_task<ric_control_config_response> configure_ue_mac_scheduler(ric_control_config reconf) = 0;
+  virtual async_task<du_mac_sched_control_config_response>
+  configure_ue_mac_scheduler(du_mac_sched_control_config reconf) = 0;
 };
 
 } // namespace srsran

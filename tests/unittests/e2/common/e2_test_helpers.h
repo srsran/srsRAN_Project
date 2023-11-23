@@ -740,17 +740,18 @@ private:
   dummy_e2_pdu_notifier* msg_notifier;
 };
 
-class dummy_e2sm_param_configurator : public e2sm_param_configurator
+class dummy_du_configurator : public du_configurator
 {
 public:
-  dummy_e2sm_param_configurator(){};
-  async_task<ric_control_config_response> configure_ue_mac_scheduler(ric_control_config reconf) override
+  dummy_du_configurator(){};
+  async_task<du_mac_sched_control_config_response>
+  configure_ue_mac_scheduler(du_mac_sched_control_config reconf) override
   {
-    ric_control_config config;
+    du_mac_sched_control_config config;
     config = reconf;
-    return launch_async([](coro_context<async_task<ric_control_config_response>>& ctx) {
+    return launch_async([](coro_context<async_task<du_mac_sched_control_config_response>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(ric_control_config_response{true, true, true});
+      CORO_RETURN(du_mac_sched_control_config_response{true, true, true});
     });
   }
 };
@@ -777,7 +778,7 @@ protected:
   std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
   std::unique_ptr<e2sm_rc_asn1_packer>                e2sm_rc_packer;
-  std::unique_ptr<e2sm_param_configurator>            rc_param_configurator;
+  std::unique_ptr<du_configurator>                    rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   std::unique_ptr<srs_du::f1ap_ue_id_translator>      f1ap_ue_id_mapper;
@@ -865,7 +866,7 @@ class e2_entity_test : public e2_test_base
     du_metrics            = std::make_unique<dummy_e2_du_metrics>();
     f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
-    rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
+    rc_param_configurator = std::make_unique<dummy_du_configurator>();
     e2                    = create_e2_entity(
         cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, task_worker);
   }
@@ -925,7 +926,7 @@ class e2_test_setup : public e2_test_base
     e2sm_kpm_packer                = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_kpm_iface                 = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     e2sm_rc_packer                 = std::make_unique<e2sm_rc_asn1_packer>();
-    rc_param_configurator          = std::make_unique<dummy_e2sm_param_configurator>();
+    rc_param_configurator          = std::make_unique<dummy_du_configurator>();
     e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
     rc_control_action_2_6_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*rc_param_configurator);

@@ -77,7 +77,7 @@ class du_manager_interface : public du_manager_interface_query,
                              public du_manager_controller,
                              public du_manager_configurator,
                              public du_manager_mac_event_handler,
-                             public e2sm_param_configurator
+                             public du_configurator
 {
 public:
   virtual ~du_manager_interface() = default;
