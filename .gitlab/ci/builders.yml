@@ -190,7 +190,7 @@ ubuntu-20.04-uhd:
     expire_in: 30 minutes
   parallel:
     matrix:
-      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
+      - dpdk_version: ["21.08", "22.11.2", "23.07"]
 
 ubuntu-23.10-dpdk:
   extends: .ubuntu-dpdk-builder
