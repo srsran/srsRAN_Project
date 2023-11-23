@@ -12,6 +12,7 @@
 #include "formatters/json_formatter.h"
 #include "sinks/file_sink.h"
 #include "sinks/syslog_sink.h"
+#include "sinks/udp_sink.h"
 #include "srslog_instance.h"
 
 using namespace srslog;
@@ -182,6 +183,21 @@ sink& srslog::fetch_syslog_sink(const std::string&             preamble_,
       std::piecewise_construct,
       std::forward_as_tuple(sink_id),
       std::forward_as_tuple(new syslog_sink(std::move(f), preamble_, log_local_)));
+
+  return *s;
+}
+
+sink& srslog::fetch_udp_sink(const std::string& remote_ip, unsigned port, std::unique_ptr<log_formatter> f)
+{
+  std::string id = remote_ip + ':' + std::to_string(port);
+  if (auto* s = find_sink(id)) {
+    return *s;
+  }
+
+  auto& s = srslog_instance::get().get_sink_repo().emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(id),
+      std::forward_as_tuple(new udp_sink(remote_ip, port, std::move(f))));
 
   return *s;
 }
