@@ -232,7 +232,11 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_contr
     for (auto& action : style.ric_ctrl_action_list) {
       // Create a control request with format 1 to match the API of control service styles 1-10.
       e2_sm_ric_control_request_s tmp_req = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
-      // TODO: execute all actions and aggregate the response
+      e2_ric_control_response     tmp_response;
+      tmp_response = config_req_executors[action.ric_ctrl_action_id]->execute_ric_control_action(tmp_req);
+
+      // Aggregate RIC control action response.
+      aggregated_response.success &= tmp_response.success;
     }
   }
 
