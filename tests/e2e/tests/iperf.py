@@ -199,7 +199,7 @@ def test_srsue(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
-        always_download_artifacts=False,
+        always_download_artifacts=True,
         common_search_space_enable=True,
         prach_config_index=1,
     )
