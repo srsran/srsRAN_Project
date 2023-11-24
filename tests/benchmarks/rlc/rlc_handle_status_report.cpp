@@ -135,7 +135,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
     }
     timers.tick();
   };
-  auto measure = [&rlc, &status]() mutable { rlc->on_status_pdu(status); };
+  auto measure = [&rlc, &status]() mutable { rlc->on_status_pdu(rlc_am_status_pdu{status}); };
   bm->new_measure_with_context("Handling status pdu", 1, context, measure);
 
   // Output results.
@@ -154,19 +154,19 @@ int main(int argc, char** argv)
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn = 1024;
-    benchmark_status_pdu_handling(status, params);
+    benchmark_status_pdu_handling(std::move(status), params);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn = 2048;
-    benchmark_status_pdu_handling(status, params);
+    benchmark_status_pdu_handling(std::move(status), params);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn           = 2048;
     rlc_am_status_nack nack = {}; // NACK SN=0
     status.push_nack(nack);
-    benchmark_status_pdu_handling(status, params);
+    benchmark_status_pdu_handling(std::move(status), params);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
       nack.nack_range         = 255;
       status.push_nack(nack);
     }
-    benchmark_status_pdu_handling(status, params);
+    benchmark_status_pdu_handling(std::move(status), params);
   }
   srslog::flush();
 }

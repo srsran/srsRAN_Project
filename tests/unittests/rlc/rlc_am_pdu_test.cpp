@@ -3037,7 +3037,7 @@ void rlc_am_nr_control_pdu_test_trimming(rlc_am_sn_size sn_size)
     TESTASSERT_EQ(pdu.length(), min_size);
 
     // test copy assignment is deep copy
-    rlc_am_status_pdu status_pdu_copy = status_pdu;
+    rlc_am_status_pdu status_pdu_copy = rlc_am_status_pdu{status_pdu};
     TESTASSERT_EQ(status_pdu_copy.ack_sn, 99);
     TESTASSERT_EQ(status_pdu_copy.get_packed_size(), min_size); // minimum size
     pdu.clear();
@@ -3176,7 +3176,7 @@ void rlc_am_nr_control_pdu_test_trimming(rlc_am_sn_size sn_size)
     // current state: ACK=77, NACKs=[12][14][17 50:99][17 150:199][17 250:299][19][21 333:111 r5][27 444:666 r3]
 
     // create a copy, check content
-    rlc_am_status_pdu status_pdu_copy               = status_pdu;
+    rlc_am_status_pdu status_pdu_copy               = rlc_am_status_pdu{status_pdu};
     uint32_t          status_pdu_copy_expected_size = expected_size;
     TESTASSERT_EQ(status_pdu_copy.ack_sn, 77);
     TESTASSERT_EQ(status_pdu_copy.get_packed_size(), status_pdu_copy_expected_size);
