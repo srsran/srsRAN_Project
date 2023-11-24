@@ -170,8 +170,12 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
         pusch_uci.csi_part1_info.emplace();
         pusch_uci.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
         fill_csi_bits(pusch_uci.csi_part1_info->payload);
-        pusch_uci.ri  = test_ue_cfg.ri;
-        pusch_uci.pmi = test_ue_cfg.pmi;
+        unsigned nof_ports =
+            (*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports;
+        if (nof_ports > 1) {
+          pusch_uci.ri  = test_ue_cfg.ri;
+          pusch_uci.pmi = test_ue_cfg.pmi;
+        }
       }
 
       // Forward MAC UCI to the real MAC.
