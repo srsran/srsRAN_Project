@@ -14,7 +14,6 @@
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
-#include "srsran/srsvec/zero.h"
 #include "srsran/support/error_handling.h"
 #include <mutex>
 
@@ -164,7 +163,7 @@ public:
 
     // Reset CRCs if it is necessary.
     if (reset_crc) {
-      srsvec::zero(crc);
+      reset_codeblocks_crc();
     }
 
     // Transition to reserved.
