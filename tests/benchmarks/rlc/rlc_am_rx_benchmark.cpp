@@ -94,7 +94,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-std::vector<byte_buffer> generate_pdus()
+std::vector<byte_buffer> generate_pdus(bench_params params)
 {
   // Set Tx config
   rlc_tx_am_config config;
@@ -137,10 +137,22 @@ std::vector<byte_buffer> generate_pdus()
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());
 
-  for (int i = 0; i < 2048; i++) {
+  // Prepare SDU list for benchmark
+  std::vector<byte_buffer> sdu_list  = {};
+  int                      num_sdus  = params.nof_repetitions;
+  int                      num_bytes = 1500;
+  for (int i = 0; i < num_sdus; i++) {
+    byte_buffer sdu_buf = {};
+    for (int j = 0; j < num_bytes; ++j) {
+      sdu_buf.append(rand());
+    }
+    sdu_list.push_back(std::move(sdu_buf));
+  }
+
+  for (int i = 0; i < num_sdus; i++) {
     rlc_sdu     sdu;
     byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
-    byte_buffer sdu_buf      = {0x00, 0x01, 0x02, 0x04};
+    byte_buffer sdu_buf      = std::move(sdu_list[i]);
     sdu.pdcp_sn              = i;
     sdu.buf                  = std::move(pdcp_hdr_buf);
     sdu.buf.append(std::move(sdu_buf));
@@ -155,7 +167,7 @@ std::vector<byte_buffer> generate_pdus()
 void benchmark_rx_pdu(const bench_params& params)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark RX PDUs");
+  fmt::format_to(buffer, "Benchmark RLC AM RX PDUs");
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   auto tester = std::make_unique<rlc_rx_am_test_frame>();
@@ -185,16 +197,18 @@ void benchmark_rx_pdu(const bench_params& params)
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());
 
-  std::vector<byte_buffer> pdus    = generate_pdus();
-  unsigned                 i       = 0;
-  auto                     measure = [&rlc_rx, &i, &pdus]() mutable {
+  std::vector<byte_buffer> pdus = generate_pdus(params);
+
+  unsigned i       = 0;
+  auto     measure = [&rlc_rx, &i, &pdus]() mutable {
     rlc_rx->handle_pdu(std::move(pdus[i]));
     i++;
   };
-  bm->new_measure("Handling status pdu", 1, measure);
+  bm->new_measure("RX RLC AM PDU", 1500 * 8, measure);
 
   // Output results.
   bm->print_percentiles_time();
+  bm->print_percentiles_throughput(" bps");
 }
 
 int main(int argc, char** argv)
