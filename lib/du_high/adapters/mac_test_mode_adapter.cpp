@@ -220,6 +220,9 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
       msg_copy.crcs.push_back(crc);
     }
   }
+  if(not msg.crcs.empty()) {
+    adapted.handle_crc(msg);
+  }
 }
 
 void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& msg)
@@ -240,7 +243,9 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
       msg_copy.ucis.push_back(pdu);
     }
   }
-  adapted.handle_uci(msg_copy);
+  if(not msg_copy.ucis.empty()) {
+    adapted.handle_uci(msg_copy);
+  }
 }
 
 // Intercepts the UL results coming from the MAC.
