@@ -570,11 +570,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     // DL common config.
-    if (base_cell.pdsch_cfg.dc_offset.has_value()) {
-      out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location =
-          dc_offset_helper::pack(base_cell.pdsch_cfg.dc_offset.value(),
-                                 out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth);
-    }
+    out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location = dc_offset_helper::pack(
+        base_cell.pdsch_cfg.dc_offset, out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth);
 
     // PRACH config.
     rach_config_common& rach_cfg                    = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
