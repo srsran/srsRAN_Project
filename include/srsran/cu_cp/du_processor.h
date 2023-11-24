@@ -124,6 +124,18 @@ public:
   virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 };
 
+/// Interface to notify the DU processor about UE context related events.
+class du_processor_ue_context_notifier
+{
+public:
+  virtual ~du_processor_ue_context_notifier() = default;
+
+  /// \brief Handle a UE Context Release Command
+  /// \param[in] cmd The UE Context Release Command.
+  virtual async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+};
+
 /// Interface for an RRC entity to communicate with the DU processor.
 class du_processor_rrc_interface
 {
@@ -158,15 +170,10 @@ public:
 };
 
 /// Interface for an RRC UE entity to communicate with the DU processor.
-class du_processor_rrc_ue_interface
+class du_processor_rrc_ue_interface : public du_processor_ue_context_notifier
 {
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
-
-  /// \brief Handle a UE Context Release Command
-  /// \param[in] cmd The UE Context Release Command.
-  virtual async_task<cu_cp_ue_context_release_complete>
-  handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
@@ -248,7 +255,8 @@ public:
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
-                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier) = 0;
+                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
+                                   du_processor_ue_context_notifier&      target_du_processor_notifier) = 0;
 
   /// \brief Start the inter NG-RAN node N2 handover procedure at the source gNB.
   /// See TS 23.502 section 4.9.1.3.
@@ -436,6 +444,7 @@ public:
   virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;
   virtual du_processor_ngap_interface&           get_du_processor_ngap_interface()           = 0;
   virtual du_processor_ue_task_handler&          get_du_processor_ue_task_handler()          = 0;
+  virtual du_processor_ue_context_notifier&      get_du_processor_ue_context_notifier()      = 0;
   virtual du_processor_paging_handler&           get_du_processor_paging_handler()           = 0;
   virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
   virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;

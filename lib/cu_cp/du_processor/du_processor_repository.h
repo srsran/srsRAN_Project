@@ -89,6 +89,7 @@ private:
     du_processor_mobility_handler&         get_mobility_handler() override;
     du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override;
     du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override;
+    du_processor_ue_context_notifier&      get_du_processor_ue_context_notifier() override;
   };
 
   /// \brief Find a DU object.

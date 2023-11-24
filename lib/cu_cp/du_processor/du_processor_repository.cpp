@@ -225,6 +225,11 @@ du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_
   return du_processor->get_du_processor_f1ap_ue_context_notifier();
 }
 
+du_processor_ue_context_notifier& du_processor_repository::du_context::get_du_processor_ue_context_notifier()
+{
+  return du_processor->get_du_processor_ue_context_notifier();
+}
+
 void du_processor_repository::handle_amf_connection()
 {
   // inform all connected DU objects about the new connection
