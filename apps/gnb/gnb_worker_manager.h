@@ -40,7 +40,6 @@ struct worker_manager {
   task_executor*                           cu_cp_exec    = nullptr;
   task_executor*                           cu_up_exec    = nullptr;
   task_executor*                           gtpu_pdu_exec = nullptr;
-  task_executor*                           io_exec       = nullptr;
   std::vector<task_executor*>              lower_phy_tx_exec;
   std::vector<task_executor*>              lower_phy_rx_exec;
   std::vector<task_executor*>              lower_phy_dl_exec;
