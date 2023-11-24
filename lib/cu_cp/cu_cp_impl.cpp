@@ -243,13 +243,13 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
         logger.warning("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
         return false;
       }
-
-      // Transfer NGAP UE Context to new UE and remove the old context
-      ngap_entity->update_ue_index(ue_index, old_ue_index);
-
-      // Transfer E1AP UE Context to new UE and remove old context
-      cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
     }
+
+    // Transfer NGAP UE Context to new UE and remove the old context
+    ngap_entity->update_ue_index(ue_index, old_ue_index);
+
+    // Transfer E1AP UE Context to new UE and remove old context
+    cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
 
     return true;
   };
