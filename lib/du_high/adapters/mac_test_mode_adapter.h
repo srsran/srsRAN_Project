@@ -84,7 +84,7 @@ public:
 private:
   struct slot_descision_history {
     std::vector<pucch_info> pucchs;
-    optional<uci_info>      pusch_uci;
+    optional<ul_sched_info> pusch;
   };
 
   void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
