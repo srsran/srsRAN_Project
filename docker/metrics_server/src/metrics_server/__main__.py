@@ -94,7 +94,7 @@ def _parse_args() -> Tuple[InfluxDBClient, str, str, bool, int, int]:
 def _start_metric_server(
     port: int,
     queue_obj: Queue[Optional[Dict[str, Any]]],  # pylint: disable=unsubscriptable-object
-    max_buffer_size: int = 1024,
+    max_buffer_size: int = 1024**2,
 ) -> None:
     # Create Server
     server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -112,7 +112,7 @@ def _start_metric_server(
         if not line:
             # If event is set and also last line was empty, end
             break
-        text += line
+        text += line.strip()
 
         # Split jSONs
         *items, text = text.split("}{")
@@ -186,7 +186,7 @@ def _influx_push(write_api: WriteApi, *args, **kwargs) -> None:
         try:
             write_api.write(*args, **kwargs)
             break
-        except RemoteDisconnected:
+        except (RemoteDisconnected, ConnectionRefusedError):
             logging.warning("Error pushing data. Retrying...")
             sleep(1)
 
