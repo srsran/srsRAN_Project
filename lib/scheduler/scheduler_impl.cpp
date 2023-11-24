@@ -42,6 +42,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     // If it is a new group, create a new instance.
     groups.emplace(msg.cell_group_index,
                    std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
+    cell_to_group_index.emplace(msg.cell_index, msg.cell_group_index);
   }
 
   // Create a new cell scheduler instance.
@@ -178,6 +179,13 @@ const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
   // Return result for the slot.
   return cell.last_result();
+}
+
+void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index)
+{
+  srsran_assert(cell_to_group_index.contains(cell_index), "cell={} does not exist", cell_index);
+  ue_scheduler& ue_sched = *groups[cell_to_group_index[cell_index]];
+  ue_sched.handle_error_indication(sl_tx, cell_index);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)

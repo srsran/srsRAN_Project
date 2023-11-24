@@ -56,11 +56,11 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
     if (ue_cell.is_pucch_grid_inited()) {
       // Only allocate in the farthest slot in the grid, as the previous part of the allocation grid has been completed
       // at the first this function was called.
-      schedule_uci(cell_alloc[RING_ALLOCATOR_SIZE - 1], user->crnti, ue_cell, csi_period_and_offset);
+      schedule_uci(cell_alloc[cell_alloc.max_ul_slot_alloc_delay], user->crnti, ue_cell, csi_period_and_offset);
     }
     // Initial allocation: we allocate opportunities all over the grid.
     else {
-      for (unsigned n = 0; n != RING_ALLOCATOR_SIZE; ++n) {
+      for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay + 1; ++n) {
         schedule_uci(cell_alloc[n], user->crnti, ue_cell, csi_period_and_offset);
       }
       ue_cell.set_pucch_grid_inited();

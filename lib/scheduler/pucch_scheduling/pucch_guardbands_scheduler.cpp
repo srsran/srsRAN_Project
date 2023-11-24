@@ -31,7 +31,7 @@ void pucch_guardbands_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // If called for the first time, pre-reserves the PUCCH resource over the entire grid, until the last (farthest in the
   // future) usable slot.
   if (first_run_slot) {
-    for (unsigned sl = 0; sl < res_alloc.RING_ALLOCATOR_SIZE; ++sl) {
+    for (unsigned sl = 0; sl < res_alloc.max_ul_slot_alloc_delay + 1; ++sl) {
       // Do not schedule PUCCH guardbands on DL slots.
       slot_point grid_sl_point{res_alloc[sl].slot};
       if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
@@ -44,10 +44,10 @@ void pucch_guardbands_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // After the first time, pre-reserves the PUCCH resource on the grid only for the last slot.
   else {
     // Do not schedule PUCCH guardbands on DL slots.
-    slot_point grid_sl_point{res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1].slot};
+    slot_point grid_sl_point{res_alloc[res_alloc.max_ul_slot_alloc_delay].slot};
     if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
       return;
     }
-    allocate_pucch_guardbands(res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1]);
+    allocate_pucch_guardbands(res_alloc[res_alloc.max_ul_slot_alloc_delay]);
   }
 }

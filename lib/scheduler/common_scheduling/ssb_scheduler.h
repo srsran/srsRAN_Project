@@ -50,11 +50,6 @@ public:
   void schedule_ssb(cell_slot_resource_allocator& slot_allocator);
 
 private:
-  /// Size of the ring buffer of \c cell_slot_resource_allocator. This size sets a limit on how far in advance a SSB can
-  /// be allocated. See remark of \c get_allocator_ring_size_ge_min(unsigned minimum_value).
-  static const size_t RING_ALLOCATOR_SIZE =
-      get_allocator_ring_size_gt_min(std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
-
   /// \brief Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
   void ssb_alloc_case_A_C(ssb_information_list& ssb_list, uint32_t freq_arfcn_cut_off, const slot_point& sl_point_mod);
 

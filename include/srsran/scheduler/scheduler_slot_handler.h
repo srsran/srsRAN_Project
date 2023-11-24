@@ -498,8 +498,13 @@ struct sched_result {
 class scheduler_slot_handler
 {
 public:
-  virtual ~scheduler_slot_handler()                                                         = default;
+  virtual ~scheduler_slot_handler() = default;
+
+  /// \brief Handle slot indications that arrive to the scheduler for a given cell.
   virtual const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
+
+  /// \brief Handle error indications caused by lates or invalid scheduling results.
+  virtual void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran

@@ -27,8 +27,9 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
-  /// Obtain scheduling result for a given slot and cell.
+  // scheduler_slot_handler interface methods.
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
+  void                handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   // DU manager events.
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;
@@ -66,6 +67,7 @@ private:
 
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;
+  slotted_id_table<du_cell_index_t, du_cell_group_index_t, MAX_NOF_DU_CELLS>                 cell_to_group_index;
 
   /// Mapping of UEs to DU Cell Groups.
   slotted_id_table<du_ue_index_t, du_cell_group_index_t, MAX_NOF_DU_UES> ue_to_cell_group_index;

@@ -31,13 +31,13 @@ void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_poin
   if (first_run_slot) {
     const unsigned ssb_period_slots = ssb_period * sl_point.nof_slots_per_subframe();
     // First call to run_slot. Schedule SSBs when relevant across cell resource grid.
-    for (unsigned i = 0; i < RING_ALLOCATOR_SIZE; i += ssb_period_slots) {
+    for (unsigned i = 0; i < res_alloc.max_dl_slot_alloc_delay + 1; i += ssb_period_slots) {
       schedule_ssb(res_alloc[i]);
     }
     first_run_slot = false;
   } else {
     // Schedule SSB in last scheduled slot + 1 slot if relevant.
-    schedule_ssb(res_alloc[RING_ALLOCATOR_SIZE - 1]);
+    schedule_ssb(res_alloc[res_alloc.max_dl_slot_alloc_delay]);
   }
 }
 

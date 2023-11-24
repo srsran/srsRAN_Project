@@ -167,3 +167,42 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // TODO: remove this.
   puxch_grant_sanitizer(*cells[cell_index]->cell_res_alloc);
 }
+
+void ue_scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index)
+{
+  if (cells[cell_index] == nullptr or cells[cell_index]->cell_res_alloc == nullptr) {
+    logger.error("cell={}: Discarding error indication. Cause: cell with provided index is not configured", cell_index);
+    return;
+  }
+  cell_resource_allocator& res_grid = *cells[cell_index]->cell_res_alloc;
+
+  const cell_slot_resource_allocator* prev_slot_result = res_grid.get_history(sl_tx);
+  if (prev_slot_result != nullptr) {
+    logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
+                   "of the error indication have already been erased",
+                   cell_index,
+                   sl_tx);
+    return;
+  }
+
+  // Cancel scheduled HARQs. This is important to avoid the softbuffer incorrect initialization in the lower layers
+  // during newTxs.
+  for (const dl_msg_alloc& grant : prev_slot_result->result.dl.ue_grants) {
+    ue* u = ue_db.find_by_rnti(grant.pdsch_cfg.rnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+    for (unsigned cw_idx = 0; cw_idx != grant.pdsch_cfg.codewords.size(); ++cw_idx) {
+      u->get_pcell().harqs.dl_harq(grant.pdsch_cfg.harq_id).cancel_harq(cw_idx);
+    }
+  }
+  for (const ul_sched_info& grant : prev_slot_result->result.ul.puschs) {
+    ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+    u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id).cancel_harq();
+  }
+}

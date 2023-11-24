@@ -266,7 +266,11 @@ void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_) : cfg(cfg_)
+cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_) :
+  cfg(cfg_),
+  max_dl_slot_alloc_delay(SCHEDULER_MAX_K0),
+  max_ul_slot_alloc_delay(SCHEDULER_MAX_K0 + std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA) +
+                          cfg.ntn_cs_koffset)
 {
   // Create cell_slot_resource_allocator objects.
   std::vector<scs_specific_carrier> dl_scs_carriers, ul_scs_carriers;
@@ -306,8 +310,9 @@ void cell_resource_allocator::slot_indication(slot_point sl_tx)
     }
   } else {
     // Reset old slot state and set its new future slot.
-    auto& old_slot_res = slots[(sl_tx - 1).to_uint() % slots.size()];
-    old_slot_res->slot_indication(old_slot_res->slot + slots.size());
+    slot_point slot_to_reset = sl_tx - static_cast<unsigned>(RING_MAX_HISTORY_SIZE);
+    auto&      old_slot_res  = slots[slot_to_reset.to_uint() % slots.size()];
+    old_slot_res->slot_indication(slot_to_reset + slots.size());
   }
   last_slot_ind = sl_tx;
 }

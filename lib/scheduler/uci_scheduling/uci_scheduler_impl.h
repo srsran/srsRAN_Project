@@ -37,11 +37,6 @@ private:
                     const ue_cell&                          user,
                     optional<std::pair<unsigned, unsigned>> csi_period_and_offset);
 
-  // Size of the ring buffer of \c cell_slot_resource_allocator. This size sets a limit on how far in advance a SR and
-  // CSI grants can be allocated. See remark of \c get_allocator_ring_size_ge_min(unsigned minimum_value).
-  static const size_t RING_ALLOCATOR_SIZE = get_allocator_ring_size_gt_min(
-      std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA + NTN_CELL_SPECIFIC_KOFFSET_MAX));
-
   // Cell configuration.
   const cell_configuration& cell_cfg;
   // Reference to PUCCH resource allocator object.
