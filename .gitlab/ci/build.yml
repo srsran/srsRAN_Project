@@ -946,7 +946,6 @@ smoke dpdk:
       start_in: 90 minutes
   interruptible: false
   variables:
-    COMPILER: clang
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
@@ -957,12 +956,16 @@ smoke dpdk:
   parallel:
     matrix:
       - OS: ubuntu-23.10
+        COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.2", "23.07"]
       - OS: ubuntu-23.04
+        COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.2", "23.07"]
       - OS: ubuntu-22.04
+        COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.2", "23.07"]
       - OS: ubuntu-20.04
+        COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.2", "23.07"]
 
 ###################
@@ -1521,10 +1524,10 @@ rhel-8 arm neon:
 
 .dpdk_combinations: &basic_combinations_dpdk
   <<: *basic_combinations
-  COMPILER: clang
   ENABLE_UHD: "False"
   ENABLE_ZEROMQ: "False"
   ENABLE_DPDK: "True"
+  COMPILER: [gcc, clang]
   DPDK_VERSION: ["22.11.2", "23.07"]
 
 ubuntu-20.04 amd64 avx2 dpdk:
