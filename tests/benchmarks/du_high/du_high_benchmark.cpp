@@ -272,6 +272,9 @@ public:
   unsigned nof_dl_grants = 0;
   uint64_t nof_dl_bytes  = 0;
 
+  unsigned nof_ul_grants = 0;
+  uint64_t nof_ul_bytes  = 0;
+
   void clear_previous_scheduler_results()
   {
     slot_dl_result.dl_res = nullptr;
@@ -293,7 +296,16 @@ public:
   }
 
   /// Notifies slot scheduled PUCCH/PUSCH grants.
-  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { slot_ul_result = ul_res; }
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override
+  {
+    slot_ul_result = ul_res;
+    if (ul_res.ul_res != nullptr) {
+      nof_ul_grants += ul_res.ul_res->puschs.size();
+      for (const auto& pdu : ul_res.ul_res->puschs) {
+        nof_ul_bytes += pdu.pusch_cfg.tb_size_bytes;
+      }
+    }
+  }
 
   /// \brief Notifies the completion of all cell results for the given slot.
   void on_cell_results_completion(slot_point slot) override
@@ -785,10 +797,12 @@ void benchmark_dl_ul_only_rlc_um(benchmarker& bm,
   srslog::flush();
 
   const unsigned sim_time_msec = bench.slot_count / get_nof_slots_per_subframe(bench.cfg.cells[0].scs_common);
-  fmt::print("Stats: slots={}, #PDSCHs={}, dl_bitrate={:.2} Mbps\n",
+  fmt::print("Stats: slots={}, #PDSCHs={}, dl_bitrate={:.2} Mbps, #PUSCHs={}, ul_bitrate={:.2} Mbps\n",
              bench.slot_count,
              bench.sim_phy.nof_dl_grants,
-             bench.sim_phy.nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3));
+             bench.sim_phy.nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3),
+             bench.sim_phy.nof_ul_grants,
+             bench.sim_phy.nof_ul_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3));
 }
 
 int main(int argc, char** argv)
