@@ -114,7 +114,11 @@ public:
   {
     return next_sched_result;
   }
-  void handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx) override {}
+  void handle_error_indication(slot_point                         slot_tx,
+                               du_cell_index_t                    cell_idx,
+                               mac_cell_slot_handler::error_event event) override
+  {
+  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

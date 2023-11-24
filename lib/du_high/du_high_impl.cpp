@@ -70,9 +70,9 @@ public:
     mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
   }
 
-  void handle_error_indication(slot_point sl_tx) override
+  void handle_error_indication(slot_point sl_tx, error_event event) override
   {
-    mac.get_slot_handler(to_du_cell_index(0)).handle_error_indication(sl_tx);
+    mac.get_slot_handler(to_du_cell_index(0)).handle_error_indication(sl_tx, event);
   }
 
 private:

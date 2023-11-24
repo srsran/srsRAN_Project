@@ -498,13 +498,17 @@ struct sched_result {
 class scheduler_slot_handler
 {
 public:
+  /// \brief Effect that the errors in the lower layers had on the results provided by the scheduler for a given
+  /// slot and clel.
+  enum class error_outcome { dl_discarded, ul_discarded, dl_and_ul_discarded };
+
   virtual ~scheduler_slot_handler() = default;
 
   /// \brief Handle slot indications that arrive to the scheduler for a given cell.
   virtual const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 
   /// \brief Handle error indications caused by lates or invalid scheduling results.
-  virtual void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
+  virtual void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) = 0;
 };
 
 } // namespace srsran

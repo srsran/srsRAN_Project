@@ -29,7 +29,7 @@ public:
 
   // scheduler_slot_handler interface methods.
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
-  void                handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
+  void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override;
 
   // DU manager events.
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;

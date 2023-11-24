@@ -34,7 +34,9 @@ public:
   /// \brief Processes an error indication for a specific cell in the MAC scheduler.
   /// \param slot_tx SFN + slot index of the Transmit slot to be processed.
   /// \param cell_idx DU-specific index of the cell for which the indication is being processed.
-  virtual void handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx) = 0;
+  /// \param event Effect that the errors in the lower layers had on the result provided by the scheduler.
+  virtual void
+  handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx, mac_cell_slot_handler::error_event event) = 0;
 };
 
 } // namespace srsran

@@ -181,11 +181,11 @@ const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   return cell.last_result();
 }
 
-void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index)
+void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
 {
   srsran_assert(cell_to_group_index.contains(cell_index), "cell={} does not exist", cell_index);
   ue_scheduler& ue_sched = *groups[cell_to_group_index[cell_index]];
-  ue_sched.handle_error_indication(sl_tx, cell_index);
+  ue_sched.handle_error_indication(sl_tx, cell_index, event);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
