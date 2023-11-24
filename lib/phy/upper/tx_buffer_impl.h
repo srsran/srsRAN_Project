@@ -124,7 +124,7 @@ public:
       codeblock_pool.free(cb_id);
     }
 
-    // If the current number of codeblocks is lesser than required, reserve the remaining codeblocks.
+    // If the current number of codeblocks is less than required, reserve the remaining codeblocks.
     while (codeblock_ids.size() < nof_codeblocks) {
       // Reserve codeblock.
       unsigned cb_id = codeblock_pool.reserve();

@@ -42,7 +42,7 @@ public:
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
   /// \remark An assertion is triggered if the number of PRGs exceeds \ref precoding_constants::MAX_NOF_PRG.
-  /// \remark An assertion is triggered if the PRG size is lesser than \ref precoding_constants::MIN_PRG_SIZE.
+  /// \remark An assertion is triggered if the PRG size is less than \ref precoding_constants::MIN_PRG_SIZE.
   precoding_configuration(unsigned nof_layers_, unsigned nof_ports_, unsigned nof_prg_, unsigned prg_size_) :
     prg_size(prg_size_), nof_prg(nof_prg_), nof_layers(nof_layers_), nof_ports(nof_ports_)
   {

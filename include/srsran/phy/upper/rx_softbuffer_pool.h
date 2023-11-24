@@ -30,7 +30,7 @@ struct rx_softbuffer_identifier {
     return (rnti == other.rnti) && (harq_ack_id == other.harq_ack_id);
   }
 
-  /// Not equal comparison to other identifier.
+  /// Not equal comparison with another identifier.
   bool operator!=(const rx_softbuffer_identifier& other) const { return !(*this == other); }
 };
 

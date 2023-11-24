@@ -122,10 +122,10 @@ public:
       return rx_softbuffer_status::already_in_use;
     }
 
-    // Reset CRCs if one of the following conditions:
-    // - Reservation identifier changed;
+    // Reset CRCs if one of the following conditions holds:
+    // - The reservation identifier changed;
     // - The buffer is available; or
-    // - The number of codeblocks has changed.
+    // - The number of codeblocks changed.
     bool reset_crc = (reservation_id != id) || (current_state == state::available) || (crc.size() != nof_codeblocks);
 
     // Update reservation information.
@@ -142,7 +142,7 @@ public:
       codeblock_pool.free(cb_id);
     }
 
-    // If the current number of codeblocks is lesser than required, reserve the remaining codeblocks.
+    // If the current number of codeblocks is less than required, reserve the remaining codeblocks.
     while (codeblock_ids.size() < nof_codeblocks) {
       // Reserve codeblock.
       unsigned cb_id = codeblock_pool.reserve();
@@ -161,7 +161,7 @@ public:
     // Resize CRCs.
     crc.resize(nof_codeblocks);
 
-    // Reset CRCs if it is necessary.
+    // Reset CRCs if necessary.
     if (reset_crc) {
       reset_codeblocks_crc();
     }
