@@ -53,6 +53,7 @@ class mac_test_mode_cell_adapter : public mac_cell_control_information_handler,
 
 public:
   mac_test_mode_cell_adapter(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
+                             const mac_cell_creation_request&              cell_cfg,
                              mac_cell_control_information_handler&         adapted_,
                              mac_pdu_handler&                              pdu_handler_,
                              mac_cell_slot_handler&                        slot_handler_,

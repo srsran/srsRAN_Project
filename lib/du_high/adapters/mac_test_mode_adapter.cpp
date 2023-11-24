@@ -59,6 +59,7 @@ private:
 };
 
 mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
+                                                       const mac_cell_creation_request&              cell_cfg,
                                                        mac_cell_control_information_handler&         adapted_,
                                                        mac_pdu_handler&                              pdu_handler_,
                                                        mac_cell_slot_handler&                        slot_handler_,
@@ -73,7 +74,11 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(const srs_du::du_test_con
   dl_bs_notifier(dl_bs_notifier_),
   ue_cfg_req(ue_cfg_req_)
 {
-  const size_t HISTORY_RING_SIZE = 1024;
+  // Note: The history ring size has to be a multiple of the TDD frame size in slots.
+  const size_t HISTORY_RING_SIZE =
+      100 * (cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value()
+                 ? nof_slots_per_tdd_period(cell_cfg.sched_req.tdd_ul_dl_cfg_common.value())
+                 : 10U);
   sched_decision_history.resize(HISTORY_RING_SIZE);
 }
 
@@ -367,6 +372,7 @@ void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
   };
   auto new_cell =
       std::make_unique<mac_test_mode_cell_adapter>(test_ue,
+                                                   cell_cfg,
                                                    mac_adapted->get_control_info_handler(cell_cfg.cell_index),
                                                    mac_adapted->get_pdu_handler(),
                                                    mac_adapted->get_slot_handler(cell_cfg.cell_index),
