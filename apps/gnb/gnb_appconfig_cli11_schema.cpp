@@ -1569,6 +1569,14 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
       ->capture_default_str();
+  app.add_option("--discontinuous_tx",
+                 config.discontinuous_tx_mode,
+                 "Enables discontinuous transmission mode for the radio front-ends supporting it.")
+      ->capture_default_str();
+  app.add_option("--power_ramping_time_us",
+                 config.power_ramping_time_us,
+                 "Advances the discontinuous transmission start to protect against TX amplifier power ramping effects.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)

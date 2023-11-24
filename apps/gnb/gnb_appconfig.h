@@ -846,6 +846,14 @@ struct test_mode_appconfig {
 struct ru_sdr_expert_appconfig {
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
   float lphy_dl_throttling = 0.0F;
+  /// Enables discontinuous transmission mode for the radio front-ends supporting it.
+  bool discontinuous_tx_mode = false;
+  /// \brief Power ramping time of the transmit amplifiers in microseconds.
+  ///
+  /// It is used by the discontinuous transmission mode to start the transmission early. This prevents the power ramping
+  /// transient of the transmit amplifiers from affecting the samples carrying data. The maximum supported power ramping
+  /// time is equivalent to the duration of an NR slot.
+  float power_ramping_time_us = 0.0F;
 };
 
 /// gNB app SDR Radio Unit cell configuration.

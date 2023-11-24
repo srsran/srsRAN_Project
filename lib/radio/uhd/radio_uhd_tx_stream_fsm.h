@@ -90,45 +90,57 @@ public:
     }
   }
 
-  /// \brief Notifies a new block transmission.
-  /// \param[out] metadata Provides the destination of the required metadata.
-  /// \param[in] time_spec Indicates the transmission time.
+  /// \brief Handles a new transmission.
+  /// \param[out] metadata Destination of the required metadata.
+  /// \param[in] time_spec Transmission time of the first sample.
+  /// \param[in] is_empty Empty buffer flag.
+  /// \param[in] tail_padding Tail padding flag, indicating the last transmission in the burst.
   /// \return True if the block shall be transmitted. False if the block shall be ignored.
-  bool transmit_block(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec)
+  bool on_transmit(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec, bool is_empty, bool tail_padding)
   {
     std::unique_lock<std::mutex> lock(mutex);
     switch (state) {
+      case states::WAIT_END_OF_BURST:
+        // Do nothing if the wait for end-of-burst timeout has not expired.
+        if (wait_eob_timeout.get_real_secs() >= time_spec.get_real_secs()) {
+          return false;
+        }
+        // Otherwise go into start burst state and handle the state.
+        state = states::START_BURST;
       case states::START_BURST:
         // Set start of burst flag and time spec.
-        metadata.has_time_spec  = true;
-        metadata.start_of_burst = true;
-        metadata.time_spec      = time_spec;
-        // Transition to in-burst.
-        state = states::IN_BURST;
-        break;
+        if (!is_empty) {
+          metadata.has_time_spec  = true;
+          metadata.start_of_burst = true;
+          metadata.end_of_burst   = tail_padding;
+          metadata.time_spec      = time_spec;
+
+          // Transition to in-burst.
+          if (!tail_padding) {
+            state = states::IN_BURST;
+          }
+
+          return true;
+        }
+        return false;
       case states::IN_BURST:
-        // All good.
+        if (is_empty || tail_padding) {
+          // Signal end of burst to UHD.
+          metadata.end_of_burst = true;
+
+          // Transition to start burst without waiting for the EOB ACK.
+          state = states::START_BURST;
+        }
         break;
       case states::END_OF_BURST:
         // Flag end-of-burst.
         metadata.end_of_burst = true;
         state                 = states::WAIT_END_OF_BURST;
         if (wait_eob_timeout == uhd::time_spec_t()) {
-          wait_eob_timeout = metadata.time_spec;
+          wait_eob_timeout = time_spec;
           wait_eob_timeout += WAIT_EOB_ACK_TIMEOUT_S;
         }
         break;
-      case states::WAIT_END_OF_BURST:
-        // Consider starting the burst if the wait for end-of-burst expired.
-        if (wait_eob_timeout.get_real_secs() < time_spec.get_real_secs()) {
-          // Set start of burst flag and time spec.
-          metadata.has_time_spec  = true;
-          metadata.start_of_burst = true;
-          metadata.time_spec      = time_spec;
-          // Transition to in-burst.
-          state = states::IN_BURST;
-          break;
-        }
       case states::UNINITIALIZED:
       case states::WAIT_STOP:
       case states::STOPPED:

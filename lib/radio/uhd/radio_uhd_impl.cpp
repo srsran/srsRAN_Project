@@ -333,6 +333,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     stream_description.otw_format                              = otw_format;
     stream_description.srate_hz                                = actual_tx_rate_Hz;
     stream_description.args                                    = stream.args;
+    stream_description.discontiuous_tx                         = radio_config.discontinuous_tx;
+    stream_description.power_ramping_us                        = radio_config.power_ramping_us;
 
     // Setup ports.
     for (unsigned channel_idx = 0; channel_idx != stream.channels.size(); ++channel_idx) {

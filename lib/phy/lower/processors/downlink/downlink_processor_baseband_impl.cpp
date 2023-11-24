@@ -30,8 +30,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
-  last_notified_slot(scs, 0),
-  discontinous_mode(false)
+  last_notified_slot(scs, 0)
 {
   unsigned symbol_size_no_cp        = config.rate.get_dft_size(config.scs);
   unsigned nof_symbols_per_subframe = nof_symbols_per_slot * nof_slots_per_subframe;
@@ -203,17 +202,10 @@ downlink_processor_baseband::metadata downlink_processor_baseband_impl::process(
     writing_index += nof_advanced_samples;
   }
 
-  if (discontinous_mode) {
-    return md;
-  }
-
-  // If discontinous mode is disabled, fill the unprocessed regions of the buffer with zeros and report full buffer
-  // metadata.
+  // Fill the unprocessed regions of the buffer with zeros.
   fill_zeros(buffer, md);
 
-  metadata default_md;
-  default_md.is_empty = false;
-  return default_md;
+  return md;
 }
 
 bool downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_buffer_writer& buffer,

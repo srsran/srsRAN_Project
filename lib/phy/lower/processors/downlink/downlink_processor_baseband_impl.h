@@ -229,8 +229,6 @@ private:
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.
   slot_point last_notified_slot;
-  /// Enables discontinous transmission via transmit metadata.
-  bool discontinous_mode;
 };
 
 } // namespace srsran

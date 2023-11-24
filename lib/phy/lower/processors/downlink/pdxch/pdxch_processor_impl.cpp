@@ -65,6 +65,18 @@ bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
     current_grid = request.grid;
   }
 
+  // Detect if the resource grid of the request is empty.
+  bool all_ports_empty = true;
+  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+    if (!current_grid->is_empty(i_port)) {
+      all_ports_empty = false;
+      break;
+    }
+  }
+  if (all_ports_empty) {
+    return false;
+  }
+
   // Symbol index within the subframe.
   unsigned symbol_index_subframe = context.symbol + context.slot.subframe_slot_index() * nof_symbols_per_slot;
 

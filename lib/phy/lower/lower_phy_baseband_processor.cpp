@@ -120,7 +120,7 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
 
   // Enqueue transmission.
   report_fatal_error_if_not(
-      tx_executor.execute([this, timestamp, tx_buffer = std::move(dl_buffer), &baseband_md]() mutable {
+      tx_executor.execute([this, timestamp, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
         // Prepare transmit metadata.
         baseband_gateway_transmitter::metadata tx_metadata;
         tx_metadata.ts       = timestamp + tx_time_offset;

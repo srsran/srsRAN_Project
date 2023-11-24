@@ -40,6 +40,9 @@ static double                                    tx_gain                 = 60.0;
 static double                                    rx_freq                 = 3.5e9;
 static double                                    rx_gain                 = 60.0;
 static double                                    tx_rx_delay_s           = 0.001;
+bool                                             discontinuous_tx        = false;
+static unsigned                                  disc_tx_gap             = 0;
+static float                                     power_ramping_us        = 200.0F;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
 
 /// Describes a benchmark configuration profile.
@@ -176,6 +179,8 @@ static void usage(std::string prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-D Duration in seconds. [Default {}]\n", duration_s);
+  fmt::print("\t-d Discontinuous transmission mode. [Default {}]\n", discontinuous_tx);
+  fmt::print("\t-g Discontinous transmission gap in number of transmit calls. [Default {}]\n", disc_tx_gap);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-o saves received signal of stream:port 0:0 in a file. Ignored if none. [Default {}]\n",
              rx_filename.empty() ? "none" : rx_filename);
@@ -187,7 +192,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "o:D:P:v:h")) != -1) {
+  while ((opt = getopt(argc, argv, "o:D:dg:P:v:h")) != -1) {
     switch (opt) {
       case 'o':
         rx_filename = std::string(optarg);
@@ -200,6 +205,14 @@ static void parse_args(int argc, char** argv)
       case 'D':
         if (optarg != nullptr) {
           duration_s = std::strtod(optarg, nullptr);
+        }
+        break;
+      case 'd':
+        discontinuous_tx = true;
+        break;
+      case 'g':
+        if (optarg != nullptr) {
+          disc_tx_gap = std::strtol(optarg, nullptr, 10);
         }
         break;
       case 'v':
@@ -252,6 +265,8 @@ int main(int argc, char** argv)
   radio_configuration::radio config = {};
   config.sampling_rate_hz           = sampling_rate_hz;
   config.otw_format                 = otw_format;
+  config.discontinuous_tx           = discontinuous_tx;
+  config.power_ramping_us           = power_ramping_us;
   config.args                       = device_arguments;
   config.log_level                  = log_level;
   radio_configuration::stream rx_stream_config;
@@ -327,6 +342,9 @@ int main(int argc, char** argv)
     rx_file = file_sink<cf_t>(rx_filename);
   }
 
+  // Counter for the number of empty transmission buffers.
+  unsigned tx_gap_count = disc_tx_gap;
+
   // Calculate starting time.
   double                     delay_s      = 0.1;
   baseband_gateway_timestamp current_time = radio->read_current_time();
@@ -357,6 +375,15 @@ int main(int argc, char** argv)
       // Prepare transmit metadata.
       baseband_gateway_transmitter::metadata tx_metadata = {};
       tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
+      if (tx_gap_count > 0) {
+        // Send empty baseband buffer.
+        tx_metadata.is_empty = true;
+        --tx_gap_count;
+      } else {
+        tx_metadata.is_empty = false;
+        // Reset counter.
+        tx_gap_count = disc_tx_gap;
+      }
 
       // Transmit baseband.
       transmitter.transmit(tx_baseband_buffers[stream_id].get_reader(), tx_metadata);
