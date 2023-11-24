@@ -106,7 +106,6 @@ async_task<cu_cp_inter_du_handover_response> du_processor_routine_manager::start
 {
   return launch_async<inter_du_handover_routine>(command,
                                                  cu_cp_notifier,
-                                                 f1ap_ue_ctxt_notifier,
                                                  target_du_f1ap_ue_ctxt_notifier,
                                                  e1ap_ctrl_notifier,
                                                  source_du_processor_notifier,

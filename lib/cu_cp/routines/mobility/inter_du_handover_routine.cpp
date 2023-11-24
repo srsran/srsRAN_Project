@@ -48,7 +48,6 @@ bool verify_ho_command(const cu_cp_inter_du_handover_request& command,
 inter_du_handover_routine::inter_du_handover_routine(
     const cu_cp_inter_du_handover_request& command_,
     du_processor_cu_cp_notifier&           cu_cp_notifier_,
-    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notif_,
     du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
     du_processor_ue_context_notifier&      source_du_processor_notifier_,
@@ -57,7 +56,6 @@ inter_du_handover_routine::inter_du_handover_routine(
     srslog::basic_logger&                  logger_) :
   command(command_),
   cu_cp_notifier(cu_cp_notifier_),
-  source_du_f1ap_ue_ctxt_notifier(source_du_f1ap_ue_ctxt_notif_),
   target_du_f1ap_ue_ctxt_notifier(target_du_f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   source_du_processor_notifier(source_du_processor_notifier_),

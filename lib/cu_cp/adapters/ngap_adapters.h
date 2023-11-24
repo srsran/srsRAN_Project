@@ -18,8 +18,6 @@
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
 
-#include "../../ngap/ngap_asn1_utils.h"
-
 namespace srsran {
 namespace srs_cu_cp {
 
