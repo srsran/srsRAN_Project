@@ -220,8 +220,8 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
       msg_copy.crcs.push_back(crc);
     }
   }
-  if(not msg.crcs.empty()) {
-    adapted.handle_crc(msg);
+  if (not msg_copy.crcs.empty()) {
+    adapted.handle_crc(msg_copy);
   }
 }
 
@@ -243,7 +243,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
       msg_copy.ucis.push_back(pdu);
     }
   }
-  if(not msg_copy.ucis.empty()) {
+  if (not msg_copy.ucis.empty()) {
     adapted.handle_uci(msg_copy);
   }
 }
