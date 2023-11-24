@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 # This script will install srsran dependencies
 #
@@ -9,6 +8,8 @@
 # E.g.: ./install_dependencies run
 # E.g.: ./install_dependencies extra
 #
+
+set -e
 
 main() {
 

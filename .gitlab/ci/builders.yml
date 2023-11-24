@@ -64,9 +64,12 @@ stages:
         curl -LJO "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz"
         tar -xf "uhd-${uhd_version}.tar.gz"
         cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
-        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" ..
+        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" ..
         make -j${KUBERNETES_CPU_REQUEST}
         make install
+
+        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
+        cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
 
     # Publish compiled version to the registry
@@ -165,8 +168,11 @@ ubuntu-20.04-uhd:
         cd /tmp
         curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
         cd dpdk*${dpdk_version}
-        meson build --prefix "${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}"
+        meson build --prefix "/opt/dpdk/${dpdk_version}"
         ninja -C build install
+
+        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
+        cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
       }
 
     # Publish compiled version to the registry
