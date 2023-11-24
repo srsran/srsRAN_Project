@@ -29,6 +29,9 @@ struct rx_softbuffer_identifier {
   {
     return (rnti == other.rnti) && (harq_ack_id == other.harq_ack_id);
   }
+
+  /// Not equal comparison to other identifier.
+  bool operator!=(const rx_softbuffer_identifier& other) const { return !(*this == other); }
 };
 
 /// \brief Describes a receive softbuffer pool.
