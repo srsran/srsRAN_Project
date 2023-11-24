@@ -60,13 +60,14 @@ void ue_repository::slot_indication(slot_point sl_tx)
       continue;
     }
     if (not ues.contains(ue_index)) {
-      logger.warning("ue={}: Unexpected UE removal", ue_index);
+      logger.error("ue={}: Unexpected UE removal", ue_index);
       ue_index = INVALID_DU_UE_INDEX;
       // Notify MAC of the successful UE removal.
       mac_notif.on_ue_delete_response(ue_index);
       continue;
     }
-    ue& u = *ues[ue_index];
+    ue&    u     = *ues[ue_index];
+    rnti_t crnti = u.crnti;
 
     // Check if UEs can be safely removed.
     if (not is_ue_ready_for_removal(u)) {
@@ -74,11 +75,12 @@ void ue_repository::slot_indication(slot_point sl_tx)
     }
 
     // Remove UE from lookup.
-    auto it = search_rnti(rnti_to_ue_index_lookup, u.crnti);
+    auto it = search_rnti(rnti_to_ue_index_lookup, crnti);
     if (it != rnti_to_ue_index_lookup.end()) {
       rnti_to_ue_index_lookup.erase(it);
     } else {
-      logger.warning("UE with c-rnti={:#x} not found in RNTI -> UE index lookup.", u.crnti);
+      logger.error(
+          "ue={} rnti={:#x}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.", ue_index, crnti);
     }
 
     // Remove UE from the repository.
@@ -87,10 +89,10 @@ void ue_repository::slot_indication(slot_point sl_tx)
     // Notify MAC of the successful UE removal.
     mac_notif.on_ue_delete_response(ue_index);
 
+    logger.debug("ue={} rnti={:#x}: UE has been successfully removed.", ue_index, crnti);
+
     // Mark UE as ready for removal.
     ue_index = INVALID_DU_UE_INDEX;
-
-    logger.debug("ue={}: UE has been successfully removed.", ue_index);
   }
 
   // In case the elements at the front of the ring has been marked for removal, pop them from the queue.
