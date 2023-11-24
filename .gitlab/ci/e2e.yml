@@ -292,37 +292,6 @@ zmq-valgrind:
       artifacts: true
     - *retina-needs
 
-rf:
-  extends: .rf
-  variables:
-    KEYWORDS: "not iperf"
-    E2E_LOG_LEVEL: "info"
-  allow_failure: true
-
-rf-iperf-udp:
-  extends: .rf
-  variables:
-    KEYWORDS: "iperf and udp"
-    E2E_LOG_LEVEL: "info"
-  allow_failure: true
-
-rf-iperf-tcp:
-  extends: .rf
-  variables:
-    KEYWORDS: "iperf and tcp"
-    E2E_LOG_LEVEL: "info"
-  allow_failure: true
-
-rf-tsan:
-  extends: .rf
-  variables:
-    MARKERS: "rf_not_crash"
-  needs:
-    - job: "smoke tsan update cache"
-      artifacts: true
-    - *retina-needs
-  allow_failure: true
-
 rf-asan:
   extends: .rf
   variables:
