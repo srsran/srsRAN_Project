@@ -44,6 +44,7 @@ public:
   async_task<void> stop() override;
 
   void handle_slot_indication(slot_point sl_tx) override;
+  void handle_error_indication(slot_point sl_tx) override;
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);

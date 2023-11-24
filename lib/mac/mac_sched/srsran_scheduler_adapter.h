@@ -60,6 +60,8 @@ public:
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
 
+  void handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
+
   mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
   {
     return cell_handlers[cell_index];

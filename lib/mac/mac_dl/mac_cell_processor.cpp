@@ -71,6 +71,14 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
   }
 }
 
+void mac_cell_processor::handle_error_indication(slot_point sl_tx)
+{
+  // Change execution context to slot indication executor.
+  if (not slot_exec.execute([this, sl_tx]() { sched.handle_error_indication(sl_tx, cell_cfg.cell_index); })) {
+    logger.warning("slot={}: Skipped error indication. Cause: DL task queue is full.", sl_tx);
+  }
+}
+
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   // * Start of Critical Path * //

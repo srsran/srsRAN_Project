@@ -21,6 +21,7 @@ class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
 {
 public:
   void handle_slot_indication(slot_point sl_tx) override {}
+  void handle_error_indication(slot_point sl_tx) override {}
 };
 
 } // namespace

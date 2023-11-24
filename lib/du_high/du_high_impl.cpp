@@ -70,6 +70,11 @@ public:
     mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
   }
 
+  void handle_error_indication(slot_point sl_tx) override
+  {
+    mac.get_slot_handler(to_du_cell_index(0)).handle_error_indication(sl_tx);
+  }
+
 private:
   timer_manager& timers;
   mac_interface& mac;

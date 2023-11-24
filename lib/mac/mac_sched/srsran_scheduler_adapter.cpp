@@ -205,6 +205,11 @@ const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx
   return res;
 }
 
+void srsran_scheduler_adapter::handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx)
+{
+  sched_impl->handle_error_indication(slot_tx, cell_idx);
+}
+
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,
                                                                                  bool          ue_creation_result)
 {
