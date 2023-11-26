@@ -189,15 +189,14 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
    * data part of the PDCP Data PDU except the
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
-  byte_buffer sdu;
+  byte_buffer sdu = pdu.deep_copy();
   if (ciphering_enabled == security::ciphering_enabled::on &&
       sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    sdu = cipher_decrypt(byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()}, rcvd_count);
+    sdu.trim_head(hdr_len_bytes);
+    cipher_decrypt(sdu, rcvd_count);
     std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
     sdu.prepend(span<uint8_t>{header_buf.data(), hdr_len_bytes});
-  } else {
-    sdu = pdu.deep_copy();
   }
 
   /*
@@ -471,7 +470,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
   return is_valid;
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(const byte_buffer_view& msg, uint32_t count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer& msg, uint32_t count)
 {
   byte_buffer_view::iterator msg_begin = msg.begin();
   byte_buffer_view::iterator msg_end   = msg.end();
@@ -489,7 +488,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(const byte_buffer_view& msg, uint32_t
       ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
+      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea3:
       ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);

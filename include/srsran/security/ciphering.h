@@ -163,6 +163,44 @@ byte_buffer security_nea2(const sec_128_key& key,
   return security_nea2(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+inline byte_buffer
+security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+{
+  aes_context   ctx;
+  unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int           ret;
+  size_t        nc_off          = 0;
+  uint32_t      msg_len_block_8 = msg.length();
+  uint32_t      len             = msg.length();
+
+  byte_buffer msg_out;
+
+  ret = aes_setkey_enc(&ctx, key.data(), 128);
+  if (ret != 0) {
+    return {};
+  }
+
+  if (msg_len_block_8 <= len) {
+    if (ret == 0) {
+      // Construct nonce
+      nonce_cnt[0] = (count >> 24) & 0xff;
+      nonce_cnt[1] = (count >> 16) & 0xff;
+      nonce_cnt[2] = (count >> 8) & 0xff;
+      nonce_cnt[3] = (count)&0xff;
+      nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
+
+      // Encryption
+      byte_buffer_segment_span_range segments = msg.segments();
+      for (const auto& segment : segments) {
+        ret = aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
+      }
+    }
+  }
+
+  return msg_out;
+}
+
 template <typename It>
 byte_buffer security_nea3(const sec_128_key& key,
                           uint32_t           count,

@@ -224,20 +224,18 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params);
 
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::off,
-                      security::ciphering_enabled::off,
-                      security::integrity_algorithm::nia2,
-                      security::ciphering_algorithm::nea0);
-  }
-  {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::on,
-                      security::ciphering_enabled::on,
-                      security::integrity_algorithm::nia1,
-                      security::ciphering_algorithm::nea1);
-  }
-  {
+      // benchmark_pdcp_rx(params,
+      //                   security::integrity_enabled::off,
+      //                   security::ciphering_enabled::off,
+      //                   security::integrity_algorithm::nia2,
+      //                   security::ciphering_algorithm::nea0);
+  } {
+      //  benchmark_pdcp_rx(params,
+      //                    security::integrity_enabled::on,
+      //                    security::ciphering_enabled::on,
+      //                    security::integrity_algorithm::nia1,
+      //                    security::ciphering_algorithm::nea1);
+  } {
     benchmark_pdcp_rx(params,
                       security::integrity_enabled::on,
                       security::ciphering_enabled::on,
@@ -245,11 +243,11 @@ int main(int argc, char** argv)
                       security::ciphering_algorithm::nea2);
   }
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::on,
-                      security::ciphering_enabled::on,
-                      security::integrity_algorithm::nia3,
-                      security::ciphering_algorithm::nea3);
+    //  benchmark_pdcp_rx(params,
+    //                    security::integrity_enabled::on,
+    //                    security::ciphering_enabled::on,
+    //                    security::integrity_algorithm::nia3,
+    //                    security::ciphering_algorithm::nea3);
   }
   srslog::flush();
 }
