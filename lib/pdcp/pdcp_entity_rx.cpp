@@ -61,9 +61,10 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
     return;
   }
 
-  pdcp_dc_field dc = pdcp_pdu_get_dc(*(buf.begin()));
+  byte_buffer   pdu = buf.deep_copy();
+  pdcp_dc_field dc  = pdcp_pdu_get_dc(*(pdu.begin()));
   if (is_srb() || dc == pdcp_dc_field::data) {
-    handle_data_pdu(std::move(buf));
+    handle_data_pdu(std::move(pdu));
   } else {
     handle_control_pdu(std::move(buf));
   }
@@ -116,7 +117,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
   configure_security(sec_cfg_);
 }
 
-void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
+void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
 {
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -191,7 +192,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
   byte_buffer sdu;
   if (ciphering_enabled == security::ciphering_enabled::on &&
       sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
+    sdu = cipher_decrypt(byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()}, rcvd_count);
     std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
     sdu.prepend(span<uint8_t>{header_buf.data(), hdr_len_bytes});
@@ -470,10 +471,10 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
   return is_valid;
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_chain::const_iterator msg_begin,
-                                           byte_buffer_chain::const_iterator msg_end,
-                                           uint32_t                          count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(const byte_buffer_view& msg, uint32_t count)
 {
+  byte_buffer_view::iterator msg_begin = msg.begin();
+  byte_buffer_view::iterator msg_end   = msg.end();
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
   logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg.");
@@ -549,7 +550,7 @@ void pdcp_entity_rx::reordering_callback::operator()(timer_id_t /*timer_id*/)
 /*
  * Header helpers
  */
-bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_chain& buf) const
+bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer& buf) const
 {
   // Check PDU is long enough to extract header
   if (buf.length() <= hdr_len_bytes) {
@@ -557,7 +558,7 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
     return false;
   }
 
-  byte_buffer_chain::const_iterator buf_it = buf.begin();
+  byte_buffer::const_iterator buf_it = buf.begin();
 
   // Extract RCVD_SN
   switch (cfg.sn_size) {
