@@ -104,9 +104,14 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
       const dci_dl_rnti_config_type                dci_type = param_candidate.dci_dl_rnti_cfg_type();
       const cell_slot_resource_grid&               grid     = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
       const crb_bitmap used_crbs = grid.used_crbs(ss.bwp->dl_common->generic_params.scs, ss.dl_crb_lims, pdsch.symbols);
-      grant_prbs_mcs   mcs_prbs  = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
+      if (used_crbs.all()) {
+        logger.debug(
+            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No more RBs available", ue_cc.ue_index, ue_cc.rnti());
+        return alloc_outcome::skip_slot;
+      }
+      grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
                                                          h.last_alloc_params().rbs.type1().length()}
-                                           : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
+                                        : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
       if (mcs_prbs.n_prbs == 0) {
         logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
         return alloc_outcome::skip_ue;
@@ -240,6 +245,11 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       }
       const prb_bitmap used_crbs =
           grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
+      if (used_crbs.all()) {
+        logger.debug(
+            "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No more RBs available", ue_cc.ue_index, ue_cc.rnti());
+        return alloc_outcome::skip_slot;
+      }
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       grant_prbs_mcs mcs_prbs = is_retx
