@@ -22,7 +22,7 @@ constexpr uint32_t pool_size = 128;
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
 class pdcp_tx_empty_pool_test : public pdcp_tx_test_helper,
                                 public ::testing::Test,
-                                public ::testing::WithParamInterface<pdcp_sn_size>
+                                public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned>>
 {
 protected:
   void SetUp() override
@@ -70,16 +70,17 @@ TEST_P(pdcp_tx_empty_pool_test, empty_pool)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_empty_pool_test_all_sn_sizes,
                          pdcp_tx_empty_pool_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

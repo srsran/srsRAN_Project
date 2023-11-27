@@ -19,7 +19,7 @@ using namespace srsran;
 /// Test SRB reestablishment
 TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
 {
-  if (sn_size == pdcp_sn_size::size18bits) {
+  if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size18bits) {
     return; // 18 bits not supported for SRBs
   }
   init(GetParam(), pdcp_rb_type::srb);
@@ -131,16 +131,17 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)));
   return fmt::to_string(buffer);
 }
 
-INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
+INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_reestablish_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

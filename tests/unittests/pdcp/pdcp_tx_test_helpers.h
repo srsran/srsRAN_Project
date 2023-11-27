@@ -68,15 +68,19 @@ class pdcp_tx_test_helper
 protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size       sn_size_,
-            pdcp_rb_type       rb_type_      = pdcp_rb_type::drb,
-            pdcp_rlc_mode      rlc_mode_     = pdcp_rlc_mode::am,
-            pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10,
-            pdcp_max_count     max_count     = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard})
+  void init(std::tuple<pdcp_sn_size, unsigned> cfg_tuple,
+            pdcp_rb_type                       rb_type_      = pdcp_rb_type::drb,
+            pdcp_rlc_mode                      rlc_mode_     = pdcp_rlc_mode::am,
+            pdcp_discard_timer                 discard_timer = pdcp_discard_timer::ms10,
+            pdcp_max_count max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard})
   {
-    logger.info("Creating PDCP TX ({} bit)", pdcp_sn_size_to_uint(sn_size_));
+    logger.info("Creating PDCP TX ({} bit, NIA{}, NEA{})",
+                pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(cfg_tuple)),
+                std::get<unsigned>(cfg_tuple),
+                std::get<unsigned>(cfg_tuple));
 
-    sn_size     = sn_size_;
+    sn_size     = std::get<pdcp_sn_size>(cfg_tuple);
+    algo        = std::get<unsigned>(cfg_tuple);
     pdu_hdr_len = pdcp_data_pdu_header_size(sn_size); // Round up division
 
     // Set TX config
@@ -106,8 +110,8 @@ protected:
     sec_cfg.k_128_enc = k_128_enc;
 
     // Set encription/integrity algorithms
-    sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
-    sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
+    sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(std::get<unsigned>(cfg_tuple));
+    sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(std::get<unsigned>(cfg_tuple));
 
     // Create PDCP entity
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker});
@@ -119,7 +123,7 @@ protected:
   /// \param exp_pdu Expected PDU that is set to the correct test vector
   void get_expected_pdu(uint32_t count, byte_buffer& exp_pdu)
   {
-    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu));
+    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu, algo));
   }
 
   /// \brief Helper to advance the timers
@@ -135,24 +139,13 @@ protected:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
   pdcp_sn_size       sn_size = {};
+  unsigned           algo    = {};
   uint32_t           pdu_hdr_len;
   uint32_t           mac_hdr_len = 4;
   pdcp_tx_config     config      = {};
   timer_manager      timers;
   manual_task_worker worker{4098};
   pdcp_tx_test_frame test_frame = {};
-
-  // 12 bit test PDUs
-  byte_buffer buf_count0_snlen12{pdu1_count0_snlen12};       // [HFN | SN] 0000 0000 0000 0000 0000 | 0000 0000 0000
-  byte_buffer buf_count2048_snlen12{pdu1_count2048_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0000 | 0001 0000 0000
-  byte_buffer buf_count4096_snlen12{pdu1_count4096_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0001 | 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen12{pdu1_count4294967295_snlen12}; // All 1's
-
-  // 18 bit test PDUs
-  byte_buffer buf_count0_snlen18{pdu1_count0_snlen18};           // [HFN | SN] 0000 0000 0000 00|00 0000 0000 0000 0000
-  byte_buffer buf_count131072_snlen18{pdu1_count131072_snlen18}; // [HFN | SN] 0000 0000 0000 00|10 0000 0000 0000 0000
-  byte_buffer buf_count262144_snlen18{pdu1_count262144_snlen18}; // [HFN | SN] 0000 0000 0000 01|00 0000 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
 
   // Security configuration
   security::sec_128_as_config sec_cfg = {};

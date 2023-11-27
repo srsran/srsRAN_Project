@@ -23,7 +23,7 @@ namespace srsran {
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
 class pdcp_tx_status_report_test : public pdcp_tx_test_helper,
                                    public ::testing::Test,
-                                   public ::testing::WithParamInterface<pdcp_sn_size>
+                                   public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned>>
 {
 protected:
   void SetUp() override
@@ -35,8 +35,6 @@ protected:
     // init RLC logger
     srslog::fetch_basic_logger("PDCP", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
-
-    sn_size = GetParam();
   }
 
   void TearDown() override
