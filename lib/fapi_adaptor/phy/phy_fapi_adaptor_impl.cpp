@@ -68,6 +68,11 @@ void phy_fapi_adaptor_impl::set_slot_time_message_notifier(fapi::slot_time_messa
   time_translator.set_slot_time_message_notifier(fapi_time_slot_notifier);
 }
 
+void phy_fapi_adaptor_impl::set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
+{
+  fapi_translator.set_slot_error_message_notifier(fapi_error_notifier);
+}
+
 void phy_fapi_adaptor_impl::set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier)
 {
   results_translator.set_slot_data_message_notifier(fapi_data_notifier);

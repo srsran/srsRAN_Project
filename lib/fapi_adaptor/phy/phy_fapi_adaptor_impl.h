@@ -87,6 +87,9 @@ public:
   void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) override;
 
   // See interface for documentation.
+  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier) override;
+
+  // See interface for documentation.
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) override;
 
 private:

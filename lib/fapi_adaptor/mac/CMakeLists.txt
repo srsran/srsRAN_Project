@@ -14,6 +14,7 @@ target_link_libraries(srsran_mac_to_fapi_translator srsran_mac_fapi_adaptors srs
 
 set(SOURCES
         fapi_to_mac_data_msg_translator.cpp
+        fapi_to_mac_error_msg_translator.cpp
         fapi_to_mac_time_msg_translator.cpp)
 
 add_library(srsran_fapi_to_mac_translator STATIC ${SOURCES})

@@ -16,6 +16,7 @@
 namespace srsran {
 namespace fapi {
 
+/// Adds logging information over the implemented interface.
 class logging_slot_data_notifier_decorator : public slot_data_message_notifier
 {
 public:

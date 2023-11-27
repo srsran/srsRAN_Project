@@ -13,6 +13,7 @@ set(SOURCES
         message_validators.cpp
         logging_decorator_factories.cpp
         logging_slot_data_notifier_decorator.cpp
+        logging_slot_error_notifier_decorator.cpp
         logging_slot_gateway_decorator.cpp
         logging_slot_time_notifier_decorator.cpp)
 

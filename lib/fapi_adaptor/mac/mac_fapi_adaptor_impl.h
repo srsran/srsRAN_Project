@@ -11,6 +11,7 @@
 #pragma once
 
 #include "fapi_to_mac_data_msg_translator.h"
+#include "fapi_to_mac_error_msg_translator.h"
 #include "fapi_to_mac_time_msg_translator.h"
 #include "mac_to_fapi_translator.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -38,10 +39,13 @@ public:
                         subcarrier_spacing                       scs);
 
   // See interface for documentation.
-  fapi::slot_data_message_notifier& get_slot_data_notifier() override;
+  fapi::slot_time_message_notifier& get_slot_time_notifier() override;
 
   // See interface for documentation.
-  fapi::slot_time_message_notifier& get_slot_time_notifier() override;
+  fapi::slot_error_message_notifier& get_slot_error_notifier() override;
+
+  // See interface for documentation.
+  fapi::slot_data_message_notifier& get_slot_data_notifier() override;
 
   // See interface for documentation.
   mac_cell_result_notifier& get_cell_result_notifier() override;
@@ -65,6 +69,8 @@ private:
   fapi_to_mac_data_msg_translator fapi_data_translator;
   /// FAPI-to-MAC time-specific message translator.
   fapi_to_mac_time_msg_translator fapi_time_translator;
+  /// FAPI-to-MAC error-specific message translator.
+  fapi_to_mac_error_msg_translator fapi_error_translator;
 };
 
 } // namespace fapi_adaptor

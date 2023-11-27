@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/fapi/messages.h"
+#include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
@@ -127,28 +128,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
 
 public:
   fapi_to_phy_translator(const fapi_to_phy_translator_config&  config,
-                         fapi_to_phy_translator_dependencies&& dependencies) :
-    sector_id(config.sector_id),
-    logger(*dependencies.logger),
-    dl_processor_pool(*dependencies.dl_processor_pool),
-    dl_rg_pool(*dependencies.dl_rg_pool),
-    dl_pdu_validator(*dependencies.dl_pdu_validator),
-    buffer_pool(*dependencies.buffer_pool),
-    ul_request_processor(*dependencies.ul_request_processor),
-    ul_rg_pool(*dependencies.ul_rg_pool),
-    ul_pdu_validator(*dependencies.ul_pdu_validator),
-    ul_pdu_repository(*dependencies.ul_pdu_repository),
-    asynchronous_executor(*dependencies.async_executor),
-    pm_repo(std::move(dependencies.pm_repo)),
-    scs(config.scs),
-    scs_common(config.scs_common),
-    prach_cfg(*config.prach_cfg),
-    carrier_cfg(*config.carrier_cfg),
-    prach_ports(config.prach_ports.begin(), config.prach_ports.end())
-  {
-    srsran_assert(pm_repo, "Invalid precoding matrix repository");
-    srsran_assert(!prach_ports.empty(), "The PRACH ports must not be empty.");
-  }
+                         fapi_to_phy_translator_dependencies&& dependencies);
 
   // See interface for documentation.
   void dl_tti_request(const fapi::dl_tti_request_message& msg) override;
@@ -174,6 +154,12 @@ public:
   /// \param[in] slot Identifies the new slot.
   /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot(slot_point slot);
+
+  /// Configures the FAPI slot-based, error-specific notifier to the given one.
+  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
+  {
+    error_notifier = std::ref(fapi_error_notifier);
+  }
 
 private:
   /// Returns true if the given message arrived in time, otherwise returns false.
@@ -211,6 +197,8 @@ private:
   slot_based_upper_phy_controller current_slot_controller;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Error indication notifier.
+  std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
   /// Protects concurrent access to shared variables.
   // :TODO: make this lock free.
   std::mutex mutex;

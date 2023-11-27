@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <functional>
 
@@ -20,19 +20,19 @@ class mac_cell_slot_handler;
 
 namespace fapi_adaptor {
 
-/// \brief FAPI-to-MAC timing message translator.
+/// \brief FAPI-to-MAC error message translator.
 ///
-/// This class listens to slot-based, time-specific FAPI message events and translates them to the suitable data types
+/// This class listens to slot-based, error-specific FAPI message events and translates them to the suitable data types
 /// for the MAC layer.
-class fapi_to_mac_time_msg_translator : public fapi::slot_time_message_notifier
+class fapi_to_mac_error_msg_translator : public fapi::slot_error_message_notifier
 {
 public:
-  explicit fapi_to_mac_time_msg_translator(subcarrier_spacing scs_);
+  explicit fapi_to_mac_error_msg_translator(subcarrier_spacing scs_);
 
   // See interface for documentation.
-  void on_slot_indication(const fapi::slot_indication_message& msg) override;
+  void on_error_indication(const fapi::error_indication_message& msg) override;
 
-  /// Sets the given cell-specific slot handler. This handler will be used to receive new slot notifications.
+  /// Sets the given cell-specific slot handler. This handler will be used to receive error notifications.
   void set_cell_slot_handler(mac_cell_slot_handler& handler) { mac_slot_handler = std::ref(handler); }
 
 private:
