@@ -27,12 +27,7 @@ namespace execution_config_helper {
 using task_priority = enqueue_priority;
 
 /// Parameters of a queue of tasks.
-struct task_queue {
-  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
-  concurrent_queue_policy policy;
-  /// Task queue size.
-  unsigned size;
-};
+using task_queue = concurrent_queue_params;
 
 /// Parameters of a strand executor.
 struct strand {

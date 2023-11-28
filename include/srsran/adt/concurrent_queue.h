@@ -37,6 +37,14 @@ enum class concurrent_queue_policy { lockfree_spsc, lockfree_mpmc, locking_mpmc,
 /// - non_blocking: no blocking mechanism is exposed.
 enum class concurrent_queue_wait_policy { condition_variable, sleep, non_blocking };
 
+/// \brief Parameters used to construct a concurrent queue.
+struct concurrent_queue_params {
+  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
+  concurrent_queue_policy policy;
+  /// Task queue size.
+  unsigned size;
+};
+
 namespace detail {
 
 template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
@@ -689,6 +697,9 @@ namespace detail {
 
 static constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, size_t nof_priority_levels)
 {
+  if (nof_priority_levels == 0) {
+    return 0;
+  }
   size_t queue_idx = std::numeric_limits<size_t>::max() - static_cast<size_t>(prio);
   return queue_idx < nof_priority_levels ? queue_idx : nof_priority_levels - 1;
 }

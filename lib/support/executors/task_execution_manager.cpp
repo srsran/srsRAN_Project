@@ -47,7 +47,8 @@ std::unique_ptr<task_executor> exec_to_ptr(Exec exec)
 {
   return std::make_unique<std::decay_t<Exec>>(std::move(exec));
 }
-std::unique_ptr<task_executor> exec_to_ptr(std::unique_ptr<task_executor> exec)
+template <typename Exec>
+std::unique_ptr<task_executor> exec_to_ptr(std::unique_ptr<Exec> exec)
 {
   return exec;
 }
@@ -102,9 +103,10 @@ public:
 
 protected:
   using task_executor_list = std::vector<std::pair<std::string, std::unique_ptr<task_executor>>>;
-  virtual task_executor_list create_strands(const executor_params& params) = 0;
 
   virtual std::unique_ptr<task_executor> create_executor(const executor_params& params) = 0;
+
+  virtual task_executor_list create_strand_executors(const executor_params& params) = 0;
 
   bool add_executors(span<const executor_params> execs)
   {
@@ -114,7 +116,10 @@ protected:
         return false;
       }
       if (not exec_params.strands.empty()) {
-        task_executor_list strands = create_strands(exec_params);
+        task_executor_list strands = create_strand_executors(exec_params);
+        if (exec_params.strands.size() != strands.size()) {
+          return false;
+        }
         for (auto& p : strands) {
           if (not store_executor(p.first, std::move(p.second))) {
             return false;
@@ -148,6 +153,26 @@ protected:
       return false;
     }
     return true;
+  }
+
+  template <typename OutExec>
+  task_executor_list create_strand_executors_helper(const executor_params& desc, OutExec&& basic_exec)
+  {
+    task_executor_list execs;
+    for (const execution_config_helper::strand& strand_cfg : desc.strands) {
+      std::vector<execution_config_helper::task_queue> queues(strand_cfg.queues.size());
+      for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
+        queues[i] = execution_config_helper::task_queue{strand_cfg.queues[i].policy, strand_cfg.queues[i].size};
+      }
+      auto strand_execs = make_strand_executor_ptrs(basic_exec, span<const concurrent_queue_params>(queues));
+      if (strand_execs.size() != strand_cfg.queues.size()) {
+        return {};
+      }
+      for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
+        execs.emplace_back(strand_cfg.queues[i].name, std::move(strand_execs[i]));
+      }
+    }
+    return execs;
   }
 
   // Worker type used in this execution context.
@@ -199,19 +224,12 @@ struct single_worker_context final
 
 private:
   typename base_type::task_executor_list
-  create_strands(const execution_config_helper::single_worker::executor& desc) override
+  create_strand_executors(const execution_config_helper::single_worker::executor& desc) override
   {
     typename base_type::task_executor_list execs;
 
     executor_type basic_exec(this->worker, desc.report_on_failure);
-    for (const auto& strand_cfg : desc.strands) {
-      // only one queue supported for now.
-      auto& queue_desc  = strand_cfg.queues[0];
-      auto  strand_exec = make_strand_executor_ptr(basic_exec, queue_desc.policy, queue_desc.size);
-      strand_exec       = decorate_executor(desc, std::move(strand_exec), this->task_tracer);
-      execs.emplace_back(queue_desc.name, std::move(strand_exec));
-    }
-    return execs;
+    return this->create_strand_executors_helper(desc, basic_exec);
   }
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::single_worker::executor& desc) override
@@ -320,18 +338,12 @@ private:
   }
 
   typename base_type::task_executor_list
-  create_strands(const execution_config_helper::worker_pool::executor& desc) override
+  create_strand_executors(const execution_config_helper::worker_pool::executor& desc) override
   {
     typename base_type::task_executor_list execs;
 
     visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto&& prio_exec) {
-      for (const auto& strand_cfg : desc.strands) {
-        // only one queue supported for now.
-        auto& queue_desc  = strand_cfg.queues[0];
-        auto  strand_exec = make_strand_executor_ptr(prio_exec, queue_desc.policy, queue_desc.size);
-        strand_exec       = decorate_executor(desc, std::move(strand_exec), this->task_tracer);
-        execs.emplace_back(queue_desc.name, std::move(strand_exec));
-      }
+      execs = this->create_strand_executors_helper(desc, prio_exec);
     });
     return execs;
   }
@@ -376,17 +388,10 @@ private:
   }
 
   typename base_type::task_executor_list
-  create_strands(const execution_config_helper::worker_pool::executor& desc) override
+  create_strand_executors(const execution_config_helper::worker_pool::executor& desc) override
   {
-    typename base_type::task_executor_list execs;
-
-    for (const auto& strand_cfg : desc.strands) {
-      // only one queue supported for now.
-      auto& queue_desc  = strand_cfg.queues[0];
-      auto  strand_exec = make_strand_executor_ptr(executor_type(this->worker), queue_desc.policy, queue_desc.size);
-      execs.emplace_back(queue_desc.name, std::move(strand_exec));
-    }
-    return execs;
+    executor_type basic_exec(this->worker, desc.report_on_failure);
+    return this->create_strand_executors_helper(desc, basic_exec);
   }
 };
 
@@ -479,23 +484,18 @@ private:
   }
 
   typename base_type::task_executor_list
-  create_strands(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
+  create_strand_executors(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
     typename base_type::task_executor_list execs;
 
-    visit_executor(this->worker, desc.priority, desc.report_on_failure, [&execs, &desc](auto&& prio_exec) {
-      for (const auto& strand_cfg : desc.strands) {
-        // only one queue supported for now.
-        auto& queue_desc  = strand_cfg.queues[0];
-        auto  strand_exec = make_strand_executor_ptr(prio_exec, queue_desc.policy, queue_desc.size);
-        execs.emplace_back(queue_desc.name, std::move(strand_exec));
-      }
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto&& prio_exec) {
+      execs = this->create_strand_executors_helper(desc, prio_exec);
     });
     return execs;
   }
 };
 
-static constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 4U;
+static constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 3U;
 
 // Special case to stop recursion for task queue policies.
 template <concurrent_queue_policy... QueuePolicies,
