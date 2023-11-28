@@ -166,15 +166,8 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, const csi_appconfig& csi_cfg)
+static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
 {
-  if ((not csi_cfg.csi_rs_enabled) and config.min_ue_mcs != config.max_ue_mcs) {
-    fmt::print("When CSI-RS and CSI report are disabled, the min UE PDSCH MCS must be equal to the max UE PDSCH MCS.\n",
-               config.min_ue_mcs,
-               config.max_ue_mcs);
-    return false;
-  }
-
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
                config.min_ue_mcs,
@@ -458,7 +451,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pdsch_cell_app_config(config.pdsch_cfg, config.csi_cfg)) {
+  if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
     return false;
   }
 
