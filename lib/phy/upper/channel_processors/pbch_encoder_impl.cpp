@@ -69,9 +69,6 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
                                  const srsran::pbch_encoder::pbch_msg_t& msg,
                                  span<const uint8_t>                     a)
 {
-  uint32_t i = 0;
-  uint32_t j = 0;
-
   // Initialize sequence.
   scrambler->init(msg.N_id);
 
@@ -88,11 +85,11 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
   scrambler->advance(M * v);
 
   // Generate actual sequence
-  std::array<uint8_t, PAYLOAD_SIZE> c = {};
-  scrambler->apply_xor(c, c);
+  static_bit_buffer<PAYLOAD_SIZE> c(PAYLOAD_SIZE);
+  scrambler->generate(c);
 
-  while (i < PAYLOAD_SIZE) {
-    uint8_t s_i = c[j];
+  for (unsigned i = 0, j = 0; i != PAYLOAD_SIZE; ++i) {
+    uint8_t s_i = c.extract(j, 1);
 
     // Check if i belongs to a SS/PBCH block index which is only multiplexed when L_max is 64
     bool is_ssb_idx = (i == G[11] || i == G[12] || i == G[13]) && msg.L_max == 64;
@@ -106,7 +103,6 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
     }
 
     a_prime[i] = a[i] ^ s_i;
-    i++;
   }
 }
 
@@ -158,19 +154,19 @@ void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsran::pbch_encoder
       encoded.size() == E, "Invalid encoded size ({}), expected {}.", encoded.size(), static_cast<unsigned>(E));
 
   // PBCH payload generation.
-  std::array<uint8_t, A> a = {};
+  std::array<uint8_t, A> a;
   payload_generate(a, pbch_msg);
 
   // Scrambling.
-  std::array<uint8_t, A> a_prime = {};
+  std::array<uint8_t, A> a_prime;
   scramble(a_prime, pbch_msg, a);
 
   // CRC Attach.
-  std::array<uint8_t, B> k = {};
+  std::array<uint8_t, B> k;
   crc_attach(k, a_prime);
 
   // Channel coding.
-  std::array<uint8_t, POLAR_N_MAX> d = {};
+  std::array<uint8_t, POLAR_N_MAX> d;
   channel_coding(d, k);
 
   // Rate matching.

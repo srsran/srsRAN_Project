@@ -85,7 +85,10 @@ public:
     time_start  = std::chrono::steady_clock::now();
     time_uci    = std::chrono::time_point<std::chrono::steady_clock>();
     time_return = std::chrono::time_point<std::chrono::steady_clock>();
-    results     = {};
+
+    // Clear processor results.
+    results.sch.reset();
+    results.uci.reset();
 
     processor->process(data, std::move(softbuffer), *this, grid, pdu);
     time_return = std::chrono::steady_clock::now();
@@ -116,7 +119,7 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> time_end = std::chrono::steady_clock::now();
 
     // Calculate the UCI report latency if available.
-    std::chrono::nanoseconds time_uci_ns = {};
+    std::chrono::nanoseconds time_uci_ns;
     if (time_uci != std::chrono::time_point<std::chrono::steady_clock>()) {
       time_uci_ns = time_uci - time_start;
     }

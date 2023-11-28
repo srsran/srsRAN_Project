@@ -42,9 +42,7 @@ int main()
     const std::vector<uint8_t> testvector_encoded = test_case.encoded.read();
 
     // Assert encoded data.
-    for (unsigned i = 0; i != pbch_encoder::E; ++i) {
-      TESTASSERT_EQ(encoded_data[i], testvector_encoded[i]);
-    }
+    TESTASSERT_EQ(span<const uint8_t>(testvector_encoded), span<const uint8_t>(encoded_data));
   }
   return 0;
 }

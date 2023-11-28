@@ -145,7 +145,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
                 to_string(config.modulation));
 
   // Stats accumulators.
-  pusch_demodulator_notifier::demodulation_stats stats                = {};
+  pusch_demodulator_notifier::demodulation_stats stats;
   unsigned                                       evm_symbol_count     = 0;
   unsigned                                       sinr_softbit_count   = 0;
   float                                          noise_var_accumulate = 0.0;
@@ -155,7 +155,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
        i_symbol != i_symbol_end;
        ++i_symbol) {
     // Select RE mask for the symbol.
-    re_symbol_mask_type& symbol_re_mask = config.dmrs_symb_pos[i_symbol] ? re_mask_dmrs : re_mask;
+    re_symbol_mask_type& symbol_re_mask = config.dmrs_symb_pos.test(i_symbol) ? re_mask_dmrs : re_mask;
 
     // Skip symbol if it does not contain data.
     if (symbol_re_mask.none()) {

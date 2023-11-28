@@ -136,9 +136,9 @@ private:
   /// \brief Temporary codeblock message.
   ///
   /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
-  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data = {};
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
   /// Buffer for storing temporary packed data between the LDPC rate matcher and the modulator.
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
+  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits;
   /// Buffer for storing the codeblock symbols.
   std::array<ci8_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_cb_symbols;
 };

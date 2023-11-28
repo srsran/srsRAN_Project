@@ -108,7 +108,7 @@ private:
   /// Number of zeros that must be applied to the transport block.
   units::bits zero_pad = units::bits(0);
   /// Base codeblock metadata.
-  codeblock_metadata cb_metadata = {};
+  codeblock_metadata cb_metadata;
   /// PDSCH transmission allocation pattern.
   re_pattern_list allocation;
   /// PDSCH transmission reserved elements pattern.

@@ -55,7 +55,7 @@ private:
   std::unique_ptr<ldpc_rate_matcher> rate_matcher;
 
   /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
+  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments;
   /// \brief Maximum codeblock length.
   ///
   /// This is the maximum length of an encoded codeblock, achievable with base graph 1 (rate 1/3).

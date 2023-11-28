@@ -26,12 +26,12 @@ bool srsran::validate_prach_detector_phy(prach_format_type        format,
                                          unsigned                 zero_correlation_zone,
                                          unsigned                 nof_rx_ports)
 {
-  detail::threshold_params th_params = {};
-  th_params.nof_rx_ports             = nof_rx_ports;
-  th_params.scs                      = scs;
-  th_params.format                   = format;
-  th_params.zero_correlation_zone    = zero_correlation_zone;
-  th_params.combine_symbols          = true;
+  detail::threshold_params th_params;
+  th_params.nof_rx_ports          = nof_rx_ports;
+  th_params.scs                   = scs;
+  th_params.format                = format;
+  th_params.zero_correlation_zone = zero_correlation_zone;
+  th_params.combine_symbols       = true;
 
   const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
   auto                                      flag = threshold_and_margin_table.check_flag(th_params);

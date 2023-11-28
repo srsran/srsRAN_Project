@@ -46,9 +46,9 @@ private:
   std::unique_ptr<polar_rate_matcher> rm;
 
   /// Temporary payload with CRC appended.
-  std::array<uint8_t, MAX_K + CRC_LEN> temp_c = {};
+  std::array<uint8_t, MAX_K + CRC_LEN> temp_c;
   /// Temporary encoded data prior to rate matching.
-  std::array<uint8_t, polar_code::NMAX> temp_d = {};
+  std::array<uint8_t, polar_code::NMAX> temp_d;
 
   /// \brief CRC attachment
   ///

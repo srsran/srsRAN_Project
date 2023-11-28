@@ -18,6 +18,9 @@
 using namespace srsran;
 using namespace srsran::ldpc;
 
+static const std::array<double, 4> shift_factor_bg1 = {0, 17, 33, 56};
+static const std::array<double, 4> shift_factor_bg2 = {0, 13, 25, 43};
+
 void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg)
 {
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
@@ -60,17 +63,17 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   srsran_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
-  std::array<double, 4> shift_factor = {};
-  unsigned              BG_N_short   = 0;
-  unsigned              BG_K         = 0;
+  span<const double> shift_factor;
+  unsigned           BG_N_short = 0;
+  unsigned           BG_K       = 0;
   if ((block_length % BG1_N_SHORT) == 0) {
     // input is a BG1 codeblock
-    shift_factor = {0, 17, 33, 56};
+    shift_factor = shift_factor_bg1;
     BG_N_short   = BG1_N_SHORT;
     BG_K         = BG1_N_FULL - BG1_M;
   } else if ((block_length % BG2_N_SHORT) == 0) {
     // input is a BG2 codeblock
-    shift_factor = {0, 13, 25, 43};
+    shift_factor = shift_factor_bg2;
     BG_N_short   = BG2_N_SHORT;
     BG_K         = BG2_N_FULL - BG2_M;
   } else {

@@ -112,7 +112,7 @@ private:
   /// Current PUSCH decoder configuration.
   pusch_decoder::configuration current_config;
   /// Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
-  static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs = {};
+  static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs;
   /// Counts code blocks.
   std::atomic<unsigned> cb_counter;
   /// Enqueues code block decoder statistics.

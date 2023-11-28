@@ -23,7 +23,7 @@ int main()
   std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
 
   // Generate alphas.
-  std::array<float, NRE> alphas = {};
+  std::array<float, NRE> alphas;
   std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
     return M_PI_4 * static_cast<float>(n++) / static_cast<float>(NRE);
   });

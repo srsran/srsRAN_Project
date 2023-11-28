@@ -210,7 +210,8 @@ void pusch_decoder_impl::join_and_notify()
   span<bool> cb_crcs = softbuffer->get_codeblocks_crc();
 
   // Initialize decoder status.
-  pusch_decoder_result stats = {};
+  pusch_decoder_result stats;
+  stats.tb_crc_ok            = false;
   stats.nof_codeblocks_total = nof_cbs;
   stats.ldpc_decoder_stats.reset();
 
@@ -221,7 +222,6 @@ void pusch_decoder_impl::join_and_notify()
     cb_nof_iter = cb_stats.try_pop();
   }
 
-  stats.tb_crc_ok = false;
   if (nof_cbs == 1) {
     // When only one codeblock, the CRC of codeblock and transport block are the same.
     stats.tb_crc_ok = cb_crcs[0];

@@ -296,7 +296,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
 codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,
                                                              const segmenter_config& cfg) const
 {
-  codeblock_metadata tmp_description = {};
+  codeblock_metadata tmp_description;
 
   tmp_description.tb_common.base_graph   = base_graph;
   tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);

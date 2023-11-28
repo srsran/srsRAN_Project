@@ -177,11 +177,11 @@ void ldpc_encoder_neon::systematic_bits_inner()
 
   const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
-  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk       = {};
+  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
   span<int8_t>                             blk           = span<int8_t>(tmp_blk).first(2 * lifting_size);
   unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
 
-  std::array<bool, BG_M_PH> m_mask = {};
+  std::array<bool, BG_M_PH> m_mask;
 
   for (const auto& element : parity_check_sparse) {
     unsigned m          = std::get<0>(element);

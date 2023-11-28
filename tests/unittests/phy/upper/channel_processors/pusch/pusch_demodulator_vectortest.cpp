@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              test_case.context.config.modulation,
              test_case.context.config.start_symbol_index,
              test_case.context.config.nof_symbols,
-             span<const bool>(test_case.context.config.dmrs_symb_pos),
+             test_case.context.config.dmrs_symb_pos,
              test_case.context.config.dmrs_config_type == dmrs_type::TYPE1 ? 1 : 2,
              test_case.context.config.nof_cdm_groups_without_data,
              test_case.context.config.n_id,

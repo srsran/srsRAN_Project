@@ -49,14 +49,14 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   void high_rate_bg2_other();
 
   /// Unpacked local copy of the message to encode.
-  std::array<uint8_t, ldpc::MAX_MESSAGE_SIZE> temp_message = {};
+  std::array<uint8_t, ldpc::MAX_MESSAGE_SIZE> temp_message;
   /// Read-only view of the message to encode.
-  span<const uint8_t> message = {};
+  span<const uint8_t> message;
   // Set up registers for the largest LS.
   /// Register to store auxiliary computation results.
-  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, bg_hr_parity_nodes> auxiliary = {};
+  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, bg_hr_parity_nodes> auxiliary;
   /// Register to store computed encoded bits.
-  std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock = {};
+  std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock;
 };
 
 } // namespace srsran

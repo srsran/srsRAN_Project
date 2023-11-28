@@ -317,11 +317,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Generate resource block mask.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Generate DM-RS symbol mask.
-  std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
-  pdu.dmrs_symbol_mask.for_each(
-      0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
-
   // Generate transport block.
   std::vector<uint8_t> transport_block(tbs_dist(rgen));
   std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
@@ -406,7 +401,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.mcs_descr.modulation, demodulator_entry.config.modulation);
   ASSERT_EQ(pdu.start_symbol_index, demodulator_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demodulator_entry.config.nof_symbols);
-  ASSERT_EQ(dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
+  ASSERT_EQ(pdu.dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
   ASSERT_EQ(pdu.dmrs, demodulator_entry.config.dmrs_config_type);
   ASSERT_EQ(pdu.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
   ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);

@@ -73,9 +73,9 @@ private:
   /// Modulation mapper.
   modulation_mapper& modulator;
   /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
+  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments;
   /// Temporary packed bits.
-  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock = {};
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock;
   /// Current transmission modulation.
   modulation_scheme modulation;
   /// Set to true if it is a new transmission.

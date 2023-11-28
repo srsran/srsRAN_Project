@@ -300,7 +300,7 @@ private:
   /// Set to true if the CSI Part 2 was requested but it has not notified back.
   bool pending_csi_part2 = false;
   /// Stored UCI payload.
-  pusch_processor_result_control uci_payload = {};
+  pusch_processor_result_control uci_payload;
   /// Reference to PUSCH processor notifier.
   pusch_processor_result_notifier* notifier;
   /// CSI Part 1 feedback.
