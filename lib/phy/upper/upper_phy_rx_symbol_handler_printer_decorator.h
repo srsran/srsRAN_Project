@@ -73,13 +73,19 @@ public:
 
           // Log the resource grid information.
           unsigned nof_complex_floats = temp_buffer.size() * nof_symbols * (end_port - start_port);
-          logger.set_context(context.slot.sfn(), context.slot.slot_index());
-          logger.info("RX_SYMBOL: sector={} offset={} size={}", context.sector, file_offset, nof_complex_floats);
+          logger.info(context.slot.sfn(),
+                      context.slot.slot_index(),
+                      "RX_SYMBOL: sector={} offset={} size={}",
+                      context.sector,
+                      file_offset,
+                      nof_complex_floats);
 
           // Advance file offset.
           file_offset += nof_complex_floats;
         })) {
-      logger.warning("RX_SYMBOL: Failed to write UL samples. Cause: task worker queue is full");
+      logger.warning(context.slot.sfn(),
+                     context.slot.slot_index(),
+                     "RX_SYMBOL: Failed to write UL samples. Cause: task worker queue is full");
     }
   }
 
@@ -101,13 +107,19 @@ public:
 
           unsigned nof_complex_floats = buffer.get_sequence_length() * nof_replicas * (prach_stop - prach_start);
           // Log the resource grid information.
-          logger.set_context(context.slot.sfn(), context.slot.slot_index());
-          logger.info("RX_PRACH: sector={} offset={} size={}", context.sector, file_offset, nof_complex_floats);
+          logger.info(context.slot.sfn(),
+                      context.slot.slot_index(),
+                      "RX_PRACH: sector={} offset={} size={}",
+                      context.sector,
+                      file_offset,
+                      nof_complex_floats);
 
           // Advance file offset.
           file_offset += nof_complex_floats;
         })) {
-      logger.warning("RX_PRACH: Failed to write PRACH samples. Cause: task worker queue is full");
+      logger.warning(context.slot.sfn(),
+                     context.slot.slot_index(),
+                     "RX_PRACH: Failed to write PRACH samples. Cause: task worker queue is full");
     }
   }
 

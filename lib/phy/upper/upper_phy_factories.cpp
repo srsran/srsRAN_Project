@@ -11,8 +11,6 @@
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
-#include "logging_downlink_processor_decorator.h"
-#include "logging_uplink_processor_decorator.h"
 #include "uplink_processor_concurrent.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
@@ -231,9 +229,6 @@ public:
     std::unique_ptr<uplink_processor> uplink_proc = factory->create(config, logger, log_all_opportunities);
     report_fatal_error_if_not(uplink_proc, "Invalid uplink processor.");
 
-    // Wrap uplink processor with executor.
-    uplink_proc = std::make_unique<logging_uplink_processor_decorator>(std::move(uplink_proc), logger);
-
     return uplink_proc;
   }
 
@@ -276,8 +271,13 @@ public:
     std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    return std::make_unique<downlink_processor_single_executor_impl>(
-        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
+    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                     std::move(pdcch),
+                                                                     std::move(pdsch),
+                                                                     std::move(ssb),
+                                                                     std::move(nzp_csi),
+                                                                     *config.executor,
+                                                                     srslog::fetch_basic_logger("PHY"));
   }
 
   // See interface for documentation.
@@ -306,10 +306,16 @@ public:
     }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    std::unique_ptr<downlink_processor> downlink_proc = std::make_unique<downlink_processor_single_executor_impl>(
-        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
+    std::unique_ptr<downlink_processor> downlink_proc =
+        std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                  std::move(pdcch),
+                                                                  std::move(pdsch),
+                                                                  std::move(ssb),
+                                                                  std::move(nzp_csi),
+                                                                  *config.executor,
+                                                                  srslog::fetch_basic_logger("PHY"));
 
-    return std::make_unique<logging_downlink_processor_decorator>(std::move(downlink_proc), logger);
+    return downlink_proc;
   }
 
   std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override

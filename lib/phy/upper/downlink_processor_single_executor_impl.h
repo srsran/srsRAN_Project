@@ -55,32 +55,34 @@ class downlink_processor_single_executor_impl : public downlink_processor, priva
 public:
   /// \brief Builds a downlink processor single executor impl object with the given parameters.
   ///
-  /// \param gateway_ Gateway that will be used to send the resource grids.
-  /// \param pdcch_proc_ PDSCH processor used to process PDSCH PDUs.
-  /// \param pdsch_proc_ PDCCH processor used to process PDCCH PDUs.
-  /// \param ssb_proc_ SSB processor used to process SSB PDUs.
+  /// \param gateway_     Gateway that will be used to send the resource grids.
+  /// \param pdcch_proc_  PDSCH processor used to process PDSCH PDUs.
+  /// \param pdsch_proc_  PDCCH processor used to process PDCCH PDUs.
+  /// \param ssb_proc_    SSB processor used to process SSB PDUs.
   /// \param csi_rs_proc_ CSI-RS processor used to process CSI-RS configurations.
-  /// \param executor_ Task executor that will be used to process every PDU.
+  /// \param executor_    Task executor that will be used to process every PDU.
+  /// \param logger_      Logger instance.
   downlink_processor_single_executor_impl(upper_phy_rg_gateway&                 gateway_,
                                           std::unique_ptr<pdcch_processor>      pdcch_proc_,
                                           std::unique_ptr<pdsch_processor>      pdsch_proc_,
                                           std::unique_ptr<ssb_processor>        ssb_proc_,
                                           std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
-                                          task_executor&                        executor_);
+                                          task_executor&                        executor_,
+                                          srslog::basic_logger&                 logger_);
 
   // See interface for documentation.
-  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override;
+  void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override;
 
   // See interface for documentation.
-  bool process_ssb(const ssb_processor::pdu_t& pdu) override;
+  void process_ssb(const ssb_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
+  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
 
   // See interface for documentation.
   bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;
@@ -118,6 +120,7 @@ private:
   std::unique_ptr<ssb_processor>        ssb_proc;
   std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
   task_executor&                        executor;
+  srslog::basic_logger&                 logger;
 
   /// DL processor internal state.
   downlink_processor_single_executor_state state;

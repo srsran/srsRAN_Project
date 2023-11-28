@@ -46,8 +46,7 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
       // Reserve buffer.
       tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
       if (status != tx_buffer_status::successful) {
-        logger.set_context(slot.sfn(), slot.slot_index());
-        logger.warning("DL HARQ {}: failed to reserve, {}.", id, to_string(status));
+        logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, {}.", id, to_string(status));
 
         // If the reservation failed, return an invalid buffer.
         return unique_tx_buffer();
@@ -59,8 +58,8 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
 
   // If no available buffer is available, return an invalid buffer.
   if (available_buffers.empty()) {
-    logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
+    logger.warning(
+        slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
     return unique_tx_buffer();
   }
 
@@ -75,8 +74,7 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
 
   // If the reservation failed, return an invalid buffer.
   if (status != tx_buffer_status::successful) {
-    logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ {}: failed to reserve, {}.", id, to_string(status));
+    logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, {}.", id, to_string(status));
     return unique_tx_buffer();
   }
 
@@ -94,8 +92,8 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
 
   // If no available buffer is available, return an invalid buffer.
   if (available_buffers.empty()) {
-    logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ unknown: failed to reserve, insufficient buffers in the pool.");
+    logger.warning(
+        slot.sfn(), slot.slot_index(), "DL HARQ unknown: failed to reserve, insufficient buffers in the pool.");
     return unique_tx_buffer();
   }
 
@@ -110,8 +108,7 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
 
   // If the reservation failed, return an invalid buffer.
   if (status != tx_buffer_status::successful) {
-    logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("DL HARQ unknown: failed to reserve, {}.", to_string(status));
+    logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ unknown: failed to reserve, {}.", to_string(status));
     return unique_tx_buffer();
   }
 

@@ -33,15 +33,14 @@ namespace {
 class downlink_processor_dummy : public downlink_processor
 {
 public:
-  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
-  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
+  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
-    return true;
   }
-  bool process_ssb(const ssb_processor::pdu_t& pdu) override { return true; }
-  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override { return true; }
+  void process_ssb(const ssb_processor::pdu_t& pdu) override {}
+  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
   bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override { return true; }
   void finish_processing_pdus() override {}
 };

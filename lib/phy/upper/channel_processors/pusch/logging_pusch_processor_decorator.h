@@ -132,7 +132,9 @@ private:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.data(),
+      logger.debug(pdu.slot.sfn(),
+                   pdu.slot.slot_index(),
+                   data.data(),
                    data_size,
                    "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}\n  {:n}\n  {:n}",
                    pdu,
@@ -145,7 +147,9 @@ private:
                    results);
     } else {
       // Single line log entry.
-      logger.info(data.data(),
+      logger.info(pdu.slot.sfn(),
+                  pdu.slot.slot_index(),
+                  data.data(),
                   data_size,
                   "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}",
                   pdu,

@@ -41,6 +41,8 @@ public:
     unsigned nof_symbols;
     /// Start symbol index {0, ..., 13}.
     unsigned start_symbol_index;
+    /// Slot and numerology, for logging.
+    slot_point slot;
   };
 
   /// Collects PUCCH Format 1 parameters.
@@ -142,12 +144,16 @@ public:
   struct format3_configuration {
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
+    /// Slot and numerology, for logging.
+    slot_point slot;
   };
 
   /// Collects specific PUCCH Format 4 parameters.
   struct format4_configuration {
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
+    /// Slot and numerology, for logging.
+    slot_point slot;
   };
 
   /// Default destructor.

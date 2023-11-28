@@ -24,6 +24,8 @@
 
 using namespace srsran;
 
+static srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
+
 TEST(downlinkProcessorTest, worksInOrder)
 {
   tx_buffer_spy            softbuffer_spy;
@@ -45,7 +47,8 @@ TEST(downlinkProcessorTest, worksInOrder)
                                                                                 std::move(pdsch_processor),
                                                                                 std::move(ssb_processor),
                                                                                 std::move(csi_rs_processor),
-                                                                                executor);
+                                                                                executor,
+                                                                                logger);
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
@@ -102,7 +105,8 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
                                                                                 std::move(pdsch_processor),
                                                                                 std::move(ssb_processor),
                                                                                 std::move(csi_rs_processor),
-                                                                                executor);
+                                                                                executor,
+                                                                                logger);
 
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
@@ -160,7 +164,8 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
                                                                                 std::move(pdsch_processor),
                                                                                 std::move(ssb_processor),
                                                                                 std::move(csi_rs_processor),
-                                                                                executor);
+                                                                                executor,
+                                                                                logger);
 
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
@@ -183,10 +188,7 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
   ASSERT_TRUE(gw.sent);
 
   // Process a PDU after finish_processing_pdus() method has been called.
-  {
-    bool processed = dl_processor->process_nzp_csi_rs({});
-    ASSERT_FALSE(processed);
-  }
+  dl_processor->process_nzp_csi_rs({});
   ASSERT_FALSE(csi_rs_ref.is_map_called());
 }
 
@@ -211,26 +213,18 @@ TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
                                                                                 std::move(pdsch_processor),
                                                                                 std::move(ssb_processor),
                                                                                 std::move(csi_rs_processor),
-                                                                                executor);
+                                                                                executor,
+                                                                                logger);
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
   pdu.dci.precoding         = precoding_configuration::make_wideband(make_single_port());
   std::vector<uint8_t> data = {1, 2, 3, 4};
 
-  {
-    bool processed = dl_processor->process_pdcch(pdu);
-    ASSERT_FALSE(processed);
-  }
-  {
-    unique_tx_buffer softbuffer(softbuffer_spy);
-    bool             processed = dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
-    ASSERT_FALSE(processed);
-  }
-  {
-    bool processed = dl_processor->process_nzp_csi_rs({});
-    ASSERT_FALSE(processed);
-  }
+  dl_processor->process_pdcch(pdu);
+  unique_tx_buffer softbuffer(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
+  dl_processor->process_nzp_csi_rs({});
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
   ASSERT_FALSE(pdsch_ref.is_process_called());
@@ -252,7 +246,8 @@ TEST(downlinkProcessorTest, finishBeforeConfigureDeath)
                                                                 std::make_unique<pdsch_processor_spy>(),
                                                                 std::make_unique<ssb_processor_spy>(),
                                                                 std::make_unique<csi_rs_processor_spy>(),
-                                                                executor);
+                                                                executor,
+                                                                logger);
 
   ASSERT_TRUE(!gw.sent);
 
@@ -276,7 +271,8 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
                                                                 std::make_unique<pdsch_processor_spy>(),
                                                                 std::make_unique<ssb_processor_spy>(),
                                                                 std::make_unique<csi_rs_processor_spy>(),
-                                                                executor);
+                                                                executor,
+                                                                logger);
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
@@ -325,7 +321,8 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
                                                                 std::make_unique<pdsch_processor_spy>(),
                                                                 std::make_unique<ssb_processor_spy>(),
                                                                 std::make_unique<csi_rs_processor_spy>(),
-                                                                executor);
+                                                                executor,
+                                                                logger);
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 

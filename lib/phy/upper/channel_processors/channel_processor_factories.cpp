@@ -813,7 +813,9 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.get_buffer().data(),
+      logger.debug(pdu.slot.sfn(),
+                   pdu.slot.slot_index(),
+                   data.get_buffer().data(),
                    divide_ceil(data.size(), 8),
                    "PDCCH: {:s} {}\n  {:n}\n  {}",
                    pdu,
@@ -823,7 +825,13 @@ public:
       return;
     }
     // Single line log entry.
-    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "PDCCH: {:s} {}", pdu, time_ns);
+    logger.info(pdu.slot.sfn(),
+                pdu.slot.slot_index(),
+                data.get_buffer().data(),
+                divide_ceil(data.size(), 8),
+                "PDCCH: {:s} {}",
+                pdu,
+                time_ns);
   }
 
 private:
@@ -870,10 +878,25 @@ private:
 
       if (logger.debug.enabled()) {
         // Detailed log information, including a list of all PDU fields.
-        logger.debug(data.data(), data.size(), "PDSCH: {:s} tbs={} {}\n  {:n}", pdu, data.size(), time_ns, pdu);
+        logger.debug(pdu.slot.sfn(),
+                     pdu.slot.slot_index(),
+                     data.data(),
+                     data.size(),
+                     "PDSCH: {:s} tbs={} {}\n  {:n}",
+                     pdu,
+                     data.size(),
+                     time_ns,
+                     pdu);
       } else {
         // Single line log entry.
-        logger.info(data.data(), data.size(), "PDSCH: {:s} tbs={} {}", pdu, data.size(), time_ns);
+        logger.info(pdu.slot.sfn(),
+                    pdu.slot.slot_index(),
+                    data.data(),
+                    data.size(),
+                    "PDSCH: {:s} tbs={} {}",
+                    pdu,
+                    data.size(),
+                    time_ns);
       }
     }
 
@@ -918,10 +941,17 @@ public:
     if (log_all_opportunities || !result.preambles.empty()) {
       if (logger.debug.enabled()) {
         // Detailed log information, including a list of all PRACH config and result fields.
-        logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n", config, result, time_ns, config, result);
+        logger.debug(config.slot.sfn(),
+                     config.slot.slot_index(),
+                     "PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n",
+                     config,
+                     result,
+                     time_ns,
+                     config,
+                     result);
       } else {
         // Single line log entry.
-        logger.info("PRACH: {:s} {:s} {}", config, result, time_ns);
+        logger.info(config.slot.sfn(), config.slot.slot_index(), "PRACH: {:s} {:s} {}", config, result, time_ns);
       }
     }
 
@@ -944,10 +974,17 @@ class logging_pucch_processor_decorator : public pucch_processor
     std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PUCCH configuration and result fields.
-      logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}", config, result, time_ns, config, result);
+      logger.debug(config.slot.sfn(),
+                   config.slot.slot_index(),
+                   "PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}",
+                   config,
+                   result,
+                   time_ns,
+                   config,
+                   result);
     } else {
       // Single line log entry.
-      logger.info("PUCCH: {:s} {:s} {}", config, result, time_ns);
+      logger.info(config.slot.sfn(), config.slot.slot_index(), "PUCCH: {:s} {:s} {}", config, result, time_ns);
     }
 
     return result;
@@ -1007,7 +1044,9 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all SSB PDU fields.
-      logger.debug(data.get_buffer().data(),
+      logger.debug(pdu.slot.sfn(),
+                   pdu.slot.slot_index(),
+                   data.get_buffer().data(),
                    divide_ceil(data.size(), 8),
                    "SSB: {:s} {}\n  {:n}\n  {}",
                    pdu,

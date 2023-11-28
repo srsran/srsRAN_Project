@@ -28,6 +28,7 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
   config.nof_preamble_indices  = context.nof_preamble_indices;
   config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
   config.nof_rx_ports          = context.ports.size();
+  config.slot                  = context.slot;
 
   return config;
 }
@@ -71,8 +72,9 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
   // Pop an adaptor identifier.
   optional<unsigned> adaptor_id = free_pusch_adaptors.try_pop();
   if (!adaptor_id.has_value()) {
-    logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-    logger.warning("UL rnti={:#x} h_id={}: insufficient number of PUSCH notifier adaptor. Dropping PDU.",
+    logger.warning(pdu.pdu.slot.sfn(),
+                   pdu.pdu.slot.slot_index(),
+                   "UL rnti={:#x} h_id={}: insufficient number of PUSCH notifier adaptor. Dropping PDU.",
                    pdu.pdu.rnti,
                    pdu.harq_id);
     return;

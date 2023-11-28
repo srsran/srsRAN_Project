@@ -47,8 +47,7 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
 
       // Reserve buffer.
       if (status != rx_softbuffer_status::successful) {
-        logger.set_context(slot.sfn(), slot.slot_index());
-        logger.warning("UL HARQ {}: failed to reserve, {}.", id, to_string(status));
+        logger.warning(slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve, {}.", id, to_string(status));
 
         // If the reservation failed, return an invalid buffer.
         return unique_rx_softbuffer();
@@ -60,8 +59,8 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
 
   // If no available buffer is found, return an invalid buffer.
   if (available_buffers.empty()) {
-    logger.set_context(slot.sfn(), slot.slot_index());
-    logger.warning("UL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
+    logger.warning(
+        slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
     return unique_rx_softbuffer();
   }
 
@@ -80,8 +79,7 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   }
 
   // If the reservation failed, return an invalid buffer.
-  logger.set_context(slot.sfn(), slot.slot_index());
-  logger.warning("UL HARQ {}: failed to reserve, {}.", id, to_string(status));
+  logger.warning(slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve, {}.", id, to_string(status));
   return unique_rx_softbuffer();
 }
 
