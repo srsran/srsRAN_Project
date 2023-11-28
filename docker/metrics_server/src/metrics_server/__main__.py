@@ -110,24 +110,28 @@ def _start_metric_server(
         line = server_socket.recv(max_buffer_size).decode()
 
         if not line:
-            # If event is set and also last line was empty, end
+            # If line was empty, end
             break
         text += line.strip()
 
         # Split jSONs
+        header = ""
         *items, text = text.split("}{")
         for item in items:
             # Parse old items
-            item += "}"
+            item = header + item + "}"
             try:
                 queue_obj.put(json.loads(item))
             except json.JSONDecodeError:
                 logging.error("Error decoding json: %s", item)
+            header = "{"
 
-        # Finally, try to parse remaining text
-        with suppress(json.JSONDecodeError):
-            queue_obj.put(json.loads(text))
-            text = ""
+        if text:
+            text = header + text
+            # Finally, try to parse remaining text
+            with suppress(json.JSONDecodeError):
+                queue_obj.put(json.loads(text))
+                text = ""
 
 
 def _publish_data(
