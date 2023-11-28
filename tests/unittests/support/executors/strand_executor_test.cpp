@@ -104,3 +104,37 @@ TEST(strand_executor_test, execute_inside_worker_runs_inline)
   // should ensure no task is dropped.
   ASSERT_EQ(count, nof_increments);
 }
+
+TEST(strand_executor_test, multi_priorities_in_strand)
+{
+  static const unsigned                nof_workers = 3;
+  static const unsigned                qsize       = 16;
+  static const std::array<unsigned, 2> qsizes      = {16, 16};
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{
+      nof_workers, qsize, "POOL", std::chrono::microseconds{100}};
+  auto pool_exec = task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool);
+  std::vector<std::unique_ptr<task_executor>> strand_execs =
+      make_strand_executor_ptrs<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_spsc>(
+          pool_exec, qsizes);
+
+  concurrent_queue<enqueue_priority, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
+      order_of_tasks(10);
+
+  strand_execs[0]->execute([&]() {
+    order_of_tasks.try_push(enqueue_priority::max);
+
+    // Strand tasks are being pushed from within worker pool, but strand is already locked.
+    // So, they will run right after this lambda returns, respecting the strand task priorities.
+    strand_execs[1]->execute([&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max - 1)); });
+    strand_execs[0]->execute([&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max)); });
+  });
+
+  std::array<enqueue_priority, 3> expected_values{
+      enqueue_priority::max, enqueue_priority::max, enqueue_priority::max - 1};
+  for (unsigned i = 0; i != 3; ++i) {
+    enqueue_priority p;
+    ASSERT_TRUE(order_of_tasks.pop_blocking(p));
+    ASSERT_EQ(p, expected_values[i]);
+  }
+}

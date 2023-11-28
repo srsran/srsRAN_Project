@@ -246,8 +246,10 @@ template <concurrent_queue_policy... QueuePolicies, typename OutExec>
 std::unique_ptr<task_strand<OutExec, QueuePolicies...>> make_task_strand_ptr(OutExec&&            out_exec,
                                                                              span<const unsigned> strand_queue_sizes)
 {
-  report_error_if_not(strand_queue_sizes.size() != sizeof...(QueuePolicies),
-                      "Number of queue sizes must match number of policies");
+  report_error_if_not(strand_queue_sizes.size() == sizeof...(QueuePolicies),
+                      "Number of queue sizes must match number of policies ({}!={})",
+                      strand_queue_sizes.size(),
+                      sizeof...(QueuePolicies));
   return std::make_unique<task_strand<OutExec, QueuePolicies...>>(std::forward<OutExec>(out_exec), strand_queue_sizes);
 }
 
