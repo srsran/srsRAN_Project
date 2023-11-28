@@ -170,6 +170,72 @@ const std::array<uint8_t, pdu_size_snlen18> pdu1_algo2_count334104_snlen18 =
 const std::array<uint8_t, pdu_size_snlen18> pdu1_algo2_count4294967295_snlen18 =
     {0x83, 0xff, 0xff, 0xdd, 0xf7, 0xe5, 0x59, 0x03, 0xc9};
 
+// 12 bits (NIA3, NEA3)
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count0_snlen12 =
+    {0x80, 0x00, 0x3e, 0x36, 0xba, 0x3f, 0xf0, 0x32};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count1_snlen12 =
+    {0x80, 0x01, 0x0f, 0xf6, 0xb7, 0xf1, 0x3e, 0x93};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count2_snlen12 =
+    {0x80, 0x02, 0x39, 0x40, 0xe5, 0x05, 0x5b, 0xaf};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count2047_snlen12 =
+    {0x87, 0xff, 0x4c, 0x68, 0x9c, 0xcd, 0x75, 0x7c};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count2048_snlen12 =
+    {0x88, 0x00, 0x95, 0xfb, 0x3c, 0xcb, 0x17, 0xcf};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count2049_snlen12 =
+    {0x88, 0x01, 0x1a, 0x67, 0xa4, 0xf9, 0xe1, 0x41};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count4095_snlen12 =
+    {0x8f, 0xff, 0xa6, 0x9a, 0x69, 0x22, 0x41, 0xcc};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count4096_snlen12 =
+    {0x80, 0x00, 0xc8, 0xe9, 0x15, 0x6a, 0x03, 0x9b};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count4097_snlen12 =
+    {0x80, 0x01, 0xf6, 0xd6, 0xb9, 0x37, 0xdb, 0x21};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262143_snlen12 =
+    {0x8f, 0xff, 0x2e, 0xbe, 0x5e, 0x09, 0xed, 0x77};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262144_snlen12 =
+    {0x80, 0x00, 0xdc, 0x81, 0x92, 0x75, 0xf1, 0x96};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262145_snlen12 =
+    {0x80, 0x01, 0x36, 0x33, 0x71, 0xd7, 0x7a, 0xa8};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262146_snlen12 =
+    {0x80, 0x02, 0x0c, 0xa0, 0xf5, 0x16, 0x07, 0x6a};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262147_snlen12 =
+    {0x80, 0x03, 0xb6, 0xd0, 0x2b, 0x8b, 0x27, 0x83};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count262148_snlen12 =
+    {0x80, 0x04, 0x28, 0x20, 0x3c, 0x45, 0x50, 0xa3};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_algo3_count4294967295_snlen12 =
+    {0x8f, 0xff, 0x4d, 0x4d, 0x96, 0xc7, 0x28, 0xc2};
+
+// 18 bits (NIA3, NEA3)
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count0_snlen18 =
+    {0x80, 0x00, 0x00, 0x3e, 0x36, 0xac, 0xeb, 0x1f, 0x14};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count1_snlen18 =
+    {0x80, 0x00, 0x01, 0x0f, 0xf6, 0xed, 0xf1, 0x4d, 0x72};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count2_snlen18 =
+    {0x80, 0x00, 0x02, 0x39, 0x40, 0x48, 0x90, 0xca, 0x7c};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count131071_snlen18 =
+    {0x81, 0xff, 0xff, 0x11, 0x15, 0x36, 0x6a, 0xdf, 0x5c};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count131072_snlen18 =
+    {0x82, 0x00, 0x00, 0x7a, 0x63, 0xda, 0xbb, 0x22, 0x75};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count131073_snlen18 =
+    {0x82, 0x00, 0x01, 0x39, 0x94, 0xae, 0x53, 0x35, 0x30};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262143_snlen18 =
+    {0x83, 0xff, 0xff, 0x2e, 0xbe, 0x55, 0xe3, 0x6c, 0x44};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262144_snlen18 =
+    {0x80, 0x00, 0x00, 0xdc, 0x81, 0xfa, 0x44, 0x80, 0xb4};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262145_snlen18 =
+    {0x80, 0x00, 0x01, 0x36, 0x33, 0x3b, 0x76, 0x44, 0x82};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262146_snlen18 =
+    {0x80, 0x00, 0x02, 0x0c, 0xa0, 0xc9, 0x21, 0x5d, 0xc8};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262147_snlen18 =
+    {0x80, 0x00, 0x03, 0xb6, 0xd0, 0x3a, 0x6f, 0x42, 0x68};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count262148_snlen18 =
+    {0x80, 0x00, 0x04, 0x28, 0x20, 0xef, 0xc7, 0x01, 0x52};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count334103_snlen18 =
+    {0x81, 0x19, 0x17, 0x98, 0xef, 0x5f, 0x09, 0xf6, 0x85};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count334104_snlen18 =
+    {0x81, 0x19, 0x18, 0xaf, 0x11, 0xff, 0x9b, 0x1e, 0x6d};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_algo3_count4294967295_snlen18 =
+    {0x83, 0xff, 0xff, 0x4d, 0x4d, 0x1c, 0x25, 0x00, 0x21};
+
 /// \brief Gets expected PDU based on the COUNT being tested (using NIA1/NEA1)
 /// \param sn_size SN size of the PDU test vector
 /// \param count COUNT of the PDU test vector
@@ -402,6 +468,122 @@ inline bool get_pdu_test_vector_algo2(pdcp_sn_size sn_size, uint32_t count, byte
   return false;
 }
 
+/// \brief Gets expected PDU based on the COUNT being tested (using NIA3/NEA3)
+/// \param sn_size SN size of the PDU test vector
+/// \param count COUNT of the PDU test vector
+/// \param exp_pdu Expected PDU that is set to the correct test vector
+/// \return true if we found the PDU, false other wise
+inline bool get_pdu_test_vector_algo3(pdcp_sn_size sn_size, uint32_t count, byte_buffer& exp_pdu)
+{
+  if (sn_size == pdcp_sn_size::size12bits) {
+    switch (count) {
+      case 0:
+        exp_pdu = byte_buffer{pdu1_algo3_count0_snlen12};
+        return true;
+      case 1:
+        exp_pdu = byte_buffer{pdu1_algo3_count1_snlen12};
+        return true;
+      case 2:
+        exp_pdu = byte_buffer{pdu1_algo3_count2_snlen12};
+        return true;
+      case 2047:
+        exp_pdu = byte_buffer{pdu1_algo3_count2047_snlen12};
+        return true;
+      case 2048:
+        exp_pdu = byte_buffer{pdu1_algo3_count2048_snlen12};
+        return true;
+      case 2049:
+        exp_pdu = byte_buffer{pdu1_algo3_count2049_snlen12};
+        return true;
+      case 4095:
+        exp_pdu = byte_buffer{pdu1_algo3_count4095_snlen12};
+        return true;
+      case 4096:
+        exp_pdu = byte_buffer{pdu1_algo3_count4096_snlen12};
+        return true;
+      case 4097:
+        exp_pdu = byte_buffer{pdu1_algo3_count4097_snlen12};
+        return true;
+      case 262143:
+        exp_pdu = byte_buffer{pdu1_algo3_count262143_snlen12};
+        return true;
+      case 262144:
+        exp_pdu = byte_buffer{pdu1_algo3_count262144_snlen12};
+        return true;
+      case 262145:
+        exp_pdu = byte_buffer{pdu1_algo3_count262145_snlen12};
+        return true;
+      case 262146:
+        exp_pdu = byte_buffer{pdu1_algo3_count262146_snlen12};
+        return true;
+      case 262147:
+        exp_pdu = byte_buffer{pdu1_algo3_count262147_snlen12};
+        return true;
+      case 262148:
+        exp_pdu = byte_buffer{pdu1_algo3_count262148_snlen12};
+        return true;
+      case 4294967295:
+        exp_pdu = byte_buffer{pdu1_algo3_count4294967295_snlen12};
+        return true;
+      default:
+        return false;
+    }
+  } else if (sn_size == pdcp_sn_size::size18bits) {
+    switch (count) {
+      case 0:
+        exp_pdu = byte_buffer{pdu1_algo3_count0_snlen18};
+        return true;
+      case 1:
+        exp_pdu = byte_buffer{pdu1_algo3_count1_snlen18};
+        return true;
+      case 2:
+        exp_pdu = byte_buffer{pdu1_algo3_count2_snlen18};
+        return true;
+      case 131071:
+        exp_pdu = byte_buffer{pdu1_algo3_count131071_snlen18};
+        return true;
+      case 131072:
+        exp_pdu = byte_buffer{pdu1_algo3_count131072_snlen18};
+        return true;
+      case 131073:
+        exp_pdu = byte_buffer{pdu1_algo3_count131073_snlen18};
+        return true;
+      case 262143:
+        exp_pdu = byte_buffer{pdu1_algo3_count262143_snlen18};
+        return true;
+      case 262144:
+        exp_pdu = byte_buffer{pdu1_algo3_count262144_snlen18};
+        return true;
+      case 262145:
+        exp_pdu = byte_buffer{pdu1_algo3_count262145_snlen18};
+        return true;
+      case 262146:
+        exp_pdu = byte_buffer{pdu1_algo3_count262146_snlen18};
+        return true;
+      case 262147:
+        exp_pdu = byte_buffer{pdu1_algo3_count262147_snlen18};
+        return true;
+      case 262148:
+        exp_pdu = byte_buffer{pdu1_algo3_count262148_snlen18};
+        return true;
+      case 334103:
+        exp_pdu = byte_buffer{pdu1_algo3_count334103_snlen18};
+        return true;
+      case 334104:
+        exp_pdu = byte_buffer{pdu1_algo3_count334104_snlen18};
+        return true;
+      case 4294967295:
+        exp_pdu = byte_buffer{pdu1_algo3_count4294967295_snlen18};
+        return true;
+      default:
+        return false;
+    }
+  } else {
+    return false;
+  }
+  return false;
+}
+
 /// \brief Gets expected PDU based on the COUNT being tested
 /// \param sn_size SN size of the PDU test vector
 /// \param count COUNT of the PDU test vector
@@ -415,6 +597,8 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
       return get_pdu_test_vector_algo1(sn_size, count, exp_pdu);
     case 2:
       return get_pdu_test_vector_algo2(sn_size, count, exp_pdu);
+    case 3:
+      return get_pdu_test_vector_algo3(sn_size, count, exp_pdu);
   }
   return false;
 }

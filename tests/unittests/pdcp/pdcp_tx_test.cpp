@@ -439,7 +439,7 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_test,
                          ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
-                                            ::testing::Values(1, 2)),
+                                            ::testing::Values(1, 2, 3)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)
