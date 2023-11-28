@@ -485,7 +485,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer& msg, uint32_t count)
       ct.append(msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
+      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea2:
       ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);

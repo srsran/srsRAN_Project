@@ -224,18 +224,20 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params);
 
   {
-      // benchmark_pdcp_rx(params,
-      //                   security::integrity_enabled::off,
-      //                   security::ciphering_enabled::off,
-      //                   security::integrity_algorithm::nia2,
-      //                   security::ciphering_algorithm::nea0);
-  } {
-      //  benchmark_pdcp_rx(params,
-      //                    security::integrity_enabled::on,
-      //                    security::ciphering_enabled::on,
-      //                    security::integrity_algorithm::nia1,
-      //                    security::ciphering_algorithm::nea1);
-  } {
+    benchmark_pdcp_rx(params,
+                      security::integrity_enabled::off,
+                      security::ciphering_enabled::off,
+                      security::integrity_algorithm::nia2,
+                      security::ciphering_algorithm::nea0);
+  }
+  {
+    benchmark_pdcp_rx(params,
+                      security::integrity_enabled::on,
+                      security::ciphering_enabled::on,
+                      security::integrity_algorithm::nia1,
+                      security::ciphering_algorithm::nea1);
+  }
+  {
     benchmark_pdcp_rx(params,
                       security::integrity_enabled::on,
                       security::ciphering_enabled::on,

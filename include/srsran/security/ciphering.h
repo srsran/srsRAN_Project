@@ -103,6 +103,70 @@ byte_buffer security_nea1(const sec_128_key& key,
   return security_nea1(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+inline byte_buffer
+security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+{
+  S3G_STATE state, *state_ptr;
+  uint32_t  k[]  = {0, 0, 0, 0};
+  uint32_t  iv[] = {0, 0, 0, 0};
+  uint32_t* ks;
+  int32_t   i;
+  uint32_t  msg_len_block_8, msg_len_block_32;
+  uint32_t  len     = msg.length();
+  uint32_t  msg_len = len * 8;
+
+  byte_buffer msg_out;
+
+  state_ptr        = &state;
+  msg_len_block_8  = (msg_len + 7) / 8;
+  msg_len_block_32 = (msg_len + 31) / 32;
+  if (msg_len_block_8 <= len) {
+    // Transform key
+    for (i = 3; i >= 0; i--) {
+      k[i] = (key[4 * (3 - i) + 0] << 24) | (key[4 * (3 - i) + 1] << 16) | (key[4 * (3 - i) + 2] << 8) |
+             (key[4 * (3 - i) + 3]);
+    }
+
+    // Construct iv
+    iv[3] = count;
+    iv[2] = ((bearer & 0x1f) << 27) | ((static_cast<uint8_t>(direction) & 0x01) << 26);
+    iv[1] = iv[3];
+    iv[0] = iv[2];
+
+    // Initialize keystream
+    s3g_initialize(state_ptr, k, iv);
+
+    // Generate keystream
+    ks = (uint32_t*)calloc(msg_len_block_32, sizeof(uint32_t));
+    s3g_generate_keystream(state_ptr, msg_len_block_32, ks);
+
+    // Generate output except last block
+    uint32_t offset = 0;
+    for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
+      msg[offset]     = msg[offset] ^ ((ks[i] >> 24) & 0xff);
+      msg[offset + 1] = msg[offset + 1] ^ ((ks[i] >> 16) & 0xff);
+      msg[offset + 2] = msg[offset + 2] ^ ((ks[i] >> 8) & 0xff);
+      msg[offset + 3] = msg[offset + 3] ^ ((ks[i]) & 0xff);
+      offset += 4;
+    }
+
+    // process last bytes
+    for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
+      msg[offset] = msg[offset] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
+      offset++;
+    }
+
+    // Zero tailing bits
+    zero_tailing_bits(msg.back(), msg_len);
+
+    // Clean up
+    free(ks);
+    s3g_deinitialize(state_ptr);
+  }
+
+  return msg_out;
+}
+
 template <typename It>
 byte_buffer security_nea2(const sec_128_key& key,
                           uint32_t           count,
