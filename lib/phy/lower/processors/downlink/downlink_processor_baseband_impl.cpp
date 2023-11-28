@@ -29,8 +29,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_samples_per_subframe(config.rate.to_kHz()),
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
-  temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
-  last_notified_slot(scs, 0)
+  temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs))
 {
   unsigned symbol_size_no_cp        = config.rate.get_dft_size(config.scs);
   unsigned nof_symbols_per_subframe = nof_symbols_per_slot * nof_slots_per_subframe;
@@ -45,7 +44,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
 
 // Updates the baseband metadata on each processing iteration.
 static void
-update_metadata(downlink_processor_baseband::metadata& metadata, bool could_process, unsigned curr_writing_index)
+update_metadata(baseband_gateway_transmitter_metadata& metadata, bool could_process, unsigned curr_writing_index)
 {
   srsran_assert(metadata.is_empty || (curr_writing_index != 0), "Buffer state is non-empty before writing.");
   srsran_assert(!metadata.is_empty || (!metadata.tx_start.has_value() && !metadata.tx_end.has_value()),
@@ -77,7 +76,7 @@ update_metadata(downlink_processor_baseband::metadata& metadata, bool could_proc
 }
 
 // Fills the unprocessed reagions of a baseband buffer with zeros, according to the downink processor baseband metadata.
-static void fill_zeros(baseband_gateway_buffer_writer& buffer, const downlink_processor_baseband::metadata& md)
+static void fill_zeros(baseband_gateway_buffer_writer& buffer, const baseband_gateway_transmitter_metadata& md)
 {
   // If discontinous mode is disabled, fill the non-processed regions with zeros and report full buffer metadata.
   if (md.is_empty) {
@@ -98,7 +97,7 @@ static void fill_zeros(baseband_gateway_buffer_writer& buffer, const downlink_pr
   }
 }
 
-downlink_processor_baseband::metadata downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& buffer,
+baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& buffer,
                                                                                 baseband_gateway_timestamp timestamp)
 {
   srsran_assert(nof_rx_ports == buffer.get_nof_channels(), "Invalid number of channels.");
@@ -108,7 +107,7 @@ downlink_processor_baseband::metadata downlink_processor_baseband_impl::process(
   unsigned writing_index = 0;
 
   // Output buffer metadata.
-  metadata md;
+  baseband_gateway_transmitter_metadata md;
   md.is_empty = true;
 
   // Generate baseband samples until the output buffer is full or there are no more transmission requests for the
@@ -147,11 +146,11 @@ downlink_processor_baseband::metadata downlink_processor_baseband_impl::process(
       slot_point slot(to_numerology_value(scs), i_slot);
 
       // Detect slot boundary.
-      if ((slot > last_notified_slot) && (i_symbol == 0)) {
+      if ((!last_notified_slot.has_value() || (slot > last_notified_slot.value())) && (i_symbol == 0)) {
         // Notify slot boundary.
         lower_phy_timing_context context;
-        context.slot       = slot + nof_slot_tti_in_advance;
-        last_notified_slot = slot;
+        context.slot = slot + nof_slot_tti_in_advance;
+        last_notified_slot.emplace(slot);
         notifier->on_tti_boundary(context);
       }
 
@@ -175,7 +174,7 @@ downlink_processor_baseband::metadata downlink_processor_baseband_impl::process(
         // Write the symbol into the temporary buffer.
         baseband_gateway_buffer_writer& dest_buffer = temp_buffer.write_symbol(symbol_timestamp, symbol_nof_samples);
         if (!process_new_symbol(dest_buffer, slot, i_symbol)) {
-          // If the symbol could not be processed, advance ouput buffer and invalidate the temporary buffer contents.
+          // If the symbol could not be processed, advance output buffer and invalidate the temporary buffer contents.
           nof_advanced_samples =
               std::min(temp_buffer.get_nof_available_samples(proc_timestamp), nof_output_samples - writing_index);
           temp_buffer.clear();

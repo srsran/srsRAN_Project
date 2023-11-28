@@ -121,7 +121,8 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   srate_hz(description.srate_hz),
   nof_channels(description.ports.size()),
   discontinuous_tx(description.discontiuous_tx),
-  last_tx_timespec(0.0)
+  last_tx_timespec(0.0),
+  power_ramping_buffer(nof_channels, 0)
 {
   srsran_assert(std::isnormal(srate_hz) && (srate_hz > 0.0), "Invalid sampling rate {}.", srate_hz);
 
@@ -163,9 +164,9 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
         max_packet_size,
         aligned_guard_time);
 
-    zero_buffer = std::make_unique<baseband_gateway_buffer_dynamic>(nof_channels, power_ramping_nof_samples);
+    power_ramping_buffer.resize(power_ramping_nof_samples);
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      srsvec::zero(zero_buffer->get_writer()[i_channel]);
+      srsvec::zero(power_ramping_buffer.get_writer()[i_channel]);
     }
   }
 
@@ -176,13 +177,13 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   run_recv_async_msg();
 }
 
-void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&         data,
-                                   const baseband_gateway_transmitter::metadata& tx_md)
+void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        data,
+                                   const baseband_gateway_transmitter_metadata& tx_md)
 {
   // Protect stream transmitter.
   std::unique_lock<std::mutex> lock(stream_transmit_mutex);
 
-  uhd::tx_metadata_t uhd_metadata = {};
+  uhd::tx_metadata_t uhd_metadata;
 
   bool tx_start_padding = tx_md.tx_start.has_value();
   bool tx_end_padding   = tx_md.tx_end.has_value();
@@ -208,31 +209,46 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify start of burst.
   if (uhd_metadata.start_of_burst) {
-    radio_notification_handler::event_description event_description = {};
-    event_description.stream_id                                     = stream_id;
-    event_description.channel_id                                    = 0;
-    event_description.source = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type   = radio_notification_handler::event_type::START_OF_BURST;
+    radio_notification_handler::event_description event_description;
+    event_description.stream_id  = stream_id;
+    event_description.channel_id = 0;
+    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type       = radio_notification_handler::event_type::START_OF_BURST;
     event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
     notifier.on_radio_rt_event(event_description);
 
+    // Transmit zeros before the actual transmission to absorb power ramping effects.
     if (discontinuous_tx) {
-      // Transmit zeros before the actual transmission to absorb power ramping effects.
-      unsigned nof_padding_samples =
-          std::min(power_ramping_nof_samples, static_cast<unsigned>((time_spec - last_tx_timespec).to_ticks(srate_hz)));
+      // Compute the time in number of samples between the end of the last transmission and the start of the current
+      // one.
+      unsigned transmission_gap = (time_spec - last_tx_timespec).to_ticks(srate_hz);
+
+      // Make sure that the power ramping padding starts at least 10 microseconds after the last transmission end.
+      unsigned minimum_gap_before_power_ramping = srate_hz / 100000.0;
+      unsigned nof_padding_samples              = 0;
+      if (transmission_gap > minimum_gap_before_power_ramping) {
+        nof_padding_samples = std::min(power_ramping_nof_samples, transmission_gap - minimum_gap_before_power_ramping);
+      }
 
       if (nof_padding_samples > 0) {
-        unsigned           txd_padding_sps_total  = 0;
-        uhd::tx_metadata_t power_ramping_metadata = uhd_metadata;
-        power_ramping_metadata.time_spec -= time_spec.from_ticks(nof_padding_samples, srate_hz);
+        unsigned txd_padding_sps_total = 0;
+
+        uhd::tx_metadata_t power_ramping_metadata;
+        power_ramping_metadata.has_time_spec  = true;
+        power_ramping_metadata.start_of_burst = true;
+        power_ramping_metadata.end_of_burst   = false;
+        power_ramping_metadata.time_spec = uhd_metadata.time_spec - time_spec.from_ticks(nof_padding_samples, srate_hz);
+
+        // Modify the actual trasnmission metadata, since we have already started the burst with padding.
+        uhd_metadata.start_of_burst = false;
+        uhd_metadata.has_time_spec  = false;
         do {
           unsigned txd_samples = 0;
 
-          // Modify the actual trasnmission metadata, since we have already started the burst with padding.
-          uhd_metadata.start_of_burst = false;
-          uhd_metadata.has_time_spec  = false;
+          baseband_gateway_buffer_reader_view tx_padding =
+              baseband_gateway_buffer_reader_view(power_ramping_buffer.get_reader(), 0, nof_padding_samples);
 
-          if (!transmit_block(txd_samples, zero_buffer->get_reader(), txd_padding_sps_total, power_ramping_metadata)) {
+          if (!transmit_block(txd_samples, tx_padding, txd_padding_sps_total, power_ramping_metadata)) {
             printf("Error: failed transmitting power ramping padding. %s.\n", get_error_message().c_str());
             return;
           }
@@ -247,11 +263,11 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify end of burst.
   if (uhd_metadata.end_of_burst) {
-    radio_notification_handler::event_description event_description = {};
-    event_description.stream_id                                     = stream_id;
-    event_description.channel_id                                    = 0;
-    event_description.source = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type   = radio_notification_handler::event_type::END_OF_BURST;
+    radio_notification_handler::event_description event_description;
+    event_description.stream_id  = stream_id;
+    event_description.channel_id = 0;
+    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type       = radio_notification_handler::event_type::END_OF_BURST;
     event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
     notifier.on_radio_rt_event(event_description);
   }

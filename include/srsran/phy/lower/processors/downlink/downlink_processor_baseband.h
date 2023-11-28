@@ -13,7 +13,7 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
-#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
+#include "srsran/gateways/baseband/baseband_gateway_transmitter_metadata.h"
 
 namespace srsran {
 
@@ -25,16 +25,6 @@ class baseband_gateway_buffer;
 class downlink_processor_baseband
 {
 public:
-  /// Holds information about the generated baseband signal.
-  struct metadata {
-    /// Empty baseband buffer flag. If set to \c true, the baseband buffer will not be transmitted.
-    bool is_empty;
-    /// Number of samples at the start of the baseband buffer that should not be transmitted.
-    optional<unsigned> tx_start;
-    /// Sample number at which the transmission should stop (not included).
-    optional<unsigned> tx_end;
-  };
-
   /// Default destructor.
   virtual ~downlink_processor_baseband() = default;
 
@@ -44,7 +34,8 @@ public:
   /// \param[in]  timestamp Time instant in which the first sample in the buffer is transmitted.
   /// \return Metadata about the contents of the output buffer.
   /// \remark The number of channels in \c buffer must be equal to the number of transmit ports for the sector.
-  virtual metadata process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) = 0;
+  virtual baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
+                                                        baseband_gateway_timestamp      timestamp) = 0;
 };
 
 } // namespace srsran

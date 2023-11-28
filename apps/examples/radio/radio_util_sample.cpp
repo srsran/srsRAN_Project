@@ -23,26 +23,26 @@
 using namespace srsran;
 
 // Describes the benchmark configuration.
-static std::string                               rx_filename             = "";
-static double                                    duration_s              = 0.1;
-static std::string                               log_level               = "info";
-static std::string                               driver_name             = "uhd";
-static std::string                               device_arguments        = "type=b200";
-static std::vector<std::string>                  tx_channel_arguments    = {};
-static std::vector<std::string>                  rx_channel_arguments    = {};
-static double                                    sampling_rate_hz        = 23.04e6;
-static unsigned                                  nof_tx_streams          = 1;
-static unsigned                                  nof_rx_streams          = 1;
-static unsigned                                  nof_channels_per_stream = 1;
-static unsigned                                  block_size              = sampling_rate_hz / 15e3;
-static double                                    tx_freq                 = 3.5e9;
-static double                                    tx_gain                 = 60.0;
-static double                                    rx_freq                 = 3.5e9;
-static double                                    rx_gain                 = 60.0;
-static double                                    tx_rx_delay_s           = 0.001;
-bool                                             discontinuous_tx        = false;
-static unsigned                                  disc_tx_gap             = 0;
-static float                                     power_ramping_us        = 200.0F;
+static std::string                               rx_filename                   = "";
+static double                                    duration_s                    = 0.1;
+static std::string                               log_level                     = "info";
+static std::string                               driver_name                   = "uhd";
+static std::string                               device_arguments              = "type=b200";
+static std::vector<std::string>                  tx_channel_arguments          = {};
+static std::vector<std::string>                  rx_channel_arguments          = {};
+static double                                    sampling_rate_hz              = 23.04e6;
+static unsigned                                  nof_tx_streams                = 1;
+static unsigned                                  nof_rx_streams                = 1;
+static unsigned                                  nof_channels_per_stream       = 1;
+static unsigned                                  block_size                    = sampling_rate_hz / 15e3;
+static double                                    tx_freq                       = 3.5e9;
+static double                                    tx_gain                       = 60.0;
+static double                                    rx_freq                       = 3.5e9;
+static double                                    rx_gain                       = 60.0;
+static double                                    tx_rx_delay_s                 = 0.001;
+bool                                             enable_discontinuous_tx       = false;
+static unsigned                                  nof_consecutive_empty_buffers = 0;
+static float                                     power_ramping_us              = 200.0F;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
 
 /// Describes a benchmark configuration profile.
@@ -179,8 +179,9 @@ static void usage(std::string prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-D Duration in seconds. [Default {}]\n", duration_s);
-  fmt::print("\t-d Discontinuous transmission mode. [Default {}]\n", discontinuous_tx);
-  fmt::print("\t-g Discontinous transmission gap in number of transmit calls. [Default {}]\n", disc_tx_gap);
+  fmt::print("\t-d Enable discontinuous transmission mode. [Default {}]\n", enable_discontinuous_tx);
+  fmt::print("\t-g Discontinous transmission gap in number of consecutive empty buffers. [Default {}]\n",
+             nof_consecutive_empty_buffers);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-o saves received signal of stream:port 0:0 in a file. Ignored if none. [Default {}]\n",
              rx_filename.empty() ? "none" : rx_filename);
@@ -208,11 +209,11 @@ static void parse_args(int argc, char** argv)
         }
         break;
       case 'd':
-        discontinuous_tx = true;
+        enable_discontinuous_tx = true;
         break;
       case 'g':
         if (optarg != nullptr) {
-          disc_tx_gap = std::strtol(optarg, nullptr, 10);
+          nof_consecutive_empty_buffers = std::strtol(optarg, nullptr, 10);
         }
         break;
       case 'v':
@@ -262,13 +263,15 @@ int main(int argc, char** argv)
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
   // Create radio configuration.
-  radio_configuration::radio config = {};
-  config.sampling_rate_hz           = sampling_rate_hz;
-  config.otw_format                 = otw_format;
-  config.discontinuous_tx           = discontinuous_tx;
-  config.power_ramping_us           = power_ramping_us;
-  config.args                       = device_arguments;
-  config.log_level                  = log_level;
+  radio_configuration::radio config;
+  config.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
+  config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
+  config.sampling_rate_hz = sampling_rate_hz;
+  config.otw_format       = otw_format;
+  config.discontinuous_tx = enable_discontinuous_tx;
+  config.power_ramping_us = power_ramping_us;
+  config.args             = device_arguments;
+  config.log_level        = log_level;
   radio_configuration::stream rx_stream_config;
 
   // Create Tx stream and channels.
@@ -343,7 +346,7 @@ int main(int argc, char** argv)
   }
 
   // Counter for the number of empty transmission buffers.
-  unsigned tx_gap_count = disc_tx_gap;
+  unsigned tx_gap_count = nof_consecutive_empty_buffers;
 
   // Calculate starting time.
   double                     delay_s      = 0.1;
@@ -373,8 +376,8 @@ int main(int argc, char** argv)
       }
 
       // Prepare transmit metadata.
-      baseband_gateway_transmitter::metadata tx_metadata = {};
-      tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
+      baseband_gateway_transmitter_metadata tx_metadata;
+      tx_metadata.ts = rx_metadata.front().ts + tx_rx_delay_samples;
       if (tx_gap_count > 0) {
         // Send empty baseband buffer.
         tx_metadata.is_empty = true;
@@ -382,7 +385,7 @@ int main(int argc, char** argv)
       } else {
         tx_metadata.is_empty = false;
         // Reset counter.
-        tx_gap_count = disc_tx_gap;
+        tx_gap_count = nof_consecutive_empty_buffers;
       }
 
       // Transmit baseband.

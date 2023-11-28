@@ -54,7 +54,8 @@ public:
     baseband_gateway_timestamp        timestamp;
   };
 
-  void process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override
+  baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
+                                                baseband_gateway_timestamp      timestamp) override
   {
     for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
       span<cf_t> samples = buffer.get_channel_buffer(i_channel);
@@ -65,6 +66,10 @@ public:
     entry_t& entry  = entries.back();
     entry.timestamp = timestamp;
     entry.buffer    = baseband_gateway_buffer_read_only(buffer);
+
+    baseband_gateway_transmitter_metadata md;
+    md.is_empty = false;
+    return md;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

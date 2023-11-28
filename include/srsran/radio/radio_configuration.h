@@ -98,9 +98,14 @@ struct radio {
   double sampling_rate_hz;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
-  /// Enables discontinuous transmission.
+  /// \brief Enables discontinuous transmission.
+  /// \remark Not all drivers and/or devices support this feature.
   bool discontinuous_tx;
-  /// Number of samples of padding for power ramping, used in discontinuous transmission mode.
+  /// \brief Power ramping time of the transmit chain in microseconds.
+  ///
+  /// \note It is recommended to configure this parameter carefully, taking into account the characteristics of the
+  /// transmit chain in order to achieve optimal performance.
+  /// \remark Not all drivers and/or devices support this feature.
   float power_ramping_us;
   /// \brief Indicates any device specific parameters to create the session.
   /// \remark Not all driver and/or devices support this feature.

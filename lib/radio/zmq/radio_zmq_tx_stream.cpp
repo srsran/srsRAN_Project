@@ -76,7 +76,8 @@ bool radio_zmq_tx_stream::align(baseband_gateway_timestamp timestamp, std::chron
   return timestamp_passed;
 }
 
-void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader& data, const metadata& md)
+void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader&        data,
+                                   const baseband_gateway_transmitter_metadata& md)
 {
   report_fatal_error_if_not(data.get_nof_channels() == channels.size(),
                             "Invalid number of channels ({}) expected {}.",

@@ -241,6 +241,12 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
        return config;
      },
      "Discontinuous transmission mode is not supported by the ZMQ radio.\n"},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.power_ramping_us           = 1.0F;
+       return config;
+     },
+     "Power ramping is not supported by the ZMQ radio.\n"},
 };
 
 class RadioZmqValidatorFixture : public ::testing::TestWithParam<test_case_t>

@@ -1575,7 +1575,8 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
       ->capture_default_str();
   app.add_option("--power_ramping_time_us",
                  config.power_ramping_time_us,
-                 "Advances the discontinuous transmission start to protect against TX amplifier power ramping effects.")
+                 "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
+                 "mitigates transient effects.")
       ->capture_default_str();
 }
 

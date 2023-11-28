@@ -85,10 +85,10 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
   static constexpr float subframe_duration_us = 1e3;
   float                  slot_duration_us =
       subframe_duration_us / static_cast<float>(get_nof_slots_per_subframe(cell_config.cell.common_scs));
-  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us > slot_duration_us)) {
-    fmt::print("Power ramping time, i.e., {:.1f} us, cannot exceed the duration of an NR slot, i.e., {:.1f} us.\n",
+  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
+    fmt::print("Power ramping time, i.e., {:.1f} us, cannot exceed the duration of two NR slots, i.e., {:.1f} us.\n",
                config.expert_cfg.power_ramping_time_us,
-               slot_duration_us);
+               2 * slot_duration_us);
     return false;
   }
 

@@ -228,7 +228,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
         }
 
         // Transmit stream buffer.
-        baseband_gateway_transmitter::metadata tx_md;
+        baseband_gateway_transmitter_metadata tx_md;
         tx_md.ts = start_time + tx_sample_count;
         transmitter.transmit(tx_buffer.get_reader(), tx_md);
       }

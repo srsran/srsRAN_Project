@@ -91,10 +91,10 @@ public:
   }
 
   /// \brief Handles a new transmission.
-  /// \param[out] metadata Destination of the required metadata.
-  /// \param[in] time_spec Transmission time of the first sample.
-  /// \param[in] is_empty Empty buffer flag.
-  /// \param[in] tail_padding Tail padding flag, indicating the last transmission in the burst.
+  /// \param[out] metadata     Destination of the required metadata.
+  /// \param[in]  time_spec    Transmission time of the first sample.
+  /// \param[in]  is_empty     Empty buffer flag.
+  /// \param[in]  tail_padding Tail padding flag, indicating the last transmission in the burst.
   /// \return True if the block shall be transmitted. False if the block shall be ignored.
   bool on_transmit(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec, bool is_empty, bool tail_padding)
   {

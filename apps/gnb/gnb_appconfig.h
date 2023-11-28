@@ -846,13 +846,30 @@ struct test_mode_appconfig {
 struct ru_sdr_expert_appconfig {
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
   float lphy_dl_throttling = 0.0F;
-  /// Enables discontinuous transmission mode for the radio front-ends supporting it.
-  bool discontinuous_tx_mode = false;
-  /// \brief Power ramping time of the transmit amplifiers in microseconds.
+  /// \brief Enables discontinuous transmission mode for the radio front-ends supporting it.
   ///
-  /// It is used by the discontinuous transmission mode to start the transmission early. This prevents the power ramping
-  /// transient of the transmit amplifiers from affecting the samples carrying data. The maximum supported power ramping
-  /// time is equivalent to the duration of an NR slot.
+  /// Discontinuous Transmission (DTX) is a power-saving technique used in radio communication where the transmitter is
+  /// turned off during periods of silence or when no data needs to be transmitted. This flag allows the user to
+  /// activate DTX for radio front-ends that support this transmission mode.
+  ///
+  /// When DTX is enabled, the radio transmitter intelligently manages its transmission state, reducing power
+  /// consumption during idle or silent periods. This is particularly beneficial in scenarios where power efficiency is
+  /// a critical consideration, such as battery-operated devices.
+  bool discontinuous_tx_mode = false;
+  /// \brief Power ramping time of the transmit chain in microseconds.
+  ///
+  /// This parameter represents the duration, in microseconds, required for the transmit chain to reach its full power
+  /// level.
+  ///
+  /// In discontinuous transmission mode, the transmitter is powered on ahead of the actual data transmission. By doing
+  /// so, the data-carrying samples remain unaffected by any transient effects or fluctuations in the transmit chain
+  /// during the power ramping time. The maximum supported power ramping time is equivalent to the duration of two NR
+  /// slots.
+  ///
+  /// \note It is recommended to configure this parameter carefully, taking into account the characteristics of the
+  /// transmit chain in order to achieve optimal performance.
+  /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
+  /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
 };
 

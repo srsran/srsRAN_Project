@@ -38,9 +38,10 @@ public:
   /// \brief Processes a baseband OFDM symbol.
   ///
   /// Modulates the OFDM symbol indicated by \c context and stores the baseband samples in \c samples. If the
-  /// frequency-domain OFDM symbol is not available at the time of calling this method, the processing is skipped.
+  /// resource grid is not available at the time of calling this method, the symbol processing is skipped, and the
+  /// sample buffer is not modified.
   ///
-  /// \param[in] samples Baseband samples to process.
+  /// \param[out] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.
   /// \return \c true if the symbol has been processed, \c false otherwise.
   virtual bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) = 0;

@@ -56,8 +56,8 @@ private:
   unsigned power_ramping_nof_samples;
   /// Stores the time of the last transmitted sample.
   uhd::time_spec_t last_tx_timespec;
-  /// Transmit buffer filled with zeros, used to absorb power ramping when starting a transmission.
-  std::unique_ptr<baseband_gateway_buffer_dynamic> zero_buffer;
+  /// Power ramping transmit buffer. It is filled with zeros, used to absorb power ramping when starting a transmission.
+  baseband_gateway_buffer_dynamic power_ramping_buffer;
 
   /// Receive asynchronous message.
   void recv_async_msg();
@@ -109,7 +109,8 @@ public:
   unsigned get_buffer_size() const;
 
   // See interface for documentation.
-  void transmit(const baseband_gateway_buffer_reader& data, const metadata& metadata) override;
+  void transmit(const baseband_gateway_buffer_reader&        data,
+                const baseband_gateway_transmitter_metadata& metadata) override;
 
   /// Stop the transmission.
   void stop();

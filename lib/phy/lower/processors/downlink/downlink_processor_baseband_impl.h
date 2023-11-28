@@ -184,7 +184,8 @@ public:
   void connect(downlink_processor_notifier& notifier_) { notifier = &notifier_; }
 
   // See interface for documentation.
-  metadata process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override;
+  baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
+                                                baseband_gateway_timestamp      timestamp) override;
 
 private:
   /// \brief Processes a new symbol.
@@ -228,7 +229,7 @@ private:
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.
-  slot_point last_notified_slot;
+  optional<slot_point> last_notified_slot;
 };
 
 } // namespace srsran
