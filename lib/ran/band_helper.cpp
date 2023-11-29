@@ -1155,8 +1155,15 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
   ssb_freq_location ssb                            = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
-    optional<unsigned> cset0_idx = get_coreset0_index(
-        band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
+    optional<unsigned> cset0_idx = get_coreset0_index(band,
+                                                      n_rbs,
+                                                      scs_common,
+                                                      scs_ssb,
+                                                      ssb.offset_to_point_A,
+                                                      ssb.k_ssb,
+                                                      du_cfg.get_ssb_first_symbol(),
+                                                      ss0_idx,
+                                                      max_coreset0_duration);
 
     if (cset0_idx.has_value()) {
       const unsigned nof_avail_cset0_rbs = get_nof_coreset0_rbs_not_intersecting_ssb(
@@ -1166,9 +1173,9 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
           pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, *cset0_idx, ssb.k_ssb.to_uint());
 
       // If the number of non-intersecting CORESET#0 RBs is the highest so far for the least nof. CORESET#0 RBs and
-      // largest CORESET#0 duration, save result.
+      // largest CORESET#0 duration less than max_coreset0_duration, save result.
       if (nof_avail_cset0_rbs > max_non_intersecting_cset0_rbs and cset0_desc.nof_rb_coreset < min_rbs and
-          cset0_desc.nof_symb_coreset > max_duration and cset0_desc.nof_symb_coreset <= max_coreset0_duration) {
+          cset0_desc.nof_symb_coreset > max_duration) {
         max_non_intersecting_cset0_rbs = nof_avail_cset0_rbs;
         min_rbs                        = cset0_desc.nof_rb_coreset;
         max_duration                   = cset0_desc.nof_symb_coreset;
