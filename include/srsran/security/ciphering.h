@@ -347,5 +347,71 @@ byte_buffer security_nea3(const sec_128_key& key,
   return security_nea3(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+inline byte_buffer
+security_nea3(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+{
+  uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  uint32_t* ks;
+  int32_t   i;
+  uint32_t  msg_len_block_8;
+  uint32_t  msg_len_block_32;
+  uint32_t  len     = msg.length();
+  uint32_t  msg_len = len * 8;
+
+  msg_len_block_8  = (msg_len + 7) / 8;
+  msg_len_block_32 = (msg_len + 31) / 32;
+  if (msg_len_block_8 <= len) {
+    // Construct iv
+    iv[0]  = (count >> 24) & 0xff;
+    iv[1]  = (count >> 16) & 0xff;
+    iv[2]  = (count >> 8) & 0xff;
+    iv[3]  = (count)&0xff;
+    iv[4]  = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
+    iv[5]  = 0;
+    iv[6]  = 0;
+    iv[7]  = 0;
+    iv[8]  = iv[0];
+    iv[9]  = iv[1];
+    iv[10] = iv[2];
+    iv[11] = iv[3];
+    iv[12] = iv[4];
+    iv[13] = iv[5];
+    iv[14] = iv[6];
+    iv[15] = iv[7];
+
+    zuc_state_t zuc_state;
+    // Initialize keystream
+    zuc_initialize(&zuc_state, key.data(), iv);
+
+    // Generate keystream
+
+    ks = (uint32_t*)calloc(msg_len_block_32, sizeof(uint32_t));
+    zuc_generate_keystream(&zuc_state, msg_len_block_32, ks);
+
+    // Generate output except last block
+    uint32_t offset = 0;
+    for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
+      msg[offset]     = msg[offset] ^ ((ks[i] >> 24) & 0xff);
+      msg[offset + 1] = msg[offset + 1] ^ ((ks[i] >> 16) & 0xff);
+      msg[offset + 2] = msg[offset + 2] ^ ((ks[i] >> 8) & 0xff);
+      msg[offset + 3] = msg[offset + 3] ^ ((ks[i]) & 0xff);
+      offset += 4;
+    }
+
+    // process last bytes
+    for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
+      msg[offset] = msg[offset] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
+      offset++;
+    }
+
+    zero_tailing_bits(msg.back(), msg_len);
+
+    // Clean up
+    free(ks);
+  }
+
+  return {};
+}
 } // namespace security
 } // namespace srsran

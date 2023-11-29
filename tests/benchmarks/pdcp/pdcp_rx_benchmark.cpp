@@ -245,11 +245,11 @@ int main(int argc, char** argv)
                       security::ciphering_algorithm::nea2);
   }
   {
-    //  benchmark_pdcp_rx(params,
-    //                    security::integrity_enabled::on,
-    //                    security::ciphering_enabled::on,
-    //                    security::integrity_algorithm::nia3,
-    //                    security::ciphering_algorithm::nea3);
+    benchmark_pdcp_rx(params,
+                      security::integrity_enabled::on,
+                      security::ciphering_enabled::on,
+                      security::integrity_algorithm::nia3,
+                      security::ciphering_algorithm::nea3);
   }
   srslog::flush();
 }
