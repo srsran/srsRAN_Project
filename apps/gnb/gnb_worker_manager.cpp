@@ -121,7 +121,7 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   }
 
   const worker_pool pool{
-      "non_rt_worker_pool",
+      "non_rt_pool",
       2,
       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
       executors,
