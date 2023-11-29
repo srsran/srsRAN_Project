@@ -30,7 +30,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   harqs(crnti_val,
         (unsigned)ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg->nof_harq_proc,
         NOF_UL_HARQS,
-        harq_timeout_notifier),
+        harq_timeout_notifier,
+        ue_cell_cfg_.cell_cfg_common.ntn_cs_koffset),
   crnti_(crnti_val),
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),
@@ -40,7 +41,6 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state)
 {
 }
-
 void ue_cell::deactivate()
 {
   // Stop UL HARQ retransmissions.

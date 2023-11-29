@@ -648,13 +648,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // Mark resources as occupied in the ResourceGrid.
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, grant.crbs});
 
+  // Remove NTN offset when adding slot to HARQ process.
+  slot_point harq_slot = pusch_alloc.slot - ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {
     // It is a new tx.
-    h_ul.new_tx(pusch_alloc.slot, expert_cfg.max_nof_harq_retxs);
+    h_ul.new_tx(harq_slot, expert_cfg.max_nof_harq_retxs);
   } else {
     // It is a retx.
-    h_ul.new_retx(pusch_alloc.slot);
+    h_ul.new_retx(harq_slot);
   }
 
   // Compute total DAI. See TS 38.213, 9.1.3.2.

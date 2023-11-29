@@ -368,11 +368,14 @@ harq_entity::harq_entity(rnti_t                   rnti_,
                          unsigned                 nof_dl_harq_procs,
                          unsigned                 nof_ul_harq_procs,
                          ue_harq_timeout_notifier timeout_notif,
+                         unsigned                 ntn_cs_koffset,
                          unsigned                 max_ack_wait_in_slots) :
   rnti(rnti_),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_h_logger(logger, rnti_, to_du_cell_index(0), true),
-  ul_h_logger(logger, rnti_, to_du_cell_index(0), false)
+  ul_h_logger(logger, rnti_, to_du_cell_index(0), false),
+  nop_timeout_notifier(),
+  ntn_harq(ntn_cs_koffset)
 {
   // Create HARQ processes
   dl_harqs.reserve(nof_dl_harq_procs);
@@ -381,7 +384,11 @@ harq_entity::harq_entity(rnti_t                   rnti_,
     dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
   }
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
-    ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
+    if (ntn_harq.active()) {
+      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, nop_timeout_notifier, 1);
+    } else {
+      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
+    }
   }
 }
 
@@ -392,6 +399,9 @@ void harq_entity::slot_indication(slot_point slot_tx_)
     dl_h.slot_indication(slot_tx);
   }
   for (ul_harq_process& ul_h : ul_harqs) {
+    if (ntn_harq.active()) {
+      ntn_harq.save_tbs(ul_h, slot_tx);
+    }
     ul_h.slot_indication(slot_tx);
   }
 }
@@ -424,6 +434,9 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 {
   ul_harq_process& h_ul = ul_harq(h_id);
   if (h_ul.empty() or h_ul.slot_ack() != pusch_slot) {
+    if (ntn_harq.active() && ack == true) {
+      return ntn_harq.get_tbs(pusch_slot);
+    }
     ul_h_logger.warning(h_id, "Discarding CRC. Cause: No active UL HARQ expecting a CRC at slot={}", pusch_slot);
     return -1;
   }
@@ -450,3 +463,5 @@ void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
     }
   }
 }
+
+harq_entity::ntn_harq_agent::ntn_harq_agent(unsigned ntn_cs_koffset_) : ntn_cs_koffset(ntn_cs_koffset_) {}

@@ -22,6 +22,7 @@
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/format_utils.h"
+#include <numeric>
 
 namespace srsran {
 
@@ -401,6 +402,12 @@ public:
   /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
   void cancel_harq();
 
+  /// \brief Getter of the number of bytes of the last transmitted TB.
+  int get_tbs_bytes() const { return prev_tx_params.tbs_bytes; }
+
+  /// \brief Getter of the slot when the HARQ process will assume that the ACK/CRC went missing.
+  slot_point get_slot_ack_timeout() const { return slot_ack_timeout; }
+
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
@@ -431,7 +438,8 @@ public:
                        unsigned                 nof_dl_harq_procs,
                        unsigned                 nof_ul_harq_procs,
                        ue_harq_timeout_notifier timeout_notif,
-                       unsigned max_ack_wait_in_slots = detail::harq_process<true>::DEFAULT_ACK_TIMEOUT_SLOTS);
+                       unsigned                 ntn_cs_koffset = 0,
+                       unsigned max_ack_wait_in_slots          = detail::harq_process<true>::DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);
@@ -523,6 +531,14 @@ public:
     return nullptr;
   }
 
+  unsigned get_tbs_pending_crcs() const
+  {
+    if (ntn_harq.active()) {
+      return ntn_harq.get_total_tbs();
+    }
+    return 0;
+  }
+
 private:
   template <typename HarqVector>
   harq_id_t find_oldest_harq_retx(const HarqVector& harqs) const
@@ -558,6 +574,36 @@ private:
     return harq_id_t::INVALID_HARQ_ID;
   }
 
+  class ntn_harq_agent
+  {
+  public:
+    explicit ntn_harq_agent(unsigned ntn_cs_koffset_);
+    bool active() const { return ntn_cs_koffset != 0; }
+    void save_tbs(ul_harq_process& ul_h, slot_point slot_tx)
+    {
+      if (ul_h.empty()) {
+        return;
+      }
+      if (ul_h.get_slot_ack_timeout() <= slot_tx) {
+        int tbs          = ul_h.get_tbs_bytes();
+        int idx          = (ul_h.slot_ack().to_uint() + ntn_cs_koffset) % slot_tbs.size();
+        slot_tbs.at(idx) = tbs;
+      }
+    }
+    int get_tbs(slot_point slot_tx)
+    {
+      int ret = slot_tbs.at(slot_tx.to_uint() % slot_tbs.size());
+      if (ret) {
+        slot_tbs.at(slot_tx.to_uint() % slot_tbs.size()) = 0;
+      } else {
+        return -1;
+      }
+      return ret;
+    }
+    int get_total_tbs() const { return std::accumulate(slot_tbs.begin(), slot_tbs.end(), 0); }
+    std::array<int, NTN_CELL_SPECIFIC_KOFFSET_MAX * 2> slot_tbs;
+    unsigned                                           ntn_cs_koffset;
+  };
   rnti_t                rnti;
   srslog::basic_logger& logger;
   harq_logger           dl_h_logger;
@@ -567,6 +613,8 @@ private:
   slot_point                   slot_tx;
   std::vector<dl_harq_process> dl_harqs;
   std::vector<ul_harq_process> ul_harqs;
+  ue_harq_timeout_notifier     nop_timeout_notifier;
+  ntn_harq_agent               ntn_harq;
 };
 
 } // namespace srsran
