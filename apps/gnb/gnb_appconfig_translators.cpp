@@ -676,8 +676,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (base_cell.pdcch_cfg.dedicated.coreset1_duration.has_value()) {
       cset1_cfg.duration = base_cell.pdcch_cfg.dedicated.coreset1_duration.value();
     } else {
-      cset1_cfg.duration =
-          std::max(2U, static_cast<unsigned>(out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration));
+      cset1_cfg.duration = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
     }
     const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
     if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
