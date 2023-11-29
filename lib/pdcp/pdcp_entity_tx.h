@@ -225,10 +225,9 @@ private:
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
-  expected<byte_buffer>
-              apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count);
-  void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
-  byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
+  expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer sdu, uint32_t count);
+  void                  integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
+  byte_buffer           cipher_encrypt(byte_buffer& buf, uint32_t count);
 
   uint32_t notification_count_estimation(uint32_t notification_sn);
 

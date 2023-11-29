@@ -80,7 +80,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   }
 
   // Apply ciphering and integrity protection
-  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
+  expected<byte_buffer> exp_buf =
+      apply_ciphering_and_integrity_protection(std::move(header_buf), sdu.deep_copy(), st.tx_next);
   if (exp_buf.is_error()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
@@ -256,7 +257,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
  * Ciphering and Integrity Protection Helpers
  */
 expected<byte_buffer>
-pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count)
+pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer sdu, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
@@ -278,22 +279,19 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
   byte_buffer ct;
-  if (ciphering_enabled == security::ciphering_enabled::on) {
-    byte_buffer buf = {};
-    if (not buf.append(sdu)) {
-      return default_error_t{};
-    }
+  if (ciphering_enabled == security::ciphering_enabled::on &&
+      sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      if (not buf.append(mac)) {
+      if (not sdu.append(mac)) {
         return default_error_t{};
       }
     }
-    ct = cipher_encrypt(buf, count);
+    cipher_encrypt(sdu, count);
+    ct = std::move(sdu);
   } else {
-    if (not ct.append(sdu)) {
-      return default_error_t{};
-    }
+    ct = std::move(sdu);
+
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
       if (not ct.append(mac)) {
@@ -344,7 +342,7 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
 
-byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
+byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer& msg, uint32_t count)
 {
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher encrypt key.");
@@ -353,17 +351,14 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
   byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
-    case security::ciphering_algorithm::nea0:
-      ct.append(msg);
-      break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     default:
       break;
@@ -445,7 +440,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
       // Perform integrity protection and ciphering
       expected<byte_buffer> exp_buf =
-          apply_ciphering_and_integrity_protection(std::move(header_buf), sdu_info.sdu, sdu_info.count);
+          apply_ciphering_and_integrity_protection(std::move(header_buf), sdu_info.sdu.deep_copy(), sdu_info.count);
       if (exp_buf.is_error()) {
         logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
                          "notifying RRC. count={} {}",
