@@ -165,13 +165,13 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
       pdu.rnti          = test_ue_cfg.rnti;
       auto& pusch_uci   = pdu.pdu.emplace<mac_uci_pdu::pusch_type>();
       pusch_uci.ul_sinr = 100;
-      if (entry.pusch->uci->harq_ack_nof_bits > 0) {
+      if (entry.pusch->uci.value().harq.has_value() and entry.pusch->uci.value().harq.value().harq_ack_nof_bits > 0) {
         pusch_uci.harq_info.emplace();
         pusch_uci.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-        pusch_uci.harq_info->payload.resize(entry.pusch->uci->harq_ack_nof_bits);
+        pusch_uci.harq_info->payload.resize(entry.pusch->uci.value().harq.value().harq_ack_nof_bits);
         pusch_uci.harq_info->payload.fill();
       }
-      if (entry.pusch->uci->csi_part1_nof_bits > 0) {
+      if (entry.pusch->uci.value().csi.has_value() and entry.pusch->uci.value().csi.value().csi_part1_nof_bits > 0) {
         pusch_uci.csi_part1_info.emplace();
         pusch_uci.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
         fill_csi_bits(pusch_uci.csi_part1_info->payload);
