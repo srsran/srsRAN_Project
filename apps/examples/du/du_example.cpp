@@ -363,6 +363,7 @@ static lower_phy_configuration create_lower_phy_configuration()
 {
   lower_phy_configuration phy_config;
 
+  phy_config.logger                     = &du_logger;
   phy_config.scs                        = scs;
   phy_config.cp                         = cp;
   phy_config.dft_window_offset          = 0.5F;
