@@ -100,7 +100,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
                                                                       unsigned                     k1,
                                                                       const pdcch_dl_information*  fallback_dci_info)
 {
-  cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
+  cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1];
 
   // Get existing PUSCH grant, if any, for a given UE's RNTI.
   auto&          puschs         = slot_alloc.result.ul.puschs;
