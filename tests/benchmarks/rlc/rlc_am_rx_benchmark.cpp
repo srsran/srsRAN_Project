@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "lib/rlc/rlc_tx_am_entity.h"
+#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
@@ -68,7 +69,14 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions = 100;
+  unsigned nof_repetitions = 10000;
+};
+
+enum class rx_order {
+  in_order,      ///< 0, 1, 2,..., N-1
+  swapped_edges, ///< N-1, 1, 2,..., N-2, 0
+  reverse_order, ///< N-1, N-2, N-3,..., 0
+  even_odd       ///< 0, 2, 4,...,1, 3, 5,...
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -94,7 +102,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-std::vector<byte_buffer> generate_pdus(bench_params params)
+std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
 {
   // Set Tx config
   rlc_tx_am_config config;
@@ -139,7 +147,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params)
 
   // Prepare SDU list for benchmark
   std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = params.nof_repetitions;
+  int                      num_sdus  = params.nof_repetitions + 1; // +1 to expire t_reassembly on setup
   int                      num_bytes = 1500;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
@@ -157,17 +165,40 @@ std::vector<byte_buffer> generate_pdus(bench_params params)
     sdu.buf                  = std::move(pdcp_hdr_buf);
     sdu.buf.append(std::move(sdu_buf));
     rlc_tx->handle_sdu(std::move(sdu));
-    byte_buffer_chain pdu = rlc_tx->pull_pdu(100);
+    byte_buffer_chain pdu = rlc_tx->pull_pdu(1550);
     pdus.push_back(pdu.deep_copy());
   }
+
+  // shuffle PDUs according to requested order
+  switch (order) {
+    case rx_order::in_order:
+      break;
+    case rx_order::swapped_edges:
+      std::swap(pdus.front(), pdus.back());
+      break;
+    case rx_order::reverse_order:
+      std::reverse(pdus.begin(), pdus.end());
+      break;
+    case rx_order::even_odd:
+      std::vector<byte_buffer> sdu_list_mod;
+      for (int i = 0; i < num_sdus; i += 2) {
+        sdu_list_mod.push_back(std::move(sdu_list[i]));
+      }
+      for (int i = 1; i < num_sdus; i += 2) {
+        sdu_list_mod.push_back(std::move(sdu_list[i]));
+      }
+      sdu_list = std::move(sdu_list_mod);
+      break;
+  }
+
   timers.tick();
   return pdus;
 }
 
-void benchmark_rx_pdu(const bench_params& params)
+void benchmark_rx_pdu(const bench_params& params, rx_order order)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark RLC AM RX PDUs");
+  fmt::format_to(buffer, "Benchmark RLC AM RX PDUs ({})", order);
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   auto tester = std::make_unique<rlc_rx_am_test_frame>();
@@ -197,10 +228,18 @@ void benchmark_rx_pdu(const bench_params& params)
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());
 
-  std::vector<byte_buffer> pdus = generate_pdus(params);
+  std::vector<byte_buffer> pdus = generate_pdus(params, order);
 
-  unsigned i       = 0;
-  auto     measure = [&rlc_rx, &i, &pdus]() mutable {
+  unsigned i = 0;
+
+  // Push first PDU and expire reassembly timer to advance rx_highest_status
+  rlc_rx->handle_pdu(std::move(pdus[i++]));
+  for (int32_t t = 0; t < config.t_reassembly + 1; t++) {
+    timers.tick();
+  }
+  ue_worker.run_pending_tasks();
+
+  auto measure = [&rlc_rx, &i, &pdus]() mutable {
     rlc_rx->handle_pdu(std::move(pdus[i]));
     i++;
   };
@@ -220,8 +259,44 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(524288, 1024);
+
   {
-    benchmark_rx_pdu(params);
+    benchmark_rx_pdu(params, rx_order::in_order);
+  }
+  {
+    benchmark_rx_pdu(params, rx_order::swapped_edges);
+  }
+  {
+    benchmark_rx_pdu(params, rx_order::reverse_order);
+  }
+  {
+    benchmark_rx_pdu(params, rx_order::even_odd);
   }
   srslog::flush();
 }
+
+//
+// Formatters
+//
+namespace fmt {
+
+// RLC mode
+template <>
+struct formatter<rx_order> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(rx_order order, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"in order", "swapped edges", "reverse order", "even odd"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(order)]);
+  }
+};
+
+} // namespace fmt
