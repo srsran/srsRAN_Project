@@ -179,7 +179,7 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
   cell_resource_allocator& res_grid = *cells[cell_index]->cell_res_alloc;
 
   const cell_slot_resource_allocator* prev_slot_result = res_grid.get_history(sl_tx);
-  if (prev_slot_result != nullptr) {
+  if (prev_slot_result == nullptr) {
     logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
                    "of the error indication have already been erased",
                    cell_index,
