@@ -499,8 +499,12 @@ class scheduler_slot_handler
 {
 public:
   /// \brief Effect that the errors in the lower layers had on the results provided by the scheduler for a given
-  /// slot and clel.
-  enum class error_outcome { dl_discarded, ul_discarded, dl_and_ul_discarded };
+  /// slot and cell.
+  struct error_outcome {
+    bool pdcch_discarded : 1;
+    bool pdsch_discarded : 1;
+    bool pusch_discarded : 1;
+  };
 
   virtual ~scheduler_slot_handler() = default;
 

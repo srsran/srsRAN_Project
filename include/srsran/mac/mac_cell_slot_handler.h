@@ -10,7 +10,11 @@ class mac_cell_slot_handler
 {
 public:
   /// The effect that the lower layer error(s) had on the results provided by the MAC during a slot indication.
-  enum class error_event { dl_discarded, ul_discarded, dl_and_ul_discarded };
+  struct error_event {
+    bool pdcch_discarded : 1;
+    bool pdsch_discarded : 1;
+    bool pusch_discarded : 1;
+  };
 
   virtual ~mac_cell_slot_handler() = default;
 

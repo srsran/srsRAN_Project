@@ -189,7 +189,46 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
 
   // Cancel scheduled HARQs. This is important to avoid the softbuffer incorrect initialization in the lower layers
   // during newTxs.
-  if (event != scheduler_slot_handler::error_outcome::ul_discarded) {
+  if (event.pdcch_discarded) {
+    for (const pdcch_dl_information& pdcch : prev_slot_result->result.dl.dl_pdcchs) {
+      ue* u = ue_db.find_by_rnti(pdcch.ctx.rnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+      harq_id_t h_id;
+      switch (pdcch.dci.type) {
+        case dci_dl_rnti_config_type::tc_rnti_f1_0:
+          h_id = to_harq_id(pdcch.dci.tc_rnti_f1_0.harq_process_number);
+          break;
+        case dci_dl_rnti_config_type::c_rnti_f1_0:
+          h_id = to_harq_id(pdcch.dci.c_rnti_f1_0.harq_process_number);
+          break;
+        default:
+          // For SI-RNTI, P-RNTI, RA-RNTI, there is no HARQ process associated.
+          continue;
+      }
+      u->get_pcell().harqs.dl_harq(h_id).cancel_harq(0);
+    }
+    for (const pdcch_ul_information& pdcch : prev_slot_result->result.dl.ul_pdcchs) {
+      ue* u = ue_db.find_by_rnti(pdcch.ctx.rnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+      harq_id_t h_id;
+      switch (pdcch.dci.type) {
+        case dci_ul_rnti_config_type::c_rnti_f0_0:
+          h_id = to_harq_id(pdcch.dci.c_rnti_f0_0.harq_process_number);
+          break;
+        default:
+          // TC-RNTI (e.g. Msg3) is managed outside of UE scheduler. Furthermore, NDI is not used for Msg3.
+          continue;
+      }
+      u->get_pcell().harqs.ul_harq(h_id).cancel_harq();
+    }
+  }
+  if (event.pdsch_discarded) {
     for (const dl_msg_alloc& grant : prev_slot_result->result.dl.ue_grants) {
       ue* u = ue_db.find_by_rnti(grant.pdsch_cfg.rnti);
       if (u == nullptr) {
@@ -201,7 +240,7 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
       }
     }
   }
-  if (event != scheduler_slot_handler::error_outcome::dl_discarded) {
+  if (event.pusch_discarded) {
     for (const ul_sched_info& grant : prev_slot_result->result.ul.puschs) {
       ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
       if (u == nullptr) {
