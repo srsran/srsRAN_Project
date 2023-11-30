@@ -426,3 +426,12 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
   }
   return h_ul.crc_info(ack);
 }
+
+void harq_entity::cancel_dl_harqs(slot_point uci_slot)
+{
+  for (dl_harq_process& h_dl : dl_harqs) {
+    if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
+      h_dl.cancel_harq(0);
+    }
+  }
+}

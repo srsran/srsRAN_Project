@@ -221,6 +221,9 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
         case dci_ul_rnti_config_type::c_rnti_f0_0:
           h_id = to_harq_id(pdcch.dci.c_rnti_f0_0.harq_process_number);
           break;
+        case dci_ul_rnti_config_type::c_rnti_f0_1:
+          h_id = to_harq_id(pdcch.dci.c_rnti_f0_1.harq_process_number);
+          break;
         default:
           // TC-RNTI (e.g. Msg3) is managed outside of UE scheduler. Furthermore, NDI is not used for Msg3.
           continue;
@@ -240,14 +243,43 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
       }
     }
   }
-  if (event.pusch_discarded) {
+  if (event.pusch_and_pucch_discarded) {
     for (const ul_sched_info& grant : prev_slot_result->result.ul.puschs) {
       ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
       if (u == nullptr) {
         // UE has been removed.
         continue;
       }
+
+      // Cancel UL HARQs due to missed PUSCH.
       u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id).cancel_harq();
+
+      // Cancel DL HARQs due to missed UCI.
+      if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
+        u->get_pcell().harqs.cancel_dl_harqs(sl_tx);
+      }
+    }
+    for (const auto& pucch : prev_slot_result->result.ul.pucchs) {
+      ue* u = ue_db.find_by_rnti(pucch.crnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+      bool has_harq_ack = false;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_1:
+          has_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
+          break;
+        case pucch_format::FORMAT_2:
+          has_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
+          break;
+        default:
+          break;
+      }
+      if (has_harq_ack) {
+        // Cancel DL HARQs due to missed UCI.
+        u->get_pcell().harqs.cancel_dl_harqs(sl_tx);
+      }
     }
   }
 }

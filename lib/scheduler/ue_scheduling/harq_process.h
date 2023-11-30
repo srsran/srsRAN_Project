@@ -431,6 +431,11 @@ public:
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
+  /// \brief Cancel DL HARQ processes with a given UCI slot.
+  ///
+  /// This function can be called for instance when there is an error indication coming from lower layers.
+  void cancel_dl_harqs(slot_point uci_slot);
+
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }
   const dl_harq_process& dl_harq(uint32_t pid) const { return dl_harqs[pid]; }

@@ -210,9 +210,9 @@ void srsran_scheduler_adapter::handle_error_indication(slot_point               
                                                        mac_cell_slot_handler::error_event event)
 {
   scheduler_slot_handler::error_outcome sched_err;
-  sched_err.pdcch_discarded = event.pdcch_discarded;
-  sched_err.pdsch_discarded = event.pdsch_discarded;
-  sched_err.pusch_discarded = event.pusch_discarded;
+  sched_err.pdcch_discarded           = event.pdcch_discarded;
+  sched_err.pdsch_discarded           = event.pdsch_discarded;
+  sched_err.pusch_and_pucch_discarded = event.pusch_and_pucch_discarded;
   sched_impl->handle_error_indication(slot_tx, cell_idx, sched_err);
 }
 

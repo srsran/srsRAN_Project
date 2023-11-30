@@ -503,7 +503,7 @@ public:
   struct error_outcome {
     bool pdcch_discarded : 1;
     bool pdsch_discarded : 1;
-    bool pusch_discarded : 1;
+    bool pusch_and_pucch_discarded : 1;
   };
 
   virtual ~scheduler_slot_handler() = default;

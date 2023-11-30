@@ -13,7 +13,7 @@ public:
   struct error_event {
     bool pdcch_discarded : 1;
     bool pdsch_discarded : 1;
-    bool pusch_discarded : 1;
+    bool pusch_and_pucch_discarded : 1;
   };
 
   virtual ~mac_cell_slot_handler() = default;
