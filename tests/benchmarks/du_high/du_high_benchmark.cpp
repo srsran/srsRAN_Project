@@ -51,7 +51,7 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print(
       "\t-d Size of the DL buffer status to push for DL Tx. Setting this value to 0 will disable DL Tx. [Default {}]\n",
       params.dl_buffer_state_bytes);
-  fmt::print("\t-d Size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx. "
+  fmt::print("\t-u Size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx. "
              "[Default {}]\n",
              params.ul_bsr_bytes);
   fmt::print("\t-h Show this message\n");
@@ -296,16 +296,7 @@ public:
   }
 
   /// Notifies slot scheduled PUCCH/PUSCH grants.
-  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override
-  {
-    slot_ul_result = ul_res;
-    if (ul_res.ul_res != nullptr) {
-      nof_ul_grants += ul_res.ul_res->puschs.size();
-      for (const auto& pdu : ul_res.ul_res->puschs) {
-        nof_ul_bytes += pdu.pusch_cfg.tb_size_bytes;
-      }
-    }
-  }
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { slot_ul_result = ul_res; }
 
   /// \brief Notifies the completion of all cell results for the given slot.
   void on_cell_results_completion(slot_point slot) override
@@ -364,7 +355,17 @@ public:
     cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
     cfg.mac_p        = &mac_pcap;
     cfg.rlc_p        = &rlc_pcap;
-    du_hi            = std::make_unique<du_high_impl>(cfg);
+
+    // Increase nof. PUCCH resources to accommodate more UEs.
+    cfg.cells[0].pucch_cfg.nof_sr_resources             = 30;
+    cfg.cells[0].pucch_cfg.nof_csi_resources            = 30;
+    cfg.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq     = 8;
+    cfg.cells[0].pucch_cfg.nof_ue_pucch_f1_res_harq     = 8;
+    cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets = 4;
+    cfg.cells[0].pucch_cfg.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
+    cfg.cells[0].pucch_cfg.f1_params.occ_supported      = true;
+
+    du_hi = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
     pdcp_pdu.append(test_rgen::random_vector<uint8_t>(dl_buffer_state_bytes));
@@ -522,8 +523,11 @@ public:
                                                                : uci_pucch_f0_or_f1_harq_values::dtx;
             f1.harq_info->harqs.resize(pucch.format_1.harq_ack_nof_bits, ack_val);
           }
-          // Forward positive SRs to scheduler.
-          if (ul_bsr_bytes != 0 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+          // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
+          // UL grants is 0 or scheduler stops allocating UL grants.
+          if (ul_bsr_bytes != 0 and pucch.format_1.sr_bits != sr_nof_bits::no_sr and
+              (sim_phy.nof_ul_grants == 0 or
+               (sim_phy.nof_ul_grants == sim_phy.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f1.sr_info.emplace();
             f1.sr_info->sr_detected = true;
           }
@@ -537,7 +541,11 @@ public:
             f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
             f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
           }
-          if (ul_bsr_bytes != 0 and pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
+          // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
+          // UL grants is 0 or scheduler stops allocating UL grants.
+          if (ul_bsr_bytes != 0 and pucch.format_2.sr_bits != sr_nof_bits::no_sr and
+              (sim_phy.nof_ul_grants == 0 or
+               (sim_phy.nof_ul_grants == sim_phy.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f2.sr_info.emplace();
             f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
             f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
@@ -574,6 +582,9 @@ public:
       return;
     }
 
+    // Update nof. PUSCH grants scheduled.
+    sim_phy.nof_ul_grants += sim_phy.slot_ul_result.ul_res->puschs.size();
+
     // Forwards UCI to the DU-High given the scheduled PUSCHs.
     mac_uci_indication_message uci_ind{};
     uci_ind.sl_rx = sim_phy.slot_ul_result.slot;
@@ -582,8 +593,11 @@ public:
     rx_ind.sl_rx      = sim_phy.slot_ul_result.slot;
     rx_ind.cell_index = to_du_cell_index(0);
     for (const ul_sched_info& pusch : sim_phy.slot_ul_result.ul_res->puschs) {
-      // TODO: Handle UCI on PUSCH.
       unsigned payload_len = std::min(mac_pdu.length(), static_cast<size_t>(pusch.pusch_cfg.tb_size_bytes));
+
+      // Update nof. UL bytes scheduled.
+      sim_phy.nof_ul_bytes += payload_len;
+
       // 1 Byte for LCID and other fields and 1/2 Byte(s) for payload length.
       static const uint8_t mac_header_size = payload_len > 255 ? 3 : 2;
       // Early return.
@@ -607,7 +621,7 @@ public:
       rx_pdu.pdu.append(rlc_um_complete_pdu_header);
       // Exclude RLC header from payload length.
       rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1));
-      // Append Short BSR bytes.
+      // Append Long BSR bytes.
       rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end());
 
       rx_ind.pdus.push_back(rx_pdu);
@@ -758,6 +772,14 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
   params.k_ssb               = (*ssb_freq_loc).k_ssb;
   params.coreset0_index      = (*ssb_freq_loc).coreset0_idx;
   params.search_space0_index = ss0_idx;
+
+  if (dplx_mode == duplex_mode::TDD) {
+    params.tdd_ul_dl_cfg_common.emplace();
+    params.tdd_ul_dl_cfg_common->ref_scs                            = subcarrier_spacing::kHz30;
+    params.tdd_ul_dl_cfg_common->pattern1.dl_ul_tx_period_nof_slots = 10;
+    params.tdd_ul_dl_cfg_common->pattern1.nof_dl_slots              = 7;
+    params.tdd_ul_dl_cfg_common->pattern1.nof_ul_slots              = 2;
+  }
 
   return params;
 }
