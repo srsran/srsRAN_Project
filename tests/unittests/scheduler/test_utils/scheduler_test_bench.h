@@ -12,6 +12,7 @@
 
 #include "dummy_test_components.h"
 #include "lib/scheduler/cell/cell_configuration.h"
+#include "result_test_helpers.h"
 #include "scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/scheduler/scheduler_configurator.h"
@@ -95,22 +96,12 @@ public:
 
   const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
-    for (unsigned i = 0; i != last_sched_res_list[cell_idx]->dl.dl_pdcchs.size(); ++i) {
-      if (last_sched_res_list[cell_idx]->dl.dl_pdcchs[i].ctx.rnti == rnti) {
-        return &last_sched_res_list[cell_idx]->dl.dl_pdcchs[i];
-      }
-    }
-    return nullptr;
+    return srsran::find_ue_dl_pdcch(rnti, *last_sched_res_list[cell_idx]);
   }
 
   const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti, du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
-    for (unsigned i = 0; i != last_sched_res_list[cell_idx]->dl.ul_pdcchs.size(); ++i) {
-      if (last_sched_res_list[cell_idx]->dl.ul_pdcchs[i].ctx.rnti == rnti) {
-        return &last_sched_res_list[cell_idx]->dl.ul_pdcchs[i];
-      }
-    }
-    return nullptr;
+    return srsran::find_ue_ul_pdcch(rnti, *last_sched_res_list[cell_idx]);
   }
 
   const unsigned                      tx_rx_delay;
