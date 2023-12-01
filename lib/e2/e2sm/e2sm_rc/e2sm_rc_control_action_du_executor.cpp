@@ -63,7 +63,7 @@ e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(d
   action_params.insert({13, "Dedicated PRB Policy Ratio"});
 };
 
-bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const e2_sm_ric_control_request_s& req)
+bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const e2sm_ric_control_request& req)
 {
   const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
       variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
@@ -76,22 +76,22 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
   return true;
 };
 
-async_task<e2_sm_ric_control_response_s>
-e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_ric_control_request_s& req)
+async_task<e2sm_ric_control_response>
+e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
   du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req);
   return launch_async(
-      [this, ctrl_config = std::move(ctrl_config)](coro_context<async_task<e2_sm_ric_control_response_s>>& ctx) {
+      [this, ctrl_config = std::move(ctrl_config)](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
         CORO_BEGIN(ctx);
         du_mac_sched_control_config_response ctrl_response;
         CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.configure_ue_mac_scheduler(ctrl_config));
-        e2_sm_ric_control_response_s e2_resp = convert_to_e2sm_response(ctrl_config, ctrl_response);
+        e2sm_ric_control_response e2_resp = convert_to_e2sm_response(ctrl_config, ctrl_response);
         CORO_RETURN(e2_resp);
       });
 };
 
 du_mac_sched_control_config
-e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2_sm_ric_control_request_s& e2sm_req_)
+e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_)
 {
   du_mac_sched_control_config        ctrl_config;
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
@@ -115,11 +115,11 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2_sm
   return ctrl_config;
 }
 
-e2_sm_ric_control_response_s e2sm_rc_control_action_2_6_du_executor::convert_to_e2sm_response(
+e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2sm_response(
     const du_mac_sched_control_config&          du_config_req_,
     const du_mac_sched_control_config_response& du_response_)
 {
-  e2_sm_ric_control_response_s e2sm_response;
+  e2sm_ric_control_response e2sm_response;
   e2sm_response.success =
       du_response_.harq_processes_result and du_response_.max_prb_alloc_result and du_response_.min_prb_alloc_result;
 

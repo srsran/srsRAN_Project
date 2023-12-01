@@ -26,7 +26,7 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&   logger_,
 
 bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
 {
-  e2_sm_action_definition_s action_def =
+  e2sm_action_definition action_def =
       e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
 
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
@@ -213,7 +213,7 @@ bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_def
 std::unique_ptr<e2sm_report_service>
 e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_action_definition_s      action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  e2sm_action_definition         action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
       variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;
@@ -240,7 +240,7 @@ bool e2sm_kpm_impl::add_e2sm_control_service(std::unique_ptr<e2sm_control_servic
   return false;
 }
 
-e2sm_control_service* e2sm_kpm_impl::get_e2sm_control_service(const e2_sm_ric_control_request_s& req)
+e2sm_control_service* e2sm_kpm_impl::get_e2sm_control_service(const e2sm_ric_control_request& req)
 {
   logger.warning("Control Service not supported");
   return nullptr;

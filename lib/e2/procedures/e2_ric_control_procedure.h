@@ -40,10 +40,10 @@ private:
   e2_message_notifier&         ric_notif;
   e2sm_manager&                e2sm_mng;
   const e2_ric_control_request e2_request;
-  e2_sm_ric_control_response_s e2sm_response;
+  e2sm_ric_control_response    e2sm_response;
   e2_ric_control_response      e2_response;
   e2sm_interface*              e2sm_iface;
-  e2_sm_ric_control_request_s  ric_ctrl_req;
+  e2sm_ric_control_request     ric_ctrl_req;
   e2sm_control_service*        control_service;
 };
 } // namespace srsran

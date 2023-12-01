@@ -76,7 +76,7 @@ bool e2sm_rc_control_service_base::add_e2sm_rc_control_action_executor(
 
 e2sm_rc_control_service::e2sm_rc_control_service(uint32_t style_id_) : e2sm_rc_control_service_base(style_id_) {}
 
-bool e2sm_rc_control_service::control_request_supported(const e2_sm_ric_control_request_s& req)
+bool e2sm_rc_control_service::control_request_supported(const e2sm_ric_control_request& req)
 {
   const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
   const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
@@ -121,8 +121,8 @@ bool e2sm_rc_control_service::control_request_supported(const e2_sm_ric_control_
   return true;
 }
 
-async_task<e2_sm_ric_control_response_s>
-e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request_s& req)
+async_task<e2sm_ric_control_response>
+e2sm_rc_control_service::execute_control_request(const e2sm_ric_control_request& req)
 {
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
@@ -131,12 +131,12 @@ e2sm_rc_control_service::execute_control_request(const e2_sm_ric_control_request
 
 e2sm_rc_control_service_style_255::e2sm_rc_control_service_style_255() : e2sm_rc_control_service_base(255) {}
 
-e2_sm_ric_control_request_s e2sm_rc_control_service_style_255::create_req_f1_from_req_f2(
+e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_req_f2(
     const e2_sm_rc_ctrl_hdr_format2_s&                                ctrl_hdr_f2,
     const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_style_item_s       style,
     const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_ctrl_action_item_s action)
 {
-  e2_sm_ric_control_request_s req_f1;
+  e2sm_ric_control_request req_f1;
   req_f1.ric_call_process_id_present  = false;
   req_f1.ric_ctrl_ack_request_present = false;
   req_f1.ric_ctrl_ack_request         = false;
@@ -170,7 +170,7 @@ e2_sm_ric_control_request_s e2sm_rc_control_service_style_255::create_req_f1_fro
   return req_f1;
 }
 
-bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ric_control_request_s& req)
+bool e2sm_rc_control_service_style_255::control_request_supported(const e2sm_ric_control_request& req)
 {
   const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
   const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
@@ -208,7 +208,7 @@ bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ri
 
     for (auto& action : style.ric_ctrl_action_list) {
       // Create a control request with format 1 to match the API of control service styles 1-10.
-      e2_sm_ric_control_request_s tmp_req_f1 = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
+      e2sm_ric_control_request tmp_req_f1 = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
 
       if (!e2sm_rc_control_services.at(style.indicated_ctrl_style_type)->control_request_supported(tmp_req_f1)) {
         return false;
@@ -218,11 +218,11 @@ bool e2sm_rc_control_service_style_255::control_request_supported(const e2_sm_ri
   return false;
 }
 
-async_task<e2_sm_ric_control_response_s>
-e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_control_request_s& req)
+async_task<e2sm_ric_control_response>
+e2sm_rc_control_service_style_255::execute_control_request(const e2sm_ric_control_request& req)
 {
-  std::vector<async_task<e2_sm_ric_control_response_s>> tasks;
-  e2_sm_ric_control_response_s aggregated_response;
+  std::vector<async_task<e2sm_ric_control_response>> tasks;
+  e2sm_ric_control_response                          aggregated_response;
   aggregated_response.success = false;
 
   const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
@@ -233,18 +233,18 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2_sm_ric_contr
   for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
     for (auto& action : style.ric_ctrl_action_list) {
       // Create a control request with format 1 to match the API of control service styles 1-10.
-      e2_sm_ric_control_request_s t_req              = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
-      uint32_t                    ric_ctrl_action_id = action.ric_ctrl_action_id;
+      e2sm_ric_control_request t_req              = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
+      uint32_t                 ric_ctrl_action_id = action.ric_ctrl_action_id;
 
-      async_task<e2_sm_ric_control_response_s> task =
+      async_task<e2sm_ric_control_response> task =
           config_req_executors[ric_ctrl_action_id]->execute_ric_control_action(t_req);
       tasks.push_back(std::move(task));
     }
   }
 
   return launch_async([tasks = std::move(tasks), aggregated_response = std::move(aggregated_response), i = (unsigned)0](
-                          coro_context<async_task<e2_sm_ric_control_response_s>>& ctx) mutable {
-    e2_sm_ric_control_response_s task_response;
+                          coro_context<async_task<e2sm_ric_control_response>>& ctx) mutable {
+    e2sm_ric_control_response task_response;
     CORO_BEGIN(ctx);
     for (; i < tasks.size(); i++) {
       CORO_AWAIT_VALUE(task_response, tasks[i]);

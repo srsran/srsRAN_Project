@@ -22,18 +22,18 @@ namespace srsran {
 
 enum e2sm_service_model_t { KPM, RC, UNKNOWN_SM };
 
-struct e2_sm_event_trigger_definition_s {
+struct e2sm_event_trigger_definition {
   enum e2sm_ric_service_type_t { REPORT, INSERT, POLICY, UNKNOWN };
   e2sm_ric_service_type_t ric_service_type;
   uint64_t                report_period;
 };
 
-struct e2_sm_action_definition_s {
+struct e2sm_action_definition {
   e2sm_service_model_t                                                                                service_model;
   variant<asn1::e2sm_kpm::e2_sm_kpm_action_definition_s, asn1::e2sm_rc::e2_sm_rc_action_definition_s> action_definition;
 };
 
-struct e2_sm_ric_control_request_s {
+struct e2sm_ric_control_request {
   e2sm_service_model_t                        service_model;
   bool                                        ric_call_process_id_present  = false;
   bool                                        ric_ctrl_ack_request_present = false;
@@ -43,7 +43,7 @@ struct e2_sm_ric_control_request_s {
   bool                                        ric_ctrl_ack_request;
 };
 
-struct e2_sm_ric_control_response_s {
+struct e2sm_ric_control_response {
   e2sm_service_model_t                            service_model;
   bool                                            success;
   bool                                            ric_call_process_id_present = false;
@@ -64,12 +64,11 @@ public:
   /// \brief check if the requested RIC control action is supported.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns true if action supported by control action executor.
-  virtual bool ric_control_action_supported(const e2_sm_ric_control_request_s& req) = 0;
+  virtual bool ric_control_action_supported(const e2sm_ric_control_request& req) = 0;
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual async_task<e2_sm_ric_control_response_s>
-  execute_ric_control_action(const e2_sm_ric_control_request_s& req) = 0;
+  virtual async_task<e2sm_ric_control_response> execute_ric_control_action(const e2sm_ric_control_request& req) = 0;
 };
 
 class e2sm_report_service
@@ -104,11 +103,11 @@ public:
   /// \brief check if the requested RIC control action is supported.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns true if the action supported by control service.
-  virtual bool control_request_supported(const e2_sm_ric_control_request_s& req) = 0;
+  virtual bool control_request_supported(const e2sm_ric_control_request& req) = 0;
   /// \brief trigger execution of the RIC control action.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
-  virtual async_task<e2_sm_ric_control_response_s> execute_control_request(const e2_sm_ric_control_request_s& req) = 0;
+  virtual async_task<e2sm_ric_control_response> execute_control_request(const e2sm_ric_control_request& req) = 0;
 };
 
 class e2sm_handler
@@ -118,19 +117,19 @@ public:
   /// \brief Handle the packed E2SM Action Definition.
   /// \param[in] buf
   /// \return Returns the unpacked E2SM Action Definition.
-  virtual e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) = 0;
+  virtual e2sm_action_definition handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) = 0;
   /// \brief Handle the packed E2SM Event Trigger Definition.
   /// \param[in] buf
   /// \return Returns the E2SM Event Trigger Definition.
-  virtual e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
+  virtual e2sm_event_trigger_definition handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
   /// \brief Handle the packed E2 RIC Control Request.
   /// \param[in] req E2 RIC Control Request.
   /// \return Returns the unpacked E2SM RIC Control Request.
-  virtual e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) = 0;
+  virtual e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) = 0;
   /// \brief Pack the E2SM RIC Control Response.
   /// \param[in] response E2SM RIC Control Response.
   /// \return Returns the packed E2 RIC Control Response.
-  virtual e2_ric_control_response pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response) = 0;
+  virtual e2_ric_control_response pack_ric_control_response(const e2sm_ric_control_response& e2sm_response) = 0;
   /// @brief Pack the RAN function description.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };
@@ -158,6 +157,6 @@ public:
   /// \brief gets a unique_ptr to the e2sm control service for a control msg.
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns a unique_ptr to the e2sm report service.
-  virtual e2sm_control_service* get_e2sm_control_service(const e2_sm_ric_control_request_s& req) = 0;
+  virtual e2sm_control_service* get_e2sm_control_service(const e2sm_ric_control_request& req) = 0;
 };
 } // namespace srsran

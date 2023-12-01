@@ -676,9 +676,9 @@ public:
 
 class dummy_e2sm_handler : public e2sm_handler
 {
-  e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) override
+  e2sm_action_definition handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) override
   {
-    e2_sm_action_definition_s      action_def;
+    e2sm_action_definition         action_def;
     e2_sm_kpm_action_definition_s& e2_sm_kpm_action_definition =
         variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
     e2_sm_kpm_action_definition.ric_style_type = 3;
@@ -691,19 +691,19 @@ class dummy_e2sm_handler : public e2sm_handler
     e2_sm_kpm_action_definition.action_definition_formats.action_definition_format3().granul_period = 10;
     return action_def;
   }
-  e2_sm_ric_control_request_s handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override
+  e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override
   {
-    e2_sm_ric_control_request_s ric_control_request = {};
+    e2sm_ric_control_request ric_control_request = {};
     return ric_control_request;
   }
-  e2_ric_control_response pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response) override
+  e2_ric_control_response pack_ric_control_response(const e2sm_ric_control_response& e2sm_response) override
   {
     e2_ric_control_response ric_control_response = {};
     return ric_control_response;
   }
-  e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
+  e2sm_event_trigger_definition handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
   {
-    e2_sm_event_trigger_definition_s e2sm_event_trigger_def;
+    e2sm_event_trigger_definition e2sm_event_trigger_def;
     e2sm_event_trigger_def.report_period = 10;
     return e2sm_event_trigger_def;
   }

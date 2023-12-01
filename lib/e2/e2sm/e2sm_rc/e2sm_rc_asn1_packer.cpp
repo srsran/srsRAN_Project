@@ -29,11 +29,11 @@ bool e2sm_rc_asn1_packer::add_e2sm_control_service(e2sm_control_service* control
   return true;
 }
 
-e2_sm_action_definition_s
+e2sm_action_definition
 e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_action_definition_s action_def;
-  asn1::cbit_ref            bref(action_definition);
+  e2sm_action_definition action_def;
+  asn1::cbit_ref         bref(action_definition);
   if (variant_get<asn1::e2sm_rc::e2_sm_rc_action_definition_s>(action_def.action_definition).unpack(bref) !=
       asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM RC Action Definition\n");
@@ -41,10 +41,10 @@ e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buf
   return action_def;
 }
 
-e2_sm_ric_control_request_s
+e2sm_ric_control_request
 e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req)
 {
-  e2_sm_ric_control_request_s ric_control_request  = {};
+  e2sm_ric_control_request ric_control_request     = {};
   ric_control_request.service_model                = e2sm_service_model_t::RC;
   ric_control_request.ric_call_process_id_present  = req->ri_ccall_process_id_present;
   ric_control_request.ric_ctrl_ack_request_present = req->ri_cctrl_ack_request_present;
@@ -72,8 +72,7 @@ e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctr
   return ric_control_request;
 };
 
-e2_ric_control_response
-e2sm_rc_asn1_packer::pack_ric_control_response(const e2_sm_ric_control_response_s& e2sm_response)
+e2_ric_control_response e2sm_rc_asn1_packer::pack_ric_control_response(const e2sm_ric_control_response& e2sm_response)
 {
   e2_ric_control_response e2_control_response = {};
 
@@ -107,11 +106,11 @@ e2sm_rc_asn1_packer::pack_ric_control_response(const e2_sm_ric_control_response_
   return e2_control_response;
 }
 
-e2_sm_event_trigger_definition_s
+e2sm_event_trigger_definition
 e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
   // TODO
-  return e2_sm_event_trigger_definition_s();
+  return e2sm_event_trigger_definition();
 }
 
 asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_description()
