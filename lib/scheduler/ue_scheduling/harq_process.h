@@ -200,7 +200,9 @@ public:
   /// \brief Resets HARQ process state.
   void reset();
 
-  /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
+  /// \brief Cancels the HARQ process by stopping retransmissions of the currently held TB.
+  ///
+  /// Cancelled HARQ processes do not require the HARQ-ACK to be received to get flushed.
   void cancel_harq(unsigned tb_idx);
 
 protected:
@@ -431,10 +433,10 @@ public:
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
-  /// \brief Cancel DL HARQ processes with a given UCI slot.
+  /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKEd.
   ///
   /// This function can be called for instance when there is an error indication coming from lower layers.
-  void cancel_dl_harqs(slot_point uci_slot);
+  void dl_ack_info_cancelled(slot_point uci_slot);
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }

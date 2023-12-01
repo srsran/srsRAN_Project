@@ -187,62 +187,24 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
     return;
   }
 
-  // Cancel scheduled HARQs. This is important to avoid the softbuffer incorrect initialization in the lower layers
-  // during newTxs.
-  if (event.pdcch_discarded) {
-    for (const pdcch_dl_information& pdcch : prev_slot_result->result.dl.dl_pdcchs) {
-      ue* u = ue_db.find_by_rnti(pdcch.ctx.rnti);
-      if (u == nullptr) {
-        // UE has been removed.
-        continue;
-      }
-      harq_id_t h_id;
-      switch (pdcch.dci.type) {
-        case dci_dl_rnti_config_type::tc_rnti_f1_0:
-          h_id = to_harq_id(pdcch.dci.tc_rnti_f1_0.harq_process_number);
-          break;
-        case dci_dl_rnti_config_type::c_rnti_f1_0:
-          h_id = to_harq_id(pdcch.dci.c_rnti_f1_0.harq_process_number);
-          break;
-        default:
-          // For SI-RNTI, P-RNTI, RA-RNTI, there is no HARQ process associated.
-          continue;
-      }
-      u->get_pcell().harqs.dl_harq(h_id).cancel_harq(0);
-    }
-    for (const pdcch_ul_information& pdcch : prev_slot_result->result.dl.ul_pdcchs) {
-      ue* u = ue_db.find_by_rnti(pdcch.ctx.rnti);
-      if (u == nullptr) {
-        // UE has been removed.
-        continue;
-      }
-      harq_id_t h_id;
-      switch (pdcch.dci.type) {
-        case dci_ul_rnti_config_type::c_rnti_f0_0:
-          h_id = to_harq_id(pdcch.dci.c_rnti_f0_0.harq_process_number);
-          break;
-        case dci_ul_rnti_config_type::c_rnti_f0_1:
-          h_id = to_harq_id(pdcch.dci.c_rnti_f0_1.harq_process_number);
-          break;
-        default:
-          // TC-RNTI (e.g. Msg3) is managed outside of UE scheduler. Furthermore, NDI is not used for Msg3.
-          continue;
-      }
-      u->get_pcell().harqs.ul_harq(h_id).cancel_harq();
-    }
-  }
-  if (event.pdsch_discarded) {
-    for (const dl_msg_alloc& grant : prev_slot_result->result.dl.ue_grants) {
-      ue* u = ue_db.find_by_rnti(grant.pdsch_cfg.rnti);
-      if (u == nullptr) {
-        // UE has been removed.
-        continue;
-      }
-      for (unsigned cw_idx = 0; cw_idx != grant.pdsch_cfg.codewords.size(); ++cw_idx) {
-        u->get_pcell().harqs.dl_harq(grant.pdsch_cfg.harq_id).cancel_harq(cw_idx);
-      }
-    }
-  }
+  // In case DL PDCCHs were skipped, there will be the following consequences:
+  // - The UE will not decode the PDSCH and send the respective UCI. The UCI indication coming later from the lower
+  // layers will likely contain a HARQ-ACK=DTX. No action needed. We do not cancel the respective DL HARQ, because
+  // doing so would likely increase the chance of NDI ambiguity on the UE side.
+
+  // In case UL PDCCHs were skipped, there will be the following consequences:
+  // - The UE won't send the associated PUSCHs, which means that the lower layers will later forward CRC indications
+  // with CRC=KO, and the respective UL HARQs will need to be retransmitted. No action needed. We do not cancel
+  // the respective PUSCH grant, because it is important that the PUSCH "new_data" flag reaches the lower layers,
+  // telling them whether the UL HARQ softbuffer needs to be reset or not.
+  // - Any UCI in the respective PUSCH will be reported as DTX, and the DL HARQ will be retransmitted. No action
+  // needed.
+
+  // In case of PDSCH grants being discarded, there will be the following consequences:
+  // - The UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The scheduler will retransmit the
+  // respective DL HARQ. No actions required.
+
+  // In case of PUCCH and PUSCH grants being discarded.
   if (event.pusch_and_pucch_discarded) {
     for (const ul_sched_info& grant : prev_slot_result->result.ul.puschs) {
       ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
@@ -251,12 +213,24 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
         continue;
       }
 
-      // Cancel UL HARQs due to missed PUSCH.
-      u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id).cancel_harq();
+      // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
+      ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
+      if (h_ul.tb().nof_retxs == 0) {
+        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
+        // reset the UL HARQ process.
+        h_ul.reset();
+      } else {
+        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK in
+        // the UL HARQ process.
+        h_ul.crc_info(false);
+      }
 
-      // Cancel DL HARQs due to missed UCI.
+      // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.
       if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
-        u->get_pcell().harqs.cancel_dl_harqs(sl_tx);
+        // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
+        // DL HARQ processes with UCI falling in this slot.
+        u->get_pcell().harqs.dl_ack_info_cancelled(sl_tx);
       }
     }
     for (const auto& pucch : prev_slot_result->result.ul.pucchs) {
@@ -276,9 +250,12 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
         default:
           break;
       }
+
+      // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
       if (has_harq_ack) {
-        // Cancel DL HARQs due to missed UCI.
-        u->get_pcell().harqs.cancel_dl_harqs(sl_tx);
+        // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK in
+        // the DL HARQ processes with UCI falling in this slot.
+        u->get_pcell().harqs.dl_ack_info_cancelled(sl_tx);
       }
     }
   }
