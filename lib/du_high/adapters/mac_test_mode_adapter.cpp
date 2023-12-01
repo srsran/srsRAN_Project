@@ -215,9 +215,11 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
 {
   slot_descision_history& entry = sched_decision_history[sl_tx.to_uint() % sched_decision_history.size()];
 
-  // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
-  entry.pusch.reset();
-  entry.pucchs.clear();
+  if (event.pusch_and_pucch_discarded) {
+    // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
+    entry.pusch.reset();
+    entry.pucchs.clear();
+  }
 
   slot_handler.handle_error_indication(sl_tx, event);
 }
