@@ -355,7 +355,7 @@ struct sib_appconfig {
     unsigned n310 = 1;
     /// t311
     /// Values (in ms): {1000, 3000, 5000, 10000, 15000, 20000, 30000}
-    unsigned t311 = 30000;
+    unsigned t311 = 3000;
     /// n311
     /// Values: {1, 2, 3, 4, 5, 6, 8, 10}
     unsigned n311 = 1;
