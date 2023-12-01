@@ -103,7 +103,7 @@ byte_buffer security_nea1(const sec_128_key& key,
   return security_nea1(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-inline byte_buffer
+inline void
 security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
 {
   S3G_STATE state, *state_ptr;
@@ -114,8 +114,6 @@ security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
   uint32_t  msg_len_block_8, msg_len_block_32;
   uint32_t  len     = msg.length();
   uint32_t  msg_len = len * 8;
-
-  byte_buffer msg_out;
 
   state_ptr        = &state;
   msg_len_block_8  = (msg_len + 7) / 8;
@@ -163,8 +161,6 @@ security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
     free(ks);
     s3g_deinitialize(state_ptr);
   }
-
-  return msg_out;
 }
 
 template <typename It>
@@ -227,7 +223,7 @@ byte_buffer security_nea2(const sec_128_key& key,
   return security_nea2(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-inline byte_buffer
+inline void
 security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
 {
   aes_context   ctx;
@@ -238,11 +234,9 @@ security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
   uint32_t      msg_len_block_8 = msg.length();
   uint32_t      len             = msg.length();
 
-  byte_buffer msg_out;
-
   ret = aes_setkey_enc(&ctx, key.data(), 128);
   if (ret != 0) {
-    return {};
+    return;
   }
 
   if (msg_len_block_8 <= len) {
@@ -261,8 +255,6 @@ security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
       }
     }
   }
-
-  return msg_out;
 }
 
 template <typename It>
@@ -347,7 +339,7 @@ byte_buffer security_nea3(const sec_128_key& key,
   return security_nea3(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-inline byte_buffer
+inline void
 security_nea3(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
 {
   uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -410,8 +402,6 @@ security_nea3(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
     // Clean up
     free(ks);
   }
-
-  return {};
 }
 } // namespace security
 } // namespace srsran

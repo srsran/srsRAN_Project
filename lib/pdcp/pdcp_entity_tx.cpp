@@ -342,29 +342,26 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
 
-byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer& msg, uint32_t count)
+void pdcp_entity_tx::cipher_encrypt(byte_buffer& buf, uint32_t count)
 {
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher encrypt key.");
-  logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg.");
-
-  byte_buffer ct;
+  logger.log_debug(buf.begin(), buf.end(), "Cipher encrypt input msg.");
 
   switch (sec_cfg.cipher_algo) {
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, buf);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, buf);
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, buf);
       break;
     default:
       break;
   }
-  logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg.");
-  return ct;
+  logger.log_debug(buf.begin(), buf.end(), "Cipher encrypt output msg.");
 }
 
 /*

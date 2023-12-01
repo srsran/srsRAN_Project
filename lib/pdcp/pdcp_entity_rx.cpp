@@ -472,31 +472,26 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
 
 byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer& msg, uint32_t count)
 {
-  byte_buffer_view::iterator msg_begin = msg.begin();
-  byte_buffer_view::iterator msg_end   = msg.end();
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
-  logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg.");
+  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg.");
 
   byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
-    case security::ciphering_algorithm::nea0:
-      ct.append(msg_begin, msg_end);
-      break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
+      security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg);
       break;
     default:
       break;
   }
-  logger.log_debug(ct.begin(), ct.end(), "Cipher decrypt output msg.");
+  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt output msg.");
   return ct;
 }
 
