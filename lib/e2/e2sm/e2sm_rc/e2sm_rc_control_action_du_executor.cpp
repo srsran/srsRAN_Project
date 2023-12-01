@@ -17,10 +17,7 @@ using namespace srsran;
 
 e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(du_configurator& du_configurator_,
                                                                                  uint32_t         action_id_) :
-  logger(srslog::fetch_basic_logger("E2SM-RC")),
-  action_id(action_id_),
-  du_param_configurator(du_configurator_),
-  async_tasks(10)
+  logger(srslog::fetch_basic_logger("E2SM-RC")), action_id(action_id_), du_param_configurator(du_configurator_)
 {
 }
 
@@ -79,15 +76,28 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
   return true;
 };
 
-e2_sm_ric_control_response_s
+async_task<e2_sm_ric_control_response_s>
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_ric_control_request_s& req)
 {
+  du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req);
+  return launch_async(
+      [this, ctrl_config = std::move(ctrl_config)](coro_context<async_task<e2_sm_ric_control_response_s>>& ctx) {
+        CORO_BEGIN(ctx);
+        du_mac_sched_control_config_response ctrl_response;
+        CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.configure_ue_mac_scheduler(ctrl_config));
+        e2_sm_ric_control_response_s e2_resp = convert_to_e2sm_response(ctrl_config, ctrl_response);
+        CORO_RETURN(e2_resp);
+      });
+};
+
+du_mac_sched_control_config
+e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2_sm_ric_control_request_s& e2sm_req_)
+{
   du_mac_sched_control_config        ctrl_config;
-  e2_sm_ric_control_response_s       e2_resp;
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
-      variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+      variant_get<e2_sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
-      variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
+      variant_get<e2_sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
 
   ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
 
@@ -102,31 +112,20 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
       logger.error("Parameter not supported");
     }
   }
+  return ctrl_config;
+}
 
-  std::promise<void>                   p;
-  std::future<void>                    fut = p.get_future();
-  du_mac_sched_control_config_response ctrl_response;
-
-  async_tasks.schedule([this, &p, &ctrl_config, &ctrl_response](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-
-    CORO_AWAIT_VALUE(ctrl_response, du_param_configurator.configure_ue_mac_scheduler(ctrl_config));
-
-    // Signal caller thread that the operation is complete.
-    p.set_value();
-
-    CORO_RETURN();
-  });
-
-  // Block waiting for reconfiguration to complete.
-  fut.wait();
-
-  e2_resp.success =
-      ctrl_response.harq_processes_result and ctrl_response.max_prb_alloc_result and ctrl_response.min_prb_alloc_result;
+e2_sm_ric_control_response_s e2sm_rc_control_action_2_6_du_executor::convert_to_e2sm_response(
+    const du_mac_sched_control_config&          du_config_req_,
+    const du_mac_sched_control_config_response& du_response_)
+{
+  e2_sm_ric_control_response_s e2sm_response;
+  e2sm_response.success =
+      du_response_.harq_processes_result and du_response_.max_prb_alloc_result and du_response_.min_prb_alloc_result;
 
   // Always fill outcome here, it will be decided later whether it should be included in the e2 response.
-  e2_resp.ric_ctrl_outcome_present              = true;
-  e2_sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2_sm_rc_ctrl_outcome_s>(e2_resp.ric_ctrl_outcome)
+  e2sm_response.ric_ctrl_outcome_present        = true;
+  e2_sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome)
                                                       .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
 
   // TODO: fill outcome properly
@@ -135,23 +134,23 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2_sm_r
   test_outcome.ran_param_value.set_value_int() = 100;
   ctrl_outcome.ran_p_list.push_back(test_outcome);
 
-  if (ctrl_config.min_prb_alloc.has_value()) {
+  if (du_config_req_.min_prb_alloc.has_value()) {
     e2_sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
     min_prb_outcome.ran_param_id                    = 11;
-    min_prb_outcome.ran_param_value.set_value_int() = ctrl_config.min_prb_alloc.value();
+    min_prb_outcome.ran_param_value.set_value_int() = du_config_req_.min_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
   }
 
-  if (ctrl_config.max_prb_alloc.has_value()) {
+  if (du_config_req_.max_prb_alloc.has_value()) {
     e2_sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
     max_prb_outcome.ran_param_id                    = 12;
-    max_prb_outcome.ran_param_value.set_value_int() = ctrl_config.max_prb_alloc.value();
+    max_prb_outcome.ran_param_value.set_value_int() = du_config_req_.max_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
   }
 
-  if (!e2_resp.success) {
-    e2_resp.cause.set_misc().value = cause_misc_e::options::unspecified;
+  if (!e2sm_response.success) {
+    e2sm_response.cause.set_misc().value = cause_misc_e::options::unspecified;
   }
 
-  return e2_resp;
-};
+  return e2sm_response;
+}

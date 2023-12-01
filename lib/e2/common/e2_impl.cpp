@@ -32,7 +32,6 @@ e2_impl::e2_impl(e2ap_configuration&      cfg_,
   e2sm_mngr(e2sm_mngr_),
   subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   subscribe_delete_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
-  ric_control_proc(pdu_notifier, e2sm_mngr, logger),
   events(std::make_unique<e2_event_manager>(timers)),
   async_tasks(10)
 {
@@ -111,7 +110,7 @@ void e2_impl::handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s ms
   logger.info("Received RIC Control Request");
   e2_ric_control_request request;
   request.request = msg;
-  ric_control_proc.run_e2_ric_control_procedure(request);
+  async_tasks.schedule<e2_ric_control_procedure>(request, pdu_notifier, e2sm_mngr, logger);
 }
 
 void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)

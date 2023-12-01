@@ -14,48 +14,47 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
 
-e2_ric_control_procedure::e2_ric_control_procedure(e2_message_notifier&  notif_,
-                                                   e2sm_manager&         e2sm_mng_,
-                                                   srslog::basic_logger& logger_) :
-  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_)
+e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request& request_,
+                                                   e2_message_notifier&          notif_,
+                                                   e2sm_manager&                 e2sm_mng_,
+                                                   srslog::basic_logger&         logger_) :
+  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), e2_request(request_)
 {
 }
 
-void e2_ric_control_procedure::run_e2_ric_control_procedure(const e2_ric_control_request& e2_request)
+void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
-  e2_ric_control_response      e2_response;
-  e2_sm_ric_control_response_s e2sm_response;
-  ri_cctrl_request_s           ctrl_req   = e2_request.request;
-  e2sm_interface*              e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
+  CORO_BEGIN(ctx);
+  e2sm_iface = e2sm_mng.get_e2sm_interface(e2_request.request->ra_nfunction_id.value);
 
   if (!e2sm_iface) {
     logger.error("RAN function ID not supported");
-    return;
+    CORO_EARLY_RETURN();
   }
 
-  e2sm_handler&               packer          = e2sm_iface->get_e2sm_packer();
-  e2_sm_ric_control_request_s ric_ctrl_req    = packer.handle_packed_ric_control_request(ctrl_req);
-  e2sm_control_service*       control_service = e2sm_iface->get_e2sm_control_service(ric_ctrl_req);
+  ric_ctrl_req    = e2sm_iface->get_e2sm_packer().handle_packed_ric_control_request(e2_request.request);
+  control_service = e2sm_iface->get_e2sm_control_service(ric_ctrl_req);
 
   if (!control_service) {
     logger.error("RIC Control Service not supported");
-    return;
+    CORO_EARLY_RETURN();
   }
 
   if (!control_service->control_request_supported(ric_ctrl_req)) {
     logger.error("RIC Control Request not supported");
-    return;
+    CORO_EARLY_RETURN();
   }
 
-  e2sm_response = control_service->execute_control_request(ric_ctrl_req);
+  CORO_AWAIT_VALUE(e2sm_response, control_service->execute_control_request(ric_ctrl_req));
   if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
-    e2_response = packer.pack_ric_control_response(e2sm_response);
+    e2_response = e2sm_iface->get_e2sm_packer().pack_ric_control_response(e2sm_response);
     if (e2_response.success) {
       send_e2_ric_control_acknowledge(e2_request, e2_response);
     } else {
       send_e2_ric_control_failure(e2_request, e2_response);
     }
   }
+  CORO_RETURN();
 }
 
 void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
