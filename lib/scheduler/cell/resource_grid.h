@@ -304,7 +304,7 @@ private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const
   {
-    srsran_sanity_check(slot_delay < max_ul_slot_alloc_delay,
+    srsran_sanity_check(slot_delay <= max_ul_slot_alloc_delay,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
                         slot_delay);
   }
