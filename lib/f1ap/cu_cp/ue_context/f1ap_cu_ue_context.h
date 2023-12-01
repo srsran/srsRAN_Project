@@ -157,7 +157,16 @@ public:
       return gnb_cu_ue_f1ap_id_t::invalid;
     }
 
-    // iterate over all ids starting with the next_cu_ue_f1ap_id to find the available id
+    // Check if the next_cu_ue_f1ap_id is available
+    if (ues.find(next_cu_ue_f1ap_id) == ues.end()) {
+      gnb_cu_ue_f1ap_id_t ret = next_cu_ue_f1ap_id;
+      // increase the next cu ue f1ap id
+      increase_next_cu_ue_f1ap_id();
+      return ret;
+    }
+
+    // Find holes in the allocated IDs by iterating over all ids starting with the next_cu_ue_f1ap_id to find the
+    // available id
     while (true) {
       // Only iterate over ue_index_to_ue_f1ap_id (size=MAX_NOF_UES_PER_DU)
       // to avoid iterating over all possible values of gnb_cu_ue_f1ap_id_t (size=2^32-1)
