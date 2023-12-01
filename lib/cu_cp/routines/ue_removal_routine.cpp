@@ -41,9 +41,6 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
   // Remove RRC UE
   rrc_du_notifier.remove_ue(ue_index);
 
-  // Remove UE from UE manager
-  ue_mng.remove_ue(ue_index);
-
   // Remove Bearer Context from E1AP
   e1ap_notifier.remove_ue(ue_index);
 
@@ -52,6 +49,9 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
 
   // Remove UE Context from NGAP
   ngap_notifier.remove_ue(ue_index);
+
+  // Remove UE from UE manager
+  ue_mng.remove_ue(ue_index);
 
   // Remove pending UE tasks
   task_scheduler.clear_pending_tasks(ue_index);
