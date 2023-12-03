@@ -37,7 +37,9 @@ public:
 
   /// \brief Notifies that a MAC C-RNTI CE was received with old C-RNTI set to equal to the given UE.
   ///
-  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF.
+  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF due to out-of-sync
+  /// (e.g. PUCCH/PUSCH KOs). It should not have an effect on RLFs due the RLC max retransmissions or protocol failure
+  /// as those problems are not possible to recover from without Reestablishment.
   virtual void on_crnti_ce_received() = 0;
 };
 

@@ -54,6 +54,10 @@ public:
     {
       std::lock_guard<std::mutex> lock(timer_mutex);
       timer_was_running = rel_timer.is_running();
+      if (timer_was_running and current_rlf_cause.load(std::memory_order_relaxed) != rlf_cause::max_mac_kos_reached) {
+        // If the RLF was not due to MAC KOs, a C-RNTI CE is not enough to cancel the RLF.
+        return;
+      }
       rel_timer.stop();
     }
     if (timer_was_running) {
@@ -76,10 +80,18 @@ private:
     bool rlf_timer_start = false;
     {
       std::lock_guard<std::mutex> lock(timer_mutex);
-      if (is_connected_nolock() and not rel_timer.is_running()) {
-        rel_timer.set(release_timeout, [this, cause](timer_id_t tid) { trigger_ue_release(cause); });
+      if (not is_connected_nolock()) {
+        return;
+      }
+      if (not rel_timer.is_running()) {
+        current_rlf_cause = cause;
+        rel_timer.set(release_timeout, [this](timer_id_t tid) { trigger_ue_release(); });
         rel_timer.run();
         rlf_timer_start = true;
+      } else if (cause != srs_du::rlf_cause::max_mac_kos_reached and
+                 current_rlf_cause.load(std::memory_order_relaxed) == srs_du::rlf_cause::max_mac_kos_reached) {
+        // RLFs due to RLC failures take priority over RLF due to MAC KOs.
+        current_rlf_cause = cause;
       }
     }
     if (rlf_timer_start) {
@@ -87,8 +99,10 @@ private:
     }
   }
 
-  void trigger_ue_release(rlf_cause cause)
+  void trigger_ue_release()
   {
+    rlf_cause cause = current_rlf_cause.load(std::memory_order_relaxed);
+
     // Trigger UE release in the upper layers.
     du_ue_mng.handle_rlf_ue_release(ue_index, cause);
 
@@ -106,6 +120,9 @@ private:
   unique_timer                    rel_timer;
   du_ue_manager_repository&       du_ue_mng;
   srslog::basic_logger&           logger;
+
+  // Cause for the RLF being currently handled.
+  std::atomic<rlf_cause> current_rlf_cause;
 
   // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
   // the UE to perform C-RNTI CE (t310) and/or RRC re-establishment (t311).
