@@ -143,7 +143,7 @@ unsigned ue::pending_ul_newtx_bytes() const
         harq_bytes += h_ul.last_tx_params().tbs_bytes;
       }
     }
-    harq_bytes += ue_cc->harqs.get_tbs_pending_crcs();
+    harq_bytes += ue_cc->harqs.ntn_get_tbs_pending_crcs();
     pending_bytes -= std::min(pending_bytes, harq_bytes);
   }
 

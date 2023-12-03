@@ -420,7 +420,7 @@ static sib19_info create_sib19_info(const gnb_appconfig& config)
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
 
   // These values are provided to the config in ECEF coordinates, but the scheduler expects them in WGS84 with a step
-  // level of 1.3m
+  // level of 1.3m.
   sib19.ephemeris_info.value().position_x /= 1.3;
   sib19.ephemeris_info.value().position_y /= 1.3;
   sib19.ephemeris_info.value().position_z /= 1.3;
@@ -1666,7 +1666,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   if (config.ntn_cfg.has_value()) {
     out_cfg.ue.auto_ack_harq = true;
   }
-  out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
+  out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
   out_cfg.ue.max_puschs_per_slot    = pusch.max_puschs_per_slot;

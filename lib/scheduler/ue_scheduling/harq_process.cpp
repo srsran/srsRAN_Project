@@ -383,9 +383,10 @@ harq_entity::harq_entity(rnti_t                   rnti_,
   for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
     dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
   }
+
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
     if (ntn_harq.active()) {
-      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, nop_timeout_notifier, 1);
+      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, nop_timeout_notifier, ntn_harq.ntn_harq_timeout);
     } else {
       ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
     }
@@ -434,8 +435,12 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 {
   ul_harq_process& h_ul = ul_harq(h_id);
   if (h_ul.empty() or h_ul.slot_ack() != pusch_slot) {
-    if (ntn_harq.active() && ack == true) {
-      return ntn_harq.get_tbs(pusch_slot);
+    if (ntn_harq.active()) {
+      if (ack == true) {
+        return ntn_harq.pop_tbs(pusch_slot);
+      } else {
+        ntn_harq.clear_tbs(pusch_slot);
+      }
     }
     ul_h_logger.warning(h_id, "Discarding CRC. Cause: No active UL HARQ expecting a CRC at slot={}", pusch_slot);
     return -1;
@@ -464,4 +469,9 @@ void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
   }
 }
 
-harq_entity::ntn_harq_agent::ntn_harq_agent(unsigned ntn_cs_koffset_) : ntn_cs_koffset(ntn_cs_koffset_) {}
+harq_entity::ntn_tbs_history::ntn_tbs_history(unsigned ntn_cs_koffset_) : ntn_cs_koffset(ntn_cs_koffset_)
+{
+  if (ntn_cs_koffset > 0) {
+    slot_tbs.resize(NTN_CELL_SPECIFIC_KOFFSET_MAX);
+  }
+}

@@ -531,7 +531,7 @@ public:
     return nullptr;
   }
 
-  unsigned get_tbs_pending_crcs() const
+  unsigned ntn_get_tbs_pending_crcs() const
   {
     if (ntn_harq.active()) {
       return ntn_harq.get_total_tbs();
@@ -574,35 +574,50 @@ private:
     return harq_id_t::INVALID_HARQ_ID;
   }
 
-  class ntn_harq_agent
+  class ntn_tbs_history
   {
   public:
-    explicit ntn_harq_agent(unsigned ntn_cs_koffset_);
+    /// \brief This class is used to store the TBS of the HARQ processes that have to be released before receiving the
+    /// associated PUSCH.
+    explicit ntn_tbs_history(unsigned ntn_cs_koffset_);
+
     bool active() const { return ntn_cs_koffset != 0; }
-    void save_tbs(ul_harq_process& ul_h, slot_point slot_tx)
+
+    /// \brief This function is used to save the TBS of the HARQ process.
+    void save_tbs(ul_harq_process& ul_h, slot_point _slot_tx)
     {
       if (ul_h.empty()) {
         return;
       }
-      if (ul_h.get_slot_ack_timeout() <= slot_tx) {
+      if (ul_h.get_slot_ack_timeout() <= _slot_tx) {
         int tbs          = ul_h.get_tbs_bytes();
         int idx          = (ul_h.slot_ack().to_uint() + ntn_cs_koffset) % slot_tbs.size();
         slot_tbs.at(idx) = tbs;
       }
     }
-    int get_tbs(slot_point slot_tx)
+
+    /// \brief This function is used to pop the TBS of the HARQ process saved at the slot _slot_tx.
+    int pop_tbs(slot_point _slot_tx)
     {
-      int ret = slot_tbs.at(slot_tx.to_uint() % slot_tbs.size());
+      int ret = slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size());
       if (ret) {
-        slot_tbs.at(slot_tx.to_uint() % slot_tbs.size()) = 0;
+        slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size()) = 0;
       } else {
         return -1;
       }
       return ret;
     }
+
+    /// \brief This function is used to clear the TBS of the HARQ process saved at the slot _slot_tx.
+    void clear_tbs(slot_point _slot_tx) { slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size()) = 0; }
+    /// \brief This function is used to get the total TBS of the HARQ processes saved.
     int get_total_tbs() const { return std::accumulate(slot_tbs.begin(), slot_tbs.end(), 0); }
-    std::array<int, NTN_CELL_SPECIFIC_KOFFSET_MAX * 2> slot_tbs;
-    unsigned                                           ntn_cs_koffset;
+    // We timeout the HARQ since we need to reuse the process before the PUSCH arrives.
+    const unsigned ntn_harq_timeout = 1;
+
+  private:
+    std::vector<unsigned> slot_tbs;
+    unsigned              ntn_cs_koffset;
   };
   rnti_t                rnti;
   srslog::basic_logger& logger;
@@ -614,7 +629,7 @@ private:
   std::vector<dl_harq_process> dl_harqs;
   std::vector<ul_harq_process> ul_harqs;
   ue_harq_timeout_notifier     nop_timeout_notifier;
-  ntn_harq_agent               ntn_harq;
+  ntn_tbs_history              ntn_harq;
 };
 
 } // namespace srsran

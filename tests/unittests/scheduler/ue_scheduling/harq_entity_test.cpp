@@ -46,7 +46,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
 TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
 {
   unsigned    nof_harqs = 8, max_ack_wait_slots = 4;
-  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, {}, max_ack_wait_slots);
+  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, {}, 0, max_ack_wait_slots);
   slot_point  sl_tx{0, 0};
   unsigned    ack_delay = 4;
 
