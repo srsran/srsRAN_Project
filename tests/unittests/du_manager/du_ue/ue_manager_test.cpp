@@ -8,8 +8,8 @@
  *
  */
 
-#include "du_manager_test_helpers.h"
 #include "lib/du_manager/du_ue/du_ue_manager.h"
+#include "tests/unittests/du_manager/du_manager_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
@@ -121,8 +121,8 @@ TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_reque
   TESTASSERT_EQ(ccch_ind.tc_rnti, mac_dummy.last_ue_create_msg->crnti);
 
   // TEST: DU UE manager registers UE being created.
-  ASSERT_TRUE(ue_mng.get_ues().contains(ue_index));
-  ASSERT_EQ(ue_mng.get_ues()[ue_index]->rnti, 0x4601);
+  ASSERT_TRUE(ue_mng.find_ue(ue_index) != nullptr);
+  ASSERT_EQ(ue_mng.find_ue(ue_index)->rnti, 0x4601);
 }
 
 TEST_F(du_ue_manager_tester,
@@ -150,7 +150,7 @@ TEST_F(du_ue_manager_tester, when_mac_fails_to_create_ue_then_no_ue_is_created_i
   mac_completes_ue_creation(false);
 
   // TEST: DU manager completes DU UE creation procedure with failure.
-  ASSERT_TRUE(ue_mng.get_ues().empty());
+  ASSERT_EQ(ue_mng.nof_ues(), 0);
   ASSERT_FALSE(is_ue_creation_complete());
 }
 
@@ -160,7 +160,7 @@ TEST_F(du_ue_manager_tester, inexistent_ue_index_removal_is_handled)
   push_f1ap_ue_delete_request(to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1)));
 
   // There should not be any reply from MAC and F1AP should receive failure signal
-  ASSERT_TRUE(ue_mng.get_ues().empty());
+  ASSERT_EQ(ue_mng.nof_ues(), 0);
   ASSERT_FALSE(mac_dummy.last_ue_delete_msg.has_value());
   // TODO: F1AP check
 }
@@ -184,11 +184,11 @@ TEST_F(du_ue_manager_tester,
   ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);
 
   // Action 2: MAC finishes UE deletion.
-  ASSERT_FALSE(ue_mng.get_ues().empty());
+  ASSERT_NE(ue_mng.nof_ues(), 0);
   mac_completes_ue_deletion();
 
   // UE deleted from the DU.
-  TESTASSERT(ue_mng.get_ues().empty());
+  ASSERT_EQ(ue_mng.nof_ues(), 0);
 }
 
 TEST_F(du_ue_manager_tester,
@@ -212,7 +212,7 @@ TEST_F(du_ue_manager_tester,
 
   // TEST: UEs should have different UE indexes.
   ASSERT_NE(ue_index1, ue_index2);
-  ASSERT_EQ(ue_mng.get_ues().size(), 2);
+  ASSERT_EQ(ue_mng.nof_ues(), 2);
 }
 
 TEST_F(du_ue_manager_tester,
@@ -250,5 +250,186 @@ TEST_F(du_ue_manager_tester,
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
   ASSERT_TRUE(is_ue_creation_complete());
-  ASSERT_EQ(ue_mng.get_ues().size(), 1);
+  ASSERT_EQ(ue_mng.nof_ues(), 1);
+}
+
+TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disconnected)
+{
+  // Action: Create UE.
+  ul_ccch_indication_message ccch_ind = create_ul_ccch_message(to_rnti(0x4601));
+  push_ul_ccch_message(ccch_ind);
+  mac_completes_ue_creation(true);
+
+  // Test: Buffer State updates are forwarded to MAC.
+  auto* test_ue = ue_mng.find_ue(get_last_ue_index());
+  auto& srb1    = test_ue->bearers.srbs()[srb_id_t::srb1].connector.rlc_tx_buffer_state_notif;
+  srb1.on_buffer_state_update(10);
+  ASSERT_TRUE(mac_dummy.last_dl_bs.has_value());
+  ASSERT_EQ(mac_dummy.last_dl_bs->ue_index, test_ue->ue_index);
+  ASSERT_EQ(mac_dummy.last_dl_bs->lcid, lcid_t::LCID_SRB1);
+  ASSERT_EQ(mac_dummy.last_dl_bs->bs, 10);
+
+  // Action: Start UE removal.
+  push_f1ap_ue_delete_request(get_last_ue_index());
+
+  // TEST: UE notifiers are disconnected.
+  mac_dummy.last_dl_bs.reset();
+  srb1.on_buffer_state_update(10);
+  ASSERT_FALSE(mac_dummy.last_dl_bs.has_value());
+}
+
+class du_ue_manager_rlf_tester : public du_ue_manager_tester
+{
+public:
+  du_ue_manager_rlf_tester() : du_ue_manager_tester()
+  {
+    // Creates UE.
+    ul_ccch_indication_message ccch_ind = create_ul_ccch_message(to_rnti(0x4601));
+    push_ul_ccch_message(ccch_ind);
+    mac_completes_ue_creation(true);
+  }
+
+  void tick_until_rlf_timeout()
+  {
+    const auto&    ue_timers       = params.ran.cells[0].ue_timers_and_constants;
+    const unsigned release_timeout = (ue_timers.t310 + ue_timers.t311).count();
+    for (unsigned i = 0; i != release_timeout; ++i) {
+      timers.tick();
+      worker.run_pending_tasks();
+    }
+  }
+
+  void rlf_detected(rlf_cause cause)
+  {
+    auto& mac_rlf_notifier = *mac_dummy.last_ue_create_msg->rlf_notifier;
+    auto& rlc_rlf_notifier = ue_mng.get_ue_controller(test_ue_index).get_rlc_rlf_notifier();
+
+    if (cause == rlf_cause::max_mac_kos_reached) {
+      mac_rlf_notifier.on_rlf_detected();
+    } else if (cause == rlf_cause::max_rlc_retxs_reached) {
+      rlc_rlf_notifier.on_max_retx();
+    } else {
+      rlc_rlf_notifier.on_protocol_failure();
+    }
+  }
+
+  void crnti_ce_detected() { mac_dummy.last_ue_create_msg->rlf_notifier->on_crnti_ce_received(); }
+
+  du_ue_index_t test_ue_index;
+};
+
+TEST_F(du_ue_manager_rlf_tester,
+       when_rlf_is_triggered_then_timer_starts_and_on_timeout_f1ap_is_notified_of_ue_context_removal_request)
+{
+  // Action: RLF is triggered.
+  const rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
+  this->rlf_detected(cause);
+
+  // TEST: On RLF timer timeout, F1AP is notified of UE context removal request.
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
+  tick_until_rlf_timeout();
+  ASSERT_TRUE(f1ap_dummy.last_ue_release_req.has_value());
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->ue_index, get_last_ue_index());
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, cause);
+}
+
+TEST_F(du_ue_manager_rlf_tester, when_mac_rlf_is_triggered_and_then_crnti_ce_is_detected_then_rlf_is_aborted)
+{
+  // Action: MAC RLF is triggered.
+  rlf_cause cause = rlf_cause::max_mac_kos_reached;
+  this->rlf_detected(cause);
+
+  timers.tick();
+  worker.run_pending_tasks();
+
+  // Action: C-RNTI CE is detected.
+  this->crnti_ce_detected();
+
+  // Action: RLC RLF is triggered.
+  tick_until_rlf_timeout();
+
+  // TEST: RLF is NOT reported.
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
+}
+
+TEST_F(du_ue_manager_rlf_tester,
+       when_rlc_rlf_is_triggered_after_mac_rlf_then_rlc_rlf_is_reported_and_crnti_ce_detection_has_no_effect)
+{
+  // Action: MAC RLF is triggered.
+  rlf_cause cause = rlf_cause::max_mac_kos_reached;
+  this->rlf_detected(cause);
+
+  timers.tick();
+  worker.run_pending_tasks();
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
+
+  // Action: RLC RLF is triggered.
+  cause = rlf_cause::max_rlc_retxs_reached;
+  this->rlf_detected(cause);
+
+  // Action: C-RNTI CE is detected.
+  this->crnti_ce_detected();
+
+  tick_until_rlf_timeout();
+
+  // TEST: RLC RLF is reported.
+  ASSERT_TRUE(f1ap_dummy.last_ue_release_req.has_value());
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->ue_index, get_last_ue_index());
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, cause);
+}
+
+TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_then_following_rlfs_have_no_effect)
+{
+  // Action: RLF is triggered.
+  rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
+  this->rlf_detected(cause);
+
+  // TEST: First RLF is reported.
+  tick_until_rlf_timeout();
+  ASSERT_TRUE(f1ap_dummy.last_ue_release_req.has_value());
+  f1ap_dummy.last_ue_release_req.reset();
+
+  // Action: RLF is triggered again.
+  cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
+  this->rlf_detected(cause);
+
+  // TEST: Second RLF is not reported.
+  tick_until_rlf_timeout();
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
+}
+
+TEST_F(du_ue_manager_rlf_tester, when_ue_is_being_deleted_then_rlf_should_have_no_effect)
+{
+  // Action: Initiate UE removal.
+  push_f1ap_ue_delete_request(get_last_ue_index());
+
+  // Test: UE removal is under way.
+  ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
+  ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);
+
+  // Action: RLF is triggered.
+  rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
+  this->rlf_detected(cause);
+
+  // Test: No RLF is reported.
+  tick_until_rlf_timeout();
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
+}
+
+TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_but_ue_removal_starts_then_rlf_should_have_no_effect)
+{
+  // Action: RLF is triggered.
+  rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
+  this->rlf_detected(cause);
+
+  // Action: Initiate UE removal.
+  push_f1ap_ue_delete_request(get_last_ue_index());
+
+  // Test: UE removal is under way.
+  ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
+  ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);
+
+  // Test: No RLF is reported.
+  tick_until_rlf_timeout();
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
 }

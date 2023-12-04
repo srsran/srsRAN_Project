@@ -83,13 +83,14 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                                                        ue->ue_index,
-                                                                        ue->pcell_index,
-                                                                        srb,
-                                                                        du_params.services,
-                                                                        *ue->rlf_notifier,
-                                                                        du_params.rlc.pcap_writer));
+    srb.rlc_bearer = create_rlc_entity(
+        make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                         ue->ue_index,
+                                         ue->pcell_index,
+                                         srb,
+                                         du_params.services,
+                                         ue_mng.get_ue_controller(ue->ue_index).get_rlc_rlf_notifier(),
+                                         du_params.rlc.pcap_writer));
   }
 
   // > Create F1-C bearers.
@@ -159,7 +160,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
                                                 du_params,
-                                                *ue->rlf_notifier);
+                                                ue_mng.get_ue_controller(ue->ue_index).get_rlc_rlf_notifier());
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: Failed to allocate DU UE resources.",
                                    drbtoadd.drb_id);
@@ -300,9 +301,6 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
-
-  // Update the RLF timeout to account for potential RRC Reestablishments, now that the UE has a context.
-  ue->rlf_notifier->on_drb_and_srb2_configured();
 
   return resp;
 }

@@ -17,12 +17,17 @@
 namespace srsran {
 namespace srs_du {
 
-class ue_manager_dummy : public du_ue_manager_repository
+class ue_manager_dummy : public du_ue_manager_repository,
+                         public du_ue_controller,
+                         public mac_ue_radio_link_notifier,
+                         public rlc_tx_upper_layer_control_notifier
 {
   dummy_teid_pool teid_pool;
 
 public:
   slotted_array<std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ues;
+
+  bool ue_notifiers_disconnected = false;
 
   optional<du_ue_index_t> last_rlf_ue_index;
   optional<rlf_cause>     last_rlf_cause;
@@ -36,6 +41,10 @@ public:
   void   remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
   void   update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
   du_ue* find_ue(du_ue_index_t ue_index) override { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
+  const du_ue* find_ue(du_ue_index_t ue_index) const override
+  {
+    return ues.contains(ue_index) ? ues[ue_index].get() : nullptr;
+  }
   du_ue* find_rnti(rnti_t rnti) override
   {
     for (auto& u : ues) {
@@ -65,6 +74,23 @@ public:
   {
     ue_ctrl_loop.schedule(std::move(task));
   }
+
+  du_ue_controller& get_ue_controller(du_ue_index_t ue_index) override { return *this; }
+  async_task<void>  disconnect_notifiers() override
+  {
+    ue_notifiers_disconnected = true;
+    return launch_no_op_task();
+  }
+  void schedule_async_task(async_task<void> task) override { ue_ctrl_loop.schedule(std::move(task)); }
+  void handle_rlf_detection(rlf_cause cause) override {}
+  void handle_crnti_ce_detection() override {}
+  void handle_scheduling_activation(bool active) override {}
+  mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *this; }
+  void                                 on_rlf_detected() override {}
+  void                                 on_crnti_ce_received() override {}
+  rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() override { return *this; }
+  void                                 on_protocol_failure() override {}
+  void                                 on_max_retx() override {}
 
   fifo_async_task_scheduler ue_ctrl_loop{128};
 };

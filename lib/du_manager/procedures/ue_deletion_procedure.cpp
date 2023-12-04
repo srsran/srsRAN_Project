@@ -71,20 +71,5 @@ async_task<void> ue_deletion_procedure::disconnect_inter_layer_interfaces()
   // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,
   // we start by first disconnecting the DRBs from the F1-U interface.
 
-  // Disconnect RLF notifiers so that they do not interfere with the UE deletion procedure.
-  ue->rlf_notifier->disconnect();
-
-  return dispatch_and_resume_on(
-      du_params.services.ue_execs.ctrl_executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
-        // > Disconnect DRBs.
-        for (auto& drb_pair : ue->bearers.drbs()) {
-          du_ue_drb& drb = *drb_pair.second;
-          drb.disconnect();
-        }
-
-        // > Disconnect SRBs.
-        for (du_ue_srb& srb : ue->bearers.srbs()) {
-          srb.disconnect();
-        }
-      });
+  return ue_mng.get_ue_controller(msg.ue_index).disconnect_notifiers();
 }

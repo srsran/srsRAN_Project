@@ -93,12 +93,12 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
 
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
 {
-  srsran_assert(get_ues().contains(new_ue_index), "Invalid UE index={}", new_ue_index);
-  srsran_assert(get_ues().contains(old_ue_index), "Invalid UE index={}", old_ue_index);
+  auto* new_ue_ptr = find_ue(new_ue_index);
+  srsran_assert(new_ue_ptr != nullptr, "Invalid UE index={}", new_ue_index);
+  srsran_assert(find_ue(old_ue_index) != nullptr, "Invalid UE index={}", old_ue_index);
 
   // Reset the cellGroupConfig of the new UE context, so that previous changes are included in the next UEContextUpdate.
-  du_ue& new_ue                  = *get_ues()[new_ue_index];
-  new_ue.reestablishment_pending = true;
+  new_ue_ptr->reestablishment_pending = true;
 
   // Delete the old UE context.
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
@@ -119,11 +119,11 @@ async_task<void> du_ue_manager::stop()
     proc_logger.log_proc_started();
 
     // Disconnect all UEs RLC->MAC buffer state adapters.
-    for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      for (auto& srb : (*ue_it)->bearers.srbs()) {
+    for (du_ue_controller_impl& u : ue_db) {
+      for (auto& srb : u.context->bearers.srbs()) {
         srb.connector.rlc_tx_buffer_state_notif.disconnect();
       }
-      for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
+      for (auto& drb_pair : u.context->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
         drb.connector.rlc_tx_buffer_state_notif.disconnect();
       }
@@ -131,16 +131,16 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor((*ue_it)->ue_index)));
+      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor(ue_it->context->ue_index)));
       if (not res) {
         CORO_EARLY_RETURN();
       }
 
-      for (auto& srb : (*ue_it)->bearers.srbs()) {
+      for (auto& srb : ue_it->context->bearers.srbs()) {
         srb.disconnect();
       }
 
-      for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
+      for (auto& drb_pair : ue_it->context->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
 
         drb.disconnect();
@@ -156,7 +156,7 @@ async_task<void> du_ue_manager::stop()
 
     // Cancel all pending procedures.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      eager_async_task<void> ctrl_loop = ue_ctrl_loop[(*ue_it)->ue_index].request_stop();
+      eager_async_task<void> ctrl_loop = ue_ctrl_loop[ue_it->context->ue_index].request_stop();
 
       // destroy ctrl_loop by letting it go out of scope.
     }
@@ -172,21 +172,26 @@ async_task<void> du_ue_manager::stop()
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
-  return ue_db.contains(ue_index) ? ue_db[ue_index].get() : nullptr;
+  return ue_db.contains(ue_index) ? ue_db[ue_index].context.get() : nullptr;
+}
+const du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index) const
+{
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  return ue_db.contains(ue_index) ? ue_db[ue_index].context.get() : nullptr;
 }
 
 du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 {
   auto it = rnti_to_ue_index.find(rnti);
   srsran_assert(ue_db.contains(it->second), "Detected invalid container state for rnti={:#x}", rnti);
-  return it != rnti_to_ue_index.end() ? ue_db[it->second].get() : nullptr;
+  return it != rnti_to_ue_index.end() ? ue_db[it->second].context.get() : nullptr;
 }
 
 du_ue* du_ue_manager::find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id)
 {
   for (const auto& ue : ue_db) {
-    if (ue->f1ap_ue_id == f1ap_ue_id) {
-      return ue.get();
+    if (ue.context->f1ap_ue_id == f1ap_ue_id) {
+      return ue.context.get();
     }
   }
   return nullptr;
@@ -206,15 +211,15 @@ du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 
   // Create UE context object
   du_ue_index_t ue_index = ue_ctx->ue_index;
-  ue_db.insert(ue_index, std::move(ue_ctx));
+  ue_db.emplace(ue_index, *this, std::move(ue_ctx), cfg);
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  if (u->rnti != INVALID_RNTI) {
-    rnti_to_ue_index.insert(std::make_pair(u->rnti, ue_index));
+  if (u.context->rnti != INVALID_RNTI) {
+    rnti_to_ue_index.insert(std::make_pair(u.context->rnti, ue_index));
   }
 
-  return u.get();
+  return u.context.get();
 }
 
 void du_ue_manager::remove_ue(du_ue_index_t ue_index)
@@ -228,8 +233,8 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   // Schedule UE removal task
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
-    rnti_to_ue_index.erase(ue_db[ue_index]->rnti);
+    srsran_assert(ue_db.contains(ue_index), "ue={}: Remove UE called for inexistent UE", ue_index);
+    rnti_to_ue_index.erase(ue_db[ue_index].context->rnti);
     ue_db.erase(ue_index);
     ue_ctrl_loop[ue_index].clear_pending_tasks();
     logger.debug("ue={}: Freeing UE context", ue_index);
@@ -242,13 +247,19 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
   srsran_assert(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
   srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", ue_index);
+  du_ue& u = *find_ue(ue_index);
+
+  if (u.rnti == crnti) {
+    // No change.
+    return;
+  }
 
   // Update RNTI -> UE index map
-  rnti_to_ue_index.erase(ue_db[ue_index]->rnti);
+  rnti_to_ue_index.erase(u.rnti);
   rnti_to_ue_index.insert(std::make_pair(crnti, ue_index));
 
   // Update UE context
-  ue_db[ue_index]->rnti = crnti;
+  u.rnti = crnti;
 }
 
 void du_ue_manager::handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause)

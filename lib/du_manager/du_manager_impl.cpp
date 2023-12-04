@@ -152,7 +152,7 @@ size_t du_manager_impl::nof_ues()
   // TODO: This is temporary code.
   std::promise<size_t> p;
   std::future<size_t>  fut = p.get_future();
-  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.get_ues().size()); })) {
+  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.nof_ues()); })) {
     logger.warning("Unable to compute the number of UEs active in the DU");
     return std::numeric_limits<size_t>::max();
   }

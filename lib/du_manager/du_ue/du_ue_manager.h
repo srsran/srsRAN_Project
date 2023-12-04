@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_ue.h"
+#include "du_ue_controller_impl.h"
 #include "du_ue_manager_repository.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/du_manager/du_manager.h"
@@ -22,7 +23,7 @@ namespace srsran {
 namespace srs_du {
 
 /// \brief This entity orchestrates the addition/reconfiguration/removal of UE contexts in the DU.
-class du_ue_manager : public du_ue_manager_repository
+class du_ue_manager final : public du_ue_manager_repository
 {
 public:
   explicit du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc);
@@ -48,7 +49,12 @@ public:
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();
 
-  const slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES>& get_ues() const { return ue_db; }
+  /// \brief Find a UE context by UE index.
+  const du_ue* find_ue(du_ue_index_t ue_index) const override;
+  du_ue*       find_ue(du_ue_index_t ue_index) override;
+
+  /// \brief Number of DU UEs currently active.
+  size_t nof_ues() const { return ue_db.size(); }
 
   /// \brief Schedule an asynchronous task to be executed in the UE control loop.
   void schedule_async_task(du_ue_index_t ue_index, async_task<void> task) override
@@ -58,10 +64,11 @@ public:
 
   gtpu_teid_pool& get_f1u_teid_pool() override { return *f1u_teid_pool; }
 
+  du_ue_controller& get_ue_controller(du_ue_index_t ue_index) override { return ue_db[ue_index]; }
+
 private:
   du_ue* add_ue(std::unique_ptr<du_ue> ue_ctx) override;
   void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
-  du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
   du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
   void   remove_ue(du_ue_index_t ue_index) override;
@@ -75,8 +82,8 @@ private:
   std::unique_ptr<gtpu_teid_pool> f1u_teid_pool;
 
   // Mapping of ue_index and rnti to UEs.
-  slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ue_db;
-  std::unordered_map<rnti_t, du_ue_index_t>                               rnti_to_ue_index;
+  slotted_id_table<du_ue_index_t, du_ue_controller_impl, MAX_NOF_DU_UES> ue_db;
+  std::unordered_map<rnti_t, du_ue_index_t>                              rnti_to_ue_index;
 
   // task event loops indexed by ue_index
   slotted_array<fifo_async_task_scheduler, MAX_NOF_DU_UES> ue_ctrl_loop;

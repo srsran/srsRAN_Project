@@ -18,124 +18,6 @@
 using namespace srsran;
 using namespace srsran::srs_du;
 
-namespace {
-
-/// \brief Adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
-class du_ue_rlf_notification_adapter final : public du_ue_rlf_handler
-{
-public:
-  du_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
-                                 std::chrono::milliseconds t310_,
-                                 std::chrono::milliseconds t311_,
-                                 unique_timer              release_request_timer,
-                                 du_ue_manager_repository& du_ue_mng_) :
-    ue_index(ue_index_),
-    t310(t310_),
-    t311(t311_),
-    rel_timer(std::move(release_request_timer)),
-    du_ue_mng(du_ue_mng_),
-    logger(srslog::fetch_basic_logger("DU-MNG")),
-    // The release timeout is short at the start, while the UE cannot yet perform RRC Reestablishment.
-    release_timeout(t310)
-  {
-  }
-
-  // Called by DU manager to disconnect the adapter during UE removal.
-  void disconnect() override
-  {
-    std::lock_guard<std::mutex> lock(timer_mutex);
-    rel_timer.reset();
-  }
-
-  void on_rlf_detected() override { start_rlf_timer(rlf_cause::max_mac_kos_reached); }
-  void on_crnti_ce_received() override
-  {
-    bool timer_was_running = false;
-    {
-      std::lock_guard<std::mutex> lock(timer_mutex);
-      timer_was_running = rel_timer.is_running();
-      if (timer_was_running and current_rlf_cause.load(std::memory_order_relaxed) != rlf_cause::max_mac_kos_reached) {
-        // If the RLF was not due to MAC KOs, a C-RNTI CE is not enough to cancel the RLF.
-        return;
-      }
-      rel_timer.stop();
-    }
-    if (timer_was_running) {
-      logger.info("ue={}: RLF timer reset. Cause: C-RNTI CE was received for the UE", ue_index);
-    }
-  }
-
-  void on_protocol_failure() override { start_rlf_timer(rlf_cause::rlc_protocol_failure); }
-  void on_max_retx() override { start_rlf_timer(rlf_cause::max_rlc_retxs_reached); }
-
-  void on_drb_and_srb2_configured() override
-  {
-    // Now that the UE contains a context, we need to account for the t311 in the RLF timer.
-    release_timeout = t310 + t311;
-  }
-
-private:
-  void start_rlf_timer(rlf_cause cause)
-  {
-    bool rlf_timer_start = false;
-    {
-      std::lock_guard<std::mutex> lock(timer_mutex);
-      if (not is_connected_nolock()) {
-        return;
-      }
-      if (not rel_timer.is_running()) {
-        current_rlf_cause = cause;
-        rel_timer.set(release_timeout, [this](timer_id_t tid) { trigger_ue_release(); });
-        rel_timer.run();
-        rlf_timer_start = true;
-      } else if (cause != srs_du::rlf_cause::max_mac_kos_reached and
-                 current_rlf_cause.load(std::memory_order_relaxed) == srs_du::rlf_cause::max_mac_kos_reached) {
-        // RLFs due to RLC failures take priority over RLF due to MAC KOs.
-        current_rlf_cause = cause;
-      }
-    }
-    if (rlf_timer_start) {
-      logger.info("ue={}: RLF detected. Timer of {} msec to release UE started...", ue_index, release_timeout.count());
-    }
-  }
-
-  void trigger_ue_release()
-  {
-    rlf_cause cause = current_rlf_cause.load(std::memory_order_relaxed);
-
-    // Trigger UE release in the upper layers.
-    du_ue_mng.handle_rlf_ue_release(ue_index, cause);
-
-    // Release timer so no new RLF is triggered for the same UE, after is scheduled for release.
-    disconnect();
-
-    logger.info("ue={}: RLF timer expired. Requesting a UE release...", ue_index);
-  }
-
-  bool is_connected_nolock() const { return rel_timer.is_valid(); }
-
-  const du_ue_index_t             ue_index;
-  const std::chrono::milliseconds t310;
-  const std::chrono::milliseconds t311;
-  unique_timer                    rel_timer;
-  du_ue_manager_repository&       du_ue_mng;
-  srslog::basic_logger&           logger;
-
-  // Cause for the RLF being currently handled.
-  std::atomic<rlf_cause> current_rlf_cause;
-
-  // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
-  // the UE to perform C-RNTI CE (t310) and/or RRC re-establishment (t311).
-  // Note: When the UE is initially created, it does not yet have a SRB2+DRB configured, so we do not need to account
-  // for the t311 in the RLF timer, as the UE won't try to do RRC re-establishment at that stage.
-  std::chrono::milliseconds release_timeout;
-
-  // This class is accessed directly from the MAC, so potential race conditions apply when accessing the \c rel_timer.
-  std::mutex timer_mutex;
-};
-
-} // namespace
-
 ue_creation_procedure::ue_creation_procedure(const du_ue_creation_request& req_,
                                              du_ue_manager_repository&     ue_mng_,
                                              const du_manager_params&      du_params_,
@@ -214,18 +96,8 @@ du_ue* ue_creation_procedure::create_du_ue_context()
     return nullptr;
   }
 
-  // Create the adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
-  const du_cell_config& pcell_cfg    = du_params.ran.cells[req.pcell_index];
-  auto                  rlf_notifier = std::make_unique<du_ue_rlf_notification_adapter>(
-      req.ue_index,
-      pcell_cfg.ue_timers_and_constants.t310,
-      pcell_cfg.ue_timers_and_constants.t311,
-      du_params.services.timers.create_unique_timer(du_params.services.du_mng_exec),
-      ue_mng);
-
   // Create the DU UE context.
-  return ue_mng.add_ue(
-      std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(rlf_notifier), std::move(ue_res)));
+  return ue_mng.add_ue(std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(ue_res)));
 }
 
 async_task<void> ue_creation_procedure::clear_ue()
@@ -283,23 +155,25 @@ void ue_creation_procedure::create_rlc_srbs()
 {
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
-  srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                                                       ue_ctx->ue_index,
-                                                                       ue_ctx->pcell_index,
-                                                                       srb0,
-                                                                       du_params.services,
-                                                                       *ue_ctx->rlf_notifier,
-                                                                       du_params.rlc.pcap_writer));
+  srb0.rlc_bearer = create_rlc_entity(
+      make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                       ue_ctx->ue_index,
+                                       ue_ctx->pcell_index,
+                                       srb0,
+                                       du_params.services,
+                                       ue_mng.get_ue_controller(ue_ctx->ue_index).get_rlc_rlf_notifier(),
+                                       du_params.rlc.pcap_writer));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                                                       ue_ctx->ue_index,
-                                                                       ue_ctx->pcell_index,
-                                                                       srb1,
-                                                                       du_params.services,
-                                                                       *ue_ctx->rlf_notifier,
-                                                                       du_params.rlc.pcap_writer));
+  srb1.rlc_bearer = create_rlc_entity(
+      make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                       ue_ctx->ue_index,
+                                       ue_ctx->pcell_index,
+                                       srb1,
+                                       du_params.services,
+                                       ue_mng.get_ue_controller(ue_ctx->ue_index).get_rlc_rlf_notifier(),
+                                       du_params.rlc.pcap_writer));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
@@ -311,7 +185,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.cell_index         = req.pcell_index;
   mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
-  mac_ue_create_msg.rlf_notifier       = ue_ctx->rlf_notifier.get();
+  mac_ue_create_msg.rlf_notifier       = &ue_mng.get_ue_controller(ue_ctx->ue_index).get_mac_rlf_notifier();
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
     mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();
