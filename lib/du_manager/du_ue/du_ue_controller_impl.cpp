@@ -144,8 +144,8 @@ private:
 du_ue_controller_impl::du_ue_controller_impl(du_ue_manager_repository& ue_db_,
                                              std::unique_ptr<du_ue>    context_,
                                              const du_manager_params&  cfg_) :
-  context(std::move(context_)),
   ue_db(ue_db_),
+  context(std::move(context_)),
   cfg(cfg_),
   rlf_handler(std::make_unique<rlf_state_machine>(*context, cfg)),
   mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(*this)),

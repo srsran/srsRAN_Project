@@ -22,6 +22,10 @@ class du_ue_controller
 public:
   virtual ~du_ue_controller() = default;
 
+  /// \brief Access to the UE context.
+  virtual const du_ue& get_context() const = 0;
+  virtual du_ue&       get_context()       = 0;
+
   /// \brief Disconnect the UE inter-layer notifiers.
   ///
   /// This method should be called as a first step in the deletion of a UE, to ensure traffic is not flowing through
@@ -67,13 +71,10 @@ public:
   virtual const du_ue* find_ue(du_ue_index_t ue_index) const = 0;
 
   /// \brief Find UE context based on UE RNTI.
-  virtual du_ue* find_rnti(rnti_t rnti) = 0;
+  virtual du_ue_controller* find_rnti(rnti_t rnti) = 0;
 
   /// \brief Find UE context based on GNB-DU-UE-F1AP-ID.
   virtual du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) = 0;
-
-  /// \brief Handle UE release due to detected Radio Link Failures.
-  virtual void handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) = 0;
 
   /// \brief Access to the TEID pool that can be used to allocate/deallocate unique TEIDs for F1-U bearers.
   virtual gtpu_teid_pool& get_f1u_teid_pool() = 0;

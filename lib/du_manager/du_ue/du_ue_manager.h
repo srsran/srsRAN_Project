@@ -67,12 +67,11 @@ public:
   du_ue_controller& get_ue_controller(du_ue_index_t ue_index) override { return ue_db[ue_index]; }
 
 private:
-  du_ue* add_ue(std::unique_ptr<du_ue> ue_ctx) override;
-  void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
-  du_ue* find_rnti(rnti_t rnti) override;
-  du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
-  void   remove_ue(du_ue_index_t ue_index) override;
-  void   handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) override;
+  du_ue*            add_ue(std::unique_ptr<du_ue> ue_ctx) override;
+  void              update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
+  du_ue_controller* find_rnti(rnti_t rnti) override;
+  du_ue*            find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
+  void              remove_ue(du_ue_index_t ue_index) override;
 
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;

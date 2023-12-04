@@ -21,9 +21,10 @@ public:
   du_ue_controller_impl(du_ue_manager_repository& ue_db_,
                         std::unique_ptr<du_ue>    context_,
                         const du_manager_params&  cfg_);
-  ~du_ue_controller_impl();
+  ~du_ue_controller_impl() override;
 
-  std::unique_ptr<du_ue> context;
+  const du_ue& get_context() const override { return *context; }
+  du_ue&       get_context() override { return *context; }
 
   async_task<void> disconnect_notifiers() override;
 
@@ -45,7 +46,9 @@ private:
   class rlf_state_machine;
 
   du_ue_manager_repository& ue_db;
-  const du_manager_params&  cfg;
+
+  std::unique_ptr<du_ue>   context;
+  const du_manager_params& cfg;
 
   std::unique_ptr<rlf_state_machine>                   rlf_handler;
   std::unique_ptr<mac_ue_radio_link_notifier>          mac_rlf_notifier;

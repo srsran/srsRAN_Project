@@ -76,7 +76,7 @@ TEST_F(ue_deletion_tester,
 
 TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_then_ue_notifier_disconnection_gets_called)
 {
-  ASSERT_FALSE(ue_mng.ue_notifiers_disconnected);
+  ASSERT_FALSE(ue_mng.ues[test_ue->ue_index].ue_notifiers_disconnected);
   start_procedure();
-  ASSERT_TRUE(ue_mng.ue_notifiers_disconnected);
+  ASSERT_TRUE(ue_mng.ues[test_ue->ue_index].ue_notifiers_disconnected);
 }
