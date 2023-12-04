@@ -56,10 +56,11 @@ struct e1ap_config_params {
 
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  task_executor*     cu_up_executor    = nullptr; ///< CU-UP control executor
-  task_executor*     gtpu_pdu_executor = nullptr; ///< CU-UP DL data flow executor
-  task_executor*     io_ul_executor    = nullptr; ///< CU-UP UL data IO executor
-  task_executor*     cu_up_e2_exec     = nullptr;
+  task_executor*     ctrl_executor  = nullptr; ///< CU-UP executor for control
+  task_executor*     dl_executor    = nullptr; ///< CU-UP executor for DL data flow
+  task_executor*     ul_executor    = nullptr; ///< CU-UP executor for UL data flow
+  task_executor*     io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
+  task_executor*     cu_up_e2_exec  = nullptr;
   e1ap_config_params e1ap;
   f1u_cu_up_gateway* f1u_gateway  = nullptr;
   io_broker*         epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
