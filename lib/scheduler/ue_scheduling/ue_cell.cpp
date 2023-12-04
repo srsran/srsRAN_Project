@@ -51,6 +51,17 @@ ue_cell::ue_cell(du_ue_index_t              ue_index_,
 {
 }
 
+void ue_cell::deactivate()
+{
+  // Stop UL HARQ retransmissions.
+  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
+  for (unsigned hid = 0; hid != harqs.nof_ul_harqs(); ++hid) {
+    harqs.ul_harq(hid).cancel_harq();
+  }
+
+  active = false;
+}
+
 void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)
 {
   ue_cfg.reconfigure(new_ue_cell_cfg);

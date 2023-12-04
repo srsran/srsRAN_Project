@@ -36,9 +36,17 @@ class rlc_rx_am_status_provider
 public:
   virtual ~rlc_rx_am_status_provider() = default;
 
-  virtual rlc_am_status_pdu get_status_pdu()         = 0;
-  virtual uint32_t          get_status_pdu_length()  = 0;
-  virtual bool              status_report_required() = 0;
+  /// \brief Gets a reference to the latest status report.
+  ///
+  /// Important Note: The returned status report is only guaranteed to be valid if \c status_report_required returns
+  /// \c true. For (unit-)testing not checking this condition, a valid status report can be expected
+  /// (a) once after receiving one (or more) PDUs, or (b) once after t-reassembly has expired.
+  ///
+  /// The returned reference stays valid until the next call of this function or the destruction of the RLC RX entity.
+  /// \return The latest status report
+  virtual rlc_am_status_pdu& get_status_pdu()         = 0;
+  virtual uint32_t           get_status_pdu_length()  = 0;
+  virtual bool               status_report_required() = 0;
 };
 
 /// This interface represents the status PDU entry point of a RLC TX AM entity.

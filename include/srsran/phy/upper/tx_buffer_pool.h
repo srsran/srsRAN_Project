@@ -41,6 +41,9 @@ struct tx_buffer_identifier {
   {
     return (rnti == other.rnti) && (harq_ack_id == other.harq_ack_id);
   }
+
+  /// Get unknown buffer identifier.
+  static constexpr tx_buffer_identifier unknown() { return {0, 16}; }
 };
 
 /// \brief Describes a transmitter buffer pool interface.

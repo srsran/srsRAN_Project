@@ -190,6 +190,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
   }
   radio_config.log_level        = log_level;
   radio_config.sampling_rate_hz = sample_rate_hz;
+  radio_config.discontinuous_tx = false;
 
   // Notifier.
   radio_notifier_spy radio_notifier;
@@ -239,7 +240,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
         }
 
         // Transmit stream buffer.
-        baseband_gateway_transmitter::metadata tx_md;
+        baseband_gateway_transmitter_metadata tx_md;
         tx_md.ts = start_time + tx_sample_count;
         transmitter.transmit(tx_buffer.get_reader(), tx_md);
       }

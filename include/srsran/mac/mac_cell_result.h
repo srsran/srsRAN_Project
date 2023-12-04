@@ -69,7 +69,7 @@ struct mac_dl_data_result {
   };
 
   slot_point                                      slot;
-  static_vector<dl_pdu, MAX_SIB1_PDUS_PER_SLOT>   sib1_pdus;
+  static_vector<dl_pdu, MAX_SI_PDUS_PER_SLOT>     si_pdus;
   static_vector<dl_pdu, MAX_RAR_PDUS_PER_SLOT>    rar_pdus;
   static_vector<dl_pdu, MAX_UE_PDUS_PER_SLOT>     ue_pdus;
   static_vector<dl_pdu, MAX_PAGING_PDUS_PER_SLOT> paging_pdus;

@@ -122,8 +122,7 @@ class upper_phy_impl : public upper_phy
       });
 
       if (!success) {
-        logger.set_context(context.slot.sfn(), context.slot.slot_index());
-        logger.warning("Failed to execute soft buffer pool slot.");
+        logger.warning(context.slot.sfn(), context.slot.slot_index(), "Failed to execute soft buffer pool slot.");
       }
     }
 

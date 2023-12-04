@@ -55,6 +55,10 @@ public:
   /// Schedule UE DL grants for a given {slot, cell}.
   void run_slot(slot_point slot_tx, du_cell_index_t cell_index) override;
 
+  void handle_error_indication(slot_point                            sl_tx,
+                               du_cell_index_t                       cell_index,
+                               scheduler_slot_handler::error_outcome event) override;
+
   scheduler_ue_configurator& get_ue_configurator() override { return event_mng; }
 
   scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }

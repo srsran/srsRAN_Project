@@ -134,6 +134,7 @@ class resource_grid_dummy : public resource_grid
     unsigned   get_nof_subc() const override { return 1; }
     unsigned   get_nof_symbols() const override { return 1; }
     bool       is_empty(unsigned port) const override { return true; }
+    bool       is_empty() const override { return true; }
     span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
     {
       return {};

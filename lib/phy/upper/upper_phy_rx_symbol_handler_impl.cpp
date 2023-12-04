@@ -71,8 +71,9 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   span<const uplink_slot_pdu_entry> pdus = ul_pdu_repository.get_pdus(context.slot);
 
   if (pdus.empty()) {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning("Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
+    logger.warning(context.slot.sfn(),
+                   context.slot.slot_index(),
+                   "Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
                    "processed in the slot.");
     return;
   }

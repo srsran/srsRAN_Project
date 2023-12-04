@@ -33,8 +33,8 @@ using namespace srsran;
 /// Test creation of PDCP RX entities
 TEST_P(pdcp_rx_test, create_new_entity)
 {
-  srsran::test_delimit_logger delimiter("Entity creation test. SN_SIZE={} ", sn_size);
   init(GetParam());
+  srsran::test_delimit_logger delimiter("Entity creation test. SN_SIZE={} ", sn_size);
 
   ASSERT_NE(pdcp_rx, nullptr);
   ASSERT_NE(test_frame, nullptr);
@@ -43,9 +43,9 @@ TEST_P(pdcp_rx_test, create_new_entity)
 /// Test extraction of PDCP sequence numbers
 TEST_P(pdcp_rx_test, sn_unpack)
 {
+  init(GetParam());
   auto test_hdr_reader = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter("Header reader test. SN_SIZE={} COUNT={}", sn_size, count);
-    init(GetParam());
     // Get PDU to test
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -72,9 +72,9 @@ TEST_P(pdcp_rx_test, sn_unpack)
 /// Test in-order reception of PDCP PDUs
 TEST_P(pdcp_rx_test, rx_in_order)
 {
+  init(GetParam());
   auto test_rx_in_order = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -113,10 +113,10 @@ TEST_P(pdcp_rx_test, rx_in_order)
 /// All PDUs are received before the t-Reordering expires.
 TEST_P(pdcp_rx_test, rx_out_of_order)
 {
+  init(GetParam());
   auto test_rx_out_of_order = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -168,10 +168,10 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
 /// The out-of-order PDU is received after the t-Reordering expires.
 TEST_P(pdcp_rx_test, rx_reordering_timer)
 {
+  init(GetParam());
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -211,10 +211,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
 /// t-Reordering is set to 0, so PDUs are immediately delivered.
 TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
 {
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms0);
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to 0. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms0);
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -253,10 +253,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
 /// until they are received in order.
 TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
 {
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::infinity);
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to infinity. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::infinity);
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -295,9 +295,9 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
 /// The PDCP should notify the RRC of the integrity error.
 TEST_P(pdcp_rx_test, rx_integrity_fail)
 {
+  init(GetParam());
   auto test_rx_integrity_fail = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -337,9 +337,9 @@ TEST_P(pdcp_rx_test, count_wraparound)
   uint32_t       rx_next_start  = 262143;
   uint32_t       n_sdus         = 6;
   pdcp_max_count max_count{rx_next_notify, rx_next_max};
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms10, max_count);
 
-  auto test_max_count = [this, n_sdus, max_count](uint32_t count) {
-    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms10, max_count);
+  auto test_max_count = [this, n_sdus](uint32_t count) {
     // Set state of PDCP entiy
     // Do not enable integrity or ciphering, to make it easier to generate test vectors.
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
@@ -363,16 +363,21 @@ TEST_P(pdcp_rx_test, count_wraparound)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer,
+                 "{}bit_nia{}_nea{}",
+                 pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
+                 std::get<unsigned>(info.param),
+                 std::get<unsigned>(info.param));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
                          pdcp_rx_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1, 2, 3)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

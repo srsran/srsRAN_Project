@@ -52,7 +52,8 @@ target_link_libraries(srsran_pdsch_processor srsran_upper_phy_support srsran_cha
 
 add_library(srsran_prach_detector STATIC
         prach_detector_generic_impl.cpp
-        prach_generator_impl.cpp)
+        prach_generator_impl.cpp
+        prach_detector_phy_validator_impl.cpp)
 target_link_libraries(srsran_prach_detector srsran_ran srsvec)
 
 add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)

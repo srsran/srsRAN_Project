@@ -203,15 +203,14 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
                 i_dmrs_symb);
 
   // Prepare channel estimator configuration.
-  port_channel_estimator::configuration est_cfg = {};
-
-  // Generate DM-RS allocation pattern.
-  est_cfg.dmrs_pattern.emplace_back(generate_dmrs_pattern(config));
-
+  port_channel_estimator::configuration est_cfg;
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
+  est_cfg.cp           = config.cp;
   est_cfg.first_symbol = config.start_symbol_index;
   est_cfg.nof_symbols  = config.nof_symbols;
+  est_cfg.dmrs_pattern = {generate_dmrs_pattern(config)};
   est_cfg.rx_ports     = config.ports;
+  est_cfg.scaling      = 1.0F;
 
   // Perform estimation for each receive port.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {

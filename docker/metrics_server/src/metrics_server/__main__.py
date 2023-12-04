@@ -94,7 +94,7 @@ def _parse_args() -> Tuple[InfluxDBClient, str, str, bool, int, int]:
 def _start_metric_server(
     port: int,
     queue_obj: Queue[Optional[Dict[str, Any]]],  # pylint: disable=unsubscriptable-object
-    max_buffer_size: int = 1024,
+    max_buffer_size: int = 1024**2,
 ) -> None:
     # Create Server
     server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -110,24 +110,28 @@ def _start_metric_server(
         line = server_socket.recv(max_buffer_size).decode()
 
         if not line:
-            # If event is set and also last line was empty, end
+            # If line was empty, end
             break
-        text += line
+        text += line.strip()
 
         # Split jSONs
+        header = ""
         *items, text = text.split("}{")
         for item in items:
             # Parse old items
-            item += "}"
+            item = header + item + "}"
             try:
                 queue_obj.put(json.loads(item))
             except json.JSONDecodeError:
                 logging.error("Error decoding json: %s", item)
+            header = "{"
 
-        # Finally, try to parse remaining text
-        with suppress(json.JSONDecodeError):
-            queue_obj.put(json.loads(text))
-            text = ""
+        if text:
+            text = header + text
+            # Finally, try to parse remaining text
+            with suppress(json.JSONDecodeError):
+                queue_obj.put(json.loads(text))
+                text = ""
 
 
 def _publish_data(
@@ -186,7 +190,7 @@ def _influx_push(write_api: WriteApi, *args, **kwargs) -> None:
         try:
             write_api.write(*args, **kwargs)
             break
-        except RemoteDisconnected:
+        except (RemoteDisconnected, ConnectionRefusedError):
             logging.warning("Error pushing data. Retrying...")
             sleep(1)
 

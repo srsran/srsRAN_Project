@@ -72,7 +72,7 @@ public:
   void on_crnti_ce_received() override { crnti_ce_detected = true; }
 };
 
-inline mac_ue_create_request make_default_ue_creation_request()
+inline mac_ue_create_request make_default_ue_creation_request(const cell_config_builder_params& params = {})
 {
   mac_ue_create_request msg{};
 
@@ -88,7 +88,7 @@ inline mac_ue_create_request make_default_ue_creation_request()
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
   msg.sched_cfg.cells.emplace();
-  msg.sched_cfg.cells->push_back(config_helpers::create_default_initial_ue_spcell_cell_config());
+  msg.sched_cfg.cells->push_back(config_helpers::create_default_initial_ue_spcell_cell_config(params));
 
   return msg;
 }
@@ -125,6 +125,11 @@ public:
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {
     return next_sched_result;
+  }
+  void handle_error_indication(slot_point                         slot_tx,
+                               du_cell_index_t                    cell_idx,
+                               mac_cell_slot_handler::error_event event) override
+  {
   }
 };
 

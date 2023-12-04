@@ -153,7 +153,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
     }
     {
       // Notify transmission of all PDUs
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
 
       // Write an SDU that should be dropped
       byte_buffer sdu = {sdu1};
@@ -195,14 +195,14 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
       ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
     }
     // Write second SDU
     {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
       ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
     }
     // Let timers expire
@@ -244,25 +244,25 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     for (uint32_t i = 0; i < nof_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next, sn_size));
       ASSERT_EQ(i + 1, pdcp_tx->nof_discard_timers());
     }
 
     // Notify delivery of first SDU
-    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, sn_size));
     ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_discard_timers());
 
     // Notify delivery up to third SDU
-    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 2, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 2, sn_size));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
     // Notify delivery of second SDU again
     // e.g. in case the UDP-based F1-U interface swaps the the order of transmit/delivery notifications
-    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
     // Notify delivery of remaining SDUs
-    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, sn_size));
     ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
   };
 
@@ -367,7 +367,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
     }
     {
       // Notify transmission of all PDUs
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2 * stall - 1, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2 * stall - 1, sn_size));
 
       // Write an SDU that should not be dropped
       byte_buffer sdu = {sdu1};
@@ -417,7 +417,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
     }
     // check nof max_count reached and max protocol failures.
     ASSERT_EQ(11, test_frame.pdu_queue.size());
@@ -437,16 +437,21 @@ TEST_P(pdcp_tx_test, count_wraparound)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer,
+                 "{}bit_nia{}_nea{}",
+                 pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
+                 std::get<unsigned>(info.param),
+                 std::get<unsigned>(info.param));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1, 2, 3)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

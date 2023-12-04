@@ -154,13 +154,16 @@ du_impl::du_impl(const du_config& du_cfg) :
                                get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
-    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
-    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
     logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(du_high_adaptor->get_slot_time_notifier());
     report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+    logging_slot_error_notifier = fapi::create_logging_slot_error_notifier(du_high_adaptor->get_slot_error_notifier());
+    report_error_if_not(logging_slot_error_notifier, "Unable to create logger for slot error notifications.");
+    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
+    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.
     du_low_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
+    du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
     du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
     du_high_adaptor =
@@ -172,6 +175,7 @@ du_impl::du_impl(const du_config& du_cfg) :
                                get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
     report_error_if_not(du_high_adaptor, "Unable to create MAC adaptor.");
     du_low_adaptor->set_slot_time_message_notifier(du_high_adaptor->get_slot_time_notifier());
+    du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());
     du_low_adaptor->set_slot_data_message_notifier(du_high_adaptor->get_slot_data_notifier());
   }
   logger.debug("FAPI adaptors created successfully");

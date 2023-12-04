@@ -418,6 +418,19 @@ public:
     }
   }
 
+  /// Set all bits in the bounded_bitset to true/false. The size of the bitset is maintained.
+  void fill(bool val = true) noexcept
+  {
+    if (not val) {
+      reset();
+      return;
+    }
+    for (size_t i = 0; i < nof_words_(); ++i) {
+      buffer[i] = static_cast<word_t>(-1);
+    }
+    sanitize_();
+  }
+
   /// \brief Appends a bit with value \c val to the set.
   ///
   /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.

@@ -179,3 +179,96 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // TODO: remove this.
   puxch_grant_sanitizer(*cells[cell_index]->cell_res_alloc);
 }
+
+void ue_scheduler_impl::handle_error_indication(slot_point                            sl_tx,
+                                                du_cell_index_t                       cell_index,
+                                                scheduler_slot_handler::error_outcome event)
+{
+  if (cells[cell_index] == nullptr or cells[cell_index]->cell_res_alloc == nullptr) {
+    logger.error("cell={}: Discarding error indication. Cause: cell with provided index is not configured", cell_index);
+    return;
+  }
+  cell_resource_allocator& res_grid = *cells[cell_index]->cell_res_alloc;
+
+  const cell_slot_resource_allocator* prev_slot_result = res_grid.get_history(sl_tx);
+  if (prev_slot_result == nullptr) {
+    logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
+                   "of the error indication have already been erased",
+                   cell_index,
+                   sl_tx);
+    return;
+  }
+
+  // In case DL PDCCHs were skipped, there will be the following consequences:
+  // - The UE will not decode the PDSCH and send the respective UCI. The UCI indication coming later from the lower
+  // layers will likely contain a HARQ-ACK=DTX. No action needed. We do not cancel the respective DL HARQ, because
+  // doing so would likely increase the chance of NDI ambiguity on the UE side.
+
+  // In case UL PDCCHs were skipped, there will be the following consequences:
+  // - The UE won't send the associated PUSCHs, which means that the lower layers will later forward CRC indications
+  // with CRC=KO, and the respective UL HARQs will need to be retransmitted. No action needed. We do not cancel
+  // the respective PUSCH grant, because it is important that the PUSCH "new_data" flag reaches the lower layers,
+  // telling them whether the UL HARQ softbuffer needs to be reset or not.
+  // - Any UCI in the respective PUSCH will be reported as DTX, and the DL HARQ will be retransmitted. No action
+  // needed.
+
+  // In case of PDSCH grants being discarded, there will be the following consequences:
+  // - The UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The scheduler will retransmit the
+  // respective DL HARQ. No actions required.
+
+  // In case of PUCCH and PUSCH grants being discarded.
+  if (event.pusch_and_pucch_discarded) {
+    for (const ul_sched_info& grant : prev_slot_result->result.ul.puschs) {
+      ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+
+      // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
+      ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
+      if (h_ul.tb().nof_retxs == 0) {
+        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
+        // reset the UL HARQ process.
+        h_ul.reset();
+      } else {
+        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK in
+        // the UL HARQ process.
+        h_ul.crc_info(false);
+      }
+
+      // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.
+      if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
+        // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
+        // DL HARQ processes with UCI falling in this slot.
+        u->get_pcell().harqs.dl_ack_info_cancelled(sl_tx);
+      }
+    }
+    for (const auto& pucch : prev_slot_result->result.ul.pucchs) {
+      ue* u = ue_db.find_by_rnti(pucch.crnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+      bool has_harq_ack = false;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_1:
+          has_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
+          break;
+        case pucch_format::FORMAT_2:
+          has_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
+          break;
+        default:
+          break;
+      }
+
+      // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
+      if (has_harq_ack) {
+        // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK in
+        // the DL HARQ processes with UCI falling in this slot.
+        u->get_pcell().harqs.dl_ack_info_cancelled(sl_tx);
+      }
+    }
+  }
+}

@@ -34,8 +34,8 @@ namespace fapi_adaptor {
 
 /// \brief FAPI-to-MAC timing message translator.
 ///
-/// This class listens to slot-based, time-specific FAPI message events and translates them to the suitable data
-/// types for the MAC layer.
+/// This class listens to slot-based, time-specific FAPI message events and translates them to the suitable data types
+/// for the MAC layer.
 class fapi_to_mac_time_msg_translator : public fapi::slot_time_message_notifier
 {
 public:

@@ -101,6 +101,7 @@ struct test_bench_params {
   unsigned               csi_offset         = 9;
   bool                   is_tdd             = false;
   bool                   pucch_f2_more_prbs = false;
+  bool                   cfg_for_mimo_4x4   = false;
 };
 
 // Test bench with all that is needed for the PUCCH.

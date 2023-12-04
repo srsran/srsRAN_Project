@@ -81,8 +81,12 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   out_cfg.connection_name = "AMF";
   out_cfg.connect_address = config.amf_cfg.ip_addr;
   out_cfg.connect_port    = config.amf_cfg.port;
-  out_cfg.bind_address    = config.amf_cfg.bind_addr;
-  out_cfg.ppid            = NGAP_PPID;
+  if (config.amf_cfg.n2_bind_addr == "auto") {
+    out_cfg.bind_address = config.amf_cfg.bind_addr;
+  } else {
+    out_cfg.bind_address = config.amf_cfg.n2_bind_addr;
+  }
+  out_cfg.ppid = NGAP_PPID;
 
   if (config.amf_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;
@@ -105,11 +109,13 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
 
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
   srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
   out_cfg.ngap_config.gnb_id               = config.gnb_id;
   out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
-  out_cfg.ngap_config.plmn                 = config.common_cell_cfg.plmn;
-  out_cfg.ngap_config.tac                  = config.common_cell_cfg.tac;
+  out_cfg.ngap_config.plmn                 = cell.plmn;
+  out_cfg.ngap_config.tac                  = cell.tac;
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
@@ -266,6 +272,13 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
 
+  if (config.amf_cfg.n3_bind_addr == "auto") {
+    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
+  } else {
+    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
+  }
+  out_cfg.net_cfg.n3_rx_max_mmsg = config.amf_cfg.udp_rx_max_msgs;
+  out_cfg.net_cfg.f1u_bind_addr  = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
   return out_cfg;
 }
 
@@ -451,14 +464,20 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band                           = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
-    param.csi_rs_enabled        = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports          = base_cell.nof_antennas_dl;
-    param.search_space0_index   = base_cell.pdcch_cfg.common.ss0_index;
-    param.min_k1                = base_cell.pucch_cfg.min_k1;
-    param.min_k2                = base_cell.pusch_cfg.min_k2;
-    param.coreset0_index        = base_cell.pdcch_cfg.common.coreset0_index;
-    param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration;
-    const unsigned nof_crbs     = band_helper::get_n_rbs_from_bw(
+    param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;
+    param.nof_dl_ports        = base_cell.nof_antennas_dl;
+    param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
+    param.min_k1              = base_cell.pucch_cfg.min_k1;
+    param.min_k2              = base_cell.pusch_cfg.min_k2;
+    param.coreset0_index      = base_cell.pdcch_cfg.common.coreset0_index;
+    // Set maximum CORESET#0 duration to 1 OFDM symbol for BW > 50Mhz to spread CORESET RBs across the BW. This results
+    // in one extra symbol to be used for PDSCH.
+    if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value()) {
+      param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration.value();
+    } else if (param.channel_bw_mhz > bs_channel_bandwidth_fr1::MHz50) {
+      param.max_coreset0_duration = 1;
+    }
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
@@ -569,11 +588,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     // DL common config.
-    if (base_cell.pdsch_cfg.dc_offset.has_value()) {
-      out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location =
-          dc_offset_helper::pack(base_cell.pdsch_cfg.dc_offset.value(),
-                                 out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth);
-    }
+    out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location = dc_offset_helper::pack(
+        base_cell.pdsch_cfg.dc_offset, out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth);
 
     // PRACH config.
     rach_config_common& rach_cfg                    = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
@@ -673,8 +689,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (base_cell.pdcch_cfg.dedicated.coreset1_duration.has_value()) {
       cset1_cfg.duration = base_cell.pdcch_cfg.dedicated.coreset1_duration.value();
     } else {
-      cset1_cfg.duration =
-          std::max(2U, static_cast<unsigned>(out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration));
+      cset1_cfg.duration = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
     }
     const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
     if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
@@ -712,7 +727,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-        (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
+        (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
 
@@ -1238,6 +1253,8 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
   out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
   out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
   out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
+  out_cfg.discontinuous_tx = ru_cfg.expert_cfg.discontinuous_tx_mode;
+  out_cfg.power_ramping_us = ru_cfg.expert_cfg.power_ramping_time_us;
 
   const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
   const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
@@ -1574,9 +1591,11 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
 
 mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config)
 {
-  mac_expert_config out_cfg      = {};
-  out_cfg.max_consecutive_dl_kos = config.common_cell_cfg.pdsch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_ul_kos = config.common_cell_cfg.pusch_cfg.max_consecutive_kos;
+  mac_expert_config          out_cfg = {};
+  const base_cell_appconfig& cell    = config.cells_cfg.front().cell;
+
+  out_cfg.max_consecutive_dl_kos = cell.pdsch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_ul_kos = cell.pusch_cfg.max_consecutive_kos;
 
   return out_cfg;
 }
@@ -1585,8 +1604,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();
 
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
   // UE parameters.
-  const pdsch_appconfig& pdsch = config.common_cell_cfg.pdsch_cfg;
+  const pdsch_appconfig& pdsch = cell.pdsch_cfg;
   out_cfg.ue.dl_mcs            = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
@@ -1599,7 +1620,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
 
-  const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
+  const pusch_appconfig& pusch = cell.pusch_cfg;
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
@@ -1609,7 +1630,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
 
   // RA parameters.
-  const prach_appconfig& prach = config.common_cell_cfg.prach_cfg;
+  const prach_appconfig& prach = cell.prach_cfg;
 
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
@@ -1663,7 +1684,7 @@ e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config)
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
   out_cfg.gnb_id             = config.gnb_id;
   out_cfg.ran_node_name      = config.ran_node_name;
-  out_cfg.plmn               = config.common_cell_cfg.plmn;
+  out_cfg.plmn               = config.cells_cfg.front().cell.plmn;
   out_cfg.e2sm_kpm_enabled   = config.e2_cfg.e2sm_kpm_enabled;
   out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
 
@@ -1702,8 +1723,6 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
 
 void srsran::derive_auto_params(gnb_appconfig& gnb_params)
 {
-  derive_cell_auto_params(gnb_params.common_cell_cfg);
-
   for (auto& cell : gnb_params.cells_cfg) {
     derive_cell_auto_params(cell.cell);
   }

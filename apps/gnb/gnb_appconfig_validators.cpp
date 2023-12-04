@@ -24,6 +24,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -85,6 +86,27 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
     fmt::print("Low PHY throttling (i.e., {}) must be in range {}.\n",
                config.expert_cfg.lphy_dl_throttling,
                lphy_dl_throttling_range);
+    return false;
+  }
+
+  if (config.expert_cfg.discontinuous_tx_mode && (config.device_driver == "zmq")) {
+    fmt::print("Discontinuous transmission mode cannot be used with ZMQ.\n");
+    return false;
+  }
+
+  static constexpr float subframe_duration_us = 1e3;
+  float                  slot_duration_us =
+      subframe_duration_us / static_cast<float>(get_nof_slots_per_subframe(cell_config.cell.common_scs));
+  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
+    fmt::print("Power ramping time, i.e., {:.1f} us, cannot exceed the duration of two NR slots, i.e., {:.1f} us.\n",
+               config.expert_cfg.power_ramping_time_us,
+               2 * slot_duration_us);
+    return false;
+  }
+
+  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us < 0)) {
+    fmt::print("Power ramping time, i.e., {:.1f} us, must be positive or zero.\n",
+               config.expert_cfg.power_ramping_time_us);
     return false;
   }
 
@@ -221,8 +243,15 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, subcarrier_spacing scs_common)
 {
   const pucch_appconfig& pucch_cfg = config.pucch_cfg;
-  if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
-    fmt::print("Number of PUCCH Format 1 cell resources for CSI must be zero when a fixed MCS is used.\n");
+  if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
+    fmt::print(
+        "Number of PUCCH Format 2 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
+    return false;
+  }
+
+  if (config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources == 0) {
+    fmt::print("Number of PUCCH Format 2 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
+               "enabled.\n");
     return false;
   }
 
@@ -278,6 +307,35 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   }
 
   return true;
+}
+
+static bool validate_phy_prach_configuration(const base_cell_appconfig& base_cell_config)
+{
+  const prach_appconfig& config = base_cell_config.prach_cfg;
+
+  unsigned nof_rx_ports = config.ports.size();
+
+  // Get PRACH info.
+  subcarrier_spacing  common_scs = base_cell_config.common_scs;
+  prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+                                                           band_helper::get_duplex_mode(base_cell_config.band.value()),
+                                                           base_cell_config.prach_cfg.prach_config_index.value());
+
+  // PRACH format type.
+  prach_format_type format = prach_info.format;
+
+  // Get preamble info.
+  prach_preamble_information preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
+
+  // PRACH subcarrier spacing.
+  prach_subcarrier_spacing scs = preamble_info.scs;
+  // Zero correlation zone.
+  unsigned zero_correlation_zone = config.zero_correlation_zone;
+
+  return validate_prach_detector_phy(format, scs, zero_correlation_zone, nof_rx_ports);
 }
 
 static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconfig& config,
@@ -440,6 +498,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
   if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
+    return false;
+  }
+
+  if (!validate_phy_prach_configuration(config)) {
     return false;
   }
 
@@ -889,13 +951,14 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
                    cs0_idx);
         return false;
       }
-      if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and
-          desc.nof_symb_coreset > base_cell.pdcch_cfg.common.max_coreset0_duration) {
+      if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value() and
+          desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and
+          desc.nof_symb_coreset > base_cell.pdcch_cfg.common.max_coreset0_duration.value()) {
         fmt::print("Configured CORESET#0 index={} results in duration={} > maximum CORESET#0 duration configured={}. "
                    "Try increasing maximum CORESET#0 duration or pick another CORESET#0 index\n",
                    cs0_idx,
                    desc.nof_symb_coreset,
-                   base_cell.pdcch_cfg.common.max_coreset0_duration);
+                   base_cell.pdcch_cfg.common.max_coreset0_duration.value());
         return false;
       }
     }
@@ -920,12 +983,12 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
                  nof_crbs);
       return false;
     }
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
-        config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+    if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
+        base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
       return false;
     }
-    if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
+    if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
         base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
         base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
       // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
@@ -939,14 +1002,15 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
 
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
-  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+  if ((config.test_mode_cfg.test_ue.ri > 1) and
+      not config.cells_cfg.front().cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
     fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }
-  if (config.test_mode_cfg.test_ue.ri > config.common_cell_cfg.nof_antennas_dl) {
+  if (config.test_mode_cfg.test_ue.ri > config.cells_cfg.front().cell.nof_antennas_dl) {
     fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports ({} > {})\n",
                config.test_mode_cfg.test_ue.ri,
-               config.common_cell_cfg.nof_antennas_dl);
+               config.cells_cfg.front().cell.nof_antennas_dl);
     return false;
   }
 
@@ -1096,7 +1160,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.common_cell_cfg.sib_cfg)) {
+  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
     return false;
   }
 
@@ -1105,10 +1169,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!config.log_cfg.phy_rx_symbols_filename.empty() && config.log_cfg.phy_rx_symbols_port.has_value() &&
-      (config.log_cfg.phy_rx_symbols_port.value() >= config.common_cell_cfg.nof_antennas_ul)) {
+      (config.log_cfg.phy_rx_symbols_port.value() >= config.cells_cfg.front().cell.nof_antennas_ul)) {
     fmt::print("Requested IQ dump from Rx port {}, valid Rx ports are 0-{}.\n",
                config.log_cfg.phy_rx_symbols_port.value(),
-               config.common_cell_cfg.nof_antennas_ul - 1);
+               config.cells_cfg.front().cell.nof_antennas_ul - 1);
     return false;
   }
 
@@ -1153,10 +1217,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (sdr_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
+    if (sdr_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.cells_cfg.front().cell.channel_bw_mhz)) {
       fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
                  sdr_cfg.srate_MHz,
-                 bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
+                 bs_channel_bandwidth_to_MHz(config.cells_cfg.front().cell.channel_bw_mhz));
       return false;
     }
   }

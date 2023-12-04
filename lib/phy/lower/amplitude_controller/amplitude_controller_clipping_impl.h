@@ -43,7 +43,7 @@ private:
   /// Maximum amplitude allowed by the clipping.
   float ceiling_lin;
   /// Runtime metrics reported by the amplitude controller.
-  amplitude_controller_metrics metrics = {};
+  amplitude_controller_metrics metrics = {0.0F, 0.0F, 0.0F, 0.0F, 0UL, 0UL, 0.0, false};
 
 public:
   /// \brief Constructs an amplitude controller.

@@ -18,5 +18,5 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_instrumentation traces/du_traces.cpp)
+add_library(srsran_instrumentation traces/du_traces.cpp traces/up_traces.cpp)
 target_link_libraries(srsran_instrumentation srsran_support)

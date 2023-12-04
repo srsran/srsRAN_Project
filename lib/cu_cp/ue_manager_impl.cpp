@@ -69,7 +69,7 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   // Remove CU-CP UE from database
   ues.erase(ue_index);
 
-  logger.info("ue={}: Removed", ue_index);
+  logger.debug("ue={}: Removed", ue_index);
   return;
 }
 

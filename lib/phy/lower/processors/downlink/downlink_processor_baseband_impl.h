@@ -196,7 +196,8 @@ public:
   void connect(downlink_processor_notifier& notifier_) { notifier = &notifier_; }
 
   // See interface for documentation.
-  void process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override;
+  baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
+                                                baseband_gateway_timestamp      timestamp) override;
 
 private:
   /// \brief Processes a new symbol.
@@ -204,7 +205,8 @@ private:
   /// \param[out] buffer Destination buffer.
   /// \param[in]  slot Slot number.
   /// \param[in]  i_symbol Symbol number within the current slot.
-  void process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
+  /// \return \c true if the symbol has been processed, \c false otherwise.
+  bool process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
 
   /// Logger for printing amplitude control.
   srslog::basic_logger& amplitude_control_logger;
@@ -238,6 +240,8 @@ private:
   sample_statistics<float> symbol_papr;
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
+  /// Last notified slot boundary.
+  optional<slot_point> last_notified_slot;
 };
 
 } // namespace srsran

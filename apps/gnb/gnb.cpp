@@ -176,12 +176,14 @@ int main(int argc, char** argv)
   // Fill the generic application arguments to parse.
   populate_cli11_generic_args(app);
 
-  gnb_appconfig gnb_cfg;
+  gnb_parsed_appconfig gnb_parsed_cfg;
   // Configure CLI11 with the gNB application configuration schema.
-  configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
+  configure_cli11_with_gnb_appconfig_schema(app, gnb_parsed_cfg);
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
+
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
 
   // Derive the parameters that were set to be derived automatically.
   derive_auto_params(gnb_cfg);
@@ -472,10 +474,6 @@ int main(int argc, char** argv)
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
   cu_up_cfg.gtpu_pcap                              = gtpu_p.get();
   cu_up_cfg.timers                                 = cu_timers;
-  cu_up_cfg.net_cfg.n3_bind_addr                   = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
-  cu_up_cfg.net_cfg.n3_rx_max_mmsg                 = gnb_cfg.amf_cfg.udp_rx_max_msgs;
-  cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start CU-UP
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);

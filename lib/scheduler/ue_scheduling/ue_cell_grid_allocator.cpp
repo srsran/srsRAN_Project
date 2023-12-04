@@ -68,7 +68,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active()) {
+  if (ue_cc == nullptr) {
     logger.warning("PDSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
@@ -80,6 +80,14 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   const bwp_downlink_common&   init_dl_bwp = *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common;
   const bwp_downlink_common&   bwp_dl_cmn  = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).dl_common;
   dl_harq_process&             h_dl        = ue_cc->harqs.dl_harq(grant.h_id);
+
+  if (not ue_cc->is_active() and h_dl.empty()) {
+    // newTxs are not allowed for inactive UEs.
+    logger.warning("PDSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
+                   u.ue_index,
+                   grant.cell_index);
+    return alloc_outcome::skip_ue;
+  }
 
   // Find a SearchSpace candidate.
   const search_space_info* ss_info = ue_cell_cfg.find_search_space(grant.ss_id);
@@ -436,7 +444,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active()) {
+  if (ue_cc == nullptr) {
     logger.warning("PUSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
@@ -446,6 +454,14 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
+
+  if (not ue_cc->is_active() and h_ul.empty()) {
+    // newTxs are not allowed for inactive UEs.
+    logger.warning("PUSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
+                   u.ue_index,
+                   grant.cell_index);
+    return alloc_outcome::skip_ue;
+  }
 
   // Find a SearchSpace candidate.
   const search_space_info* ss_info = ue_cell_cfg.find_search_space(grant.ss_id);

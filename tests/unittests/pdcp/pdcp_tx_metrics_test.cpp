@@ -48,7 +48,7 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     // Write SDU
     byte_buffer sdu = {sdu1};
     pdcp_tx->handle_sdu(std::move(sdu));
-    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
+    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
 
     uint32_t exp_sdu_size = 2;
     auto     m            = pdcp_tx->get_metrics();
@@ -79,16 +79,17 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_metrics_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

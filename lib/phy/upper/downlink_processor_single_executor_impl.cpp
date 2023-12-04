@@ -23,6 +23,7 @@
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
@@ -35,7 +36,8 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
     std::unique_ptr<pdsch_processor>      pdsch_proc_,
     std::unique_ptr<ssb_processor>        ssb_proc_,
     std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
-    task_executor&                        executor_) :
+    task_executor&                        executor_,
+    srslog::basic_logger&                 logger_) :
   gateway(gateway_),
   current_grid(nullptr),
   pdcch_proc(std::move(pdcch_proc_)),
@@ -43,6 +45,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   ssb_proc(std::move(ssb_proc_)),
   csi_rs_proc(std::move(csi_rs_proc_)),
   executor(executor_),
+  logger(logger_),
   pdsch_notifier(*this)
 {
   srsran_assert(pdcch_proc, "Invalid PDCCH processor received.");
@@ -51,14 +54,16 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   srsran_assert(csi_rs_proc, "Invalid CSI-RS processor received.");
 }
 
-bool downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
+void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
 {
   {
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
     if (!state.is_processing()) {
-      return false;
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring PDCCH: {:s}", pdu);
+      return;
     }
 
     // Increase the pending task counter.
@@ -81,12 +86,12 @@ bool downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   if (!enqueued) {
     // Report task drop to FSM.
     on_task_completion();
-    return false;
+
+    logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Failed to process PDCCH: {:s}", pdu);
   }
-  return true;
 }
 
-bool downlink_processor_single_executor_impl::process_pdsch(
+void downlink_processor_single_executor_impl::process_pdsch(
     unique_tx_buffer                                                                     softbuffer,
     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
     const pdsch_processor::pdu_t&                                                        pdu)
@@ -96,7 +101,9 @@ bool downlink_processor_single_executor_impl::process_pdsch(
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
     if (!state.is_processing()) {
-      return false;
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring PDSCH: {:s}", pdu);
+      return;
     }
 
     // Increase the pending task counter.
@@ -111,7 +118,7 @@ bool downlink_processor_single_executor_impl::process_pdsch(
       pdsch_proc->process(mapper, std::move(sb), pdsch_notifier, data, pdu);
     } else {
       // Inform about the dropped PDSCH.
-      srslog::fetch_basic_logger("PHY").warning("Failed to execute. Dropping PDSCH {:s}.", pdu);
+      logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Resource grid not configured. Ignoring PDSCH {:s}.", pdu);
 
       // Report task drop to FSM.
       on_task_completion();
@@ -122,19 +129,21 @@ bool downlink_processor_single_executor_impl::process_pdsch(
   if (!enqueued) {
     // Report task drop to FSM.
     on_task_completion();
-    return false;
+
+    logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Failed to process PDSCH: {:s}", pdu);
   }
-  return true;
 }
 
-bool downlink_processor_single_executor_impl::process_ssb(const ssb_processor::pdu_t& pdu)
+void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::pdu_t& pdu)
 {
   {
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
     if (!state.is_processing()) {
-      return false;
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring SSB: {:s}", pdu);
+      return;
     }
 
     // Increase the pending task counter.
@@ -156,19 +165,23 @@ bool downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   if (!enqueued) {
     // Report task drop to FSM.
     on_task_completion();
-    return false;
+
+    logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Failed to process SSB: {:s}", pdu);
   }
-  return true;
 }
 
-bool downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
+void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
 {
   {
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
     if (!state.is_processing()) {
-      return false;
+      logger.warning(config.slot.sfn(),
+                     config.slot.slot_index(),
+                     "Invalid downlink processor state. Ignoring NZP-CSI-RS: {:s}",
+                     config);
+      return;
     }
 
     // Increase the pending task counter.
@@ -191,9 +204,9 @@ bool downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   if (!enqueued) {
     // Report task drop to FSM.
     on_task_completion();
-    return false;
+
+    logger.warning(config.slot.sfn(), config.slot.slot_index(), "Failed to process NZP-CSI-RS: {:s}", config);
   }
-  return true;
 }
 
 bool downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,

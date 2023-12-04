@@ -116,11 +116,7 @@ public:
   /// \brief Resize buffer.
   /// \param[in] new_nof_samples Indicates the new number of samples per channel.
   /// \note The new number of samples must be greater than 0 and must not exceed the maximum number of samples.
-  void resize(unsigned new_nof_samples)
-  {
-    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
-    data.resize({new_nof_samples, get_nof_channels()});
-  }
+  void resize(unsigned new_nof_samples) { data.resize({new_nof_samples, get_nof_channels()}); }
 
   /// \brief Default constructor.
   /// \param[in] nof_channels_ Indicates the number of channels to create.

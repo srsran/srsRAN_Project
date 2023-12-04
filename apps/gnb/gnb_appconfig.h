@@ -122,7 +122,7 @@ struct pdcch_common_appconfig {
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
   /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
-  uint8_t max_coreset0_duration = 2;
+  optional<uint8_t> max_coreset0_duration;
 };
 
 /// PDCCH Dedicated configuration.
@@ -192,7 +192,7 @@ struct pdsch_appconfig {
   ///
   /// The numerology of the active DL BWP is used as a reference to determine the number of subcarriers.
   /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active DL BWP.
-  optional<dc_offset_t> dc_offset;
+  dc_offset_t dc_offset{dc_offset_t::center};
   /// Link Adaptation (LA) threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are
   /// cancelled.
   uint8_t harq_la_cqi_drop_threshold{3};
@@ -367,7 +367,7 @@ struct sib_appconfig {
     unsigned n310 = 1;
     /// t311
     /// Values (in ms): {1000, 3000, 5000, 10000, 15000, 20000, 30000}
-    unsigned t311 = 30000;
+    unsigned t311 = 3000;
     /// n311
     /// Values: {1, 2, 3, 4, 5, 6, 8, 10}
     unsigned n311 = 1;
@@ -388,6 +388,8 @@ struct sib_appconfig {
 };
 
 struct csi_appconfig {
+  /// \brief Enable CSI-RS and CSI reporting in the cell.
+  bool csi_rs_enabled = true;
   /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
   unsigned csi_rs_period_msec = 20;
   /// \brief Slot offset for measurement CSI-RS resources. If not set, it is automatically derived to avoid collisions
@@ -615,6 +617,8 @@ struct amf_appconfig {
   std::string ip_addr                = "127.0.0.1";
   uint16_t    port                   = 38412;
   std::string bind_addr              = "127.0.0.1";
+  std::string n2_bind_addr           = "auto";
+  std::string n3_bind_addr           = "auto";
   int         sctp_rto_initial       = 120;
   int         sctp_rto_min           = 120;
   int         sctp_rto_max           = 500;
@@ -854,6 +858,31 @@ struct test_mode_appconfig {
 struct ru_sdr_expert_appconfig {
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
   float lphy_dl_throttling = 0.0F;
+  /// \brief Enables discontinuous transmission mode for the radio front-ends supporting it.
+  ///
+  /// Discontinuous Transmission (DTX) is a power-saving technique used in radio communication where the transmitter is
+  /// turned off during periods of silence or when no data needs to be transmitted. This flag allows the user to
+  /// activate DTX for radio front-ends that support this transmission mode.
+  ///
+  /// When DTX is enabled, the radio transmitter intelligently manages its transmission state, reducing power
+  /// consumption during idle or silent periods. This is particularly beneficial in scenarios where power efficiency is
+  /// a critical consideration, such as battery-operated devices.
+  bool discontinuous_tx_mode = false;
+  /// \brief Power ramping time of the transmit chain in microseconds.
+  ///
+  /// This parameter represents the duration, in microseconds, required for the transmit chain to reach its full power
+  /// level.
+  ///
+  /// In discontinuous transmission mode, the transmitter is powered on ahead of the actual data transmission. By doing
+  /// so, the data-carrying samples remain unaffected by any transient effects or fluctuations in the transmit chain
+  /// during the power ramping time. The maximum supported power ramping time is equivalent to the duration of two NR
+  /// slots.
+  ///
+  /// \note It is recommended to configure this parameter carefully, taking into account the characteristics of the
+  /// transmit chain in order to achieve optimal performance.
+  /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
+  /// window for the radio to transmit the provided samples.
+  float power_ramping_time_us = 0.0F;
 };
 
 /// gNB app SDR Radio Unit cell configuration.
@@ -1140,11 +1169,6 @@ struct gnb_appconfig {
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
   variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
-  /// \brief Base cell application configuration.
-  ///
-  /// \note When a cell is added, it will use the values of this base cell as default values for its base cell
-  /// configuration. This parameter usage is restricted for filling cell information in the \remark cell_cfg variable.
-  base_cell_appconfig common_cell_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
@@ -1176,6 +1200,19 @@ struct gnb_appconfig {
 
   /// \brief HAL configuration.
   optional<hal_appconfig> hal_config;
+};
+
+/// \brief Monolithic gnb parsed application configuration.
+///
+/// Parsed configuration includes the common cell support.
+struct gnb_parsed_appconfig {
+  /// gNB application configuration.
+  gnb_appconfig config;
+  /// \brief Base cell application configuration.
+  ///
+  /// \note When a cell is added, it will use the values of this base cell as default values for its base cell
+  /// configuration. This parameter usage is restricted for filling cell information in the \remark cell_cfg variable.
+  base_cell_appconfig common_cell_cfg;
 };
 
 } // namespace srsran

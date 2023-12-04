@@ -109,9 +109,17 @@ private:
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
   static const bool rx_window_changed = true;
 
-  /// Cached status report
-  rlc_am_status_pdu status_report;
-  /// Cached status report size
+  /// Pre-allocated status reports for (re)-building, caching, and sharing with TX entity
+  std::array<rlc_am_status_pdu, 3> status_buf;
+
+  /// Status report for (re)-building
+  rlc_am_status_pdu* status_builder = &status_buf[0];
+  /// Status report for caching
+  rlc_am_status_pdu* status_cached = &status_buf[1];
+  /// Status report for sharing
+  rlc_am_status_pdu* status_shared = &status_buf[2];
+
+  /// Size of the cached status report
   std::atomic<uint32_t> status_report_size;
   std::atomic<bool>     status_prohibit_timer_is_running{false};
 
@@ -152,10 +160,10 @@ public:
   // Interfaces for lower layers
   void handle_pdu(byte_buffer_slice buf) override;
 
-  // Status provider for Rx entity
-  rlc_am_status_pdu get_status_pdu() override;
-  uint32_t          get_status_pdu_length() override;
-  bool              status_report_required() override;
+  // Status provider for Tx entity
+  rlc_am_status_pdu& get_status_pdu() override;
+  uint32_t           get_status_pdu_length() override;
+  bool               status_report_required() override;
 
   /// Inform the Tx entity that a status report is triggered (whenever do_status is set to true and t-statusProhibit is
   /// not running), or its size has changed (e.g. further PDUs have been received)
@@ -268,8 +276,8 @@ private:
   /// and resets the rx_window_changed flag
   void refresh_status_report();
 
-  /// Replaces the cached status_report with a new version
-  void store_status_report(rlc_am_status_pdu&& status);
+  /// Swaps the cached status_report with the newly built version
+  void store_status_report();
 
   void on_expired_status_prohibit_timer();
 

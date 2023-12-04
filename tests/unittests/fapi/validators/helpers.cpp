@@ -391,6 +391,62 @@ error_indication_message unittest::build_valid_out_of_sync_error_indication()
   return msg;
 }
 
+error_indication_message unittest::build_valid_invalid_sfn_error_indication()
+{
+  error_indication_message msg;
+  msg.message_type  = message_type_id::error_indication;
+  msg.slot          = generate_slot();
+  msg.sfn           = generate_sfn();
+  msg.message_id    = message_type_id::ul_dci_request;
+  msg.error_code    = error_code_id::msg_invalid_sfn;
+  msg.expected_sfn  = std::numeric_limits<decltype(error_indication_message::expected_sfn)>::max();
+  msg.expected_slot = std::numeric_limits<decltype(error_indication_message::expected_slot)>::max();
+
+  return msg;
+}
+
+error_indication_message unittest::build_valid_msg_slot_error_indication()
+{
+  error_indication_message msg;
+  msg.message_type  = message_type_id::error_indication;
+  msg.slot          = generate_slot();
+  msg.sfn           = generate_sfn();
+  msg.message_id    = message_type_id::dl_tti_request;
+  msg.error_code    = error_code_id::msg_slot_err;
+  msg.expected_sfn  = std::numeric_limits<decltype(error_indication_message::expected_sfn)>::max();
+  msg.expected_slot = std::numeric_limits<decltype(error_indication_message::expected_slot)>::max();
+
+  return msg;
+}
+
+error_indication_message unittest::build_valid_tx_err_error_indication()
+{
+  error_indication_message msg;
+  msg.message_type  = message_type_id::error_indication;
+  msg.slot          = generate_slot();
+  msg.sfn           = generate_sfn();
+  msg.message_id    = message_type_id::tx_data_request;
+  msg.error_code    = error_code_id::msg_tx_err;
+  msg.expected_sfn  = std::numeric_limits<decltype(error_indication_message::expected_sfn)>::max();
+  msg.expected_slot = std::numeric_limits<decltype(error_indication_message::expected_slot)>::max();
+
+  return msg;
+}
+
+error_indication_message unittest::build_valid_ul_dci_err_error_indication()
+{
+  error_indication_message msg;
+  msg.message_type  = message_type_id::error_indication;
+  msg.slot          = generate_slot();
+  msg.sfn           = generate_sfn();
+  msg.message_id    = message_type_id::ul_dci_request;
+  msg.error_code    = error_code_id::msg_ul_dci_err;
+  msg.expected_sfn  = std::numeric_limits<decltype(error_indication_message::expected_sfn)>::max();
+  msg.expected_slot = std::numeric_limits<decltype(error_indication_message::expected_slot)>::max();
+
+  return msg;
+}
+
 rx_data_indication_message unittest::build_valid_rx_data_indication()
 {
   rx_data_indication_message msg;

@@ -26,6 +26,7 @@
 #include "radio_uhd_multi_usrp.h"
 #include "radio_uhd_tx_stream_fsm.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
@@ -61,6 +62,14 @@ private:
   unsigned nof_channels;
   /// Indicates the current internal state.
   radio_uhd_tx_stream_fsm state_fsm;
+  /// Discontinous transmission mode flag.
+  bool discontinuous_tx;
+  /// Number of samples to advance the burst start to protect agains power ramping effects.
+  unsigned power_ramping_nof_samples;
+  /// Stores the time of the last transmitted sample.
+  uhd::time_spec_t last_tx_timespec;
+  /// Power ramping transmit buffer. It is filled with zeros, used to absorb power ramping when starting a transmission.
+  baseband_gateway_buffer_dynamic power_ramping_buffer;
 
   /// Receive asynchronous message.
   void recv_async_msg();
@@ -72,12 +81,12 @@ private:
   /// \param[out] nof_txd_samples Number of transmitted samples.
   /// \param[in] data             Buffer to transmit.
   /// \param[in] offset           Sample offset in the transmit buffers.
-  /// \param[in] time_spec        Transmission timestamp.
+  /// \param[in] md               Transmission metadata.
   /// \return True if no exception is caught in the transmission process, false otherwise.
   bool transmit_block(unsigned&                             nof_txd_samples,
                       const baseband_gateway_buffer_reader& data,
                       unsigned                              offset,
-                      uhd::time_spec_t&                     time_spec);
+                      const uhd::tx_metadata_t&             md);
 
 public:
   /// Describes the necessary parameters to create an UHD transmit stream.
@@ -92,6 +101,10 @@ public:
     std::string args;
     /// Indicates the port indexes for the stream.
     std::vector<size_t> ports;
+    /// Enables discontinuous transmission mode.
+    bool discontiuous_tx;
+    /// Time by which to advance the burst start, using zero padding to protect against power ramping.
+    float power_ramping_us;
   };
 
   /// \brief Constructs an UHD transmit stream.
@@ -108,7 +121,8 @@ public:
   unsigned get_buffer_size() const;
 
   // See interface for documentation.
-  void transmit(const baseband_gateway_buffer_reader& data, const metadata& metadata) override;
+  void transmit(const baseband_gateway_buffer_reader&        data,
+                const baseband_gateway_transmitter_metadata& metadata) override;
 
   /// Stop the transmission.
   void stop();

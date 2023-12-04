@@ -224,7 +224,13 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
+  app.add_option("--bind_addr",
+                 amf_params.bind_addr,
+                 "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
   app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
@@ -1160,6 +1166,8 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
 
 static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
 {
+  app.add_option("--csi_rs_enabled", csi_params.csi_rs_enabled, "Enable CSI-RS resources and CSI reporting")
+      ->capture_default_str();
   app.add_option("--csi_rs_period", csi_params.csi_rs_period_msec, "CSI-RS period in milliseconds")
       ->capture_default_str()
       ->check(CLI::IsMember({10, 20, 40, 80}));
@@ -1572,6 +1580,15 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
   app.add_option("--low_phy_dl_throttling",
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
+      ->capture_default_str();
+  app.add_option("--discontinuous_tx",
+                 config.discontinuous_tx_mode,
+                 "Enables discontinuous transmission mode for the radio front-ends supporting it.")
+      ->capture_default_str();
+  app.add_option("--power_ramping_time_us",
+                 config.power_ramping_time_us,
+                 "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
+                 "mitigates transient effects.")
       ->capture_default_str();
 }
 
@@ -2203,8 +2220,9 @@ static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
-void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
+void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
   app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
@@ -2257,11 +2275,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
-  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
+  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_parsed_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
-  common_cell_subcmd->parse_complete_callback([&gnb_cfg, &app]() {
-    for (auto& cell : gnb_cfg.cells_cfg) {
-      cell.cell = gnb_cfg.common_cell_cfg;
+  common_cell_subcmd->parse_complete_callback([&gnb_parsed_cfg, &app]() {
+    for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+      cell.cell = gnb_parsed_cfg.common_cell_cfg;
     };
     // Run the callback again for the cells if the option callback is already run once.
     if (app.get_option("--cells")->get_callback_run()) {
@@ -2272,11 +2290,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
-      [&gnb_cfg](const std::vector<std::string>& values) {
+      [&gnb_parsed_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        gnb_cfg.cells_cfg.resize(values.size());
-        for (auto& cell : gnb_cfg.cells_cfg) {
-          cell.cell = gnb_cfg.common_cell_cfg;
+        gnb_parsed_cfg.config.cells_cfg.resize(values.size());
+        for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+          cell.cell = gnb_parsed_cfg.common_cell_cfg;
         }
 
         // Format every cell.
@@ -2284,7 +2302,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
           CLI::App subapp("srsGNB application");
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_cells_args(subapp, gnb_cfg.cells_cfg[i]);
+          configure_cli11_cells_args(subapp, gnb_parsed_cfg.config.cells_cfg[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }

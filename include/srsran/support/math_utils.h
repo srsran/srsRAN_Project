@@ -126,7 +126,7 @@ inline float convert_power_to_dB(float value)
 /// \remark Only works for prime numbers not larger than 3299.
 unsigned prime_greater_than(unsigned n);
 
-/// \brief Finds the biggest prime number lesser than \c n.
+/// \brief Finds the biggest prime number less than \c n.
 /// \remark Only works for prime numbers not larger than 3299.
 unsigned prime_lower_than(unsigned n);
 

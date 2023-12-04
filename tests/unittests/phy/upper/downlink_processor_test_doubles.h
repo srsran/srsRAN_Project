@@ -46,22 +46,17 @@ public:
   bool has_process_ssb_method_been_called() const { return process_ssb_method_called; }
   bool has_finish_processing_pdus_method_been_called() const { return finish_processing_pdus_method_called; }
 
-  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
+  void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
 
-  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
-    return true;
   }
 
-  bool process_ssb(const ssb_processor::pdu_t& pdu) override
-  {
-    process_ssb_method_called = true;
-    return true;
-  }
+  void process_ssb(const ssb_processor::pdu_t& pdu) override { process_ssb_method_called = true; }
 
-  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override { return true; }
+  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
 
   bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override
   {

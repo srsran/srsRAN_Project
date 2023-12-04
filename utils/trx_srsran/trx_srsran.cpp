@@ -226,8 +226,9 @@ static void trx_srsran_write2(TRXState*         s1,
   }
 
   // Prepare metadata.
-  baseband_gateway_transmitter::metadata metadata = {};
-  metadata.ts                                     = static_cast<baseband_gateway_timestamp>(timestamp);
+  baseband_gateway_transmitter_metadata metadata;
+  metadata.is_empty = false;
+  metadata.ts       = static_cast<baseband_gateway_timestamp>(timestamp);
 
   // Write metadata.
   md->cur_timestamp_set = 0;

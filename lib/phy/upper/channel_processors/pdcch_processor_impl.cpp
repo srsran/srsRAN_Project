@@ -77,23 +77,23 @@ void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_pro
   bounded_bitset<MAX_RB> rb_mask = compute_rb_mask(coreset, dci);
 
   // Populate PDCCH encoder configuration.
-  pdcch_encoder::config_t encoder_config = {};
-  encoder_config.E                       = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
-  encoder_config.rnti                    = dci.rnti;
+  pdcch_encoder::config_t encoder_config;
+  encoder_config.E    = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
+  encoder_config.rnti = dci.rnti;
 
   // Encode.
   span<uint8_t> encoded = span<uint8_t>(temp_encoded).first(nof_encoded_bits(dci.aggregation_level));
   encoder->encode(encoded, dci.payload, encoder_config);
 
   // Populate PDCCH modulator configuration.
-  pdcch_modulator::config_t modulator_config = {};
-  modulator_config.rb_mask                   = rb_mask;
-  modulator_config.start_symbol_index        = coreset.start_symbol_index;
-  modulator_config.duration                  = coreset.duration;
-  modulator_config.n_id                      = dci.n_id_pdcch_data;
-  modulator_config.n_rnti                    = dci.n_rnti;
-  modulator_config.scaling                   = convert_dB_to_amplitude(dci.data_power_offset_dB);
-  modulator_config.precoding                 = dci.precoding;
+  pdcch_modulator::config_t modulator_config;
+  modulator_config.rb_mask            = rb_mask;
+  modulator_config.start_symbol_index = coreset.start_symbol_index;
+  modulator_config.duration           = coreset.duration;
+  modulator_config.n_id               = dci.n_id_pdcch_data;
+  modulator_config.n_rnti             = dci.n_rnti;
+  modulator_config.scaling            = convert_dB_to_amplitude(dci.data_power_offset_dB);
+  modulator_config.precoding          = dci.precoding;
 
   // Modulate.
   modulator->modulate(mapper, encoded, modulator_config);
@@ -102,16 +102,16 @@ void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_pro
       coreset.cce_to_reg_mapping == cce_to_reg_mapping_type::CORESET0 ? coreset.bwp_start_rb : 0;
 
   // Populate DMRS for PDCCH configuration.
-  dmrs_pdcch_processor::config_t dmrs_pdcch_config = {};
-  dmrs_pdcch_config.slot                           = pdu.slot;
-  dmrs_pdcch_config.cp                             = pdu.cp;
-  dmrs_pdcch_config.reference_point_k_rb           = reference_point_k_rb;
-  dmrs_pdcch_config.rb_mask                        = rb_mask;
-  dmrs_pdcch_config.start_symbol_index             = coreset.start_symbol_index;
-  dmrs_pdcch_config.duration                       = coreset.duration;
-  dmrs_pdcch_config.n_id                           = dci.n_id_pdcch_dmrs;
-  dmrs_pdcch_config.amplitude                      = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
-  dmrs_pdcch_config.precoding                      = dci.precoding;
+  dmrs_pdcch_processor::config_t dmrs_pdcch_config;
+  dmrs_pdcch_config.slot                 = pdu.slot;
+  dmrs_pdcch_config.cp                   = pdu.cp;
+  dmrs_pdcch_config.reference_point_k_rb = reference_point_k_rb;
+  dmrs_pdcch_config.rb_mask              = rb_mask;
+  dmrs_pdcch_config.start_symbol_index   = coreset.start_symbol_index;
+  dmrs_pdcch_config.duration             = coreset.duration;
+  dmrs_pdcch_config.n_id                 = dci.n_id_pdcch_dmrs;
+  dmrs_pdcch_config.amplitude            = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
+  dmrs_pdcch_config.precoding            = dci.precoding;
 
   // Generate DMRS.
   dmrs->map(mapper, dmrs_pdcch_config);

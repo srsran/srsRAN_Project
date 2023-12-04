@@ -29,6 +29,7 @@ namespace fapi {
 
 struct crc_indication_message;
 struct dl_tti_request_message;
+struct error_indication_message;
 struct rach_indication_message;
 struct rx_data_indication_message;
 struct tx_data_request_message;
@@ -36,6 +37,9 @@ struct slot_indication_message;
 struct uci_indication_message;
 struct ul_dci_request_message;
 struct ul_tti_request_message;
+
+/// Logs the given Error.indication message in the given logger.
+void log_error_indication(const error_indication_message& msg, srslog::basic_logger& logger);
 
 /// Logs the given CRC.indication message in the given logger.
 void log_crc_indication(const crc_indication_message& msg, srslog::basic_logger& logger);

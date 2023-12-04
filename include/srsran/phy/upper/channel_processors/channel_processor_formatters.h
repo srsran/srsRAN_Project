@@ -244,11 +244,10 @@ struct formatter<srsran::prach_detection_result::preamble_indication> {
       -> decltype(std::declval<FormatContext>().out())
   {
     format_to(ctx.out(),
-              "{{idx={} ta={:.2f}us power={:+.1f}dB snr={:.1f}dB}}",
+              "{{idx={} ta={:.2f}us detection_metric={:.1f}}}",
               preamble.preamble_index,
               preamble.time_advance.to_seconds() * 1e6,
-              preamble.power_dB,
-              preamble.snr_dB);
+              preamble.detection_metric);
     return ctx.out();
   }
 };

@@ -24,6 +24,7 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/event_tracing.h"
 
 using namespace srsran;
 
@@ -132,7 +133,7 @@ void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
   }
 
   const worker_pool pool{
-      "non_rt_worker_pool",
+      "non_rt_pool",
       2,
       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
       executors,

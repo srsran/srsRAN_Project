@@ -27,6 +27,7 @@
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
@@ -56,6 +57,8 @@ public:
     prach_subcarrier_spacing ra_scs;
     /// Number of receive ports.
     unsigned nof_rx_ports;
+    /// Slot and numerology, for logging.
+    slot_point slot;
   };
 
   /// Default destructor.

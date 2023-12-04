@@ -64,9 +64,14 @@ public:
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
-  bool     is_active() const { return true; }
+
+  /// \brief Determines whether the UE cell is currently active.
+  bool is_active() const { return active; }
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
+
+  /// \brief Deactivates cell.
+  void deactivate();
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
   void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
@@ -152,6 +157,9 @@ private:
   sched_ue_resource_alloc_config ue_res_alloc_cfg;
   scheduler_ue_expert_config     expert_cfg;
   srslog::basic_logger&          logger;
+
+  /// \brief Whether cell is currently active.
+  bool active = true;
 
   /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
   /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must

@@ -43,22 +43,31 @@ public:
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
   {
     std::unique_lock<std::mutex> lock(mutex);
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Rx symbol {} received for sector {}", context.symbol, context.sector);
+    logger.debug(context.slot.sfn(),
+                 context.slot.slot_index(),
+                 "Rx symbol {} received for sector {}",
+                 context.symbol,
+                 context.sector);
   }
 
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
   {
     std::unique_lock<std::mutex> lock(mutex);
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("PRACH symbol {} received for sector {}", context.start_symbol, context.sector);
+    logger.debug(context.slot.sfn(),
+                 context.slot.slot_index(),
+                 "PRACH symbol {} received for sector {}",
+                 context.start_symbol,
+                 context.sector);
   }
 
   void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override
   {
     std::unique_lock<std::mutex> lock(mutex);
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("SRS symbol {} received for sector {}", context.symbol, context.sector);
+    logger.debug(context.slot.sfn(),
+                 context.slot.slot_index(),
+                 "SRS symbol {} received for sector {}",
+                 context.symbol,
+                 context.sector);
   }
 };
 

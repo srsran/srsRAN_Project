@@ -116,7 +116,8 @@ static bool port_init(const gw_config& config, ::rte_mempool* mbuf_pool, unsigne
 static void dpdk_port_configure(const gw_config& config, ::rte_mempool*& mbuf_pool)
 {
   if (::rte_eth_dev_count_avail() != 1) {
-    ::rte_exit(EXIT_FAILURE, "Error: number of ports must be one\n");
+    ::rte_exit(
+        EXIT_FAILURE, "Error: number of DPDK devices must be one but is currently %d\n", ::rte_eth_dev_count_avail());
   }
 
   // Creates a new mempool in memory to hold the mbufs.

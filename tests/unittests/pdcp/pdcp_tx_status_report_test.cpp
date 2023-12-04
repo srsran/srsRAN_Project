@@ -35,10 +35,10 @@ using namespace srsran;
 /// Test correct handling of PDCP status report
 TEST_P(pdcp_tx_status_report_test, handle_status_report)
 {
+  init(GetParam());
   auto test_with_count = [this](uint32_t tx_next) {
     // clear queue from previous runs
-    test_frame.sdu_discard_queue = {};
-    init(sn_size);
+    test_frame.sdu_discard_queue   = {};
     unsigned                n_sdus = 5;
     std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next, tx_next};
@@ -49,7 +49,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
       // Write SDU
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -131,8 +131,8 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
 /// \brief Test basic data recovery functionality
 TEST_P(pdcp_tx_status_report_test, data_recovery)
 {
+  init(GetParam());
   auto test_with_count = [this](uint32_t tx_next) {
-    init(sn_size);
     unsigned                n_sdus = 5;
     std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next, tx_next};
@@ -143,7 +143,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
       // Write SDU
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -194,16 +194,17 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_status_report_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

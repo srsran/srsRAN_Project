@@ -519,9 +519,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   if (!ue_ctxt_list.contains(amf_ue_id)) {
     // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
     // indication
-    logger.error("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
-                 ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
-                 amf_ue_id);
+    logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
+                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
+                   amf_ue_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
     return;
   }

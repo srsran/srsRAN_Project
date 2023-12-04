@@ -325,7 +325,7 @@ unit coverage:
     - job: intermediate commits
       optional: true
       artifacts: true
-    - job: smoke relwithdeb update cache
+    - job: smoke release update cache
       optional: true
       artifacts: true
 

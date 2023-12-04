@@ -391,6 +391,8 @@ static radio_configuration::radio create_radio_configuration()
   radio_config.clock.sync       = radio_configuration::to_clock_source(sync_source);
   radio_config.sampling_rate_hz = srate.to_Hz<double>();
   radio_config.otw_format       = otw_format;
+  radio_config.discontinuous_tx = false;
+  radio_config.power_ramping_us = 0.0F;
   radio_config.args             = device_arguments;
   radio_config.log_level        = log_level;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {

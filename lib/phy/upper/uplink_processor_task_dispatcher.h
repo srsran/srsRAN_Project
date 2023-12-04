@@ -60,8 +60,7 @@ public:
         [&notifier, &buffer, context, this]() { processor->process_prach(notifier, buffer, context); });
 
     if (!success) {
-      logger.set_context(context.slot.sfn(), context.slot.slot_index());
-      logger.warning("Failed to execute PRACH. Ignoring detection.");
+      logger.warning(context.slot.sfn(), context.slot.slot_index(), "Failed to execute PRACH. Ignoring detection.");
     }
   }
 
@@ -78,8 +77,7 @@ public:
         });
 
     if (!success) {
-      logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-      logger.warning("Failed to execute PUSCH. Ignoring processing.");
+      logger.warning(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
     }
   }
 
@@ -91,8 +89,8 @@ public:
     bool success =
         pucch_executor.execute([&notifier, &grid, pdu, this]() { processor->process_pucch(notifier, grid, pdu); });
     if (!success) {
-      logger.set_context(pdu.context.slot.sfn(), pdu.context.slot.slot_index());
-      logger.warning("Failed to execute PUCCH. Ignoring processing.");
+      logger.warning(
+          pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
     }
   }
 

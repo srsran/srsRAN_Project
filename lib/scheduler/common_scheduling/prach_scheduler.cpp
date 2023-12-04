@@ -133,15 +133,15 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
     // If called for the first time, pre-allocates the PRACH PDUs over the entire grid, until the last
     // (farthest in the future) usable slot.
     first_slot_ind = false;
-    // NOTE: Min value of cell_resource_allocator::RING_ALLOCATOR_SIZE is 20, max value of prach_length_slots is 7.
-    for (unsigned sl = 0; sl < (cell_resource_allocator::RING_ALLOCATOR_SIZE - prach_length_slots + 1); ++sl) {
+    // NOTE: Min value of cell_resource_allocator.max_ul_slot_alloc_delay is 20, max value of prach_length_slots is 7.
+    for (unsigned sl = 0; sl < (res_grid.max_ul_slot_alloc_delay - prach_length_slots + 1); ++sl) {
       allocate_slot_prach_pdus(res_grid, res_grid[sl].slot);
     }
     return;
   }
 
   // Pre-allocate PRACH PDU in the last slot.
-  allocate_slot_prach_pdus(res_grid, res_grid[cell_resource_allocator::RING_ALLOCATOR_SIZE - prach_length_slots].slot);
+  allocate_slot_prach_pdus(res_grid, res_grid[res_grid.max_ul_slot_alloc_delay - prach_length_slots].slot);
 }
 
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)

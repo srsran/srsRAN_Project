@@ -176,10 +176,10 @@ TEST_P(PrachDetectorFixture, FromVector)
                 preamble_indication.time_advance.to_seconds(),
                 result.time_resolution.to_seconds());
 
-    // Allow a 1% difference between expected and measured SNR.
-    ASSERT_NEAR(expected_result.preambles.front().snr_dB,
-                preamble_indication.snr_dB,
-                std::abs(preamble_indication.snr_dB) / 100);
+    // Allow a 1% difference between expected and measured detection metric.
+    ASSERT_NEAR(expected_result.preambles.front().detection_metric,
+                preamble_indication.detection_metric,
+                std::abs(preamble_indication.detection_metric) / 100);
 
     // Allow a 1% difference between expected and measured RSSI.
     ASSERT_NEAR(expected_result.rssi_dB, result.rssi_dB, std::abs(result.rssi_dB) / 100);

@@ -35,6 +35,8 @@ using namespace srsran;
 struct pdcp_gen_helper_args {
   std::string sn_size = {};
   uint32_t    count   = {};
+  unsigned    algo    = 1;
+  unsigned    rb_type = 0;
 };
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
@@ -58,6 +60,7 @@ bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
   static const struct option long_options[] = {{"help", no_argument, nullptr, 'h'},
                                                {"sn_size", required_argument, nullptr, 's'},
                                                {"count", required_argument, nullptr, 'c'},
+                                               {"algo", required_argument, nullptr, 'a'},
                                                {nullptr, 0, nullptr, 0}};
 
   static const char usage[] = "Usage: pdcp_gen_helper [options]\n"
@@ -65,11 +68,13 @@ bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
                               "  -h, --help                 Show help message and quit.\n"
                               "  -s, --sn_size <SN size>    Specify 12bit, or 18bit\n"
                               "  -c, --count <COUNT>        Specify COUNT of PDU to generate\n"
+                              "  -a, --algo <algo>          Specify ciphering and integrity algorithm\n"
+                              "  -r, --rb_type <rb_type>    Specify RB type. 0 means SRB, 1 DRB\n"
                               "\n";
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hs:c:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hs:c:a:r:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -85,6 +90,14 @@ bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
       case 'c':
         args.count = strtod(optarg, nullptr);
         fprintf(stdout, "PDCP COUNT %u\n", args.count);
+        break;
+      case 'a':
+        args.algo = strtod(optarg, nullptr);
+        fprintf(stdout, "PDCP NIA%u/NEA%u\n", args.algo, args.algo);
+        break;
+      case 'r':
+        args.rb_type = strtod(optarg, nullptr);
+        fprintf(stdout, "PDCP %s\n", args.rb_type == 0 ? "SRB" : "DRB");
         break;
       default:
         fprintf(stderr, "error parsing arguments\n");
@@ -111,26 +124,28 @@ int main(int argc, char** argv)
   manual_task_worker worker{64};
 
   // Set TX config
-  pdcp_tx_config config         = {};
-  config.rb_type                = pdcp_rb_type::drb;
-  config.rlc_mode               = pdcp_rlc_mode::am;
-  config.sn_size                = sn_size;
-  config.direction              = pdcp_security_direction::downlink;
-  config.discard_timer          = pdcp_discard_timer::ms10;
+  pdcp_tx_config config = {};
+  config.rb_type        = args.rb_type == 0 ? pdcp_rb_type::srb : pdcp_rb_type::drb;
+  config.rlc_mode       = pdcp_rlc_mode::am;
+  config.sn_size        = sn_size;
+  config.direction      = pdcp_security_direction::downlink;
+  if (args.rb_type == 1) {
+    config.discard_timer = pdcp_discard_timer::ms10;
+  }
   config.status_report_required = false;
 
   security::sec_128_as_config sec_cfg = {};
 
   // Set security domain
-  sec_cfg.domain = security::sec_domain::up; // DRB
+  sec_cfg.domain = args.rb_type == 0 ? security::sec_domain::rrc : security::sec_domain::up;
 
   // Set security keys
   sec_cfg.k_128_int = k_128_int;
   sec_cfg.k_128_enc = k_128_enc;
 
   // Set encription/integrity algorithms
-  sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
-  sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
+  sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(args.algo);
+  sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(args.algo);
 
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities

@@ -104,11 +104,13 @@ bool ofh_uplane_fragment_size_calculator::calculate_fragment_size(unsigned& frag
 
 unsigned
 ofh_uplane_fragment_size_calculator::calculate_nof_segments(units::bytes                              frame_size,
-                                                            unsigned int                              nof_prbs,
+                                                            unsigned                                  nof_prbs,
                                                             const srsran::ofh::ru_compression_params& comp_params,
                                                             units::bytes                              headers_size)
 {
-  units::bytes grid_symbol_size = get_prb_data_size(comp_params) * nof_prbs;
-  units::bytes frame_size_data  = frame_size - headers_size;
-  return std::ceil(static_cast<float>(grid_symbol_size.value()) / frame_size_data.value());
+  units::bytes prb_size              = get_prb_data_size(comp_params);
+  units::bytes frame_size_data       = frame_size - headers_size;
+  unsigned     nof_prbs_fit_in_frame = frame_size_data.value() / prb_size.value();
+
+  return std::ceil(static_cast<float>(nof_prbs) / nof_prbs_fit_in_frame);
 }

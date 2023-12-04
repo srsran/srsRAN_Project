@@ -128,16 +128,15 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
-  downlink_processor.process(dl_buffer->get_writer(), timestamp);
+  baseband_gateway_transmitter_metadata baseband_md = downlink_processor.process(dl_buffer->get_writer(), timestamp);
+
+  // Set transmission timestamp.
+  baseband_md.ts = timestamp + tx_time_offset;
 
   // Enqueue transmission.
-  report_fatal_error_if_not(tx_executor.execute([this, timestamp, tx_buffer = std::move(dl_buffer)]() mutable {
-    // Prepare transmit metadata.
-    baseband_gateway_transmitter::metadata tx_metadata;
-    tx_metadata.ts = timestamp + tx_time_offset;
-
+  report_fatal_error_if_not(tx_executor.execute([this, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
     // Transmit buffer.
-    transmitter.transmit(tx_buffer->get_reader(), tx_metadata);
+    transmitter.transmit(tx_buffer->get_reader(), baseband_md);
 
     // Return transmit buffer to the queue.
     tx_buffers.push_blocking(std::move(tx_buffer));

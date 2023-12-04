@@ -234,7 +234,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
-  srsran_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty() ||
+  srsran_assert(!dl_data.si_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty() ||
                     !dl_data.paging_pdus.empty(),
                 "Received a mac_dl_data_result object with zero payloads");
 
@@ -247,7 +247,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   unsigned fapi_index = 0;
 
   // Add SIB1 PDUs to the Tx_Data.request message.
-  for (const auto& pdu : dl_data.sib1_pdus) {
+  for (const auto& pdu : dl_data.si_pdus) {
     builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
     if (pdu.cw_index == 0) {
       ++fapi_index;

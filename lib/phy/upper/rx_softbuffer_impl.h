@@ -31,7 +31,7 @@
 
 namespace srsran {
 
-enum class rx_softbuffer_status { successful = 0, already_in_use, insuficient_cb };
+enum class rx_softbuffer_status { successful = 0, already_in_use, insufficient_cb };
 
 constexpr const char* to_string(rx_softbuffer_status status)
 {
@@ -41,7 +41,7 @@ constexpr const char* to_string(rx_softbuffer_status status)
       return "successful";
     case rx_softbuffer_status::already_in_use:
       return "HARQ already in use";
-    case rx_softbuffer_status::insuficient_cb:
+    case rx_softbuffer_status::insufficient_cb:
       return "insufficient CBs";
   }
 }
@@ -80,7 +80,7 @@ private:
   /// Current softbuffer state.
   state current_state = state::available;
   /// Reservation identifier.
-  rx_softbuffer_identifier reservation_id = {};
+  rx_softbuffer_identifier reservation_id = rx_softbuffer_identifier::unknown();
   /// Indicates the slot the softbuffer will expire at.
   slot_point reservation_expire_slot;
   /// Reference to the codeblock pool.
@@ -125,7 +125,7 @@ public:
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
   /// \return True if the reservation is successful, false otherwise.
   rx_softbuffer_status
-  reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
+  reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned nof_codeblocks)
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
 
@@ -134,37 +134,48 @@ public:
       return rx_softbuffer_status::already_in_use;
     }
 
+    // Reset CRCs if one of the following conditions holds:
+    // - The reservation identifier changed;
+    // - The buffer is available; or
+    // - The number of codeblocks changed.
+    bool reset_crc = (reservation_id != id) || (current_state == state::available) || (crc.size() != nof_codeblocks);
+
     // Update reservation information.
     reservation_id          = id;
     reservation_expire_slot = expire_slot;
 
-    // If the number of codeblocks match, skip the rest.
-    if (nof_codeblocks == codeblock_ids.size()) {
-      // Transitions to reserved if it is available or released.
-      current_state = state::reserved;
-      return rx_softbuffer_status::successful;
+    // If the current number of codeblocks is larger than required, free the excess of codeblocks.
+    while (codeblock_ids.size() > nof_codeblocks) {
+      // Get the codeblock identifier at the back and remove from the list.
+      unsigned cb_id = codeblock_ids.back();
+      codeblock_ids.pop_back();
+
+      // Free the codeblock.
+      codeblock_pool.free(cb_id);
     }
 
-    // Make sure there are no buffers before reserving.
-    free();
+    // If the current number of codeblocks is less than required, reserve the remaining codeblocks.
+    while (codeblock_ids.size() < nof_codeblocks) {
+      // Reserve codeblock.
+      unsigned cb_id = codeblock_pool.reserve();
+
+      // Make sure the CB identifier is valid.
+      if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
+        // Free the rest of the buffer.
+        free();
+        return rx_softbuffer_status::insufficient_cb;
+      }
+
+      // Append the codeblock identifier to the list.
+      codeblock_ids.push_back(cb_id);
+    }
 
     // Resize CRCs.
     crc.resize(nof_codeblocks);
 
-    // Resize codeblocks with codeblock unreserved identifier.
-    codeblock_ids.resize(nof_codeblocks, static_cast<unsigned>(rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID));
-
-    // Reserve codeblocks.
-    for (unsigned& cb_id : codeblock_ids) {
-      // Reserve codeblock.
-      cb_id = codeblock_pool.reserve();
-
-      // Make sure the CB identifier is valid.
-      if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
-        // Free the rest of the softbuffer.
-        free();
-        return rx_softbuffer_status::insuficient_cb;
-      }
+    // Reset CRCs if necessary.
+    if (reset_crc) {
+      reset_codeblocks_crc();
     }
 
     // Transition to reserved.

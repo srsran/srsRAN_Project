@@ -24,3 +24,6 @@ include_directories(../../..)
 
 add_executable(rlc_handle_status_report rlc_handle_status_report.cpp)
 target_link_libraries(rlc_handle_status_report srsran_rlc srslog)
+
+add_executable(rlc_am_rx_benchmark rlc_am_rx_benchmark.cpp)
+target_link_libraries(rlc_am_rx_benchmark srsran_rlc srslog)

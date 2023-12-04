@@ -553,7 +553,7 @@ INSTANTIATE_TEST_SUITE_P(
             band_helper::ssb_coreset0_freq_location{26, 0, 712608, 6, 0},
             cfg_gen_input_params{713328, nr_band::n79, 106, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
-            band_helper::ssb_coreset0_freq_location{28, 6, 435650, 14, 0},
+            band_helper::ssb_coreset0_freq_location{0, 22, 434690, 0, 0},
             cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
             band_helper::ssb_coreset0_freq_location{14, 18, 390730, 2, 0},

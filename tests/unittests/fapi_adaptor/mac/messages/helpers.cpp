@@ -429,14 +429,15 @@ ul_sched_info unittests::build_valid_pusch_pdu()
   pusch.num_cb                     = 0;
 
   // UCI.
-  uci_info& uci            = info.uci.emplace();
-  uci.harq_ack_nof_bits    = 1;
-  uci.csi_part1_nof_bits   = 2;
-  uci.csi_part2_nof_bits   = 0;
-  uci.alpha                = alpha_scaling_opt::f0p5;
-  uci.beta_offset_harq_ack = 4;
-  uci.beta_offset_csi_1    = 5;
-  uci.beta_offset_csi_2    = 6;
+  uci_info& uci             = info.uci.emplace();
+  uci.alpha                 = alpha_scaling_opt::f0p5;
+  auto& harq                = uci.harq.emplace();
+  harq.harq_ack_nof_bits    = 1;
+  harq.beta_offset_harq_ack = 4;
+  auto& csi                 = uci.csi.emplace();
+  csi.csi_part1_nof_bits    = 2;
+  csi.beta_offset_csi_1     = 5;
+  csi.beta_offset_csi_2.emplace(6);
 
   return info;
 }
@@ -511,7 +512,7 @@ mac_dl_data_result srsran::unittests::build_valid_mac_data_result()
 {
   mac_dl_data_result result;
 
-  result.sib1_pdus.push_back({1, {}});
+  result.si_pdus.push_back({1, {}});
 
   return result;
 }

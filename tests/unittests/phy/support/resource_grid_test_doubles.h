@@ -312,6 +312,8 @@ public:
 
   bool is_empty(unsigned port) const override { return entries.empty(); }
 
+  bool is_empty() const override { return entries.empty(); }
+
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
     ++count;

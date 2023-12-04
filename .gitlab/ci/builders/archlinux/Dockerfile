@@ -12,7 +12,7 @@ RUN pacman-key --init \
 RUN install_dependencies.sh && pacman -Syu --noconfirm \
   git git-lfs \
   clang \
-  ccache valgrind libelf libdwarf \
+  ccache valgrind \
   python-pip
 RUN git lfs install && pip install --break-system-packages gcovr==5.0
 

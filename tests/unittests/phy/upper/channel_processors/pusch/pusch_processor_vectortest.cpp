@@ -217,9 +217,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 
   // Verify HARQ-ACK result.
   if (config.uci.nof_harq_ack > 0) {
-    std::vector<uint8_t> expected_harq_ack = test_case.harq_ack.read();
+    std::vector<uint8_t> expected_harq_ack_unpacked = test_case.harq_ack.read();
+    uci_payload_type     expected_harq_ack(expected_harq_ack_unpacked.begin(), expected_harq_ack_unpacked.end());
 
-    ASSERT_EQ(span<const uint8_t>(uci_entry.harq_ack.payload), span<const uint8_t>(expected_harq_ack));
+    ASSERT_EQ(uci_entry.harq_ack.payload, expected_harq_ack);
     ASSERT_EQ(uci_entry.harq_ack.status, uci_status::valid);
   } else {
     ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
@@ -228,9 +229,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 
   // Verify CSI Part 1 result.
   if (config.uci.nof_csi_part1 > 0) {
-    std::vector<uint8_t> expected_csi_part1 = test_case.csi_part1.read();
+    std::vector<uint8_t> expected_csi_part1_unpacked = test_case.csi_part1.read();
+    uci_payload_type     expected_csi_part1(expected_csi_part1_unpacked.begin(), expected_csi_part1_unpacked.end());
 
-    ASSERT_EQ(span<const uint8_t>(uci_entry.csi_part1.payload), span<const uint8_t>(expected_csi_part1));
+    ASSERT_EQ(uci_entry.csi_part1.payload, expected_csi_part1);
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::valid);
   } else {
     ASSERT_TRUE(uci_entry.csi_part1.payload.empty());

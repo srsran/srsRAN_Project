@@ -42,13 +42,13 @@ public:
   /// Internal storage type.
   struct request_type {
     slot_point slot;
-    GridType   grid;
+    GridType*  grid;
   };
 
   /// \brief Exchanges a request from the pool by the given one.
   /// \param[in] request The given request, it is copied into <tt>request.slot.system_slot() % REQUEST_ARRAY_SIZE</tt>.
   /// \return The previous request at position  <tt> request.slot.system_slot() % REQUEST_ARRAY_SIZE </tt>.
-  request_type exchange(request_type request) { return requests[request.slot.system_slot()].exchange(request); }
+  request_type exchange(const request_type& request) { return requests[request.slot.system_slot()].exchange(request); }
 
 private:
   /// Number of requests contained in the array.
@@ -58,6 +58,9 @@ private:
   class request_wrapper
   {
   public:
+    /// Default constructor - constructs an empty request.
+    request_wrapper() : request({slot_point(), nullptr}) {}
+
     /// \brief Exchanges the previous request with a new request.
     /// \param[in] new_request New request.
     /// \return A copy of the previous request.
@@ -73,7 +76,7 @@ private:
   };
 
   /// Request storage, indexed by slots.
-  circular_array<request_wrapper, REQUEST_ARRAY_SIZE> requests = {};
+  circular_array<request_wrapper, REQUEST_ARRAY_SIZE> requests;
 };
 
 } // namespace srsran

@@ -29,6 +29,23 @@
 #include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/support/format_utils.h"
 
+namespace srsran {
+namespace detail {
+
+class uci_bad_payload
+{
+public:
+  uci_bad_payload(std::size_t size) : bad_payload(size, 2U) {}
+
+  span<const uint8_t> get() const { return bad_payload; }
+
+private:
+  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
+};
+
+} // namespace detail
+} // namespace srsran
+
 namespace fmt {
 
 /// \brief Custom formatter for \c pusch_processor::codeword_description.
@@ -279,32 +296,25 @@ struct formatter<srsran::pusch_processor_result_control> {
   auto format(const srsran::pusch_processor_result_control& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    // Generate bad payload, to use in case of invalid or unknown UCI status.
-    std::array<uint8_t, srsran::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
-    std::fill(bad_payload.begin(), bad_payload.end(), 2U);
-
     if ((!result.harq_ack.payload.empty())) {
       if (result.harq_ack.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "ack={:#}", srsran::span<const uint8_t>(result.harq_ack.payload));
+        helper.format_always(ctx, "ack={:b}", result.harq_ack.payload);
       } else {
-        helper.format_always(
-            ctx, "ack={:#}", srsran::span<const uint8_t>(bad_payload).first(result.harq_ack.payload.size()));
+        helper.format_always(ctx, "ack={:#}", srsran::detail::uci_bad_payload(result.harq_ack.payload.size()).get());
       }
     }
     if ((!result.csi_part1.payload.empty())) {
       if (result.csi_part1.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "csi1={:#}", srsran::span<const uint8_t>(result.csi_part1.payload));
+        helper.format_always(ctx, "csi1={:b}", result.csi_part1.payload);
       } else {
-        helper.format_always(
-            ctx, "csi1={:#}", srsran::span<const uint8_t>(bad_payload).first(result.csi_part1.payload.size()));
+        helper.format_always(ctx, "csi1={:#}", srsran::detail::uci_bad_payload(result.csi_part1.payload.size()).get());
       }
     }
     if ((!result.csi_part2.payload.empty())) {
       if (result.csi_part2.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "csi2={:#}", srsran::span<const uint8_t>(result.csi_part2.payload));
+        helper.format_always(ctx, "csi2={:b}", result.csi_part2.payload);
       } else {
-        helper.format_always(
-            ctx, "csi2={:#}", srsran::span<const uint8_t>(bad_payload).first(result.csi_part2.payload.size()));
+        helper.format_always(ctx, "csi2={:#}", srsran::detail::uci_bad_payload(result.csi_part2.payload.size()).get());
       }
     }
     return ctx.out();
