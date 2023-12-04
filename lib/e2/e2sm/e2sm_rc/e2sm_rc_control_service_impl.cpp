@@ -126,6 +126,17 @@ e2sm_rc_control_service::execute_control_request(const e2sm_ric_control_request&
 {
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+
+  if (config_req_executors.find(ctrl_hdr.ric_ctrl_action_id) == config_req_executors.end()) {
+    return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      e2sm_ric_control_response ctrl_response;
+      ctrl_response.success                 = false;
+      ctrl_response.cause.set_ric_request() = cause_ri_crequest_e::options::action_not_supported;
+      CORO_RETURN(ctrl_response);
+    });
+  }
+
   return config_req_executors[ctrl_hdr.ric_ctrl_action_id]->execute_ric_control_action(req);
 }
 
@@ -236,10 +247,22 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2sm_ric_contro
       e2sm_ric_control_request t_req              = create_req_f1_from_req_f2(ctrl_hdr_f2, style, action);
       uint32_t                 ric_ctrl_action_id = action.ric_ctrl_action_id;
 
-      async_task<e2sm_ric_control_response> task =
-          config_req_executors[ric_ctrl_action_id]->execute_ric_control_action(t_req);
-      tasks.push_back(std::move(task));
+      if (config_req_executors.find(ric_ctrl_action_id) != config_req_executors.end()) {
+        async_task<e2sm_ric_control_response> task =
+            config_req_executors[ric_ctrl_action_id]->execute_ric_control_action(t_req);
+        tasks.push_back(std::move(task));
+      }
     }
+  }
+
+  if (tasks.size() == 0) {
+    return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      e2sm_ric_control_response ctrl_response;
+      ctrl_response.success                 = false;
+      ctrl_response.cause.set_ric_request() = cause_ri_crequest_e::options::action_not_supported;
+      CORO_RETURN(ctrl_response);
+    });
   }
 
   return launch_async([tasks = std::move(tasks), aggregated_response = std::move(aggregated_response), i = (unsigned)0](
