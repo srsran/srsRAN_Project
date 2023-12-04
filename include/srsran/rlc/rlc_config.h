@@ -662,6 +662,10 @@ struct rlc_rx_am_config {
   // Timers Ref: 3GPP TS 38.322 Section 7.3
   int32_t t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
   int32_t t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+
+  // Implementation-specific parameters that are not specified by 3GPP
+  /// Maximum number of visited SNs in the RX window when building a status report.
+  static constexpr uint32_t max_nof_sn_per_status_report = 2048;
 };
 
 /// \brief Configurable Tx parameters for RLC AM
