@@ -939,13 +939,14 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
                    cs0_idx);
         return false;
       }
-      if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and
-          desc.nof_symb_coreset > base_cell.pdcch_cfg.common.max_coreset0_duration) {
+      if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value() and
+          desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and
+          desc.nof_symb_coreset > base_cell.pdcch_cfg.common.max_coreset0_duration.value()) {
         fmt::print("Configured CORESET#0 index={} results in duration={} > maximum CORESET#0 duration configured={}. "
                    "Try increasing maximum CORESET#0 duration or pick another CORESET#0 index\n",
                    cs0_idx,
                    desc.nof_symb_coreset,
-                   base_cell.pdcch_cfg.common.max_coreset0_duration);
+                   base_cell.pdcch_cfg.common.max_coreset0_duration.value());
         return false;
       }
     }

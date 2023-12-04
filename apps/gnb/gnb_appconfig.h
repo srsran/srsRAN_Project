@@ -110,7 +110,7 @@ struct pdcch_common_appconfig {
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
   /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
-  uint8_t max_coreset0_duration = 2;
+  optional<uint8_t> max_coreset0_duration;
 };
 
 /// PDCCH Dedicated configuration.
