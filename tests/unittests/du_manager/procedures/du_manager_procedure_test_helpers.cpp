@@ -54,7 +54,7 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
 
   srsran_assert(launcher.ready(), "The UE creation procedure should have completed by now");
 
-  return ue_mng.ues[ue_index].get_context();
+  return ue_mng.ues[ue_index];
 }
 
 f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_ue_context_update_request& req)

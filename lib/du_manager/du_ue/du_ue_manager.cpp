@@ -93,12 +93,12 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
 
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
 {
-  auto* new_ue_ptr = find_ue(new_ue_index);
-  srsran_assert(new_ue_ptr != nullptr, "Invalid UE index={}", new_ue_index);
+  srsran_assert(ue_db.contains(new_ue_index), "Invalid UE index={}", new_ue_index);
   srsran_assert(find_ue(old_ue_index) != nullptr, "Invalid UE index={}", old_ue_index);
+  auto& new_ue = ue_db[new_ue_index];
 
   // Reset the cellGroupConfig of the new UE context, so that previous changes are included in the next UEContextUpdate.
-  new_ue_ptr->reestablishment_pending = true;
+  new_ue.reestablishment_pending = true;
 
   // Delete the old UE context.
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
@@ -120,10 +120,10 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect all UEs RLC->MAC buffer state adapters.
     for (du_ue_controller_impl& u : ue_db) {
-      for (auto& srb : u.get_context().bearers.srbs()) {
+      for (auto& srb : u.bearers.srbs()) {
         srb.connector.rlc_tx_buffer_state_notif.disconnect();
       }
-      for (auto& drb_pair : u.get_context().bearers.drbs()) {
+      for (auto& drb_pair : u.bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
         drb.connector.rlc_tx_buffer_state_notif.disconnect();
       }
@@ -131,16 +131,16 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor(ue_it->get_context().ue_index)));
+      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor(ue_it->ue_index)));
       if (not res) {
         CORO_EARLY_RETURN();
       }
 
-      for (auto& srb : ue_it->get_context().bearers.srbs()) {
+      for (auto& srb : ue_it->bearers.srbs()) {
         srb.disconnect();
       }
 
-      for (auto& drb_pair : ue_it->get_context().bearers.drbs()) {
+      for (auto& drb_pair : ue_it->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
 
         drb.disconnect();
@@ -156,7 +156,7 @@ async_task<void> du_ue_manager::stop()
 
     // Cancel all pending procedures.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      eager_async_task<void> ctrl_loop = ue_ctrl_loop[ue_it->get_context().ue_index].request_stop();
+      eager_async_task<void> ctrl_loop = ue_ctrl_loop[ue_it->ue_index].request_stop();
 
       // destroy ctrl_loop by letting it go out of scope.
     }
@@ -172,15 +172,15 @@ async_task<void> du_ue_manager::stop()
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
-  return ue_db.contains(ue_index) ? &ue_db[ue_index].get_context() : nullptr;
+  return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 const du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index) const
 {
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
-  return ue_db.contains(ue_index) ? &ue_db[ue_index].get_context() : nullptr;
+  return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
-du_ue_controller* du_ue_manager::find_rnti(rnti_t rnti)
+du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 {
   auto it = rnti_to_ue_index.find(rnti);
   srsran_assert(ue_db.contains(it->second), "Detected invalid container state for rnti={:#x}", rnti);
@@ -190,36 +190,36 @@ du_ue_controller* du_ue_manager::find_rnti(rnti_t rnti)
 du_ue* du_ue_manager::find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id)
 {
   for (auto& ue : ue_db) {
-    if (ue.get_context().f1ap_ue_id == f1ap_ue_id) {
-      return &ue.get_context();
+    if (ue.f1ap_ue_id == f1ap_ue_id) {
+      return &ue;
     }
   }
   return nullptr;
 }
 
-du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
+du_ue* du_ue_manager::add_ue(const du_ue_context& ue_ctx, ue_ran_resource_configurator ue_ran_res)
 {
-  if (not is_du_ue_index_valid(ue_ctx->ue_index) or (not is_crnti(ue_ctx->rnti) and ue_ctx->rnti != INVALID_RNTI)) {
+  if (not is_du_ue_index_valid(ue_ctx.ue_index) or (not is_crnti(ue_ctx.rnti) and ue_ctx.rnti != INVALID_RNTI)) {
     // UE identifiers are invalid.
     return nullptr;
   }
 
-  if (ue_db.contains(ue_ctx->ue_index) or (is_crnti(ue_ctx->rnti) and rnti_to_ue_index.count(ue_ctx->rnti) > 0)) {
+  if (ue_db.contains(ue_ctx.ue_index) or (is_crnti(ue_ctx.rnti) and rnti_to_ue_index.count(ue_ctx.rnti) > 0)) {
     // UE already existed with same ue_index or C-RNTI.
     return nullptr;
   }
 
   // Create UE context object
-  du_ue_index_t ue_index = ue_ctx->ue_index;
-  ue_db.emplace(ue_index, *this, std::move(ue_ctx), cfg);
+  du_ue_index_t ue_index = ue_ctx.ue_index;
+  ue_db.emplace(ue_index, ue_ctx, *this, cfg, std::move(ue_ran_res));
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  if (u.get_context().rnti != INVALID_RNTI) {
-    rnti_to_ue_index.insert(std::make_pair(u.get_context().rnti, ue_index));
+  if (u.rnti != INVALID_RNTI) {
+    rnti_to_ue_index.insert(std::make_pair(u.rnti, ue_index));
   }
 
-  return &u.get_context();
+  return &u;
 }
 
 void du_ue_manager::remove_ue(du_ue_index_t ue_index)
@@ -234,7 +234,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     srsran_assert(ue_db.contains(ue_index), "ue={}: Remove UE called for inexistent UE", ue_index);
-    rnti_to_ue_index.erase(ue_db[ue_index].get_context().rnti);
+    rnti_to_ue_index.erase(ue_db[ue_index].rnti);
     ue_db.erase(ue_index);
     ue_ctrl_loop[ue_index].clear_pending_tasks();
     logger.debug("ue={}: Freeing UE context", ue_index);
@@ -247,7 +247,7 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
   srsran_assert(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
   srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", ue_index);
-  du_ue& u = *find_ue(ue_index);
+  du_ue& u = ue_db[ue_index];
 
   if (u.rnti == crnti) {
     // No change.
@@ -258,6 +258,6 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
   rnti_to_ue_index.erase(u.rnti);
   rnti_to_ue_index.insert(std::make_pair(crnti, ue_index));
 
-  // Update UE context
+  // Update UE context with new C-RNTI.
   u.rnti = crnti;
 }

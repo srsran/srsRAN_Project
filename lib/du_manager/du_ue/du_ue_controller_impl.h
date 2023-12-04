@@ -15,23 +15,18 @@
 namespace srsran {
 namespace srs_du {
 
-class du_ue_controller_impl final : public du_ue_controller
+class du_ue_controller_impl final : public du_ue
 {
 public:
-  du_ue_controller_impl(du_ue_manager_repository& ue_db_,
-                        std::unique_ptr<du_ue>    context_,
-                        const du_manager_params&  cfg_);
+  du_ue_controller_impl(const du_ue_context&         context_,
+                        du_ue_manager_repository&    ue_db_,
+                        const du_manager_params&     cfg_,
+                        ue_ran_resource_configurator ue_ran_res_);
   ~du_ue_controller_impl() override;
-
-  const du_ue& get_context() const override { return *context; }
-  du_ue&       get_context() override { return *context; }
 
   async_task<void> disconnect_notifiers() override;
 
-  void schedule_async_task(async_task<void> task) override
-  {
-    ue_db.schedule_async_task(context->ue_index, std::move(task));
-  }
+  void schedule_async_task(async_task<void> task) override { ue_db.schedule_async_task(ue_index, std::move(task)); }
 
   void handle_rlf_detection(rlf_cause cause) override;
 
@@ -47,7 +42,6 @@ private:
 
   du_ue_manager_repository& ue_db;
 
-  std::unique_ptr<du_ue>   context;
   const du_manager_params& cfg;
 
   std::unique_ptr<rlf_state_machine>                   rlf_handler;

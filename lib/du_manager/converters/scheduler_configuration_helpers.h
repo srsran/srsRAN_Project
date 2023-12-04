@@ -18,7 +18,7 @@ struct du_cell_config;
 
 namespace srs_du {
 
-struct du_ue;
+class du_ue;
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
 sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_index_t          cell_index,

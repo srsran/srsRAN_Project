@@ -17,25 +17,22 @@
 namespace srsran {
 namespace srs_du {
 
-class du_ue_dummy : public du_ue_controller,
-                    public mac_ue_radio_link_notifier,
-                    public rlc_tx_upper_layer_control_notifier
+class du_ue_dummy : public du_ue, public mac_ue_radio_link_notifier, public rlc_tx_upper_layer_control_notifier
 {
 public:
   bool                    ue_notifiers_disconnected = false;
   optional<du_ue_index_t> last_rlf_ue_index;
   optional<rlf_cause>     last_rlf_cause;
 
-  du_ue_dummy(std::unique_ptr<du_ue> ctx_, fifo_async_task_scheduler* ue_ctrl_loop_) :
-    ctx(std::move(ctx_)), ue_ctrl_loop(ue_ctrl_loop_)
+  du_ue_dummy(const du_ue_context&         ctx_,
+              ue_ran_resource_configurator resources_,
+              fifo_async_task_scheduler*   ue_ctrl_loop_) :
+    du_ue(ctx_, std::move(resources_)), ue_ctrl_loop(ue_ctrl_loop_)
   {
   }
 
-  std::unique_ptr<du_ue>     ctx;
   fifo_async_task_scheduler* ue_ctrl_loop;
 
-  const du_ue&     get_context() const override { return *ctx; }
-  du_ue&           get_context() override { return *ctx; }
   async_task<void> disconnect_notifiers() override
   {
     ue_notifiers_disconnected = true;
@@ -60,26 +57,23 @@ class ue_manager_dummy : public du_ue_manager_repository
 public:
   slotted_array<du_ue_dummy, MAX_NOF_DU_UES> ues;
 
-  du_ue* add_ue(std::unique_ptr<du_ue> u) override
+  du_ue* add_ue(const du_ue_context& u, ue_ran_resource_configurator resources) override
   {
-    du_ue* ret = u.get();
-    ues.emplace(u->ue_index, std::move(u), &ue_ctrl_loop);
-    return ret;
+    du_ue_index_t ue_index = u.ue_index;
+    ues.emplace(ue_index, std::move(u), std::move(resources), &ue_ctrl_loop);
+    return &ues[ue_index];
   }
-  void   remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
-  void   update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
-  du_ue* find_ue(du_ue_index_t ue_index) override
-  {
-    return ues.contains(ue_index) ? &ues[ue_index].get_context() : nullptr;
-  }
+  void         remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
+  void         update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
+  du_ue*       find_ue(du_ue_index_t ue_index) override { return ues.contains(ue_index) ? &ues[ue_index] : nullptr; }
   const du_ue* find_ue(du_ue_index_t ue_index) const override
   {
-    return ues.contains(ue_index) ? &ues[ue_index].get_context() : nullptr;
+    return ues.contains(ue_index) ? &ues[ue_index] : nullptr;
   }
-  du_ue_controller* find_rnti(rnti_t rnti) override
+  du_ue* find_rnti(rnti_t rnti) override
   {
     for (auto& u : ues) {
-      if (u.get_context().rnti == rnti) {
+      if (u.rnti == rnti) {
         return &u;
       }
     }
@@ -88,8 +82,8 @@ public:
   du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override
   {
     for (auto& u : ues) {
-      if (u.get_context().f1ap_ue_id == f1ap_ue_id) {
-        return &u.get_context();
+      if (u.f1ap_ue_id == f1ap_ue_id) {
+        return &u;
       }
     }
     return nullptr;
@@ -100,8 +94,6 @@ public:
   {
     ue_ctrl_loop.schedule(std::move(task));
   }
-
-  du_ue_controller& get_ue_controller(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
   fifo_async_task_scheduler ue_ctrl_loop{128};
 };

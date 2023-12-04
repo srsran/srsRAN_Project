@@ -71,5 +71,5 @@ async_task<void> ue_deletion_procedure::disconnect_inter_layer_interfaces()
   // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,
   // we start by first disconnecting the DRBs from the F1-U interface.
 
-  return ue_mng.get_ue_controller(msg.ue_index).disconnect_notifiers();
+  return ue->disconnect_notifiers();
 }

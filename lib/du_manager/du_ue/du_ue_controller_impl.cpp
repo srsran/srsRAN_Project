@@ -141,13 +141,14 @@ private:
 
 // -------------
 
-du_ue_controller_impl::du_ue_controller_impl(du_ue_manager_repository& ue_db_,
-                                             std::unique_ptr<du_ue>    context_,
-                                             const du_manager_params&  cfg_) :
+du_ue_controller_impl::du_ue_controller_impl(const du_ue_context&         context_,
+                                             du_ue_manager_repository&    ue_db_,
+                                             const du_manager_params&     cfg_,
+                                             ue_ran_resource_configurator ue_ran_res_) :
+  du_ue(context_, std::move(ue_ran_res_)),
   ue_db(ue_db_),
-  context(std::move(context_)),
   cfg(cfg_),
-  rlf_handler(std::make_unique<rlf_state_machine>(*context, cfg)),
+  rlf_handler(std::make_unique<rlf_state_machine>(*this, cfg)),
   mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(*this)),
   rlc_rlf_notifier(std::make_unique<rlc_rlf_du_adapter>(*this))
 {
@@ -161,19 +162,18 @@ async_task<void> du_ue_controller_impl::disconnect_notifiers()
   rlf_handler->disconnect();
 
   // > Disconnect bearers from within the UE execution context.
-  return dispatch_and_resume_on(
-      cfg.services.ue_execs.ctrl_executor(context->ue_index), cfg.services.du_mng_exec, [this]() {
-        // > Disconnect DRBs.
-        for (auto& drb_pair : context->bearers.drbs()) {
-          du_ue_drb& drb = *drb_pair.second;
-          drb.disconnect();
-        }
+  return dispatch_and_resume_on(cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, [this]() {
+    // > Disconnect DRBs.
+    for (auto& drb_pair : bearers.drbs()) {
+      du_ue_drb& drb = *drb_pair.second;
+      drb.disconnect();
+    }
 
-        // > Disconnect SRBs.
-        for (du_ue_srb& srb : context->bearers.srbs()) {
-          srb.disconnect();
-        }
-      });
+    // > Disconnect SRBs.
+    for (du_ue_srb& srb : bearers.srbs()) {
+      srb.disconnect();
+    }
+  });
 }
 
 void du_ue_controller_impl::handle_rlf_detection(rlf_cause cause)

@@ -56,7 +56,7 @@ protected:
   void mac_finishes_ue_config(du_ue_index_t ue_index, bool result)
   {
     this->mac.wait_ue_reconf.result.result   = result;
-    this->mac.wait_ue_reconf.result.ue_index = this->ue_mng.ues.begin()->get_context().ue_index;
+    this->mac.wait_ue_reconf.result.ue_index = this->ue_mng.ues.begin()->ue_index;
     this->mac.wait_ue_reconf.ready_ev.set();
   }
 

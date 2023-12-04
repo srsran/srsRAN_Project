@@ -302,7 +302,7 @@ public:
   void rlf_detected(rlf_cause cause)
   {
     auto& mac_rlf_notifier = *mac_dummy.last_ue_create_msg->rlf_notifier;
-    auto& rlc_rlf_notifier = ue_mng.get_ue_controller(test_ue_index).get_rlc_rlf_notifier();
+    auto& rlc_rlf_notifier = ue_mng.find_ue(test_ue_index)->get_rlc_rlf_notifier();
 
     if (cause == rlf_cause::max_mac_kos_reached) {
       mac_rlf_notifier.on_rlf_detected();

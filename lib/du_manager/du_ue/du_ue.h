@@ -19,39 +19,67 @@
 namespace srsran {
 namespace srs_du {
 
-class du_ue_rlf_handler : public mac_ue_radio_link_notifier, public rlc_tx_upper_layer_control_notifier
-{
-public:
-  /// \brief Notify that the UE has now an SRB2 and DRB configured, so we need to account for its potential RRC
-  /// reestablishment.
-  virtual void on_drb_and_srb2_configured() = 0;
-
-  /// \brief Notify the RLF handler to stop listening to new RLF triggers.
-  virtual void disconnect() = 0;
-};
-
 /// \brief This class holds the context of an UE in the DU.
-struct du_ue {
-  explicit du_ue(du_ue_index_t                ue_index_,
-                 du_cell_index_t              pcell_index_,
-                 rnti_t                       rnti_,
-                 ue_ran_resource_configurator resources_) :
-    ue_index(ue_index_),
-    rnti(rnti_),
-    pcell_index(pcell_index_),
-    f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)),
-    resources(std::move(resources_))
+struct du_ue_context {
+  du_ue_context(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_) :
+    ue_index(ue_index_), rnti(rnti_), f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)), pcell_index(pcell_index_)
   {
   }
 
   const du_ue_index_t ue_index;
-  rnti_t              rnti;
-  du_cell_index_t     pcell_index;
+  rnti_t              rnti = INVALID_RNTI;
   gnb_du_ue_f1ap_id_t f1ap_ue_id;
+  du_cell_index_t     pcell_index;
+};
 
-  du_ue_bearer_manager         bearers;
+/// The interface exposes the methods to interact with the state of a DU UE.
+class du_ue_controller
+{
+public:
+  virtual ~du_ue_controller() = default;
+
+  /// \brief Disconnect the UE inter-layer notifiers.
+  ///
+  /// This method should be called as a first step in the deletion of a UE, to ensure traffic is not flowing through
+  /// its bearers during the layer by layer UE context removal.
+  virtual async_task<void> disconnect_notifiers() = 0;
+
+  /// \brief Schedule task for a given UE.
+  virtual void schedule_async_task(async_task<void> task) = 0;
+
+  /// \brief Handle detection of RLF in MAC or RLC.
+  virtual void handle_rlf_detection(rlf_cause cause) = 0;
+
+  /// \brief Handle the detection of a C-RNTI MAC CE for this UE.
+  virtual void handle_crnti_ce_detection() = 0;
+
+  /// \brief Handle command to activate/deactivate scheduling for this UE.
+  virtual void handle_scheduling_activation(bool active) = 0;
+
+  /// \brief Access to the MAC RLF notifier for this UE.
+  virtual mac_ue_radio_link_notifier& get_mac_rlf_notifier() = 0;
+
+  /// \brief Access to the RLC RLF notifier for this UE.
+  virtual rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() = 0;
+};
+
+class du_ue : public du_ue_context, public du_ue_controller
+{
+public:
+  explicit du_ue(const du_ue_context& ctx_, ue_ran_resource_configurator resources_) :
+    du_ue_context(ctx_), resources(std::move(resources_))
+  {
+  }
+
+  /// \brief Mutable access to the bearers of a UE
+  du_ue_bearer_manager bearers;
+
+  /// \brief Mutable access to the radio resources of a UE
   ue_ran_resource_configurator resources;
-  bool                         reestablishment_pending = false;
+
+  /// \brief Determines whether this UE is running the RRC Reestablishment procedure.
+  // TODO: refactor.
+  bool reestablishment_pending = false;
 };
 
 } // namespace srs_du

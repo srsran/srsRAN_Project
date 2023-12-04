@@ -97,7 +97,7 @@ du_ue* ue_creation_procedure::create_du_ue_context()
   }
 
   // Create the DU UE context.
-  return ue_mng.add_ue(std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(ue_res)));
+  return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti), std::move(ue_res));
 }
 
 async_task<void> ue_creation_procedure::clear_ue()
@@ -155,25 +155,23 @@ void ue_creation_procedure::create_rlc_srbs()
 {
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
-  srb0.rlc_bearer = create_rlc_entity(
-      make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                       ue_ctx->ue_index,
-                                       ue_ctx->pcell_index,
-                                       srb0,
-                                       du_params.services,
-                                       ue_mng.get_ue_controller(ue_ctx->ue_index).get_rlc_rlf_notifier(),
-                                       du_params.rlc.pcap_writer));
+  srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                       ue_ctx->ue_index,
+                                                                       ue_ctx->pcell_index,
+                                                                       srb0,
+                                                                       du_params.services,
+                                                                       ue_ctx->get_rlc_rlf_notifier(),
+                                                                       du_params.rlc.pcap_writer));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.rlc_bearer = create_rlc_entity(
-      make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                       ue_ctx->ue_index,
-                                       ue_ctx->pcell_index,
-                                       srb1,
-                                       du_params.services,
-                                       ue_mng.get_ue_controller(ue_ctx->ue_index).get_rlc_rlf_notifier(),
-                                       du_params.rlc.pcap_writer));
+  srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                       ue_ctx->ue_index,
+                                                                       ue_ctx->pcell_index,
+                                                                       srb1,
+                                                                       du_params.services,
+                                                                       ue_ctx->get_rlc_rlf_notifier(),
+                                                                       du_params.rlc.pcap_writer));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
@@ -185,7 +183,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.cell_index         = req.pcell_index;
   mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
-  mac_ue_create_msg.rlf_notifier       = &ue_mng.get_ue_controller(ue_ctx->ue_index).get_mac_rlf_notifier();
+  mac_ue_create_msg.rlf_notifier       = &ue_ctx->get_mac_rlf_notifier();
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
     mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();

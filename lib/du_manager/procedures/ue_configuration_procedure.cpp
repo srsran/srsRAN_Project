@@ -26,7 +26,7 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
   ue_mng(ue_mng_),
   du_params(du_params_),
   ue(ue_mng.find_ue(request.ue_index)),
-  proc_logger(logger, name(), request.ue_index, ue->rnti)
+  proc_logger(logger, name(), request.ue_index, ue != nullptr ? ue->rnti : INVALID_RNTI)
 {
   srsran_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
@@ -83,14 +83,13 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer = create_rlc_entity(
-        make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
-                                         ue->ue_index,
-                                         ue->pcell_index,
-                                         srb,
-                                         du_params.services,
-                                         ue_mng.get_ue_controller(ue->ue_index).get_rlc_rlf_notifier(),
-                                         du_params.rlc.pcap_writer));
+    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                        ue->ue_index,
+                                                                        ue->pcell_index,
+                                                                        srb,
+                                                                        du_params.services,
+                                                                        ue->get_rlc_rlf_notifier(),
+                                                                        du_params.rlc.pcap_writer));
   }
 
   // > Create F1-C bearers.
@@ -160,7 +159,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
                                                 du_params,
-                                                ue_mng.get_ue_controller(ue->ue_index).get_rlc_rlf_notifier());
+                                                ue->get_rlc_rlf_notifier());
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: Failed to allocate DU UE resources.",
                                    drbtoadd.drb_id);
