@@ -28,9 +28,6 @@ class udp_network_gateway_data_handler
 public:
   virtual ~udp_network_gateway_data_handler() = default;
 
-  /// \brief Handle the incoming PDU.
-  /// \param[in]  put Byte-buffer with new PDU.
-
   /// \brief handle_pdu Transmit a new PDU.
   /// \param pdu The PDU to be transmitted.
   /// \param dest_addr The destination address of that PDU.
