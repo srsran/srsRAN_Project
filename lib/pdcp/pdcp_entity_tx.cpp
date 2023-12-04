@@ -302,10 +302,10 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_b
 
   // Construct the protected buffer
   byte_buffer protected_buf;
-  if (not protected_buf.append(hdr)) {
+  if (not protected_buf.append(std::move(hdr))) {
     return default_error_t{};
   }
-  if (not protected_buf.append(ct)) {
+  if (not protected_buf.append(std::move(ct))) {
     return default_error_t{};
   }
 
