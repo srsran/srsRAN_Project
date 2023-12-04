@@ -41,7 +41,17 @@ bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
 
   return true;
 }
-
+async_task<e2sm_ric_control_response>
+e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_control_request& req)
+{
+  return launch_async([req](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+    CORO_BEGIN(ctx);
+    e2sm_ric_control_response e2sm_response;
+    e2sm_response.success                = false;
+    e2sm_response.cause.set_misc().value = cause_misc_e::options::unspecified;
+    CORO_RETURN(e2sm_response);
+  });
+}
 e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(du_configurator& du_configurator_) :
   e2sm_rc_control_action_du_executor_base(du_configurator_, 6)
 {
@@ -80,6 +90,9 @@ async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
   du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req);
+  if (!ctrl_config.ue_id) {
+    return return_ctrl_failure(req);
+  }
   return launch_async(
       [this, ctrl_config = std::move(ctrl_config)](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
         CORO_BEGIN(ctx);
@@ -93,23 +106,24 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
 du_mac_sched_control_config
 e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_)
 {
-  du_mac_sched_control_config        ctrl_config;
+  du_mac_sched_control_config        ctrl_config = {};
   const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
       variant_get<e2_sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
       variant_get<e2_sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
 
-  ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
-
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
       if (ran_p.ran_param_id == 11) {
         ctrl_config.min_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
+        ctrl_config.ue_id         = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
       } else if (ran_p.ran_param_id == 12) {
         ctrl_config.max_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
+        ctrl_config.ue_id         = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
       }
     } else {
       logger.error("Parameter not supported");
+      return ctrl_config;
     }
   }
   return ctrl_config;
