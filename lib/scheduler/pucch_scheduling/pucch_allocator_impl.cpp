@@ -124,17 +124,6 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
 
   pucch_common_alloc_grid[slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset].slot.to_uint()].emplace_back(tcrnti);
 
-  {
-    fmt::memory_buffer fmtbuf;
-    for (auto pucch_com_rnti :
-         pucch_common_alloc_grid[slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset].slot.to_uint()]) {
-      fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", pucch_com_rnti);
-    }
-    logger.debug("List of common PUCCH res scheduled currently allocated in this slot. List size={} Content: {}",
-                 pucch_common_alloc_grid[slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset].slot.to_uint()].size(),
-                 to_c_str(fmtbuf));
-  }
-
   logger.debug("tc-rnti={:#x}: PUCCH HARQ-ACK common with res_ind={} allocated for slot={}",
                tcrnti,
                pucch_res_indicator,
@@ -343,17 +332,6 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
   last_sl_ind = sl_tx;
 
   resource_manager.slot_indication(sl_tx);
-
-  if (not pucch_common_alloc_grid[(sl_tx - 1).to_uint()].empty()) {
-    fmt::memory_buffer fmtbuf;
-    for (rnti_t rnti : pucch_common_alloc_grid[(sl_tx - 1).to_uint()]) {
-      fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", rnti);
-    }
-    logger.debug("List of common PUCCH res scheduled in previous slot={} to be deleted. List size={} Content: {}",
-                 sl_tx - 1,
-                 pucch_common_alloc_grid[(sl_tx - 1).to_uint()].size(),
-                 to_c_str(fmtbuf));
-  }
 
   // Clear previous slot PUCCH common allocations.
   pucch_common_alloc_grid[(sl_tx - 1).to_uint()].clear();
@@ -715,7 +693,7 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
                "slot={} completed",
                rnti,
                curr_harq_bits + harq_ack_bits_increment,
-               sr_bits,
+               sr_nof_bits_to_uint(sr_bits),
                csi1_nof_bits_only_harq,
                format2_res.pucch_res_indicator,
                pucch_slot_alloc.slot
@@ -807,7 +785,7 @@ optional<unsigned> pucch_allocator_impl::change_format2_resource(cell_slot_resou
   logger.debug("rnti={:#x}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for slot={} completed",
                rnti,
                harq_ack_bits_increment,
-               sr_bits_to_report,
+               sr_nof_bits_to_uint(sr_bits_to_report),
                csi_bits_to_report,
                pucch_slot_alloc.slot);
 
@@ -984,15 +962,16 @@ optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(pucch_in
   // because the required number of PRBs can increase as a result of adding HARQ-ACK bits.
 
   // Check if the number of PRBs is sufficient for the number of bits to be acked.
-  const float    max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
+  const float max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
                                                                .ul_config.value()
                                                                .init_ul_bwp.pucch_cfg.value()
                                                                .format_2_common_param.value()
                                                                .max_c_rate);
-  const unsigned max_payload         = get_pucch_format2_max_payload(
-      variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params).nof_prbs,
-      variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params).nof_symbols,
-      max_pucch_code_rate);
+
+  const auto&    f2_params    = variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params);
+  const unsigned max_nof_prbs = f2_params.nof_prbs;
+  const unsigned nof_symbols  = f2_params.nof_symbols;
+  const unsigned max_payload  = get_pucch_format2_max_payload(max_nof_prbs, nof_symbols, max_pucch_code_rate);
 
   if (max_payload < candidate_uci_bits) {
     logger.debug("rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 max payload {} is "
@@ -1006,11 +985,8 @@ optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(pucch_in
     return nullopt;
   }
 
-  const unsigned nof_prbs = get_pucch_format2_nof_prbs(
-      candidate_uci_bits,
-      variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params).nof_prbs,
-      variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params).nof_symbols,
-      max_pucch_code_rate);
+  const unsigned nof_prbs =
+      get_pucch_format2_nof_prbs(candidate_uci_bits, max_nof_prbs, nof_symbols, max_pucch_code_rate);
   // NOTE: there is no need to check if the code rate is within the limit, as the UCI bits are computed so that not to
   // exceed the code rate.
   existing_f2_grant.resources.prbs.set(pucch_f2_harq_cfg.pucch_res->starting_prb,
@@ -1041,7 +1017,7 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
-  const pucch_format_1_cfg res_f1 = variant_get<pucch_format_1_cfg>(pucch_ded_res_cfg.format_params);
+  const pucch_format_1_cfg& res_f1 = variant_get<pucch_format_1_cfg>(pucch_ded_res_cfg.format_params);
   pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
                                  pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_1_NOF_PRBS);
   pucch_grant.resources.symbols.set(res_f1.starting_sym_idx, res_f1.starting_sym_idx + res_f1.nof_symbols);
@@ -1079,7 +1055,7 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
   pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb, pucch_ded_res_cfg.starting_prb + nof_prbs);
-  const pucch_format_2_3_cfg res_f2 = variant_get<pucch_format_2_3_cfg>(pucch_ded_res_cfg.format_params);
+  const pucch_format_2_3_cfg& res_f2 = variant_get<pucch_format_2_3_cfg>(pucch_ded_res_cfg.format_params);
   pucch_grant.resources.symbols.set(res_f2.starting_sym_idx, res_f2.starting_sym_idx + res_f2.nof_symbols);
   if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
     pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),
@@ -1113,29 +1089,6 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
                                                 rnti_t                                              rnti,
                                                 slot_point                                          sl_ack)
 {
-  unsigned pucch_cnt = 0;
-  unsigned nof_sr_f1 = 0;
-  for (auto& pucch : pucchs) {
-    if (pucch.crnti == rnti) {
-      ++pucch_cnt;
-      if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
-        ++nof_sr_f1;
-      }
-    }
-  }
-  if (nof_sr_f1 > 1) {
-    logger.error("rnti={:#x}: found more than 1 PUCCH grant for SR in slot={}", rnti, sl_ack);
-  }
-  if (nof_sr_f1 != 0) {
-    if (pucch_cnt > 2) {
-      logger.error("rnti={:#x}: found more than 2 PUCCH grants in slot={}", rnti, sl_ack);
-    }
-  } else {
-    if (pucch_cnt > 1) {
-      logger.error("rnti={:#x}: found more than 1 PUCCH grant in slot={} without any being F1 SR", rnti, sl_ack);
-    }
-  }
-
   existing_pucch_grants grants;
   for (auto& pucch : pucchs) {
     if (pucch.crnti == rnti) {
@@ -1152,15 +1105,6 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
           auto* pucch_common_it = std::find(
               pucch_common_alloc_grid[sl_ack.to_uint()].begin(), pucch_common_alloc_grid[sl_ack.to_uint()].end(), rnti);
           if (pucch_common_it != pucch_common_alloc_grid[sl_ack.to_uint()].end()) {
-            fmt::memory_buffer fmtbuf;
-            for (rnti_t rnti_common : pucch_common_alloc_grid[sl_ack.to_uint()]) {
-              fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", rnti_common);
-            }
-            logger.error("rnti={:#x}: PUCCH common saved for rnti={:#x} with format={} found in slot={}: {}",
-                         rnti,
-                         *pucch_common_it,
-                         sl_ack,
-                         to_c_str(fmtbuf));
             grants.format1_harq_common_grant = &pucch;
           } else {
             grants.format1_harq_grant = &pucch;
