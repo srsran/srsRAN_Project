@@ -163,76 +163,21 @@ security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
   }
 }
 
-template <typename It>
-byte_buffer security_nea2(const sec_128_key& key,
+inline void security_nea2(const sec_128_key& key,
                           uint32_t           count,
                           uint8_t            bearer,
                           security_direction direction,
-                          It                 msg_begin,
-                          It                 msg_end,
+                          byte_buffer&       msg,
                           uint32_t           msg_len)
 {
-  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   aes_context   ctx;
   unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   int           ret;
-  size_t        nc_off          = 0;
-  uint32_t      msg_len_block_8 = (msg_len + 7) / 8;
-  uint32_t      len             = std::distance(msg_begin, msg_end);
+  size_t        nc_off = 0;
 
-  byte_buffer msg_out;
-
-  ret = aes_setkey_enc(&ctx, key.data(), 128);
-
-  if (msg_len_block_8 <= len) {
-    if (ret == 0) {
-      // Construct nonce
-      nonce_cnt[0] = (count >> 24) & 0xff;
-      nonce_cnt[1] = (count >> 16) & 0xff;
-      nonce_cnt[2] = (count >> 8) & 0xff;
-      nonce_cnt[3] = (count)&0xff;
-      nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
-
-      // Encryption
-      for (uint32_t i = 0; i < msg_len_block_8; i++) {
-        // FIXME: call aes_crypt_ctr in larger contiguous chunks when available/supported
-        uint8_t out;
-        ret = aes_crypt_ctr(&ctx, 1, &nc_off, nonce_cnt, stream_blk, &(*msg_begin++), &out);
-        msg_out.append(out);
-      }
-    }
-
-    if (ret == 0) {
-      // Zero tailing bits
-      zero_tailing_bits(msg_out.back(), msg_len);
-    }
-  }
-
-  return msg_out;
-}
-
-template <typename It>
-byte_buffer security_nea2(const sec_128_key& key,
-                          uint32_t           count,
-                          uint8_t            bearer,
-                          security_direction direction,
-                          It                 msg_begin,
-                          It                 msg_end)
-{
-  return security_nea2(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
-}
-
-inline void
-security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
-{
-  aes_context   ctx;
-  unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int           ret;
-  size_t        nc_off          = 0;
-  uint32_t      msg_len_block_8 = msg.length();
-  uint32_t      len             = msg.length();
+  uint32_t msg_len_block_8 = (msg_len + 7) / 8;
+  uint32_t len             = msg.length();
 
   ret = aes_setkey_enc(&ctx, key.data(), 128);
   if (ret != 0) {
@@ -255,6 +200,16 @@ security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_d
       }
     }
   }
+  if (ret == 0) {
+    //  Zero tailing bits
+    zero_tailing_bits(msg.back(), msg_len);
+  }
+}
+
+inline void
+security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+{
+  return security_nea2(key, count, bearer, direction, msg, msg.length() * 8);
 }
 
 template <typename It>
