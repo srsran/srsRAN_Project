@@ -159,10 +159,10 @@ int main(int argc, char** argv)
   dummy_network_gateway_data_notifier_with_src_addr gw1_dn{params}, gw2_dn{params};
   std::unique_ptr<udp_network_gateway>              gw1, gw2;
 
-  manual_task_worker io_executor{128};
+  manual_task_worker io_tx_executor{128};
 
-  gw1 = create_udp_network_gateway({gw1_cfg, gw1_dn, io_executor});
-  gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_executor});
+  gw1 = create_udp_network_gateway({gw1_cfg, gw1_dn, io_tx_executor});
+  gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_tx_executor});
 
   gw1->create_and_bind();
   gw2->create_and_bind();

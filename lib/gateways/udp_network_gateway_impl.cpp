@@ -25,11 +25,11 @@ using namespace srsran;
 
 udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                                    network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                                   task_executor&                               io_executor_) :
+                                                   task_executor&                               io_tx_executor_) :
   config(std::move(config_)),
   data_notifier(data_notifier_),
   logger(srslog::fetch_basic_logger("UDP-GW")),
-  io_executor(io_executor_)
+  io_tx_executor(io_tx_executor_)
 {
   logger.info("UDP GW configured. rx_max_mmsg={}", config.rx_max_mmsg);
 
@@ -53,7 +53,7 @@ bool udp_network_gateway_impl::is_initialized()
 void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
 {
   auto fn = [this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); };
-  if (not io_executor.execute(std::move(fn))) {
+  if (not io_tx_executor.execute(std::move(fn))) {
     logger.info("Dropped PDU, queue is full.");
   }
 }

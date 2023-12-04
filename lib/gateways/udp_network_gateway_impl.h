@@ -55,7 +55,7 @@ private:
   udp_network_gateway_config                   config; // configuration
   network_gateway_data_notifier_with_src_addr& data_notifier;
   srslog::basic_logger&                        logger;
-  task_executor&                               io_executor;
+  task_executor&                               io_tx_executor;
 
   int sock_fd = -1;
 
