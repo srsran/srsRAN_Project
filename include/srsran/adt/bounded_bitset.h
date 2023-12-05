@@ -981,7 +981,7 @@ public:
   /// bitset size (in bits) divided by \c sizeof(UnsignedInteger) * 8U (the number of bits per integer).
   /// \return Returns the number of positions of \c packed_bits that were written during the function call.
   template <typename UnsignedInteger>
-  size_t to_packed_bits(span<UnsignedInteger> packed_bits)
+  size_t to_packed_bits(span<UnsignedInteger> packed_bits) const
   {
     static_assert(sizeof(UnsignedInteger) <= sizeof(word_t), "ERROR: provided array type is too large");
     static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
@@ -1028,7 +1028,7 @@ public:
   /// unsigned integer. \param[in] unpacked_bits Array where the unpacked bits will be stored. The array size must be
   /// equal or larger than the bitset size (in bits). \return Returns the number of bits packed.
   template <typename UnsignedInteger>
-  void to_unpacked_bits(span<UnsignedInteger> unpacked_bits)
+  void to_unpacked_bits(span<UnsignedInteger> unpacked_bits) const
   {
     static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
     srsran_assert(size() == unpacked_bits.size(),
