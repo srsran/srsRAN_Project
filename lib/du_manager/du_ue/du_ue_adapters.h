@@ -226,6 +226,17 @@ public:
     return rlc_handler->pull_pdu(nof_bytes);
   }
 
+  size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
+  {
+    byte_buffer_chain buf = on_new_tx_sdu(mac_sdu_buf.size());
+    for (auto& slice : buf.slices()) {
+      for (span<const uint8_t> seg : slice.segments()) {
+        std::copy(seg.begin(), seg.end(), mac_sdu_buf.begin());
+      }
+    }
+    return buf.length();
+  }
+
   unsigned on_buffer_state_update() override
   {
     srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");

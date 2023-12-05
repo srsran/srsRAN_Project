@@ -52,6 +52,13 @@ public:
     // Return empty MAC SDU so that the MAC PDU is padded.
     return byte_buffer_chain{};
   }
+
+  size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
+  {
+    // Return empty MAC SDU so that the MAC PDU is padded.
+    return 0;
+  }
+
   unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
 
 private:

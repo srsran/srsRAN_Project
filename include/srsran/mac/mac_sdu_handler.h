@@ -24,7 +24,8 @@ public:
 
   /// Called by MAC to generate an MAC Tx SDU for the respective logical channel.
   /// \return Generated MAC SDU.
-  virtual byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) = 0;
+  virtual byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes)          = 0;
+  virtual size_t            on_new_tx_sdu(span<uint8_t> mac_sdu_space) = 0;
 
   /// Called by MAC to obtain the DL BSR  for the respective logical channel.
   virtual unsigned on_buffer_state_update() = 0;
