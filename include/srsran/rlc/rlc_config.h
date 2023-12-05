@@ -904,10 +904,11 @@ struct formatter<srsran::rlc_rx_am_config> {
   auto format(srsran::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rx_sn_size={} t_reassembly={} t_status_prohibit={}",
+                     "rx_sn_size={} t_reassembly={} t_status_prohibit={} max_nof_sn_per_status_report={}",
                      cfg.sn_field_length,
                      cfg.t_reassembly,
-                     cfg.t_status_prohibit);
+                     cfg.t_status_prohibit,
+                     cfg.max_nof_sn_per_status_report);
   }
 };
 
