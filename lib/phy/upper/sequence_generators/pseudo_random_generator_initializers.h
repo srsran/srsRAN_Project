@@ -36,7 +36,7 @@ public:
 
     // For each bit of the initial state.
     for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
-      pseudo_random_generator_sequence sequence(1 << i, 0);
+      pseudo_random_generator_sequence sequence(1 << (31 - i), 0);
 
       unsigned n = 0;
       for (unsigned n_end = (Nc / max_step_size) * max_step_size; n != n_end; n += max_step_size) {
@@ -52,14 +52,29 @@ public:
 
   /// \brief Gets the \f$x_1(n)\f$ state register after initialization.
   ///
-  /// \param[in] c_init Initial \f$x_1(n)\f$ state. Set to 1 by default.
+  /// \param[in] c_init Initial \f$x_1(n)\f$ state as specified by TS38.211 Section 5.2.1. Set to 1 by default.
   /// \return The \f$x_1(n)\f$ state register after initialization.
-  uint32_t get(unsigned c_init = 1) const
+  uint32_t get_reverse(unsigned c_init = 1) const
   {
     uint32_t ret = 0;
-
     for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
-      if ((c_init >> i) & 1UL) {
+      if ((c_init >> i) & 1U) {
+        ret ^= table[i];
+      }
+    }
+
+    return ret;
+  }
+
+  /// \brief Gets the \f$x_1(n)\f$ state register after initialization.
+  ///
+  /// \param[in] init_state Initial \f$x_1(n)\f$ state.
+  /// \return The \f$x_1(n)\f$ state register after initialization.
+  uint32_t get(unsigned init_state) const
+  {
+    uint32_t ret = 0;
+    for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
+      if ((init_state << i) & (1U << 31U)) {
         ret ^= table[i];
       }
     }
@@ -97,7 +112,7 @@ public:
 
     // For each bit of the seed.
     for (uint32_t i = 0; i != pseudo_random_generator_state_size; ++i) {
-      pseudo_random_generator_sequence sequence(0, 1 << i);
+      pseudo_random_generator_sequence sequence(0, 1 << (31 - i));
 
       unsigned n = 0;
       for (unsigned n_end = (Nc / max_step_size) * max_step_size; n != n_end; n += max_step_size) {
@@ -113,14 +128,29 @@ public:
 
   /// \brief Gets the \f$x_2(n)\f$ state register after initialization.
   ///
-  /// \param[in] c_init Initial \f$x_2(n)\f$ state.
+  /// \param[in] c_init Initial \f$x_2(n)\f$ state as specified by TS38.211 Section 5.2.1.
   /// \return The \f$x_2(n)\f$ state register after initialization.
-  unsigned get(unsigned c_init) const
+  uint32_t get_reverse(unsigned c_init) const
   {
     uint32_t ret = 0;
-
     for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
-      if ((c_init >> i) & 1UL) {
+      if ((c_init >> i) & 1U) {
+        ret ^= table[i];
+      }
+    }
+
+    return ret;
+  }
+
+  /// \brief Gets the \f$x_2(n)\f$ state register after initialization.
+  ///
+  /// \param[in] init_state Initial \f$x_2(n)\f$ state.
+  /// \return The \f$x_2(n)\f$ state register after initialization.
+  uint32_t get(unsigned init_state) const
+  {
+    uint32_t ret = 0;
+    for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
+      if ((init_state << i) & (1U << 31U)) {
         ret ^= table[i];
       }
     }
