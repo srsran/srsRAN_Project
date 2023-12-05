@@ -53,8 +53,10 @@ public:
   /// \brief Handle the detection of a C-RNTI MAC CE for this UE.
   virtual void handle_crnti_ce_detection() = 0;
 
-  /// \brief Handle command to activate/deactivate scheduling for this UE.
-  virtual void handle_scheduling_activation(bool active) = 0;
+  /// \brief Stop DRB traffic from flowing through the stack.
+  ///
+  /// This method may be called when Radio Link Failures are detected.
+  virtual void stop_drb_traffic() = 0;
 
   /// \brief Access to the MAC RLF notifier for this UE.
   virtual mac_ue_radio_link_notifier& get_mac_rlf_notifier() = 0;
@@ -71,10 +73,10 @@ public:
   {
   }
 
-  /// \brief Mutable access to the bearers of a UE
+  /// \brief List of bearers of the UE.
   du_ue_bearer_manager bearers;
 
-  /// \brief Mutable access to the radio resources of a UE
+  /// \brief Radio access network resources currently allocated to the UE.
   ue_ran_resource_configurator resources;
 
   /// \brief Determines whether this UE is running the RRC Reestablishment procedure.

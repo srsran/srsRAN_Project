@@ -32,7 +32,7 @@ public:
 
   void handle_crnti_ce_detection() override;
 
-  void handle_scheduling_activation(bool active) override {}
+  void stop_drb_traffic() override;
 
   mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *mac_rlf_notifier; }
   rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() override { return *rlc_rlf_notifier; }
@@ -41,8 +41,8 @@ private:
   class rlf_state_machine;
 
   du_ue_manager_repository& ue_db;
-
-  const du_manager_params& cfg;
+  const du_manager_params&  cfg;
+  srslog::basic_logger&     logger = srslog::fetch_basic_logger("DU-MNG");
 
   std::unique_ptr<rlf_state_machine>                   rlf_handler;
   std::unique_ptr<mac_ue_radio_link_notifier>          mac_rlf_notifier;

@@ -287,6 +287,8 @@ public:
     ul_ccch_indication_message ccch_ind = create_ul_ccch_message(to_rnti(0x4601));
     push_ul_ccch_message(ccch_ind);
     mac_completes_ue_creation(true);
+
+    test_ue_index = get_last_ue_index();
   }
 
   void tick_until_rlf_timeout()
