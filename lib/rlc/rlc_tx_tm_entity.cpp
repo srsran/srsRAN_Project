@@ -93,6 +93,18 @@ byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   return pdu_buf;
 }
 
+size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
+{
+  byte_buffer_chain buf    = pull_pdu(mac_sdu_buf.size());
+  auto              out_it = mac_sdu_buf.begin();
+  for (auto& slice : buf.slices()) {
+    for (span<const uint8_t> seg : slice.segments()) {
+      out_it = std::copy(seg.begin(), seg.end(), out_it);
+    }
+  }
+  return buf.length();
+}
+
 void rlc_tx_tm_entity::handle_changed_buffer_state()
 {
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {

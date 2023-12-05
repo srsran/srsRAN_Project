@@ -149,21 +149,16 @@ public:
   unsigned    next_bs = 0;
   byte_buffer previous_tx_sdu;
 
-  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
-  {
-    previous_tx_sdu = test_rgen::random_vector<uint8_t>(nof_bytes);
-    return byte_buffer_chain{previous_tx_sdu.copy()};
-  }
   size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
-    byte_buffer_chain buf = on_new_tx_sdu(mac_sdu_buf.size());
-    for (auto& slice : buf.slices()) {
-      for (span<const uint8_t> seg : slice.segments()) {
-        std::copy(seg.begin(), seg.end(), mac_sdu_buf.begin());
-      }
+    previous_tx_sdu = test_rgen::random_vector<uint8_t>(mac_sdu_buf.size());
+    auto out_it     = mac_sdu_buf.begin();
+    for (span<const uint8_t> seg : previous_tx_sdu.segments()) {
+      out_it = std::copy(seg.begin(), seg.end(), out_it);
     }
-    return buf.length();
+    return mac_sdu_buf.size();
   }
+
   unsigned on_buffer_state_update() override { return next_bs; }
 };
 

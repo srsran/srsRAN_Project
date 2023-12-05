@@ -120,29 +120,17 @@ public:
   std::vector<byte_buffer> last_sdus;
   std::deque<unsigned>     next_rlc_pdu_sizes;
 
-  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
+  size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
+    unsigned nof_bytes = mac_sdu_buf.size();
     if (not next_rlc_pdu_sizes.empty()) {
       nof_bytes = std::min(nof_bytes, next_rlc_pdu_sizes.front());
       next_rlc_pdu_sizes.pop_front();
     }
-    byte_buffer sdu;
     for (unsigned i = 0; i != nof_bytes; ++i) {
-      sdu.append(test_rgen::uniform_int<uint8_t>());
+      mac_sdu_buf[i] = test_rgen::uniform_int<uint8_t>();
     }
-    last_sdus.push_back(std::move(sdu));
-    return byte_buffer_chain{last_sdus.back().copy()};
-  }
-
-  size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
-  {
-    byte_buffer_chain buf = on_new_tx_sdu(mac_sdu_buf.size());
-    for (auto& slice : buf.slices()) {
-      for (span<const uint8_t> seg : slice.segments()) {
-        std::copy(seg.begin(), seg.end(), mac_sdu_buf.begin());
-      }
-    }
-    return buf.length();
+    return nof_bytes;
   }
 
   unsigned on_buffer_state_update() override { return 0; }

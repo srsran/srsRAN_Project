@@ -133,6 +133,12 @@ public:
   /// \return One PDU
   virtual byte_buffer_chain pull_pdu(uint32_t grant_len) = 0;
 
+  /// \brief Pulls a PDU from the lower end of the RLC TX entity
+  /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
+  /// \param mac_sdu_buf Buffer to write the RLC PDU.
+  /// \return Number of bytes taken by the written RLC PDU.
+  virtual size_t pull_pdu(span<uint8_t> mac_sdu_buf) = 0;
+
   /// \brief Get the buffer status information
   /// This function provides the current buffer state of the RLC TX entity.
   /// This is the gross total size required to fully flush the TX entity (potentially by multiple calls to pull_pdu).

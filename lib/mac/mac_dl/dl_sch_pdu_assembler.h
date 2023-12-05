@@ -38,7 +38,8 @@ public:
     span<uint8_t> sdu_space() const;
 
     /// \brief Updates the DL-SCH PDU with the encoded MAC SDU subheader and payload.
-    bool encode_sdu(unsigned sdu_bytes_written);
+    /// \return Number of bytes written to the DL-SCH PDU (MAC SDU subheader + payload).
+    unsigned encode_sdu(unsigned sdu_bytes_written);
 
   private:
     dl_sch_pdu* pdu = nullptr;

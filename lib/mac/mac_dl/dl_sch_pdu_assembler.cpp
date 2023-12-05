@@ -43,11 +43,11 @@ span<uint8_t> dl_sch_pdu::mac_sdu_encoder::sdu_space() const
   return pdu->pdu.subspan(sdu_offset, max_sdu_size);
 }
 
-bool dl_sch_pdu::mac_sdu_encoder::encode_sdu(unsigned sdu_bytes_written)
+unsigned dl_sch_pdu::mac_sdu_encoder::encode_sdu(unsigned sdu_bytes_written)
 {
   srsran_assert(pdu != nullptr, "encode_sdu called for invalid MAC grant");
   if (sdu_bytes_written == 0 or sdu_bytes_written > max_sdu_size) {
-    return false;
+    return 0;
   }
 
   // Encode MAC SubHeader.
@@ -57,7 +57,7 @@ bool dl_sch_pdu::mac_sdu_encoder::encode_sdu(unsigned sdu_bytes_written)
   // Advance byte offset to account for MAC SDU.
   pdu->byte_offset += sdu_bytes_written;
 
-  return true;
+  return subhr_len + sdu_bytes_written;
 }
 
 dl_sch_pdu::mac_sdu_encoder dl_sch_pdu::get_sdu_encoder(lcid_t lcid, unsigned sdu_payload_len_estimate)
@@ -301,8 +301,8 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                   lcid);
 
     // Fetch MAC Tx SDU from upper layers.
-    size_t nwritten = bearer->on_new_tx_sdu(sdu_enc.sdu_space());
-    if (nwritten == 0) {
+    size_t nwritten_sdu = bearer->on_new_tx_sdu(sdu_enc.sdu_space());
+    if (nwritten_sdu == 0) {
       logger.debug("ue={} rnti={:#x} lcid={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
                    ue_mng.get_ue_index(rnti),
                    rnti,
@@ -312,7 +312,8 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     }
 
     // Encode MAC SDU.
-    if (not sdu_enc.encode_sdu(nwritten)) {
+    size_t nwritten_tot = sdu_enc.encode_sdu(nwritten_sdu);
+    if (nwritten_tot == 0) {
       logger.error("ue={} rnti={:#x} lcid={}: Scheduled SubPDU with size={} cannot fit in scheduled DL grant",
                    ue_mng.get_ue_index(rnti),
                    rnti,
@@ -320,12 +321,12 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                    lc_grant_info.sched_bytes);
       break;
     }
-    srsran_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
+    srsran_assert(rem_bytes >= nwritten_tot, "Too many bytes were packed in MAC SDU");
 
     // Log SDU.
-    pdu_logger.add_sdu(lc_grant_info.lcid.to_lcid(), nwritten);
+    pdu_logger.add_sdu(lc_grant_info.lcid.to_lcid(), nwritten_tot);
 
-    rem_bytes -= nwritten;
+    rem_bytes -= nwritten_tot;
   }
   if (rem_bytes == total_space) {
     // No SDU was encoded for this LCID.

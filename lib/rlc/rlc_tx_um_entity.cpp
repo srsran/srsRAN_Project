@@ -175,6 +175,18 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   return pdu_buf;
 }
 
+size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
+{
+  byte_buffer_chain buf    = pull_pdu(mac_sdu_buf.size());
+  auto              out_it = mac_sdu_buf.begin();
+  for (auto& slice : buf.slices()) {
+    for (span<const uint8_t> seg : slice.segments()) {
+      out_it = std::copy(seg.begin(), seg.end(), out_it);
+    }
+  }
+  return buf.length();
+}
+
 /// Helper to get SI of an PDU
 bool rlc_tx_um_entity::get_si_and_expected_header_size(uint32_t      so,
                                                        uint32_t      sdu_len,

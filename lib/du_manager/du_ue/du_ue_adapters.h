@@ -220,21 +220,10 @@ class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 public:
   void connect(rlc_tx_lower_layer_interface& rlc_tx) { rlc_handler = &rlc_tx; }
 
-  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
-  {
-    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
-    return rlc_handler->pull_pdu(nof_bytes);
-  }
-
   size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
-    byte_buffer_chain buf = on_new_tx_sdu(mac_sdu_buf.size());
-    for (auto& slice : buf.slices()) {
-      for (span<const uint8_t> seg : slice.segments()) {
-        std::copy(seg.begin(), seg.end(), mac_sdu_buf.begin());
-      }
-    }
-    return buf.length();
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    return rlc_handler->pull_pdu(mac_sdu_buf);
   }
 
   unsigned on_buffer_state_update() override
