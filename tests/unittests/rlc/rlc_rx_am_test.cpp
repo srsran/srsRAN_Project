@@ -18,6 +18,27 @@
 
 using namespace srsran;
 
+// Config params
+rlc_rx_am_config cfg_12bit = {/*sn_field_length=*/rlc_am_sn_size::size12bits,
+                              /*t_reassembly=*/35,
+                              /*t_status_prohibit=*/8,
+                              /*max_sn_per_status=*/{}};
+
+rlc_rx_am_config cfg_18bit = {/*sn_field_length=*/rlc_am_sn_size::size18bits,
+                              /*t_reassembly=*/35,
+                              /*t_status_prohibit=*/8,
+                              /*max_sn_per_status=*/{}};
+
+rlc_rx_am_config cfg_12bit_status_limit = {/*sn_field_length=*/rlc_am_sn_size::size12bits,
+                                           /*t_reassembly=*/35,
+                                           /*t_status_prohibit=*/8,
+                                           /*max_sn_per_status=*/1024};
+
+rlc_rx_am_config cfg_18bit_status_limit = {/*sn_field_length=*/rlc_am_sn_size::size18bits,
+                                           /*t_reassembly=*/35,
+                                           /*t_status_prohibit=*/8,
+                                           /*max_sn_per_status=*/2048};
+
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,
                              public rlc_tx_am_status_handler,
@@ -46,8 +67,10 @@ public:
 };
 
 /// Fixture class for RLC AM Rx tests.
-/// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class rlc_rx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>, public rlc_trx_test
+/// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each config
+class rlc_rx_am_test : public ::testing::Test,
+                       public ::testing::WithParamInterface<rlc_rx_am_config>,
+                       public rlc_trx_test
 {
 protected:
   void SetUp() override
@@ -60,12 +83,7 @@ protected:
     srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(100);
 
-    logger.info("Creating RLC Rx AM entity ({} bit)", to_number(sn_size));
-
-    // Set Rx config
-    config.sn_field_length   = sn_size;
-    config.t_reassembly      = 35;
-    config.t_status_prohibit = 8;
+    logger.info("Creating RLC Rx AM entity ({})", config);
 
     // Create test frame
     tester = std::make_unique<rlc_rx_am_test_frame>(config.sn_field_length);
@@ -372,14 +390,17 @@ protected:
   }
 
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
-  rlc_am_sn_size                        sn_size = GetParam();
-  rlc_rx_am_config                      config;
+  rlc_rx_am_config                      config  = GetParam();
+  rlc_am_sn_size                        sn_size = config.sn_field_length;
   timer_manager                         timers;
   manual_task_worker                    ue_worker{128};
   std::unique_ptr<rlc_rx_am_test_frame> tester;
   null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_rx_am_entity>     rlc;
 };
+
+class rlc_rx_am_test_with_limit : public rlc_rx_am_test
+{};
 
 /// Test the instantiation of a new entity
 TEST_P(rlc_rx_am_test, create_new_entity)
@@ -1237,17 +1258,19 @@ TEST_P(rlc_rx_am_test, status_report)
   }
 }
 
-TEST_P(rlc_rx_am_test, status_report_with_limit)
+TEST_P(rlc_rx_am_test_with_limit, status_report_large_window)
 {
-  // Exit test if max_nof_sn_per_status_report exceeds window size
-  if (window_size(to_number(sn_size)) <= config.max_nof_sn_per_status_report) {
-    return;
-  }
-
   uint32_t sn_start     = 0;
   uint32_t sn_state     = sn_start;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 7;
+
+  uint32_t sn_max;
+  if (config.max_sn_per_status.has_value()) {
+    sn_max = config.max_sn_per_status.value();
+  } else {
+    sn_max = window_size(to_number(config.sn_field_length));
+  }
 
   {
     // check status report
@@ -1270,7 +1293,7 @@ TEST_P(rlc_rx_am_test, status_report_with_limit)
   }
 
   // Skip sn_state to expand rx_window up to max_nof_sn_per_status_report
-  sn_state += config.max_nof_sn_per_status_report - 1;
+  sn_state += sn_max - 1;
 
   {
     // Create SDU and PDUs with SDU segments
@@ -1309,9 +1332,9 @@ TEST_P(rlc_rx_am_test, status_report_with_limit)
 
   // Check status report
   rlc_am_status_pdu& status_report = rlc->get_status_pdu();
-  EXPECT_EQ(status_report.ack_sn, sn_start + config.max_nof_sn_per_status_report);
-  constexpr uint32_t max_nack_range = 255;
-  uint32_t nof_nack_ranges = ((config.max_nof_sn_per_status_report + max_nack_range - 1) / max_nack_range); // round up
+  EXPECT_EQ(status_report.ack_sn, sn_start + sn_max);
+  constexpr uint32_t max_nack_range  = 255;
+  uint32_t           nof_nack_ranges = ((sn_max + max_nack_range - 1) / max_nack_range); // round up
   EXPECT_EQ(status_report.get_nacks().size(), nof_nack_ranges + 1); // +1 for the missing segment at upper edge
 }
 
@@ -1385,17 +1408,27 @@ TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////
 
-std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_am_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_rx_am_config>& info)
 {
-  fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", to_number(info.param));
-  return fmt::to_string(buffer);
+  constexpr static const char* options[] = {"12bit", "18bit"};
+  return options[info.index];
 }
 
 INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size,
                          rlc_rx_am_test,
-                         ::testing::Values(rlc_am_sn_size::size12bits, rlc_am_sn_size::size18bits),
+                         ::testing::Values(cfg_12bit, cfg_18bit),
                          test_param_info_to_string);
+
+std::string test_param_info_to_string_status_limit(const ::testing::TestParamInfo<rlc_rx_am_config>& info)
+{
+  constexpr static const char* options[] = {"12bit", "18bit", "12bit_status_limit", "18bit_status_limit"};
+  return options[info.index];
+}
+
+INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size_with_limit,
+                         rlc_rx_am_test_with_limit,
+                         ::testing::Values(cfg_12bit, cfg_18bit, cfg_12bit_status_limit, cfg_18bit_status_limit),
+                         test_param_info_to_string_status_limit);
 
 int main(int argc, char** argv)
 {

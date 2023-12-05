@@ -42,10 +42,6 @@ rlc_rx_am_entity::rlc_rx_am_entity(uint32_t                          du_index,
   srsran_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM, status_prohibit_timer not configured.");
   // check reassembly_timer
   srsran_assert(reassembly_timer.is_valid(), "Cannot create RLC RX AM, reassembly_timer not configured.");
-  // Check max_nof_sn_per_status_report
-  srsran_assert(cfg.max_nof_sn_per_status_report <= cardinality(to_number(cfg.sn_field_length)),
-                "Cannot create RLC RX AM, invalid max_nof_sn_per_status_report exceeds window_size. {}",
-                cfg);
 
   // configure status_prohibit_timer
   if (cfg.t_status_prohibit > 0) {
@@ -57,6 +53,18 @@ rlc_rx_am_entity::rlc_rx_am_entity(uint32_t                          du_index,
   if (cfg.t_reassembly > 0) {
     reassembly_timer.set(std::chrono::milliseconds{cfg.t_reassembly},
                          [this](timer_id_t tid) { on_expired_reassembly_timer(); });
+  }
+
+  // configure status report limits
+  if (cfg.max_sn_per_status.has_value()) {
+    uint32_t max_sn_per_status = cfg.max_sn_per_status.value();
+    srsran_assert(max_sn_per_status <= window_size(to_number(cfg.sn_field_length)),
+                  "Cannot create RLC RX AM, max_sn_per_status exceeds window_size. {}",
+                  cfg);
+    srsran_assert(max_sn_per_status > 0, "Cannot create RLC RX AM, max_sn_per_status must not be zero. {}", cfg);
+    max_nof_sn_per_status_report = max_sn_per_status;
+  } else {
+    max_nof_sn_per_status_report = window_size(to_number(cfg.sn_field_length));
   }
 
   // initialize status report
@@ -475,8 +483,8 @@ void rlc_rx_am_entity::refresh_status_report()
    */
   uint32_t stop_sn = st.rx_highest_status;
   // Restrict execution time by limiting the number of visited SNs in the RX window
-  if (rx_mod_base(st.rx_highest_status) > rx_mod_base((st.rx_next + cfg.max_nof_sn_per_status_report) % mod)) {
-    stop_sn = (st.rx_next + cfg.max_nof_sn_per_status_report) % mod;
+  if (rx_mod_base(st.rx_highest_status) > rx_mod_base((st.rx_next + max_nof_sn_per_status_report) % mod)) {
+    stop_sn = (st.rx_next + max_nof_sn_per_status_report) % mod;
   }
   logger.log_debug(
       "Generating status PDU. rx_next={} rx_highest_status={} stop_sn={}", st.rx_next, st.rx_highest_status, stop_sn);

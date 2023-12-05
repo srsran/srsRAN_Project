@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
@@ -665,7 +666,7 @@ struct rlc_rx_am_config {
 
   // Implementation-specific parameters that are not specified by 3GPP
   /// Maximum number of visited SNs in the RX window when building a status report.
-  static constexpr uint32_t max_nof_sn_per_status_report = 2048;
+  optional<uint32_t> max_sn_per_status;
 };
 
 /// \brief Configurable Tx parameters for RLC AM
@@ -904,11 +905,11 @@ struct formatter<srsran::rlc_rx_am_config> {
   auto format(srsran::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rx_sn_size={} t_reassembly={} t_status_prohibit={} max_nof_sn_per_status_report={}",
+                     "rx_sn_size={} t_reassembly={} t_status_prohibit={} max_sn_per_status={}",
                      cfg.sn_field_length,
                      cfg.t_reassembly,
                      cfg.t_status_prohibit,
-                     cfg.max_nof_sn_per_status_report);
+                     cfg.max_sn_per_status);
   }
 };
 

@@ -78,6 +78,9 @@ private:
   /// Rx state variables
   rlc_rx_am_state st;
 
+  /// Maximum number of visited SNs in the RX window when building a status report.
+  uint32_t max_nof_sn_per_status_report; // keep this attribute close to st (cache)
+
   /// Status handler
   rlc_tx_am_status_handler* status_handler = nullptr;
   /// Status notifier
