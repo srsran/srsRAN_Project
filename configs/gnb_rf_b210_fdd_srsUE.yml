@@ -14,8 +14,8 @@ ru_sdr:
   device_args: type=b200                                          # Optionally pass arguments to the selected RF driver.
   sync: external                                                  # Set sync to external. This set-up uses a LEO BODNAR GPDSO providing a 10 MHz ref.
   srate: 11.52                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
-  tx_gain: 70                                                     # Transmit gain of the RF might need to adjusted to the given situation.
-  rx_gain: 60                                                     # Receive gain of the RF might need to adjusted to the given situation. 
+  tx_gain: 80                                                     # Transmit gain of the RF might need to adjusted to the given situation.
+  rx_gain: 40                                                     # Receive gain of the RF might need to adjusted to the given situation.
 
 cell_cfg:
   dl_arfcn: 368500                                                # ARFCN of the downlink carrier (center frequency).
