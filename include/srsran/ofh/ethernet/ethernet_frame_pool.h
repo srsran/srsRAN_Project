@@ -24,30 +24,28 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ethernet/ethernet_properties.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/support/units.h"
 #include <mutex>
 
 namespace srsran {
 namespace ether {
 
-/// Length of Ethernet Jumbo frame.
-constexpr unsigned MAX_ETH_FRAME_LENGTH = 9000;
-
-/// Minimal Ethernet frame length.
-constexpr unsigned MIN_ETH_FRAME_LENGTH = 64;
-
 /// Storage for one Ethernet frame buffer.
 class frame_buffer
 {
-  using buffer_type = std::array<uint8_t, MAX_ETH_FRAME_LENGTH>;
-
-  size_t      sz     = 0;
-  buffer_type buffer = {};
+  size_t               sz = 0;
+  std::vector<uint8_t> buffer;
 
 public:
+  /// Constructors.
+  frame_buffer() = default;
+  explicit frame_buffer(unsigned size) : buffer(size, 0) {}
+
   constexpr bool empty() const noexcept { return sz == 0; }
 
   constexpr size_t size() const noexcept { return sz; }
@@ -80,22 +78,18 @@ struct frame_pool_context {
   }
 };
 
-/// Class encapsulating \c ethernet_frame_buffer buffers used in a circular manner. It is used by \c eth_frame_pool
+/// Class encapsulating \c ether::frame_buffer buffers used in a circular manner. It is used by \c eth_frame_pool
 /// class to manage Ethernet frame buffers for each OFH type in a slot symbol. Internally it keeps track of current
 /// write and read positions.
 class frame_buffer_array
 {
-  /// Maximum number of ethernet frames of each OFH type stored for each slot symbol.
-  /// \note Minimum value of stored frames is 2, which allows differentiation of the written/read frame counters.
-  static constexpr size_t MAX_ETH_FRAMES_PER_SYMBOL =
-      std::max(ofh::MAX_CP_MESSAGES_PER_SYMBOL, ofh::MAX_UP_MESSAGES_PER_SYMBOL) * 4;
-
-  /// Maximum number of \c ethernet_frame_buffer arrays with prepared ethernet frames.
-  static constexpr size_t MAX_NOF_PREPARED_FRAMES = 16;
-
   /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
-  using storage_array_type = std::array<frame_buffer, MAX_ETH_FRAMES_PER_SYMBOL>;
-  using ready_frames_type  = static_vector<const frame_buffer*, MAX_NOF_PREPARED_FRAMES>;
+  using storage_array_type = std::vector<frame_buffer>;
+  using ready_frames_type  = std::vector<const frame_buffer*>;
+
+  /// Number of entries in the internal storage. Each entry comprises multiple frame buffers, the number of
+  /// buffers in one entry is received at construction time.
+  static constexpr size_t NUM_OF_ENTRIES = 2;
 
   /// Structure used to count number of written and read elements in the circular array.
   struct rd_wr_counter {
@@ -110,10 +104,14 @@ class frame_buffer_array
   };
 
 public:
-  // Receives number of packets stored/read at a time, reserves storage to accommodate (2 * n_packets) packets.
-  explicit frame_buffer_array(unsigned n_packets) :
-    write_position(MAX_ETH_FRAMES_PER_SYMBOL), increment_quant(n_packets)
+  // Constructor receives number of buffers stored/read at a time, reserves storage for all eAxCs.
+  frame_buffer_array(unsigned nof_buffers, unsigned buffer_size) :
+    increment_quant(nof_buffers),
+    buf_array(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES, frame_buffer{buffer_size}),
+    write_position(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES),
+    max_nof_prepared_buffers(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES)
   {
+    ready_frames.reserve(max_nof_prepared_buffers);
   }
 
   // Returns view over increment_quant buffers for writing. Unread buffers might be overwritten
@@ -127,7 +125,7 @@ public:
   void push_buffers(span<frame_buffer> prepared_buffers)
   {
     // Overwrite old data.
-    if (ready_frames.size() == MAX_NOF_PREPARED_FRAMES) {
+    if (ready_frames.size() == max_nof_prepared_buffers) {
       clear_buffers();
     }
     for (unsigned i = 0, e = prepared_buffers.size(); i != e; ++i) {
@@ -150,14 +148,16 @@ public:
   }
 
 private:
+  // Number of buffers accessed at a time.
+  unsigned increment_quant;
   // Data buffers.
   storage_array_type buf_array;
-  // Vector of spans of prepared ethernet packets.
+  // Vector of spans of prepared Ethernet packets.
   ready_frames_type ready_frames;
   // Keeps track of the current write position.
   rd_wr_counter write_position;
-  // Number of buffers accessed at a time.
-  unsigned increment_quant;
+  // Maximum number of prepared buffers stored in the pool before overwriting takes place.
+  unsigned max_nof_prepared_buffers;
 };
 
 /// Pool of Ethernet frames pre-allocated for each slot symbol.
@@ -166,21 +166,24 @@ class eth_frame_pool
   /// Maximum number of entries contained by the pool, one entry per OFDM symbol, sized to accommodate 20 slots.
   static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * 20L;
 
-  /// Pool entry storing circular arrays of ethernet frame buffers.
+  /// Pool entry stores three circular arrays for every OFH type (DL C-Plane, UL C-Plane and U-Plane).
   struct pool_entry {
-    /// Pool entry stores \c POOL_ENTRY_SIZE circular arrays for every OFH type (DL CP, UL CP, UP).
-    static constexpr size_t POOL_ENTRY_SIZE = 3;
     /// Number of buffers returned for Control-Plane messages at a time.
-    static constexpr size_t NUM_CP_MESSAGES_TO_RETURN = 1;
-    /// Number of buffers returned for User-Plane messages at a time.
-    static constexpr size_t NUM_UP_MESSAGES_TO_RETURN = 2;
+    const size_t NUM_CP_MESSAGES_TO_RETURN = 1;
 
-    /// Circular arrays of Ethernet frame buffers for each OFH type.
-    std::array<frame_buffer_array, POOL_ENTRY_SIZE> buffers = {frame_buffer_array{NUM_CP_MESSAGES_TO_RETURN},
-                                                               frame_buffer_array{NUM_CP_MESSAGES_TO_RETURN},
-                                                               frame_buffer_array{NUM_UP_MESSAGES_TO_RETURN}};
+    /// Circular arrays of Ethernet frame buffers for each OFH type (DL C-Plane, UL C-Plane and U-Plane).
+    std::vector<frame_buffer_array> buffers;
 
-    /// Returns an entry_buffer given the OFH type.
+    pool_entry(units::bytes mtu, unsigned num_of_frames)
+    {
+      // DL C-Plane storage.
+      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value());
+      // UL C-Plane storage.
+      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value());
+      // U-Plane storage.
+      buffers.emplace_back(num_of_frames, mtu.value());
+    }
+
     /// Returns frame buffers for the given OFH type and given direction.
     frame_buffer_array& get_ofh_type_buffers(ofh::message_type type, ofh::data_direction dir)
     {
@@ -232,7 +235,7 @@ class eth_frame_pool
       const frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       return entry_buf.get_rd_buffers();
     }
-  }; // end of pool_entry
+  }; // End of pool_entry class.
 
   /// Returns pool entry for the given slot and symbol.
   const pool_entry& get_pool_entry(slot_point slot_point, unsigned symbol) const
@@ -248,6 +251,9 @@ class eth_frame_pool
   }
 
 public:
+  /// Constructor;
+  eth_frame_pool(units::bytes mtu, unsigned num_of_frames) : pool(NUM_ENTRIES, {mtu, num_of_frames}) {}
+
   /// Returns data buffer from the pool for the given slot and symbol.
   span<frame_buffer> get_frame_buffers(const frame_pool_context& context)
   {
@@ -257,7 +263,7 @@ public:
     return p_entry.get_write_buffers(context);
   }
 
-  /// Increments number of prepared ethernet frames in the given slot symbol.
+  /// Increments number of prepared Ethernet frames in the given slot symbol.
   void eth_frames_ready(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
@@ -275,11 +281,11 @@ public:
     return p_entry.get_read_buffers(context);
   }
 
-  /// Clear prepared ethernet frames in the given symbol once it was sent to a gateway (thread-safe).
+  /// Clear prepared Ethernet frames in the given symbol once it was sent to a gateway (thread-safe).
   void eth_frames_sent(const frame_pool_context& context)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
-    // Lock and increment number of read ethernet frames.
+    // Lock and increment number of read Ethernet frames.
     std::lock_guard<std::mutex> lock(mutex);
     p_entry.clear_buffers(context);
   }
@@ -309,7 +315,7 @@ public:
 
 private:
   /// Buffer pool.
-  std::array<pool_entry, NUM_ENTRIES> pool;
+  std::vector<pool_entry> pool;
   /// Mutex protecting buffers read/write counters.
   mutable std::mutex mutex;
 };

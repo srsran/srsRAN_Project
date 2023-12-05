@@ -64,17 +64,23 @@ public:
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
-  bool     is_active() const { return true; }
+
+  /// \brief Determines whether the UE cell is currently active.
+  bool is_active() const { return active; }
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
+
+  /// \brief Deactivates cell.
+  void deactivate();
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
   void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
 
-  const dl_harq_process* handle_dl_ack_info(slot_point                 uci_slot,
-                                            mac_harq_ack_report_status ack_value,
-                                            unsigned                   harq_bit_idx,
-                                            optional<float>            pucch_snr);
+  std::pair<const dl_harq_process*, dl_harq_process::status_update>
+  handle_dl_ack_info(slot_point                 uci_slot,
+                     mac_harq_ack_report_status ack_value,
+                     unsigned                   harq_bit_idx,
+                     optional<float>            pucch_snr);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -131,6 +137,10 @@ public:
     is_fallback_mode = fallback_state_;
   }
 
+  bool is_pucch_grid_inited() const { return is_pucch_alloc_grid_initialized; }
+
+  void set_pucch_grid_inited() { is_pucch_alloc_grid_initialized = true; }
+
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
@@ -148,10 +158,15 @@ private:
   scheduler_ue_expert_config     expert_cfg;
   srslog::basic_logger&          logger;
 
+  /// \brief Whether cell is currently active.
+  bool active = true;
+
   /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
   /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must
   /// already have applied a dedicated config.
   bool is_fallback_mode = false;
+
+  bool is_pucch_alloc_grid_initialized = false;
 
   metrics ue_metrics;
 

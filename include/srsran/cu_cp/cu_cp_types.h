@@ -132,18 +132,6 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
   return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
 }
 
-/// \brief The UE creation is triggered from the F1AP.
-/// It carries an RRC container and the C-RNTI if the DU sent an Initial UL RRC transfer. If the user is created
-/// during handover the RNTI is only allocated after the Random Access.
-struct cu_cp_ue_creation_message {
-  ue_index_t          ue_index = ue_index_t::invalid;
-  nr_cell_global_id_t cgi;
-  uint32_t            tac;
-  byte_buffer         du_to_cu_rrc_container;
-  rnti_t              c_rnti;
-  bool                is_inter_cu_handover = false;
-};
-
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {

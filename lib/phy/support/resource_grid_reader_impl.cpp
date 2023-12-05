@@ -46,6 +46,16 @@ bool resource_grid_reader_impl::is_empty(unsigned port) const
   return is_port_empty(port);
 }
 
+bool resource_grid_reader_impl::is_empty() const
+{
+  for (unsigned i_port = 0, i_port_end = get_nof_ports(); i_port != i_port_end; ++i_port) {
+    if (!is_empty(i_port)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 span<cf_t> resource_grid_reader_impl::get(span<cf_t>       symbols,
                                           unsigned         port,
                                           unsigned         l,

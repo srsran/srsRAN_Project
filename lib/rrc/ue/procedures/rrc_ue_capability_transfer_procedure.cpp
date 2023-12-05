@@ -31,7 +31,7 @@ rrc_ue_capability_transfer_procedure::rrc_ue_capability_transfer_procedure(
     rrc_ue_context_t&                           context_,
     rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier_,
     rrc_ue_event_manager&                       event_mng_,
-    srslog::basic_logger&                       logger_) :
+    rrc_ue_logger&                              logger_) :
   context(context_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
 {
 }
@@ -41,11 +41,11 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
   CORO_BEGIN(ctx);
 
   if (context.capabilities.has_value()) {
-    logger.debug("ue={} \"{}\" skipped - capabilities already present", context.ue_index, name());
+    logger.log_debug("\"{}\" skipped. Capabilities already present", name());
     CORO_EARLY_RETURN(true);
   }
 
-  logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
+  logger.log_debug("\"{}\" initialized", name());
   // create new transaction for RRCUeCapabilityEnquiry
   transaction =
       event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
@@ -66,29 +66,29 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
           asn1::cbit_ref            bref{ue_cap_rat_container.ue_cap_rat_container.copy()};
           asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
           if (ue_nr_cap.unpack(bref) != asn1::SRSASN_SUCCESS) {
-            logger.error("Error unpacking UE Capabilities");
+            logger.log_error("Error unpacking UE Capabilities");
             continue;
           }
 
-          if (logger.debug.enabled()) {
+          if (logger.get_basic_logger().debug.enabled()) {
             asn1::json_writer json_writer;
             ue_nr_cap.to_json(json_writer);
-            logger.debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
+            logger.log_debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
           }
 
           // Store capabilities for future use.
           context.capabilities = ue_nr_cap;
         } else {
-          logger.warning("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
+          logger.log_warning("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
         }
       }
     }
     procedure_result = context.capabilities.has_value();
   } else {
-    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
   }
 
-  logger.debug("ue={} \"{}\" finalized", context.ue_index, name());
+  logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN(procedure_result);
 }
 

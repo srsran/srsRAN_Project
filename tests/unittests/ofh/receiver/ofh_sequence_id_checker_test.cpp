@@ -180,3 +180,46 @@ TEST(ofh_sequence_id_checker, two_eaxc_with_different_seq_id_detects_future_mess
   ASSERT_EQ(103, checker.update_and_compare_seq_id(eaxc_1, seq_id_1));
   ASSERT_EQ(70, checker.update_and_compare_seq_id(eaxc_2, seq_id_2));
 }
+
+TEST(ofh_sequence_id_checker, message_from_the_past_does_not_modify_internal_seq_id)
+{
+  sequence_id_checker checker;
+  unsigned            eaxc   = 0;
+  unsigned            seq_id = 1;
+
+  ASSERT_EQ(0, checker.update_and_compare_seq_id(eaxc, seq_id));
+
+  // Set a sequence identifier from the past.
+  --seq_id;
+  ASSERT_EQ(-2, checker.update_and_compare_seq_id(eaxc, seq_id));
+
+  // Continue as if was normal. As it was a packet from the past, the expected sequence id does not change.
+  ++seq_id;
+  ASSERT_EQ(-1, checker.update_and_compare_seq_id(eaxc, seq_id));
+}
+
+TEST(ofh_sequence_id_checker,
+     message_from_the_past_does_not_modify_internal_seq_id_and_will_resume_if_gets_to_the_expected_seq_id)
+{
+  sequence_id_checker checker;
+  unsigned            eaxc   = 0;
+  unsigned            seq_id = 1;
+
+  ASSERT_EQ(0, checker.update_and_compare_seq_id(eaxc, seq_id));
+
+  // Set a sequence identifier from the past.
+  seq_id = 200;
+
+  // Check that the expected sequence identifier is not modified.
+  for (int i = 1; i != 58; ++i) {
+    // Continue as if was normal. As it was a packet from the past, the expected sequence id does not change.
+    ++seq_id;
+    ASSERT_EQ((-58 + i), checker.update_and_compare_seq_id(eaxc, seq_id));
+  }
+
+  // Once the given sequence id matched the expected, increment the expected sequence id.
+  for (int i = 0; i != 20; ++i) {
+    ++seq_id;
+    ASSERT_EQ(0, checker.update_and_compare_seq_id(eaxc, seq_id));
+  }
+}

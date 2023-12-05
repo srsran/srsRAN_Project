@@ -28,18 +28,60 @@
 
 #include "short_block_detector_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsran/support/srsran_test.h"
+#include "fmt/ostream.h"
+#include <gtest/gtest.h>
 
 /// \cond
 using namespace srsran;
-int main()
+namespace srsran {
+std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  std::shared_ptr<short_block_detector_factory> short_block_detector_factory = create_short_block_detector_factory_sw();
-  TESTASSERT(short_block_detector_factory);
+  fmt::print(os,
+             "message_length={} codeblock_length={} mod={}",
+             test_case.message_length,
+             test_case.codeblock_length,
+             test_case.mod);
+  return os;
+}
 
-  std::unique_ptr<short_block_detector> test_detector = short_block_detector_factory->create();
-  TESTASSERT(test_detector);
+} // namespace srsran
+namespace {
 
+using ShortBlockDetectorParams = test_case_t;
+
+class ShortBlockDetectorFixture : public ::testing::TestWithParam<ShortBlockDetectorParams>
+{
+protected:
+  static std::shared_ptr<short_block_detector_factory> factory;
+  static std::unique_ptr<short_block_detector>         test_detector;
+
+  static void SetUpTestSuite()
+  {
+    // Create short block detector factory.
+    if (!factory) {
+      factory = create_short_block_detector_factory_sw();
+      ASSERT_NE(factory, nullptr) << "Cannot create short block detector factory";
+    }
+
+    // Create test detector
+    if (!test_detector) {
+      test_detector = factory->create();
+      ASSERT_NE(test_detector, nullptr) << "Cannot create test detector";
+    }
+  }
+
+  void SetUp() override
+  {
+    ASSERT_NE(factory, nullptr) << "Cannot create short block detector factory";
+    ASSERT_NE(test_detector, nullptr) << "Cannot create test detector";
+  }
+};
+
+std::shared_ptr<short_block_detector_factory> ShortBlockDetectorFixture::factory       = nullptr;
+std::unique_ptr<short_block_detector>         ShortBlockDetectorFixture::test_detector = nullptr;
+
+TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTest)
+{
   for (const auto& test_data : short_block_detector_test_data) {
     unsigned          nof_messages     = test_data.nof_messages;
     unsigned          message_length   = test_data.message_length;
@@ -47,18 +89,25 @@ int main()
     modulation_scheme mod              = test_data.mod;
 
     const std::vector<uint8_t> messages = test_data.messages.read();
-    TESTASSERT_EQ(messages.size(), nof_messages * message_length, "Error reading messages.");
+    ASSERT_EQ(messages.size(), nof_messages * message_length) << "Error reading messages.";
     std::vector<log_likelihood_ratio> codeblocks = test_data.codeblocks.read();
-    TESTASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length, "Error reading codeblocks.");
+    ASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length) << "Error reading codeblocks.";
 
     std::vector<uint8_t> messages_test(messages.size());
     for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
       span<const log_likelihood_ratio> input =
           span<const log_likelihood_ratio>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
       span<uint8_t> output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
-      TESTASSERT(test_detector->detect(output, input, mod), "Meaningless detection.");
+      ASSERT_TRUE(test_detector->detect(output, input, mod)) << "Meaningless detection.";
     }
-    TESTASSERT(std::equal(messages_test.cbegin(), messages_test.cend(), messages.cbegin()), "Detection went wrong.");
+    ASSERT_EQ(span<const uint8_t>(messages_test), span<const uint8_t>(messages)) << "Detection went wrong.";
   }
 }
-/// \endcond
+
+INSTANTIATE_TEST_SUITE_P(ShortBlockDetectorTest,
+                         ShortBlockDetectorFixture,
+                         ::testing::ValuesIn(short_block_detector_test_data));
+
+} // end namespace
+
+/// \encond

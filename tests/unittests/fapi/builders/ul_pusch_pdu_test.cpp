@@ -198,39 +198,85 @@ TEST(ul_pusch_pdu_builder, valid_data_parameters_passes)
   ASSERT_EQ(cb_present, data.cb_present_and_position);
 }
 
-TEST(ul_pusch_pdu_builder, valid_uci_parameters_passes)
+TEST(ul_pusch_pdu_builder, valid_uci_alpha_parameters_passes)
 {
-  unsigned                       harq_ack_bit_len     = 3;
-  unsigned                       csi_part1_bit_len    = 5;
-  unsigned                       flag_csi_part2       = 54;
   std::vector<alpha_scaling_opt> alpha_scaling_vector = {
       alpha_scaling_opt::f0p5, alpha_scaling_opt::f0p65, alpha_scaling_opt::f0p8, alpha_scaling_opt::f1};
-  unsigned beta_offset_harq_ack = 12;
-  unsigned beta_offset_csi1     = 2;
-  unsigned beta_offset_csi2     = 3;
 
   for (auto alpha_scaling : alpha_scaling_vector) {
     ul_pusch_pdu         pdu;
     ul_pusch_pdu_builder builder(pdu);
 
-    builder.add_optional_pusch_uci(harq_ack_bit_len,
-                                   csi_part1_bit_len,
-                                   flag_csi_part2,
-                                   alpha_scaling,
-                                   beta_offset_harq_ack,
-                                   beta_offset_csi1,
-                                   beta_offset_csi2);
+    builder.add_optional_pusch_uci_alpha(alpha_scaling);
 
     ASSERT_TRUE(pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_UCI_BIT]);
     const auto& uci = pdu.pusch_uci;
-    ASSERT_EQ(beta_offset_harq_ack, uci.beta_offset_harq_ack);
-    ASSERT_EQ(beta_offset_csi1, uci.beta_offset_csi1);
-    ASSERT_EQ(beta_offset_csi2, uci.beta_offset_csi2);
-    ASSERT_EQ(harq_ack_bit_len, uci.harq_ack_bit_length);
-    ASSERT_EQ(csi_part1_bit_len, uci.csi_part1_bit_length);
-    ASSERT_EQ(flag_csi_part2, uci.flags_csi_part2);
+    ASSERT_EQ(0, uci.beta_offset_harq_ack);
+    ASSERT_EQ(0, uci.beta_offset_csi1);
+    ASSERT_EQ(0, uci.beta_offset_csi2);
+    ASSERT_EQ(0, uci.harq_ack_bit_length);
+    ASSERT_EQ(0, uci.csi_part1_bit_length);
+    ASSERT_EQ(0, uci.flags_csi_part2);
     ASSERT_EQ(alpha_scaling, uci.alpha_scaling);
   }
+}
+
+TEST(ul_pusch_pdu_builder, valid_uci_harq_parameters_passes)
+{
+  unsigned harq_ack_bit_len     = 3;
+  unsigned beta_offset_harq_ack = 12;
+
+  ul_pusch_pdu         pdu;
+  ul_pusch_pdu_builder builder(pdu);
+
+  builder.add_optional_pusch_uci_harq(harq_ack_bit_len, beta_offset_harq_ack);
+
+  ASSERT_TRUE(pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_UCI_BIT]);
+  const auto& uci = pdu.pusch_uci;
+  ASSERT_EQ(beta_offset_harq_ack, uci.beta_offset_harq_ack);
+  ASSERT_EQ(0, uci.beta_offset_csi1);
+  ASSERT_EQ(0, uci.beta_offset_csi2);
+  ASSERT_EQ(harq_ack_bit_len, uci.harq_ack_bit_length);
+  ASSERT_EQ(0, uci.csi_part1_bit_length);
+  ASSERT_EQ(0, uci.flags_csi_part2);
+}
+
+TEST(ul_pusch_pdu_builder, valid_uci_csi1_parameters_passes)
+{
+  unsigned csi_part1_bit_len = 5;
+  unsigned beta_offset_csi1  = 2;
+
+  ul_pusch_pdu         pdu;
+  ul_pusch_pdu_builder builder(pdu);
+
+  builder.add_optional_pusch_uci_csi1(csi_part1_bit_len, beta_offset_csi1);
+
+  ASSERT_TRUE(pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_UCI_BIT]);
+  const auto& uci = pdu.pusch_uci;
+  ASSERT_EQ(0, uci.beta_offset_harq_ack);
+  ASSERT_EQ(beta_offset_csi1, uci.beta_offset_csi1);
+  ASSERT_EQ(0, uci.beta_offset_csi2);
+  ASSERT_EQ(0, uci.harq_ack_bit_length);
+  ASSERT_EQ(csi_part1_bit_len, uci.csi_part1_bit_length);
+  ASSERT_EQ(0, uci.flags_csi_part2);
+}
+
+TEST(ul_pusch_pdu_builder, valid_uci_csi2_parameters_passes)
+{
+  unsigned beta_offset_csi2 = 3;
+
+  ul_pusch_pdu         pdu;
+  ul_pusch_pdu_builder builder(pdu);
+
+  builder.add_optional_pusch_uci_csi2(beta_offset_csi2);
+
+  const auto& uci = pdu.pusch_uci;
+  ASSERT_EQ(0, uci.beta_offset_harq_ack);
+  ASSERT_EQ(0, uci.beta_offset_csi1);
+  ASSERT_EQ(beta_offset_csi2, uci.beta_offset_csi2);
+  ASSERT_EQ(0, uci.harq_ack_bit_length);
+  ASSERT_EQ(0, uci.csi_part1_bit_length);
+  ASSERT_EQ(std::numeric_limits<decltype(ul_pusch_uci::flags_csi_part2)>::max(), uci.flags_csi_part2);
 }
 
 TEST(ul_pusch_pdu_builder, valid_pusch_ptrs_parameters_passes)

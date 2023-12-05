@@ -21,10 +21,10 @@
  */
 
 #include "du_high_impl.h"
-#include "adapters.h"
+#include "adapters/adapters.h"
+#include "adapters/du_high_adapter_factories.h"
+#include "adapters/f1ap_adapters.h"
 #include "du_high_executor_strategies.h"
-#include "f1ap_adapters.h"
-#include "mac_test_mode_adapter.h"
 #include "srsran/du_manager/du_manager_factory.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
@@ -82,6 +82,11 @@ public:
     mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
   }
 
+  void handle_error_indication(slot_point sl_tx, error_event event) override
+  {
+    mac.get_slot_handler(to_du_cell_index(0)).handle_error_indication(sl_tx, event);
+  }
+
 private:
   timer_manager& timers;
   mac_interface& mac;
@@ -105,30 +110,28 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   // Create layers
-  mac = create_mac(mac_config{adapters->mac_ev_notifier,
-                              cfg.exec_mapper->ue_mapper(),
-                              cfg.exec_mapper->cell_mapper(),
-                              cfg.exec_mapper->du_control_executor(),
-                              *cfg.phy_adapter,
-                              cfg.mac_cfg,
-                              *cfg.pcap,
-                              cfg.sched_cfg,
-                              cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier});
-  if (cfg.test_cfg.test_ue.has_value()) {
-    mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
-  }
-
+  mac =
+      create_du_high_mac(mac_config{adapters->mac_ev_notifier,
+                                    cfg.exec_mapper->ue_mapper(),
+                                    cfg.exec_mapper->cell_mapper(),
+                                    cfg.exec_mapper->du_control_executor(),
+                                    *cfg.phy_adapter,
+                                    cfg.mac_cfg,
+                                    *cfg.mac_p,
+                                    cfg.sched_cfg,
+                                    cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier},
+                         cfg.test_cfg);
   f1ap       = create_f1ap(*cfg.f1c_client,
                      adapters->f1_to_du_notifier,
                      cfg.exec_mapper->du_control_executor(),
                      cfg.exec_mapper->ue_mapper(),
                      adapters->f1ap_paging_notifier);
   du_manager = create_du_manager(du_manager_params{
-      {cfg.gnb_du_name, cfg.gnb_du_id, 1, cfg.du_bind_addr, cfg.cells, cfg.qos},
+      {cfg.gnb_du_name, cfg.gnb_du_id, 1, cfg.du_bind_addr, cfg.cells, cfg.srbs, cfg.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},
-      {mac->get_ue_control_info_handler(), *f1ap, *f1ap, cfg.rlc_metrics_notif},
+      {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *cfg.rlc_p, cfg.rlc_metrics_notif},
       {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
@@ -151,9 +154,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
 du_high_impl::~du_high_impl()
 {
-  logger.info("Stopping DU-High...");
   stop();
-  logger.info("DU-High stopped successfully");
 }
 
 void du_high_impl::start()
@@ -179,10 +180,16 @@ void du_high_impl::start()
 
 void du_high_impl::stop()
 {
+  if (not is_running.exchange(false, std::memory_order::memory_order_relaxed)) {
+    return;
+  }
+
+  logger.info("Stopping DU-High...");
   du_manager->stop();
   if (e2ap_entity) {
     e2ap_entity->stop();
   }
+  logger.info("DU-High stopped successfully");
 }
 
 f1ap_message_handler& du_high_impl::get_f1ap_message_handler()

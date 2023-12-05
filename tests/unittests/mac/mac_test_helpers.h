@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_sched/mac_scheduler_adapter.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_ue_configurator.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
@@ -71,7 +72,7 @@ public:
   void on_crnti_ce_received() override { crnti_ce_detected = true; }
 };
 
-inline mac_ue_create_request make_default_ue_creation_request()
+inline mac_ue_create_request make_default_ue_creation_request(const cell_config_builder_params& params = {})
 {
   mac_ue_create_request msg{};
 
@@ -87,7 +88,7 @@ inline mac_ue_create_request make_default_ue_creation_request()
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
   msg.sched_cfg.cells.emplace();
-  msg.sched_cfg.cells->push_back(config_helpers::create_default_initial_ue_spcell_cell_config());
+  msg.sched_cfg.cells->push_back(config_helpers::create_default_initial_ue_spcell_cell_config(params));
 
   return msg;
 }
@@ -124,6 +125,11 @@ public:
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {
     return next_sched_result;
+  }
+  void handle_error_indication(slot_point                         slot_tx,
+                               du_cell_index_t                    cell_idx,
+                               mac_cell_slot_handler::error_event event) override
+  {
   }
 };
 
@@ -176,18 +182,6 @@ struct mac_test_ue {
 
   void                  add_bearer(lcid_t lcid);
   mac_ue_create_request make_ue_create_request();
-};
-
-class dummy_mac_pcap : public mac_pcap
-{
-public:
-  ~dummy_mac_pcap() override = default;
-
-  void open(const std::string& filename_, mac_pcap_type type) override {}
-  void close() override {}
-  bool is_write_enabled() override { return false; }
-  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
-  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
 } // namespace test_helpers

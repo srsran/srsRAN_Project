@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
+// This file was generated using the following MATLAB class on 22-11-2023 (seed 0):
 //   + "srsChEstimatorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"

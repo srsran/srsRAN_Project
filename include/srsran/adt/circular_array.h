@@ -42,7 +42,7 @@ namespace srsran {
 template <typename T, std::size_t N>
 class circular_array
 {
-  std::array<T, N> data{};
+  std::array<T, N> data;
 
 public:
   using iterator       = T*;

@@ -73,9 +73,22 @@ protected:
         // For Supported Extension Headers Notification [...], the Sequence Number shall be ignored by the receiver,
         // even though the S flag is set to '1'.
         return;
+      case GTPU_MSG_ERROR_INDICATION:
+        // TODO: unpack and print information elements; add handling
+        logger.log_error(pdu.buf.begin(), pdu.buf.end(), "Received error indication from peer");
+        // TS 29.281 Sec. 7.3.1: Error Indication
+        // When a GTP-U node receives a G-PDU for which no EPS Bearer context, PDP context, PDU Session, MBMS Bearer
+        // context, or RAB exists, the GTP-U node shall discard the G - PDU.If the TEID of the incoming G-PDU is
+        // different from the value 'all zeros' the GTP-U node shall also return a GTP error indication to the
+        // originating node.
+        return;
+      case GTPU_MSG_END_MARKER:
+        // TODO: unpack and print information elements; add handling
+        logger.log_warning("Discarded PDU. Cause: 'End marker' not supported");
+        return;
       default:
         logger.log_error(
-            "Discarded PDU. Cause: Invalid message type for path management message. teid={} msg_type={:#x}",
+            "Discarded PDU. Cause: Invalid message type for path or tunnel management message. teid={} msg_type={:#x}",
             pdu.hdr.teid,
             pdu.hdr.message_type);
         return;

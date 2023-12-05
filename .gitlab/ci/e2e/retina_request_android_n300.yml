@@ -20,7 +20,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: android
       model: one-plus-9-pro
@@ -31,19 +30,20 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 11
-      limits: 11
+      requests: 12
+      limits: 12
     memory:
-      requests: "12G"
-      limits: "12G"
+      requests: "24G"
+      limits: "24G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   taints: ["retina"]
   resources:
     - type: sdr
       model: n3xx
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin
@@ -63,4 +63,21 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
+
+- name: metrics-server
+  type: generic
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "500Mi"
+    ephemeral-storage:
+      requests: "1G"
+  environment:
+    - URL: ${RETINA_METRICS_SERVER_URL}
+    - ORG: ${RETINA_METRICS_SERVER_ORG}
+    - BUCKET: ${RETINA_METRICS_SERVER_BUCKET}
+    - TESTBED: ${RETINA_METRICS_SERVER_TESTBED}
+    - TOKEN: ${RETINA_METRICS_SERVER_TOKEN}
+  image: ${SRSGNB_REGISTRY_URI}/metrics_server:${METRICS_SERVER_VERSION}

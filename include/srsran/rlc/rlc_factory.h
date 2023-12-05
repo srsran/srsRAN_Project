@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
 #include "srsran/rlc/rlc_rx.h"
@@ -33,6 +34,7 @@
 namespace srsran {
 
 struct rlc_entity_creation_message {
+  uint32_t                             du_index;
   du_ue_index_t                        ue_index;
   rb_id_t                              rb_id;
   rlc_config                           config;
@@ -44,6 +46,7 @@ struct rlc_entity_creation_message {
   task_executor*                       pcell_executor;
   task_executor*                       ue_executor;
   rlc_metrics_notifier*                rlc_metrics_notif;
+  rlc_pcap*                            pcap_writer;
 };
 
 /// Creates an instance of a RLC bearer

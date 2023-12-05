@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_notifier.h"
@@ -37,17 +38,16 @@ class prach_processor_baseband_spy : public prach_processor_baseband
 {
 public:
   struct entry_t {
-    std::vector<cf_t> samples;
-    symbol_context    context;
+    baseband_gateway_buffer_read_only samples;
+    symbol_context                    context;
   };
 
-  void process_symbol(span<const cf_t> samples, const symbol_context& context) override
+  void process_symbol(const baseband_gateway_buffer_reader& samples, const symbol_context& context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
-    entry.samples.reserve(samples.size());
-    std::copy(samples.begin(), samples.end(), std::back_inserter(entry.samples));
-    entry.context = context;
+    entry.samples  = samples;
+    entry.context  = context;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

@@ -25,8 +25,8 @@
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
 #include "rlc_rx_entity.h"
-#include "rlc_sdu_window.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <set>
@@ -103,15 +103,23 @@ private:
   const uint32_t am_window_size;
 
   /// Rx window
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rx_window;
+  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
   static const bool rx_window_changed = true;
 
-  /// Cached status report
-  rlc_am_status_pdu status_report;
-  /// Cached status report size
+  /// Pre-allocated status reports for (re)-building, caching, and sharing with TX entity
+  std::array<rlc_am_status_pdu, 3> status_buf;
+
+  /// Status report for (re)-building
+  rlc_am_status_pdu* status_builder = &status_buf[0];
+  /// Status report for caching
+  rlc_am_status_pdu* status_cached = &status_buf[1];
+  /// Status report for sharing
+  rlc_am_status_pdu* status_shared = &status_buf[2];
+
+  /// Size of the cached status report
   std::atomic<uint32_t> status_report_size;
   std::atomic<bool>     status_prohibit_timer_is_running{false};
 
@@ -133,13 +141,17 @@ private:
 
   task_executor& ue_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
 public:
-  rlc_rx_am_entity(du_ue_index_t                     du_index,
+  rlc_rx_am_entity(uint32_t                          du_index_,
+                   du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_factory                     timers,
-                   task_executor&                    ue_executor);
+                   task_executor&                    ue_executor,
+                   rlc_pcap&                         pcap_);
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -148,10 +160,10 @@ public:
   // Interfaces for lower layers
   void handle_pdu(byte_buffer_slice buf) override;
 
-  // Status provider for Rx entity
-  rlc_am_status_pdu get_status_pdu() override;
-  uint32_t          get_status_pdu_length() override;
-  bool              status_report_required() override;
+  // Status provider for Tx entity
+  rlc_am_status_pdu& get_status_pdu() override;
+  uint32_t           get_status_pdu_length() override;
+  bool               status_report_required() override;
 
   /// Inform the Tx entity that a status report is triggered (whenever do_status is set to true and t-statusProhibit is
   /// not running), or its size has changed (e.g. further PDUs have been received)
@@ -264,8 +276,8 @@ private:
   /// and resets the rx_window_changed flag
   void refresh_status_report();
 
-  /// Replaces the cached status_report with a new version
-  void store_status_report(rlc_am_status_pdu&& status);
+  /// Swaps the cached status_report with the newly built version
+  void store_status_report();
 
   void on_expired_status_prohibit_timer();
 
@@ -280,7 +292,7 @@ private:
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
+  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };

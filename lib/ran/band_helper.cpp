@@ -1147,7 +1147,8 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
                                                                                          unsigned           n_rbs,
                                                                                          subcarrier_spacing scs_common,
                                                                                          subcarrier_spacing scs_ssb,
-                                                                                         uint8_t            ss0_idx)
+                                                                                         uint8_t            ss0_idx,
+                                                                                         uint8_t max_coreset0_duration)
 {
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
@@ -1157,21 +1158,39 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
-  // Iterate over different SSB candidates and select the valid CORESET#0 index with the widest bandwidth.
-  unsigned          max_cset0_rbs = 0;
-  ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
+  // Iterate over different SSB candidates and select the valid CORESET#0 index with the narrowest bandwidth.
+  // NOTE: CORESET#0 with least bandwidth is chosen so that nof. CCEs monitored in UE dedicated CORESET (used for
+  // scheduling C-RNTI DCIs) per slot is much higher than CORESET#0. Hence, allowing more UEs to be scheduled per slot.
+  unsigned          min_rbs                        = MAX_NOF_PRBS;
+  unsigned          max_non_intersecting_cset0_rbs = 0;
+  unsigned          max_duration                   = 0;
+  ssb_freq_location ssb                            = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
-    optional<unsigned> cset0_idx = get_coreset0_index(
-        band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
+    optional<unsigned> cset0_idx = get_coreset0_index(band,
+                                                      n_rbs,
+                                                      scs_common,
+                                                      scs_ssb,
+                                                      ssb.offset_to_point_A,
+                                                      ssb.k_ssb,
+                                                      du_cfg.get_ssb_first_symbol(),
+                                                      ss0_idx,
+                                                      max_coreset0_duration);
 
     if (cset0_idx.has_value()) {
       const unsigned nof_avail_cset0_rbs = get_nof_coreset0_rbs_not_intersecting_ssb(
           cset0_idx.value(), band, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb);
 
-      // If the number of non-intersecting CORESET#0 RBs is the highest so far, save result.
-      if (nof_avail_cset0_rbs > max_cset0_rbs) {
-        max_cset0_rbs = nof_avail_cset0_rbs;
+      const pdcch_type0_css_coreset_description cset0_desc =
+          pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, *cset0_idx, ssb.k_ssb.to_uint());
+
+      // If the number of non-intersecting CORESET#0 RBs is the highest so far for the least nof. CORESET#0 RBs and
+      // largest CORESET#0 duration less than max_coreset0_duration, save result.
+      if (nof_avail_cset0_rbs > max_non_intersecting_cset0_rbs and cset0_desc.nof_rb_coreset < min_rbs and
+          cset0_desc.nof_symb_coreset > max_duration) {
+        max_non_intersecting_cset0_rbs = nof_avail_cset0_rbs;
+        min_rbs                        = cset0_desc.nof_rb_coreset;
+        max_duration                   = cset0_desc.nof_symb_coreset;
 
         result.emplace();
         result->offset_to_point_A = ssb.offset_to_point_A;
@@ -1188,13 +1207,14 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
   return result;
 }
 
-optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                                                         nr_band            band,
-                                                                                         unsigned           n_rbs,
-                                                                                         subcarrier_spacing scs_common,
-                                                                                         subcarrier_spacing scs_ssb,
-                                                                                         uint8_t            ss0_idx,
-                                                                                         unsigned           cset0_idx)
+optional<ssb_coreset0_freq_location>
+srsran::band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(unsigned           dl_arfcn,
+                                                                  nr_band            band,
+                                                                  unsigned           n_rbs,
+                                                                  subcarrier_spacing scs_common,
+                                                                  subcarrier_spacing scs_ssb,
+                                                                  uint8_t            ss0_idx,
+                                                                  unsigned           cset0_idx)
 {
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");

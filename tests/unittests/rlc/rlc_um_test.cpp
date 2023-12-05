@@ -21,6 +21,7 @@
  */
 
 #include "lib/rlc/rlc_um_entity.h"
+#include "tests/unittests/rlc/rlc_test_helpers.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -95,7 +96,8 @@ protected:
     config.tx.queue_size      = 4096;
 
     // Create RLC entities
-    rlc1 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+    rlc1 = std::make_unique<rlc_um_entity>(0,
+                                           du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
                                            config,
                                            std::chrono::milliseconds(1000),
@@ -106,8 +108,10 @@ protected:
                                            tester1,
                                            timers,
                                            pcell_worker,
-                                           ue_worker);
-    rlc2 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                           ue_worker,
+                                           pcap1);
+    rlc2 = std::make_unique<rlc_um_entity>(0,
+                                           du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
                                            config,
                                            std::chrono::milliseconds(1000),
@@ -118,7 +122,8 @@ protected:
                                            tester2,
                                            timers,
                                            pcell_worker,
-                                           ue_worker);
+                                           ue_worker,
+                                           pcap2);
 
     // Bind interfaces
     rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();
@@ -248,6 +253,7 @@ protected:
   manual_task_worker                 ue_worker{128};
   manual_task_worker                 pcell_worker{128};
   rlc_test_frame                     tester1, tester2;
+  null_rlc_pcap                      pcap1, pcap2;
   std::unique_ptr<rlc_um_entity>     rlc1, rlc2;
   rlc_rx_lower_layer_interface*      rlc1_rx_lower = nullptr;
   rlc_tx_upper_layer_data_interface* rlc1_tx_upper = nullptr;

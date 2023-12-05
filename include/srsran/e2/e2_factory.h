@@ -29,7 +29,7 @@
 #include "subscription/e2_subscription.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/gateways/sctp_network_gateway.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/timers.h"
 #include <memory>
 

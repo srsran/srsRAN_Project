@@ -48,6 +48,15 @@ public:
   /// \return True if the given port is empty. Otherwise, false.
   virtual bool is_empty(unsigned port) const = 0;
 
+  /// \brief Determines whether the resource grid is empty.
+  ///
+  /// The grid is considered empty if no \c put method have been called since last zero set.
+  ///
+  /// If zeros are written using any \c put method, the grid is considered not empty.
+  ///
+  /// \return \c true if the resource grid is empty. Otherwise, \c false.
+  virtual bool is_empty() const = 0;
+
   /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a mask to
   /// indicate which subcarriers are allocated and which are not.
   ///

@@ -130,9 +130,11 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                              pdu_sessions_to_setup_list,
                              ue_context_modification_response.du_to_cu_rrc_info,
                              {},
-                             rrc_ue_notifier.get_rrc_ue_meas_config(),
+                             {} /* TODO: include meas config in context*/,
                              true /* Reestablish SRBs */,
-                             true /* Reestablish DRBs */);
+                             true /* Reestablish DRBs */,
+                             false /* don't update keys */,
+                             logger);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
@@ -256,7 +258,8 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     e1ap_bearer_context_modification_request&        bearer_ctxt_mod_req,
     const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
     const f1ap_ue_context_modification_response&     ue_context_modification_resp,
-    up_resource_manager&                             up_resource_manager)
+    up_resource_manager&                             up_resource_manager,
+    bool                                             reestablish_pdcp)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {
@@ -289,12 +292,12 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
           e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
         }
 
-        // set pdcp reestablishment
-        const up_drb_context& drb_ctxt = up_resource_manager.get_drb_context(drb_item.drb_id);
-        e1ap_drb_item.pdcp_cfg.emplace();
-        fill_e1ap_drb_pdcp_config(e1ap_drb_item.pdcp_cfg.value(), drb_ctxt.pdcp_cfg);
-        e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
-
+        if (reestablish_pdcp) {
+          const up_drb_context& drb_ctxt = up_resource_manager.get_drb_context(drb_item.drb_id);
+          e1ap_drb_item.pdcp_cfg.emplace();
+          fill_e1ap_drb_pdcp_config(e1ap_drb_item.pdcp_cfg.value(), drb_ctxt.pdcp_cfg);
+          e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
+        }
         e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
       }
     }

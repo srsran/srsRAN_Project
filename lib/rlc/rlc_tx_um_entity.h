@@ -70,6 +70,8 @@ private:
 
   task_executor& pcell_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
 
@@ -80,13 +82,15 @@ private:
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
 public:
-  rlc_tx_um_entity(du_ue_index_t                        du_index,
+  rlc_tx_um_entity(uint32_t                             du_index,
+                   du_ue_index_t                        ue_index,
                    rb_id_t                              rb_id,
                    const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_);
+                   task_executor&                       pcell_executor_,
+                   rlc_pcap&                            pcap_);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu_) override;

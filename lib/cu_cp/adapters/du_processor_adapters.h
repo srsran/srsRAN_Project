@@ -105,10 +105,17 @@ public:
     ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
+  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    srsran_assert(ue_context_handler != nullptr, "UE context handler must not be nullptr");
+    return ue_context_handler->handle_ue_context_transfer(ue_index, old_ue_index);
+  }
+
 private:
-  cu_cp_du_event_handler*             cu_cp_handler      = nullptr;
-  cu_cp_ue_removal_handler*           ue_removal_handler = nullptr;
-  ngap_du_processor_control_notifier* ngap_du_notifier   = nullptr;
+  cu_cp_du_event_handler*                cu_cp_handler      = nullptr;
+  cu_cp_ue_removal_handler*              ue_removal_handler = nullptr;
+  cu_cp_ue_context_manipulation_handler* ue_context_handler = nullptr;
+  ngap_du_processor_control_notifier*    ngap_du_notifier   = nullptr;
 };
 
 /// Adapter between DU processor and E1AP
@@ -155,11 +162,12 @@ public:
 
   void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
 
-  async_task<f1ap_ue_context_setup_response> on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                                                         bool is_inter_cu_handover = false) override
+  async_task<f1ap_ue_context_setup_response>
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                              optional<rrc_ue_transfer_context>    rrc_context) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_context_setup_request(request, is_inter_cu_handover);
+    return handler->handle_ue_context_setup_request(request, rrc_context);
   }
 
   async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
@@ -285,10 +293,16 @@ public:
     return rrc_ue_handler->get_rrc_ue_release_context();
   }
 
-  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  rrc_ue_transfer_context get_transfer_context() override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->get_rrc_ue_meas_config();
+    return rrc_ue_handler->get_transfer_context();
+  }
+
+  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->generate_meas_config(current_meas_config);
   }
 
   byte_buffer get_packed_handover_preparation_message() override
@@ -335,7 +349,7 @@ public:
 
   void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
     return ngap_handler->handle_ue_context_release_request(msg);

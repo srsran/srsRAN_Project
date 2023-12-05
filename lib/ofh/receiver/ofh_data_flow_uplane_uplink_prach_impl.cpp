@@ -35,7 +35,7 @@ data_flow_uplane_uplink_prach_impl::data_flow_uplane_uplink_prach_impl(
   ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   prach_iq_writter(config_.prach_eaxcs, *dependencies.logger, dependencies.prach_context_repo),
-  notification_sender(*dependencies.logger, dependencies.prach_context_repo, *dependencies.notifier)
+  notification_sender(*dependencies.logger, dependencies.prach_context_repo, dependencies.notifier)
 {
   srsran_assert(ul_cplane_context_repo_ptr, "Invalid Control-Plane context repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");

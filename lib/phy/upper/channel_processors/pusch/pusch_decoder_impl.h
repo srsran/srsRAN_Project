@@ -39,13 +39,6 @@ static constexpr unsigned BITS_PER_BYTE = 8;
 // Maximum TBS that implies a 16-bit CRC.
 constexpr unsigned MAX_BITS_CRC16 = 3824;
 
-// Number of bits in the long CRC. A CRC of this length is used either for TB CRCs, when the TB is longer than
-// MAX_BITS_CRC16, or as a codeblock CRC, when the TB consists of multiple codeblocks.
-constexpr unsigned LONG_CRC_LENGTH = 24;
-
-// Maximum accepted transport block size.
-static constexpr unsigned MAX_TBS = 1277992;
-
 /// Implementation of the PUSCH decoder.
 class pusch_decoder_impl : public pusch_decoder, private pusch_decoder_buffer
 {

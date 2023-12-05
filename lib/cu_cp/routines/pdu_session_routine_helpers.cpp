@@ -21,6 +21,7 @@
  */
 
 #include "pdu_session_routine_helpers.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -62,7 +63,27 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
       request_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability;
 }
 
-void srsran::srs_cu_cp::fill_rrc_reconfig_args(
+bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&          packed_config,
+                                                         const srslog::basic_logger& logger)
+{
+  // Unpack DU to CU container
+  asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+  asn1::cbit_ref                 bref_cell({packed_config.begin(), packed_config.end()});
+  if (cell_group_cfg.unpack(bref_cell) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to unpack cellGroupConfig");
+    return false;
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    cell_group_cfg.to_json(js);
+    logger.debug("Containerized cellGroupCfg: {}", js.to_string());
+  }
+
+  return true;
+}
+
+bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
@@ -70,7 +91,9 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               reestablish_srbs,
-    bool                                                               reestablish_drbs)
+    bool                                                               reestablish_drbs,
+    bool                                                               update_keys,
+    const srslog::basic_logger&                                        logger)
 {
   rrc_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
@@ -83,6 +106,20 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
       }
       radio_bearer_config.srb_to_add_mod_list.emplace(srb_to_add_mod.srb_id, srb);
     }
+  }
+
+  // set masterCellGroupConfig as received by DU
+  rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
+  rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
+
+  // Verify DU container content.
+  if (!du_to_cu_rrc_info.cell_group_cfg.empty()) {
+    if (!verify_and_log_cell_group_config(du_to_cu_rrc_info.cell_group_cfg, logger)) {
+      logger.error("Failed to verify cellGroupConfig");
+      return false;
+    }
+    // set masterCellGroupConfig as received by DU
+    rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
   }
 
   for (const auto& pdu_session_to_add_mod : pdu_sessions) {
@@ -108,10 +145,6 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
       radio_bearer_config.drb_to_release_list.push_back(drb_to_remove);
     }
 
-    // set masterCellGroupConfig as received by DU
-    rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-    rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
-
     // append NAS PDUs as received by AMF
     if (!nas_pdus.empty()) {
       if (nas_pdus.find(pdu_session_to_add_mod.first) != nas_pdus.end()) {
@@ -120,9 +153,15 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
         }
       }
     }
-
-    rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
   }
+
+  if (update_keys) {
+    rrc_recfg_v1530_ies.master_key_upd.emplace();
+    rrc_recfg_v1530_ies.master_key_upd.value().key_set_change_ind      = false;
+    rrc_recfg_v1530_ies.master_key_upd.value().next_hop_chaining_count = 0; // TODO: remove hard-coded value
+  }
+
+  rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
 
   if (radio_bearer_config.contains_values()) {
     // Add radio bearer config.
@@ -130,6 +169,8 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
   }
 
   rrc_reconfig_args.meas_cfg = rrc_meas_cfg;
+
+  return true;
 }
 
 bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_item, // Request to setup DRB at DU.

@@ -35,11 +35,10 @@ namespace srs_cu_cp {
 class bearer_context_release_procedure
 {
 public:
-  bearer_context_release_procedure(const ue_index_t       ue_index_,
-                                   const e1ap_message&    command_,
-                                   e1ap_ue_context_list&  ue_ctxt_list_,
-                                   e1ap_message_notifier& e1ap_notif_,
-                                   srslog::basic_logger&  logger_);
+  bearer_context_release_procedure(const e1ap_message&              command_,
+                                   e1ap_bearer_transaction_manager& ev_mng_,
+                                   e1ap_message_notifier&           e1ap_notif_,
+                                   e1ap_ue_logger&                  logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -52,11 +51,10 @@ private:
   /// Handles procedure result and returns back to procedure caller.
   void handle_bearer_context_release_complete();
 
-  const ue_index_t       ue_index;
-  const e1ap_message     command;
-  e1ap_ue_context_list&  ue_ctxt_list;
-  e1ap_message_notifier& e1ap_notifier;
-  srslog::basic_logger&  logger;
+  const e1ap_message               command;
+  e1ap_bearer_transaction_manager& ev_mng;
+  e1ap_message_notifier&           e1ap_notifier;
+  e1ap_ue_logger&                  logger;
 
   protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_release_complete_s> transaction_sink;
 };

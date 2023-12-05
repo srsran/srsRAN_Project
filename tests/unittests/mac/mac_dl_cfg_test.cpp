@@ -20,13 +20,13 @@
  *
  */
 
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/mac_dl_processor.h"
 #include "lib/mac/mac_sched/srsran_scheduler_adapter.h"
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/executors/blocking_task_worker.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -145,7 +145,7 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
-  test_helpers::dummy_mac_pcap        pcap;
+  null_mac_pcap                       pcap;
   mac_dl_config                       mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   mac_config                          maccfg{du_mng_notifier,
                     ul_exec_mapper,
@@ -199,7 +199,7 @@ void test_dl_ue_procedure_tsan()
   dummy_dl_executor_mapper            dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
-  test_helpers::dummy_mac_pcap        pcap;
+  null_mac_pcap                       pcap;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
   mac_dl_config                       mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   mac_config                          maccfg{du_mng_notifier,

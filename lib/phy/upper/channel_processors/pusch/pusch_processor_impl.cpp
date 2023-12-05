@@ -52,7 +52,7 @@ public:
 
   void connect_notifier(pusch_processor_notifier_adaptor& notifier_) { notifier = &notifier_; }
 
-  void on_csi_part1(span<const uint8_t> part1) override
+  void on_csi_part1(const uci_payload_type& part1) override
   {
     srsran_assert(notifier != nullptr, "Notifier not connected.");
 
@@ -367,22 +367,22 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
 {
   // Make sure the configuration is supported.
-  srsran_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
+  srsran_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.capacity().nof_prb,
                 "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
                 pdu.bwp_start_rb,
                 pdu.bwp_size_rb,
-                ch_estimate.size().nof_prb);
+                ch_estimate.capacity().nof_prb);
   srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
   srsran_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
   srsran_assert(
-      pdu.nof_tx_layers <= ch_estimate.size().nof_tx_layers,
+      pdu.nof_tx_layers <= ch_estimate.capacity().nof_tx_layers,
       "The number of transmit layers (i.e., {}) exceeds the maximum number of transmission layers (i.e., {}).",
       pdu.nof_tx_layers,
-      ch_estimate.size().nof_tx_layers);
-  srsran_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
+      ch_estimate.capacity().nof_tx_layers);
+  srsran_assert(pdu.rx_ports.size() <= ch_estimate.capacity().nof_rx_ports,
                 "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
                 pdu.rx_ports.size(),
-                ch_estimate.size().nof_rx_ports);
+                ch_estimate.capacity().nof_rx_ports);
 
   srsran_assert(pdu.uci.csi_part2_size.is_valid(pdu.uci.nof_csi_part1),
                 "CSI Part 1 UCI field length (i.e., {}) does not correspond with the CSI Part 2 (i.e., {})",

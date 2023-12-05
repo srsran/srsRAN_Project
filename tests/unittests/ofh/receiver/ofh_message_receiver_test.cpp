@@ -127,7 +127,7 @@ public:
   ofh_message_receiver_fixture() :
     window_checker(srslog::fetch_basic_logger("TEST"), {}, {}), ul_handler(generate_config(), generate_dependencies())
   {
-    window_checker.handle_new_ota_symbol({{1, 0}, 0, 14});
+    window_checker.on_new_symbol({{1, 0}, 0, 14});
   }
 
   message_receiver_config generate_config()

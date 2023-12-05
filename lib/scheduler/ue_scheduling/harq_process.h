@@ -46,6 +46,7 @@ class harq_timeout_handler
 public:
   virtual ~harq_timeout_handler() = default;
 
+  /// \brief Handles a HARQ process timeout.
   virtual void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) = 0;
 };
 
@@ -211,7 +212,9 @@ public:
   /// \brief Resets HARQ process state.
   void reset();
 
-  /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
+  /// \brief Cancels the HARQ process by stopping retransmissions of the currently held TB.
+  ///
+  /// Cancelled HARQ processes do not require the HARQ-ACK to be received to get flushed.
   void cancel_harq(unsigned tb_idx);
 
 protected:
@@ -258,6 +261,9 @@ class dl_harq_process : public detail::harq_process<true>
   using base_type = detail::harq_process<true>;
 
 public:
+  /// \brief Update to the HARQ process state after a HARQ-ACK is received.
+  enum class status_update { acked, nacked, no_update, error };
+
   /// \brief Parameters relative to the last used PDSCH PDU that get stored in the HARQ process for future reuse.
   struct alloc_params {
     struct tb_params {
@@ -315,8 +321,8 @@ public:
                uint8_t                   harq_bit_idx);
 
   /// \brief Updates the ACK state of the HARQ process.
-  /// \return True if harq was not empty and state was succesfully updated. False, otherwise.
-  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr);
+  /// \return The result of a HARQ receiving an HARQ-ACK bit.
+  status_update ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -430,13 +436,19 @@ public:
   void slot_indication(slot_point slot_tx_);
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
-  /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
-  const dl_harq_process*
+  /// \return HARQ process whose state was updated and the update that occurred. Nullptr, if no HARQ for which the
+  /// ACK/NACK was directed was found.
+  std::pair<const dl_harq_process*, dl_harq_process::status_update>
   dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
+
+  /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKEd.
+  ///
+  /// This function can be called for instance when there is an error indication coming from lower layers.
+  void dl_ack_info_cancelled(slot_point uci_slot);
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }

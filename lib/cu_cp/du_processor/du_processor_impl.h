@@ -134,11 +134,11 @@ public:
 private:
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
-  bool create_rrc_ue(du_ue&                     ue,
-                     rnti_t                     c_rnti,
-                     const nr_cell_global_id_t& cgi,
-                     byte_buffer                du_to_cu_rrc_container,
-                     bool                       is_inter_cu_handover = false);
+  bool create_rrc_ue(du_ue&                            ue,
+                     rnti_t                            c_rnti,
+                     const nr_cell_global_id_t&        cgi,
+                     byte_buffer                       du_to_cu_rrc_container,
+                     optional<rrc_ue_transfer_context> rrc_context);
 
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
@@ -161,6 +161,12 @@ private:
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(cause_t cause);
+
+  // NGAP senders
+  /// \brief Request UE context release over NGAP.
+  /// \param[in] ue_index The UE.
+  /// \param[in] cause The cause of the failure.
+  void send_ngap_ue_context_release_request(ue_index_t ue_index, cause_t cause);
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;

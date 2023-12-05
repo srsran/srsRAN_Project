@@ -3,6 +3,7 @@
 
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_srb_config.h"
 #include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/e2/e2.h"
@@ -12,7 +13,8 @@
 #include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -41,10 +43,12 @@ struct du_high_configuration {
   uint64_t                           gnb_du_id;
   transport_layer_address            du_bind_addr;
   std::vector<du_cell_config>        cells;
+  std::map<srb_id_t, du_srb_config>  srbs;
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   mac_expert_config                  mac_cfg;
   scheduler_expert_config            sched_cfg;
-  mac_pcap*                          pcap = nullptr;
+  mac_pcap*                          mac_p = nullptr;
+  rlc_pcap*                          rlc_p = nullptr;
   du_test_config                     test_cfg;
   e2ap_configuration                 e2ap_config;
 };

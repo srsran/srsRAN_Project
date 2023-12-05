@@ -19,6 +19,7 @@
 #
 
 add_subdirectory(pusch)
+add_subdirectory(uci)
 
 add_library(srsran_pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_generators srsvec)
@@ -45,12 +46,14 @@ add_library(srsran_pdsch_processor STATIC
         pdsch_codeblock_processor.cpp
         pdsch_processor_concurrent_impl.cpp
         pdsch_processor_impl.cpp
-        pdsch_processor_lite_impl.cpp)
+        pdsch_processor_lite_impl.cpp
+        pdsch_processor_validator_impl.cpp)
 target_link_libraries(srsran_pdsch_processor srsran_upper_phy_support srsran_channel_modulation)
 
 add_library(srsran_prach_detector STATIC
         prach_detector_generic_impl.cpp
-        prach_generator_impl.cpp)
+        prach_generator_impl.cpp
+        prach_detector_phy_validator_impl.cpp)
 target_link_libraries(srsran_prach_detector srsran_ran srsvec)
 
 add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)
@@ -59,9 +62,6 @@ add_library(srsran_pucch_detector STATIC pucch_detector_impl.cpp)
 
 add_library(srsran_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsran_ssb_processor srsran_sequence_generators srsran_signal_processors)
-
-add_library(srsran_uci_decoder STATIC uci_decoder_impl.cpp)
-target_link_libraries(srsran_uci_decoder srsran_channel_coding srsvec)
 
 add_library(srsran_pucch_demodulator STATIC pucch_demodulator_impl.cpp)
 

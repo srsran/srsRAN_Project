@@ -24,6 +24,7 @@
 
 #include "gtpu_teid.h"
 #include "fmt/format.h"
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -37,7 +38,8 @@ constexpr unsigned GTPU_PORT = 2152;
 /// \brief Configurable parameters for the GTP-U
 struct gtpu_config {
   struct gtpu_rx_config {
-    gtpu_teid_t local_teid;
+    gtpu_teid_t               local_teid;
+    std::chrono::milliseconds t_reordering = {};
   } rx;
   struct gtpu_tx_config {
     gtpu_teid_t peer_teid;

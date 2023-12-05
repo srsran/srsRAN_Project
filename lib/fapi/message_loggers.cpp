@@ -27,6 +27,18 @@
 using namespace srsran;
 using namespace fapi;
 
+void srsran::fapi::log_error_indication(const error_indication_message& msg, srslog::basic_logger& logger)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(
+      buffer, "Error.indication slot={}.{} error_code={} msg_id={}", msg.sfn, msg.slot, msg.error_code, msg.message_id);
+  if (msg.error_code == error_code_id::out_of_sync) {
+    fmt::format_to(buffer, " expected_sfn={} expected_slot={}", msg.expected_sfn, msg.expected_slot);
+  }
+
+  logger.debug("{}", to_c_str(buffer));
+}
+
 /// Converts the given FAPI CRC SINR to dBs as per SCF-222 v4.0 section 3.4.8.
 static float to_crc_ul_sinr(int sinr)
 {

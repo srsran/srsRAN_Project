@@ -88,7 +88,8 @@ def test_android(
     "band, common_scs, bandwidth",
     (
         param(7, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 90, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android_hp
@@ -262,7 +263,7 @@ def test_rf(
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
         global_timing_advance=-1,
-        time_alignment_calibration="auto",
+        time_alignment_calibration="264",
         warning_as_errors=False,
         always_download_artifacts=True,
     )
@@ -305,7 +306,7 @@ def test_rf_does_not_crash(
             bandwidth=bandwidth,
             sample_rate=None,  # default from testbed
             global_timing_advance=-1,
-            time_alignment_calibration="auto",
+            time_alignment_calibration="264",
             log_search=False,
             always_download_artifacts=True,
         )

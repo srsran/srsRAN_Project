@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://${DOCKER_INFLUXDB_INIT_HOST}:${DOCKER_INFLUXDB_INIT_PORT}
+    uid: ${GRAFANA_DATASOURCE_INFLUXDB_UID}
+    secureJsonData:
+      token: ${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+    jsonData:
+      version: Flux
+      organization: ${DOCKER_INFLUXDB_INIT_ORG}
+      defaultBucket: ${DOCKER_INFLUXDB_INIT_BUCKET}
+      tlsSkipVerify: true

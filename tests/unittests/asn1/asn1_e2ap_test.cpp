@@ -20,15 +20,16 @@
  *
  */
 
-#include "lib/pcap/e2ap_pcap.h"
 #include "srsran/asn1/e2ap/e2ap.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
 using namespace srsran;
 
-#define JSON_OUTPUT 1
+#define JSON_OUTPUT 0
 
 class asn1_e2ap_test : public ::testing::Test
 {
@@ -41,10 +42,6 @@ protected:
     test_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_hex_dump_max_size(-1);
 
-    srslog::init();
-
-    pcap_writer.open("e2ap.pcap");
-
     // Start the log backend.
     srslog::init();
   }
@@ -53,11 +50,15 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-    pcap_writer.close();
   }
 
-  srsran::e2ap_pcap     pcap_writer;
+#if JSON_OUTPUT
+  task_worker               worker{"pcap_worker", 16};
+  task_worker_executor      exec{worker};
+  std::unique_ptr<dlt_pcap> pcap_writer = create_e2ap_pcap("/tmp/e2ap.pcap", exec);
+#else
+  std::unique_ptr<dlt_pcap> pcap_writer = create_null_dlt_pcap();
+#endif
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -116,7 +117,7 @@ TEST_F(asn1_e2ap_test, when_e2_setup_correct_then_packing_successful)
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
-  pcap_writer.write_pdu(bytes);
+  pcap_writer->push_pdu(bytes);
 
   logger.info(bytes.data(), bytes.size(), "Packed PDU ({} bytes):", bref.distance_bytes());
 

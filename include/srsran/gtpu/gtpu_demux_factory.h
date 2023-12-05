@@ -23,7 +23,7 @@
 #pragma once
 
 #include "gtpu_demux.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 

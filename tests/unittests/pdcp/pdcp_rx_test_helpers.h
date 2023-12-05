@@ -68,15 +68,15 @@ class pdcp_rx_test_helper
 protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size      sn_size_,
-            pdcp_rb_type      rb_type_     = pdcp_rb_type::drb,
-            pdcp_rlc_mode     rlc_mode_    = pdcp_rlc_mode::am,
-            pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10,
-            pdcp_max_count    max_count    = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
+  void init(std::tuple<pdcp_sn_size, unsigned> cfg_param,
+            pdcp_rb_type                       rb_type_     = pdcp_rb_type::drb,
+            pdcp_rlc_mode                      rlc_mode_    = pdcp_rlc_mode::am,
+            pdcp_t_reordering                  t_reordering = pdcp_t_reordering::ms10,
+            pdcp_max_count max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
   {
-    logger.info("Creating PDCP RX ({} bit)", pdcp_sn_size_to_uint(sn_size_));
-
-    sn_size = sn_size_;
+    sn_size = std::get<pdcp_sn_size>(cfg_param);
+    algo    = std::get<unsigned>(cfg_param);
+    logger.info("Creating PDCP RX ({} bit nia={} nea={})", pdcp_sn_size_to_uint(sn_size), algo, algo);
 
     // Set Rx config
     config.rb_type               = rb_type_;
@@ -105,8 +105,8 @@ protected:
     sec_cfg.k_128_enc = k_128_enc;
 
     // Set encription/integrity algorithms
-    sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
-    sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
+    sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(algo);
+    sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(algo);
 
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
@@ -122,7 +122,7 @@ protected:
   /// \param exp_pdu Expected PDU that is set to the correct test vector
   void get_test_pdu(uint32_t count, byte_buffer& exp_pdu)
   {
-    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu));
+    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu, algo));
   }
 
   /// \brief Helper to advance the timers
@@ -142,6 +142,7 @@ protected:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
   pdcp_sn_size                        sn_size = {};
+  unsigned                            algo    = {};
   pdcp_rx_config                      config  = {};
   timer_manager                       timers;
   manual_task_worker                  worker{64};

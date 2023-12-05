@@ -122,7 +122,7 @@ public:
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
-    if (Priority == task_priority::max and worker->get_id() == std::this_thread::get_id()) {
+    if (can_run_task_inline()) {
       // If same thread and highest priority task, run task right away.
       task();
       return true;
@@ -145,6 +145,12 @@ public:
     return true;
   }
 
+  // Check whether task can be run inline or it needs to be dispatched to a queue.
+  bool can_run_task_inline() const
+  {
+    return Priority == task_priority::max and worker->get_id() == std::this_thread::get_id();
+  }
+
 private:
   priority_task_worker<QueuePolicies...>* worker            = nullptr;
   bool                                    report_on_failure = true;
@@ -153,9 +159,9 @@ private:
 /// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
 template <task_priority Priority, concurrent_queue_policy... QueuePolicies>
 priority_task_worker_executor<Priority, QueuePolicies...>
-make_priority_task_worker_executor(priority_task_worker<QueuePolicies...>& worker)
+make_priority_task_worker_executor(priority_task_worker<QueuePolicies...>& worker, bool report_on_failure)
 {
-  return priority_task_worker_executor<Priority, QueuePolicies...>(worker);
+  return priority_task_worker_executor<Priority, QueuePolicies...>(worker, report_on_failure);
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
@@ -170,14 +176,15 @@ namespace detail {
 template <typename Func, concurrent_queue_policy... QueuePolicies, size_t... Is>
 void visit_executor(priority_task_worker<QueuePolicies...>& w,
                     task_priority                           priority,
+                    bool                                    report_on_failure,
                     const Func&                             func,
                     std::index_sequence<Is...> /*unused*/)
 {
   const size_t idx = detail::enqueue_priority_to_queue_index(priority, sizeof...(QueuePolicies));
-  (void)std::initializer_list<int>{[idx, &w, &func]() {
+  (void)std::initializer_list<int>{[idx, &w, &func, report_on_failure]() {
     if (idx == Is) {
-      func(
-          make_priority_task_worker_executor<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies))>(w));
+      func(make_priority_task_worker_executor<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies))>(
+          w, report_on_failure));
     }
     return 0;
   }()...};
@@ -187,9 +194,13 @@ void visit_executor(priority_task_worker<QueuePolicies...>& w,
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
 template <typename Func, concurrent_queue_policy... QueuePolicies>
-void visit_executor(priority_task_worker<QueuePolicies...>& worker, task_priority priority, const Func& func)
+void visit_executor(priority_task_worker<QueuePolicies...>& worker,
+                    task_priority                           priority,
+                    bool                                    report_on_failure,
+                    const Func&                             func)
 {
-  detail::visit_executor(worker, priority, func, std::make_index_sequence<sizeof...(QueuePolicies)>{});
+  detail::visit_executor(
+      worker, priority, report_on_failure, func, std::make_index_sequence<sizeof...(QueuePolicies)>{});
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.

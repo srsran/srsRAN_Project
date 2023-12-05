@@ -83,6 +83,15 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
   }
 }
 
+void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event event)
+{
+  // Change execution context to slot indication executor.
+  if (not slot_exec.execute(
+          [this, sl_tx, event]() { sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event); })) {
+    logger.warning("slot={}: Skipped error indication. Cause: DL task queue is full.", sl_tx);
+  }
+}
+
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   // * Start of Critical Path * //
@@ -245,7 +254,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   data_res.slot = sl_tx;
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
-    srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
+    srsran_assert(not data_res.si_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
     const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     span<const uint8_t> payload;
     if (sib_info.si_indicator == sib_information::sib1) {
@@ -253,7 +262,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     } else {
       payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), tbs);
     }
-    data_res.sib1_pdus.emplace_back(0, payload);
+    data_res.si_pdus.emplace_back(0, payload);
   }
 
   // Assemble scheduled RARs' subheaders and payloads.
@@ -317,6 +326,51 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     return;
   }
 
+  for (unsigned i = 0; i < dl_res.si_pdus.size(); ++i) {
+    const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
+    // At the moment, we allocate max 1 SIB (SIB1) message per slot. Eventually, this will be extended to other SIBs.
+    // TODO: replace sib1_pcap_dumped flag with a vector or booleans that includes other SIBs.
+    if (dl_alloc.si_indicator == sib_information::sib1 and not sib1_pcap_dumped) {
+      const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
+      srsran::mac_nr_context_info       context  = {};
+      context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+      context.direction = PCAP_DIRECTION_DOWNLINK;
+      context.rntiType  = PCAP_SI_RNTI;
+      context.rnti      = dl_alloc.pdsch_cfg.rnti;
+      context.system_frame_number = sl_tx.sfn();
+      context.sub_frame_number    = sl_tx.subframe_index();
+      context.length              = sib1_pdu.pdu.size();
+      pcap.push_pdu(context, sib1_pdu.pdu);
+      sib1_pcap_dumped = true;
+    }
+  }
+
+  for (unsigned i = 0; i < dl_res.rar_pdus.size(); ++i) {
+    const mac_dl_data_result::dl_pdu& rar_pdu  = dl_res.rar_pdus[i];
+    const rar_information&            dl_alloc = sl_res.dl.rar_grants[i];
+    srsran::mac_nr_context_info       context  = {};
+    context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+    context.direction           = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType            = PCAP_RA_RNTI;
+    context.rnti                = dl_alloc.pdsch_cfg.rnti;
+    context.system_frame_number = sl_tx.sfn();
+    context.sub_frame_number    = sl_tx.subframe_index();
+    context.length              = rar_pdu.pdu.size();
+    pcap.push_pdu(context, rar_pdu.pdu);
+  }
+  for (unsigned i = 0; i < dl_res.paging_pdus.size(); ++i) {
+    const mac_dl_data_result::dl_pdu& pg_pdu   = dl_res.paging_pdus[i];
+    const dl_paging_allocation&       dl_alloc = sl_res.dl.paging_grants[i];
+    srsran::mac_nr_context_info       context  = {};
+    context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+    context.direction           = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType            = PCAP_P_RNTI;
+    context.rnti                = dl_alloc.pdsch_cfg.rnti;
+    context.system_frame_number = sl_tx.sfn();
+    context.sub_frame_number    = sl_tx.subframe_index();
+    context.length              = pg_pdu.pdu.size();
+    pcap.push_pdu(context, pg_pdu.pdu);
+  }
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
     const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
@@ -335,18 +389,5 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       context.length              = ue_pdu.pdu.size();
       pcap.push_pdu(context, ue_pdu.pdu);
     }
-  }
-  for (unsigned i = 0; i < dl_res.paging_pdus.size(); ++i) {
-    const mac_dl_data_result::dl_pdu& pg_pdu   = dl_res.paging_pdus[i];
-    const dl_paging_allocation&       dl_alloc = sl_res.dl.paging_grants[i];
-    srsran::mac_nr_context_info       context  = {};
-    context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
-    context.direction           = PCAP_DIRECTION_DOWNLINK;
-    context.rntiType            = PCAP_P_RNTI;
-    context.rnti                = dl_alloc.pdsch_cfg.rnti;
-    context.system_frame_number = sl_tx.sfn();
-    context.sub_frame_number    = sl_tx.subframe_index();
-    context.length              = pg_pdu.pdu.size();
-    pcap.push_pdu(context, pg_pdu.pdu);
   }
 }

@@ -35,23 +35,26 @@
 using namespace srsran;
 
 // Describes the benchmark configuration.
-static std::string                               rx_filename             = "";
-static double                                    duration_s              = 0.1;
-static std::string                               log_level               = "info";
-static std::string                               driver_name             = "uhd";
-static std::string                               device_arguments        = "type=b200";
-static std::vector<std::string>                  tx_channel_arguments    = {};
-static std::vector<std::string>                  rx_channel_arguments    = {};
-static double                                    sampling_rate_hz        = 23.04e6;
-static unsigned                                  nof_tx_streams          = 1;
-static unsigned                                  nof_rx_streams          = 1;
-static unsigned                                  nof_channels_per_stream = 1;
-static unsigned                                  block_size              = sampling_rate_hz / 15e3;
-static double                                    tx_freq                 = 3.5e9;
-static double                                    tx_gain                 = 60.0;
-static double                                    rx_freq                 = 3.5e9;
-static double                                    rx_gain                 = 60.0;
-static double                                    tx_rx_delay_s           = 0.001;
+static std::string                               rx_filename                   = "";
+static double                                    duration_s                    = 0.1;
+static std::string                               log_level                     = "info";
+static std::string                               driver_name                   = "uhd";
+static std::string                               device_arguments              = "type=b200";
+static std::vector<std::string>                  tx_channel_arguments          = {};
+static std::vector<std::string>                  rx_channel_arguments          = {};
+static double                                    sampling_rate_hz              = 23.04e6;
+static unsigned                                  nof_tx_streams                = 1;
+static unsigned                                  nof_rx_streams                = 1;
+static unsigned                                  nof_channels_per_stream       = 1;
+static unsigned                                  block_size                    = sampling_rate_hz / 15e3;
+static double                                    tx_freq                       = 3.5e9;
+static double                                    tx_gain                       = 60.0;
+static double                                    rx_freq                       = 3.5e9;
+static double                                    rx_gain                       = 60.0;
+static double                                    tx_rx_delay_s                 = 0.001;
+bool                                             enable_discontinuous_tx       = false;
+static unsigned                                  nof_consecutive_empty_buffers = 0;
+static float                                     power_ramping_us              = 200.0F;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
 
 /// Describes a benchmark configuration profile.
@@ -188,6 +191,9 @@ static void usage(std::string prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-D Duration in seconds. [Default {}]\n", duration_s);
+  fmt::print("\t-d Enable discontinuous transmission mode. [Default {}]\n", enable_discontinuous_tx);
+  fmt::print("\t-g Discontinous transmission gap in number of consecutive empty buffers. [Default {}]\n",
+             nof_consecutive_empty_buffers);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-o saves received signal of stream:port 0:0 in a file. Ignored if none. [Default {}]\n",
              rx_filename.empty() ? "none" : rx_filename);
@@ -199,7 +205,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "o:D:P:v:h")) != -1) {
+  while ((opt = getopt(argc, argv, "o:D:dg:P:v:h")) != -1) {
     switch (opt) {
       case 'o':
         rx_filename = std::string(optarg);
@@ -212,6 +218,14 @@ static void parse_args(int argc, char** argv)
       case 'D':
         if (optarg != nullptr) {
           duration_s = std::strtod(optarg, nullptr);
+        }
+        break;
+      case 'd':
+        enable_discontinuous_tx = true;
+        break;
+      case 'g':
+        if (optarg != nullptr) {
+          nof_consecutive_empty_buffers = std::strtol(optarg, nullptr, 10);
         }
         break;
       case 'v':
@@ -254,18 +268,22 @@ int main(int argc, char** argv)
 
   // Asynchronous task executor.
   task_worker                    async_task_worker("async_thread", RADIO_MAX_NOF_PORTS);
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
   // Create radio configuration.
-  radio_configuration::radio config = {};
-  config.sampling_rate_hz           = sampling_rate_hz;
-  config.otw_format                 = otw_format;
-  config.args                       = device_arguments;
-  config.log_level                  = log_level;
+  radio_configuration::radio config;
+  config.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
+  config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
+  config.sampling_rate_hz = sampling_rate_hz;
+  config.otw_format       = otw_format;
+  config.discontinuous_tx = enable_discontinuous_tx;
+  config.power_ramping_us = power_ramping_us;
+  config.args             = device_arguments;
+  config.log_level        = log_level;
   radio_configuration::stream rx_stream_config;
 
   // Create Tx stream and channels.
@@ -339,6 +357,17 @@ int main(int argc, char** argv)
     rx_file = file_sink<cf_t>(rx_filename);
   }
 
+  // Counter for the number of empty transmission buffers.
+  unsigned tx_gap_count = nof_consecutive_empty_buffers;
+
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_hz);
+
+  // Start processing.
+  radio->start(start_time);
+
   // Receive and transmit per block basis.
   while (!stop && sample_count < total_nof_samples) {
     // For each stream...
@@ -359,8 +388,17 @@ int main(int argc, char** argv)
       }
 
       // Prepare transmit metadata.
-      baseband_gateway_transmitter::metadata tx_metadata = {};
-      tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
+      baseband_gateway_transmitter_metadata tx_metadata;
+      tx_metadata.ts = rx_metadata.front().ts + tx_rx_delay_samples;
+      if (tx_gap_count > 0) {
+        // Send empty baseband buffer.
+        tx_metadata.is_empty = true;
+        --tx_gap_count;
+      } else {
+        tx_metadata.is_empty = false;
+        // Reset counter.
+        tx_gap_count = nof_consecutive_empty_buffers;
+      }
 
       // Transmit baseband.
       transmitter.transmit(tx_baseband_buffers[stream_id].get_reader(), tx_metadata);

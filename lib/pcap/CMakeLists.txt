@@ -18,5 +18,13 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set(SOURCES pcap_file_base.cpp mac_pcap_impl.cpp f1ap_pcap.cpp e2ap_pcap.cpp dlt_pcap_impl.cpp)
+set(SOURCES
+        backend_pcap_writer.cpp
+        dlt_pcap_impl.cpp
+        mac_pcap_impl.cpp
+        pcap_file_writer.cpp
+        rlc_pcap_impl.cpp
+        pcap_rlc_pdu_context.cpp
+)
+
 add_library(srsran_pcap STATIC ${SOURCES})

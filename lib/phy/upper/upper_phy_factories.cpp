@@ -23,8 +23,6 @@
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
-#include "logging_downlink_processor_decorator.h"
-#include "logging_uplink_processor_decorator.h"
 #include "uplink_processor_concurrent.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
@@ -34,6 +32,7 @@
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/support/error_handling.h"
 
@@ -242,9 +241,6 @@ public:
     std::unique_ptr<uplink_processor> uplink_proc = factory->create(config, logger, log_all_opportunities);
     report_fatal_error_if_not(uplink_proc, "Invalid uplink processor.");
 
-    // Wrap uplink processor with executor.
-    uplink_proc = std::make_unique<logging_uplink_processor_decorator>(std::move(uplink_proc), logger);
-
     return uplink_proc;
   }
 
@@ -287,8 +283,13 @@ public:
     std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    return std::make_unique<downlink_processor_single_executor_impl>(
-        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
+    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                     std::move(pdcch),
+                                                                     std::move(pdsch),
+                                                                     std::move(ssb),
+                                                                     std::move(nzp_csi),
+                                                                     *config.executor,
+                                                                     srslog::fetch_basic_logger("PHY"));
   }
 
   // See interface for documentation.
@@ -317,10 +318,16 @@ public:
     }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    std::unique_ptr<downlink_processor> downlink_proc = std::make_unique<downlink_processor_single_executor_impl>(
-        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
+    std::unique_ptr<downlink_processor> downlink_proc =
+        std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                  std::move(pdcch),
+                                                                  std::move(pdsch),
+                                                                  std::move(ssb),
+                                                                  std::move(nzp_csi),
+                                                                  *config.executor,
+                                                                  srslog::fetch_basic_logger("PHY"));
 
-    return std::make_unique<logging_downlink_processor_decorator>(std::move(downlink_proc), logger);
+    return downlink_proc;
   }
 
   std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
@@ -478,7 +485,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(polar_dec_factory, "Invalid polar decoder factory.");
 
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   report_fatal_error_if_not(uci_dec_factory, "Invalid UCI decoder factory.");
 
   // Enable EVM calculation if PUSCH SINR is obtained from EVM or if it is logged by the PHY.
@@ -643,8 +650,11 @@ public:
     upper_phy_impl_config phy_config;
     phy_config.sector_id                   = config.sector_id;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
+    phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
     phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
+    phy_config.rx_symbol_printer_port      = config.rx_symbol_printer_port;
+    phy_config.rx_symbol_printer_prach     = config.rx_symbol_printer_prach;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
     phy_config.nof_slots_ul_pdu_repository = config.nof_ul_processors * 2;
 
@@ -659,8 +669,11 @@ public:
     phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, config);
     report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
 
-    phy_config.softbuffer_pool = create_rx_softbuffer_pool(config.softbuffer_config);
-    report_fatal_error_if_not(phy_config.softbuffer_pool, "Invalid softbuffer processor pool.");
+    phy_config.tx_buf_pool = create_tx_buffer_pool(config.tx_buffer_config);
+    report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid transmit buffer processor pool.");
+
+    phy_config.rx_buf_pool = create_rx_softbuffer_pool(config.rx_buffer_config);
+    report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid receive buffer processor pool.");
 
     phy_config.ul_processor_pool = create_ul_processor_pool(*ul_processor_fact, config);
     report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");

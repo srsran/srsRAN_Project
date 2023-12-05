@@ -245,12 +245,21 @@ struct cell_slot_resource_allocator {
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of
 /// cell_slot_resource_grid objects, once they become old.
 struct cell_resource_allocator {
+  /// \brief Number of previous slot results to keep in history before they get deleted.
+  ///
+  /// Having access to past decisions is useful during the handling of error indications.
+  static const size_t RING_MAX_HISTORY_SIZE = 4;
   /// Number of slots managed by this container.
   static const size_t RING_ALLOCATOR_SIZE =
-      get_allocator_ring_size_gt_min(std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
+      get_allocator_ring_size_gt_min(RING_MAX_HISTORY_SIZE + SCHEDULER_MAX_K0 + NTN_CELL_SPECIFIC_KOFFSET_MAX +
+                                     std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
 
   /// Cell configuration
   const cell_configuration& cfg;
+
+  /// Maximum number of slots that can be allocated in advance.
+  const unsigned max_dl_slot_alloc_delay;
+  const unsigned max_ul_slot_alloc_delay;
 
   explicit cell_resource_allocator(const cell_configuration& cfg_);
 
@@ -291,11 +300,23 @@ struct cell_resource_allocator {
     return this->operator[](slot - last_slot_ind);
   }
 
+  /// \brief Access a past slot decision made by the scheduler for the given cell.
+  const cell_slot_resource_allocator* get_history(slot_point slot) const
+  {
+    int diff = last_slot_ind - slot;
+    if (diff < 0 or diff >= static_cast<int>(RING_MAX_HISTORY_SIZE)) {
+      return nullptr;
+    }
+    const cell_slot_resource_allocator& r = *slots[slot.to_uint() % slots.size()];
+    srsran_assert(r.slot == slot, "Bad access to uninitialized cell_resource_grid");
+    return &r;
+  }
+
 private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const
   {
-    srsran_sanity_check(slot_delay < RING_ALLOCATOR_SIZE,
+    srsran_sanity_check(slot_delay <= max_ul_slot_alloc_delay,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
                         slot_delay);
   }

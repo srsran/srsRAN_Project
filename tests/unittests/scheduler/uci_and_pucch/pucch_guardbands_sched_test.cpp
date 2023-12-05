@@ -56,7 +56,7 @@ class test_pucch_guard_sched : public ::testing::TestWithParam<std::pair<subcarr
 public:
   test_pucch_guard_sched() : bwp_cfg{t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params}
   {
-    res_grid_size  = t_bench.res_grid.RING_ALLOCATOR_SIZE;
+    res_grid_size  = t_bench.res_grid.max_ul_slot_alloc_delay;
     ul_bwp_scs     = t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
     test_tot_slots = test_tot_frames * static_cast<unsigned>(t_bench.sl_tx.nof_slots_per_frame());
   }

@@ -161,7 +161,7 @@ task_worker                    RadioZmqE2EFixture::async_task_worker("async_thre
 TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 {
   // Asynchronous task executor.
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
   // Prepare radio configuration.
   radio_configuration::radio radio_config;
@@ -190,6 +190,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
   }
   radio_config.log_level        = log_level;
   radio_config.sampling_rate_hz = sample_rate_hz;
+  radio_config.discontinuous_tx = false;
 
   // Notifier.
   radio_notifier_spy radio_notifier;
@@ -239,7 +240,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
         }
 
         // Transmit stream buffer.
-        baseband_gateway_transmitter::metadata tx_md;
+        baseband_gateway_transmitter_metadata tx_md;
         tx_md.ts = start_time + tx_sample_count;
         transmitter.transmit(tx_buffer.get_reader(), tx_md);
       }

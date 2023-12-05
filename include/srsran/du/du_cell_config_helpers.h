@@ -24,6 +24,7 @@
 
 #include "du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi_helpers.h"
@@ -102,7 +103,7 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
-      cfg.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->value());
+      cfg.dl_carrier.band, params.ssb_scs, params.scs_common, *params.coreset0_index, params.k_ssb->value());
   cfg.dmrs_typeA_pos = coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
 
   cfg.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
@@ -146,6 +147,10 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac          = make_default_drb_mac_lc_config();
+    cfg.mac.priority = 4;
+    cfg.mac.lcg_id   = uint_to_lcg_id(1);
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
@@ -167,6 +172,8 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac = make_default_drb_mac_lc_config();
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }

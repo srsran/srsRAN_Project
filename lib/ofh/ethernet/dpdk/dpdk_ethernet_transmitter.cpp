@@ -66,8 +66,13 @@ static bool port_init(const gw_config& config, ::rte_mempool* mbuf_pool, unsigne
   }
 
   // Configure MTU size.
-  if (::rte_eth_dev_set_mtu(port, 9574) != 0) {
-    fmt::print("Error setting MTU size\n");
+  if (::rte_eth_dev_set_mtu(port, config.mtu_size.value()) != 0) {
+    uint16_t current_mtu;
+    ::rte_eth_dev_get_mtu(port, &current_mtu);
+    fmt::print(
+        "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes\n",
+        config.mtu_size,
+        current_mtu);
     return false;
   }
 
@@ -111,7 +116,8 @@ static bool port_init(const gw_config& config, ::rte_mempool* mbuf_pool, unsigne
 static void dpdk_port_configure(const gw_config& config, ::rte_mempool*& mbuf_pool)
 {
   if (::rte_eth_dev_count_avail() != 1) {
-    ::rte_exit(EXIT_FAILURE, "Error: number of ports must be one\n");
+    ::rte_exit(
+        EXIT_FAILURE, "Error: number of DPDK devices must be one but is currently %d\n", ::rte_eth_dev_count_avail());
   }
 
   // Creates a new mempool in memory to hold the mbufs.

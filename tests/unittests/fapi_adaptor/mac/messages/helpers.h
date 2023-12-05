@@ -30,11 +30,26 @@ namespace unittests {
 /// Builds and returns a valid SIB1 information PDU.
 sib_information build_valid_sib1_information_pdu();
 
+/// Builds and returns a valid RAR information PDU.
+rar_information build_valid_rar_information_pdu();
+
+/// Builds and returns a valid DL paging PDU.
+dl_paging_allocation build_valid_dl_paging_pdu();
+
+/// Builds and returns a valid DL message allocation PDU.
+dl_msg_alloc build_valid_dl_msg_alloc_pdu();
+
 /// Builds and returns a valid MAC SSB PDU.
 dl_ssb_pdu build_valid_dl_ssb_pdu();
 
 /// Builds and returns a valid MAC DL sched result.
 mac_dl_sched_result build_valid_mac_dl_sched_result();
+
+/// Builds and returns a valid MAC UL sched result.
+mac_ul_sched_result build_valid_mac_ul_sched_result();
+
+/// Builds and returns a valid MAC data result.
+mac_dl_data_result build_valid_mac_data_result();
 
 /// Builds and returns a valid PRACH occassion.
 prach_occasion_info build_valid_prach_occassion();

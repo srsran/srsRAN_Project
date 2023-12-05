@@ -32,11 +32,13 @@ ngap_pdu_session_resource_modify_procedure::ngap_pdu_session_resource_modify_pro
     const ngap_ue_ids&                               ue_ids_,
     ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
     ngap_message_notifier&                           amf_notif_,
-    srslog::basic_logger&                            logger_) :
+    ngap_control_message_handler&                    ngap_ctrl_handler_,
+    ngap_ue_logger&                                  logger_) :
   request(request_),
   ue_ids(ue_ids_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
+  ngap_ctrl_handler(ngap_ctrl_handler_),
   logger(logger_)
 {
 }
@@ -45,11 +47,7 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
-               ue_ids.ue_index,
-               ue_ids.amf_ue_id,
-               ue_ids.ran_ue_id,
-               name());
+  logger.log_debug("\"{}\" initialized", name());
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_modify_request(request));
@@ -58,8 +56,12 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 
   send_pdu_session_resource_modify_response();
 
-  logger.debug(
-      "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized", ue_ids.ue_index, ue_ids.amf_ue_id, ue_ids.ran_ue_id, name());
+  // Request UE release in case of a failure to cleanup CU-CP
+  if (!response.pdu_session_res_failed_to_modify_list.empty()) {
+    send_ue_context_release_request();
+  }
+
+  logger.log_debug("\"{}\" finalized", name());
 
   CORO_RETURN();
 }
@@ -78,9 +80,13 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
   pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
-  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending PduSessionResourceModifyResponse",
-              ue_ids.ue_index,
-              ue_ids.amf_ue_id,
-              ue_ids.ran_ue_id);
+  logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);
+}
+
+void ngap_pdu_session_resource_modify_procedure::send_ue_context_release_request()
+{
+  cu_cp_ue_context_release_request ue_context_release_request{
+      ue_ids.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason};
+  ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request);
 }

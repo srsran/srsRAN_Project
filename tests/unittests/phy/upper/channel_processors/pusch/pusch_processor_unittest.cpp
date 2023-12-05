@@ -23,12 +23,12 @@
 #include "../../../support/resource_grid_test_doubles.h"
 #include "../../rx_softbuffer_test_doubles.h"
 #include "../../signal_processors/dmrs_pusch_estimator_test_doubles.h"
-#include "../uci_decoder_test_doubles.h"
+#include "../uci/uci_decoder_test_doubles.h"
 #include "pusch_decoder_test_doubles.h"
 #include "pusch_demodulator_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "ulsch_demultiplex_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
 #include "srsran/srsvec/compare.h"
@@ -63,6 +63,12 @@ std::ostream& operator<<(std::ostream& os, cyclic_prefix value)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, uci_status value)
+{
+  fmt::print(os, "{}", to_string(value));
+  return os;
+}
+
 static bool operator==(span<const log_likelihood_ratio> left, span<const log_likelihood_ratio> right)
 {
   return srsvec::equal(left, right);
@@ -72,7 +78,8 @@ static bool operator==(span<const log_likelihood_ratio> left, span<const log_lik
 
 namespace {
 
-using PuschProcessorParams = std::tuple<subcarrier_spacing, cyclic_prefix, modulation_scheme, bool, unsigned, unsigned>;
+using PuschProcessorParams =
+    std::tuple<subcarrier_spacing, cyclic_prefix, modulation_scheme, bool, unsigned, unsigned, unsigned>;
 
 class PuschProcessorFixture : public ::testing::TestWithParam<PuschProcessorParams>
 {
@@ -153,7 +160,8 @@ protected:
     modulation_scheme  modulation         = std::get<2>(GetParam());
     bool               codeword_present   = std::get<3>(GetParam());
     unsigned           nof_harq_ack_bits  = std::get<4>(GetParam());
-    unsigned           nof_rx_ports       = std::get<5>(GetParam());
+    unsigned           nof_csi_part1_bits = std::get<5>(GetParam());
+    unsigned           nof_rx_ports       = std::get<6>(GetParam());
 
     unsigned numerology             = to_numerology_value(scs);
     unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
@@ -176,7 +184,7 @@ protected:
 
     // Fill UCI configuration.
     pdu.uci.nof_harq_ack          = nof_harq_ack_bits;
-    pdu.uci.nof_csi_part1         = 0;
+    pdu.uci.nof_csi_part1         = nof_csi_part1_bits;
     pdu.uci.csi_part2_size        = {};
     pdu.uci.alpha_scaling         = 1.0F;
     pdu.uci.beta_offset_harq_ack  = 20.0F;
@@ -460,25 +468,47 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_TRUE(sch_entries.empty());
   }
 
+  // Calculate the number of UCI decoded fields.
+  unsigned nof_uci_fields  = ((pdu.uci.nof_harq_ack > 0) ? 1 : 0) + ((pdu.uci.nof_csi_part1 > 0) ? 1 : 0);
+  unsigned uci_decoder_idx = 0;
+  ASSERT_EQ(nof_uci_fields, uci_dec_spy->get_entries().size());
+
   // Assert HARQ-ACK decoder inputs.
   if (pdu.uci.nof_harq_ack > 0) {
-    ASSERT_EQ(1, uci_dec_spy->get_entries().size());
-    const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries().front();
+    const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries()[uci_decoder_idx++];
     ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.harq_ack),
               span<const log_likelihood_ratio>(uci_dec_entry.llr));
     ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
+    uci_payload_type packed_harq_ack(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
+
     ASSERT_EQ(uci_entries.size(), 1);
     const auto& uci_entry = uci_entries.back();
-    ASSERT_EQ(span<const uint8_t>(uci_entry.harq_ack.payload), span<const uint8_t>(uci_dec_entry.message));
+    ASSERT_EQ(uci_entry.harq_ack.payload, packed_harq_ack);
     ASSERT_EQ(uci_entry.harq_ack.status, uci_dec_entry.status);
-  } else {
-    ASSERT_EQ(0, uci_dec_spy->get_entries().size());
-    if (!uci_entries.empty()) {
-      const auto& uci_entry = uci_entries.back();
-      ASSERT_EQ(uci_status::unknown, uci_entry.harq_ack.status);
-      ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
-    }
+  } else if (!uci_entries.empty()) {
+    const auto& uci_entry = uci_entries.back();
+    ASSERT_EQ(uci_status::unknown, uci_entry.harq_ack.status);
+    ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
+  }
+
+  // Assert CSI Part 1 decoder inputs.
+  if (pdu.uci.nof_csi_part1 > 0) {
+    const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries()[uci_decoder_idx++];
+    ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.csi_part1),
+              span<const log_likelihood_ratio>(uci_dec_entry.llr));
+    ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
+
+    uci_payload_type packed_csi_part1(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
+
+    ASSERT_EQ(uci_entries.size(), 1);
+    const auto& uci_entry = uci_entries.back();
+    ASSERT_EQ(uci_entry.csi_part1.payload, packed_csi_part1);
+    ASSERT_EQ(uci_entry.csi_part1.status, uci_dec_entry.status);
+  } else if (!uci_entries.empty()) {
+    const auto& uci_entry = uci_entries.back();
+    ASSERT_EQ(uci_status::unknown, uci_entry.csi_part1.status);
+    ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
   }
 }
 
@@ -542,6 +572,8 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(true, false),
         // Number of HARQ-ACK bits.
         ::testing::Values(0, 1, 2, 10),
+        // Number of CSI Part1 bits.
+        ::testing::Values(0, 4),
         // Number of receive antenna ports.
         ::testing::Values(1, 2, 4)));
 

@@ -107,7 +107,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
   return true;
 }
 
-rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message msg)
+rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg)
 {
   // Unpack DU to CU container
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
@@ -128,7 +128,13 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
   ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
+  ue_cfg.int_algo_pref_list             = cfg.int_algo_pref_list;
+  ue_cfg.enc_algo_pref_list             = cfg.enc_algo_pref_list;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
+
+  // Copy RRC cell and add SSB ARFCN.
+  rrc_cell_context rrc_cell = msg.cell;
+  rrc_cell.ssb_arfcn        = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
 
   auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(resource_mng,
@@ -140,19 +146,18 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          cell_meas_mng,
                                                          msg.ue_index,
                                                          msg.c_rnti,
-                                                         msg.cell,
+                                                         rrc_cell,
                                                          ue_cfg,
                                                          msg.du_to_cu_container.copy(),
                                                          *msg.ue_task_sched,
                                                          reject_users,
-                                                         msg.is_inter_cu_handover));
+                                                         msg.rrc_context));
 
   if (res.second) {
     auto& u = ue_db.at(ue_index);
     return u.get();
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 void rrc_du_impl::remove_ue(ue_index_t ue_index)

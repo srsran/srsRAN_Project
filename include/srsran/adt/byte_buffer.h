@@ -426,17 +426,20 @@ public:
   }
 
   /// Appends a view of bytes into current byte buffer.
-  void append(const byte_buffer_view& view)
+  bool append(const byte_buffer_view& view)
   {
     // append segment by segment.
     auto view_segs = view.segments();
     for (span<const uint8_t> seg : view_segs) {
-      append(seg);
+      if (not append(seg)) {
+        return false;
+      }
     }
+    return true;
   }
 
   /// Appends an owning view of bytes into current byte buffer.
-  void append(const byte_buffer_slice& view);
+  bool append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   bool prepend(span<const uint8_t> bytes)
@@ -950,9 +953,9 @@ private:
   byte_buffer_view sliced_view;
 };
 
-inline void byte_buffer::append(const byte_buffer_slice& slice)
+inline bool byte_buffer::append(const byte_buffer_slice& slice)
 {
-  append(slice.view());
+  return append(slice.view());
 }
 
 /// Used to read a range of bytes stored in a byte_buffer.
@@ -1110,7 +1113,7 @@ inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem
     return *src.segments().begin();
   }
   // non-contiguous: copy required
-  srsran_assert(src.length() <= tmp_mem.size_bytes(),
+  srsran_assert(src.length() <= tmp_mem.size(),
                 "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
                 src.length(),
                 tmp_mem.size());

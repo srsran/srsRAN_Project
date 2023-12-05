@@ -56,17 +56,17 @@ void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
   // handle transmit notifications
   if (msg.data_delivery_status.has_value()) {
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
-    // Highest successfully delivered PDCP SN
-    if (status.highest_delivered_pdcp_sn.has_value()) {
-      uint32_t pdcp_sn = status.highest_delivered_pdcp_sn.value();
-      logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
-      rx_delivery_notifier.on_delivery_notification(pdcp_sn);
-    }
     // Highest transmitted PDCP SN
     if (status.highest_transmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_transmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
       rx_delivery_notifier.on_transmit_notification(pdcp_sn);
+    }
+    // Highest successfully delivered PDCP SN
+    if (status.highest_delivered_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_delivered_pdcp_sn.value();
+      logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
+      rx_delivery_notifier.on_delivery_notification(pdcp_sn);
     }
     // Highest successfully delivered retransmitted PDCP SN
     if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {

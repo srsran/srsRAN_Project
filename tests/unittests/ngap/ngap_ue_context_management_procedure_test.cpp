@@ -46,23 +46,25 @@ protected:
 
   bool was_initial_context_setup_response_sent() const
   {
-    return msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type() ==
+    return msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp;
   }
 
   bool was_initial_context_setup_failure_sent() const
   {
-    return msg_notifier.last_ngap_msg.pdu.unsuccessful_outcome().value.type() ==
+    return msg_notifier.last_ngap_msgs.back().pdu.unsuccessful_outcome().value.type() ==
            asn1::ngap::ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::init_context_setup_fail;
   }
 
   bool was_pdu_session_resource_setup_successful() const
   {
-    bool setup_present = msg_notifier.last_ngap_msg.pdu.successful_outcome()
+    bool setup_present = msg_notifier.last_ngap_msgs.back()
+                             .pdu.successful_outcome()
                              .value.init_context_setup_resp()
                              ->pdu_session_res_setup_list_cxt_res_present == true;
 
-    bool fail_present = msg_notifier.last_ngap_msg.pdu.successful_outcome()
+    bool fail_present = msg_notifier.last_ngap_msgs.back()
+                            .pdu.successful_outcome()
                             .value.init_context_setup_resp()
                             ->pdu_session_res_failed_to_setup_list_cxt_res_present == false;
 
@@ -71,23 +73,24 @@ protected:
 
   bool was_pdu_session_resource_setup_unsuccessful() const
   {
-    return msg_notifier.last_ngap_msg.pdu.unsuccessful_outcome()
+    return msg_notifier.last_ngap_msgs.back()
+               .pdu.unsuccessful_outcome()
                .value.init_context_setup_fail()
                ->pdu_session_res_failed_to_setup_list_cxt_fail_present == true;
   }
 
   bool was_ue_context_release_request_sent() const
   {
-    if (msg_notifier.last_ngap_msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::nulltype) {
+    if (msg_notifier.last_ngap_msgs.back().pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::nulltype) {
       return false;
     }
-    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+    return msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request;
   }
 
   bool was_ue_context_release_complete_sent() const
   {
-    return msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type() ==
+    return msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete;
   }
 
@@ -95,7 +98,7 @@ protected:
 
   bool was_ue_removed() const { return ngap->get_nof_ues() == 0; }
 
-  void clear_last_received_msg() { msg_notifier.last_ngap_msg = {}; }
+  void clear_last_received_msg() { msg_notifier.last_ngap_msgs.back() = {}; }
 };
 
 /// Test Initial Context Setup Request

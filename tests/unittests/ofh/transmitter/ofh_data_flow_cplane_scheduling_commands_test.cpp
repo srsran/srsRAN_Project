@@ -96,46 +96,56 @@ protected:
   ru_compression_params                             prach_compr_params = {compression_type::BFP, 8};
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo =
       std::make_shared<uplink_cplane_context_repository>(58);
-  std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>();
+  std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
   ether::testing::vlan_frame_builder_spy*   vlan_builder;
   ecpri::testing::packet_builder_spy*       ecpri_builder;
   cplane_message_builder_spy*               cplane_builder;
   data_flow_cplane_scheduling_commands_impl data_flow;
 
 public:
-  data_flow_cplane_scheduling_commands_impl_fixture() : data_flow(generate_data_flow_config()) {}
+  data_flow_cplane_scheduling_commands_impl_fixture() :
+    data_flow(generate_data_flow_config(), generate_data_flow_dependencies())
+  {
+  }
 
 private:
   data_flow_cplane_scheduling_commands_impl_config generate_data_flow_config()
   {
     data_flow_cplane_scheduling_commands_impl_config config;
 
-    config.ru_nof_prbs            = ru_nof_prbs;
-    config.vlan_params            = vlan_params;
-    config.dl_compr_params        = dl_compr_params;
-    config.ul_compr_params        = ul_compr_params;
-    config.prach_compr_params     = prach_compr_params;
-    config.ul_cplane_context_repo = ul_cplane_context_repo;
-    config.frame_pool             = frame_pool;
-    config.logger                 = &srslog::fetch_basic_logger("TEST");
-
-    {
-      auto temp         = std::make_unique<cplane_message_builder_spy>();
-      cplane_builder    = temp.get();
-      config.cp_builder = std::move(temp);
-    }
-    {
-      auto temp          = std::make_unique<ether::testing::vlan_frame_builder_spy>();
-      vlan_builder       = temp.get();
-      config.eth_builder = std::move(temp);
-    }
-    {
-      auto temp            = std::make_unique<ecpri::testing::packet_builder_spy>();
-      ecpri_builder        = temp.get();
-      config.ecpri_builder = std::move(temp);
-    }
+    config.ru_nof_prbs        = ru_nof_prbs;
+    config.vlan_params        = vlan_params;
+    config.dl_compr_params    = dl_compr_params;
+    config.ul_compr_params    = ul_compr_params;
+    config.prach_compr_params = prach_compr_params;
 
     return config;
+  }
+
+  data_flow_cplane_scheduling_commands_impl_dependencies generate_data_flow_dependencies()
+  {
+    data_flow_cplane_scheduling_commands_impl_dependencies dependencies;
+
+    dependencies.ul_cplane_context_repo = ul_cplane_context_repo;
+    dependencies.frame_pool             = frame_pool;
+    dependencies.logger                 = &srslog::fetch_basic_logger("TEST");
+    {
+      auto temp               = std::make_unique<cplane_message_builder_spy>();
+      cplane_builder          = temp.get();
+      dependencies.cp_builder = std::move(temp);
+    }
+    {
+      auto temp                = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+      vlan_builder             = temp.get();
+      dependencies.eth_builder = std::move(temp);
+    }
+    {
+      auto temp                  = std::make_unique<ecpri::testing::packet_builder_spy>();
+      ecpri_builder              = temp.get();
+      dependencies.ecpri_builder = std::move(temp);
+    }
+
+    return dependencies;
   }
 };
 

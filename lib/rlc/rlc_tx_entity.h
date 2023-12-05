@@ -24,6 +24,7 @@
 
 #include "rlc_bearer_logger.h"
 #include "rlc_tx_metrics_container.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
@@ -37,12 +38,18 @@ class rlc_tx_entity : public rlc_tx_upper_layer_data_interface,
                       public rlc_tx_metrics
 {
 protected:
-  rlc_tx_entity(du_ue_index_t                        du_index,
+  rlc_tx_entity(uint32_t                             du_index,
+                du_ue_index_t                        ue_index,
                 rb_id_t                              rb_id,
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
-                rlc_tx_lower_layer_notifier&         lower_dn_) :
-    logger("RLC", {du_index, rb_id, "DL"}), upper_dn(upper_dn_), upper_cn(upper_cn_), lower_dn(lower_dn_)
+                rlc_tx_lower_layer_notifier&         lower_dn_,
+                rlc_pcap&                            pcap_) :
+    logger("RLC", {du_index, ue_index, rb_id, "DL"}),
+    upper_dn(upper_dn_),
+    upper_cn(upper_cn_),
+    lower_dn(lower_dn_),
+    pcap(pcap_)
   {
   }
 
@@ -51,6 +58,7 @@ protected:
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;
+  rlc_pcap&                            pcap;
 
 public:
   rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }

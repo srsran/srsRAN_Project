@@ -36,18 +36,39 @@ public:
     std::vector<cf_t> output;
   };
 
+  amplitude_controller_spy() : random_data(1009)
+  {
+    std::mt19937                          rgen;
+    std::uniform_real_distribution<float> sample_dist(-1, 1);
+    std::generate(random_data.begin(), random_data.end(), [&sample_dist, &rgen]() {
+      return cf_t(sample_dist(rgen), sample_dist(rgen));
+    });
+  }
+
   amplitude_controller_metrics process(span<cf_t> output, span<const cf_t> input) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
 
-    entry.input.resize(input.size());
-    srsvec::copy(entry.input, input);
+    entry.input = std::vector<cf_t>(input.begin(), input.end());
 
-    std::generate(output.begin(), output.end(), [this]() { return cf_t(output_dist(rgen), output_dist(rgen)); });
+    std::size_t remaining = output.size();
+    span<cf_t>  random_data_view(random_data);
 
-    entry.output.resize(output.size());
-    srsvec::copy(entry.output, output);
+    while (remaining > 0) {
+      // Number of samples to copy for this iteration.
+      unsigned   nof_copied_samples = std::min(random_data.size() - random_data_index, remaining);
+      span<cf_t> random_samples     = random_data_view.subspan(random_data_index, nof_copied_samples);
+      span<cf_t> out_samples        = output.subspan(output.size() - remaining, nof_copied_samples);
+
+      srsvec::copy(out_samples, random_samples);
+
+      // Update remaining samples and buffer index.
+      remaining -= nof_copied_samples;
+      random_data_index = (random_data_index + nof_copied_samples) % random_data.size();
+    }
+
+    entry.output = std::vector<cf_t>(output.begin(), output.end());
 
     return amplitude_controller_metrics();
   }
@@ -57,7 +78,8 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  std::mt19937                          rgen;
+  unsigned                              random_data_index = 0;
+  std::vector<cf_t>                     random_data;
   std::uniform_real_distribution<float> output_dist;
   std::vector<entry_t>                  entries;
 };

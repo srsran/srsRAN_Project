@@ -23,7 +23,7 @@
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/srsran_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -31,91 +31,113 @@ static std::mt19937 rgen(0);
 using namespace srsran;
 
 #define Nc 1600
-#define MAX_SEQ_LEN (256 * 1024)
-
-static std::array<uint8_t, Nc + MAX_SEQ_LEN + 31> x1;
-static std::array<uint8_t, Nc + MAX_SEQ_LEN + 31> x2;
-static std::array<uint8_t, Nc + MAX_SEQ_LEN + 31> c;
-static std::array<float, Nc + MAX_SEQ_LEN + 31>   c_float;
-static std::array<int16_t, Nc + MAX_SEQ_LEN + 31> c_short;
-static std::array<int8_t, Nc + MAX_SEQ_LEN + 31>  c_char;
-static std::array<uint8_t, MAX_SEQ_LEN / 8>       c_packed;
-static std::array<uint8_t, MAX_SEQ_LEN>           c_unpacked;
 
 static constexpr float ASSERT_MAX_FLOAT_ERROR = 1e-6;
 
-static uint32_t bit_pack(uint8_t** bits, int nof_bits)
+namespace {
+
+using PseudoRandomGeneratorParams = std::tuple<unsigned, unsigned>;
+std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
+
+class PseudoRandomGeneratorFixture : public ::testing::TestWithParam<PseudoRandomGeneratorParams>
 {
-  int      i;
-  uint32_t value = 0;
+protected:
+  static std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  unsigned                                                offset;
+  unsigned                                                size;
+  unsigned                                                c_init;
+  static std::unique_ptr<pseudo_random_generator>         generator;
 
-  for (i = 0; i < nof_bits; i++) {
-    value |= (uint32_t)(*bits)[i] << (nof_bits - i - 1);
-  }
-  *bits += nof_bits;
-  return value;
-}
-
-static void pack_vector(uint8_t* unpacked, uint8_t* packed, int nof_bits)
-{
-  uint32_t i, nbytes;
-  nbytes = nof_bits / 8;
-
-  for (i = 0; i < nbytes; i++) {
-    packed[i] = bit_pack(&unpacked, 8);
-  }
-
-  if (nof_bits % 8) {
-    packed[i] = bit_pack(&unpacked, nof_bits % 8);
-    packed[i] <<= 8 - (nof_bits % 8);
-  }
-}
-
-static void generate_gold(unsigned c_init, unsigned length, unsigned offset)
-{
-  // Initialize states
-  for (uint32_t n = 0; n < 31; n++) {
-    x2[n] = (c_init >> n) & 0x1;
-  }
-  x1[0] = 1;
-
-  // reach initial states
-  for (uint32_t n = 0; n < Nc + length; n++) {
-    x1[n + 31] = (x1[n + 3] + x1[n]) & 0x1;
-    x2[n + 31] = (x2[n + 3] + x2[n + 2] + x2[n + 1] + x2[n]) & 0x1;
+  static void SetUpTestSuite()
+  {
+    // Create pseudo random generator factory.
+    if (!prg_factory) {
+      prg_factory = create_pseudo_random_generator_sw_factory();
+      ASSERT_NE(prg_factory, nullptr) << "Cannot create factory";
+    }
+    if (!generator) {
+      // Create sequence generator.
+      generator = prg_factory->create();
+      ASSERT_NE(generator, nullptr) << "Cannot create sequence generator";
+    }
   }
 
-  // Create each sequence
-  for (uint32_t n = 0; n < length; n++) {
-    c[n]          = (x1[n + Nc + offset] + x2[n + Nc + offset]) & 0x1;
-    c_float[n]    = c[n] ? -1.0f : +1.0f;
-    c_short[n]    = c[n] ? -1 : +1;
-    c_char[n]     = c[n] ? -1 : +1;
-    c_unpacked[n] = c[n];
+  void SetUp() override
+  {
+    ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo random generator factory";
+    ASSERT_NE(generator, nullptr) << "Cannot create pseudo random generator";
+
+    // Get test parameters.
+    auto params = GetParam();
+    offset      = std::get<0>(params);
+    size        = std::get<1>(params);
+
+    c_init = dist(rgen);
+
+    c.resize(size);
+    c_float.resize(size);
+    c_char.resize(size);
+    c_packed.resize(size);
+    x1.resize(Nc + 31 + size);
+    x2.resize(Nc + 31 + size);
+
+    // Generate gold sequence.
+    generate_gold();
   }
 
-  pack_vector(c_unpacked.data(), c_packed.data(), length);
-}
+  span<const uint8_t> get_gold() const { return c; }
+  span<const float>   get_gold_float() const { return c_float; }
+  span<const int8_t>  get_gold_char() const { return c_char; }
+  const bit_buffer&   get_gold_packed() const { return c_packed; }
 
-static void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factory> factory,
-                                  unsigned                                         c_init,
-                                  unsigned                                         N,
-                                  unsigned                                         offset)
+private:
+  dynamic_bit_buffer   c_packed;
+  std::vector<uint8_t> x1;
+  std::vector<uint8_t> x2;
+  std::vector<uint8_t> c;
+  std::vector<float>   c_float;
+  std::vector<int8_t>  c_char;
+
+  void generate_gold()
+  {
+    // Initialize states
+    for (uint32_t n = 0; n < 31; n++) {
+      x2[n] = (c_init >> n) & 0x1;
+    }
+    x1[0] = 1;
+
+    // reach initial states
+    for (uint32_t n = 0; n < Nc + size; n++) {
+      x1[n + 31] = (x1[n + 3] + x1[n]) & 0x1;
+      x2[n + 31] = (x2[n + 3] + x2[n + 2] + x2[n + 1] + x2[n]) & 0x1;
+    }
+
+    // Create each sequence
+    for (uint32_t n = 0; n < size; n++) {
+      c[n]       = (x1[n + Nc + offset] + x2[n + Nc + offset]) & 0x1;
+      c_float[n] = c[n] ? -1.0f : +1.0f;
+      c_char[n]  = c[n] ? -1 : +1;
+    }
+
+    srsvec::bit_pack(c_packed, c);
+  }
+};
+
+std::shared_ptr<pseudo_random_generator_factory> PseudoRandomGeneratorFixture::prg_factory = nullptr;
+std::unique_ptr<pseudo_random_generator>         PseudoRandomGeneratorFixture::generator   = nullptr;
+
+TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXorPacked)
 {
   // Create data buffer.
-  dynamic_bit_buffer data(N);
+  dynamic_bit_buffer data(size);
 
   // Fill buffer with random data.
-  for (unsigned i_byte = 0, i_byte_end = N / 8; i_byte != i_byte_end; ++i_byte) {
+  for (unsigned i_byte = 0, i_byte_end = size / 8; i_byte != i_byte_end; ++i_byte) {
     data.set_byte(rgen() & mask_lsb_ones<unsigned>(8), i_byte);
   }
-  if (N % 8 != 0) {
-    data.insert((rgen() & mask_lsb_ones<unsigned>(N % 8)), 8 * (N / 8), N % 8);
+  if (size % 8 != 0) {
+    data.insert((rgen() & mask_lsb_ones<unsigned>(size % 8)), 8 * (size / 8), size % 8);
   }
-
-  // Create sequence generator.
-  std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -124,34 +146,28 @@ static void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factor
   generator->advance(offset);
 
   // Apply sequence.
-  dynamic_bit_buffer data_xor(N);
+  dynamic_bit_buffer data_xor(size);
   generator->apply_xor(data_xor, data);
 
   // Assert.
-  for (unsigned i = 0; i != N / 8; ++i) {
-    uint8_t gold = c_packed[i] ^ data.extract(8 * i, 8);
-    TESTASSERT_EQ(gold, data_xor.extract(8 * i, 8));
+  const bit_buffer& gold_packed = get_gold_packed();
+  for (unsigned i = 0; i != size / 8; ++i) {
+    uint8_t gold = gold_packed.get_byte(i) ^ data.get_byte(i);
+    ASSERT_EQ(gold, data_xor.get_byte(i));
   }
 }
 
-static void test_apply_xor_unpacked(std::shared_ptr<pseudo_random_generator_factory> factory,
-                                    unsigned                                         c_init,
-                                    unsigned                                         N,
-                                    unsigned                                         offset)
+TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXorUnpacked)
 {
-  std::uniform_int_distribution<unsigned char> dist(0, 1);
+  std::uniform_int_distribution<unsigned char> distXorUnpacked(0, 1);
 
   // Create data buffer.
-  srsvec::aligned_vec<uint8_t> data(N);
+  srsvec::aligned_vec<uint8_t> data(size);
 
   // Fill buffer with random data.
   for (unsigned char& v : data) {
-    v = dist(rgen);
+    v = distXorUnpacked(rgen);
   }
-
-  // Create sequence generator.
-  std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -160,35 +176,28 @@ static void test_apply_xor_unpacked(std::shared_ptr<pseudo_random_generator_fact
   generator->advance(offset);
 
   // Apply sequence.
-  srsvec::aligned_vec<uint8_t> data_xor(N);
+  srsvec::aligned_vec<uint8_t> data_xor(size);
   generator->apply_xor(data_xor, data);
 
   // Assert.
-  for (unsigned i = 0; i != N; ++i) {
-    uint8_t gold = c_unpacked[i] ^ data[i];
-    TESTASSERT_EQ(gold, data_xor[i]);
+  span<const uint8_t> gold = get_gold();
+  for (unsigned i = 0; i != size; ++i) {
+    ASSERT_EQ(gold[i] ^ data[i], data_xor[i]);
   }
 }
 
-static void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> factory,
-                              unsigned                                         c_init,
-                              unsigned                                         N,
-                              unsigned                                         offset)
+TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorXori8)
 {
-  std::uniform_int_distribution<int8_t> dist(log_likelihood_ratio::min().to_value_type(),
-                                             log_likelihood_ratio::max().to_value_type());
+  std::uniform_int_distribution<int8_t> distXori8(log_likelihood_ratio::min().to_value_type(),
+                                                  log_likelihood_ratio::max().to_value_type());
 
   // Create data buffer.
-  srsvec::aligned_vec<log_likelihood_ratio> data(N);
+  srsvec::aligned_vec<log_likelihood_ratio> data(size);
 
   // Fill buffer with random data.
   for (log_likelihood_ratio& v : data) {
-    v = dist(rgen);
+    v = distXori8(rgen);
   }
-
-  // Create sequence generator.
-  std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -197,27 +206,21 @@ static void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> f
   generator->advance(offset);
 
   // Apply sequence.
-  srsvec::aligned_vec<log_likelihood_ratio> data_xor(N);
+  srsvec::aligned_vec<log_likelihood_ratio> data_xor(size);
   generator->apply_xor(data_xor, data);
 
   // Assert.
-  for (unsigned i = 0; i != N; ++i) {
-    log_likelihood_ratio gold = c_char[i] * data[i].to_value_type();
-    TESTASSERT_EQ(gold, data_xor[i]);
+  span<const int8_t> gold_char = get_gold_char();
+  for (unsigned i = 0; i != size; ++i) {
+    log_likelihood_ratio gold = gold_char[i] * data[i].to_value_type();
+    ASSERT_EQ(gold, data_xor[i]);
   }
 }
 
-static void test_generate_bit(std::shared_ptr<pseudo_random_generator_factory> factory,
-                              unsigned                                         c_init,
-                              unsigned                                         N,
-                              unsigned                                         offset)
+TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorBit)
 {
   // Create data buffer.
-  dynamic_bit_buffer sequence(N);
-
-  // Create sequence generator.
-  std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  dynamic_bit_buffer sequence(size);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -229,28 +232,21 @@ static void test_generate_bit(std::shared_ptr<pseudo_random_generator_factory> f
   generator->generate(sequence);
 
   // Assert.
-  for (unsigned i_byte = 0, i_byte_end = N / 8; i_byte != i_byte_end; ++i_byte) {
-    uint8_t gold = c_packed[i_byte];
-    TESTASSERT_EQ(gold, sequence.get_byte(i_byte));
+  const bit_buffer& gold_packed = get_gold_packed();
+  for (unsigned i_byte = 0, i_byte_end = size / 8; i_byte != i_byte_end; ++i_byte) {
+    ASSERT_EQ(gold_packed.get_byte(i_byte), sequence.get_byte(i_byte));
   }
 
-  for (unsigned i_bit = (N / 8) * 8; i_bit != N; ++i_bit) {
-    uint8_t gold = c_unpacked[i_bit];
-    TESTASSERT_EQ(gold, sequence.extract(i_bit, 1));
+  span<const uint8_t> gold = get_gold();
+  for (unsigned i_bit = (size / 8) * 8; i_bit != size; ++i_bit) {
+    ASSERT_EQ(gold[i_bit], sequence.extract(i_bit, 1));
   }
 }
 
-static void test_generate_float(std::shared_ptr<pseudo_random_generator_factory> factory,
-                                unsigned                                         c_init,
-                                unsigned                                         N,
-                                unsigned                                         offset)
+TEST_P(PseudoRandomGeneratorFixture, PseudoRandomGeneratorFloat)
 {
   // Create data buffer.
-  srsvec::aligned_vec<float> sequence(N);
-
-  // Create sequence generator.
-  std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  srsvec::aligned_vec<float> sequence(size);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -262,43 +258,16 @@ static void test_generate_float(std::shared_ptr<pseudo_random_generator_factory>
   generator->generate(sequence, M_SQRT1_2);
 
   // Assert.
-  for (unsigned i = 0; i != N; ++i) {
-    float gold = c_float[i] * M_SQRT1_2;
+  span<const float> gold_float = get_gold_float();
+  for (unsigned i = 0; i != size; ++i) {
+    float gold = gold_float[i] * M_SQRT1_2;
     float err  = std::abs(gold - sequence[i]);
-    TESTASSERT(err < ASSERT_MAX_FLOAT_ERROR, "Failed err={}.", err);
+    ASSERT_TRUE(err < ASSERT_MAX_FLOAT_ERROR) << ::fmt::format("Failed err={}.", err);
   }
 }
 
-int main()
-{
-  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+INSTANTIATE_TEST_SUITE_P(PseudoRandomGeneratorTest,
+                         PseudoRandomGeneratorFixture,
+                         ::testing::Combine(::testing::Values(0, 2, 3, 5, 7), ::testing::Values(255, 512, 768)));
 
-  std::vector<unsigned>                   offsets = {0, 2, 3, 5, 7};
-  std::vector<unsigned>                   sizes   = {256, 512, 768};
-  std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
-
-  for (unsigned N : sizes) {
-    for (unsigned offset : offsets) {
-      unsigned c_init = dist(rgen);
-
-      // Generate gold sequence.
-      generate_gold(c_init, N, offset);
-
-      // Test sequence XOR with byte buffer.
-      test_apply_xor_packed(prg_factory, c_init, N, offset);
-
-      // Test sequence XOR with bit buffer.
-      test_apply_xor_unpacked(prg_factory, c_init, N, offset);
-
-      // Test sequence XOR with 8-bit signed buffer.
-      test_apply_xor_i8(prg_factory, c_init, N, offset);
-
-      // Test sequence generation in packed bits.
-      test_generate_bit(prg_factory, c_init, N, offset);
-
-      // Test sequence generation in float.
-      test_generate_float(prg_factory, c_init, N, offset);
-    }
-  }
-}
+} // end namespace

@@ -21,7 +21,10 @@
  */
 
 #include "pdsch_processor_lite_impl.h"
+#include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/tx_buffer.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/dmrs.h"
 
 using namespace srsran;
@@ -56,10 +59,14 @@ static unsigned compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   return nof_grid_re - nof_reserved_re;
 }
 
-void pdsch_block_processor::configure_new_transmission(span<const uint8_t>           data,
+void pdsch_block_processor::configure_new_transmission(unique_tx_buffer              softbuffer_,
+                                                       span<const uint8_t>           data,
                                                        unsigned                      i_cw,
                                                        const pdsch_processor::pdu_t& pdu)
 {
+  new_data   = pdu.codewords.front().new_data;
+  softbuffer = std::move(softbuffer_);
+
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
@@ -94,9 +101,6 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
 
 void pdsch_block_processor::new_codeblock()
 {
-  // Temporary data storage.
-  static_bit_buffer<3 * MAX_SEG_LENGTH.value()> rm_buffer;
-
   srsran_assert(next_i_cb < d_segments.size(),
                 "The codeblock index (i.e., {}) exceeds the number of codeblocks (i.e., {})",
                 next_i_cb,
@@ -112,10 +116,13 @@ void pdsch_block_processor::new_codeblock()
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
+  bit_buffer rm_buffer = softbuffer.get().get_codeblock(next_i_cb, descr_seg.get_metadata().cb_specific.full_length);
 
-  // Encode the segment into a codeblock.
-  encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  // Encode only if it is a new transmission.
+  if (new_data) {
+    // Encode the segment into a codeblock.
+    encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  }
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
@@ -130,6 +137,11 @@ void pdsch_block_processor::new_codeblock()
 
   // Increment codeblock counter.
   ++next_i_cb;
+
+  // Unlock softbuffer if all the codeblocks have been processed.
+  if (next_i_cb == d_segments.size()) {
+    softbuffer = unique_tx_buffer();
+  }
 }
 
 span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
@@ -139,54 +151,50 @@ span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
     new_codeblock();
   }
 
-  // Avoid copy if the new block fits in the current symbol buffer.
-  if (codeblock_symbols.size() >= block_size) {
-    // Select view of the current block.
-    span<ci8_t> symbols = codeblock_symbols.first(block_size);
+  srsran_assert(block_size <= codeblock_symbols.size(),
+                "The block size (i.e., {}) exceeds the number of available symbols (i.e., {}).",
+                block_size,
+                codeblock_symbols.size());
 
-    // Advance read pointer.
-    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+  // Select view of the current block.
+  span<ci8_t> symbols = codeblock_symbols.first(block_size);
 
-    return symbols;
+  // Advance read pointer.
+  codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+
+  return symbols;
+}
+
+unsigned pdsch_block_processor::get_max_block_size() const
+{
+  if (!codeblock_symbols.empty()) {
+    return codeblock_symbols.size();
   }
 
-  // Create a view to the symbol buffer.
-  span<ci8_t> symbols = span<ci8_t>(temp_symbol_buffer).first(block_size);
-
-  // Process symbols until the symbols is depleted.
-  // Note: the copy of symbols could be avoided if the resource mapper could work from a block size given by the
-  // processor.
-  while (!symbols.empty()) {
-    // Process a new code block if the buffer with code block symbols is empty.
-    if (codeblock_symbols.empty()) {
-      new_codeblock();
-    }
-
-    // Calculate number of symbols to read from the current codeblock.
-    unsigned nof_symbols = static_cast<unsigned>(std::min(symbols.size(), codeblock_symbols.size()));
-
-    // Copy symbols.
-    srsvec::copy(symbols.first(nof_symbols), codeblock_symbols.first(nof_symbols));
-
-    // Advance read pointer.
-    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - nof_symbols);
-
-    // Advance write pointer.
-    symbols = symbols.last(symbols.size() - nof_symbols);
+  if (next_i_cb != d_segments.size()) {
+    unsigned rm_length       = d_segments[next_i_cb].get_metadata().cb_specific.rm_length;
+    unsigned bits_per_symbol = get_bits_per_symbol(modulation);
+    return rm_length / bits_per_symbol;
   }
 
-  return span<const ci8_t>(temp_symbol_buffer).first(block_size);
+  return 0;
+}
+
+bool pdsch_block_processor::empty() const
+{
+  return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
+                                        unique_tx_buffer                                             softbuffer,
                                         pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                        const pdsch_processor::pdu_t&                                pdu)
+                                        const pdu_t&                                                 pdu)
 {
-  assert_pdu(pdu);
+  pdsch_processor_validator_impl::assert_pdu(pdu);
 
   // Configure new transmission.
-  subprocessor.configure_new_transmission(data[0], 0, pdu);
+  subprocessor.configure_new_transmission(std::move(softbuffer), data[0], 0, pdu);
 
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -243,62 +251,6 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
-}
-
-void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
-{
-  // Deduce parameters from the PDU.
-  unsigned         nof_layers       = pdu.precoding.get_nof_layers();
-  unsigned         nof_codewords    = (nof_layers > 4) ? 2 : 1;
-  unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
-  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
-
-  srsran_assert(pdu.dmrs_symbol_mask.size() == nof_symbols_slot,
-                "The DM-RS symbol mask size (i.e., {}), must be equal to the number of symbols in the slot (i.e., {}).",
-                pdu.dmrs_symbol_mask.size(),
-                nof_symbols_slot);
-  srsran_assert(pdu.dmrs_symbol_mask.any(), "The number of OFDM symbols carrying DM-RS RE must be greater than zero.");
-  srsran_assert(
-      static_cast<unsigned>(pdu.dmrs_symbol_mask.find_lowest(true)) >= pdu.start_symbol_index,
-      "The index of the first OFDM symbol carrying DM-RS (i.e., {}) must be equal to or greater than the first symbol "
-      "allocated to transmission (i.e., {}).",
-      pdu.dmrs_symbol_mask.find_lowest(true),
-      pdu.start_symbol_index);
-  srsran_assert(static_cast<unsigned>(pdu.dmrs_symbol_mask.find_highest(true)) <
-                    (pdu.start_symbol_index + pdu.nof_symbols),
-                "The index of the last OFDM symbol carrying DM-RS (i.e., {}) must be less than or equal to the last "
-                "symbol allocated to transmission (i.e., {}).",
-                pdu.dmrs_symbol_mask.find_highest(true),
-                pdu.start_symbol_index + pdu.nof_symbols - 1);
-  srsran_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation [{}, {}) exceeds the slot boundary of {} symbols.",
-                pdu.start_symbol_index,
-                pdu.start_symbol_index + pdu.nof_symbols,
-                nof_symbols_slot);
-  srsran_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb),
-                "Invalid BWP configuration [{}, {}) for the given frequency allocation {}.",
-                pdu.bwp_start_rb,
-                pdu.bwp_start_rb + pdu.bwp_size_rb,
-                pdu.freq_alloc);
-  srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-  srsran_assert(pdu.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
-  srsran_assert(pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
-                "The number of CDM groups without data (i.e., {}) must not exceed the maximum supported by the DM-RS "
-                "type (i.e., {}).",
-                pdu.nof_cdm_groups_without_data,
-                get_max_nof_cdm_groups_without_data(dmrs_config));
-  srsran_assert(nof_layers != 0, "No transmit layers are active.");
-  srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
-
-  srsran_assert(pdu.codewords.size() == nof_codewords,
-                "Expected {} codewords and got {} for {} layers.",
-                nof_codewords,
-                pdu.codewords.size(),
-                nof_layers);
-  srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
-                pdu.tbs_lbrm_bytes,
-                ldpc::MAX_CODEBLOCK_SIZE / 8);
 }
 
 void pdsch_processor_lite_impl::process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)

@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
@@ -55,8 +56,7 @@ public:
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
-    executor(executor_),
-    temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
+    executor(executor_)
   {
     srsran_assert(scrambler, "Invalid scrambler pointer.");
     srsran_assert(cb_processor_pool, "Invalid CB processor pool pointer.");
@@ -65,6 +65,7 @@ public:
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
+               unique_tx_buffer                                             softbuffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
@@ -80,25 +81,16 @@ private:
 
   /// Saves process() parameters for future uses during an asynchronous execution.
   void save_inputs(resource_grid_mapper&                                        mapper,
+                   unique_tx_buffer                                             softbuffer,
                    pdsch_processor_notifier&                                    notifier,
                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                    const pdu_t&                                                 pdu);
-
-  /// \brief Asserts PDU.
-  ///
-  /// It triggers an assertion if the PDU is not valid for this processor.
-  void assert_pdu() const;
 
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
 
   /// Processes PDSCH DM-RS.
   void process_dmrs();
-
-  /// \brief Maps the PDSCH resource elements.
-  /// \param[in]  buffer  Symbols after modulation mapping.
-  /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
-  void map(span<const ci8_t> codeword);
 
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
@@ -113,6 +105,7 @@ private:
   pdsch_processor_notifier* notifier;
   span<const uint8_t>       data;
   pdsch_processor::pdu_t    config;
+  unique_tx_buffer          softbuffer;
 
   /// Transport block size of the current transmission.
   units::bits tbs;
@@ -128,13 +121,18 @@ private:
   units::bits zero_pad = units::bits(0);
   /// Base codeblock metadata.
   codeblock_metadata cb_metadata = {};
-
+  /// PDSCH transmission allocation pattern.
+  re_pattern_list allocation;
+  /// PDSCH transmission reserved elements pattern.
+  re_pattern_list reserved;
+  /// Precoding configuration scaled.
+  precoding_configuration precoding;
   /// Rate matching length in bits for each of the segments.
   static_vector<units::bits, MAX_NOF_SEGMENTS> rm_length;
   /// Codeblock bit offset within the codeword.
   static_vector<units::bits, MAX_NOF_SEGMENTS> cw_offset;
-  /// Buffer for storing the modulated codeword.
-  std::vector<ci8_t> temp_codeword;
+  /// Codeblock resource block offset.
+  static_vector<unsigned, MAX_NOF_SEGMENTS> re_offset;
   /// Pending code block batch counter.
   std::atomic<unsigned> cb_batch_counter;
   /// Pending asynchronous task counter (DM-RS and CB processing).

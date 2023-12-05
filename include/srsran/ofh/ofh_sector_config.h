@@ -41,21 +41,12 @@ namespace ofh {
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
-  /// Logger.
-  srslog::basic_logger* logger = nullptr;
-  /// Downlink task executors.
-  std::vector<task_executor*> downlink_executors;
-  /// Transmitter task executor.
-  task_executor* transmitter_executor = nullptr;
-  /// Receiver task executor.
-  task_executor* receiver_executor = nullptr;
-  /// User-Plane received symbol notifier.
-  uplane_rx_symbol_notifier* notifier = nullptr;
-
   /// Ethernet interface name.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
+  /// MTU size.
+  units::bytes mtu_size;
   /// Destination MAC address, corresponds to the Radio Unit MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address, corresponds to the Distributed Unit MAC address.
@@ -119,6 +110,22 @@ struct sector_configuration {
   bool uses_dpdk;
   /// Optional TDD configuration.
   optional<tdd_ul_dl_config_common> tdd_config;
+};
+
+/// Open Fronthaul sector dependencies.
+struct sector_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
+  /// Downlink task executors.
+  std::vector<task_executor*> downlink_executors;
+  /// Transmitter task executor.
+  task_executor* transmitter_executor = nullptr;
+  /// Receiver task executor.
+  task_executor* receiver_executor = nullptr;
+  /// User-Plane received symbol notifier.
+  std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
+  /// Ethernet gateway.
+  std::unique_ptr<ether::gateway> eth_gateway;
 };
 
 } // namespace ofh

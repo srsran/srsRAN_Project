@@ -603,6 +603,25 @@ inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
   }
 }
 
+/// \brief Convert common type UE Context Release Request to NGAP UE Context Release Request.
+/// \param[out] asn1_msg The ASN1 NGAP UE Context Release Request.
+/// \param[in] msg The CU-CP UE Context Release Request.
+inline void fill_asn1_ue_context_release_request(asn1::ngap::ue_context_release_request_s& asn1_msg,
+                                                 const cu_cp_ue_context_release_request&   msg)
+{
+  // Add PDU Session IDs
+  if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
+    asn1_msg->pdu_session_res_list_cxt_rel_req_present = true;
+    for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
+      asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
+      pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
+      asn1_msg->pdu_session_res_list_cxt_rel_req.push_back(pdu_session_item);
+    }
+  }
+
+  asn1_msg->cause = cause_to_asn1(msg.cause);
+}
+
 /// \brief Convert NGAP ASN1 PDU Session Resource Release Comman ASN1 struct to common type.
 /// \param[out] pdu_session_resource_release_cmd The cu_cp_pdu_session_resource_release_command struct to fill.
 /// \param[in] asn1_pdu_session_resource_release_cmd The pdu_session_res_release_cmd ASN1 struct.
@@ -1070,6 +1089,19 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
   }
 
   return true;
+}
+
+/// \brief Fill the Handover Notify to ASN.1 struct.
+/// \param[out] asn1_msg The Handover Notify ASN1 struct to fill.
+/// \param[in] cgi The nr_cell_global_id common type struct of the UE.
+/// \param[in] tac The tac of the UE.
+inline void
+fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const unsigned tac)
+{
+  auto& user_loc_info_nr  = asn1_msg->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr.nr_cgi = nr_cgi_to_ngap_asn1(cgi);
+  user_loc_info_nr.tai.plmn_id.from_string(cgi.plmn_hex);
+  user_loc_info_nr.tai.tac.from_number(tac);
 }
 
 } // namespace srs_cu_cp

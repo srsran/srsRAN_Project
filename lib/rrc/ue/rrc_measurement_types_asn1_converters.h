@@ -1052,7 +1052,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
 
   // meas obj to rem list
   for (const auto& meas_obj_to_rem : meas_cfg.meas_obj_to_rem_list) {
-    asn1_meas_cfg.meas_obj_to_rem_list.push_back(meas_obj_to_rem);
+    asn1_meas_cfg.meas_obj_to_rem_list.push_back(meas_obj_id_to_uint(meas_obj_to_rem));
   }
 
   // meas obj to add mod list
@@ -1063,7 +1063,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
 
   // report cfg to rem list
   for (const auto& report_cfg_to_rem : meas_cfg.report_cfg_to_rem_list) {
-    asn1_meas_cfg.report_cfg_to_rem_list.push_back(report_cfg_to_rem);
+    asn1_meas_cfg.report_cfg_to_rem_list.push_back(report_cfg_id_to_uint(report_cfg_to_rem));
   }
 
   // report cfg to add mod list
@@ -1075,7 +1075,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
 
   // meas id to rem list
   for (const auto& meas_id_to_rem : meas_cfg.meas_id_to_rem_list) {
-    asn1_meas_cfg.meas_id_to_rem_list.push_back(meas_id_to_rem);
+    asn1_meas_cfg.meas_id_to_rem_list.push_back(meas_id_to_uint(meas_id_to_rem));
   }
 
   // meas id to add mod list

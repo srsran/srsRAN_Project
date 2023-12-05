@@ -31,7 +31,7 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
@@ -56,6 +56,7 @@ public:
   async_task<void> stop() override;
 
   void handle_slot_indication(slot_point sl_tx) override;
+  void handle_error_indication(slot_point sl_tx, error_event event) override;
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
@@ -105,6 +106,8 @@ private:
   enum class cell_state { inactive, active } state = cell_state::active;
 
   mac_pcap& pcap;
+
+  bool sib1_pcap_dumped = false;
 };
 
 } // namespace srsran

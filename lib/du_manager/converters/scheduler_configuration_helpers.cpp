@@ -52,8 +52,8 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
   sched_req.ssb_config           = du_cfg.ssb_cfg;
   sched_req.dmrs_typeA_pos       = du_cfg.dmrs_typeA_pos;
   sched_req.tdd_ul_dl_cfg_common = du_cfg.tdd_ul_dl_cfg_common;
-
-  sched_req.nof_beams = 1;
+  sched_req.ntn_cs_koffset       = du_cfg.ntn_cs_koffset;
+  sched_req.nof_beams            = 1;
 
   sched_req.coreset0     = du_cfg.coreset0_idx;
   sched_req.searchspace0 = du_cfg.searchspace0_idx;
@@ -95,13 +95,21 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
   sched_cfg.lc_config_list.emplace();
   for (const du_ue_srb& bearer : ue_ctx.bearers.srbs()) {
     sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid()));
-    auto& sched_lc_ch = sched_cfg.lc_config_list->back();
-    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list->back().sr_id);
+    auto& sched_lc_ch                     = sched_cfg.lc_config_list->back();
+    sched_lc_ch.priority                  = bearer.mac_cfg.priority;
+    sched_lc_ch.lc_group                  = bearer.mac_cfg.lcg_id;
+    sched_lc_ch.lc_sr_mask                = bearer.mac_cfg.lc_sr_mask;
+    sched_lc_ch.lc_sr_delay_timer_applied = bearer.mac_cfg.lc_sr_delay_applied;
+    sched_lc_ch.sr_id.emplace(bearer.mac_cfg.sr_id);
   }
   for (const auto& bearer : ue_ctx.bearers.drbs()) {
     sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(bearer.second->lcid));
-    auto& sched_lc_ch = sched_cfg.lc_config_list->back();
-    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list->back().sr_id);
+    auto& sched_lc_ch                     = sched_cfg.lc_config_list->back();
+    sched_lc_ch.priority                  = bearer.second->mac_cfg.priority;
+    sched_lc_ch.lc_group                  = bearer.second->mac_cfg.lcg_id;
+    sched_lc_ch.lc_sr_mask                = bearer.second->mac_cfg.lc_sr_mask;
+    sched_lc_ch.lc_sr_delay_timer_applied = bearer.second->mac_cfg.lc_sr_delay_applied;
+    sched_lc_ch.sr_id.emplace(bearer.second->mac_cfg.sr_id);
   }
 
   return sched_cfg;

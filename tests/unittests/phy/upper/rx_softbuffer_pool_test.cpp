@@ -118,12 +118,25 @@ static void test_softbuffer_free()
 
   // Reserve softbuffer with all the codeblocks, it shall not fail.
   rx_softbuffer_identifier softbuffer_id0;
-  softbuffer_id0.harq_ack_id = 0x3;
-  softbuffer_id0.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
+  softbuffer_id0.harq_ack_id      = 0x3;
+  softbuffer_id0.rnti             = 0x1234;
+  unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
+  TESTASSERT(softbuffer.is_valid());
+
+  // Extract CRCs.
+  span<bool> crc = softbuffer->get_codeblocks_crc();
+
+  // Check the CRC are all false.
+  TESTASSERT(std::find(crc.begin(), crc.end(), true) == crc.end());
+
+  // Fill codeblocks with true.
+  std::fill(crc.begin(), crc.end(), true);
+
+  // Unlock softbuffer. It is still reserved.
+  softbuffer = unique_rx_softbuffer();
 
   // Reserve softbuffer with the same identifier. It shall not fail.
-  unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
+  softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
   TESTASSERT(softbuffer.is_valid());
 
   // Reserve softbuffer with a different identifier. It shall fail.
@@ -132,6 +145,12 @@ static void test_softbuffer_free()
   softbuffer_id1.rnti        = 0x1234;
   TESTASSERT(!pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 
+  // Extract CRCs.
+  crc = softbuffer->get_codeblocks_crc();
+
+  // Check the CRC are all true.
+  TESTASSERT(std::find(crc.begin(), crc.end(), false) == crc.end());
+
   // Free the first softbuffer identifier.
   softbuffer.release();
 
@@ -139,7 +158,11 @@ static void test_softbuffer_free()
   pool->run_slot(slot);
 
   // Reserve softbuffer with all the codeblocks, it shall not fail.
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
+  softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
+  TESTASSERT(softbuffer.is_valid());
+
+  // Check the CRC are all false.
+  TESTASSERT(std::find(crc.begin(), crc.end(), true) == crc.end());
 }
 
 // Tests that the pool expires softbuffers after the last reserved slot.

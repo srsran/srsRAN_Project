@@ -143,6 +143,15 @@ public:
   uint32_t ack_sn = INVALID_RLC_SN;
 
   rlc_am_status_pdu(rlc_am_sn_size sn_size_);
+  /// Explicit copy ctor to avoid implicit copies.
+  explicit rlc_am_status_pdu(const rlc_am_status_pdu& other) = default;
+  /// Default move ctor.
+  rlc_am_status_pdu(rlc_am_status_pdu&& other) = default;
+  /// Copy assignment is disabled. Use std::move, or explicit copy instead.
+  rlc_am_status_pdu& operator=(const rlc_am_status_pdu&) = delete;
+  /// Move assignment of byte_buffer.
+  rlc_am_status_pdu& operator=(rlc_am_status_pdu&& other) = default;
+
   void reset();
   /// \brief Checks whether the two NACKs can be merged into one NACK.
   ///

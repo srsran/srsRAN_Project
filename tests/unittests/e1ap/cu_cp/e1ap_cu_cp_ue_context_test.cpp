@@ -22,6 +22,7 @@
 
 #include "../common/test_helpers.h"
 #include "lib/e1ap/cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 
@@ -68,10 +69,10 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_added_then_ue_exists)
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
   ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
 
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_index, ue_index);
-  ASSERT_EQ(ue_ctxt_list[ue_index].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[ue_index].ue_index, ue_index);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, ue_index);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.ue_index, ue_index);
 }
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_not_added_then_ue_doesnt_exist)
@@ -86,6 +87,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_not_added_then_ue_doesnt_exist)
 TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_ue_not_added)
 {
   // Add maximum number of supported UEs
+  e1ap_logger.set_level(srslog::basic_levels::error);
   for (unsigned it = 0; it < MAX_NOF_CU_UES; ++it) {
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id();
     ASSERT_NE(cu_cp_ue_e1ap_id, gnb_cu_cp_ue_e1ap_id_t::invalid);
@@ -96,6 +98,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
     ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
     ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
   }
+  e1ap_logger.set_level(srslog::basic_levels::debug);
 
   // Try to get another cu_cp_ue_e1ap_id (should fail)
   ASSERT_EQ(ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id(), gnb_cu_cp_ue_e1ap_id_t::invalid);
@@ -130,10 +133,10 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_index_is_old_ue_index_then_ue_index_n
   ASSERT_TRUE(ue_ctxt_list.contains(old_ue_index));
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
 
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_index, old_ue_index);
-  ASSERT_EQ(ue_ctxt_list[old_ue_index].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_index, old_ue_index);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, old_ue_index);
+  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_ids.ue_index, old_ue_index);
 }
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
@@ -158,8 +161,8 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
   ASSERT_FALSE(ue_ctxt_list.contains(old_ue_index));
 
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_index, ue_index);
-  ASSERT_EQ(ue_ctxt_list[ue_index].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[ue_index].ue_index, ue_index);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, ue_index);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.ue_index, ue_index);
 }

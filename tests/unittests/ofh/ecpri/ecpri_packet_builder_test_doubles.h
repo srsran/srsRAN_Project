@@ -39,7 +39,7 @@ class packet_builder_spy : public packet_builder
 
 public:
   // See interface for documentation.
-  units::bytes get_header_size(message_type msg_type) const override { return units::bytes(0); }
+  units::bytes get_header_size(message_type msg_type) const override { return units::bytes(8); }
 
   // See interface for documentation.
   void build_control_packet(span<uint8_t> buffer, const realtime_control_parameters& msg_params) override

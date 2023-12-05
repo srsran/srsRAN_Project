@@ -21,6 +21,8 @@
  */
 
 #include "radio_uhd_tx_stream.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
@@ -98,22 +100,13 @@ void radio_uhd_tx_stream::run_recv_async_msg()
 bool radio_uhd_tx_stream::transmit_block(unsigned&                             nof_txd_samples,
                                          const baseband_gateway_buffer_reader& buffs,
                                          unsigned                              buffer_offset,
-                                         uhd::time_spec_t&                     time_spec)
+                                         const uhd::tx_metadata_t&             md)
 {
-  // Prepare metadata.
-  uhd::tx_metadata_t md = {};
-
   // Extract number of samples.
   unsigned num_samples = buffs[0].size() - buffer_offset;
 
   // Make sure the number of channels is equal.
   report_fatal_error_if_not(buffs.get_nof_channels() == nof_channels, "Number of channels does not match.");
-
-  // Run states.
-  if (!state_fsm.transmit_block(md, time_spec)) {
-    nof_txd_samples = num_samples;
-    return true;
-  }
 
   // Flatten buffers.
   static_vector<void*, RADIO_MAX_NOF_CHANNELS> buffs_flat_ptr(nof_channels);
@@ -123,28 +116,6 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                             n
 
   // Make UHD buffers.
   uhd::tx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
-
-  // Notify start of burst.
-  if (md.start_of_burst) {
-    radio_notification_handler::event_description event_description = {};
-    event_description.stream_id                                     = stream_id;
-    event_description.channel_id                                    = 0;
-    event_description.source = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type   = radio_notification_handler::event_type::START_OF_BURST;
-    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
-    notifier.on_radio_rt_event(event_description);
-  }
-
-  // Notify end of burst.
-  if (md.end_of_burst) {
-    radio_notification_handler::event_description event_description = {};
-    event_description.stream_id                                     = stream_id;
-    event_description.channel_id                                    = 0;
-    event_description.source = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type   = radio_notification_handler::event_type::END_OF_BURST;
-    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
-    notifier.on_radio_rt_event(event_description);
-  }
 
   // Safe transmission.
   return safe_execution([this, &buffs_cpp, num_samples, &md, &nof_txd_samples]() {
@@ -160,7 +131,10 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   async_executor(async_executor_),
   notifier(notifier_),
   srate_hz(description.srate_hz),
-  nof_channels(description.ports.size())
+  nof_channels(description.ports.size()),
+  discontinuous_tx(description.discontiuous_tx),
+  last_tx_timespec(0.0),
+  power_ramping_buffer(nof_channels, 0)
 {
   srsran_assert(std::isnormal(srate_hz) && (srate_hz > 0.0), "Invalid sampling rate {}.", srate_hz);
 
@@ -190,6 +164,24 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
     return;
   }
 
+  // Use zero padding to absorb power ramping on each new burst.
+  if (discontinuous_tx) {
+    power_ramping_nof_samples = description.srate_hz * static_cast<double>(description.power_ramping_us) / 1e6;
+
+    // Align the number of padding samples to the TX buffer size.
+    power_ramping_nof_samples = (power_ramping_nof_samples / max_packet_size) * max_packet_size;
+    double aligned_guard_time = static_cast<double>(power_ramping_nof_samples) * 1000000.0 / srate_hz;
+    fmt::print(
+        "Aligning TX power ramping guard time to the UHD buffer size, i.e., {}. Aligned guard time: {:.1f} us.\n",
+        max_packet_size,
+        aligned_guard_time);
+
+    power_ramping_buffer.resize(power_ramping_nof_samples);
+    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+      srsvec::zero(power_ramping_buffer.get_writer()[i_channel]);
+    }
+  }
+
   // Notify FSM that it was successfully initialized.
   state_fsm.init_successful();
 
@@ -197,31 +189,131 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   run_recv_async_msg();
 }
 
-void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&         data,
-                                   const baseband_gateway_transmitter::metadata& tx_md)
+void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        data,
+                                   const baseband_gateway_transmitter_metadata& tx_md)
 {
   // Protect stream transmitter.
   std::unique_lock<std::mutex> lock(stream_transmit_mutex);
 
+  uhd::tx_metadata_t uhd_metadata;
+
+  bool tx_start_padding = tx_md.tx_start.has_value();
+  bool tx_end_padding   = tx_md.tx_end.has_value();
+
   uhd::time_spec_t time_spec = time_spec.from_ticks(tx_md.ts, srate_hz);
+  bool             transmit;
+  if (discontinuous_tx) {
+    if (tx_start_padding) {
+      // Set the timespec to the start of the actual transmission if there is head padding in the buffer.
+      time_spec =
+          time_spec.from_ticks(tx_md.ts + static_cast<baseband_gateway_timestamp>(tx_md.tx_start.value()), srate_hz);
+    }
+    // Update state.
+    transmit = state_fsm.on_transmit(uhd_metadata, time_spec, tx_md.is_empty, tx_end_padding);
+  } else {
+    transmit = state_fsm.on_transmit(uhd_metadata, time_spec, false, false);
+  }
 
-  unsigned nsamples          = data.get_nof_samples();
+  // Return if no transmission is required.
+  if (!transmit) {
+    return;
+  }
+
+  // Notify start of burst.
+  if (uhd_metadata.start_of_burst) {
+    radio_notification_handler::event_description event_description;
+    event_description.stream_id  = stream_id;
+    event_description.channel_id = 0;
+    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type       = radio_notification_handler::event_type::START_OF_BURST;
+    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    notifier.on_radio_rt_event(event_description);
+
+    // Transmit zeros before the actual transmission to absorb power ramping effects.
+    if (discontinuous_tx) {
+      // Compute the time in number of samples between the end of the last transmission and the start of the current
+      // one.
+      unsigned transmission_gap = (time_spec - last_tx_timespec).to_ticks(srate_hz);
+
+      // Make sure that the power ramping padding starts at least 10 microseconds after the last transmission end.
+      unsigned minimum_gap_before_power_ramping = srate_hz / 100000.0;
+      unsigned nof_padding_samples              = 0;
+      if (transmission_gap > minimum_gap_before_power_ramping) {
+        nof_padding_samples = std::min(power_ramping_nof_samples, transmission_gap - minimum_gap_before_power_ramping);
+      }
+
+      if (nof_padding_samples > 0) {
+        unsigned txd_padding_sps_total = 0;
+
+        uhd::tx_metadata_t power_ramping_metadata;
+        power_ramping_metadata.has_time_spec  = true;
+        power_ramping_metadata.start_of_burst = true;
+        power_ramping_metadata.end_of_burst   = false;
+        power_ramping_metadata.time_spec = uhd_metadata.time_spec - time_spec.from_ticks(nof_padding_samples, srate_hz);
+
+        // Modify the actual trasnmission metadata, since we have already started the burst with padding.
+        uhd_metadata.start_of_burst = false;
+        uhd_metadata.has_time_spec  = false;
+        do {
+          unsigned txd_samples = 0;
+
+          baseband_gateway_buffer_reader_view tx_padding =
+              baseband_gateway_buffer_reader_view(power_ramping_buffer.get_reader(), 0, nof_padding_samples);
+
+          if (!transmit_block(txd_samples, tx_padding, txd_padding_sps_total, power_ramping_metadata)) {
+            printf("Error: failed transmitting power ramping padding. %s.\n", get_error_message().c_str());
+            return;
+          }
+
+          power_ramping_metadata.time_spec += txd_samples * srate_hz;
+          txd_padding_sps_total += txd_samples;
+
+        } while (txd_padding_sps_total < nof_padding_samples);
+      }
+    }
+  }
+
+  // Notify end of burst.
+  if (uhd_metadata.end_of_burst) {
+    radio_notification_handler::event_description event_description;
+    event_description.stream_id  = stream_id;
+    event_description.channel_id = 0;
+    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type       = radio_notification_handler::event_type::END_OF_BURST;
+    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    notifier.on_radio_rt_event(event_description);
+  }
+
+  // Determine actual transmission range.
+  unsigned data_start = discontinuous_tx && tx_start_padding ? tx_md.tx_start.value() : 0;
+  unsigned data_nof_samples =
+      discontinuous_tx && tx_end_padding ? tx_md.tx_end.value() - data_start : data.get_nof_samples() - data_start;
+
+  // Don't pass the transmission data to UHD if the transmit buffer is empty.
+  baseband_gateway_buffer_reader_view tx_data =
+      discontinuous_tx && tx_md.is_empty ? baseband_gateway_buffer_reader_view(data, 0, 0)
+                                         : baseband_gateway_buffer_reader_view(data, data_start, data_nof_samples);
+
+  unsigned nsamples = tx_data.get_nof_samples();
+
+  // Transmit stream in multiple blocks.
   unsigned txd_samples_total = 0;
-
-  // Receive stream in multiple blocks.
-  while (txd_samples_total < nsamples) {
+  do {
     unsigned txd_samples = 0;
-    if (!transmit_block(txd_samples, data, txd_samples_total, time_spec)) {
+    if (!transmit_block(txd_samples, tx_data, txd_samples_total, uhd_metadata)) {
       printf("Error: failed transmitting packet. %s.\n", get_error_message().c_str());
       return;
     }
 
-    // Save timespec for first block.
-    time_spec += txd_samples * srate_hz;
+    // Increment timespec.
+    uhd_metadata.time_spec += txd_samples * srate_hz;
 
     // Increment the total amount of received samples.
     txd_samples_total += txd_samples;
-  }
+
+  } while (txd_samples_total < nsamples);
+
+  last_tx_timespec = time_spec + uhd::time_spec_t::from_ticks(txd_samples_total, srate_hz);
 }
 
 void radio_uhd_tx_stream::stop()

@@ -34,12 +34,22 @@ public:
   pdsch_context() = default;
 
   /// Constructs from values.
-  explicit pdsch_context(harq_id_t h_id_, unsigned k1_) : h_id(h_id_), k1(k1_) {}
+  explicit pdsch_context(harq_id_t h_id_, unsigned k1_, unsigned nof_retxs_) :
+    h_id(h_id_), k1(k1_), nof_retxs(nof_retxs_)
+  {
+  }
+
+  /// Gets the HARQ process identifier.
+  harq_id_t get_h_id() const { return h_id; }
+
+  /// Gets if the PDSCH transmission is new.
+  bool is_new_data() const { return nof_retxs == 0; }
 
 private:
   friend struct fmt::formatter<pdsch_context>;
-  harq_id_t h_id = INVALID_HARQ_ID;
-  unsigned  k1   = 0;
+  harq_id_t h_id      = INVALID_HARQ_ID;
+  unsigned  k1        = 0;
+  unsigned  nof_retxs = 0;
 };
 
 } // namespace srsran

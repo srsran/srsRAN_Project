@@ -72,7 +72,7 @@ static std::string log_level = "warning";
 
 // Program parameters.
 static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
-static unsigned                                  max_processing_delay_slots = 2;
+static unsigned                                  max_processing_delay_slots = 4;
 static cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
 static double                                    dl_center_freq             = 3489.42e6;
 static double                                    ssb_center_freq            = 3488.16e6;
@@ -96,6 +96,8 @@ static bool                                      enable_ul_processing = false;
 static bool                                      enable_prach_processing = false;
 static modulation_scheme                         data_mod_scheme         = modulation_scheme::QPSK;
 static std::string                               thread_profile_name     = "single";
+static std::string                               clock_source            = "internal";
+static std::string                               sync_source             = "internal";
 
 // Amplitude control args.
 static float baseband_backoff_dB    = 12.0F;
@@ -151,6 +153,19 @@ static const std::vector<configuration_profile> profiles = {
        tx_gain          = 5;
        rx_gain          = 5;
        scs              = subcarrier_spacing::kHz30;
+     }},
+    {"n320_n321_5MHz",
+     "Two N320/321 USRPs 5 MHz bandwidth.",
+     []() {
+       device_arguments = "type=n3xx,product=n320,addr0=192.168.10.2,addr1=192.168.20.2,master_clock_rate=245.76e6";
+       srate            = sampling_rate::from_MHz(7.68);
+       bw_rb            = 25;
+       tx_gain          = 30;
+       rx_gain          = 30;
+       scs              = subcarrier_spacing::kHz15;
+       dl_center_freq   = 1842.5e6;
+       ssb_center_freq  = 1842.5e6;
+       rx_freq          = 1747.5e6;
      }},
     {"zmq_20MHz_n7",
      "Single 20MHz FDD in band n7 using ZMQ.",
@@ -262,6 +277,8 @@ static void usage(std::string prog)
   fmt::print("\t-D Duration in slots. [Default {}]\n", duration_slots);
   fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true. [Default {}]\n", zmq_loopback);
   fmt::print("\t-T Set thread profile (single, dual, quad). [Default {}]\n", thread_profile_name);
+  fmt::print("\t-C Set clock source (internal, external, gpsdo). [Default {}]\n", clock_source);
+  fmt::print("\t-S Set sync source (internal, external, gpsdo). [Default {}]\n", sync_source);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
@@ -279,7 +296,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:a:cduph")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:S:T:C:L:v:b:m:a:cduph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -299,6 +316,16 @@ static void parse_args(int argc, char** argv)
       case 'L':
         if (optarg != nullptr) {
           zmq_loopback = (std::strtol(optarg, nullptr, 10) > 0);
+        }
+        break;
+      case 'C':
+        if (optarg != nullptr) {
+          clock_source = std::string(optarg);
+        }
+        break;
+      case 'S':
+        if (optarg != nullptr) {
+          sync_source = std::string(optarg);
         }
         break;
       case 'v':
@@ -359,10 +386,15 @@ static void parse_args(int argc, char** argv)
 static radio_configuration::radio create_radio_configuration()
 {
   radio_configuration::radio radio_config = {};
-  radio_config.sampling_rate_hz           = srate.to_Hz<double>();
-  radio_config.otw_format                 = otw_format;
-  radio_config.args                       = device_arguments;
-  radio_config.log_level                  = log_level;
+
+  radio_config.clock.clock      = radio_configuration::to_clock_source(clock_source);
+  radio_config.clock.sync       = radio_configuration::to_clock_source(sync_source);
+  radio_config.sampling_rate_hz = srate.to_Hz<double>();
+  radio_config.otw_format       = otw_format;
+  radio_config.discontinuous_tx = false;
+  radio_config.power_ramping_us = 0.0F;
+  radio_config.args             = device_arguments;
+  radio_config.log_level        = log_level;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     // For each channel in the streams...
     radio_configuration::stream tx_stream_config;
@@ -476,11 +508,11 @@ int main(int argc, char** argv)
         std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy", std::make_unique<task_worker>("low_phy", 4)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_phy"]);
-    tx_task_executor    = make_task_executor(*workers["low_phy"]);
-    ul_task_executor    = make_task_executor(*workers["low_phy"]);
-    dl_task_executor    = make_task_executor(*workers["low_phy"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
   } else if (thread_profile_name == "dual") {
     os_thread_realtime_priority low_dl_priority = os_thread_realtime_priority::max();
     os_thread_realtime_priority low_ul_priority = os_thread_realtime_priority::max() - 1;
@@ -496,11 +528,11 @@ int main(int argc, char** argv)
     workers.emplace(std::make_pair("low_phy_dl",
                                    std::make_unique<task_worker>("low_phy_dl", 128, low_dl_priority, low_dl_affinity)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_phy_ul"]);
-    tx_task_executor    = make_task_executor(*workers["low_phy_dl"]);
-    ul_task_executor    = make_task_executor(*workers["low_phy_ul"]);
-    dl_task_executor    = make_task_executor(*workers["low_phy_dl"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
   } else if (thread_profile_name == "quad") {
     os_thread_realtime_priority low_rx_priority = os_thread_realtime_priority::max() - 2;
     os_thread_realtime_priority low_tx_priority = os_thread_realtime_priority::max();
@@ -525,16 +557,16 @@ int main(int argc, char** argv)
     workers.emplace(
         std::make_pair("low_ul", std::make_unique<task_worker>("low_ul", 128, low_ul_priority, low_ul_affinity)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_rx"]);
-    tx_task_executor    = make_task_executor(*workers["low_tx"]);
-    ul_task_executor    = make_task_executor(*workers["low_ul"]);
-    dl_task_executor    = make_task_executor(*workers["low_dl"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_rx"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_tx"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_ul"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_dl"]);
   } else {
     report_error("Invalid thread profile '{}'.\n", thread_profile_name);
   }
   workers.emplace(std::make_pair("low_phy_prach", std::make_unique<task_worker>("low_phy_prach", 4)));
-  prach_task_executor = make_task_executor(*workers["low_phy_prach"]);
+  prach_task_executor = make_task_executor_ptr(*workers["low_phy_prach"]);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);

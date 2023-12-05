@@ -43,16 +43,19 @@ public:
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning(
-        "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.", context.sector, context.slot);
+    logger.warning(context.slot.sfn(),
+                   context.slot.slot_index(),
+                   "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.",
+                   context.sector,
+                   context.slot);
   }
 
   // See interface for documentation.
   void on_prach_request_late(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning("Real-time failure in low-phy: PRACH request late for sector {}, slot {} and start symbol {}.",
+    logger.warning(context.slot.sfn(),
+                   context.slot.slot_index(),
+                   "Real-time failure in low-phy: PRACH request late for sector {}, slot {} and start symbol {}.",
                    context.sector,
                    context.slot,
                    context.start_symbol);
@@ -61,8 +64,9 @@ public:
   // See interface for documentation.
   void on_prach_request_overflow(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning("Real-time failure in low-phy: PRACH request overflow for sector {}, slot {} and start symbol {}.",
+    logger.warning(context.slot.sfn(),
+                   context.slot.slot_index(),
+                   "Real-time failure in low-phy: PRACH request overflow for sector {}, slot {} and start symbol {}.",
                    context.sector,
                    context.slot,
                    context.start_symbol);
@@ -71,9 +75,11 @@ public:
   // See interface for documentation.
   void on_puxch_request_late(const resource_grid_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning(
-        "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.", context.sector, context.slot);
+    logger.warning(context.slot.sfn(),
+                   context.slot.slot_index(),
+                   "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.",
+                   context.sector,
+                   context.slot);
   }
 };
 

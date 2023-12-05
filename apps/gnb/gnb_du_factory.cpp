@@ -27,6 +27,7 @@
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/pcap/rlc_pcap.h"
 
 using namespace srsran;
 
@@ -95,6 +96,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       srs_du::f1u_du_gateway&               f1u_gw,
                                                       timer_manager&                        timer_mng,
                                                       mac_pcap&                             mac_p,
+                                                      rlc_pcap&                             rlc_p,
                                                       gnb_console_helper&                   console_helper,
                                                       e2_connection_client&                 e2_client_handler,
                                                       e2_metric_connector_manager&          e2_metric_connectors,
@@ -136,9 +138,6 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = gnb_cfg.cells_cfg[i];
 
-    // DU QoS config
-    std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
-
     du_config                   du_cfg = {};
     std::vector<task_executor*> du_low_dl_exec;
     workers.get_du_low_dl_executors(du_low_dl_exec, i);
@@ -161,8 +160,10 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.phy_adapter                    = nullptr;
     du_hi_cfg.timers                         = &timer_mng;
     du_hi_cfg.cells                          = {du_cells[i]};
-    du_hi_cfg.qos                            = du_qos_cfg;
-    du_hi_cfg.pcap                           = &mac_p;
+    du_hi_cfg.srbs                           = generate_du_srb_config(gnb_cfg);
+    du_hi_cfg.qos                            = generate_du_qos_config(gnb_cfg);
+    du_hi_cfg.mac_p                          = &mac_p;
+    du_hi_cfg.rlc_p                          = &rlc_p;
     du_hi_cfg.gnb_du_id                      = du_insts.size() + 1;
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
@@ -195,8 +196,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                                           gnb_cfg.test_mode_cfg.test_ue.i_2};
     }
     // FAPI configuration.
-    du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
-    du_cfg.fapi.sector    = i;
+    du_cfg.fapi.log_level   = gnb_cfg.log_cfg.fapi_level;
+    du_cfg.fapi.sector      = i;
+    du_cfg.fapi.prach_ports = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
 
     du_insts.push_back(make_du(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");

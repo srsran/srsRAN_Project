@@ -26,7 +26,6 @@
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/rlc/rlc_config_messages.h"
 
 /*
  * This file will hold the interfaces and notifiers for the RLC entity.

@@ -329,7 +329,8 @@ protected:
                                                       nof_crbs,
                                                       builder_params.scs_common,
                                                       builder_params.scs_common,
-                                                      0);
+                                                      builder_params.search_space0_index,
+                                                      builder_params.max_coreset0_duration);
       srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
       builder_params.offset_to_point_a  = ssb_freq_loc->offset_to_point_A;
       builder_params.k_ssb              = ssb_freq_loc->k_ssb;

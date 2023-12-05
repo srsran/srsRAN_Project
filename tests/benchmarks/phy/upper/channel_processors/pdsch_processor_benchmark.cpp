@@ -24,6 +24,9 @@
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -85,12 +88,13 @@ static std::string                        ldpc_encoder_type           = "auto";
 static std::string                        pdsch_processor_type        = "generic";
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
-static unsigned                           nof_cdm_groups_without_data = 1;
+static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static unsigned                                     nof_pdsch_processor_concurrent_threads = 4;
-static std::unique_ptr<task_worker_pool<>>          worker_pool                            = nullptr;
-static std::unique_ptr<task_worker_pool_executor<>> executor                               = nullptr;
+static bool                                             new_data                               = true;
+static unsigned                                         nof_pdsch_processor_concurrent_threads = 4;
+static std::unique_ptr<task_worker_pool<true>>          worker_pool                            = nullptr;
+static std::unique_ptr<task_worker_pool_executor<true>> executor                               = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -278,6 +282,7 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
+  fmt::print("\t-N New data, set to 0 for false [Default {}]\n", new_data);
   fmt::print("\t-D LDPC encoder type. [Default {}]\n", ldpc_encoder_type);
   fmt::print("\t-t PDSCH processor type (generic, concurrent:nof_threads). [Default {}]\n", pdsch_processor_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
@@ -290,7 +295,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:N:T:B:D:P:m:t:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -300,6 +305,9 @@ static int parse_args(int argc, char** argv)
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'N':
+        new_data = (std::strtol(optarg, nullptr, 10) > 0);
         break;
       case 'D':
         ldpc_encoder_type = std::string(optarg);
@@ -383,7 +391,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          nof_prb,
                                          0,
                                          profile.cp,
-                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
+                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv, new_data}},
                                          0,
                                          pdsch_processor::pdu_t::CRB0,
                                          dmrs_symbol_mask,
@@ -487,9 +495,13 @@ static pdsch_processor_factory& get_processor_factory()
       affinity[i].set(i + nof_threads);
     }
 
-    worker_pool = std::make_unique<task_worker_pool<>>(
-        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max(), affinity);
-    executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+    worker_pool = std::make_unique<task_worker_pool<true>>(nof_pdsch_processor_concurrent_threads,
+                                                           1024,
+                                                           "pdsch_proc",
+                                                           std::chrono::microseconds(10),
+                                                           os_thread_realtime_priority::max(),
+                                                           affinity);
+    executor    = std::make_unique<task_worker_pool_executor<true>>(*worker_pool);
 
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                                       ldpc_enc_factory,
@@ -539,6 +551,21 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
       create_resource_grid(config.precoding.get_nof_ports(), MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
   TESTASSERT(grid);
 
+  // Compute the number of codeblocks.
+  unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.ldpc_base_graph);
+
+  tx_buffer_pool_config softbuffer_pool_config;
+  softbuffer_pool_config.max_codeblock_size       = ldpc::MAX_CODEBLOCK_SIZE;
+  softbuffer_pool_config.nof_buffers              = 1;
+  softbuffer_pool_config.nof_codeblocks           = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  softbuffer_pool_config.expire_timeout_slots     = 0;
+  softbuffer_pool_config.external_soft_bits       = false;
+  std::shared_ptr<tx_buffer_pool> softbuffer_pool = create_tx_buffer_pool(softbuffer_pool_config);
+
+  tx_buffer_identifier softbuffer_id;
+  softbuffer_id.harq_ack_id = 0;
+  softbuffer_id.rnti        = 0;
+
   // Notify finish count.
   {
     std::unique_lock<std::mutex> lock(mutex_finish_count);
@@ -566,13 +593,17 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Reset any notification.
     notifier.reset();
 
+    unique_tx_buffer softbuffer = softbuffer_pool->reserve_buffer(config.slot, softbuffer_id, nof_codeblocks);
+
     // Process PDU.
     if (worker_pool) {
-      bool success = worker_pool->push_task(
-          [&proc, &grid, &notifier, &data, &config]() { proc.process(grid->get_mapper(), notifier, {data}, config); });
+      bool success =
+          worker_pool->push_task([&proc, &grid, sb = std::move(softbuffer), &notifier, &data, &config]() mutable {
+            proc.process(grid->get_mapper(), std::move(sb), notifier, {data}, config);
+          });
       (void)success;
     } else {
-      proc.process(grid->get_mapper(), notifier, {data}, config);
+      proc.process(grid->get_mapper(), std::move(softbuffer), notifier, {data}, config);
     }
 
     // Wait for the processor to finish.

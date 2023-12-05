@@ -21,7 +21,8 @@
  */
 
 #include "srsran/gateways/sctp_network_gateway_factory.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
@@ -31,7 +32,6 @@
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
-#include "srsran/cu_cp/cu_cp_types.h"
 
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
@@ -55,8 +55,6 @@
 #include "helpers/metrics_hub.h"
 
 #include "gnb_du_factory.h"
-#include "lib/pcap/dlt_pcap_impl.h"
-#include "lib/pcap/mac_pcap_impl.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -135,6 +133,7 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
 
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
+                                                     ru_ofh_dependencies&                dependencies,
                                                      const log_appconfig&                log_cfg,
                                                      worker_manager&                     workers,
                                                      ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
@@ -143,36 +142,20 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
-  config.logger             = &ofh_logger;
-  config.rt_timing_executor = workers.ru_timing_exec;
-  config.timing_notifier    = &timing_notifier;
-  config.rx_symbol_notifier = &symbol_notifier;
+  dependencies.logger             = &ofh_logger;
+  dependencies.rt_timing_executor = workers.ru_timing_exec;
+  dependencies.timing_notifier    = &timing_notifier;
+  dependencies.rx_symbol_notifier = &symbol_notifier;
 
   // Configure sector.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
-    ru_ofh_sector_configuration& sector_cfg = config.sector_configs[i];
-    sector_cfg.receiver_executor            = workers.ru_rx_exec[i];
-    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i];
-    sector_cfg.downlink_executors           = workers.ru_dl_exec[i];
+    dependencies.sector_dependencies.emplace_back();
+    ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
+    sector_deps.logger                      = dependencies.logger;
+    sector_deps.receiver_executor           = workers.ru_rx_exec[i];
+    sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
+    sector_deps.downlink_executors          = workers.ru_dl_exec[i];
   }
-}
-
-/// Resolves the Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
-                                                 const log_appconfig&                log_cfg,
-                                                 worker_manager&                     workers,
-                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                 ru_timing_notifier&                 timing_notifier)
-{
-  if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
-    configure_ru_ofh_executors_and_notifiers(
-        variant_get<ru_ofh_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
-
-    return;
-  }
-
-  configure_ru_generic_executors_and_notifiers(
-      variant_get<ru_generic_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -183,6 +166,9 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
+  // Clean cgroups from a previous run.
+  cleanup_cgroups();
+
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
@@ -190,12 +176,14 @@ int main(int argc, char** argv)
   // Fill the generic application arguments to parse.
   populate_cli11_generic_args(app);
 
-  gnb_appconfig gnb_cfg;
+  gnb_parsed_appconfig gnb_parsed_cfg;
   // Configure CLI11 with the gNB application configuration schema.
-  configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
+  configure_cli11_with_gnb_appconfig_schema(app, gnb_parsed_cfg);
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
+
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
 
   // Derive the parameters that were set to be derived automatically.
   derive_auto_params(gnb_cfg);
@@ -203,6 +191,12 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
+  }
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
+    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
+      report_error("Failed to isolate specified CPUs");
+    }
   }
 
 #ifdef DPDK_FOUND
@@ -337,42 +331,46 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
+  worker_manager workers{gnb_cfg};
+
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
-  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.ngap.enabled) {
-    ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename);
+  std::unique_ptr<dlt_pcap> ngap_p = gnb_cfg.pcap_cfg.ngap.enabled ? create_ngap_pcap(gnb_cfg.pcap_cfg.ngap.filename,
+                                                                                      workers.get_executor("pcap_exec"))
+                                                                   : create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> e1ap_p = gnb_cfg.pcap_cfg.e1ap.enabled ? create_e1ap_pcap(gnb_cfg.pcap_cfg.e1ap.filename,
+                                                                                      workers.get_executor("pcap_exec"))
+                                                                   : create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> f1ap_p = gnb_cfg.pcap_cfg.f1ap.enabled ? create_f1ap_pcap(gnb_cfg.pcap_cfg.f1ap.filename,
+                                                                                      workers.get_executor("pcap_exec"))
+                                                                   : create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> e2ap_p = gnb_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(gnb_cfg.pcap_cfg.e2ap.filename,
+                                                                                      workers.get_executor("pcap_exec"))
+                                                                   : create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> gtpu_p =
+      gnb_cfg.pcap_cfg.gtpu.enabled
+          ? create_gtpu_pcap(gnb_cfg.pcap_cfg.gtpu.filename, workers.get_executor("gtpu_pcap_exec"))
+          : create_null_dlt_pcap();
+  if (gnb_cfg.pcap_cfg.mac.type != "dlt" and gnb_cfg.pcap_cfg.mac.type != "udp") {
+    report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
   }
-  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.e1ap.enabled) {
-    e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename);
+  std::unique_ptr<mac_pcap> mac_p =
+      gnb_cfg.pcap_cfg.mac.enabled
+          ? create_mac_pcap(gnb_cfg.pcap_cfg.mac.filename,
+                            gnb_cfg.pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
+                            workers.get_executor("mac_pcap_exec"))
+          : create_null_mac_pcap();
+  if (gnb_cfg.pcap_cfg.rlc.rb_type != "all" and gnb_cfg.pcap_cfg.rlc.rb_type != "srb" and
+      gnb_cfg.pcap_cfg.rlc.rb_type != "drb") {
+    report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
   }
-  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.f1ap.enabled) {
-    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename);
-  }
-  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.e2ap.enabled) {
-    e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename);
-  }
-  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU", low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.gtpu.enabled) {
-    gtpu_p->open(gnb_cfg.pcap_cfg.gtpu.filename);
-  }
-
-  std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>(low_prio_cpu_mask);
-  if (gnb_cfg.pcap_cfg.mac.enabled) {
-    if (gnb_cfg.pcap_cfg.mac.type == "dlt") {
-      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::dlt);
-    } else if (gnb_cfg.pcap_cfg.mac.type == "udp") {
-      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::udp);
-    } else {
-      report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
-    }
-  }
-
-  worker_manager workers{gnb_cfg};
+  std::unique_ptr<rlc_pcap> rlc_p = gnb_cfg.pcap_cfg.rlc.enabled
+                                        ? create_rlc_pcap(gnb_cfg.pcap_cfg.rlc.filename,
+                                                          workers.get_executor("rlc_pcap_exec"),
+                                                          gnb_cfg.pcap_cfg.rlc.rb_type != "drb",
+                                                          gnb_cfg.pcap_cfg.rlc.rb_type != "srb")
+                                        : create_null_rlc_pcap();
 
   f1c_gateway_local_connector  f1c_gw{*f1ap_p};
   e1ap_gateway_local_connector e1ap_gw{*e1ap_p};
@@ -457,8 +455,13 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->amf_is_connected()) {
-    report_error("CU-CP failed to connect to AMF");
+  if (gnb_cfg.amf_cfg.no_core) {
+    // Signal AMF connection so test UEs do not get rejected
+    cu_cp_obj->handle_amf_connection();
+  } else {
+    if (not cu_cp_obj->amf_is_connected()) {
+      report_error("CU-CP failed to connect to AMF");
+    }
   }
 
   // Create CU-UP config.
@@ -471,10 +474,6 @@ int main(int argc, char** argv)
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
   cu_up_cfg.gtpu_pcap                              = gtpu_p.get();
   cu_up_cfg.timers                                 = cu_timers;
-  cu_up_cfg.net_cfg.n3_bind_addr                   = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
-  cu_up_cfg.net_cfg.n3_rx_max_mmsg                 = gnb_cfg.amf_cfg.udp_rx_max_msgs;
-  cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start CU-UP
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -488,12 +487,21 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
   upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
 
-  configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
-
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
-    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config));
+    ru_ofh_dependencies ru_dependencies;
+    configure_ru_ofh_executors_and_notifiers(variant_get<ru_ofh_configuration>(ru_cfg.config),
+                                             ru_dependencies,
+                                             gnb_cfg.log_cfg,
+                                             workers,
+                                             ru_ul_adapt,
+                                             ru_timing_adapt);
+
+    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
   } else {
+    configure_ru_generic_executors_and_notifiers(
+        variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
+
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
   }
   report_error_if_not(ru_object, "Unable to create Radio Unit.");
@@ -514,6 +522,7 @@ int main(int argc, char** argv)
                                                           *f1u_conn->get_f1u_du_gateway(),
                                                           app_timers,
                                                           *mac_p,
+                                                          *rlc_p,
                                                           console,
                                                           e2_gw,
                                                           e2_metric_connectors,
@@ -543,12 +552,6 @@ int main(int argc, char** argv)
 
   console.on_app_stopping();
 
-  ngap_p->close();
-  e1ap_p->close();
-  f1ap_p->close();
-  e2ap_p->close();
-  mac_p->close();
-
   gnb_logger.info("Stopping Radio Unit...");
   ru_object->get_controller().stop();
   gnb_logger.info("Radio Unit notify_stop successfully");
@@ -576,9 +579,19 @@ int main(int argc, char** argv)
     gnb_logger.info("E2 Network connections closed successfully");
   }
 
+  gnb_logger.info("Closing PCAP files...");
+  ngap_p->close();
+  gtpu_p->close();
+  e1ap_p->close();
+  f1ap_p->close();
+  e2ap_p->close();
+  mac_p->close();
+  rlc_p->close();
+  gnb_logger.info("PCAP files successfully closed.");
+
   gnb_logger.info("Stopping executors...");
   workers.stop();
-  gnb_logger.info("Executors notify_stop successfully");
+  gnb_logger.info("Executors closed successfully.");
 
   srslog::flush();
 
@@ -586,6 +599,10 @@ int main(int argc, char** argv)
     gnb_logger.info("Closing event tracer...");
     close_trace_file();
     gnb_logger.info("Event tracer closed successfully");
+  }
+
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cleanup_cgroups();
   }
 
   return 0;

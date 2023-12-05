@@ -22,7 +22,6 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -51,6 +50,7 @@ protected:
 
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,
+                                          n3_config,
                                           *e1ap,
                                           timers,
                                           *f1u_gw,
@@ -73,12 +73,13 @@ protected:
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
   dummy_inner_f1u_bearer                               f1u_bearer;
-  dummy_dlt_pcap                                       gtpu_pcap;
+  null_dlt_pcap                                        gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   timer_manager                                        timers;
   ue_context_cfg                                       ue_cfg;
   std::unique_ptr<ue_manager_ctrl>                     ue_mng;
   network_interface_config                             net_config;
+  n3_interface_config                                  n3_config;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
   manual_task_worker                                   worker{64};
 };

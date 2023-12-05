@@ -24,6 +24,7 @@
 
 #include "dummy_test_components.h"
 #include "lib/scheduler/cell/cell_configuration.h"
+#include "result_test_helpers.h"
 #include "scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/scheduler/scheduler_configurator.h"
@@ -57,7 +58,8 @@ public:
 
   void add_cell(const sched_cell_configuration_request_message& cell_cfg_req)
   {
-    cell_cfg_list.emplace(cell_cfg_req.cell_index, sched_cfg, cell_cfg_req);
+    cell_cfg_list.emplace_back(sched_cfg, cell_cfg_req);
+    last_sched_res_list.emplace_back(nullptr);
     sched->handle_cell_configuration_request(cell_cfg_req);
   }
 
@@ -86,8 +88,8 @@ public:
   {
     srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    last_sched_res = &sched->slot_indication(next_slot, cell_idx);
-    test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res);
+    last_sched_res_list[cell_idx] = &sched->slot_indication(next_slot, cell_idx);
+    test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res_list[cell_idx]);
     ++next_slot;
   }
 
@@ -104,24 +106,14 @@ public:
     return count < slot_timeout;
   }
 
-  const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti) const
+  const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
-    for (unsigned i = 0; i != last_sched_res->dl.dl_pdcchs.size(); ++i) {
-      if (last_sched_res->dl.dl_pdcchs[i].ctx.rnti == rnti) {
-        return &last_sched_res->dl.dl_pdcchs[i];
-      }
-    }
-    return nullptr;
+    return srsran::find_ue_dl_pdcch(rnti, *last_sched_res_list[cell_idx]);
   }
 
-  const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti) const
+  const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti, du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
-    for (unsigned i = 0; i != last_sched_res->dl.ul_pdcchs.size(); ++i) {
-      if (last_sched_res->dl.ul_pdcchs[i].ctx.rnti == rnti) {
-        return &last_sched_res->dl.ul_pdcchs[i];
-      }
-    }
-    return nullptr;
+    return srsran::find_ue_ul_pdcch(rnti, *last_sched_res_list[cell_idx]);
   }
 
   const unsigned                      tx_rx_delay;
@@ -131,10 +123,10 @@ public:
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;
 
-  slotted_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
+  static_vector<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
 
-  slot_point          next_slot;
-  const sched_result* last_sched_res = nullptr;
+  slot_point                                           next_slot;
+  static_vector<const sched_result*, MAX_NOF_DU_CELLS> last_sched_res_list;
 };
 
 } // namespace srsran

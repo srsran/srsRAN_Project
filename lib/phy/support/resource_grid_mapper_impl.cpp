@@ -27,6 +27,128 @@
 
 using namespace srsran;
 
+using precoding_buffer_type = static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB>;
+
+static concurrent_thread_local_object_pool<precoding_buffer_type>
+    precoding_buffers(std::thread::hardware_concurrency());
+
+// Resource element allocation patterns within a resource block for PDSCH DM-RS type 1.
+static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
+{
+  static constexpr unsigned MAX_CDM_GROUPS_TYPE1 = 2;
+  srsran_assert(cdm_group_id < MAX_CDM_GROUPS_TYPE1, "Invalid CDM group ID.");
+
+  static const std::array<re_prb_mask, MAX_CDM_GROUPS_TYPE1> re_mask_type1 = {
+      {{true, false, true, false, true, false, true, false, true, false, true, false},
+       {false, true, false, true, false, true, false, true, false, true, false, true}}};
+
+  return re_mask_type1[cdm_group_id];
+};
+
+// Optimized mapping for PDSCH DM-RS Type 1 mapped on contiguous RBs. It derives the CDM group ID of the input symbols
+// from the RE allocation pattern.
+static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
+                                      precoding_buffer_type&         precoding_buffer,
+                                      const re_buffer_reader&        input,
+                                      const re_pattern&              pattern,
+                                      const precoding_configuration& precoding,
+                                      const channel_precoder&        precoder)
+{
+  // Obtain the DM-RS CDM group ID.
+  unsigned cdm_group_id = pattern.re_mask == get_re_mask_type_1(0) ? 0 : 1;
+
+  // The PDSCH DM-RS Type 1 occupies one of every two resource elements across the OFDM symbol.
+  static constexpr unsigned re_stride       = 2;
+  static constexpr unsigned nof_dmrs_re_prb = NRE / re_stride;
+
+  unsigned nof_layers          = precoding.get_nof_layers();
+  unsigned nof_precoding_ports = precoding.get_nof_ports();
+
+  // PRG size in number of RB.
+  unsigned prg_size = precoding.get_prg_size();
+
+  int first_symbol = pattern.symbols.find_lowest(true);
+  int end_symbol   = pattern.symbols.find_highest(true) + 1;
+  srsran_assert((first_symbol >= 0) && (end_symbol >= 0),
+                "At least one OFDM symbol must be used by the allocation pattern.");
+
+  unsigned nof_re_symbol = nof_dmrs_re_prb * pattern.prb_mask.count();
+
+  if ((nof_re_symbol != precoding_buffer.get_nof_re()) || (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
+    // Resize the output buffer if the input dimensions don't match.
+    precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
+  }
+
+  unsigned first_prb = pattern.prb_mask.find_lowest(true);
+  unsigned prb_end   = pattern.prb_mask.find_highest(true) + 1;
+
+  // First subcarrier occupied by a DM-RS symbol.
+  unsigned first_subcarrier = first_prb * NRE + cdm_group_id;
+
+  // Counter for the number of RE read from the input and mapped to the grid.
+  unsigned i_re_buffer = 0;
+  for (int i_symbol = first_symbol; i_symbol != end_symbol; ++i_symbol) {
+    // Skip symbol if it is not in the allocation pattern.
+    if (!pattern.symbols.test(i_symbol)) {
+      continue;
+    }
+
+    // Bypass precoding if it has no effect on the signal.
+    if ((nof_layers == 1) && (nof_precoding_ports == 1) && (precoding.get_nof_prg() == 1) &&
+        (precoding.get_coefficient(0, 0, 0) == 1.0F)) {
+      // View over the input RE belonging to the current symbol.
+      re_buffer_reader_view input_re_symbol(input, i_re_buffer, nof_re_symbol);
+
+      // Map directly to the grid.
+      span<const cf_t> port_data = input_re_symbol.get_slice(0);
+      writer.put(0, i_symbol, first_subcarrier, re_stride, port_data);
+      i_re_buffer += nof_re_symbol;
+      continue;
+    }
+
+    // Counter for the number of precoded REs for the current symbol.
+    unsigned i_precoding_buffer = 0;
+    // First PRG in the allocation pattern.
+    unsigned first_prg = first_prb / prg_size;
+    for (unsigned i_prg = first_prg, nof_prg = precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
+      // Get the precoding matrix for the current PRG.
+      const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(i_prg);
+
+      // First PRB in the PRG used by the allocation pattern.
+      unsigned prg_prb_start = std::max(i_prg * prg_size, first_prb);
+
+      // First PRB outside the range of PRB belonging to the current PRG and used by the allocation pattern.
+      unsigned prg_prb_end = std::min((i_prg + 1) * prg_size, prb_end);
+
+      // Number of allocated RE for the current PRG.
+      unsigned nof_re_prg = (prg_prb_end - prg_prb_start) * nof_dmrs_re_prb;
+
+      // Views of the input and precoder buffers for the REs belonging to the current PRG.
+      re_buffer_reader_view input_re_prg(input, i_re_buffer, nof_re_prg);
+      re_buffer_writer_view output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
+
+      // Apply precoding.
+      precoder.apply_precoding(output_re_prg, input_re_prg, prg_weights);
+
+      // Advance input and output buffers.
+      i_re_buffer += nof_re_prg;
+      i_precoding_buffer += nof_re_prg;
+    }
+
+    // Assert that the precoding buffer has been filled.
+    srsran_assert((i_precoding_buffer == precoding_buffer.get_nof_re()),
+                  "The number of precoded RE (i.e., {}) does not match the precoding buffer size (i.e., {}).",
+                  i_precoding_buffer,
+                  precoding_buffer.get_nof_re());
+
+    for (unsigned i_tx_port = 0; i_tx_port != nof_precoding_ports; ++i_tx_port) {
+      // Map the precoded REs to each port for the current symbol.
+      span<const cf_t> port_data = precoding_buffer.get_slice(i_tx_port);
+      writer.put(i_tx_port, i_symbol, first_subcarrier, re_stride, port_data);
+    }
+  }
+}
+
 resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                          nof_ports_,
                                                      unsigned                          nof_subc_,
                                                      resource_grid_writer&             writer_,
@@ -42,13 +164,11 @@ resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                   
                 nof_subc,
                 static_cast<unsigned>(max_nof_subcarriers));
 }
+
 void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
-                                    const re_pattern_list&         pattern,
-                                    const re_pattern_list&         reserved,
+                                    const re_pattern&              pattern,
                                     const precoding_configuration& precoding)
 {
-  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
-
   unsigned nof_layers = precoding.get_nof_layers();
 
   srsran_assert(input.get_nof_slices() == precoding.get_nof_layers(),
@@ -62,28 +182,51 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                 precoding.get_nof_ports(),
                 nof_ports);
 
+  precoding_buffer_type& precoding_buffer = precoding_buffers.get();
+
+  bool is_dmrs_type1 = pattern.prb_mask.is_contiguous(true) &&
+                       (pattern.re_mask == get_re_mask_type_1(0) || pattern.re_mask == get_re_mask_type_1(1));
+
+  if (is_dmrs_type1) {
+    // Optimized contiguous DM-RS Type 1 mapping.
+    map_dmrs_type1_contiguous(writer, precoding_buffer, input, pattern, precoding, *precoder);
+    return;
+  }
+
   // PRG size in number of subcarriers.
   unsigned prg_size = precoding.get_prg_size() * NRE;
 
+  int first_symbol = pattern.symbols.find_lowest(true);
+  int end_symbol   = pattern.symbols.find_highest(true) + 1;
+  srsran_assert((first_symbol >= 0) && (end_symbol >= 0),
+                "At least one OFDM symbol must be used by the allocation pattern.");
+
+  // Get the symbol RE mask. It is the same for all allocated OFDM symbols.
+  bounded_bitset<max_nof_subcarriers> symbol_re_mask(nof_subc);
+  pattern.get_inclusion_mask(symbol_re_mask, first_symbol);
+
+  // Find the highest used subcarrier. Skip symbol if no active subcarrier.
+  int i_highest_subc = symbol_re_mask.find_highest();
+  srsran_assert(i_highest_subc >= 0, "At least one subcarrier must be used by the allocation pattern.");
+
+  // Resize the mask to the highest subcarrier, ceiling to PRB.
+  symbol_re_mask.resize(divide_ceil(i_highest_subc + 1, NRE) * NRE);
+
+  // Number of RE to be allocated for each OFDM symbol in the pattern.
+  unsigned nof_re_symbol = symbol_re_mask.count();
+
+  if ((nof_re_symbol != precoding_buffer.get_nof_re()) || (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
+    // Resize the output buffer if the input dimensions don't match.
+    precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
+  }
+
   // Counter for the number of RE read from the input and mapped to the grid.
   unsigned i_re_buffer = 0;
-  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
-    // Get the symbol RE mask.
-    bounded_bitset<max_nof_subcarriers> symbol_re_mask(nof_subc);
-    pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
-    reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
-
-    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
-    int i_highest_subc = symbol_re_mask.find_highest();
-    if (i_highest_subc < 0) {
+  for (int i_symbol = first_symbol; i_symbol != end_symbol; ++i_symbol) {
+    // Skip symbol if it is not in the allocation pattern.
+    if (!pattern.symbols.test(i_symbol)) {
       continue;
     }
-
-    // Resize the mask to the highest subcarrier, ceiling to PRB.
-    symbol_re_mask.resize(divide_ceil(i_highest_subc + 1, NRE) * NRE);
-
-    // Number of RE to be allocated for the current symbol.
-    unsigned nof_re_symbol = symbol_re_mask.count();
 
     // Bypass precoding if it has no effect on the signal.
     if ((nof_layers == 1) && (nof_precoding_ports == 1) && (precoding.get_nof_prg() == 1) &&
@@ -96,12 +239,6 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
       srsran_assert(unmapped.empty(), "Not all REs have been mapped to the grid.");
       i_re_buffer += nof_re_symbol;
       continue;
-    }
-
-    if ((nof_re_symbol != precoding_buffer.get_nof_re()) ||
-        (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
-      // Resize the output buffer if the input dimensions don't match.
-      precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
     }
 
     // Counter for the number of precoded REs for the current symbol.
@@ -155,22 +292,13 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                 input.get_nof_re());
 }
 
-void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
-                                    const re_pattern_list&         pattern,
-                                    const precoding_configuration& precoding)
-{
-  // Map with an empty list of reserved RE patterns.
-  map(input, pattern, re_pattern_list(), precoding);
-}
-
 void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                                     const re_pattern_list&         pattern,
                                     const re_pattern_list&         reserved,
-                                    const precoding_configuration& precoding)
+                                    const precoding_configuration& precoding,
+                                    unsigned                       re_skip)
 {
-  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
-
-  unsigned max_block_size = buffer.get_max_block_size();
+  precoding_buffer_type& precoding_buffer = precoding_buffers.get();
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
@@ -190,6 +318,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                 nof_layers,
                 nof_layers_range);
 
+  unsigned re_count = 0;
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
     bounded_bitset<max_nof_subcarriers> symbol_re_mask(max_nof_subcarriers);
@@ -199,6 +328,13 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
     // Find the highest used subcarrier. Skip symbol if no active subcarrier.
     int i_highest_subc = symbol_re_mask.find_highest();
     if (i_highest_subc < 0) {
+      continue;
+    }
+
+    // Get the number of active RE in the OFDM symbol. Skip symbol if the number of active RE does not reach the skip.
+    unsigned nof_re_symbol = symbol_re_mask.count();
+    if (re_count + nof_re_symbol < re_skip) {
+      re_count += nof_re_symbol;
       continue;
     }
 
@@ -222,11 +358,18 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
         continue;
       }
 
-      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
+      // Get the number of active RE in the PRG. Skip PRG if the number of active RE does not reach the skip.
+      unsigned nof_re_prg = prg_re_mask.count();
+      if (re_count + nof_re_prg < re_skip) {
+        re_count += nof_re_prg;
+        continue;
+      }
+
+      // Advance subcarrier offset to reach the skip count.
       unsigned subc_offset = prg_re_mask.find_lowest();
-      while (subc_offset != nof_subc_prg) {
+      while (re_count < re_skip) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
-        unsigned max_nof_subc_block = max_block_size / nof_layers;
+        unsigned max_nof_subc_block = re_skip - re_count;
 
         // Calculate the number of pending subcarriers to process.
         unsigned nof_subc_pending = nof_subc_prg - subc_offset;
@@ -241,14 +384,34 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
         // Count the number of resource elements to map in the block.
         unsigned nof_re_block = block_mask.count();
 
-        // Calculate the number of symbols to generate.
-        unsigned nof_symbols_block = nof_re_block * nof_layers;
+        re_count += nof_re_block;
+        subc_offset += nof_subc_block;
+      }
 
-        // Prepare destination of the modulation buffer.
-        span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
+      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
+      while (subc_offset != nof_subc_prg) {
+        // Calculate the maximum number of subcarriers that can be processed in one block.
+        unsigned max_nof_subc_block = buffer.get_max_block_size() / nof_layers;
 
-        // Skip layer mapping and precoding for one layer.
-        {
+        // Calculate the number of pending subcarriers to process.
+        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
+
+        // Select the number of subcarriers to process in a block.
+        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
+        srsran_assert(nof_subc_block != 0, "The number of pending subcarriers cannot be zero.");
+
+        // Get the allocation mask for the block.
+        bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+
+        // Count the number of resource elements to map in the block.
+        unsigned nof_re_block = block_mask.count();
+        if (nof_re_block > 0) {
+          // Calculate the number of symbols to generate.
+          unsigned nof_symbols_block = nof_re_block * nof_layers;
+
+          // Prepare destination of the modulation buffer.
+          span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
+
           // Prepare buffers.
           precoding_buffer.resize(nof_antennas, nof_re_block);
 
@@ -257,7 +420,12 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 
           // Map for each port.
           for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
-            writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
+            writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get_slice(i_port));
+          }
+
+          // Early return  if the buffer is empty.
+          if (buffer.empty()) {
+            return;
           }
         }
 

@@ -117,13 +117,22 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
       const dci_dl_rnti_config_type                dci_type = param_candidate.dci_dl_rnti_cfg_type();
       const cell_slot_resource_grid&               grid     = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
       const crb_bitmap used_crbs = grid.used_crbs(ss.bwp->dl_common->generic_params.scs, ss.dl_crb_lims, pdsch.symbols);
-      grant_prbs_mcs   mcs_prbs  = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
+      if (used_crbs.all()) {
+        logger.debug(
+            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No more RBs available", ue_cc.ue_index, ue_cc.rnti());
+        return alloc_outcome::skip_slot;
+      }
+      grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
                                                          h.last_alloc_params().rbs.type1().length()}
-                                           : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
+                                        : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
       if (mcs_prbs.n_prbs == 0) {
         logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
         return alloc_outcome::skip_ue;
       }
+
+      // In case of retx, ensure the RI does not change.
+      const unsigned nof_dl_layers =
+          is_retx ? h.last_alloc_params().nof_layers : ue_cc.channel_state_manager().get_nof_dl_layers();
 
       // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
       // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
@@ -149,7 +158,8 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
                                                                                   param_candidate.pdsch_td_res_index(),
                                                                                   ue_grant_crbs,
                                                                                   aggr_lvl,
-                                                                                  mcs_prbs.mcs});
+                                                                                  mcs_prbs.mcs,
+                                                                                  nof_dl_layers});
         // If the allocation failed due to invalid parameters, we continue iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;
@@ -225,10 +235,10 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       // Assumes that first entry in the PUSCH Time Domain resource list contains the k2 value which is less than or
       // equal to minimum value of k1(s).
-      const unsigned                               time_res   = 0;
-      const pusch_time_domain_resource_allocation& pusch_td   = ss->pusch_time_domain_list[time_res];
-      const slot_point                             pusch_slot = pdcch_slot + pusch_td.k2;
-      const unsigned                               start_ul_symbols =
+      const unsigned                               time_res = 0;
+      const pusch_time_domain_resource_allocation& pusch_td = ss->pusch_time_domain_list[time_res];
+      const slot_point pusch_slot                           = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
+      const unsigned   start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
       // the first transmission.
@@ -240,13 +250,19 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2);
-      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2)) {
+      const cell_slot_resource_grid& grid =
+          res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2 + cell_cfg_common.ntn_cs_koffset);
+      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2 + cell_cfg_common.ntn_cs_koffset)) {
         // only one PUSCH per UE per slot.
         continue;
       }
       const prb_bitmap used_crbs =
           grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
+      if (used_crbs.all()) {
+        logger.debug(
+            "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No more RBs available", ue_cc.ue_index, ue_cc.rnti());
+        return alloc_outcome::skip_slot;
+      }
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       grant_prbs_mcs mcs_prbs = is_retx

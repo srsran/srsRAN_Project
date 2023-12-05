@@ -133,7 +133,10 @@ du_impl::du_impl(const du_config& du_cfg) :
                              du_lo->get_uplink_pdu_validator(),
                              generate_prach_config_tlv(du_cfg.du_hi.cells),
                              generate_carrier_config_tlv(du_cell),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
+                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
+                             *du_cfg.du_lo.upper_phy.front().dl_executors.front(),
+                             du_lo->get_tx_buffer_pool(),
+                             du_cfg.fapi.prach_ports);
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());
@@ -151,13 +154,16 @@ du_impl::du_impl(const du_config& du_cfg) :
                                get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
-    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
-    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
     logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(du_high_adaptor->get_slot_time_notifier());
     report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+    logging_slot_error_notifier = fapi::create_logging_slot_error_notifier(du_high_adaptor->get_slot_error_notifier());
+    report_error_if_not(logging_slot_error_notifier, "Unable to create logger for slot error notifications.");
+    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
+    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.
     du_low_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
+    du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
     du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
     du_high_adaptor =
@@ -169,6 +175,7 @@ du_impl::du_impl(const du_config& du_cfg) :
                                get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
     report_error_if_not(du_high_adaptor, "Unable to create MAC adaptor.");
     du_low_adaptor->set_slot_time_message_notifier(du_high_adaptor->get_slot_time_notifier());
+    du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());
     du_low_adaptor->set_slot_data_message_notifier(du_high_adaptor->get_slot_data_notifier());
   }
   logger.debug("FAPI adaptors created successfully");

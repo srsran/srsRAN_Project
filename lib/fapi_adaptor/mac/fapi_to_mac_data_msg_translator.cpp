@@ -90,7 +90,7 @@ static optional<float> convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr)
 }
 
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_) :
-  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler), scs(scs_)
+  scs(scs_), rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler)
 {
 }
 
@@ -165,8 +165,6 @@ static optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
 static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                                     const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
-  mac_pucch.is_f1 = fapi_pucch.pucch_format == fapi::uci_pucch_pdu_format_0_1::format_type::format_1;
-
   mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
   mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
   mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
@@ -273,7 +271,7 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
       case fapi::uci_pdu_type::PUSCH: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
         mac_pdu.rnti         = to_rnti(pdu.pusch_pdu.rnti);
-        mac_uci_pdu::pusch_type pusch{};
+        mac_uci_pdu::pusch_type pusch;
         convert_fapi_to_mac_pusch_uci_ind(pusch, pdu.pusch_pdu);
         mac_pdu.pdu = pusch;
         break;
@@ -281,7 +279,7 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
       case fapi::uci_pdu_type::PUCCH_format_0_1: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
         mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f01.rnti);
-        mac_uci_pdu::pucch_f0_or_f1_type pucch{};
+        mac_uci_pdu::pucch_f0_or_f1_type pucch;
         convert_fapi_to_mac_pucch_f0_f1_uci_ind(pucch, pdu.pucch_pdu_f01);
         mac_pdu.pdu = pucch;
         break;
@@ -289,7 +287,7 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
       case fapi::uci_pdu_type::PUCCH_format_2_3_4: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
         mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f234.rnti);
-        mac_uci_pdu::pucch_f2_or_f3_or_f4_type pucch{};
+        mac_uci_pdu::pucch_f2_or_f3_or_f4_type pucch;
         convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(pucch, pdu.pucch_pdu_f234);
         mac_pdu.pdu = pucch;
         break;

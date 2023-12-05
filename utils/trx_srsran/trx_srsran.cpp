@@ -226,8 +226,9 @@ static void trx_srsran_write2(TRXState*         s1,
   }
 
   // Prepare metadata.
-  baseband_gateway_transmitter::metadata metadata = {};
-  metadata.ts                                     = static_cast<baseband_gateway_timestamp>(timestamp);
+  baseband_gateway_transmitter_metadata metadata;
+  metadata.is_empty = false;
+  metadata.ts       = static_cast<baseband_gateway_timestamp>(timestamp);
 
   // Write metadata.
   md->cur_timestamp_set = 0;
@@ -418,7 +419,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
 
   // Create task worker.
   context.async_task_worker   = std::make_unique<task_worker>("async_thread", p->rf_port_count + 10);
-  context.async_task_executor = make_task_executor(*context.async_task_worker);
+  context.async_task_executor = make_task_executor_ptr(*context.async_task_worker);
 
   // Create radio session.
   context.session = context.factory->create(configuration, *context.async_task_executor, context.notification_handler);

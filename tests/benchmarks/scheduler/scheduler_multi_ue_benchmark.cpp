@@ -207,7 +207,9 @@ public:
           pdu.ue_index = to_du_ue_index(static_cast<unsigned>(ul_grant.pusch_cfg.rnti) - 0x4601);
           pdu.crnti    = ul_grant.pusch_cfg.rnti;
           uci_indication::uci_pdu::uci_pusch_pdu pusch_pdu{};
-          pusch_pdu.harqs.resize(ul_grant.uci->harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+          if (ul_grant.uci.value().harq.has_value()) {
+            pusch_pdu.harqs.resize(ul_grant.uci->harq.value().harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+          }
           pusch_pdu.csi =
               csi_report_data{nullopt,
                               4,

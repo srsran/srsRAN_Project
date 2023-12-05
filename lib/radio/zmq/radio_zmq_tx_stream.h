@@ -75,7 +75,7 @@ public:
   bool align(baseband_gateway_timestamp timestamp, std::chrono::milliseconds timeout) override;
 
   // See interface for documentation.
-  void transmit(const baseband_gateway_buffer_reader& data, const metadata& md) override;
+  void transmit(const baseband_gateway_buffer_reader& data, const baseband_gateway_transmitter_metadata& md) override;
 
   void start(baseband_gateway_timestamp init_time);
 

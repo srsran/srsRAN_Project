@@ -138,8 +138,11 @@ public:
   // See interface for documentation.
   void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Sector {} - On Rx Symbol {}.", context.sector, context.nof_symbols);
+    logger.debug(context.slot.sfn(),
+                 context.slot.slot_index(),
+                 "Sector {} - On Rx Symbol {}.",
+                 context.sector,
+                 context.nof_symbols);
     rx_symbol_events.emplace_back();
     rx_symbol_event& event = rx_symbol_events.back();
     event.context          = context;
@@ -149,8 +152,7 @@ public:
   // See interface for documentation.
   void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Sector {} - On Rx PRACH Window.", context.sector);
+    logger.debug(context.slot.sfn(), context.slot.slot_index(), "Sector {} - On Rx PRACH Window.", context.sector);
     rx_prach_events.emplace_back();
     rx_prach_event& event = rx_prach_events.back();
     event.context         = context;
@@ -160,8 +162,7 @@ public:
   // See interface for documentation.
   void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Sector {} - On Rx SRS Symbol.", context.sector);
+    logger.debug(context.slot.sfn(), context.slot.slot_index(), "Sector {} - On Rx SRS Symbol.", context.sector);
   }
 
   /// \brief Gets the total number of events of any kind.

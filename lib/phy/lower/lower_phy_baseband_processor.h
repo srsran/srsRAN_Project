@@ -108,63 +108,56 @@ private:
     /// Default destructor - It reports a fatal error if the state is \c running or \c wait_stop.
     ~internal_fsm()
     {
-      std::unique_lock<std::mutex> lock(state_mutex);
       report_fatal_error_if_not((state != states::running) && (state != states::wait_stop), "Unexpected state.");
     }
 
-    /// Notifies the start of the processing.
+    /// \brief Notifies the start of the processing.
+    /// \remark A fatal error is reported if start() is called while the processor is not in \c idle state.
     void start()
     {
-      std::unique_lock<std::mutex> lock(state_mutex);
-      report_fatal_error_if_not(state == states::idle, "Unexpected state.");
-      state = states::running;
-      state_cvar.notify_all();
+      states previous_state = state.exchange(states::running);
+      report_fatal_error_if_not(previous_state == states::idle, "Unexpected state.");
     }
 
     /// \brief Notifies that the asynchronous execution has stopped.
     ///
-    /// Changes the state to \e stopped and sends the corresponding notification.
+    /// Changes the state to \c stopped and sends the corresponding notification.
+    /// \remark A fatal error is reported if notify_stop() is called while the processor is not in \c wait_stop.
     void notify_stop()
     {
-      std::unique_lock<std::mutex> lock(state_mutex);
-      report_fatal_error_if_not(state == states::wait_stop, "Unexpected state.");
-      state = states::stopped;
-      state_cvar.notify_all();
+      states previous_state = state.exchange(states::stopped);
+      report_fatal_error_if_not(previous_state == states::wait_stop, "Unexpected state.");
     }
 
-    /// Requests all asynchronous processing to stop.
+    /// \brief Requests all asynchronous processing to stop.
+    /// \remark A fatal error is reported if request_stop() is called more than once.
     void request_stop()
     {
-      std::unique_lock<std::mutex> lock(state_mutex);
+      states previous_state = state.exchange(states::wait_stop);
 
-      // Skip if it is not running.
-      if (state != states::running) {
-        return;
+      report_fatal_error_if_not((previous_state == states::running) || (previous_state == states::idle),
+                                "Unexpected state.");
+
+      // Transition to stop state directly if idle.
+      if (previous_state == states::idle) {
+        state = states::stopped;
       }
-
-      state = states::wait_stop;
-      state_cvar.notify_all();
     }
 
     /// \brief Waits for all asynchronous processing to stop.
-    /// \remark A fatal error is reported if wait_stop() is called while it is running without calling first
-    ///         request_stop().
+    /// \remark A fatal error is reported if wait_stop() is called while it is \c idle or \c running without calling
+    /// first request_stop().
     void wait_stop()
     {
-      std::unique_lock<std::mutex> lock(state_mutex);
-      report_fatal_error_if_not(state != states::running, "Unexpected state.");
+      report_fatal_error_if_not((state == states::wait_stop) || (state == states::stopped), "Unexpected state.");
 
       while (state == states::wait_stop) {
-        state_cvar.wait(lock);
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
     }
 
     /// Returns true if the asynchronous execution is running.
-    bool is_running() const
-    {
-      std::unique_lock<std::mutex> lock(state_mutex);
-      return state == states::running;
-    }
+    bool is_running() const { return state == states::running; }
 
   private:
     /// Possible states.
@@ -179,12 +172,8 @@ private:
       stopped
     };
 
-    /// Protects concurrent read and write of the state.
-    mutable std::mutex state_mutex;
-    /// Notifies state transitions.
-    std::condition_variable state_cvar;
     /// Actual state.
-    states state = states::idle;
+    std::atomic<states> state{states::idle};
   };
 
   /// \brief Processes downlink baseband.

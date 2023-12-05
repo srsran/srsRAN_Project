@@ -56,8 +56,12 @@ public:
                      const prach_buffer&            buffer,
                      const prach_buffer_context&    context) override
   {
-    prach_executor.execute(
+    bool success = prach_executor.execute(
         [&notifier, &buffer, context, this]() { processor->process_prach(notifier, buffer, context); });
+
+    if (!success) {
+      logger.warning(context.slot.sfn(), context.slot.slot_index(), "Failed to execute PRACH. Ignoring detection.");
+    }
   }
 
   // See interface for documentation.
@@ -67,9 +71,14 @@ public:
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
-    pusch_executor.execute([data, softbuffer2 = std::move(softbuffer), &notifier, &grid, pdu, this]() mutable {
-      processor->process_pusch(data, std::move(softbuffer2), notifier, grid, pdu);
-    });
+    bool success =
+        pusch_executor.execute([data, softbuffer2 = std::move(softbuffer), &notifier, &grid, pdu, this]() mutable {
+          processor->process_pusch(data, std::move(softbuffer2), notifier, grid, pdu);
+        });
+
+    if (!success) {
+      logger.warning(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
+    }
   }
 
   // See interface for documentation.
@@ -77,10 +86,17 @@ public:
                      const resource_grid_reader&    grid,
                      const pucch_pdu&               pdu) override
   {
-    pucch_executor.execute([&notifier, &grid, pdu, this]() { processor->process_pucch(notifier, grid, pdu); });
+    bool success =
+        pucch_executor.execute([&notifier, &grid, pdu, this]() { processor->process_pucch(notifier, grid, pdu); });
+    if (!success) {
+      logger.warning(
+          pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
+    }
   }
 
 private:
+  /// Default logger.
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
   /// Uplink processor detector.
   std::unique_ptr<uplink_processor> processor;
   /// Executor for the PUCCH tasks generated within this uplink processor.

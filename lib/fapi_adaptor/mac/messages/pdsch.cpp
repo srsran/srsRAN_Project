@@ -252,8 +252,11 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
-  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::subcarrier_0);
-
+  fill_codeword_information(builder,
+                            mac_pdu.pdsch_cfg.n_id,
+                            (mac_pdu.si_indicator == sib_information::other_si)
+                                ? fapi::pdsch_ref_point_type::point_a
+                                : fapi::pdsch_ref_point_type::subcarrier_0);
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
   builder.set_bwp_parameters(
@@ -401,7 +404,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
   // Fill PDSCH context for logging.
-  builder.set_context_vendor_specific(mac_pdu.pdsch_cfg.harq_id, mac_pdu.context.k1);
+  builder.set_context_vendor_specific(mac_pdu.pdsch_cfg.harq_id, mac_pdu.context.k1, mac_pdu.context.nof_retxs);
 
   // As the CSI uses the whole bandwidth, all the CSI-RS PDUs will collide with the PDSCH.
   static_vector<uint16_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rm_indexes(nof_csi_pdus);

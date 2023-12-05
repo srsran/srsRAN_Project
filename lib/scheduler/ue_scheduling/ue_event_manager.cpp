@@ -204,30 +204,26 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 void ue_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits,
-                                       bool                                   is_pucch_f1,
                                        optional<float>                        pucch_snr)
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
-    mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
-    if (ack_value == mac_harq_ack_report_status::dtx and not is_pucch_f1) {
-      // in case of PUCCH format 2 or PUSCH UCI, we treat DTX as a NACK, as there is no ambiguity between PUCCH with and
-      // without SR.
-      ack_value = mac_harq_ack_report_status::nack;
-    }
+    // Update UE HARQ state with received HARQ-ACK.
+    std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
+        ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
+    const dl_harq_process* h_dl = result.first;
 
-    // Update UE state.
-    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx, pucch_snr);
     if (h_dl != nullptr) {
-      // HARQ was found.
+      // Respective HARQ was found.
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
 
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
 
-      if (ack_value != mac_harq_ack_report_status::dtx) {
-        // Notify metric.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack, tbs);
+      if (result.second == dl_harq_process::status_update::acked or
+          result.second == dl_harq_process::status_update::nacked) {
+        // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.second == dl_harq_process::status_update::acked, tbs);
       }
     }
   }
@@ -260,7 +256,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, true, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
             }
 
             // Process SRs.
@@ -287,7 +283,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false, nullopt);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, nullopt);
             }
 
             // Process CSI.
@@ -300,7 +296,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
             }
 
             // Process SRs.

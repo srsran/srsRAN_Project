@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/ofh/slot_symbol_point.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

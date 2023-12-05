@@ -92,6 +92,8 @@ const radio_configuration::radio radio_base_config = {base_clock_sources,
                                                       {base_rx_stream},
                                                       1.92e6,
                                                       radio_configuration::over_the_wire_format::DEFAULT,
+                                                      false,
+                                                      0.0F,
                                                       "",
                                                       "none"};
 
@@ -245,6 +247,18 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
        return config;
      },
      "Log level some invalid log level does not correspond to an actual logger level.\n"},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.discontinuous_tx           = true;
+       return config;
+     },
+     "Discontinuous transmission mode is not supported by the ZMQ radio.\n"},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.power_ramping_us           = 1.0F;
+       return config;
+     },
+     "Power ramping is not supported by the ZMQ radio.\n"},
 };
 
 class RadioZmqValidatorFixture : public ::testing::TestWithParam<test_case_t>
@@ -298,7 +312,7 @@ TEST_P(RadioZmqValidatorFixture, RadioZmqValidatorTest)
   if (param.message.empty()) {
     // Asynchronous task executor.
     task_worker                    async_task_worker("async_thread", 2 * RADIO_MAX_NOF_PORTS);
-    std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+    std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
     // Notifier.
     radio_notifier_spy notifier;

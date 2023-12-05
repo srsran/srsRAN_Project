@@ -48,13 +48,10 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", ue_index, name());
 
   // Remove RRC UE
   rrc_du_notifier.remove_ue(ue_index);
-
-  // Remove UE from UE manager
-  ue_mng.remove_ue(ue_index);
 
   // Remove Bearer Context from E1AP
   e1ap_notifier.remove_ue(ue_index);
@@ -65,10 +62,13 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
   // Remove UE Context from NGAP
   ngap_notifier.remove_ue(ue_index);
 
+  // Remove UE from UE manager
+  ue_mng.remove_ue(ue_index);
+
   // Remove pending UE tasks
   task_scheduler.clear_pending_tasks(ue_index);
 
-  logger.debug("ue={}: \"{}\" finalized.", ue_index, name());
+  logger.info("ue={}: \"{}\" finalized", ue_index, name());
 
   CORO_RETURN();
 }

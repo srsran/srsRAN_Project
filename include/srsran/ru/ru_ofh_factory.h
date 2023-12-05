@@ -27,7 +27,7 @@
 
 namespace srsran {
 
-/// Returns an Open FrontHaul Radio Unit using the given configuration.
-std::unique_ptr<radio_unit> create_ofh_ru(const ru_ofh_configuration& config);
+/// Returns an Open FrontHaul Radio Unit using the given configuration and dependencies.
+std::unique_ptr<radio_unit> create_ofh_ru(const ru_ofh_configuration& config, ru_ofh_dependencies&& dependencies);
 
 } // namespace srsran

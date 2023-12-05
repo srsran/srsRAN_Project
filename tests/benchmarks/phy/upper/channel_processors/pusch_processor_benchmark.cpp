@@ -25,7 +25,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
@@ -113,7 +113,11 @@ static std::string                        rate_dematcher_type         = "auto";
 static bool                               enable_evm                  = false;
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static unsigned                           nof_rx_ports                = 1;
+static constexpr unsigned                 max_nof_rx_ports            = 4;
 static unsigned                           nof_tx_layers               = 1;
+static unsigned                           nof_harq_ack                = 0;
+static unsigned                           nof_csi_part1               = 0;
+static unsigned                           nof_csi_part2               = 0;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
@@ -246,6 +250,7 @@ static void usage(const char* prog)
              nof_pusch_decoder_threads,
              max_nof_threads);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
+  fmt::print("\t-p Number of RX ports. [Default {}, max. {}]\n", nof_rx_ports, max_nof_rx_ports);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
@@ -258,7 +263,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:t:B:D:M:EP:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:t:p:B:D:M:EP:m:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -268,6 +273,9 @@ static int parse_args(int argc, char** argv)
         break;
       case 't':
         nof_pusch_decoder_threads = std::min(max_nof_threads, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
+        break;
+      case 'p':
+        nof_rx_ports = std::min(max_nof_rx_ports, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
@@ -345,9 +353,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       config.mcs_descr              = mcs;
       config.codeword.emplace(pusch_processor::codeword_description{
           0, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
-      config.uci           = {};
-      config.n_id          = 0;
-      config.nof_tx_layers = nof_tx_layers;
+      config.uci.alpha_scaling         = 1.0;
+      config.uci.beta_offset_harq_ack  = 5.0;
+      config.uci.beta_offset_csi_part1 = 5.0;
+      config.uci.beta_offset_csi_part2 = 5.0;
+      config.uci.nof_harq_ack          = nof_harq_ack;
+      config.uci.nof_csi_part1         = nof_csi_part1;
+      config.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
+      config.n_id                      = 0;
+      config.nof_tx_layers             = nof_tx_layers;
       config.rx_ports.resize(nof_rx_ports);
       std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
       config.dmrs_symbol_mask            = dmrs_symbol_mask;
@@ -454,7 +468,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create UCI decoder factory.
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   TESTASSERT(uci_dec_factory);
 
   // Create PUSCH processor.

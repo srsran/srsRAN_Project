@@ -21,6 +21,7 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -30,7 +31,8 @@
 
 using namespace srsran;
 
-rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
+rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index,
+                                   du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id,
                                    const rlc_tx_am_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
@@ -38,8 +40,9 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    timer_factory                        timers,
                                    task_executor&                       pcell_executor_,
-                                   task_executor&                       ue_executor_) :
-  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
+                                   task_executor&                       ue_executor_,
+                                   rlc_pcap&                            pcap_) :
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
@@ -52,7 +55,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   poll_retransmit_timer(timers.create_timer()),
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
-  ue_executor(ue_executor_)
+  ue_executor(ue_executor_),
+  pcap_context(ue_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -109,7 +113,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
       logger.log_debug("Cannot fit status PDU into small grant_len={}.", grant_len);
       return {};
     }
-    rlc_am_status_pdu status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
+    rlc_am_status_pdu& status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
@@ -132,19 +136,29 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     // Log state
     log_state(srslog::basic_levels::debug);
 
-    return byte_buffer_chain{std::move(pdu)};
+    byte_buffer_chain pdu_buf{std::move(pdu)};
+    pcap.push_pdu(pcap_context, pdu_buf);
+
+    return pdu_buf;
   }
 
   // Retransmit if required
   if (not retx_queue.empty()) {
     logger.log_debug("Re-transmission required. retx_queue_size={}", retx_queue.size());
-    return build_retx_pdu(grant_len);
+
+    byte_buffer_chain pdu_buf{build_retx_pdu(grant_len)};
+    pcap.push_pdu(pcap_context, pdu_buf);
+
+    return pdu_buf;
   }
 
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len);
+      byte_buffer_chain pdu_buf{build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len)};
+      pcap.push_pdu(pcap_context, pdu_buf);
+
+      return pdu_buf;
     }
     sn_under_segmentation = INVALID_RLC_SN;
     logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
@@ -157,7 +171,9 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     return {};
   }
 
-  return build_new_pdu(grant_len);
+  byte_buffer_chain pdu_buf{build_new_pdu(grant_len)};
+  pcap.push_pdu(pcap_context, pdu_buf);
+  return pdu_buf;
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
@@ -400,6 +416,7 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   const rlc_tx_amd_retx retx = retx_queue.front(); // local copy, since front may change below
   logger.log_debug("Processing RETX. {}", retx);
+  retx_sn = retx.sn;
 
   // Get sdu_info info from tx_window
   rlc_tx_am_sdu_info& sdu_info = (*tx_window)[retx.sn];
@@ -490,8 +507,13 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   byte_buffer_chain pdu_buf = {};
   pdu_buf.append(std::move(header_buf));
   pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "RETX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "RETX PDU. {} pdu_len={} grant_len={} retx_count={}",
+                  hdr,
+                  pdu_buf.length(),
+                  grant_len,
+                  sdu_info.retx_count);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -591,7 +613,6 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       if (sdu_info.pdcp_sn.has_value()) {
         max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
-      retx_queue.remove_sn(sn); // remove any pending retx for that SN
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
         // recycle bin is full and the PDU was deleted on the spot, which may slow down this worker. Warn later.
@@ -612,7 +633,20 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     logger.log_warning("Could not postpone recycling of PDU byte_buffers. Performance can be impaired.");
   }
 
-  // Process NACKs
+  // Clear ReTx queue and rewind retx_counter (once per SN unless not started to ReTx)
+  while (!retx_queue.empty()) {
+    const rlc_tx_amd_retx& retx = retx_queue.front();
+    if (retx_sn != retx.sn) {
+      if (tx_window->has_sn(retx.sn)) {
+        decrement_retx_count(retx.sn);
+      }
+      retx_sn = retx.sn;
+    }
+    retx_queue.pop();
+  }
+  retx_sn = INVALID_RLC_SN;
+
+  // Rebuild ReTx queue by processing the NACKs
   uint32_t prev_retx_sn = INVALID_RLC_SN; // Stores the most recent SN that was considered for ReTx
   for (uint32_t nack_idx = 0; nack_idx < status.get_nacks().size(); nack_idx++) {
     if (status.get_nacks()[nack_idx].has_nack_range) {
@@ -715,26 +749,17 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   }
 
   // Enqueue RETX
-  bool retx_enqueued = false;
-  if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
-    rlc_tx_amd_retx retx = {};
-    retx.so              = nack.so_start;
-    retx.sn              = nack.nack_sn;
-    retx.length          = nack.so_end - nack.so_start + 1;
-    retx_enqueued        = retx_queue.try_push(retx);
-    if (retx_enqueued) {
-      logger.log_debug("Scheduled RETX for nack={}. {} retx_queue_len={}", nack, retx, retx_queue.size());
-    } else {
-      logger.log_warning(
-          "Failed to schedule RETX for nack={}. Queue is full. {} retx_queue_len={}", nack, retx, retx_queue.size());
-    }
-  } else {
-    logger.log_info(
-        "NACK'ed SDU or SDU segment is already queued for RETX. nack={} retx_queue_len={}", nack, retx_queue.size());
+  rlc_tx_amd_retx retx = {};
+  retx.so              = nack.so_start;
+  retx.sn              = nack.nack_sn;
+  retx.length          = nack.so_end - nack.so_start + 1;
+  if (!retx_queue.try_push(retx)) {
+    logger.log_warning(
+        "Failed to schedule RETX for nack={}. Queue is full. {} retx_queue_len={}", nack, retx, retx_queue.size());
     return false;
   }
-
-  return retx_enqueued;
+  logger.log_debug("Scheduled RETX for nack={}. {} retx_queue_len={}", nack, retx, retx_queue.size());
+  return true;
 }
 
 void rlc_tx_am_entity::increment_retx_count(uint32_t sn)
@@ -751,6 +776,19 @@ void rlc_tx_am_entity::increment_retx_count(uint32_t sn)
 
   // Inform upper layers if needed
   check_sn_reached_max_retx(sn);
+}
+
+void rlc_tx_am_entity::decrement_retx_count(uint32_t sn)
+{
+  auto& pdu = (*tx_window)[sn];
+  if (pdu.retx_count == RETX_COUNT_NOT_STARTED) {
+    return;
+  }
+  if (pdu.retx_count == 0) {
+    pdu.retx_count = RETX_COUNT_NOT_STARTED;
+    return;
+  }
+  pdu.retx_count--;
 }
 
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
@@ -954,15 +992,13 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
     if (retx_enqueued) {
       logger.log_debug(
           "Scheduled RETX due to expired poll retransmit timer. {} retx_queue_len={}", retx, retx_queue.size());
+      increment_retx_count(st.tx_next_ack);
     } else {
       logger.log_warning(
           "Failed to schedule RETX at expired poll retransmit timer. Queue is full. {} retx_queue_len={}",
           retx,
           retx_queue.size());
     }
-    //
-    // TODO: Increment RETX counter, handle max_retx
-    //
 
     update_mac_buffer_state(/* is_locked = */ true);
   }
@@ -972,19 +1008,19 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
   is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
 }
 
-std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window_;
+  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> tx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      tx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
-              logger);
+      tx_window_ = std::make_unique<
+          sdu_window_impl<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits)), rlc_bearer_logger>>(
+          logger);
       break;
     case rlc_am_sn_size::size18bits:
-      tx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
-              logger);
+      tx_window_ = std::make_unique<
+          sdu_window_impl<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits)), rlc_bearer_logger>>(
+          logger);
       break;
     default:
       srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));

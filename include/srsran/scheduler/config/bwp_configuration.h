@@ -50,7 +50,7 @@ struct pdcch_config_common {
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
   std::vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
-  search_space_id                         other_si_search_space_id;
+  optional<search_space_id>               other_si_search_space_id;
   optional<search_space_id>               paging_search_space_id;
   /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
   search_space_id ra_search_space_id;

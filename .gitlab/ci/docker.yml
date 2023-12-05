@@ -1,0 +1,164 @@
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "14"
+    file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "14"
+    file: .gitlab/ci-shared/tools/python.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "14"
+    file: .gitlab/ci-shared/tools/docker.yml
+
+################################################################################
+# Stages
+################################################################################
+stages:
+  - ci
+  - static
+  - compose
+  - publish
+
+variables:
+  PY_DIR: docker/metrics_server
+
+################################################################################
+# Static
+################################################################################
+metrics tox:
+  extends: .tox
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - docker/metrics_server/**/*
+
+metrics version changed:
+  extends: .version_changed_pyproject
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - docker/metrics_server/**/*
+
+metrics version check in retina:
+  extends: metrics version changed
+  script:
+    - |
+      VERSION_IN_PYPROJECT=$(cat docker/metrics_server/pyproject.toml | grep '^version' | cut -d'"' -f2)
+      VERSION_IN_RETINA=$(cat .gitlab/ci/e2e/.env | grep METRICS_SERVER_VERSION | cut -d'=' -f2)
+      echo "pyproject.toml version: $VERSION_IN_PYPROJECT -- retina .env version: $VERSION_IN_RETINA"
+    - |
+      export VERSION_IN_PYPROJECT
+      export VERSION_IN_RETINA
+    - python3 -c "import semver; import os; exit(semver.compare(os.environ['VERSION_IN_RETINA'], os.environ['VERSION_IN_PYPROJECT']))"
+
+################################################################################
+# Docker Compose
+################################################################################
+.docker compose:
+  stage: compose
+  image: docker:24.0.7
+  tags:
+    - docker
+  timeout: 2h
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+
+gnb docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/builders/install_dependencies.sh
+          - .gitlab/ci/builders/builder.sh
+          - docker/Dockerfile
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
+
+5gc docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/open5gs/**/*
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
+
+grafana docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/.env
+          - docker/grafana/**/*
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run --no-deps grafana --version
+
+influxdb docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/.env
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run influxdb influx version
+
+metrics-server docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/.env
+          - docker/metrics_server/**/*
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run metrics-server metrics-server --help
+
+################################################################################
+# Publish
+################################################################################
+metrics server image:
+  extends: .docker-builder
+  stage: publish
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/metrics_server/**/*
+  variables:
+    REGISTRY_URI: $GITLAB_REGISTRY_URI
+    NAME: metrics_server
+    CONTEXT: ${CI_PROJECT_DIR}/docker/metrics_server
+    MODE: publish
+  before_script:
+    - |
+      export VERSION=$(cat ${CONTEXT}/pyproject.toml | grep '^version' | cut -d'"' -f2)
+
+metrics server image latest:
+  extends: metrics server image
+  variables:
+    OVERWRITE: "true"
+  before_script:
+    - |
+      export VERSION=latest

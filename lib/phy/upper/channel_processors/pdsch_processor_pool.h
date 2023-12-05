@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/ring_buffer.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/srslog/logger.h"
@@ -58,6 +57,7 @@ public:
 
   // See pdsch_processor interface for documentation.
   void process(resource_grid_mapper&                                                         mapper,
+               unique_tx_buffer                                                              softbuffer,
                pdsch_processor_notifier&                                                     notifier_,
                static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdsch_processor::pdu_t&                                                 pdu) override
@@ -66,7 +66,7 @@ public:
     notifier = &notifier_;
 
     // Process.
-    processor->process(mapper, *this, data, pdu);
+    processor->process(mapper, std::move(softbuffer), *this, data, pdu);
   }
 
 private:
@@ -111,6 +111,7 @@ public:
   }
 
   void process(resource_grid_mapper&                                        mapper,
+               unique_tx_buffer                                             softbuffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
@@ -126,7 +127,7 @@ public:
     }
 
     // Process PDSCH.
-    processors[index.value()].process(mapper, notifier, data, pdu);
+    processors[index.value()].process(mapper, std::move(softbuffer), notifier, data, pdu);
   }
 
 private:

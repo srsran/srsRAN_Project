@@ -39,6 +39,11 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 {
   srsran_assert(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
   srsran_assert(not cells.contains(msg.cell_index), "cell={} already exists", msg.cell_index);
+  // Cell group index must be unique since carrier Aggregation is not supported.
+  srsran_assert(not groups.contains(msg.cell_group_index),
+                "cell={} with cell group index={} already exists",
+                msg.cell_index,
+                msg.cell_group_index);
   srsran_assert(
       not config_validators::validate_sched_cell_configuration_request_message(msg, expert_params).is_error(),
       "Invalid cell configuration request message. Cause: {}",
@@ -49,6 +54,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     // If it is a new group, create a new instance.
     groups.emplace(msg.cell_group_index,
                    std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
+    cell_to_group_index.emplace(msg.cell_index, msg.cell_group_index);
   }
 
   // Create a new cell scheduler instance.
@@ -185,6 +191,13 @@ const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
   // Return result for the slot.
   return cell.last_result();
+}
+
+void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
+{
+  srsran_assert(cell_to_group_index.contains(cell_index), "cell={} does not exist", cell_index);
+  ue_scheduler& ue_sched = *groups[cell_to_group_index[cell_index]];
+  ue_sched.handle_error_indication(sl_tx, cell_index, event);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)

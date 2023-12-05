@@ -258,16 +258,8 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowNoRequest)
           // Process baseband.
           pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
 
-          // Assert OFDM modulator call.
-          auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-            auto& entry = ofdm_mod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(entry.output), buffer[i_port]);
-            ASSERT_TRUE(entry.grid->is_empty(i_port));
-            ASSERT_EQ(entry.port_index, i_port);
-            ASSERT_EQ(entry.symbol_index, i_symbol_subframe);
-          }
+          // Assert OFDM modulator is not called.
+          ASSERT_TRUE(ofdm_mod_spy->get_modulate_entries().empty());
 
           // Assert notification.
           ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);
@@ -295,6 +287,18 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
+  resource_grid_reader_spy rg_spy(nof_tx_ports, 1, 1);
+
+  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
+  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+    resource_grid_reader_spy::expected_entry_t entry;
+    entry.port       = i_port;
+    entry.symbol     = 0;
+    entry.subcarrier = 0;
+    entry.value      = cf_t(0.0F, 0.0F);
+    rg_spy.write(entry);
+  }
+
   for (unsigned i_frame = 0, i_slot_frame = initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
       for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
@@ -303,7 +307,6 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
         rg_context.sector = dist_sector_id(rgen);
 
         // Request resource grid modulation for the current slot.
-        resource_grid_reader_spy rg_spy(0, 0, 0);
         pdxch_proc->get_request_handler().handle_request(rg_spy, rg_context);
 
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
@@ -317,8 +320,8 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
 
           // Prepare expected PDxCH baseband entry context.
           pdxch_processor_baseband::symbol_context pdxch_context;
-          pdxch_context.slot   = slot_point(to_numerology_value(scs), i_slot_frame);
-          pdxch_context.sector = dist_sector_id(rgen);
+          pdxch_context.slot   = rg_context.slot;
+          pdxch_context.sector = rg_context.sector;
           pdxch_context.symbol = i_symbol;
 
           // Process baseband.
@@ -367,9 +370,21 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
   unsigned late_slot    = 2;
   unsigned next_slot    = 4;
 
-  resource_grid_reader_spy initial_rg_spy(0, 0, 0);
-  resource_grid_reader_spy late_rg_spy(0, 0, 0);
-  resource_grid_reader_spy next_rg_spy(0, 0, 0);
+  resource_grid_reader_spy initial_rg_spy(nof_tx_ports, 1, 1);
+  resource_grid_reader_spy late_rg_spy(nof_tx_ports, 1, 1);
+  resource_grid_reader_spy next_rg_spy(nof_tx_ports, 1, 1);
+
+  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
+  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+    resource_grid_reader_spy::expected_entry_t entry;
+    entry.port       = i_port;
+    entry.symbol     = 0;
+    entry.subcarrier = 0;
+    entry.value      = cf_t(0.0F, 0.0F);
+    initial_rg_spy.write(entry);
+    late_rg_spy.write(entry);
+    next_rg_spy.write(entry);
+  }
 
   // Initial request.
   resource_grid_context initial_rg_context;
@@ -420,17 +435,18 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
         // Assert OFDM modulator call only for initial and next slot.
         const auto&               ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
         resource_grid_reader_spy* rg_spy           = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
-        ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-        for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-          const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
-          ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer[i_port]);
-          if ((i_slot == initial_slot) || (i_slot == next_slot)) {
+
+        if (i_slot == initial_slot || i_slot == next_slot) {
+          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
+          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+            const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
+            ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer[i_port]);
             ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(rg_spy));
-          } else {
-            ASSERT_TRUE(ofdm_mod_entry.grid->is_empty(i_port));
+            ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
+            ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
           }
-          ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
-          ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
+        } else {
+          ASSERT_TRUE(ofdm_mod_entries.empty());
         }
 
         // Assert notifications.
@@ -466,7 +482,17 @@ TEST_P(LowerPhyDownlinkProcessorFixture, OverflowRequest)
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  resource_grid_reader_spy rg_spy(0, 0, 0);
+  resource_grid_reader_spy rg_spy(nof_tx_ports, 1, 1);
+
+  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
+  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+    resource_grid_reader_spy::expected_entry_t entry;
+    entry.port       = i_port;
+    entry.symbol     = 0;
+    entry.subcarrier = 0;
+    entry.value      = cf_t(0.0F, 0.0F);
+    rg_spy.write(entry);
+  }
 
   // Generate requests.
   for (unsigned i_request = 0; i_request != request_queue_size + 1; ++i_request) {

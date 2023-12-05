@@ -38,7 +38,8 @@ public:
                                              const ngap_ue_ids&                               ue_ids_,
                                              ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
                                              ngap_message_notifier&                           amf_notif_,
-                                             srslog::basic_logger&                            logger_);
+                                             ngap_control_message_handler&                    ngap_ctrl_handler_,
+                                             ngap_ue_logger&                                  logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -47,13 +48,15 @@ public:
 private:
   // results senders
   void send_pdu_session_resource_modify_response();
+  void send_ue_context_release_request();
 
   cu_cp_pdu_session_resource_modify_request  request;
   const ngap_ue_ids                          ue_ids;
   cu_cp_pdu_session_resource_modify_response response;
   ngap_du_processor_control_notifier&        du_processor_ctrl_notifier;
   ngap_message_notifier&                     amf_notifier;
-  srslog::basic_logger&                      logger;
+  ngap_control_message_handler&              ngap_ctrl_handler;
+  ngap_ue_logger&                            logger;
 };
 
 } // namespace srs_cu_cp

@@ -41,7 +41,7 @@ protected:
   {
     for (unsigned i = 0; i != max_slot_delay; ++i) {
       bench.run_slot();
-      const ul_sched_info* grant = find_ue_pusch(ue_rnti, bench.last_sched_res->ul.puschs);
+      const ul_sched_info* grant = find_ue_pusch(ue_rnti, bench.last_sched_res_list[to_du_cell_index(0)]->ul.puschs);
       if (grant != nullptr) {
         return grant;
       }
@@ -122,7 +122,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
   slot_point crc_slot = bench.last_result_slot();
   while (bench.next_slot_rx() != crc_slot) {
     bench.run_slot();
-    ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res), nullptr);
+    ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res_list[to_du_cell_index(0)]), nullptr);
   }
 
   // Notify ACK/NACK.
@@ -140,7 +140,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
     crc_slot = bench.last_result_slot();
     while (bench.next_slot_rx() != crc_slot) {
       bench.run_slot();
-      ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res), nullptr);
+      ASSERT_EQ(find_ue_pusch(this->ue_rnti, *bench.last_sched_res_list[to_du_cell_index(0)]), nullptr);
     }
 
     // Notify ACK/NACK.
@@ -260,6 +260,109 @@ TEST_F(scheduler_missing_ack_tester, when_no_crc_arrives_then_ul_harq_eventually
     const pdcch_ul_information* pdcch = this->run_until_next_ul_pdcch_alloc(2);
     ASSERT_NE(pdcch, nullptr) << "Failed to reuse UL HARQs";
   }
+}
+
+class scheduler_error_indication_tester : public base_scheduler_retx_tester, public ::testing::Test
+{};
+
+TEST_F(scheduler_error_indication_tester, when_uci_lost_due_to_error_indication_then_dl_harq_is_retx)
+{
+  static constexpr rnti_t           rnti          = to_rnti(0x4601);
+  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  ue_create_req.crnti                             = rnti;
+  ue_create_req.ue_index                          = to_du_ue_index(0);
+  bench.add_ue(ue_create_req);
+
+  // Push bytes so that an HARQ gets allocated.
+  bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 10});
+
+  // Search for DL PDCCH.
+  const unsigned              PDSCH_TIMEOUT = 20;
+  const pdcch_dl_information* pdcch         = nullptr;
+  auto                        pdcch_found   = [&]() {
+    pdcch = bench.find_ue_dl_pdcch(rnti);
+    return pdcch != nullptr;
+  };
+  ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDSCH_TIMEOUT));
+  ASSERT_EQ(pdcch->dci.type, dci_dl_rnti_config_type::c_rnti_f1_1);
+  harq_id_t h_id = to_harq_id(pdcch->dci.c_rnti_f1_1.harq_process_number);
+  bool      ndi  = pdcch->dci.c_rnti_f1_1.tb1_new_data_indicator;
+
+  // Wait for HARQ-ACK.
+  const unsigned       ACK_TIMEOUT = 20;
+  const pucch_info*    pucch       = nullptr;
+  const ul_sched_info* pusch       = nullptr;
+  ASSERT_TRUE(this->bench.run_slot_until(
+      [&]() {
+        pucch = find_ue_pucch_with_harq_ack(rnti, *this->bench.last_sched_res_list[0]);
+        pusch = find_ue_pusch_with_harq_ack(rnti, *this->bench.last_sched_res_list[0]);
+        return pucch != nullptr or pusch != nullptr;
+      },
+      ACK_TIMEOUT));
+
+  // Error Indication should mark the HARQ as ready for reTx.
+  scheduler_slot_handler::error_outcome err{};
+  err.pusch_and_pucch_discarded = true;
+  this->bench.sched->handle_error_indication(this->bench.last_result_slot(), to_du_cell_index(0), err);
+
+  // The HARQ should not timeout and should be retransmitted.
+  ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDSCH_TIMEOUT));
+  ASSERT_EQ(h_id, to_harq_id(pdcch->dci.c_rnti_f1_1.harq_process_number));
+  ASSERT_EQ(ndi, pdcch->dci.c_rnti_f1_1.tb1_new_data_indicator) << "A HARQ retransmission should have taken place";
+}
+
+TEST_F(scheduler_error_indication_tester,
+       when_pusch_with_new_data_is_lost_due_to_error_indication_then_ul_harq_is_reset)
+{
+  static constexpr rnti_t           rnti          = to_rnti(0x4601);
+  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  ue_create_req.crnti                             = rnti;
+  ue_create_req.ue_index                          = to_du_ue_index(0);
+  bench.add_ue(ue_create_req);
+
+  // Push bytes so that an UL HARQ gets allocated.
+  ul_bsr_indication_message bsr{to_du_cell_index(0),
+                                to_du_ue_index(0),
+                                rnti,
+                                bsr_format::SHORT_BSR,
+                                ul_bsr_lcg_report_list{ul_bsr_lcg_report{uint_to_lcg_id(0), 10}}};
+  bench.push_bsr(bsr);
+
+  // Search for UL PDCCH.
+  const unsigned              PDCCH_TIMEOUT = 20;
+  const pdcch_ul_information* pdcch         = nullptr;
+  auto                        pdcch_found   = [&]() {
+    pdcch = bench.find_ue_ul_pdcch(rnti);
+    return pdcch != nullptr;
+  };
+  ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDCCH_TIMEOUT));
+  ASSERT_EQ(pdcch->dci.type, dci_ul_rnti_config_type::c_rnti_f0_1);
+  harq_id_t h_id = to_harq_id(pdcch->dci.c_rnti_f0_1.harq_process_number);
+  bool      ndi  = pdcch->dci.c_rnti_f0_1.new_data_indicator;
+
+  // Search for PUSCH.
+  const unsigned       PUSCH_TIMEOUT = 10;
+  const ul_sched_info* pusch         = nullptr;
+  auto                 pusch_found   = [&]() {
+    pusch = find_ue_pusch(rnti, *bench.last_sched_res_list[to_du_cell_index(0)]);
+    return pusch != nullptr;
+  };
+  ASSERT_TRUE(this->bench.run_slot_until(pusch_found, PUSCH_TIMEOUT));
+  ASSERT_TRUE(pusch->pusch_cfg.new_data);
+
+  // Error Indication should flush the HARQ state.
+  scheduler_slot_handler::error_outcome err{};
+  err.pusch_and_pucch_discarded = true;
+  this->bench.sched->handle_error_indication(this->bench.last_result_slot(), to_du_cell_index(0), err);
+
+  // Search for UL PDCCH.
+  ASSERT_TRUE(this->bench.run_slot_until(pdcch_found, PDCCH_TIMEOUT));
+  ASSERT_EQ(h_id, to_harq_id(pdcch->dci.c_rnti_f0_1.harq_process_number));
+  ASSERT_NE(pdcch->dci.c_rnti_f0_1.new_data_indicator, ndi) << "UL HARQ should have been newTx";
+
+  // Search for PUSCH.
+  ASSERT_TRUE(this->bench.run_slot_until(pusch_found, PUSCH_TIMEOUT));
+  ASSERT_TRUE(pusch->pusch_cfg.new_data);
 }
 
 INSTANTIATE_TEST_SUITE_P(msg3_retx,

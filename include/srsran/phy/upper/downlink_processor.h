@@ -31,6 +31,7 @@ namespace srsran {
 
 struct resource_grid_context;
 class resource_grid;
+class unique_tx_buffer;
 
 /// \brief Downlink processor class that groups and process all the downlink channels within a slot.
 ///
@@ -51,28 +52,26 @@ public:
   /// \brief Process the given PDCCH PDU.
   ///
   /// \param[in] pdu PDCCH PDU to process.
-  /// \return \c true if the PDCCH PDU processing task is created and enqueued successfully, \c false otherwise.
-  virtual bool process_pdcch(const pdcch_processor::pdu_t& pdu) = 0;
+  virtual void process_pdcch(const pdcch_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given PDSCH PDU and its related data, which it is given in data parameter.
   ///
-  /// \param[in] data Contains the data of the PDSCH.
-  /// \param[in] pdu PDSCH PDU to process.
-  /// \return \c true if the PDSCH PDU processing task is created and enqueued successfully, \c false otherwise.
-  virtual bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  /// \param[in,out] softbuffer Transmit buffer.
+  /// \param[in]     data       Contains the PDSCH transport blocks.
+  /// \param[in]     pdu        PDSCH PDU to process.
+  virtual void process_pdsch(unique_tx_buffer buffer,
+                             const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                              const pdsch_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given SSB PDU.
   ///
   /// \param[in] pdu SSB PDU to pr
-  /// \return \c true if the SSB PDU processing task is created and enqueued successfully, \c false otherwise.
-  virtual bool process_ssb(const ssb_processor::pdu_t& pdu) = 0;
+  virtual void process_ssb(const ssb_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given NZP-CSI-RS configuration.
   ///
   /// \param[in] config NZP-CSI-RS configuration to process.
-  /// \return \c true if the NZP CSI-RS processing task is created and enqueued successfully, \c false otherwise.
-  virtual bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) = 0;
+  virtual void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) = 0;
 
   /// \brief Configures the resource grid of the downlink_processor.
   ///

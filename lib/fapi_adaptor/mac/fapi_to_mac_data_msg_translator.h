@@ -64,12 +64,10 @@ public:
   void set_cell_crc_handler(mac_cell_control_information_handler& handler);
 
 private:
+  const subcarrier_spacing                                     scs;
   std::reference_wrapper<mac_cell_rach_handler>                rach_handler;
   std::reference_wrapper<mac_pdu_handler>                      pdu_handler;
   std::reference_wrapper<mac_cell_control_information_handler> crc_handler;
-
-  // :TODO: subcarrier spacing should be retrieved from the cells configuration in the future.
-  const subcarrier_spacing scs;
 };
 
 } // namespace fapi_adaptor

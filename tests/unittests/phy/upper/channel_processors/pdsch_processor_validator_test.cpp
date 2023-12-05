@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
+#include "../tx_softbuffer_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -89,7 +90,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(MAX_NSYMB_PER_SLOT);
        return pdu;
      },
-     R"(The number of OFDM symbols carrying DM-RS RE must be greater than zero.)"},
+     R"(The number of OFDM symbols carrying DM-RS must be greater than zero\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(MAX_NSYMB_PER_SLOT);
@@ -172,6 +173,20 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        return pdu;
      },
      R"(Invalid BWP configuration \[0, 52\) for the given frequency allocation non-contiguous.)"},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+
+       // Create RE pattern that collides with DM-RS.
+       re_pattern reserved_pattern;
+       reserved_pattern.prb_mask = ~bounded_bitset<MAX_RB>(MAX_RB);
+       reserved_pattern.prb_mask.fill(0, MAX_RB);
+       reserved_pattern.symbols = pdu.dmrs_symbol_mask;
+       reserved_pattern.re_mask = ~bounded_bitset<NRE>(NRE);
+       pdu.reserved.merge(reserved_pattern);
+
+       return pdu;
+     },
+     R"(The DM-RS symbol mask must not collide with reserved elements.)"},
 };
 
 class pdschProcessorFixture : public ::testing::TestWithParam<test_case_t>
@@ -268,13 +283,15 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   std::vector<uint8_t> data;
 
   // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  tx_buffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  unique_tx_buffer softbuffer(softbuffer_spy);
 
   pdsch_processor_notifier_spy notifier_spy;
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(*mapper, notifier_spy, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(*mapper, std::move(softbuffer), notifier_spy, {data}, param.get_pdu()); },
+               param.expr);
 #endif // ASSERTS_ENABLED
 }
 

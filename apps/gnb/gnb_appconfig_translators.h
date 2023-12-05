@@ -26,6 +26,7 @@
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_srb_config.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/mac/mac_config.h"
@@ -37,6 +38,8 @@
 namespace srsran {
 
 struct gnb_appconfig;
+struct rlc_am_appconfig;
+struct mac_lc_appconfig;
 
 /// This function takes the appconfig and generates the values for the parameters set to be auto-configured.
 void derive_auto_params(gnb_appconfig& gnb_params);
@@ -62,8 +65,27 @@ std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config)
 /// Converts and returns the given gnb application QoS configuration to a CU-CP configuration.
 std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application QoS configuration to a DU configuration.
+/// Converts and returns the given gnb application integrity protection algorithm preferences configuration to a CU-CP
+/// configuration.
+srsran::security::preferred_integrity_algorithms
+generate_preferred_integrity_algorithms_list(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application ciphering protection algorithm preferences configuration to a CU-CP
+/// configuration.
+srsran::security::preferred_ciphering_algorithms
+generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb RLC AM configuration to a RLC configuration.
+srsran::rlc_am_config generate_rlc_am_config(const rlc_am_appconfig& in_cfg);
+
+/// Converts and returns the given gnb MAC LC configuration to a MAC LC configuration.
+srsran::mac_lc_config generate_mac_lc_config(const mac_lc_appconfig& in_cfg);
+
+/// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application QoS configuration to a DU SRB list configuration.
+std::map<srb_id_t, du_srb_config> generate_du_srb_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a mac expert configuration.
 mac_expert_config generate_mac_expert_config(const gnb_appconfig& config);
@@ -82,5 +104,8 @@ srsran::sctp_network_gateway_config generate_e2ap_nw_config(const gnb_appconfig&
 
 /// Converts and returns the given gnb application configuration to a E2 configuration.
 e2ap_configuration generate_e2_config(const gnb_appconfig& config);
+
+/// Augments RLC parameters based on NTN configuration.
+void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs);
 
 } // namespace srsran

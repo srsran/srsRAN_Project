@@ -24,4 +24,5 @@ set(SOURCES
         dpdk_ethernet_receiver.cpp)
 
 add_library(srsran_ofh_dpdk_ethernet STATIC ${SOURCES})
+target_compile_options(srsran_ofh_dpdk_ethernet PRIVATE ${DPDK_CFLAGS})
 target_link_libraries(srsran_ofh_dpdk_ethernet srslog ${DPDK_LIBRARIES})

@@ -28,6 +28,11 @@ cell_cfg:
     dedicated:
       ss2_type: common                                            # Set search space to common to match capabilities
       dci_format_0_1_and_1_1: false                               # Use fallback DCI to match srsUE capabilities
+    common:
+      ss0_index: 0                                                # Set search space zero index to match srsUE capabilities
+      coreset0_index: 6                                           # Set search CORESET Zero index to match srsUE capabilities
+  prach:
+    prach_config_index: 1                                         # Set PRACH config index to 1
 
 log:
   filename: /tmp/gnb.log                                          # Path of the log file.

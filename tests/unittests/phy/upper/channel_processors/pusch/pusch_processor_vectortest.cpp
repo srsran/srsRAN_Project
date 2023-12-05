@@ -23,8 +23,8 @@
 #include "../../rx_softbuffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "pusch_processor_test_data.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
@@ -137,7 +137,7 @@ protected:
 
     // Create UCI decoder factory.
     std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-        create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+        create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
     ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
     // Create PUSCH processor.
@@ -217,9 +217,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 
   // Verify HARQ-ACK result.
   if (config.uci.nof_harq_ack > 0) {
-    std::vector<uint8_t> expected_harq_ack = test_case.harq_ack.read();
+    std::vector<uint8_t> expected_harq_ack_unpacked = test_case.harq_ack.read();
+    uci_payload_type     expected_harq_ack(expected_harq_ack_unpacked.begin(), expected_harq_ack_unpacked.end());
 
-    ASSERT_EQ(span<const uint8_t>(uci_entry.harq_ack.payload), span<const uint8_t>(expected_harq_ack));
+    ASSERT_EQ(uci_entry.harq_ack.payload, expected_harq_ack);
     ASSERT_EQ(uci_entry.harq_ack.status, uci_status::valid);
   } else {
     ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
@@ -228,9 +229,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 
   // Verify CSI Part 1 result.
   if (config.uci.nof_csi_part1 > 0) {
-    std::vector<uint8_t> expected_csi_part1 = test_case.csi_part1.read();
+    std::vector<uint8_t> expected_csi_part1_unpacked = test_case.csi_part1.read();
+    uci_payload_type     expected_csi_part1(expected_csi_part1_unpacked.begin(), expected_csi_part1_unpacked.end());
 
-    ASSERT_EQ(span<const uint8_t>(uci_entry.csi_part1.payload), span<const uint8_t>(expected_csi_part1));
+    ASSERT_EQ(uci_entry.csi_part1.payload, expected_csi_part1);
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::valid);
   } else {
     ASSERT_TRUE(uci_entry.csi_part1.payload.empty());

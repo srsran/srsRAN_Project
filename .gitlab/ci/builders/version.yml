@@ -14,7 +14,7 @@ builder version:
         temp_archive=$(mktemp)
         tar -cf "$temp_archive" -C "$@" --mtime='1970-01-01' --sort=name .
 
-        # Compute the hash of the archive using sha256sum
+        # Generate the hash of the archive using sha256sum
         hash=$(sha256sum "$temp_archive" | cut -c 1-32)
         echo "$hash"
 

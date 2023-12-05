@@ -77,6 +77,14 @@ struct worker_manager {
   // Gets the DU-low downlink executors.
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
+  /// Get executor based on the name.
+  task_executor* find_executor(const std::string& name) const
+  {
+    auto it = exec_mng.executors().find(name);
+    return it != exec_mng.executors().end() ? it->second : nullptr;
+  }
+  task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
+
 private:
   struct du_high_executor_storage {
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
@@ -104,6 +112,8 @@ private:
                           const std::vector<execution_config_helper::worker_pool::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
+
+  void create_non_rt_worker_pool(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the Control and Distributed Units executors.
   void create_du_cu_executors(const gnb_appconfig& appcfg);

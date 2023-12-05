@@ -20,6 +20,7 @@
  *
  */
 
+#include "../../../../lib/ofh/transmitter/helpers.h"
 #include "../../../../lib/ofh/transmitter/ofh_data_flow_uplane_downlink_data.h"
 #include "../../../../lib/ofh/transmitter/ofh_downlink_handler_impl.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
@@ -30,6 +31,7 @@
 using namespace srsran;
 using namespace ofh;
 using namespace srsran::ofh::testing;
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -60,14 +62,29 @@ public:
 
 } // namespace
 
-TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
+static constexpr units::bytes mtu_size{9000};
+
+static downlink_handler_impl_config generate_default_config()
 {
   downlink_handler_impl_config config;
-  config.dl_eaxc = {24};
+  config.dl_eaxc            = {24};
+  config.cp                 = cyclic_prefix::NORMAL;
+  config.scs                = subcarrier_spacing::kHz30;
+  config.dl_processing_time = std::chrono::milliseconds(400);
+  config.tx_timing_params   = {std::chrono::milliseconds(500),
+                               std::chrono::milliseconds(200),
+                               std::chrono::milliseconds(300),
+                               std::chrono::milliseconds(150),
+                               std::chrono::milliseconds(250),
+                               std::chrono::milliseconds(100)};
 
-  unsigned nof_symbols            = 14;
-  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
-  unsigned nof_symbols_before_ota = 14;
+  return config;
+}
+
+TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
+{
+  downlink_handler_impl_config config      = generate_default_config();
+  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
   downlink_handler_impl_dependencies dependencies;
   dependencies.logger = &srslog::fetch_basic_logger("TEST");
@@ -78,11 +95,7 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
   const auto&                                         uplane_spy = *uplane;
   dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.window_checker =
-      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
-
-  auto& window_checker = *dependencies.window_checker;
+  dependencies.frame_pool_ptr                                    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -95,8 +108,9 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
 
   // Delay the OTA 3 slots.
-  ota_time -= (3 * nof_symbols);
-  window_checker.handle_new_ota_symbol(ota_time);
+  ota_time -=
+      (3 * calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params));
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -115,12 +129,8 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
 
 TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
 {
-  downlink_handler_impl_config config;
-  config.dl_eaxc = {24};
-
-  unsigned nof_symbols            = 14;
-  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
-  unsigned nof_symbols_before_ota = 14;
+  downlink_handler_impl_config config      = generate_default_config();
+  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
   downlink_handler_impl_dependencies dependencies;
   dependencies.logger = &srslog::fetch_basic_logger("TEST");
@@ -131,11 +141,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
   const auto&                                         uplane_spy = *uplane;
   dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.window_checker =
-      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
-
-  auto& window_checker = *dependencies.window_checker;
+  dependencies.frame_pool_ptr                                    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -148,9 +154,10 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
 
   // Delay the OTA, as the grid should always be advanced in slot.
-  ota_time -= nof_symbols;
+  ota_time -=
+      calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params);
 
-  window_checker.handle_new_ota_symbol(ota_time);
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -161,12 +168,8 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
 
 TEST(ofh_downlink_handler_impl, same_slot_fails)
 {
-  downlink_handler_impl_config config;
-  config.dl_eaxc = {24};
-
-  unsigned nof_symbols            = 14;
-  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
-  unsigned nof_symbols_before_ota = 14;
+  downlink_handler_impl_config config      = generate_default_config();
+  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
   downlink_handler_impl_dependencies dependencies;
   dependencies.logger = &srslog::fetch_basic_logger("TEST");
@@ -177,11 +180,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
   const auto&                                         uplane_spy = *uplane;
   dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.window_checker =
-      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
-
-  auto& window_checker = *dependencies.window_checker;
+  dependencies.frame_pool_ptr                                    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -193,7 +192,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   // Set the OTA to the same slot as the grid.
   slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
   // Same slot and symbol than the resource grid.
-  window_checker.handle_new_ota_symbol(ota_time);
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -204,12 +203,8 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
 
 TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
 {
-  downlink_handler_impl_config config;
-  config.dl_eaxc = {24};
-
-  unsigned nof_symbols            = 14;
-  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
-  unsigned nof_symbols_before_ota = 14;
+  downlink_handler_impl_config config      = generate_default_config();
+  unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
   downlink_handler_impl_dependencies dependencies;
   dependencies.logger = &srslog::fetch_basic_logger("TEST");
@@ -220,11 +215,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
   const auto&                                         uplane_spy = *uplane;
   dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.window_checker =
-      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
-
-  auto& window_checker = *dependencies.window_checker;
+  dependencies.frame_pool_ptr                                    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -237,9 +228,10 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
 
   // Delay the OTA, as the grid should always be advanced in slot.
-  ota_time -= (nof_symbols + 1);
+  ota_time -=
+      (calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params) + 1);
 
-  window_checker.handle_new_ota_symbol(ota_time);
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 

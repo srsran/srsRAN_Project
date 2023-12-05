@@ -32,7 +32,7 @@ static constexpr size_t MAX_LC_PER_TB = 4;
 static constexpr size_t MAX_SSB_PER_SLOT = 2;
 
 /// [Implementation defined] This corresponds to "Number of search space sets per slot" in Table 13-11, TS 38.213.
-static constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
+static constexpr size_t MAX_SI_PDUS_PER_SLOT = 2;
 
 /// [Implementation defined] This corresponds to maximum number of RARs that can be scheduled per slot.
 static constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
@@ -54,11 +54,11 @@ static constexpr size_t MAX_CSI_RS_PDUS_PER_SLOT = 16;
 
 /// [Implementation defined] This corresponds to maximum number of PDCCH PDUs that can be scheduled per slot.
 static constexpr size_t MAX_DL_PDCCH_PDUS_PER_SLOT =
-    MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
+    MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
 
 /// [Implementation defined] This corresponds to maximum number of PDSCH PDUs that can be scheduled per slot.
 static constexpr size_t MAX_PDSCH_PDUS_PER_SLOT =
-    MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
+    MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of PRACH occasions per slot supported by the current implementation.
 static constexpr size_t MAX_PRACH_OCCASIONS_PER_SLOT = 1;
@@ -84,8 +84,8 @@ static constexpr size_t MAX_CBS_PER_PDU = 64;
 
 /// [Implementation defined] Maximum number of downlink PDUs per slot.
 static constexpr size_t MAX_DL_PDUS_PER_SLOT = MAX_SSB_PER_SLOT + MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT +
-                                               MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT +
-                                               MAX_PAGING_PDUS_PER_SLOT + MAX_CSI_RS_PDUS_PER_SLOT;
+                                               MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT +
+                                               MAX_CSI_RS_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of uplink PDUs per slot.
 static constexpr size_t MAX_UL_PDUS_PER_SLOT =

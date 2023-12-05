@@ -27,6 +27,7 @@
 #include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/mean.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
@@ -90,10 +91,49 @@ public:
 
 private:
   // Auxiliary buffers.
-  std::array<float, MAX_FILTER_LENGTH>     filter_coefs     = {};
-  std::array<float, MAX_FILTER_LENGTH / 2> correction_coefs = {};
+  std::array<float, MAX_FILTER_LENGTH>     filter_coefs;
+  std::array<float, MAX_FILTER_LENGTH / 2> correction_coefs;
 };
 } // namespace
+
+/// \brief Applies frequency domain smoothing strategy.
+/// \param[out] filtered_pilots_lse   Smoothed pilots estimates.
+/// \param[in]  pilots_lse            Pilots estimates.
+/// \param[in]  nof_rb                Number of resource elements.
+/// \param[in]  stride                Reference signals stride in frequency domain.
+/// \param[in]  fd_smoothing_strategy Frequency domain smoothing strategy.
+static void apply_fd_smoothing(span<cf_t>                                   filtered_pilots_lse,
+                               span<const cf_t>                             pilots_lse,
+                               unsigned                                     nof_rb,
+                               unsigned                                     stride,
+                               port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy)
+{
+  switch (fd_smoothing_strategy) {
+    case port_channel_estimator_fd_smoothing_strategy::mean:
+      std::fill(filtered_pilots_lse.begin(), filtered_pilots_lse.end(), srsvec::mean(pilots_lse));
+      break;
+    case port_channel_estimator_fd_smoothing_strategy::filter: {
+      // Generate a low pass filter.
+      filter_type rc(nof_rb, stride);
+
+      // Apply filter.
+      srsvec::convolution_same(filtered_pilots_lse, pilots_lse, rc.rc_filter);
+
+      // Compensate tails (note that we take the reverse iterator for the back tail).
+      auto tail_front = filtered_pilots_lse.begin();
+      auto tail_back  = filtered_pilots_lse.rbegin();
+      for (const auto cc : rc.tail_correction) {
+        *tail_front++ *= cc;
+        *tail_back++ *= cc;
+      }
+    } break;
+    case port_channel_estimator_fd_smoothing_strategy::none:
+    default:
+      // No strategy.
+      srsvec::copy(filtered_pilots_lse, pilots_lse);
+      break;
+  }
+}
 
 /// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop
 /// and for the selected port.
@@ -263,18 +303,10 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   const bounded_bitset<MAX_RB>& hop_rb_mask      = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
   interpolator::configuration   interpolator_cfg = configure_interpolator(pattern.re_pattern);
 
-  // Apply a low-pass filter to remove some noise ("high-time" components).
-  filter_type rc(hop_rb_mask.count(), interpolator_cfg.stride);
-  span<cf_t>  filtered_pilots_lse = span<cf_t>(aux_pilots_lse_rc).first(pilots_lse.size());
-  srsvec::convolution_same(filtered_pilots_lse, pilots_lse, rc.rc_filter);
-
-  // Compensate tails (note that we take the reverse iterator for the back tail).
-  auto tail_front = filtered_pilots_lse.begin();
-  auto tail_back  = filtered_pilots_lse.rbegin();
-  for (const auto cc : rc.tail_correction) {
-    *tail_front++ *= cc;
-    *tail_back++ *= cc;
-  }
+  // Apply a smoothing strategy to remove some noise ("high-time" components).
+  span<cf_t> filtered_pilots_lse = span<cf_t>(aux_pilots_lse_rc).first(pilots_lse.size());
+  apply_fd_smoothing(
+      filtered_pilots_lse, pilots_lse, hop_rb_mask.count(), interpolator_cfg.stride, fd_smoothing_strategy);
 
   rsrp += std::real(srsvec::dot_prod(filtered_pilots_lse, filtered_pilots_lse)) * beta_scaling * beta_scaling *
           static_cast<float>(nof_dmrs_symbols);

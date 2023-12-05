@@ -25,13 +25,17 @@
 
 using namespace srsran;
 
-rlc_tx_tm_entity::rlc_tx_tm_entity(du_ue_index_t                        du_index,
+rlc_tx_tm_entity::rlc_tx_tm_entity(uint32_t                             du_index,
+                                   du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                                   task_executor&                       pcell_executor_) :
-  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_), pcell_executor(pcell_executor_)
+                                   task_executor&                       pcell_executor_,
+                                   rlc_pcap&                            pcap_) :
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
+  pcell_executor(pcell_executor_),
+  pcap_context(ue_index, rb_id, /* is_uplink */ false)
 {
   metrics.metrics_set_mode(rlc_mode::tm);
   logger.log_info("RLC TM created.");
@@ -89,12 +93,16 @@ byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   srsran_sanity_check(sdu_len == front_len, "Length mismatch. sdu_len={} front_len={}", sdu_len, front_len);
 
   // In TM there is no header, just pass the plain SDU
-  byte_buffer_chain pdu = {};
-  pdu.append(std::move(sdu.buf));
-  logger.log_info(pdu.begin(), pdu.end(), "TX PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
-  metrics.metrics_add_pdus(1, pdu.length());
+  byte_buffer_chain pdu_buf{std::move(sdu.buf)};
 
-  return pdu;
+  logger.log_info(pdu_buf.begin(), pdu_buf.end(), "TX PDU. pdu_len={} grant_len={}", pdu_buf.length(), grant_len);
+
+  // Update metrics
+  metrics.metrics_add_pdus(1, pdu_buf.length());
+
+  pcap.push_pdu(pcap_context, pdu_buf);
+
+  return pdu_buf;
 }
 
 void rlc_tx_tm_entity::handle_changed_buffer_state()

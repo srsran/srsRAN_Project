@@ -33,11 +33,9 @@ using namespace srsran;
 /// \brief Test correct metrics counting of PDCP data SDUs/PDUs
 TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
 {
-  init(GetParam());
-
   auto test_metrics = [this](uint32_t count) {
-    srsran::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
+    srsran::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -62,14 +60,15 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     ASSERT_EQ(m.num_integrity_verified_pdus, 1);
     ASSERT_EQ(m.num_integrity_failed_pdus, 0);
     ASSERT_EQ(m.num_t_reordering_timeouts, 0);
+    pdcp_rx->reset_metrics();
   };
 
-  if (config.sn_size == pdcp_sn_size::size12bits) {
+  if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size12bits) {
     test_metrics(0);
     test_metrics(2048);
     test_metrics(4095);
     test_metrics(4096);
-  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+  } else if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size18bits) {
     test_metrics(0);
     test_metrics(131072);
     test_metrics(262144);
@@ -87,7 +86,6 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
   auto test_metrics = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX PDU with bad integrity metrics test. SN_SIZE={} COUNT={}", sn_size, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -112,6 +110,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     ASSERT_EQ(m.num_integrity_verified_pdus, 0);
     ASSERT_EQ(m.num_integrity_failed_pdus, 1);
     ASSERT_EQ(m.num_t_reordering_timeouts, 0);
+    pdcp_rx->reset_metrics();
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
@@ -133,9 +132,9 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
 TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
+    init(GetParam());
     srsran::test_delimit_logger delimiter(
         "t-Reordering expiration metrics test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
     pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
@@ -152,12 +151,13 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
     tick_all(10);
     auto m = pdcp_rx->get_metrics();
     ASSERT_EQ(1, m.num_t_reordering_timeouts);
+    pdcp_rx->reset_metrics();
   };
-  if (sn_size == pdcp_sn_size::size12bits) {
+  if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size12bits) {
     test_rx_t_reorder(0);
     test_rx_t_reorder(2047);
     test_rx_t_reorder(4095);
-  } else if (sn_size == pdcp_sn_size::size18bits) {
+  } else if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size18bits) {
     test_rx_t_reorder(0);
     test_rx_t_reorder(131071);
     test_rx_t_reorder(262143);
@@ -169,16 +169,21 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer,
+                 "{}bit_nia{}_nea{}",
+                 pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
+                 std::get<unsigned>(info.param),
+                 std::get<unsigned>(info.param));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
                          pdcp_rx_metrics_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

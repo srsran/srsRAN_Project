@@ -24,12 +24,14 @@
 #include "../../fapi/validators/helpers.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
+#include "../../phy/upper/tx_softbuffer_pool_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -105,24 +107,27 @@ protected:
   fapi::carrier_config           carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
   downlink_pdu_validator_dummy   dl_pdu_validator;
   uplink_pdu_validator_dummy     ul_pdu_validator;
-  fapi_to_phy_translator_config  config = {sector_id,
-                                           subcarrier_spacing::kHz15,
-                                           &dl_processor_pool,
-                                           &rg_pool,
-                                           &ul_request_processor,
-                                           &rg_pool,
-                                           &pdu_repo,
-                                           &dl_pdu_validator,
-                                           &ul_pdu_validator,
-                                           scs_common,
-                                           &prach_cfg,
-                                           &carrier_cfg,
-                                           std::move(std::get<1>(generate_precoding_matrix_tables(1)))};
-  fapi_to_phy_translator         translator;
+  manual_task_worker             worker;
+  tx_softbuffer_pool_spy         softbuffer_pool_spy;
+  fapi_to_phy_translator_config  config =
+      {sector_id, subcarrier_spacing::kHz15, scs_common, &prach_cfg, &carrier_cfg, {0}};
+  fapi_to_phy_translator_dependencies dependencies = {
+      &srslog::fetch_basic_logger("FAPI"),
+      &dl_processor_pool,
+      &rg_pool,
+      &dl_pdu_validator,
+      &softbuffer_pool_spy,
+      &ul_request_processor,
+      &rg_pool,
+      &pdu_repo,
+      &ul_pdu_validator,
+      std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1))),
+      &worker};
+  fapi_to_phy_translator translator;
 
 public:
   fapi_to_phy_translator_fixture() :
-    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), translator(std::move(config), srslog::fetch_basic_logger("FAPI"))
+    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), worker(1), translator(config, std::move(dependencies))
   {
   }
 };
@@ -139,6 +144,15 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_not_configured_on_n
   // Assert that the downlink processor is configured.
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+
+  // Assert that the softbuffer pool ran the slot.
+  auto& run_slot_entries = softbuffer_pool_spy.get_run_slot_entries();
+  ASSERT_EQ(run_slot_entries.size(), 1);
+  ASSERT_EQ(run_slot_entries.front(), slot);
+
+  // Assert that no softbuffer reservation was done.
+  auto& reserve_softbuffer_entries = softbuffer_pool_spy.get_reserve_softbuffer_entries();
+  ASSERT_TRUE(reserve_softbuffer_entries.empty());
 }
 
 TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_dl_tti_request)

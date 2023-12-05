@@ -172,7 +172,7 @@ protected:
   float scaling_factor = 0.8;
 
   /// Buffer to store the current value of the soft bits.
-  std::array<log_likelihood_ratio, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits = {};
+  std::array<log_likelihood_ratio, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits;
 
 private:
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
@@ -207,10 +207,10 @@ private:
   /// Buffer to store the current value of the check-to-variable messages.
   std::array<std::array<log_likelihood_ratio, static_cast<size_t>(MAX_CHECK_NODE_DEGREE* ldpc::MAX_LIFTING_SIZE)>,
              ldpc::MAX_BG_M>
-      check_to_var = {};
+      check_to_var;
 
   /// Initialization flags of check-to-variable messages: true if initialized.
-  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised = {};
+  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised;
 };
 
 } // namespace srsran

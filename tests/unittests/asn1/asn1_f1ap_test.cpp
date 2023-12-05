@@ -20,14 +20,16 @@
  *
  */
 
-#include "lib/pcap/f1ap_pcap.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
+using namespace srsran;
 
-#define JSON_OUTPUT 1
+#define JSON_OUTPUT 0
 
 class asn1_f1ap_test : public ::testing::Test
 {
@@ -40,10 +42,6 @@ protected:
     test_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_hex_dump_max_size(-1);
 
-#if JSON_OUTPUT
-    pcap_writer.open("f1ap.pcap");
-#endif
-
     // Start the log backend.
     srslog::init();
   }
@@ -52,14 +50,14 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-#if JSON_OUTPUT
-    pcap_writer.close();
-#endif
   }
 
 #if JSON_OUTPUT
-  srsran::f1ap_pcap pcap_writer;
+  task_worker                    worker{"pcap_worker", 128};
+  std::unique_ptr<task_executor> pcap_exec   = make_task_executor_ptr(worker);
+  std::unique_ptr<dlt_pcap>      pcap_writer = create_f1ap_pcap("/tmp/f1ap.pcap", *pcap_exec);
+#else
+  std::unique_ptr<dlt_pcap> pcap_writer = create_null_dlt_pcap();
 #endif
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
@@ -129,7 +127,7 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   test_logger.info(
       bytes.data(), bytes.size(), "F1AP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
 
-  pcap_writer.write_pdu(bytes);
+  pcap_writer->push_pdu(bytes);
 #endif
 }
 
@@ -163,7 +161,7 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 
-  pcap_writer.write_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  pcap_writer->push_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 #endif
 }
 
@@ -200,7 +198,7 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 
-  pcap_writer.write_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  pcap_writer->push_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 #endif
 }
 
@@ -244,7 +242,7 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
   srsran::byte_buffer rx_pdu{rx_msg};
 
 #ifdef JSON_OUTPUT
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer->push_pdu(rx_msg);
 #endif
 
   asn1::cbit_ref         bref{rx_pdu};
@@ -283,7 +281,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
   srsran::byte_buffer rx_pdu{rx_msg};
 
 #ifdef JSON_OUTPUT
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer->push_pdu(rx_msg);
 #endif
 
   asn1::cbit_ref         bref{rx_pdu};

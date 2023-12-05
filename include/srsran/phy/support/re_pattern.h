@@ -51,7 +51,7 @@ struct re_pattern {
   /// \param[in] symbols_  Symbol mask.
   /// \remark An assertion is triggered if \c rb_begin, \c rb_end or \c rb_stride value is not within the indicated
   /// interval.
-  /// \remark An assertion is triggered if \c rb_end is lesser than \c rb_begin.
+  /// \remark An assertion is triggered if \c rb_end is less than \c rb_begin.
   re_pattern(unsigned                rb_begin,
              unsigned                rb_end,
              unsigned                rb_stride,

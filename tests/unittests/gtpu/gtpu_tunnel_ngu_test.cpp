@@ -25,6 +25,7 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 #include <sys/socket.h>
@@ -104,6 +105,11 @@ protected:
   gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
   gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "UL"}};
 
+  // Timers
+  manual_task_worker worker{64};
+  timer_manager      timers_manager;
+  timer_factory      timers{timers_manager, worker};
+
   // GTP-U tunnel entity
   std::unique_ptr<gtpu_tunnel_ngu> gtpu;
 
@@ -115,7 +121,7 @@ protected:
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  null_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
@@ -124,6 +130,7 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   ASSERT_NE(gtpu, nullptr);
@@ -132,7 +139,7 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
 TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  null_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
@@ -141,6 +148,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   sockaddr_storage   orig_addr = {};
@@ -159,7 +167,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 /// \brief Test correct transmission of GTP-U packet
 TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
-  dummy_dlt_pcap dummy_pcap = {};
+  null_dlt_pcap dummy_pcap;
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
@@ -168,6 +176,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   byte_buffer sdu{gtpu_ping_sdu};

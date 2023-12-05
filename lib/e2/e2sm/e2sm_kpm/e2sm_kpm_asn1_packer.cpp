@@ -29,7 +29,7 @@ using namespace srsran;
 const std::string e2sm_kpm_asn1_packer::short_name       = "ORAN-E2SM-KPM";
 const std::string e2sm_kpm_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.2.2.2";
 const std::string e2sm_kpm_asn1_packer::func_description = "KPM Monitor";
-const uint32_t    e2sm_kpm_asn1_packer::ran_func_id      = 147;
+const uint32_t    e2sm_kpm_asn1_packer::ran_func_id      = 2;
 const uint32_t    e2sm_kpm_asn1_packer::revision         = 0;
 
 e2sm_kpm_asn1_packer::e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider_) : meas_provider(meas_provider_) {}

@@ -101,11 +101,15 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
 
   const fapi::ul_pusch_uci& fapi_uci = fapi_pdu.pusch_uci;
   const uci_info&           mac_uci  = mac_pdu.uci.value();
-  ASSERT_EQ(mac_uci.harq_ack_nof_bits, fapi_uci.harq_ack_bit_length);
-  ASSERT_EQ(mac_uci.csi_part1_nof_bits, fapi_uci.csi_part1_bit_length);
-  ASSERT_EQ(mac_uci.csi_part2_nof_bits, fapi_uci.flags_csi_part2);
+  ASSERT_EQ(mac_uci.harq.has_value() ? mac_uci.harq->harq_ack_nof_bits : 0U, fapi_uci.harq_ack_bit_length);
+  ASSERT_EQ(mac_uci.csi.has_value() ? mac_uci.csi->csi_part1_nof_bits : 0U, fapi_uci.csi_part1_bit_length);
+  ASSERT_EQ(mac_uci.csi.has_value() and mac_uci.csi->beta_offset_csi_2.has_value() ? 65535U : 0U,
+            fapi_uci.flags_csi_part2);
   ASSERT_EQ(mac_uci.alpha, fapi_uci.alpha_scaling);
-  ASSERT_EQ(mac_uci.beta_offset_harq_ack, fapi_uci.beta_offset_harq_ack);
-  ASSERT_EQ(mac_uci.beta_offset_csi_1, fapi_uci.beta_offset_csi1);
-  ASSERT_EQ(mac_uci.beta_offset_csi_2, fapi_uci.beta_offset_csi2);
+  ASSERT_EQ(mac_uci.harq.has_value() ? mac_uci.harq->beta_offset_harq_ack : 0U, fapi_uci.beta_offset_harq_ack);
+  ASSERT_EQ(mac_uci.csi.has_value() ? mac_uci.csi->beta_offset_csi_1 : 0U, fapi_uci.beta_offset_csi1);
+  ASSERT_EQ(mac_uci.csi.has_value() and mac_uci.csi->beta_offset_csi_2.has_value()
+                ? mac_uci.csi->beta_offset_csi_2.value()
+                : 0U,
+            fapi_uci.beta_offset_csi2);
 }

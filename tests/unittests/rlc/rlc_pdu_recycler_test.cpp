@@ -55,7 +55,7 @@ protected:
   }
 
   srslog::basic_logger&             logger     = srslog::fetch_basic_logger("TEST", false);
-  rlc_bearer_logger                 rlc_logger = rlc_bearer_logger("RLC", {du_ue_index_t{}, rb_id_t{}, "DL"});
+  rlc_bearer_logger                 rlc_logger = rlc_bearer_logger("RLC", {0, du_ue_index_t{}, rb_id_t{}, "DL"});
   std::unique_ptr<rlc_pdu_recycler> pdu_recycler;
 
   manual_task_worker_always_enqueue_tasks other_worker{8};

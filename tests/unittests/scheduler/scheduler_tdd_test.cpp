@@ -27,7 +27,6 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
-#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/test_utils.h"
@@ -55,9 +54,15 @@ protected:
       params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-      static const uint8_t                              ss0_idx      = 0;
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          params.dl_arfcn, *params.band, nof_crbs, params.scs_common, params.scs_common, ss0_idx);
+      static const uint8_t                              ss0_idx = 0;
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(params.dl_arfcn,
+                                                      *params.band,
+                                                      nof_crbs,
+                                                      params.scs_common,
+                                                      params.scs_common,
+                                                      ss0_idx,
+                                                      params.max_coreset0_duration);
       if (!ssb_freq_loc.has_value()) {
         report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
       }
@@ -125,11 +130,11 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     // For every DL slot.
     if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res->dl.ue_grants.empty())
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty())
           << "The UE configuration is leading to some DL slots staying empty";
     }
 
-    for (const pucch_info& pucch : this->last_sched_res->ul.pucchs) {
+    for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
       if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
@@ -169,11 +174,11 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
     // Note: Skip special slots in test for now.
     if (cell_cfg_list[0].is_fully_ul_enabled(this->last_result_slot())) {
       // Ensure UE PUSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res->ul.puschs.empty())
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty())
           << "The UE configuration is leading to some UL slots staying empty";
     }
 
-    for (const ul_sched_info& pusch : this->last_sched_res->ul.puschs) {
+    for (const ul_sched_info& pusch : this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs) {
       ul_crc_indication crc{};
       crc.cell_index = to_du_cell_index(0);
       crc.sl_rx      = this->last_result_slot();

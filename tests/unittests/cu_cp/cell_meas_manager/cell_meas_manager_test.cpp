@@ -149,3 +149,32 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_n
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
 }
+
+TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_removed)
+{
+  create_default_manager();
+
+  const nr_cell_id_t initial_nci = 0;
+
+  // Make sure meas_cfg is created (no previous meas config provided)
+  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(initial_nci);
+  check_default_meas_cfg(initial_meas_cfg, meas_obj_id_t::min);
+  verify_meas_cfg(initial_meas_cfg);
+
+  const nr_cell_id_t     target_nci      = 1;
+  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(target_nci, initial_meas_cfg);
+
+  // Make sure initial IDs are release again.
+  ASSERT_EQ(target_meas_cfg.value().meas_obj_to_rem_list.at(0),
+            initial_meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id);
+
+  ASSERT_EQ(target_meas_cfg.value().meas_id_to_rem_list.at(0),
+            initial_meas_cfg.value().meas_id_to_add_mod_list.at(0).meas_id);
+
+  ASSERT_EQ(target_meas_cfg.value().report_cfg_to_rem_list.at(0),
+            initial_meas_cfg.value().report_cfg_to_add_mod_list.at(0).report_cfg_id);
+
+  // The new config should reuse the IDs again.
+  check_default_meas_cfg(target_meas_cfg, meas_obj_id_t::min);
+  verify_meas_cfg(target_meas_cfg);
+}

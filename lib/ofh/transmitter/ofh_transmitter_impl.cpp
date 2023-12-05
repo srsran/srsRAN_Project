@@ -27,15 +27,15 @@ using namespace srsran;
 using namespace ofh;
 
 transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
-  dl_handler(std::move(dependencies.dl_handler)),
+  dl_manager(std::move(dependencies.dl_manager)),
   ul_request_handler(std::move(dependencies.ul_request_handler)),
   msg_transmitter(*dependencies.logger,
                   config.symbol_handler_cfg,
                   std::move(dependencies.eth_gateway),
                   dependencies.frame_pool),
-  ota_dispatcher(*dependencies.executor, *dependencies.window_handler, msg_transmitter)
+  ota_dispatcher(*dependencies.executor, dl_manager->get_ota_symbol_boundary_notifier(), msg_transmitter)
 {
-  srsran_assert(dl_handler, "Invalid downlink handler");
+  srsran_assert(dl_manager, "Invalid downlink manager");
   srsran_assert(ul_request_handler, "Invalid uplink request handler");
 }
 
@@ -46,10 +46,10 @@ uplink_request_handler& transmitter_impl::get_uplink_request_handler()
 
 downlink_handler& transmitter_impl::get_downlink_handler()
 {
-  return *dl_handler;
+  return dl_manager->get_downlink_handler();
 }
 
-ota_symbol_handler& transmitter_impl::get_ota_symbol_handler()
+ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
 {
   return ota_dispatcher;
 }

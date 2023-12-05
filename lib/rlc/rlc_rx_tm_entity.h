@@ -28,8 +28,15 @@ namespace srsran {
 
 class rlc_rx_tm_entity : public rlc_rx_entity
 {
+private:
+  pcap_rlc_pdu_context pcap_context;
+
 public:
-  rlc_rx_tm_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_);
+  rlc_rx_tm_entity(uint32_t                          du_index,
+                   du_ue_index_t                     ue_index,
+                   rb_id_t                           rb_id,
+                   rlc_rx_upper_layer_data_notifier& upper_dn_,
+                   rlc_pcap&                         pcap_);
 
   // Interfaces for higher layers
   void handle_pdu(byte_buffer_slice buf) override;

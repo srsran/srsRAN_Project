@@ -23,6 +23,7 @@
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
 #include "lib/du_manager/procedures/ue_creation_procedure.h"
+#include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -90,12 +91,15 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
     cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg =
+        make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
   }
   for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
     cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
     cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
     cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
   }
   for (drb_id_t drb_id : req.drbs_to_rem) {
     auto it = std::find_if(cell_res_alloc.next_context_update_result.rlc_bearers.begin(),

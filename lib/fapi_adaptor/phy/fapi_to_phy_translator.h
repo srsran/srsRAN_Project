@@ -23,9 +23,12 @@
 #pragma once
 
 #include "srsran/fapi/messages.h"
+#include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
+#include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
 namespace srsran {
@@ -46,28 +49,40 @@ struct fapi_to_phy_translator_config {
   unsigned sector_id;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
-  /// Downlink processor pool.
-  downlink_processor_pool* dl_processor_pool;
-  /// Downlink resource grid pool.
-  resource_grid_pool* dl_rg_pool;
-  /// Uplink request processor.
-  uplink_request_processor* ul_request_processor;
-  /// Uplink resource grid pool.
-  resource_grid_pool* ul_rg_pool;
-  /// Uplink slot PDU repository.
-  uplink_slot_pdu_repository* ul_pdu_repository;
-  /// Downlink PDU validator.
-  const downlink_pdu_validator* dl_pdu_validator;
-  /// Uplink PDU validator.
-  const uplink_pdu_validator* ul_pdu_validator;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::prach_config* prach_cfg;
   /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config* carrier_cfg;
+  /// PRACH port list.
+  std::vector<uint8_t> prach_ports;
+};
+
+/// FAPI-to-PHY translator dependencies.
+struct fapi_to_phy_translator_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger;
+  /// Downlink processor pool.
+  downlink_processor_pool* dl_processor_pool;
+  /// Downlink resource grid pool.
+  resource_grid_pool* dl_rg_pool;
+  /// Downlink PDU validator.
+  const downlink_pdu_validator* dl_pdu_validator;
+  /// Transmit buffer pool.
+  tx_buffer_pool* buffer_pool;
+  /// Uplink request processor.
+  uplink_request_processor* ul_request_processor;
+  /// Uplink resource grid pool.
+  resource_grid_pool* ul_rg_pool;
+  /// Uplink slot PDU repository.
+  uplink_slot_pdu_repository* ul_pdu_repository;
+  /// Uplink PDU validator.
+  const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Task executor for asynchronous tasks.
+  task_executor* async_executor;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -124,24 +139,8 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  explicit fapi_to_phy_translator(fapi_to_phy_translator_config&& config, srslog::basic_logger& logger_) :
-    sector_id(config.sector_id),
-    pm_repo(std::move(config.pm_repo)),
-    dl_processor_pool(*config.dl_processor_pool),
-    dl_rg_pool(*config.dl_rg_pool),
-    ul_request_processor(*config.ul_request_processor),
-    ul_rg_pool(*config.ul_rg_pool),
-    dl_pdu_validator(*config.dl_pdu_validator),
-    ul_pdu_validator(*config.ul_pdu_validator),
-    ul_pdu_repository(*config.ul_pdu_repository),
-    scs(config.scs),
-    scs_common(config.scs_common),
-    prach_cfg(*config.prach_cfg),
-    carrier_cfg(*config.carrier_cfg),
-    logger(logger_)
-  {
-    srsran_assert(pm_repo, "Invalid precoding matrix repository");
-  }
+  fapi_to_phy_translator(const fapi_to_phy_translator_config&  config,
+                         fapi_to_phy_translator_dependencies&& dependencies);
 
   // See interface for documentation.
   void dl_tti_request(const fapi::dl_tti_request_message& msg) override;
@@ -168,6 +167,12 @@ public:
   /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot(slot_point slot);
 
+  /// Configures the FAPI slot-based, error-specific notifier to the given one.
+  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
+  {
+    error_notifier = std::ref(fapi_error_notifier);
+  }
+
 private:
   /// Returns true if the given message arrived in time, otherwise returns false.
   template <typename T>
@@ -180,30 +185,35 @@ private:
 private:
   /// Sector identifier.
   const unsigned sector_id;
-  /// Precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Logger.
+  srslog::basic_logger& logger;
   /// Downlink processor pool.
   downlink_processor_pool& dl_processor_pool;
   /// Downlink resource grid pool.
   resource_grid_pool& dl_rg_pool;
+  /// Downlink PDU validator.
+  const downlink_pdu_validator& dl_pdu_validator;
+  /// PDSCH Softbuffer pool.
+  tx_buffer_pool& buffer_pool;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
   /// Uplink resource grid pool.
   resource_grid_pool& ul_rg_pool;
-  /// Downlink PDU validator.
-  const downlink_pdu_validator& dl_pdu_validator;
   /// Uplink PDU validator.
   const uplink_pdu_validator& ul_pdu_validator;
-  /// Current slot task controller.
-  slot_based_upper_phy_controller current_slot_controller;
-  /// PDSCH PDU repository.
-  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository& ul_pdu_repository;
+  /// Asynchronous task executor.
+  task_executor& asynchronous_executor;
+  /// Current slot task controller.
+  slot_based_upper_phy_controller current_slot_controller;
+  /// Precoding matrix repository.
+  std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Error indication notifier.
+  std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
   /// Protects concurrent access to shared variables.
-  //: TODO: make this lock free.
+  // :TODO: make this lock free.
   std::mutex mutex;
-  // :TODO: these variables should be asked to the cell configuration. Remove them when they're available.
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   const subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
@@ -212,8 +222,10 @@ private:
   const fapi::prach_config prach_cfg;
   /// Carrier configuration as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config carrier_cfg;
-  /// Logger.
-  srslog::basic_logger& logger;
+  /// PRACH receive ports.
+  const static_vector<uint8_t, MAX_PORTS> prach_ports;
+  /// PDSCH PDU repository.
+  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
 };
 
 } // namespace fapi_adaptor

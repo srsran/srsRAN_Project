@@ -2,9 +2,7 @@
 # Based on 5QI characteristics in TS 23.501 table 5.7.4-1 
 
 # This is a supplementary configuration to modify the RLC and PDCP radio bearers on 
-# a per 5QI basis. This file will be passed to the gNB along with the base configuration 
-# at start-up. The following command may be used to run the gNB with this configuration file: 
-#   sudo ./gnb -c gnb_ru_ran550_tdd_n78_100mhz_2x2.yml -c qos.yml
+# a per 5QI basis.
 
 qos:
   -
@@ -14,6 +12,7 @@ qos:
       um-bidir:
         tx:
           sn: 12
+          queue-size: 4096
         rx:
           sn: 12
           t-reassembly: 50
@@ -30,7 +29,12 @@ qos:
     f1u_du:
       backoff_timer: 10
     f1u_cu_up:
-      backoff_timer: 10     
+      backoff_timer: 10
+    mac:
+      lc_priority: 4
+      lc_group_id: 1
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537
   -
     five_qi: 2 # E.g. Conversational Video
     rlc:
@@ -38,6 +42,7 @@ qos:
       um-bidir:
         tx:
           sn: 12
+          queue-size: 4096
         rx:
           sn: 12
           t-reassembly: 50
@@ -54,7 +59,12 @@ qos:
     f1u_du:
       backoff_timer: 10
     f1u_cu_up:
-      backoff_timer: 10     
+      backoff_timer: 10
+    mac:
+      lc_priority: 4
+      lc_group_id: 1
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537
   -
     five_qi: 5 # E.g. IMS signaling
     rlc:
@@ -66,6 +76,7 @@ qos:
           max-retx-threshold: 4
           poll-pdu: 64
           poll-byte: 125
+          queue-size: 4096
         rx:
           sn: 12
           t-reassembly: 80
@@ -83,7 +94,12 @@ qos:
     f1u_du:
       backoff_timer: 10
     f1u_cu_up:
-      backoff_timer: 10      
+      backoff_timer: 10
+    mac:
+      lc_priority: 5
+      lc_group_id: 2
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537
   -
     five_qi: 7 # E.g. Voice, Video (live streaming)
     rlc:
@@ -91,6 +107,7 @@ qos:
       um-bidir:
         tx:
           sn: 12
+          queue-size: 4096
         rx:
           sn: 12
           t-reassembly: 50
@@ -107,7 +124,12 @@ qos:
     f1u_du:
       backoff_timer: 10
     f1u_cu_up:
-      backoff_timer: 10          
+      backoff_timer: 10
+    mac:
+      lc_priority: 4
+      lc_group_id: 1
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537
   -
     five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
     rlc:
@@ -119,6 +141,7 @@ qos:
           max-retx-threshold: 4
           poll-pdu: 64
           poll-byte: 125
+          queue-size: 4096
         rx:
           sn: 12
           t-reassembly: 80
@@ -137,3 +160,8 @@ qos:
       backoff_timer: 10
     f1u_cu_up:
       backoff_timer: 10
+    mac:
+      lc_priority: 5
+      lc_group_id: 2
+      bucket_size_duration_ms: 5
+      prioritized_bit_rate_kBps: 65537

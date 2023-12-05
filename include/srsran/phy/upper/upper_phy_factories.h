@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "tx_buffer_pool.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -228,6 +229,10 @@ struct upper_phy_config {
   channel_state_information::sinr_type pusch_sinr_calc_method;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
+  /// Receive port the UL symbols are dumped from. Leave emtpy for all ports.
+  optional<unsigned> rx_symbol_printer_port;
+  /// Boolean flag for dumping PRACH symbols when set to true.
+  bool rx_symbol_printer_prach;
   /// \brief LDPC decoder type.
   ///
   /// Use of there options:
@@ -291,8 +296,10 @@ struct upper_phy_config {
   unsigned ul_bw_rb;
   /// List of active subcarrier spacing, indexed by numerology.
   std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
-  /// Softbuffer pool configuration.
-  rx_softbuffer_pool_config softbuffer_config;
+  /// Transmit buffer pool configuration.
+  tx_buffer_pool_config tx_buffer_config;
+  /// Receive buffer pool configuration.
+  rx_softbuffer_pool_config rx_buffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.

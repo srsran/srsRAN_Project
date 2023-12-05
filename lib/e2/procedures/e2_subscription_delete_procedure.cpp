@@ -40,7 +40,7 @@ void e2_subscription_delete_procedure::run_subscription_delete_procedure(
   e2_subscribe_delete_response_message response;
   response = subscription_mngr.handle_subscription_delete(request_);
   if (response.success) {
-    subscription_mngr.stop_subscription(request_->ri_crequest_id.value.ric_instance_id, event_manager, request_);
+    subscription_mngr.stop_subscription(request_->ri_crequest_id.value, event_manager, request_);
     send_e2_subscription_delete_response(response);
   } else {
     send_e2_subscription_delete_failure(response);

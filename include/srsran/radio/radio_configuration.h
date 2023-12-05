@@ -24,6 +24,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/radio/radio_constants.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 
@@ -109,6 +110,15 @@ struct radio {
   double sampling_rate_hz;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
+  /// \brief Enables discontinuous transmission.
+  /// \remark Not all drivers and/or devices support this feature.
+  bool discontinuous_tx;
+  /// \brief Power ramping time of the transmit chain in microseconds.
+  ///
+  /// \note It is recommended to configure this parameter carefully, taking into account the characteristics of the
+  /// transmit chain in order to achieve optimal performance.
+  /// \remark Not all drivers and/or devices support this feature.
+  float power_ramping_us;
   /// \brief Indicates any device specific parameters to create the session.
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
@@ -128,7 +138,10 @@ inline clock_sources::source to_clock_source(const std::string& str)
   if (str == "gpsdo") {
     return clock_sources::source::GPSDO;
   }
-  return clock_sources::source::DEFAULT;
+  if (str == "default") {
+    return clock_sources::source::DEFAULT;
+  }
+  report_error("Invalid clock/sync source '{}'.", str);
 }
 
 /// Converts a string into a OTW format. No error or invalid type is returned if the string is not valid.
@@ -143,7 +156,10 @@ inline over_the_wire_format to_otw_format(const std::string& str)
   if (str == "sc16") {
     return over_the_wire_format::SC16;
   }
-  return over_the_wire_format::DEFAULT;
+  if (str == "default") {
+    return over_the_wire_format::DEFAULT;
+  }
+  report_error("Invalid OTW format '{}'.", str);
 }
 
 /// Interface for validating a given radio configuration.

@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "pusch_uci_decoder_notifier.h"
 #include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
@@ -61,7 +62,7 @@ class pusch_processor_csi_part1_feedback
 public:
   virtual ~pusch_processor_csi_part1_feedback() = default;
 
-  virtual void on_csi_part1(span<const uint8_t> part1) = 0;
+  virtual void on_csi_part1(const uci_payload_type& part1) = 0;
 };
 
 /// \brief Adapts the notifiers of each PUSCH decoder to the PUSCH processor notifier.
@@ -78,9 +79,6 @@ public:
     csi_part_1_notifier(*this),
     csi_part_2_notifier(*this)
   {
-    uci_payload.harq_ack.clear();
-    uci_payload.csi_part1.clear();
-    uci_payload.csi_part2.clear();
   }
 
   /// \brief Configures the notifier for a new transmission.
@@ -95,6 +93,10 @@ public:
     notifier            = &notifier_;
     csi_part_1_feedback = &csi_part_1_feedback_;
     uci_payload.csi     = csi;
+
+    uci_payload.harq_ack.clear();
+    uci_payload.csi_part1.clear();
+    uci_payload.csi_part2.clear();
   }
 
   /// Gets the PUSCH demodulator notifier.
@@ -106,7 +108,7 @@ public:
   /// Gets the HARQ-ACK notifier and sets the field as pending.
   pusch_uci_decoder_notifier& get_harq_ack_notifier()
   {
-    srsran_assert(!pending_csi_part1, "HARQ-ACK has already been requested.");
+    srsran_assert(!pending_harq_ack, "HARQ-ACK has already been requested.");
     pending_harq_ack = true;
     return harq_ack_notifier;
   }
@@ -186,9 +188,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_harq_ack(field);
     }
 
@@ -206,9 +207,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_csi_part1(field);
     }
 
@@ -226,9 +226,8 @@ private:
     void on_uci_decoded(span<const uint8_t> message, const uci_status& status) override
     {
       pusch_uci_field field;
-      field.payload.resize(message.size());
-      srsvec::copy(field.payload, message);
-      field.status = status;
+      field.payload = uci_payload_type(message.begin(), message.end());
+      field.status  = status;
       callback.on_csi_part2(field);
     }
 

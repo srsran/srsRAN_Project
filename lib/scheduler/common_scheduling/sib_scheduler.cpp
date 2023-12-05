@@ -102,6 +102,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
       const unsigned coreset_duration        = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id()).duration;
       const auto&    pdsch_td_res_alloc_list = get_si_rnti_pdsch_time_domain_list(
           cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+      bool is_sib1_scheduled = false;
       for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
         // Check whether PDSCH time domain resource fits in DL symbols of the slot.
         if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
@@ -114,9 +115,13 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
           time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
           if (allocate_sib1(res_grid, ssb_idx, time_resource)) {
             // SIB1 Allocation successful.
+            is_sib1_scheduled = true;
             break;
           }
         }
+      }
+      if (not is_sib1_scheduled) {
+        logger.error("No valid PDSCH time domain resource exists to schedule SIB1");
       }
     }
   }

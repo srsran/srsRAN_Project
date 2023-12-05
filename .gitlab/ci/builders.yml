@@ -1,16 +1,10 @@
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "13"
-    file: .gitlab/ci-shared/setup/default.yml
+    ref: "14"
+    file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "13"
-    file: .gitlab/ci-shared/setup/workflow.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "13"
+    ref: "14"
     file: .gitlab/ci-shared/tools/docker.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "13"
-    file: .gitlab/ci-shared/setup/versions.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -19,15 +13,16 @@ include:
 ################################################################################
 stages:
   - ci
-  - uhd
+  - dependencies
   - publish
   - manifest
+  - alt registries
 
 ################################################################################
 # UHD builder
 ################################################################################
 .ubuntu-uhd-builder:
-  stage: uhd
+  stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
@@ -69,9 +64,12 @@ stages:
         curl -LJO "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz"
         tar -xf "uhd-${uhd_version}.tar.gz"
         cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
-        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" ..
+        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" ..
         make -j${KUBERNETES_CPU_REQUEST}
         make install
+
+        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
+        cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
 
     # Publish compiled version to the registry
@@ -94,30 +92,135 @@ stages:
     paths:
       - .gitlab/ci/builders/uhd
     expire_in: 30 minutes
+  parallel:
+    matrix:
+      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
 
-ubuntu-23-uhd:
+ubuntu-23.10-uhd:
+  extends: .ubuntu-uhd-builder
+  variables:
+    os_version: "23.10"
+  parallel:
+    matrix:
+      - uhd_version: ["4.5.0.0"]
+
+ubuntu-23.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "23.04"
   parallel:
     matrix:
-      - uhd_version: ["4.3.0.0"]
+      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
 
-ubuntu-22-uhd:
+ubuntu-22.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "22.04"
-  parallel:
-    matrix:
-      - uhd_version: ["4.2.0.0"]
 
-ubuntu-20-uhd:
+ubuntu-20.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "20.04"
+
+################################################################################
+# DPDK builder
+################################################################################
+.ubuntu-dpdk-builder:
+  stage: dependencies
+  image: ubuntu:${os_version}
+  rules:
+    - if: $ON_MR
+  tags:
+    - ${AMD64_TAG}
+  variables:
+    os_version: ""
+    dpdk_version: ""
+    GIT_STRATEGY: none
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_CPU_REQUEST: 3
+  before_script:
+    - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+    # Download existing package in the registry, if exists
+    - |
+      download_from_registry() {
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz" -o output.tar.gz)
+        if [[ $http_code == "200" ]]; then
+          tar -xf output.tar.gz
+          return 0
+        else
+          return 1
+        fi
+      }
+
+    # Install dependencies and compile
+    - |
+      build_dpdk() {
+        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
+        
+        export PIP_EXTRA_INDEX_URL=""
+        pip3 install meson pyelftools || pip3 install --break-system-packages meson pyelftools 
+
+        cd /tmp
+        curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
+        cd dpdk*${dpdk_version}
+        meson build --prefix "/opt/dpdk/${dpdk_version}"
+        ninja -C build install
+
+        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
+        cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
+      }
+
+    # Publish compiled version to the registry
+    - |
+      publish_to_registry() {
+        cd ${CI_PROJECT_DIR}
+        tar -czf dpdk.tar.gz .gitlab/ci/builders/dpdk/${dpdk_version}
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz"
+      }
+  script:
+    - |
+      if download_from_registry; then
+        echo "Reusing existing package"
+      else
+        echo "Not found on the package registry. It will be compiled and published"
+        build_dpdk
+        publish_to_registry
+      fi
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/dpdk
+    expire_in: 30 minutes
   parallel:
     matrix:
-      - uhd_version: ["4.2.0.0", "4.1.0.5"]
+      - dpdk_version: ["21.08", "22.11.2", "23.07"]
+
+ubuntu-23.10-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "23.10"
+  parallel:
+    matrix:
+      - dpdk_version: ["22.11.2", "23.07"]
+
+ubuntu-23.04-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "23.04"
+
+ubuntu-22.04-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "22.04"
+
+ubuntu-20.04-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "20.04"
 
 ################################################################################
 # Common
@@ -145,7 +248,7 @@ ubuntu-20-uhd:
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
-      mkdir -p $CONTEXT/uhd  # make sure those jobs that don't need UHD can copy something
+      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
   needs:
     - builder version
   cache:
@@ -196,7 +299,8 @@ docker-builder-publish [ubuntu, 20.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-20-uhd
+    - ubuntu-20.04-uhd
+    - ubuntu-20.04-dpdk
 
 docker manifest ubuntu 20.04:
   extends: .docker manifest
@@ -229,7 +333,8 @@ docker-builder-publish [ubuntu, 22.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-22-uhd
+    - ubuntu-22.04-uhd
+    - ubuntu-22.04-dpdk
 
 docker manifest ubuntu 22.04:
   extends: .docker manifest
@@ -262,7 +367,8 @@ docker-builder-publish [ubuntu, 23.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-23-uhd
+    - ubuntu-23.04-uhd
+    - ubuntu-23.04-dpdk
 
 docker manifest ubuntu 23.04:
   extends: .docker manifest
@@ -280,6 +386,40 @@ docker manifest ubuntu 23.04:
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-amd64 \
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-arm64
       docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}
+
+# Ubuntu 23.10
+docker-builder-publish [ubuntu, 23.10]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+    - ubuntu-23.10-uhd
+    - ubuntu-23.10-dpdk
+
+docker manifest ubuntu 23.10:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [ubuntu, 23.10]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}
 
 # debian
 docker-builder-publish [debian]:
@@ -316,7 +456,7 @@ docker-builder-publish [rhel, 8]:
     OS_NAME: rhel
     OS_VERSION: "8"
     VERSION: $DOCKER_BUILDER_VERSION
-    RHEL_CT_VERSION: "1.0.6"
+    RHEL_CT_VERSION: "2023.5_1.0.3"
     MULTI_ARCH_BUILD: "true"
   parallel:
     matrix:
@@ -340,3 +480,49 @@ docker manifest rhel 8:
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-amd64 \
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-arm64
       docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}
+
+tag alt registries:
+  extends: .docker manifest
+  stage: alt registries
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [archlinux, latest]
+      artifacts: false
+    - job: "docker-builder-publish [debian]: [11]"
+      artifacts: false
+    - job: "docker-builder-publish [debian]: [12]"
+      artifacts: false
+    - job: docker manifest ubuntu 20.04
+      artifacts: false
+    - job: docker manifest ubuntu 22.04
+      artifacts: false
+    - job: docker manifest ubuntu 23.04
+      artifacts: false
+    - job: docker manifest ubuntu 23.10
+      artifacts: false
+    - job: docker manifest rhel 8
+      artifacts: false
+  script:
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get update && \
+        apt-get install -y --no-install-recommends skopeo
+    - |
+      skopeo copy \
+        docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION} \
+        docker://${ALT_REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION}
+  parallel:
+    matrix:
+      - OS_NAME: ubuntu
+        OS_VERSION: ["20.04", "22.04", "23.04", "23.10"]
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: debian
+        OS_VERSION: ["11", "12"]
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: archlinux
+        OS_VERSION: latest
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - OS_NAME: rhel
+        OS_VERSION: "8"
+        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}

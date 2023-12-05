@@ -20,9 +20,9 @@
  *
  */
 
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
 #include "mac_test_helpers.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"

@@ -40,14 +40,20 @@ static void fill_optional_uci_parameters(fapi::ul_pusch_pdu_builder& builder, co
   if (!uci) {
     return;
   }
+  builder.add_optional_pusch_uci_alpha(uci->alpha);
 
-  builder.add_optional_pusch_uci(uci->harq_ack_nof_bits,
-                                 uci->csi_part1_nof_bits,
-                                 uci->csi_part2_nof_bits,
-                                 uci->alpha,
-                                 uci->beta_offset_harq_ack,
-                                 uci->beta_offset_csi_1,
-                                 uci->beta_offset_csi_2);
+  if (uci->harq) {
+    const uci_info::harq_info& harq = *uci->harq;
+    builder.add_optional_pusch_uci_harq(harq.harq_ack_nof_bits, harq.beta_offset_harq_ack);
+  }
+
+  if (uci->csi) {
+    const uci_info::csi_info& csi = *uci->csi;
+    builder.add_optional_pusch_uci_csi1(csi.csi_part1_nof_bits, csi.beta_offset_csi_1);
+    if (csi.beta_offset_csi_2) {
+      builder.add_optional_pusch_uci_csi2(*csi.beta_offset_csi_2);
+    }
+  }
 }
 
 void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu)

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../cell/resource_grid_util.h"
 #include "../ue_scheduling/ue_repository.h"
 #include "uci_scheduler.h"
 
@@ -30,6 +31,7 @@ namespace srsran {
 class cell_configuration;
 class uci_allocator;
 struct cell_resource_allocator;
+struct cell_slot_resource_allocator;
 
 class uci_scheduler_impl final : public uci_scheduler
 {
@@ -41,6 +43,12 @@ public:
   void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
 
 private:
+  // Helper that schedules the SR and CSI for a given user at a given slot.
+  void schedule_uci(cell_slot_resource_allocator&           slot_alloc,
+                    rnti_t                                  crnti,
+                    const ue_cell&                          user,
+                    optional<std::pair<unsigned, unsigned>> csi_period_and_offset);
+
   // Cell configuration.
   const cell_configuration& cell_cfg;
   // Reference to PUCCH resource allocator object.

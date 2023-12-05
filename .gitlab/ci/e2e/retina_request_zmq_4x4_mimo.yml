@@ -18,7 +18,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: zmq
       nof_ant: 4
@@ -38,13 +37,15 @@
       requests: 1
     memory:
       requests: "8G"
+      limit: "8G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  mode: grpc
   resources:
     - type: zmq
       nof_ant: 4
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin
@@ -62,4 +63,3 @@
       requests: "3G"
       limit: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  mode: grpc

@@ -36,12 +36,22 @@ class file_event_tracer;
 
 namespace execution_config_helper {
 
+/// Parameters of a queue of tasks.
+struct task_queue {
+  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
+  concurrent_queue_policy policy;
+  /// Task queue size.
+  unsigned size;
+};
+
 namespace detail {
 
 /// Parameters of the task executor, including name and decorators.
 struct executor_common {
   /// Name of the executor.
   std::string name;
+  /// In case of non-empty, the executor is instantiated as a strand executor.
+  optional<task_queue> strand{};
   /// Whether to log when task fails to be dispatched.
   bool report_on_failure = true;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
@@ -50,14 +60,6 @@ struct executor_common {
 };
 
 } // namespace detail
-
-/// Parameters of a queue of tasks.
-struct task_queue {
-  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
-  concurrent_queue_policy policy;
-  /// Task queue size.
-  unsigned size;
-};
 
 /// Arguments for a single task worker creation.
 struct single_worker {
@@ -114,11 +116,12 @@ struct priority_multiqueue_worker {
     /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
     task_priority priority;
 
-    executor(const std::string& name_,
-             task_priority      priority_,
-             bool               report_on_failure_ = true,
-             bool               synchronous_       = false) :
-      executor_common{name_, report_on_failure_, synchronous_}, priority(priority_)
+    executor(const std::string&   name_,
+             task_priority        priority_,
+             optional<task_queue> strand_            = {},
+             bool                 report_on_failure_ = true,
+             bool                 synchronous_       = false) :
+      executor_common{name_, strand_, report_on_failure_, synchronous_}, priority(priority_)
     {
     }
   };

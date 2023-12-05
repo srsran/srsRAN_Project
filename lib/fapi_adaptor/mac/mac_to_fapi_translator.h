@@ -48,9 +48,9 @@ public:
                          std::unique_ptr<precoding_matrix_mapper> pm_mapper_,
                          unsigned                                 cell_nof_prbs_) :
     logger(logger_),
-    pm_mapper(std::move(pm_mapper_)),
     msg_gw(msg_gw_),
     last_msg_notifier(last_msg_notifier_),
+    pm_mapper(std::move(pm_mapper_)),
     cell_nof_prbs(cell_nof_prbs_)
   {
     srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
@@ -76,12 +76,12 @@ private:
 private:
   /// FAPI logger.
   srslog::basic_logger& logger;
-  /// Precoding matrix mapper.
-  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// Slot-specific last message notifier.
   fapi::slot_last_message_notifier& last_msg_notifier;
+  /// Precoding matrix mapper.
+  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
   /// Cell number of resource blocks.
   const unsigned cell_nof_prbs;
 };

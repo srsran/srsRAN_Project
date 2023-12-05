@@ -35,6 +35,8 @@ private:
 
   task_executor& pcell_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
   /// It helps to avoid queuing of redundant notification tasks in case of frequent changes of the buffer status.
   /// If the flag is set, no further notification needs to be scheduled, because the already queued task will pick the
@@ -42,12 +44,14 @@ private:
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
 public:
-  rlc_tx_tm_entity(du_ue_index_t                        du_index,
+  rlc_tx_tm_entity(uint32_t                             du_index,
+                   du_ue_index_t                        ue_index,
                    rb_id_t                              rb_id,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_);
+                   task_executor&                       pcell_executor_,
+                   rlc_pcap&                            pcap_);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override;

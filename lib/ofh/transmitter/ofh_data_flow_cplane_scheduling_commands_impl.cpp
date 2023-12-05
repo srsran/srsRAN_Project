@@ -140,20 +140,21 @@ static ecpri::realtime_control_parameters generate_ecpri_control_parameters(uint
 }
 
 data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_impl(
-    data_flow_cplane_scheduling_commands_impl_config&& config) :
-  logger(*config.logger),
+    const data_flow_cplane_scheduling_commands_impl_config&  config,
+    data_flow_cplane_scheduling_commands_impl_dependencies&& dependencies) :
+  logger(*dependencies.logger),
   ru_nof_prbs(config.ru_nof_prbs),
   dl_compr_params(config.dl_compr_params),
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
   vlan_params(config.vlan_params),
-  ul_cplane_context_repo_ptr(config.ul_cplane_context_repo),
-  frame_pool_ptr(config.frame_pool),
+  ul_cplane_context_repo_ptr(dependencies.ul_cplane_context_repo),
+  frame_pool_ptr(dependencies.frame_pool),
   ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
   frame_pool(*frame_pool_ptr),
-  eth_builder(std::move(config.eth_builder)),
-  ecpri_builder(std::move(config.ecpri_builder)),
-  cp_builder(std::move(config.cp_builder))
+  eth_builder(std::move(dependencies.eth_builder)),
+  ecpri_builder(std::move(dependencies.ecpri_builder)),
+  cp_builder(std::move(dependencies.cp_builder))
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
@@ -167,9 +168,10 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
 {
   data_direction direction = context.direction;
   slot_point     slot      = context.slot;
-  logger.debug("Creating Control-Plane message type 1 for {} at slot={}",
+  logger.debug("Creating Control-Plane message type 1 for {} at slot={}, eaxc={}",
                (direction == data_direction::downlink) ? "downlink" : "uplink",
-               slot);
+               slot,
+               context.eaxc);
 
   // Get an ethernet frame buffer.
   scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);

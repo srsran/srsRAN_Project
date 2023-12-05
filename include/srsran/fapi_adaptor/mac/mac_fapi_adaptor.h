@@ -26,6 +26,7 @@ namespace srsran {
 
 namespace fapi {
 class slot_data_message_notifier;
+class slot_error_message_notifier;
 class slot_time_message_notifier;
 } // namespace fapi
 
@@ -48,11 +49,14 @@ class mac_fapi_adaptor
 public:
   virtual ~mac_fapi_adaptor() = default;
 
-  /// \brief Returns a reference to the slot data notifier used by the adaptor.
-  virtual fapi::slot_data_message_notifier& get_slot_data_notifier() = 0;
-
   /// \brief Returns a reference to the slot time notifier used by the adaptor.
   virtual fapi::slot_time_message_notifier& get_slot_time_notifier() = 0;
+
+  /// \brief Returns a reference to the slot error notifier used by the adaptor.
+  virtual fapi::slot_error_message_notifier& get_slot_error_notifier() = 0;
+
+  /// \brief Returns a reference to the slot data notifier used by the adaptor.
+  virtual fapi::slot_data_message_notifier& get_slot_data_notifier() = 0;
 
   /// \brief Returns a reference to the MAC cell results notifier used by the adaptor.
   virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;
@@ -68,10 +72,6 @@ public:
 
   /// \brief Configures the MAC cell CRC handler to the given one.
   virtual void set_cell_crc_handler(mac_cell_control_information_handler& handler) = 0;
-
-  // :TODO: add the rest of the MAC handlers.
-
-  // :TODO: should provide access to the cell interface.
 };
 
 } // namespace fapi_adaptor

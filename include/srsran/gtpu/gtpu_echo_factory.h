@@ -24,7 +24,7 @@
 
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include <memory>
 
 /// This factory header file depends on the GTP-U tunnel interfaces (see above include list). It is kept separate as

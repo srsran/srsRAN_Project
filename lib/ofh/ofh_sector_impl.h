@@ -42,22 +42,19 @@ public:
               std::unique_ptr<transmitter>                      transmitter_,
               std::shared_ptr<uplink_cplane_context_repository> cp_repo_,
               std::shared_ptr<prach_context_repository>         prach_repo_,
-              std::shared_ptr<uplink_context_repository>        slot_repo_,
-              std::unique_ptr<ether::receiver>                  eth_receiver_) :
-    eth_receiver(std::move(eth_receiver_)),
+              std::shared_ptr<uplink_context_repository>        slot_repo_) :
     cp_repo(std::move(cp_repo_)),
     prach_repo(std::move(prach_repo_)),
     slot_repo(std::move(slot_repo_)),
     ofh_receiver(std::move(receiver_)),
     ofh_transmitter(std::move(transmitter_)),
-    ofh_sector_controller(*eth_receiver)
+    ofh_sector_controller(*ofh_receiver)
   {
     srsran_assert(ofh_receiver, "Invalid Open Fronthaul receiver");
     srsran_assert(ofh_transmitter, "Invalid Open Fronthaul transmitter");
     srsran_assert(cp_repo, "Invalid Control-Plane context repository");
     srsran_assert(prach_repo, "Invalid PRACH context repository");
     srsran_assert(slot_repo, "Invalid UL slot context repository");
-    srsran_assert(eth_receiver, "Invalid Ethernet receiver");
   }
 
   // See interface for documentation.
@@ -70,7 +67,6 @@ public:
   controller& get_controller() override;
 
 private:
-  std::unique_ptr<ether::receiver>                  eth_receiver;
   std::shared_ptr<uplink_cplane_context_repository> cp_repo;
   std::shared_ptr<prach_context_repository>         prach_repo;
   std::shared_ptr<uplink_context_repository>        slot_repo;

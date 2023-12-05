@@ -231,7 +231,7 @@ public:
 
   void on_du_remove_request_received(du_index_t idx) override
   {
-    logger.info("Received a du remove request for du {}", idx);
+    logger.info("Received a DU remove request for du={}", idx);
     last_du_idx = idx; // store idx
 
     if (handler != nullptr) {

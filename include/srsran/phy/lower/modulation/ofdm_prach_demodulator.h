@@ -52,6 +52,8 @@ public:
     unsigned nof_prb_ul_grid;
     /// Uplink resource grid subcarrier spacing. Expresses the numerology \f$\mu\f$.
     subcarrier_spacing pusch_scs;
+    /// Destination port identifier.
+    unsigned port;
   };
 
   /// Default destructor.
@@ -65,8 +67,9 @@ public:
   /// For short preamble formats, the input shall correspond to one slot at \ref configuration::pusch_scs.
   ///
   /// An assertion is triggered if:
-  /// - the input samples are not sufficient, or
-  /// - the buffer dimensions cannot contain the demodulated sequences.
+  /// - the input samples are not sufficient,
+  /// - the buffer dimensions cannot contain the demodulated sequences, or
+  /// - the port identifier exceeds the number of ports contained in the destination buffer.
   ///
   /// \param[out] buffer    Frequency-domain signal corresponding to one PRACH receive occasion.
   /// \param[in] input      PRACH receive window baseband samples.

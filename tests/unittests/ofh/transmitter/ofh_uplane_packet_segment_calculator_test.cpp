@@ -27,6 +27,24 @@
 using namespace srsran;
 using namespace ofh;
 
+/// Returns number of segments after segmenting the given number of PRBs into frames of given size.
+static unsigned segment_prbs(const ru_compression_params& comp_params, unsigned nof_prbs, units::bytes frame_size)
+{
+  ofh_uplane_fragment_size_calculator calculator(0, nof_prbs, comp_params);
+
+  bool     calculate_segments_finished = false;
+  unsigned nof_segments                = 0;
+  unsigned segment_start_prb           = 0;
+  unsigned segment_nof_prbs            = 0;
+
+  while (!calculate_segments_finished) {
+    calculate_segments_finished =
+        calculator.calculate_fragment_size(segment_start_prb, segment_nof_prbs, frame_size.value());
+    ++nof_segments;
+  }
+  return nof_segments;
+}
+
 TEST(ofh_uplane_packet_fragment_calculator, prbs_fit_in_one_segment_passes)
 {
   ru_compression_params comp_params;
@@ -180,5 +198,24 @@ TEST(ofh_uplane_packet_fragment_calculator, different_frame_size_segments)
   ASSERT_EQ(nof_segments, 7);
   for (unsigned i = start_prb, e = start_prb + nof_prbs; i != e; ++i) {
     ASSERT_TRUE(used_prbs.test(i));
+  }
+}
+
+TEST(ofh_uplane_packet_fragment_calculator, correct_number_of_segments_calculated)
+{
+  ru_compression_params comp_params;
+  comp_params.type       = compression_type::none;
+  comp_params.data_width = 16;
+  unsigned     nof_prbs  = 273;
+  units::bytes headers_size{36};
+
+  // Test jumbo frames, medium size frames and normal frames.
+  units::bytes test_frame_sizes[] = {units::bytes{9000}, units::bytes{6600}, units::bytes{3200}, units::bytes{1500}};
+
+  for (auto frame_size : test_frame_sizes) {
+    unsigned nof_segments_processed = segment_prbs(comp_params, nof_prbs, frame_size - headers_size);
+    unsigned nof_segments_calculated =
+        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, comp_params, headers_size);
+    ASSERT_EQ(nof_segments_processed, nof_segments_calculated);
   }
 }

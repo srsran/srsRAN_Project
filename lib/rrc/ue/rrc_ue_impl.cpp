@@ -21,6 +21,10 @@
  */
 
 #include "rrc_ue_impl.h"
+#include "procedures/rrc_reconfiguration_procedure.h"
+#include "procedures/rrc_security_mode_command_procedure.h"
+#include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_ue_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -28,22 +32,22 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
-                         rrc_ue_du_processor_notifier&    du_proc_notif_,
-                         rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier_,
-                         rrc_ue_nas_notifier&             nas_notif_,
-                         rrc_ue_control_notifier&         ngap_ctrl_notif_,
-                         rrc_ue_reestablishment_notifier& cu_cp_notif_,
-                         cell_meas_manager&               cell_meas_mng_,
-                         const ue_index_t                 ue_index_,
-                         const rnti_t                     c_rnti_,
-                         const rrc_cell_context           cell_,
-                         const rrc_ue_cfg_t&              cfg_,
-                         const byte_buffer                du_to_cu_container_,
-                         rrc_ue_task_scheduler&           task_sched_,
-                         bool&                            reject_users_,
-                         bool                             is_inter_cu_handover_) :
-  context(ue_index_, c_rnti_, cell_, cfg_, is_inter_cu_handover_),
+rrc_ue_impl::rrc_ue_impl(up_resource_manager&              up_resource_mng_,
+                         rrc_ue_du_processor_notifier&     du_proc_notif_,
+                         rrc_pdu_f1ap_notifier&            f1ap_pdu_notifier_,
+                         rrc_ue_nas_notifier&              nas_notif_,
+                         rrc_ue_control_notifier&          ngap_ctrl_notif_,
+                         rrc_ue_reestablishment_notifier&  cu_cp_notif_,
+                         cell_meas_manager&                cell_meas_mng_,
+                         const ue_index_t                  ue_index_,
+                         const rnti_t                      c_rnti_,
+                         const rrc_cell_context            cell_,
+                         const rrc_ue_cfg_t&               cfg_,
+                         const byte_buffer                 du_to_cu_container_,
+                         rrc_ue_task_scheduler&            task_sched_,
+                         bool&                             reject_users_,
+                         optional<rrc_ue_transfer_context> rrc_context) :
+  context(ue_index_, c_rnti_, cell_, cfg_, rrc_context),
   up_resource_mng(up_resource_mng_),
   du_processor_notifier(du_proc_notif_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
@@ -54,18 +58,28 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_),
   reject_users(reject_users_),
-  logger(cfg_.logger),
+  logger("RRC", {ue_index_, c_rnti_}),
   event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_factory()))
 {
-  // TODO: Use task_sched to schedule RRC procedures.
-  (void)task_sched;
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
   srsran_assert(context.cfg.rrc_procedure_timeout_ms > 0, "RRC procedure timeout cannot be zero.");
+
+  if (rrc_context.has_value()) {
+    // Create SRBs.
+    for (const auto& srb : rrc_context.value().srbs) {
+      srb_creation_message srb_msg{};
+      srb_msg.ue_index        = ue_index_;
+      srb_msg.srb_id          = srb;
+      srb_msg.enable_security = true;
+      srb_msg.pdcp_cfg        = asn1::rrc_nr::pdcp_cfg_s{}; // TODO: add support for non-default config.
+      create_srb(srb_msg);
+    }
+  }
 }
 
 void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 {
-  logger.debug("ue={} Creating {}.", msg.ue_index, msg.srb_id);
+  logger.log_debug("Creating {}", msg.srb_id);
 
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
@@ -78,13 +92,13 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
                          std::forward_as_tuple(msg.ue_index, msg.srb_id, task_sched.get_timer_factory()));
     auto& srb_context = context.srbs.at(msg.srb_id);
 
-    if (msg.srb_id == srb_id_t::srb2) {
+    if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {
       security::sec_as_config sec_cfg = context.sec_context.get_as_config(security::sec_domain::rrc);
-      srb_context.enable_security(security::truncate_config(sec_cfg));
+      srb_context.enable_full_security(security::truncate_config(sec_cfg));
     }
 
   } else {
-    logger.error("Couldn't create SRB{}.", msg.srb_id);
+    logger.log_error("Couldn't create {}", msg.srb_id);
   }
 }
 
@@ -113,8 +127,30 @@ void rrc_ue_impl::on_new_as_security_context()
   srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
                       "Attempted to configure security, but there is no interface to PDCP");
 
-  context.srbs.at(srb_id_t::srb1).enable_security(context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_rx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::off,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_tx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::off,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
   context.security_enabled = true;
+}
+
+void rrc_ue_impl::on_security_context_sucessful()
+{
+  srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+                      "Attempted to configure security, but there is no interface to PDCP");
+
+  context.srbs.at(srb_id_t::srb1)
+      .enable_rx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::on,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_tx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::on,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)
@@ -130,6 +166,7 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   ho_prep_info_ies_s&   ies = ho_prep.crit_exts.set_c1().set_ho_prep_info();
 
   if (not context.capabilities_list.has_value()) {
+    logger.log_error("No UE capabilities stored. Handover preparation message can't be generated.");
     return {}; // no capabilities present, return empty buffer.
   }
   ies.ue_cap_rat_list = *context.capabilities_list;

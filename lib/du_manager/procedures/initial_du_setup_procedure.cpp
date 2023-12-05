@@ -22,9 +22,9 @@
 
 #include "initial_du_setup_procedure.h"
 #include "../converters/f1ap_configuration_helpers.h"
-#include "../converters/mac_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "../du_cell_manager.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 
 using namespace srsran;

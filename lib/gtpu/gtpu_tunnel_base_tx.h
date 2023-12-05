@@ -24,7 +24,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include <arpa/inet.h>
 #include <cstdint>
 #include <netinet/in.h>

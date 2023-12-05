@@ -88,8 +88,26 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       ->always_capture_default();
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,
-                 "Set to a valid file path to print the received symbols")
+                 "Set to a valid file path to print the received symbols.")
       ->always_capture_default();
+  app.add_option_function<std::string>(
+         "--phy_rx_symbols_port",
+         [&log_params](const std::string& value) {
+           if (value == "all") {
+             log_params.phy_rx_symbols_port = nullopt;
+           } else {
+             log_params.phy_rx_symbols_port = parse_int<unsigned>(value).value();
+           }
+         },
+         "Set to a valid receive port number to dump the IQ symbols from that port only, or set to \"all\" to dump the "
+         "IQ symbols from all UL receive ports. Only works if \"phy_rx_symbols_filename\" is set.")
+      ->default_str("0")
+      ->check(CLI::NonNegativeNumber | CLI::IsMember({"all"}));
+  app.add_option("--phy_rx_symbols_prach",
+                 log_params.phy_rx_symbols_prach,
+                 "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
+                 "\"phy_rx_symbols_filename\" is set.")
+      ->capture_default_str();
   app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
@@ -161,8 +179,11 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
   app.add_option("--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   app.add_option("--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  app.add_option("--rlc_filename", pcap_params.rlc.filename, "RLC PCAP file output path")->capture_default_str();
+  app.add_option("--rlc_rb_type", pcap_params.rlc.rb_type, "RLC PCAP RB type (all, srb, drb)")->capture_default_str();
+  app.add_option("--rlc_enable", pcap_params.rlc.enabled, "Enable RLC packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
-  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (DLT or UDP)")->capture_default_str();
+  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (dlt or udp)")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
@@ -203,7 +224,13 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
+  app.add_option("--bind_addr",
+                 amf_params.bind_addr,
+                 "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
   app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
@@ -364,6 +391,15 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
                  "Default confidentiality protection indication for DRBs")
       ->capture_default_str()
       ->check(sec_check);
+
+  app.add_option("--nea_pref_list",
+                 config.nea_preference_list,
+                 "Ordered preference list for the selection of encryption algorithm (NEA) (default: NEA0, NEA2, NEA1)");
+
+  app.add_option("--nia_pref_list",
+                 config.nia_preference_list,
+                 "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
+      ->capture_default_str();
   ;
 }
 
@@ -373,10 +409,11 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
-  app.add_option("--ue_context_setup_timeout_s",
-                 cu_cp_params.ue_context_setup_timeout_s,
-                 "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
-                 "core, in seconds. If the value is reached, the UE will be released")
+  app.add_option(
+         "--ue_context_setup_timeout_s",
+         cu_cp_params.ue_context_setup_timeout_s,
+         "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
+         "core, in seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
@@ -392,6 +429,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
 {
   app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  app.add_option("--gtpu_reordering_timer",
+                 cu_up_params.gtpu_reordering_timer_ms,
+                 "GTP-U RX reordering timer (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
@@ -439,6 +480,14 @@ static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appcon
   app.add_option("--ss0_index", common_params.ss0_index, "SearchSpace#0 index")
       ->capture_default_str()
       ->check(CLI::Range(0, 15));
+
+  // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
+  // been set to 3. And, we use only pos2 or pos1.
+  app.add_option("--max_coreset0_duration",
+                 common_params.max_coreset0_duration,
+                 "Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
 }
 
 static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_appconfig& ded_params)
@@ -513,6 +562,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
+  app.add_option("--max_nof_harq_retxs",
+                 pdsch_params.max_nof_harq_retxs,
+                 "Maximum number of times a DL HARQ can be retransmitted, before it gets discarded")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 4));
   app.add_option("--max_consecutive_kos",
                  pdsch_params.max_consecutive_kos,
                  "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
@@ -862,15 +916,41 @@ static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched
                  si_sched_info.sib_mapping_info,
                  "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->capture_default_str()
-      ->check(CLI::IsMember({19}));
+      ->check(CLI::IsMember({2, 19}));
 }
 
-static void configure_cli11_sib19_args(CLI::App& app, sib19_info& sib19)
+static void configure_cli11_ephemeris_info(CLI::App& app, position_velocity_t& ephemeris_info)
 {
-  app.add_option("--distance_thres", sib19.distance_thres, "Distance threshold for SIB19")
+  app.add_option("--pos_x", ephemeris_info.position_x, "X Position of the satellite")
       ->capture_default_str()
-      ->check(CLI::Range(0, 255));
-  // TODO: Add remaining parameters.
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_y", ephemeris_info.position_y, "Y Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_z", ephemeris_info.position_z, "Z Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--vel_x", ephemeris_info.velocity_vx, "X Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_y", ephemeris_info.velocity_vy, "Y Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_z", ephemeris_info.velocity_vz, "Z Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+}
+
+static void configure_cli11_ntn_args(CLI::App& app, optional<ntn_config>& ntn)
+{
+  ntn.emplace();
+  app.add_option("--cell_specific_koffset", ntn->cell_specific_koffset, "Cell-specific k-offset to be used for NTN.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1023));
+
+  // ephemeris configuration.
+  CLI::App* ephem_subcmd = app.add_subcommand("ephemeris_info", "ephermeris information of the satellite");
+  configure_cli11_ephemeris_info(*ephem_subcmd, ntn.value().ephemeris_info);
 }
 
 static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
@@ -882,9 +962,6 @@ static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
          "the SI message.")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 20, 40, 80, 160, 320, 640, 1280}));
-
-  CLI::App* sib19_subcmd = app.add_subcommand("sib19", "Content of SIB19");
-  configure_cli11_sib19_args(*sib19_subcmd, sib_params.sib19);
 
   // SI message scheduling parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -996,6 +1073,7 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
   app.add_option("--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4, 6}));
+  app.add_option("--ports", prach_params.ports, "List of antenna ports")->capture_default_str();
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -1088,6 +1166,8 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
 
 static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
 {
+  app.add_option("--csi_rs_enabled", csi_params.csi_rs_enabled, "Enable CSI-RS resources and CSI reporting")
+      ->capture_default_str();
   app.add_option("--csi_rs_period", csi_params.csi_rs_period_msec, "CSI-RS period in milliseconds")
       ->capture_default_str()
       ->check(CLI::IsMember({10, 20, 40, 80}));
@@ -1123,7 +1203,7 @@ static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_appconfig& bsr_p
   app.add_option(
          "--lc_sr_delay_timer", bsr_params.lc_sr_delay_timer, "Logical Channel SR delay timer in nof. subframes")
       ->capture_default_str()
-      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+      ->check(CLI::IsMember({20, 40, 64, 128, 512, 1024, 2560}));
 }
 
 static void configure_cli11_mac_phr_args(CLI::App& app, mac_phr_appconfig& phr_params)
@@ -1373,6 +1453,41 @@ static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& pdcp_params
   configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
 }
 
+static void configure_cli11_mac_args(CLI::App& app, mac_lc_appconfig& mac_params)
+{
+  app.add_option("--lc_priority",
+                 mac_params.priority,
+                 "Logical Channel priority. An increasing priority value indicates a lower priority level")
+      ->capture_default_str()
+      ->check(CLI::Range(4, 16));
+  app.add_option("--lc_group_id", mac_params.lc_group_id, "Logical Channel Group id")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 7));
+  app.add_option(
+         "--bucket_size_duration_ms", mac_params.bucket_size_duration_ms, "Bucket size duration in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20, 50, 100, 150, 300, 500, 1000}));
+  app.add_option("--prioritized_bit_rate_kBps",
+                 mac_params.prioritized_bit_rate_kBps,
+                 "Prioritized bit rate in kBps. Value 65537 means infinity")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 2768, 65536, 65537}));
+}
+
+static void configure_cli11_srb_args(CLI::App& app, srb_appconfig& srb_params)
+{
+  app.add_option("--srb_id", srb_params.srb_id, "SRB Id")->capture_default_str()->check(CLI::IsMember({1, 2}));
+  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
+  configure_cli11_rlc_am_args(*rlc_subcmd, srb_params.rlc);
+  auto verify_callback = [&]() {
+    CLI::App* rlc = app.get_subcommand("rlc");
+    if (rlc->count_all() == 0) {
+      report_error("Error parsing SRB config for SRB{}. RLC configuration not present.\n", srb_params.srb_id);
+    }
+  };
+  app.callback(verify_callback);
+}
+
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
@@ -1384,11 +1499,14 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
   CLI::App* pdcp_subcmd = app.add_subcommand("pdcp", "PDCP parameters");
   configure_cli11_pdcp_args(*pdcp_subcmd, qos_params.pdcp);
+  CLI::App* mac_subcmd = app.add_subcommand("mac", "MAC parameters");
+  configure_cli11_mac_args(*mac_subcmd, qos_params.mac);
   auto verify_callback = [&]() {
     CLI::App* rlc       = app.get_subcommand("rlc");
     CLI::App* f1u_du    = app.get_subcommand("f1u_du");
     CLI::App* f1u_cu_up = app.get_subcommand("f1u_cu_up");
     CLI::App* pdcp      = app.get_subcommand("pdcp");
+    CLI::App* mac       = app.get_subcommand("mac");
     if (rlc->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. RLC configuration not present.\n", qos_params.five_qi);
     }
@@ -1400,6 +1518,9 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
     }
     if (pdcp->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. PDCP configuration not present.\n", qos_params.five_qi);
+    }
+    if (mac->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. MAC configuration not present.\n", qos_params.five_qi);
     }
   };
   app.callback(verify_callback);
@@ -1459,6 +1580,15 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
   app.add_option("--low_phy_dl_throttling",
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
+      ->capture_default_str();
+  app.add_option("--discontinuous_tx",
+                 config.discontinuous_tx_mode,
+                 "Enables discontinuous transmission mode for the radio front-ends supporting it.")
+      ->capture_default_str();
+  app.add_option("--power_ramping_time_us",
+                 config.power_ramping_time_us,
+                 "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
+                 "mitigates transient effects.")
       ->capture_default_str();
 }
 
@@ -1667,6 +1797,9 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
   app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
   app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
       ->capture_default_str();
+  app.add_option("--mtu", config.mtu_size, "NIC interface MTU size")
+      ->capture_default_str()
+      ->check(CLI::Range(1500, 9600));
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
@@ -1799,6 +1932,31 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
     }
   };
 
+  auto parsing_isolated_cpus_fcn = [parsing_fcn](cpu_affinities_appconfig& affinity_config,
+                                                 const std::string&        value,
+                                                 const std::string&        property_name) {
+    os_sched_affinity_bitmask mask;
+    parsing_fcn(mask, value, property_name);
+    // If parsing was successful, store the string in the config.
+    affinity_config.isol_cpus.emplace();
+    affinity_config.isol_cpus->isolated_cpus = value;
+
+    // Find free CPUs to be assigned to OS tasks.
+    std::stringstream ss;
+    for (unsigned pos = 0; pos != mask.size(); ++pos) {
+      if (!mask.test(pos)) {
+        ss << pos << ",";
+      }
+    }
+    std::string os_tasks_cpus = ss.str();
+    if (!os_tasks_cpus.empty()) {
+      // Remove last ',' character.
+      affinity_config.isol_cpus->os_tasks_cpus = os_tasks_cpus.substr(0, os_tasks_cpus.size() - 1);
+    } else {
+      report_error("Error in '{}' property: can not assign all available CPUs to the gNB app", property_name);
+    }
+  };
+
   app.add_option_function<std::string>(
       "--l1_dl_cpus",
       [&config, &parsing_fcn](const std::string& value) {
@@ -1881,6 +2039,13 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         }
       },
       "Policy used for assigning CPU cores to the Radio Unit tasks");
+
+  app.add_option_function<std::string>(
+      "--isolated_cpus",
+      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
+        parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
+      },
+      "CPU cores isolated for gNB application");
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
@@ -1997,10 +2162,18 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
+static void manage_ntn_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // Clean the NTN optional.
+  if (app.get_subcommand("ntn")->count_all() == 0) {
+    gnb_cfg.ntn_cfg.reset();
+  }
+}
+
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
-  // max_proc_delay..
+  // max_proc_delay.
   upper_phy_threads_appconfig& upper      = gnb_cfg.expert_execution_cfg.threads.upper_threads;
   CLI::App*                    expert_cmd = app.get_subcommand("expert_execution");
   if (expert_cmd->count_all() < 1 || expert_cmd->get_subcommand("threads")->count_all() < 1 ||
@@ -2047,8 +2220,9 @@ static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
-void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
+void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
+  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
   app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
@@ -2083,6 +2257,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
 
+  /// NTN section
+  CLI::App* ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();
+  configure_cli11_ntn_args(*ntn_subcmd, gnb_cfg.ntn_cfg);
+
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
@@ -2097,24 +2275,26 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
-  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
+  configure_cli11_common_cell_args(*common_cell_subcmd, gnb_parsed_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
-  common_cell_subcmd->parse_complete_callback([&gnb_cfg]() {
-    for (auto& cell : gnb_cfg.cells_cfg) {
-      cell.cell = gnb_cfg.common_cell_cfg;
+  common_cell_subcmd->parse_complete_callback([&gnb_parsed_cfg, &app]() {
+    for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+      cell.cell = gnb_parsed_cfg.common_cell_cfg;
     };
+    // Run the callback again for the cells if the option callback is already run once.
+    if (app.get_option("--cells")->get_callback_run()) {
+      app.get_option("--cells")->run_callback();
+    }
   });
 
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
-      [&gnb_cfg](const std::vector<std::string>& values) {
+      [&gnb_parsed_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        if (values.size() > gnb_cfg.cells_cfg.size()) {
-          gnb_cfg.cells_cfg.resize(values.size());
-          for (auto& cell : gnb_cfg.cells_cfg) {
-            cell.cell = gnb_cfg.common_cell_cfg;
-          }
+        gnb_parsed_cfg.config.cells_cfg.resize(values.size());
+        for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
+          cell.cell = gnb_parsed_cfg.common_cell_cfg;
         }
 
         // Format every cell.
@@ -2122,7 +2302,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
           CLI::App subapp("srsGNB application");
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_cells_args(subapp, gnb_cfg.cells_cfg[i]);
+          configure_cli11_cells_args(subapp, gnb_parsed_cfg.config.cells_cfg[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }
@@ -2146,6 +2326,22 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   };
   app.add_option_function<std::vector<std::string>>(
       "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // SRB parameters.
+  auto srb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    // Format every SRB setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("SRB parameters");
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
+      srb_appconfig srb_cfg;
+      configure_cli11_srb_args(subapp, srb_cfg);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+      gnb_cfg.srb_cfg[static_cast<srb_id_t>(srb_cfg.srb_id)] = srb_cfg;
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--srbs", srb_lambda, "Configures signaling radio bearers.");
 
   // Slicing parameters.
   auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
@@ -2186,6 +2382,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_ntn_optional(app, gnb_cfg);
     manage_processing_delay(app, gnb_cfg);
     manage_expert_execution_threads(app, gnb_cfg);
   });

@@ -28,9 +28,20 @@ done
 
 # setup ogstun and routing
 python3 setup_tun.py --ip_range ${UE_IP_RANGE}
+if [ $? -ne 0 ]
+then
+    echo "Failed to setup ogstun and routing"
+    exit 1
+fi
 
 # Add subscriber data to open5gs mongo db
+echo "SUBSCRIBER_DB=${SUBSCRIBER_DB}"
 python3 add_users.py --mongodb ${MONGODB_IP} --subscriber_data ${SUBSCRIBER_DB}
+if [ $? -ne 0 ]
+then
+    echo "Failed to add subscribers to database"
+    exit 1
+fi
 
 if $DEBUG
 then

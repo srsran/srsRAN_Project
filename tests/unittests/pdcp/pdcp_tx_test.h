@@ -35,7 +35,7 @@ namespace srsran {
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
 class pdcp_tx_test : public pdcp_tx_test_helper,
                      public ::testing::Test,
-                     public ::testing::WithParamInterface<pdcp_sn_size>
+                     public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned>>
 {
 protected:
   void SetUp() override

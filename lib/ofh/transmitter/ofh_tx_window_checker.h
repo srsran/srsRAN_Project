@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_ota_symbol_handler.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include <atomic>
 
 namespace srsran {
 namespace ofh {
 
 /// Open Fronthaul transmission window checker.
-class tx_window_checker : public ota_symbol_handler
+class tx_window_checker : public ota_symbol_boundary_notifier
 {
 public:
   tx_window_checker(srslog::basic_logger& logger_,
@@ -44,7 +44,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_new_ota_symbol(slot_symbol_point symbol_point) override
+  void on_new_symbol(slot_symbol_point symbol_point) override
   {
     // This atomic is only written from a single thread.
     count_val.store(symbol_point.system_slot(), std::memory_order::memory_order_release);

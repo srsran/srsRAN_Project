@@ -36,10 +36,10 @@ using namespace srsran;
 TEST_P(pdcp_rx_status_report_test, build_status_report)
 {
   uint32_t count = 262143;
+  init(GetParam());
 
   srsran::test_delimit_logger delimiter(
       "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-  init(GetParam());
 
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
@@ -57,6 +57,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
     EXPECT_EQ(hdr_fmc, count);
   }
 
+  uint8_t exp_bitmap = 0;
   for (uint32_t i = count + 5; i > count; i--) {
     byte_buffer test_pdu;
     get_test_pdu(i, test_pdu);
@@ -75,7 +76,8 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
       EXPECT_EQ(hdr_fmc, count);
       uint8_t bitmap;
       dec.unpack(bitmap, 8);
-      EXPECT_EQ(bitmap, (0b11110000 << (count + 5 - i)) & 0xff);
+      exp_bitmap |= (0b00001000 << (count + 5 - i));
+      ASSERT_EQ(bitmap, exp_bitmap);
     }
   }
 
@@ -101,7 +103,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
 TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
 {
   // this test only applies to 18-bit SNs.
-  if (sn_size == pdcp_sn_size::size12bits) {
+  if (std::get<pdcp_sn_size>(GetParam()) == pdcp_sn_size::size12bits) {
     return;
   }
 
@@ -150,9 +152,9 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
     for (uint32_t i = 0; i < (9000 - 5); i++) {
       ASSERT_TRUE(dec.unpack(bitmap, 8));
       if (i < (9000 - 5) - 1) {
-        EXPECT_EQ(bitmap, 0xff); // whole bitmap shall be ones (all missing)
+        ASSERT_EQ(bitmap, 0x0); // whole bitmap shall be zeros (all missing)
       } else {
-        EXPECT_EQ(bitmap, 0xfe); // only the last one is received
+        ASSERT_EQ(bitmap, 0x1); // only the last one is received
       }
     }
   }
@@ -195,16 +197,21 @@ TEST_P(pdcp_rx_status_report_test, rx_status_report)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
+  fmt::format_to(buffer,
+                 "{}bit_nia{}_nea{}",
+                 pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
+                 std::get<unsigned>(info.param),
+                 std::get<unsigned>(info.param));
   return fmt::to_string(buffer);
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
                          pdcp_rx_status_report_test,
-                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1)),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

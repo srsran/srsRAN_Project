@@ -78,7 +78,7 @@ private:
         input.begin(), input.end(), accumulator.begin(), accumulator.begin(), [&reference](float value, float acc) {
           float diff = reference - value;
           if (!std::isnormal(diff)) {
-            diff = 1e9F;
+            diff = 1e-9F;
           }
           return diff + acc;
         });

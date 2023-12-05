@@ -240,11 +240,13 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
 
     if (ul_info.uci.has_value()) {
-      fmt::format_to(fmtbuf,
-                     " uci: harq_bits={} csi-1_bits={} csi-2_bits={}",
-                     ul_info.uci.value().harq_ack_nof_bits,
-                     ul_info.uci.value().csi_part1_nof_bits,
-                     ul_info.uci.value().csi_part2_nof_bits);
+      fmt::format_to(
+          fmtbuf,
+          " uci: harq_bits={} csi-1_bits={} csi-2_present={}",
+          ul_info.uci.value().harq.has_value() ? ul_info.uci.value().harq.value().harq_ack_nof_bits : 0U,
+          ul_info.uci.value().csi.has_value() ? ul_info.uci.value().csi.value().csi_part1_nof_bits : 0U,
+          ul_info.uci.value().csi.has_value() && ul_info.uci.value().csi.value().beta_offset_csi_2.has_value() ? "Yes"
+                                                                                                               : "No");
     }
   }
 
@@ -287,7 +289,8 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
-    logger.debug("Slot decisions cell=0 t={}us ({} PDSCH{}, {} PUSCH{}):{}",
+    logger.debug("Slot decisions cell={} t={}us ({} PDSCH{}, {} PUSCH{}):{}",
+                 cell_index,
                  decision_latency.count(),
                  nof_pdschs,
                  nof_pdschs == 1 ? "" : "s",
@@ -372,7 +375,8 @@ void scheduler_result_logger::log_info(const sched_result& result)
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
-    logger.info("Slot decisions cell=0 t={}us ({} PDSCH{}, {} PUSCH{}): {}",
+    logger.info("Slot decisions cell={} t={}us ({} PDSCH{}, {} PUSCH{}): {}",
+                cell_index,
                 decision_latency.count(),
                 nof_pdschs,
                 nof_pdschs == 1 ? "" : "s",

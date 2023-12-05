@@ -31,6 +31,7 @@ def configure_test_parameters(
     pcap: Optional[bool] = None,
     gtpu_enable: Optional[bool] = None,
     common_search_space_enable: bool = False,
+    prach_config_index: int = -1,
 ):
     """
     Configure test parameters
@@ -55,6 +56,7 @@ def configure_test_parameters(
                 "bandwidth": bandwidth,
                 "time_alignment_calibration": time_alignment_calibration,
                 "common_search_space_enable": common_search_space_enable,
+                "prach_config_index": prach_config_index,
             },
         },
     }
@@ -65,15 +67,25 @@ def configure_test_parameters(
     if sample_rate is not None:
         retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
         retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate
-    if _is_tdd(band):
+    if is_tdd(band):
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
+
+    metrics_server = None
+    for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
+        if "metrics-server" in node_name:
+            metrics_server = retina_manager.get_testbed_info()["generic"][node_name]
+
+    if metrics_server is not None and metrics_server.metadata.get("ip", None) is not None:
+        retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.metadata["ip"]
+        retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
+        logging.info("Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
 
 
-def _is_tdd(band: int) -> bool:
+def is_tdd(band: int) -> bool:
     """
     Return True if the band is tdd
     """
@@ -93,31 +105,43 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
     """
     return {  # type: ignore
         3: defaultdict(
-            lambda: 368410,
+            lambda: 368500,
             {
-                30: 367450,
-                40: 366490,
-                50: 365530,
+                5: 368410,
+                10: 367930,
+                20: 366970,
+                30: 366010,
+                40: 365050,
+                50: 364090,
             },
         ),
         7: defaultdict(
             lambda: 535930,
             {
-                30: 534970,
-                40: 534010,
-                50: 533050,
+                20: 534490,
+                30: 533530,
+                40: 532570,
+                50: 531610,
             },
         ),
         41: defaultdict(
             lambda: 519870,
             {
-                20: 520110,
-                30: 518910,
-                40: 517950,
-                50: 517230,
+                20: 518910,
+                30: 517950,
+                40: 516990,
+                50: 516030,
             },
         ),
-        78: defaultdict(lambda: 632544),
+        78: defaultdict(
+            lambda: 632544,
+            {
+                20: 632256,
+                30: 631968,
+                40: 631680,
+                50: 631296,
+            },
+        ),
     }[band][bandwidth]
 
 

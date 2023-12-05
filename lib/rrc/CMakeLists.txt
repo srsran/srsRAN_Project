@@ -23,6 +23,7 @@ set(SOURCES
   rrc_du_impl.cpp
   ue/meas_types_validators.cpp
   ue/rrc_ue_impl.cpp
+  ue/rrc_ue_context.cpp
   ue/rrc_ue_message_handlers.cpp
   ue/rrc_ue_message_senders.cpp
   ue/rrc_ue_helpers.cpp

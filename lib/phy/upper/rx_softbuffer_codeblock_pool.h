@@ -42,7 +42,7 @@ private:
     /// Contains the codeblock soft bits.
     std::vector<log_likelihood_ratio> soft_bits;
     /// Contains the codeblock data bits.
-    dynamic_bit_buffer data_bits = {};
+    dynamic_bit_buffer data_bits;
   };
 
   /// Stores all codeblock entries.

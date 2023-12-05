@@ -179,7 +179,8 @@ void du_high_cu_test_simulator::start_dus()
     du_hi_cfg.sched_ue_metrics_notifier      = &du_ctxt.ue_metrics_notifier;
     du_hi_cfg.cells                          = cfg.dus[du_idx];
     du_hi_cfg.sched_cfg                      = config_helpers::make_default_scheduler_expert_config();
-    du_hi_cfg.pcap                           = &du_ctxt.mac_pcap;
+    du_hi_cfg.mac_p                          = &du_ctxt.mac_pcap;
+    du_hi_cfg.rlc_p                          = &du_ctxt.rlc_pcap;
     du_ctxt.du_high_inst                     = make_du_high(du_hi_cfg);
 
     du_ctxt.du_high_inst->start();

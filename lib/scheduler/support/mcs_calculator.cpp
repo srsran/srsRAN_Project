@@ -58,30 +58,40 @@ static const int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
 
 // TODO: This table is temporary. Note that we might eventually change this table for a SNR vs Spectral Efficiency
 //       table.
-// This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
-// table is the minimum SNR for MCS index n.
+// TODO: Revise the tables if BLER is too high.
+// The ul_snr_mcs_table and ul_snr_256qam_mcs_table tables contain the minimum required SNR for a given MCS index; the
+// n-th (n = {0, ..., size - 1}) element of the table is the minimum SNR for MCS index n.
+//
+// The minimum required SNR for a given MCS index is derived by following steps:
+//  1. Connect gNB to UE over ZMQ and introduce an AWGN channel with varying UL SNR (gnuradio)
+//  2. Start UL traffic from UE to 5GC
+//  3. Observe the BLER at times when SNR remains constant (not during transition) and ensure BLER is 0% for the MCS
+//  chosen
+//  4. If the BLER is not 0% in step 3 then, increase the SNR value in the table corresponding to the MCS chosen
+//
+//  NOTE: Following values were computed using SISO configuration over 20Mhz Bandwidth and TDD configuration
+
+// For 64QAM PUSCH MCS table.
 static const std::array<double, 29> ul_snr_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
-     -1.0998,  0.0500,  1.1125,  2.8625,  3.0500, 3.98266,  4.6250,  5.5425,  6.4175,   7.3548,
+     -5.7998, -3.5500,  -2.925, -2.5625, -1.0500,  0.98266,  1.6250,  2.5425,  3.4175,  4.3548,
     /* MCS 10    11       12       13       14      15       16        17       18       19  */
-      8.3695,  8.8250,  9.6375, 10.6375, 11.5875, 12.4000, 13.1540, 13.9070,  14.1250, 15.0625,
+      5.3695,  5.8250,  6.6375,  7.6375,  9.5875,  10.4000, 11.1540, 12.1070, 12.5250, 13.0625,
     /* MCS 20    21       22       23       24      25       26        27       28 */
-     16.0250, 16.8375, 17.7160, 18.6525, 19.3725, 20.1450, 20.9175, 21.7425,  23.191
+     13.5250, 13.9375, 14.1160, 14.5525, 14.9725,  15.3450, 15.9175, 16.0425, 16.591
     // clang-format on
 };
 
-// TODO: Compute correct values based on 256QAM MCS table in TS 38.214, Table 5.1.3.1-2.
-// This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
-// table is the minimum SNR for MCS index n.
+// For 256QAM PUSCH MCS table.
 static const std::array<double, 28> ul_snr_256qam_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
-       0.0500,  1.1125,  2.8625,  3.0500, 3.98266,  4.6250,  5.5425,  6.3175,   7.8548,  8.3695,
+      1.7998,  3.5500,   4.925,  5.5625,  6.0500, 7.98266,  8.6250,  9.5425, 10.4175,  11.3548,
     /* MCS 10    11       12       13       14      15       16        17       18       19  */
-       11.8250, 12.6375, 13.6375, 14.5875, 15.9000, 19.2070, 19.8250, 20.1625,  20.8625, 21.1250,
-    /* MCS 20    21       22       23       24      25       26        27 */
-      22.8375, 23.2160, 24.6525, 25.0725, 26.6450, 27.7175, 28.8425,  29.191
+     12.3695, 12.8250, 13.1375, 13.8475, 14.6875,  15.554, 15.9540, 16.1070, 16.8250,  17.0625,
+    /* MCS 20    21       22       23       24      25       26        27   */
+     17.4250, 17.9375, 18.1160, 18.5525, 18.8725, 19.0150,  20.591,  21.691
     // clang-format on
 };
 

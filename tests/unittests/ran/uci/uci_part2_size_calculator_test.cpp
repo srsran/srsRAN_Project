@@ -33,9 +33,8 @@ TEST(uci_part2_size_calculator, fix_size)
   // Create description.
   uci_part2_size_description description(expected_csi_part2_size);
 
-  // Generate random payload with invalid bits.
-  std::array<uint8_t, csi_part1_size> csi_part1;
-  std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
+  // Generate random payload with all ones.
+  uci_payload_type csi_part1 = ~uci_payload_type(csi_part1_size);
 
   unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -77,14 +76,13 @@ TEST(uci_part2_size_calculator, basic_two_ports)
   // Make sure the description is consistent with the CSI Part 1 size.
   ASSERT_TRUE(description.is_valid(csi_part1_size));
 
-  // Generate random payload with invalid bits.
-  std::array<uint8_t, csi_part1_size> csi_part1;
-  std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
+  // Generate random payload with all ones.
+  uci_payload_type csi_part1 = ~uci_payload_type(csi_part1_size);
 
   // Test for RI=1 layer.
   {
     // Force RI to 1 layer.
-    csi_part1[0] = 0;
+    csi_part1.set(0, false);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -94,7 +92,7 @@ TEST(uci_part2_size_calculator, basic_two_ports)
   // Test for RI=2 layer.
   {
     // Force RI to 2 layer.
-    csi_part1[0] = 1;
+    csi_part1.set(0, true);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -143,14 +141,13 @@ TEST(uci_part2_size_calculator, basic_four_ports)
   // Make sure the description is consistent with the CSI Part 1 size.
   ASSERT_TRUE(description.is_valid(csi_part1_size));
 
-  // Generate random payload with invalid bits.
-  std::array<uint8_t, csi_part1_size> csi_part1;
-  std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
+  // Generate random payload with all ones.
+  uci_payload_type csi_part1 = ~uci_payload_type(csi_part1_size);
 
   // Test for RI=1 layer.
   {
-    csi_part1[0] = 0;
-    csi_part1[1] = 0;
+    csi_part1.set(0, false);
+    csi_part1.set(1, false);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -159,8 +156,8 @@ TEST(uci_part2_size_calculator, basic_four_ports)
 
   // Test for RI=2 layer.
   {
-    csi_part1[0] = 0;
-    csi_part1[1] = 1;
+    csi_part1.set(0, false);
+    csi_part1.set(1, true);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -169,8 +166,8 @@ TEST(uci_part2_size_calculator, basic_four_ports)
 
   // Test for RI=3 layer.
   {
-    csi_part1[0] = 1;
-    csi_part1[1] = 0;
+    csi_part1.set(0, true);
+    csi_part1.set(1, false);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 
@@ -179,8 +176,8 @@ TEST(uci_part2_size_calculator, basic_four_ports)
 
   // Test for RI=4 layer.
   {
-    csi_part1[0] = 1;
-    csi_part1[1] = 1;
+    csi_part1.set(0, true);
+    csi_part1.set(1, true);
 
     unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
 

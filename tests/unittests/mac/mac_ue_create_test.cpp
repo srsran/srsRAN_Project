@@ -76,12 +76,12 @@ protected:
   void set_sched_ue_unit_result(bool result) { sched_cfg_adapter.ue_created_ev.set(result); }
 
   // Run all async tasks in same thread.
-  manual_task_worker           worker{128};
-  dummy_ue_executor_mapper     ul_exec_mapper{worker};
-  dummy_dl_executor_mapper     dl_exec_mapper{&worker};
-  dummy_mac_event_indicator    du_mng_notif;
-  dummy_mac_result_notifier    phy_notifier;
-  test_helpers::dummy_mac_pcap pcap;
+  manual_task_worker        worker{128};
+  dummy_ue_executor_mapper  ul_exec_mapper{worker};
+  dummy_dl_executor_mapper  dl_exec_mapper{&worker};
+  dummy_mac_event_indicator du_mng_notif;
+  dummy_mac_result_notifier phy_notifier;
+  null_mac_pcap             pcap;
 
   // Create a MAC config object.
   mac_control_config          mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker};

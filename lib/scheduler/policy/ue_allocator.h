@@ -41,6 +41,7 @@ struct ue_pdsch_grant {
   crb_interval      crbs;
   aggregation_level aggr_lvl = aggregation_level::n4;
   sch_mcs_index     mcs;
+  unsigned          nof_layers = 1;
 };
 
 /// Information relative to a UE PUSCH grant.

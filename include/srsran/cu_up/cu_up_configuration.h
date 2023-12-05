@@ -27,7 +27,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 
@@ -57,6 +57,10 @@ struct network_interface_config {
   int f1u_bind_port = GTPU_PORT;
 };
 
+struct n3_interface_config {
+  std::chrono::milliseconds gtpu_reordering_timer; // N3 reordering timer
+};
+
 struct e1ap_config_params {
   e1ap_connection_client*  e1ap_conn_client = nullptr;
   e1ap_connection_manager* e1ap_conn_mng    = nullptr;
@@ -74,6 +78,7 @@ struct cu_up_configuration {
   dlt_pcap*          gtpu_pcap    = nullptr;
 
   network_interface_config net_cfg;
+  n3_interface_config      n3_cfg;
 
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";

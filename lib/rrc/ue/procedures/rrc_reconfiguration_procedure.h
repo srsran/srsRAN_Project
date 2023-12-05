@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../rrc_ue_context.h"
+#include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/du_processor.h"
@@ -42,9 +43,10 @@ public:
   rrc_reconfiguration_procedure(rrc_ue_context_t&                            context_,
                                 const rrc_reconfiguration_procedure_request& args_,
                                 rrc_ue_reconfiguration_proc_notifier&        rrc_ue_notifier_,
+                                rrc_ue_control_notifier&                     ngap_ctrl_notifier_,
                                 rrc_ue_event_manager&                        ev_mng_,
                                 rrc_ue_srb_handler&                          srb_notifier_,
-                                srslog::basic_logger&                        logger_);
+                                rrc_ue_logger&                               logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -54,13 +56,16 @@ private:
   /// \remark Send RRC Reconfiguration, see section 5.3.5 in TS 38.331
   void send_rrc_reconfiguration();
 
+  void send_ue_context_release_request();
+
   rrc_ue_context_t&                           context;
   const rrc_reconfiguration_procedure_request args;
 
-  rrc_ue_reconfiguration_proc_notifier& rrc_ue;       // handler to the parent RRC UE object
+  rrc_ue_reconfiguration_proc_notifier& rrc_ue; // handler to the parent RRC UE object
+  rrc_ue_control_notifier&              ngap_ctrl_notifier;
   rrc_ue_event_manager&                 event_mng;    // event manager for the RRC UE entity
   rrc_ue_srb_handler&                   srb_notifier; // For creating SRBs
-  srslog::basic_logger&                 logger;
+  rrc_ue_logger&                        logger;
 
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;

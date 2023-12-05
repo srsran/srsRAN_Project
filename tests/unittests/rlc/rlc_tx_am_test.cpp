@@ -71,9 +71,9 @@ public:
   }
 
   // rlc_rx_am_status_provider interface
-  rlc_am_status_pdu get_status_pdu() override { return status; }
-  uint32_t          get_status_pdu_length() override { return status.get_packed_size(); }
-  bool              status_report_required() override { return status_required; }
+  rlc_am_status_pdu& get_status_pdu() override { return status; }
+  uint32_t           get_status_pdu_length() override { return status.get_packed_size(); }
+  bool               status_report_required() override { return status_required; }
 };
 
 /// Fixture class for RLC AM Tx tests
@@ -106,7 +106,8 @@ protected:
     tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
     // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_tx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+    rlc = std::make_unique<rlc_tx_am_entity>(0,
+                                             du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
                                              config,
                                              *tester,
@@ -114,7 +115,8 @@ protected:
                                              *tester,
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
-                                             ue_worker);
+                                             ue_worker,
+                                             pcap);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
@@ -297,6 +299,7 @@ protected:
   manual_task_worker                    ue_worker{128};
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;
+  null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_tx_am_entity>     rlc;
 };
 
@@ -651,7 +654,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
@@ -698,7 +701,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
@@ -765,7 +768,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_min_size);
@@ -819,7 +822,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
@@ -874,7 +877,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
@@ -927,7 +930,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
@@ -979,7 +982,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end + 1 + header_min_size);
@@ -1021,7 +1024,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
   // ACK up until 5
   rlc_am_status_pdu status_pdu0(sn_size);
   status_pdu0.ack_sn = 5;
-  rlc->on_status_pdu(status_pdu0);
+  rlc->on_status_pdu(std::move(status_pdu0));
 
   // Status PDU 1
   rlc_am_status_pdu status_pdu1(sn_size);
@@ -1044,7 +1047,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
   }
 
   // Receive 2 before 1
-  rlc->on_status_pdu(status_pdu2);
+  rlc->on_status_pdu(std::move(status_pdu2));
   ASSERT_NE(rlc->get_buffer_state(), 0); // should have one PDU to RETX
   byte_buffer_chain retx_pdu;
   rlc->pull_pdu(rlc->get_buffer_state());
@@ -1052,8 +1055,8 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
   ASSERT_EQ(st0.tx_next_ack, 7); // TX_NEXT_ACK should be the same as NACK_SN now
 
   // Receive 1 now
-  rlc->on_status_pdu(status_pdu1);       // NACK SN=6 is now outside TX window
-  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
+  rlc->on_status_pdu(std::move(status_pdu1)); // NACK SN=6 is now outside TX window
+  ASSERT_EQ(rlc->get_buffer_state(), 0);      // should have ignored status report
   rlc_tx_am_state st1 = rlc->get_state();
   ASSERT_EQ(st1.tx_next_ack, 7); // TX_NEXT_ACK should have not changed
 }
@@ -1069,7 +1072,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
   // ACK up until 5
   rlc_am_status_pdu status_pdu0(sn_size);
   status_pdu0.ack_sn = 5;
-  rlc->on_status_pdu(status_pdu0);
+  rlc->on_status_pdu(std::move(status_pdu0));
 
   // Status PDU 1
   rlc_am_status_pdu status_pdu1(sn_size);
@@ -1082,7 +1085,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
   }
 
   // Receive Status 1
-  rlc->on_status_pdu(status_pdu1);
+  rlc->on_status_pdu(std::move(status_pdu1));
   ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
   rlc_tx_am_state st1 = rlc->get_state();
   ASSERT_EQ(st1.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
@@ -1099,7 +1102,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
   }
 
   // Receive Status 2
-  rlc->on_status_pdu(status_pdu2);
+  rlc->on_status_pdu(std::move(status_pdu2));
   ASSERT_NE(rlc->get_buffer_state(), 0);  // should have processed status report
   rlc->pull_pdu(rlc->get_buffer_state()); // RETX 5
   rlc->pull_pdu(rlc->get_buffer_state()); // RETX 6
@@ -1120,7 +1123,7 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
   }
 
   // Receive Status 3
-  rlc->on_status_pdu(status_pdu3);
+  rlc->on_status_pdu(std::move(status_pdu3));
   ASSERT_EQ(rlc->get_buffer_state(), 0); // should have dropped status report
   rlc_tx_am_state st3 = rlc->get_state();
   ASSERT_EQ(st3.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
@@ -1144,7 +1147,7 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
@@ -1201,7 +1204,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = (sn_start + n_pdus) % cardinality(to_number(sn_size));
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), range * (sdu_size + header_min_size));
@@ -1261,7 +1264,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = (sn_start + n_pdus) % cardinality(to_number(sn_size));
   status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
+  rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), range * (sdu_size + header_min_size));
@@ -1557,6 +1560,53 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   }
 }
 
+TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
+{
+  const uint32_t    n_pdus = 5;
+  byte_buffer_chain pdus[n_pdus];
+
+  const uint32_t sdu_size        = 10;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+
+  for (uint32_t n_retx = 0; n_retx <= config.max_retx_thresh; n_retx++) {
+    uint32_t expect_mac_bsr = tester->bsr;
+    uint32_t n_bsr          = tester->bsr_count;
+
+    // no max_retx shall be reported yet
+    EXPECT_EQ(tester->max_retx_count, 0);
+
+    // advance timers to expire poll_retransmit_timer
+    for (int32_t i = 0; i < config.t_poll_retx; i++) {
+      EXPECT_EQ(rlc->get_buffer_state(), 0);
+      EXPECT_EQ(tester->bsr, expect_mac_bsr) << "n_retx=" << n_retx << " i=" << i << std::endl;
+      EXPECT_EQ(tester->bsr_count, n_bsr);
+      tick();
+    }
+
+    // expiry of poll_retransmit_timer should schedule an SDU for ReTx
+    EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
+    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+    {
+      // pull PDU
+      // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
+      byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state());
+      rlc_am_pdu_header pdu_hdr = {};
+      ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
+      EXPECT_TRUE(pdu_hdr.p);
+      EXPECT_EQ(tester->bsr, pdu_size);
+      EXPECT_EQ(tester->bsr_count, n_bsr);
+    }
+  }
+
+  // max_retx shall be reported now
+  EXPECT_EQ(tester->max_retx_count, 1);
+}
+
 TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
 {
   const uint32_t    sdu_size        = 3;
@@ -1580,7 +1630,7 @@ TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
     status_pdu.ack_sn = n_pdus;
     status_pdu.push_nack(nack1);
     status_pdu.push_nack(nack3);
-    rlc->on_status_pdu(status_pdu);
+    rlc->on_status_pdu(std::move(status_pdu));
     pcell_worker.run_pending_tasks();
     ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));
@@ -1617,7 +1667,7 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
     status_pdu.ack_sn = n_pdus;
     status_pdu.push_nack(nack1);
     status_pdu.push_nack(nack3);
-    rlc->on_status_pdu(status_pdu);
+    rlc->on_status_pdu(std::move(status_pdu));
     pcell_worker.run_pending_tasks();
     ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));

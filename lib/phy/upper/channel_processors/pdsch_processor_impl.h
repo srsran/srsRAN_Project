@@ -29,14 +29,6 @@
 
 namespace srsran {
 
-/// Implements a parameter validator for \ref pdsch_processor_impl.
-class pdsch_processor_validator_impl : public pdsch_pdu_validator
-{
-public:
-  // See interface for documentation.
-  bool is_valid(const pdsch_processor::pdu_t& pdu) const override;
-};
-
 /// Implements a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {
@@ -55,13 +47,12 @@ public:
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
+               unique_tx_buffer                                             softbuffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
 
 private:
-  void assert_pdu(const pdu_t& pdu) const;
-
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
   /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
@@ -78,8 +69,12 @@ private:
   /// \param[in] Nre         Indicates the number of resource elements used for PDSCH mapping.
   /// \param[in] pdu         Provides the PDSCH processor PDU.
   /// \return A view of the encoded codeword.
-  const bit_buffer&
-  encode(span<const uint8_t> data, unsigned codeword_id, unsigned nof_layers, unsigned Nre, const pdu_t& pdu);
+  const bit_buffer& encode(tx_buffer&          softbuffer,
+                           span<const uint8_t> data,
+                           unsigned            codeword_id,
+                           unsigned            nof_layers,
+                           unsigned            Nre,
+                           const pdu_t&        pdu);
 
   /// \brief Modulates a PDSCH transmission as per TS 38.211 section 7.3.1.
   /// \param[out] mapper         Resource grid mapping interface.
