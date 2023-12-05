@@ -1237,6 +1237,84 @@ TEST_P(rlc_rx_am_test, status_report)
   }
 }
 
+TEST_P(rlc_rx_am_test, status_report_with_limit)
+{
+  // Exit test if max_nof_sn_per_status_report exceeds window size
+  if (window_size(to_number(sn_size)) <= config.max_nof_sn_per_status_report) {
+    return;
+  }
+
+  uint32_t sn_start     = 0;
+  uint32_t sn_state     = sn_start;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 7;
+
+  {
+    // check status report
+    rlc_am_status_pdu& status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+  }
+
+  {
+    // Create SDU and PDUs with SDU segments
+    std::list<byte_buffer> pdu_list = {};
+    byte_buffer            sdu;
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+
+    // Push only first segment
+    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    rlc->handle_pdu(std::move(pdu));
+  }
+
+  // Skip sn_state to expand rx_window up to max_nof_sn_per_status_report
+  sn_state += config.max_nof_sn_per_status_report - 1;
+
+  {
+    // Create SDU and PDUs with SDU segments
+    std::list<byte_buffer> pdu_list = {};
+    byte_buffer            sdu;
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+
+    // Push only first segment
+    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    rlc->handle_pdu(std::move(pdu));
+  }
+
+  // Now overstep max_nof_sn_per_status_report. The corresponding NACKs shall not appear in the status report
+  for (int i = 0; i < 2; i++) {
+    sn_state++;
+
+    // Create SDU and PDUs with SDU segments
+    std::list<byte_buffer> pdu_list = {};
+    byte_buffer            sdu;
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+
+    // Push only first segment
+    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    rlc->handle_pdu(std::move(pdu));
+  }
+
+  // Let the reassembly timer expire (advance rx_highest_status)
+  for (int t = 0; t < config.t_reassembly; t++) {
+    EXPECT_FALSE(rlc->status_report_required());
+    EXPECT_EQ(tester->status_trigger_counter, 0);
+    tick();
+  }
+
+  EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
+
+  // Check status report
+  rlc_am_status_pdu& status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_start + config.max_nof_sn_per_status_report);
+  constexpr uint32_t max_nack_range = 255;
+  uint32_t nof_nack_ranges = ((config.max_nof_sn_per_status_report + max_nack_range - 1) / max_nack_range); // round up
+  EXPECT_EQ(status_report.get_nacks().size(), nof_nack_ranges + 1); // +1 for the missing segment at upper edge
+}
+
 /// Verify in-order Rx of full SDUs
 /// Example: [0][1][2][3][4]
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
