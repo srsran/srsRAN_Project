@@ -657,10 +657,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     unsigned             cset1_start_crb = 0;
     if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
       cset1_start_crb = base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value();
-    } else if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
-      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
-      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-      cset1_start_crb = 6;
     }
     unsigned cset1_l_crb = nof_crbs - cset1_start_crb;
     if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {

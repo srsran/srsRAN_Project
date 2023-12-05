@@ -988,14 +988,6 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
       fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
       return false;
     }
-    if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
-        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
-        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
-      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
-      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-      fmt::print("Cannot start CORESET#1 from CRB0 in Common SearchSpace\n");
-      return false;
-    }
   }
   return true;
 }
