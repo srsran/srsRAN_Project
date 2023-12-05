@@ -42,6 +42,10 @@ rlc_rx_am_entity::rlc_rx_am_entity(uint32_t                          du_index,
   srsran_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM, status_prohibit_timer not configured.");
   // check reassembly_timer
   srsran_assert(reassembly_timer.is_valid(), "Cannot create RLC RX AM, reassembly_timer not configured.");
+  // Check max_nof_sn_per_status_report
+  srsran_assert(cfg.max_nof_sn_per_status_report <= cardinality(to_number(cfg.sn_field_length)),
+                "Cannot create RLC RX AM, invalid max_nof_sn_per_status_report exceeds window_size. {}",
+                cfg);
 
   // configure status_prohibit_timer
   if (cfg.t_status_prohibit > 0) {
