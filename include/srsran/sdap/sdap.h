@@ -74,6 +74,7 @@ public:
   virtual sdap_rx_pdu_handler& get_sdap_rx_pdu_handler(drb_id_t drb_id) = 0;
   virtual sdap_tx_sdu_handler& get_sdap_tx_sdu_handler()                = 0;
 
+  virtual bool is_mapped(qos_flow_id_t qfi) = 0;
   virtual void
   add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) = 0;
   virtual void remove_mapping(drb_id_t drb_id)                                                                 = 0;
