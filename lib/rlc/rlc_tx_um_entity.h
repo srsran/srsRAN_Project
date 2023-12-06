@@ -85,7 +85,7 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  byte_buffer_chain pull_pdu(uint32_t grant_len) override;
+  byte_buffer_chain pull_pdu(uint32_t grant_len);
   size_t            pull_pdu(span<uint8_t> mac_sdu_buf) override;
   uint32_t          get_buffer_state() override;
 

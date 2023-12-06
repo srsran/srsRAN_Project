@@ -174,8 +174,10 @@ protected:
     byte_buffer_chain pdu_bufs[max_num_pdus];
 
     buffer_state = rlc1_tx_lower->get_buffer_state();
+    std::vector<uint8_t> tx_pdu(payload_len);
     while (buffer_state > 0 && num_pdus < max_num_pdus) {
-      pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+      unsigned n         = rlc1_tx_lower->pull_pdu(tx_pdu);
+      pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>{tx_pdu.data(), n}};
 
       if (pdu_bufs[num_pdus].empty()) {
         break;
@@ -337,10 +339,12 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1
-  byte_buffer_chain pdu_bufs[num_pdus];
-  const int         payload_len = 1 + sdu_size; // 1 bytes for header + payload
+  byte_buffer_chain    pdu_bufs[num_pdus];
+  const int            payload_len = 1 + sdu_size; // 1 bytes for header + payload
+  std::vector<uint8_t> tx_pdu(payload_len);
   for (uint32_t i = 0; i < num_pdus; i++) {
-    pdu_bufs[i] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    pdu_bufs[i]       = byte_buffer_slice{span<uint8_t>{tx_pdu.data(), nwritten}};
     EXPECT_EQ(payload_len, pdu_bufs[i].length());
     EXPECT_EQ(i, pdu_bufs[i][payload_len - 1]); // check if last payload item corresponds with index
 
@@ -409,8 +413,10 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   uint32_t          num_pdus     = 0;
   byte_buffer_chain pdu_bufs[max_num_pdus];
 
+  std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten  = rlc1_tx_lower->pull_pdu(tx_pdu);
+    pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
 
     if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
       // Verify transmit notification
@@ -512,8 +518,9 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Transmit full PDU
-  byte_buffer_chain pdu;
-  pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
+  std::vector<uint8_t> tx_pdu(data_pdu_size);
+  unsigned             nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  byte_buffer_chain    pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
   expect_buffer_state = (num_sdus - 4) * data_pdu_size;
@@ -533,7 +540,9 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
   // Transmit full PDU
-  pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
+  tx_pdu.resize(data_pdu_size);
+  nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
   expect_buffer_state = (num_sdus - 5) * data_pdu_size;
@@ -614,8 +623,9 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Transmit full PDU
-  byte_buffer_chain pdu;
-  pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
+  std::vector<uint8_t> tx_pdu(data_pdu_size);
+  unsigned             nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  byte_buffer_chain    pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
   expect_buffer_state = (num_sdus - 4) * data_pdu_size;
@@ -635,7 +645,8 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
   // Transmit full PDU
-  pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
+  nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
   expect_buffer_state = (num_sdus - 5) * data_pdu_size;
@@ -686,8 +697,10 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   uint32_t          num_pdus     = 0;
   byte_buffer_chain pdu_bufs[max_num_pdus];
 
+  std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten  = rlc1_tx_lower->pull_pdu(tx_pdu);
+    pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
 
     if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
       // Verify transmit notification
@@ -764,8 +777,10 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   uint32_t          num_pdus     = 0;
   byte_buffer_chain pdu_bufs[max_num_pdus];
 
+  std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten  = rlc1_tx_lower->pull_pdu(tx_pdu);
+    pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
 
     if (pdu_bufs[num_pdus].empty()) {
       break;
@@ -871,8 +886,10 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
     EXPECT_EQ(tester1.bsr_count, i + 1);
 
     // read PDUs from lower end of RLC1 and write into lower end of RLC2
+    std::vector<uint8_t> pdu_tmp(payload_len);
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      byte_buffer_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      unsigned          nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      byte_buffer_chain tx_pdu   = byte_buffer_slice{span<uint8_t>(pdu_tmp.data(), nwritten)};
       if (tx_pdu.empty()) {
         break;
       }
@@ -932,8 +949,10 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     EXPECT_EQ(tester1.bsr_count, i + 1);
 
     // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th and 22th)
+    std::vector<uint8_t> pdu_tmp(payload_len);
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      byte_buffer_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      unsigned          nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      byte_buffer_chain tx_pdu   = byte_buffer_slice{span<uint8_t>(pdu_tmp.data(), nwritten)};
       if (tx_pdu.empty()) {
         break;
       }
@@ -1010,8 +1029,10 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   uint32_t          num_pdus     = 0;
   byte_buffer_chain pdu_bufs[max_num_pdus];
 
+  std::vector<uint8_t> pdu_tmp(payload_len);
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten  = rlc1_tx_lower->pull_pdu(pdu_tmp);
+    pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>(pdu_tmp.data(), nwritten)};
 
     if (pdu_bufs[num_pdus].empty()) {
       break;
@@ -1087,8 +1108,10 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   uint32_t          num_pdus     = 0;
   byte_buffer_chain pdu_bufs[max_num_pdus];
 
+  std::vector<uint8_t> pdu_tmp(payload_len);
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+    unsigned nwritten  = rlc1_tx_lower->pull_pdu(pdu_tmp);
+    pdu_bufs[num_pdus] = byte_buffer_slice{span<uint8_t>(pdu_tmp.data(), nwritten)};
 
     if (pdu_bufs[num_pdus].empty()) {
       break;

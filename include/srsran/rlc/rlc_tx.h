@@ -129,15 +129,10 @@ public:
 
   /// \brief Pulls a PDU from the lower end of the RLC TX entity
   /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
-  /// \param grant_len Limits the maximum size of the requested PDU.
-  /// \return One PDU
-  virtual byte_buffer_chain pull_pdu(uint32_t grant_len) = 0;
-
-  /// \brief Pulls a PDU from the lower end of the RLC TX entity
-  /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
-  /// \param mac_sdu_buf Buffer to write the RLC PDU.
+  /// \param rlc_pdu_buf TX buffer where to encode an RLC Tx PDU. The encoded PDU size cannot exceed the size of the
+  /// buffer.
   /// \return Number of bytes taken by the written RLC PDU.
-  virtual size_t pull_pdu(span<uint8_t> mac_sdu_buf) = 0;
+  virtual size_t pull_pdu(span<uint8_t> rlc_pdu_buf) = 0;
 
   /// \brief Get the buffer status information
   /// This function provides the current buffer state of the RLC TX entity.
