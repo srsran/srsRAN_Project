@@ -704,15 +704,15 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0);
     }
 
-    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
-    if (band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD) {
-      const auto& tdd_cfg = out_cell.tdd_ul_dl_cfg_common.value();
-      out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
-          config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
-                                                          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
-                                                          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-                                                          tdd_cfg);
-    }
+    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot and/or dedicated PDCCH
+    // configuration.
+    out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+        config_helpers::make_pdsch_time_domain_resource(
+            param.search_space0_index,
+            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+            band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD ? out_cell.tdd_ul_dl_cfg_common.value()
+                                                                                 : optional<tdd_ul_dl_config_common>{});
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
