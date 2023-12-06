@@ -192,6 +192,37 @@ inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
   return true;
 }
 
+inline span<uint8_t>::iterator rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, span<uint8_t> buf)
+{
+  span<uint8_t>::iterator buf_it = buf.begin();
+
+  *buf_it = (to_number(header.si) & 0x03U) << 6U; // 2 bits SI
+
+  if (header.si == rlc_si_field::full_sdu) {
+    return ++buf_it; // that's all
+  }
+
+  if (header.sn_size == rlc_um_sn_size::size6bits) {
+    // write SN
+    *buf_it |= (header.sn & 0x3fU); // 6 bit SN
+    buf_it++;
+  } else {
+    // 12bit SN
+    *buf_it |= (header.sn >> 8U) & 0xfU; // high part of SN (4 bit)
+    buf_it++;
+    *buf_it = header.sn & 0xffU; // high part of SN (4 bit)
+    buf_it++;
+  }
+  if (header.so != 0) {
+    // write SO
+    *buf_it = header.so >> 8U; // first part of SO
+    buf_it++;
+    *buf_it = header.so & 0xffU;
+    buf_it++;
+  }
+  return buf_it;
+}
+
 } // namespace srsran
 
 namespace fmt {

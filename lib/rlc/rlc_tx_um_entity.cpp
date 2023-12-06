@@ -177,14 +177,101 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 
 size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
-  byte_buffer_chain buf    = pull_pdu(mac_sdu_buf.size());
-  auto              out_it = mac_sdu_buf.begin();
-  for (auto& slice : buf.slices()) {
-    for (span<const uint8_t> seg : slice.segments()) {
-      out_it = std::copy(seg.begin(), seg.end(), out_it);
+  uint32_t grant_len = mac_sdu_buf.size();
+  logger.log_debug("MAC opportunity. grant_len={}", grant_len);
+
+  // Check available space -- we need at least the minimum header + 1 payload Byte
+  if (grant_len <= head_len_full) {
+    logger.log_debug("Cannot fit SDU into grant_len={}. head_len_full={}", grant_len, head_len_full);
+    return 0;
+  }
+
+  // Multiple threads can read from the SDU queue and change the
+  // RLC UM TX state (current SDU, tx_next and next_so).
+  // As such we need to lock to access these variables.
+  std::lock_guard<std::mutex> lock(mutex);
+
+  // Get a new SDU, if none is currently being transmitted
+  if (sdu.buf.empty()) {
+    srsran_sanity_check(next_so == 0, "New TX SDU, but next_so={} > 0.", next_so);
+    logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
+    if (not sdu_queue.read(sdu)) {
+      logger.log_debug("SDU queue empty. grant_len={}", grant_len);
+      return {};
+    }
+    logger.log_debug("Read SDU. sn={} pdcp_sn={} sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
+
+    // Notify the upper layer about the beginning of the transfer of the current SDU
+    if (sdu.pdcp_sn.has_value()) {
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
     }
   }
-  return buf.length();
+
+  // Prepare header
+  rlc_um_pdu_header header = {};
+  header.sn                = st.tx_next;
+  header.sn_size           = cfg.sn_field_length;
+  header.so                = next_so;
+
+  // Get SI and expected header size
+  uint32_t head_len = 0;
+  if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), grant_len, header.si, head_len)) {
+    logger.log_debug("Cannot fit any payload into grant_len={}. head_len={} si={}", grant_len, head_len, header.si);
+    return 0;
+  }
+
+  // Pack header
+  span<uint8_t>::iterator hdr_offset = rlc_um_write_data_pdu_header(header, mac_sdu_buf);
+  srsran_sanity_check(head_len == std::distance(mac_sdu_buf.begin(), hdr_offset),
+                      "Header length and expected header length do not match ({} != {})",
+                      std::distance(hdr_offset, mac_sdu_buf.begin()),
+                      head_len);
+
+  // Calculate the amount of data to move
+  uint32_t space       = grant_len - head_len;
+  uint32_t payload_len = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
+
+  // Log PDU info
+  logger.log_debug("Creating PDU. si={} payload_len={} head_len={} sdu_len={} grant_len={}",
+                   header.si,
+                   payload_len,
+                   head_len,
+                   sdu.buf.length(),
+                   grant_len);
+
+  // Copy payload
+  byte_buffer::iterator   payload_start = sdu.buf.begin() + next_so;
+  byte_buffer::iterator   payload_end   = payload_start + payload_len;
+  span<uint8_t>::iterator pdu_begin     = mac_sdu_buf.begin();
+  span<uint8_t>::iterator pdu_end       = std::copy(payload_start, payload_end, hdr_offset);
+  size_t                  pdu_size      = std::distance(pdu_begin, pdu_end);
+
+  // Assert number of bytes
+  logger.log_info(mac_sdu_buf.data(), pdu_size, "TX PDU. {} pdu_len={} grant_len={}", header, pdu_size, grant_len);
+
+  // Release SDU if needed
+  if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
+    sdu.buf.clear();
+    next_so = 0;
+  } else {
+    // advance SO offset
+    next_so += payload_len;
+  }
+
+  // Update SN if needed
+  if (header.si == rlc_si_field::last_segment) {
+    st.tx_next = (st.tx_next + 1) % mod;
+  }
+
+  // Update metrics
+  metrics.metrics_add_pdus(1, pdu_size);
+
+  // Log state
+  log_state(srslog::basic_levels::debug);
+
+  // pcap.push_pdu(pcap_context, pdu_buf);
+
+  return pdu_size;
 }
 
 /// Helper to get SI of an PDU
