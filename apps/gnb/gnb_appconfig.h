@@ -529,6 +529,10 @@ struct rlc_rx_am_appconfig {
   uint16_t sn_field_length;   ///< Number of bits used for sequence number
   int32_t  t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
   int32_t  t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+
+  // Implementation-specific parameters that are not specified by 3GPP
+  /// Maximum number of visited SNs in the RX window when building a status report. 0 means no limit.
+  uint32_t max_sn_per_status = 0;
 };
 
 /// RLC AM configuration

@@ -711,6 +711,13 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
                "ms1200, ms1600, ms2000, ms2400\n");
     return false;
   }
+  if (config.rx.max_sn_per_status >= window_size(config.rx.sn_field_length)) {
+    fmt::print("RLC AM RX max_sn_per_status={} exceeds window_size={}. sn_size={}\n",
+               config.rx.max_sn_per_status,
+               window_size(config.rx.sn_field_length),
+               config.rx.sn_field_length);
+    return false;
+  }
 
   return true;
 }

@@ -1004,6 +1004,9 @@ srsran::rlc_am_config srsran::generate_rlc_am_config(const rlc_am_appconfig& in_
   }
   out_rlc.rx.t_reassembly      = in_cfg.rx.t_reassembly;
   out_rlc.rx.t_status_prohibit = in_cfg.rx.t_status_prohibit;
+  if (in_cfg.rx.max_sn_per_status != 0) {
+    out_rlc.rx.max_sn_per_status = in_cfg.rx.max_sn_per_status;
+  }
   return out_rlc;
 }
 

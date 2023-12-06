@@ -1398,6 +1398,9 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_rx_am_subcmd->add_option("--t-status-prohibit", rlc_am_params.rx.t_status_prohibit, "RLC AM RX t-StatusProhibit")
       ->capture_default_str();
+  rlc_rx_am_subcmd->add_option("--max_sn_per_status", rlc_am_params.rx.max_sn_per_status, "RLC AM RX status SN limit")
+      ->capture_default_str();
+  ;
 }
 
 static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
