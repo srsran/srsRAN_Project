@@ -261,9 +261,9 @@ private:
   /// being RETX'ed. The RETX may have been previously transmitted as
   /// a full PDU or an PDU segment(s).
   ///
-  /// \param grant_len Limits the maximum size of the requested PDU.
-  /// \return One PDU or PDU segment segment
-  byte_buffer_chain build_retx_pdu(uint32_t grant_len);
+  /// \param sdu_info The tx_pdu info contained in the tx_window.
+  /// \return Number of bytes taken by the written RLC PDU.
+  size_t build_retx_pdu(span<uint8_t> rlc_pdu_buf);
 
   constexpr uint32_t get_retx_expected_hdr_len(const rlc_tx_amd_retx retx)
   {
