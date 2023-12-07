@@ -245,6 +245,7 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
+// TODO: Remove this function
 inline SRSRAN_NODISCARD bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
@@ -285,6 +286,19 @@ inline SRSRAN_NODISCARD bool rlc_am_write_data_pdu_header(const rlc_am_pdu_heade
   }
   pdu.prepend(std::move(hdr_buf));
   return true;
+}
+
+// TODO: Refactor this function
+inline size_t rlc_am_write_data_pdu_header(span<uint8_t> rlc_pdu_buf, const rlc_am_pdu_header& header)
+{
+  byte_buffer buf;
+  if (rlc_am_write_data_pdu_header(header, buf)) {
+    auto* it = rlc_pdu_buf.begin();
+    for (span<const uint8_t> seg : buf.segments()) {
+      it = std::copy(seg.begin(), seg.end(), it);
+    }
+  }
+  return buf.length();
 }
 
 } // namespace srsran

@@ -227,11 +227,12 @@ private:
   /// It will read an SDU from the SDU queue, build a new PDU, and add it to the tx_window.
   /// SDU segmentation is applied if necessary.
   ///
-  /// An empty PDU is returned if grant_len is insufficient or the TX buffer is empty.
+  /// No PDU is written if the size of \c rlc_pdu_buf is insufficient or the TX buffer is empty.
   ///
-  /// \param grant_len Limits the maximum size of the requested PDU.
-  /// \return One PDU
-  byte_buffer_chain build_new_pdu(uint32_t grant_len);
+  /// \param rlc_pdu_buf TX buffer where to encode an RLC Tx PDU. The encoded PDU size cannot exceed the size of the
+  /// buffer.
+  /// \return Number of bytes taken by the written RLC PDU.
+  size_t build_new_pdu(span<uint8_t> rlc_pdu_buf);
 
   /// \brief Builds a RLC PDU containing the first segment of a new SDU.
   ///

@@ -102,6 +102,15 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
   return byte_buffer_chain{std::move(pdu)};
 }
 
+size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src)
+{
+  auto* it = dst.begin();
+  for (span<const uint8_t> seg : src.segments()) {
+    it = std::copy(seg.begin(), seg.end(), it);
+  }
+  return src.length();
+}
+
 // API transition helper function
 size_t copy_pdu(span<uint8_t> dst, const byte_buffer_chain& src)
 {
@@ -187,22 +196,24 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
     return pdu_len;
   }
 
-  byte_buffer_chain pdu_buf{build_new_pdu(grant_len)};
-  pcap.push_pdu(pcap_context, pdu_buf);
-  return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
+  pdu_len = build_new_pdu(rlc_pdu_buf);
+  pcap.push_pdu(pcap_context, rlc_pdu_buf.subspan(0, pdu_len));
+  return pdu_len;
 }
 
-byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
+size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
 {
+  const size_t grant_len = rlc_pdu_buf.size();
+
   if (grant_len <= head_min_size) {
     logger.log_debug("Cannot fit SDU into grant_len={}. head_min_size={}", grant_len, head_min_size);
-    return {};
+    return 0;
   }
 
   // do not build any more PDU if window is already full
   if (is_tx_window_full()) {
     logger.log_warning("Cannot build data PDU, tx_window is full. grant_len={}", grant_len);
-    return {};
+    return 0;
   }
 
   // Read new SDU from TX queue
@@ -210,7 +221,7 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
   if (not sdu_queue.read(sdu)) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
-    return {};
+    return 0;
   }
   logger.log_debug("Read SDU. sn={} pdcp_sn={} sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
 
@@ -227,7 +238,8 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 
   // Segment new SDU if necessary
   if (sdu_info.sdu.length() + head_min_size > grant_len) {
-    return build_first_sdu_segment(sdu_info, grant_len);
+    byte_buffer_chain pdu_buf{build_first_sdu_segment(sdu_info, grant_len)};
+    return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
   }
   logger.log_debug("Creating PDU with full SDU. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
@@ -240,29 +252,33 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   hdr.sn                = st.tx_next;
 
   // Pack header
-  byte_buffer header_buf = {};
-  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+  size_t header_len = rlc_am_write_data_pdu_header(rlc_pdu_buf, hdr);
+  if (header_len == 0) {
     logger.log_error("Could not pack RLC header. hdr={}", hdr);
-    return {};
+    return 0;
   }
 
   // Assemble PDU
-  byte_buffer_chain pdu_buf = {};
-  pdu_buf.append(std::move(header_buf));
-  pdu_buf.append(byte_buffer_slice{sdu_info.sdu});
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
+  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len), sdu_info.sdu);
+  if (payload_len == 0) {
+    logger.log_error(
+        "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
+    return 0;
+  }
+
+  size_t pdu_len = header_len + payload_len;
+  logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_len, grant_len);
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_pdus(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  return pdu_buf;
+  return pdu_len;
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
