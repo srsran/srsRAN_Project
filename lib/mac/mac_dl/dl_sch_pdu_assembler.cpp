@@ -67,7 +67,7 @@ dl_sch_pdu::mac_sdu_encoder dl_sch_pdu::get_sdu_encoder(lcid_t lcid, unsigned sd
   }
 
   unsigned rem_grant_space = pdu.size() - byte_offset;
-  if (rem_grant_space <= min_mac_subhdr_and_sdu_space_required(lcid)) {
+  if (rem_grant_space < min_mac_subhdr_and_sdu_space_required(lcid)) {
     // No space available for the smallest possible MAC SDU.
     return mac_sdu_encoder{};
   }
