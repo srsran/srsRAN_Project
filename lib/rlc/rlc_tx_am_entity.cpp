@@ -238,8 +238,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
 
   // Segment new SDU if necessary
   if (sdu_info.sdu.length() + head_min_size > grant_len) {
-    byte_buffer_chain pdu_buf{build_first_sdu_segment(sdu_info, grant_len)};
-    return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
+    return build_first_sdu_segment(rlc_pdu_buf, sdu_info);
   }
   logger.log_debug("Creating PDU with full SDU. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
@@ -281,8 +280,9 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   return pdu_len;
 }
 
-byte_buffer_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
+size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_tx_am_sdu_info& sdu_info)
 {
+  const size_t grant_len = rlc_pdu_buf.size();
   logger.log_debug("Creating PDU with first SDU segment. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
   // Sanity check: can this SDU be sent this in a single PDU?
@@ -314,29 +314,34 @@ byte_buffer_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& 
   hdr.so                = sdu_info.next_so;
 
   // Pack header
-  byte_buffer header_buf = {};
-  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+  size_t header_len = rlc_am_write_data_pdu_header(rlc_pdu_buf, hdr);
+  if (header_len == 0) {
     logger.log_error("Could not pack RLC header. hdr={}", hdr);
-    return {};
+    return 0;
   }
 
   // Assemble PDU
-  byte_buffer_chain pdu_buf = {};
-  pdu_buf.append(std::move(header_buf));
-  pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
+  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len),
+                                  byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len});
+  if (payload_len == 0 || payload_len != segment_payload_len) {
+    logger.log_error(
+        "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
+    return 0;
+  }
+
+  size_t pdu_len = header_len + payload_len;
+  logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_len, grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_pdus(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  return pdu_buf;
+  return pdu_len;
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
