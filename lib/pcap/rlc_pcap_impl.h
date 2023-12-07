@@ -30,6 +30,8 @@ public:
 
   void close() override;
   bool is_write_enabled() const override { return writer.is_write_enabled(); }
+
+  void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 

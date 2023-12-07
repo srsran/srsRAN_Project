@@ -30,6 +30,7 @@ public:
 
   virtual void close()                                                                     = 0;
   virtual bool is_write_enabled() const                                                    = 0;
+  virtual void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu)      = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) = 0;
 };
@@ -97,6 +98,7 @@ public:
 
   void close() override {}
   bool is_write_enabled() const override { return false; }
+  void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
 };

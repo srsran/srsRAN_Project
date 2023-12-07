@@ -49,6 +49,12 @@ void rlc_pcap_impl::close()
   writer.close();
 }
 
+void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu)
+{
+  byte_buffer buf{pdu};
+  push_pdu(context, byte_buffer_chain{std::move(buf)});
+}
+
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
