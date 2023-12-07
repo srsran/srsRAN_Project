@@ -55,7 +55,7 @@ struct strand_queue<QueuePolicy> {
   explicit strand_queue(unsigned strand_queue_size) : queue(strand_queue_size) {}
   explicit strand_queue(span<const unsigned> strand_queue_sizes) :
     queue([&strand_queue_sizes]() {
-      report_error_if_not(strand_queue_sizes.size() != 1, "Number of queue sizes must match number of policies");
+      report_error_if_not(strand_queue_sizes.size() == 1, "Number of queue sizes must match number of policies");
       return strand_queue_sizes[0];
     }())
   {

@@ -105,8 +105,6 @@ private:
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
-  void create_non_rt_worker_pool(const gnb_appconfig& appcfg);
-
   /// Helper method that creates the Control and Distributed Units executors.
   void create_du_cu_executors(const gnb_appconfig& appcfg);
 

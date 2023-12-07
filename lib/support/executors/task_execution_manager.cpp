@@ -118,12 +118,16 @@ protected:
         return false;
       }
       if (not exec_params.strands.empty()) {
-        task_executor_list strands = create_strand_executors(exec_params);
-        if (exec_params.strands.size() != strands.size()) {
+        task_executor_list strand_execs              = create_strand_executors(exec_params);
+        unsigned           nof_expected_strand_execs = 0;
+        for (const auto& strand : exec_params.strands) {
+          nof_expected_strand_execs += strand.queues.size();
+        }
+        if (nof_expected_strand_execs != strand_execs.size()) {
           executor_list.clear();
           return false;
         }
-        for (auto& p : strands) {
+        for (auto& p : strand_execs) {
           if (not store_executor(p.first, std::move(p.second))) {
             return false;
           }
@@ -302,8 +306,10 @@ struct worker_pool_context final : public common_task_execution_context<task_wor
         params.tracer,
         params.nof_workers,
         [&params]() {
-          report_error_if_not(params.queues.size() != sizeof...(QueuePolicies),
-                              "Invalid number of queues for the specified policies");
+          report_error_if_not(params.queues.size() == sizeof...(QueuePolicies),
+                              "Invalid number of queues for the specified policies ({} != {})",
+                              params.queues.size(),
+                              sizeof...(QueuePolicies));
           std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
           for (unsigned i = 0; i != params.queues.size(); ++i) {
             qsizes[i] = params.queues[i].size;
@@ -368,7 +374,8 @@ struct worker_pool_context<QueuePolicy> final : public common_task_execution_con
               params.prio,
               params.masks)
   {
-    report_error_if_not(params.queues.size() == 1, "Invalid number of queues for the specified policies");
+    report_error_if_not(
+        params.queues.size() == 1, "Invalid number of queues {} for the specified policies", params.queues.size());
   }
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
