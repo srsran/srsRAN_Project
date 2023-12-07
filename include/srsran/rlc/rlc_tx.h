@@ -128,7 +128,7 @@ public:
   rlc_tx_lower_layer_interface& operator=(const rlc_tx_lower_layer_interface&&) = delete;
 
   /// \brief Pulls a PDU from the lower end of the RLC TX entity
-  /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
+  /// No PDU is written if the size of \c rlc_pdu_buf is insufficient or the TX buffer is empty.
   /// \param rlc_pdu_buf TX buffer where to encode an RLC Tx PDU. The encoded PDU size cannot exceed the size of the
   /// buffer.
   /// \return Number of bytes taken by the written RLC PDU.
