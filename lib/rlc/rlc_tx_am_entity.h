@@ -249,10 +249,11 @@ private:
   /// This function will reset sn_under_segmentation to RLC_INVALID_SN if the produced PDU contains
   /// the last segment of the SDU under segmentation.
   ///
-  /// \param tx_pdu The tx_pdu info contained in the tx_window.
-  /// \param grant_len Limits the maximum size of the requested PDU.
-  /// \return One PDU
-  byte_buffer_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
+  /// \param rlc_pdu_buf TX buffer where to encode an RLC Tx PDU. The encoded PDU size cannot exceed the size of the
+  /// buffer.
+  /// \param sdu_info The tx_pdu info contained in the tx_window.
+  /// \return Number of bytes taken by the written RLC PDU.
+  size_t build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_tx_am_sdu_info& sdu_info);
 
   /// \brief Builds a RETX RLC PDU.
   ///

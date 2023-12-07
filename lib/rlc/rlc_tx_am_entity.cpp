@@ -129,21 +129,20 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
   std::lock_guard<std::mutex> lock(mutex);
 
   const size_t grant_len = rlc_pdu_buf.size();
-  size_t       pdu_len   = 0;
   logger.log_debug("MAC opportunity. grant_len={} tx_window_size={}", grant_len, tx_window->size());
 
   // TX STATUS if requested
   if (status_provider->status_report_required()) {
     if (grant_len < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
       logger.log_debug("Cannot fit status PDU into small grant_len={}.", grant_len);
-      return pdu_len;
+      return 0;
     }
     rlc_am_status_pdu& status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
         logger.log_warning("Could not trim status PDU down to grant_len={}.", grant_len);
-        return pdu_len;
+        return 0;
       }
       logger.log_info("Trimmed status PDU to fit into grant_len={}.", grant_len);
       logger.log_debug("Trimmed status PDU. {}", status_pdu);
@@ -151,7 +150,7 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
     byte_buffer pdu;
     if (not status_pdu.pack(pdu)) {
       logger.log_error("Could not pack status pdu. {}", status_pdu);
-      return pdu_len;
+      return 0;
     }
     logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
@@ -180,10 +179,9 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      byte_buffer_chain pdu_buf{build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len)};
-      pcap.push_pdu(pcap_context, pdu_buf);
-
-      return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
+      size_t pdu_len = build_continued_sdu_segment(rlc_pdu_buf, (*tx_window)[sn_under_segmentation]);
+      pcap.push_pdu(pcap_context, rlc_pdu_buf.subspan(0, pdu_len));
+      return pdu_len;
     }
     sn_under_segmentation = INVALID_RLC_SN;
     logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
@@ -193,10 +191,10 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
-    return pdu_len;
+    return 0;
   }
 
-  pdu_len = build_new_pdu(rlc_pdu_buf);
+  size_t pdu_len = build_new_pdu(rlc_pdu_buf);
   pcap.push_pdu(pcap_context, rlc_pdu_buf.subspan(0, pdu_len));
   return pdu_len;
 }
@@ -344,8 +342,9 @@ size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_
   return pdu_len;
 }
 
-byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
+size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_tx_am_sdu_info& sdu_info)
 {
+  const size_t grant_len = rlc_pdu_buf.size();
   logger.log_debug("Creating PDU with continued SDU segment. sn={} next_so={} sdu_len={} grant_len={}",
                    sn_under_segmentation,
                    sdu_info.next_so,
@@ -403,18 +402,23 @@ byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_in
   hdr.so                = sdu_info.next_so;
 
   // Pack header
-  byte_buffer header_buf = {};
-  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+  size_t header_len = rlc_am_write_data_pdu_header(rlc_pdu_buf, hdr);
+  if (header_len == 0) {
     logger.log_error("Could not pack RLC header. hdr={}", hdr);
-    return {};
+    return 0;
   }
 
   // Assemble PDU
-  byte_buffer_chain pdu_buf = {};
-  pdu_buf.append(std::move(header_buf));
-  pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
+  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len),
+                                  byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len});
+  if (payload_len == 0 || payload_len != segment_payload_len) {
+    logger.log_error(
+        "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
+    return 0;
+  }
+
+  size_t pdu_len = header_len + payload_len;
+  logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_len, grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -425,12 +429,12 @@ byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_in
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_pdus(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  return pdu_buf;
+  return pdu_len;
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
