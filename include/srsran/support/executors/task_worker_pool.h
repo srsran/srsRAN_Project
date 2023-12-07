@@ -33,7 +33,7 @@ public:
   worker_pool_impl& operator=(worker_pool_impl&&)      = delete;
 
   /// Name given to the pool.
-  const std::string& name() const { return this->pool_name; }
+  const char* name() const { return this->pool_name.c_str(); }
 
   /// \brief Number of workers that compose the worker pool.
   unsigned nof_workers() const { return worker_threads.size(); }
@@ -126,6 +126,13 @@ public:
     return pending_tasks.template capacity<Priority>();
   }
 
+  /// \brief Get enqueuer object for a given Priority.
+  template <enqueue_priority Priority>
+  auto get_enqueuer()
+  {
+    return pending_tasks.template get_enqueuer<Priority>();
+  }
+
 protected:
   queue_type pending_tasks;
 };
@@ -214,25 +221,28 @@ private:
   bool                           report_on_failure = true;
 };
 
-/// \brief Task executor that pushes tasks to worker pool.
-template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
+/// \brief Task executor that pushes tasks to worker pool with a given priority.
+template <enqueue_priority Priority, concurrent_queue_policy QueuePolicy>
 class priority_task_worker_pool_executor final : public task_executor
 {
 public:
   priority_task_worker_pool_executor() = default;
+  template <concurrent_queue_policy... QueuePolicies>
   priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker_pool_, bool report_on_failure_ = true) :
-    worker_pool(&worker_pool_), report_on_failure(report_on_failure_)
+    enqueuer(worker_pool_.template get_enqueuer<Priority>()),
+    worker_pool_name(worker_pool_.name()),
+    report_on_failure(report_on_failure_)
   {
   }
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
-    bool ret = worker_pool->template push_task<Priority>(std::move(task));
+    bool ret = enqueuer.try_push(std::move(task));
     if (not ret and report_on_failure) {
       srslog::fetch_basic_logger("ALL").warning(
           "Cannot push more tasks into the {} worker pool queue. Maximum size is {}",
-          worker_pool->name(),
-          worker_pool->template capacity<Priority>());
+          worker_pool_name,
+          enqueuer.capacity());
     }
     return ret;
   }
@@ -240,23 +250,25 @@ public:
   SRSRAN_NODISCARD bool defer(unique_task task) override { return execute(std::move(task)); }
 
 private:
-  task_worker_pool<QueuePolicies...>* worker_pool       = nullptr;
-  bool                                report_on_failure = true;
+  priority_enqueuer<unique_task, QueuePolicy> enqueuer;
+  const char*                                 worker_pool_name;
+  bool                                        report_on_failure = true;
 };
 
 /// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
-priority_task_worker_pool_executor<Priority, QueuePolicies...>
-make_priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker, bool report_on_failure)
+auto make_priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker, bool report_on_failure)
 {
-  return priority_task_worker_pool_executor<Priority, QueuePolicies...>(worker, report_on_failure);
+  return priority_task_worker_pool_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>(
+      worker, report_on_failure);
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
 std::unique_ptr<task_executor> make_priority_task_worker_pool_executor_ptr(task_worker_pool<QueuePolicies...>& worker)
 {
-  return std::make_unique<priority_task_worker_pool_executor<Priority, QueuePolicies...>>(worker);
+  return std::make_unique<
+      priority_task_worker_pool_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>>(worker);
 }
 
 namespace detail {
@@ -271,8 +283,9 @@ void visit_executor(task_worker_pool<QueuePolicies...>& w,
   const size_t idx = detail::enqueue_priority_to_queue_index(priority, sizeof...(QueuePolicies));
   (void)std::initializer_list<int>{[idx, &w, &func, report_on_failure]() {
     if (idx == Is) {
-      func(make_priority_task_worker_pool_executor<detail::queue_index_to_enqueue_priority(
-               Is, sizeof...(QueuePolicies))>(w, report_on_failure));
+      func(
+          make_priority_task_worker_pool_executor<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies)),
+                                                  QueuePolicies...>(w, report_on_failure));
     }
     return 0;
   }()...};

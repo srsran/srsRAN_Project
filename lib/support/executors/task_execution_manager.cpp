@@ -104,8 +104,10 @@ public:
 protected:
   using task_executor_list = std::vector<std::pair<std::string, std::unique_ptr<task_executor>>>;
 
+  /// Create executor given the provided executor parameters.
   virtual std::unique_ptr<task_executor> create_executor(const executor_params& params) = 0;
 
+  /// Create all the strand executors that connect to the provided executor.
   virtual task_executor_list create_strand_executors(const executor_params& params) = 0;
 
   bool add_executors(span<const executor_params> execs)
@@ -118,6 +120,7 @@ protected:
       if (not exec_params.strands.empty()) {
         task_executor_list strands = create_strand_executors(exec_params);
         if (exec_params.strands.size() != strands.size()) {
+          executor_list.clear();
           return false;
         }
         for (auto& p : strands) {
@@ -133,7 +136,7 @@ protected:
   SRSRAN_NODISCARD bool store_executor(const std::string& exec_name, std::unique_ptr<task_executor> exec)
   {
     if (exec_name.empty()) {
-      logger.error("Failed to create executor in context \"{}\". Cause: Executor name is emtpy.");
+      logger.error("Failed to create executor in context \"{}\". Cause: Executor name is emtpy.", name());
       executor_list.clear();
       return false;
     }
@@ -291,7 +294,7 @@ template <concurrent_queue_policy... QueuePolicies>
 struct worker_pool_context final : public common_task_execution_context<task_worker_pool<QueuePolicies...>> {
   using worker_type = task_worker_pool<QueuePolicies...>;
   template <enqueue_priority Prio>
-  using executor_type = priority_task_worker_executor<Prio, QueuePolicies...>;
+  using executor_type = priority_task_worker_pool_executor<Prio, get_priority_queue_policy<QueuePolicies...>(Prio)>;
   using base_type     = common_task_execution_context<worker_type>;
 
   worker_pool_context(const execution_config_helper::worker_pool& params) :
@@ -495,13 +498,13 @@ private:
   }
 };
 
-static constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 3U;
+constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 3U;
 
 // Special case to stop recursion for task queue policies.
 template <concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<sizeof...(QueuePolicies) >= MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
-std::unique_ptr<task_execution_context>
-create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
+          std::enable_if_t<MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER<sizeof...(QueuePolicies), int> = 0>
+              std::unique_ptr<task_execution_context> create_execution_context_helper(
+                  const execution_config_helper::priority_multiqueue_worker& params)
 {
   report_fatal_error("Workers with equal or more than {} queues are not supported",
                      MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER);
@@ -509,7 +512,7 @@ create_execution_context_helper(const execution_config_helper::priority_multique
 };
 
 template <concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<sizeof...(QueuePolicies) < MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
+          std::enable_if_t<sizeof...(QueuePolicies) <= MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
 std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {

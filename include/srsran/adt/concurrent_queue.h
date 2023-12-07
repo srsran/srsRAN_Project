@@ -709,7 +709,83 @@ static constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_i
   return static_cast<enqueue_priority>(std::numeric_limits<size_t>::max() - queue_idx);
 }
 
+class concurrent_priority_queue_wait_policy
+{
+public:
+  explicit concurrent_priority_queue_wait_policy(std::chrono::microseconds spin_on_wait_interval) :
+    wait_interval(spin_on_wait_interval)
+  {
+  }
+
+  void request_stop() { running = false; }
+
+  template <typename Func>
+  bool run_until(Func&& func)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (func()) {
+        return true;
+      }
+      std::this_thread::sleep_for(wait_interval);
+    }
+    return false;
+  }
+
+protected:
+  // Time that thread spends sleeping when there are no pending tasks.
+  const std::chrono::microseconds wait_interval;
+
+  std::atomic<bool> running{true};
+};
+
 } // namespace detail
+
+/// \brief Object used to push elements to a \c concurrent_priority_queue with a given priority.
+///
+/// This class is useful to reduce the number of template instantiations needed to interact with the .
+/// \tparam T type of element pushed.
+/// \tparam QueuePolicy Queue policy used to push the element.
+template <typename T, concurrent_queue_policy QueuePolicy>
+class priority_enqueuer
+{
+public:
+  constexpr static concurrent_queue_policy queue_policy = QueuePolicy;
+
+  priority_enqueuer(detail::concurrent_priority_queue_wait_policy&                                wait_policy_,
+                    concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>& q_) :
+    wait_policy(&wait_policy_), queue(&q_)
+  {
+  }
+
+  /// \brief Push new object with priority level \c Priority.
+  template <typename U>
+  SRSRAN_NODISCARD bool try_push(U&& u)
+  {
+    return queue->try_push(std::forward<U>(u));
+  }
+
+  /// \brief Push new object with priority level \c Priority.
+  template <enqueue_priority Priority, typename U>
+  SRSRAN_NODISCARD bool push_blocking(U&& u)
+  {
+    return wait_policy->run_until([this, &u]() mutable { return queue->try_push(std::forward<U>(u)); });
+  }
+
+  /// \brief Maximum capacity of the queue.
+  size_t capacity() const { return queue->capacity(); }
+
+private:
+  detail::concurrent_priority_queue_wait_policy*                                wait_policy;
+  concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>* queue;
+};
+
+/// \brief Gets the queue policy for a given priority.
+template <concurrent_queue_policy... QueuePolicies>
+constexpr concurrent_queue_policy get_priority_queue_policy(enqueue_priority Priority)
+{
+  constexpr std::array<concurrent_queue_policy, sizeof...(QueuePolicies)> policies{QueuePolicies...};
+  return policies[detail::enqueue_priority_to_queue_index(Priority, sizeof...(QueuePolicies))];
+}
 
 /// \brief Concurrent priority queue, where the caller specifies the element priority statically while pushing it to
 /// the queue.
@@ -727,7 +803,7 @@ public:
   /// \param wait_interval The amount of time to suspend the thread, when no tasks are pending.
   concurrent_priority_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& priority_queue_sizes,
                             std::chrono::microseconds                             wait_interval_) :
-    queues(detail::as_tuple(priority_queue_sizes)), wait_interval(wait_interval_)
+    wait_policy(wait_interval_), queues(detail::as_tuple(priority_queue_sizes))
   {
   }
 
@@ -735,21 +811,16 @@ public:
   template <enqueue_priority Priority, typename U>
   SRSRAN_NODISCARD bool try_push(U&& u)
   {
-    return std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues).try_push(
-        std::forward<U>(u));
+    auto& q = std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues);
+    return q.try_push(std::forward<U>(u));
   }
 
   /// \brief Push new object with priority level \c Priority.
   template <enqueue_priority Priority, typename U>
   SRSRAN_NODISCARD bool push_blocking(U&& u)
   {
-    while (running.load(std::memory_order_relaxed)) {
-      if (try_push<Priority>(std::forward<U>(u))) {
-        return true;
-      }
-      std::this_thread::sleep_for(wait_interval);
-    }
-    return false;
+    auto& q = std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues);
+    return wait_policy.run_until([&q, &u]() mutable { return q.try_push(std::forward<U>(u)); });
   }
 
   /// \brief Pop object from queue, by starting first with the objects with highest priority.
@@ -777,41 +848,26 @@ public:
 
   bool pop_blocking(T& elem)
   {
-    while (running.load(std::memory_order_relaxed)) {
-      if (try_pop(elem)) {
-        return true;
-      }
-      std::this_thread::sleep_for(wait_interval);
-    }
-    return false;
+    return wait_policy.run_until([this, &elem]() { return try_pop(elem); });
   }
 
   optional<T> pop_blocking()
   {
     optional<T> t;
-    while (running.load(std::memory_order_relaxed)) {
+    wait_policy.run_until([this, &t]() {
       t = try_pop();
-      if (t.has_value()) {
-        break;
-      }
-      std::this_thread::sleep_for(wait_interval);
-    }
+      return t.has_value();
+    });
     return t;
   }
 
   template <typename CallOnPop>
   bool call_on_pop_blocking(const CallOnPop& func)
   {
-    while (running.load(std::memory_order_relaxed)) {
-      if (try_call_on_pop(func)) {
-        return true;
-      }
-      std::this_thread::sleep_for(wait_interval);
-    }
-    return false;
+    return wait_policy.run_until([this, &func]() { return try_call_on_pop(func); });
   }
 
-  void request_stop() { running = false; }
+  void request_stop() { wait_policy.request_stop(); }
 
   /// \brief Get specified priority queue capacity.
   template <enqueue_priority Priority>
@@ -833,6 +889,14 @@ public:
   /// Number of priority levels supported by this queue.
   static constexpr size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
 
+  /// \brief Gets the enqueue point for a given priority.
+  template <enqueue_priority Priority>
+  auto get_enqueuer()
+  {
+    auto& q = std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues);
+    return priority_enqueuer<T, get_priority_queue_policy<QueuePolicies...>(Priority)>{wait_policy, q};
+  }
+
 private:
   template <size_t... I>
   size_t size_sum(std::index_sequence<I...> /*unused*/) const
@@ -845,12 +909,10 @@ private:
     return sz;
   }
 
-  std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
-
   // Time that thread spends sleeping when there are no pending tasks.
-  const std::chrono::microseconds wait_interval;
+  detail::concurrent_priority_queue_wait_policy wait_policy;
 
-  std::atomic<bool> running{true};
+  std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
 };
 
 } // namespace srsran
