@@ -147,7 +147,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
 
           // Report ACK for RLF detection purposes.
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
@@ -160,7 +160,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
         // Report ACK for RLF detection purposes.
         for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
 
@@ -170,7 +170,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
         if (pusch.csi_part1_info->csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          rlf_handler.handle_csi(ind.ucis[i].ue_index, true);
+          rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, true);
         }
       }
 
@@ -193,7 +193,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
         // Report ACK for RLF detection purposes.
         for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, harq_st == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, harq_st == mac_harq_ack_report_status::ack);
         }
       }
 
@@ -219,6 +219,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         }
         // We consider any status other than "crc_pass" as non-decoded CSI.
         rlf_handler.handle_csi(ind.ucis[i].ue_index,
+                               cell_index,
                                pucch.uci_part1_or_csi_part1_info->status ==
                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass);
       }

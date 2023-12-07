@@ -68,7 +68,10 @@ public:
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
 
-  void handle_crnti_ce_indication(du_ue_index_t old_ue_index) override { last_crnti_ce = old_ue_index; }
+  void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) override
+  {
+    last_crnti_ce = old_ue_index;
+  }
 
   /// Compare verify_phr_msg with a test message passed to the function.
   // TODO: Handle verification of Multiple Entry PHR.
