@@ -123,6 +123,9 @@ private:
   /// latest buffer state upon execution.
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
+  /// Temporary linear PDU buffer for API adaptation pull_pdu
+  std::vector<uint8_t> linear_pdu_buffer;
+
 public:
   rlc_tx_am_entity(uint32_t                             du_index,
                    du_ue_index_t                        ue_index,

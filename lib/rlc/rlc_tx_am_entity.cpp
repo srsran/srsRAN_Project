@@ -57,6 +57,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
                               [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
 
+  linear_pdu_buffer.reserve(9100);
+
   logger.log_info("RLC AM configured. {}", cfg);
 }
 
@@ -88,25 +90,51 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
   }
 }
 
-// TS 38.322 v16.2.0 Sec. 5.2.3.1
+// API transition
 byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
+{
+  byte_buffer pdu;
+  if (linear_pdu_buffer.size() < grant_len) {
+    linear_pdu_buffer.resize(grant_len);
+  }
+  size_t pdu_len = pull_pdu(span<uint8_t>{linear_pdu_buffer.data(), grant_len});
+  pdu.append(span<uint8_t>{linear_pdu_buffer.data(), pdu_len});
+  return byte_buffer_chain{std::move(pdu)};
+}
+
+// API transition helper function
+size_t copy_pdu(span<uint8_t> dst, const byte_buffer_chain& src)
+{
+  auto* it = dst.begin();
+  for (const auto& slice : src.slices()) {
+    for (span<const uint8_t> seg : slice.segments()) {
+      it = std::copy(seg.begin(), seg.end(), it);
+    }
+  }
+  return src.length();
+}
+
+// TS 38.322 v16.2.0 Sec. 5.2.3.1
+size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
+  const size_t grant_len = rlc_pdu_buf.size();
+  size_t       pdu_len   = 0;
   logger.log_debug("MAC opportunity. grant_len={} tx_window_size={}", grant_len, tx_window->size());
 
   // TX STATUS if requested
   if (status_provider->status_report_required()) {
     if (grant_len < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
       logger.log_debug("Cannot fit status PDU into small grant_len={}.", grant_len);
-      return {};
+      return pdu_len;
     }
     rlc_am_status_pdu& status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
         logger.log_warning("Could not trim status PDU down to grant_len={}.", grant_len);
-        return {};
+        return pdu_len;
       }
       logger.log_info("Trimmed status PDU to fit into grant_len={}.", grant_len);
       logger.log_debug("Trimmed status PDU. {}", status_pdu);
@@ -114,7 +142,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     byte_buffer pdu;
     if (not status_pdu.pack(pdu)) {
       logger.log_error("Could not pack status pdu. {}", status_pdu);
-      return {};
+      return pdu_len;
     }
     logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
@@ -127,7 +155,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     byte_buffer_chain pdu_buf{std::move(pdu)};
     pcap.push_pdu(pcap_context, pdu_buf);
 
-    return pdu_buf;
+    return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
   }
 
   // Retransmit if required
@@ -137,7 +165,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     byte_buffer_chain pdu_buf{build_retx_pdu(grant_len)};
     pcap.push_pdu(pcap_context, pdu_buf);
 
-    return pdu_buf;
+    return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
   }
 
   // Send remaining segment, if it exists
@@ -146,7 +174,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
       byte_buffer_chain pdu_buf{build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len)};
       pcap.push_pdu(pcap_context, pdu_buf);
 
-      return pdu_buf;
+      return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
     }
     sn_under_segmentation = INVALID_RLC_SN;
     logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
@@ -156,24 +184,12 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
-    return {};
+    return pdu_len;
   }
 
   byte_buffer_chain pdu_buf{build_new_pdu(grant_len)};
   pcap.push_pdu(pcap_context, pdu_buf);
-  return pdu_buf;
-}
-
-size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
-{
-  byte_buffer_chain buf = pull_pdu(mac_sdu_buf.size());
-  auto              it  = mac_sdu_buf.begin();
-  for (auto& slice : buf.slices()) {
-    for (span<const uint8_t> seg : slice.segments()) {
-      it = std::copy(seg.begin(), seg.end(), it);
-    }
-  }
-  return buf.length();
+  return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
