@@ -222,16 +222,19 @@ private:
 };
 
 /// \brief Task executor that pushes tasks to worker pool with a given priority.
-template <enqueue_priority Priority, concurrent_queue_policy QueuePolicy>
+template <concurrent_queue_policy QueuePolicy>
 class priority_task_worker_pool_executor final : public task_executor
 {
 public:
   priority_task_worker_pool_executor() = default;
-  template <concurrent_queue_policy... QueuePolicies>
-  priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker_pool_, bool report_on_failure_ = true) :
-    enqueuer(worker_pool_.template get_enqueuer<Priority>()),
-    worker_pool_name(worker_pool_.name()),
-    report_on_failure(report_on_failure_)
+  priority_task_worker_pool_executor(priority_enqueuer<unique_task, QueuePolicy> enqueuer_,
+                                     enqueue_priority                            prio_,
+                                     const char*                                 worker_name_,
+                                     bool                                        report_on_push_failure_) :
+    enqueuer(std::move(enqueuer_)),
+    prio(prio_),
+    worker_pool_name(worker_name_),
+    report_on_failure(report_on_push_failure_)
   {
   }
 
@@ -251,24 +254,27 @@ public:
 
 private:
   priority_enqueuer<unique_task, QueuePolicy> enqueuer;
+  enqueue_priority                            prio;
   const char*                                 worker_pool_name;
   bool                                        report_on_failure = true;
 };
 
-/// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
+/// \brief Create task executor with \c Priority for \c task_worker_pool that supports multiple priorities.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
 auto make_priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker, bool report_on_failure)
 {
-  return priority_task_worker_pool_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>(
-      worker, report_on_failure);
+  return priority_task_worker_pool_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>(
+      worker.template get_enqueuer<Priority>(), Priority, worker.name(), report_on_failure);
 }
 
-/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
+/// \brief Create general task executor pointer with \c Priority for \c task_worker_pool that supports multiple
+/// priorities.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
-std::unique_ptr<task_executor> make_priority_task_worker_pool_executor_ptr(task_worker_pool<QueuePolicies...>& worker)
+std::unique_ptr<task_executor> make_priority_task_worker_pool_executor_ptr(task_worker_pool<QueuePolicies...>& worker,
+                                                                           bool report_on_failure)
 {
-  return std::make_unique<
-      priority_task_worker_pool_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>>(worker);
+  return std::make_unique<priority_task_worker_pool_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>>(
+      worker.template get_enqueuer<Priority>(), Priority, worker.name(), report_on_failure);
 }
 
 namespace detail {

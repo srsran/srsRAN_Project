@@ -294,7 +294,7 @@ template <concurrent_queue_policy... QueuePolicies>
 struct worker_pool_context final : public common_task_execution_context<task_worker_pool<QueuePolicies...>> {
   using worker_type = task_worker_pool<QueuePolicies...>;
   template <enqueue_priority Prio>
-  using executor_type = priority_task_worker_pool_executor<Prio, get_priority_queue_policy<QueuePolicies...>(Prio)>;
+  using executor_type = priority_task_worker_pool_executor<get_priority_queue_policy<QueuePolicies...>(Prio)>;
   using base_type     = common_task_execution_context<worker_type>;
 
   worker_pool_context(const execution_config_helper::worker_pool& params) :

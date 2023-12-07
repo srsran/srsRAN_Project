@@ -104,18 +104,24 @@ private:
 };
 
 /// \brief Task executor with \c Priority (lower is higher) for \c priority_task_worker.
-template <task_priority Priority, concurrent_queue_policy QueuePolicy>
+///
+/// This executor does not depend on the priorty_task_worker<QueuePolicies...> to avoid increases in template
+/// instantiations being proportional to all possible QueuePolicies... permutations.
+/// \tparam QueuePolicy Enqueueing policy for the given priority level.
+template <concurrent_queue_policy QueuePolicy>
 class priority_task_worker_executor : public task_executor
 {
 public:
-  constexpr static task_priority priority_level = Priority;
-
-  template <concurrent_queue_policy... QueuePolicies>
-  priority_task_worker_executor(priority_task_worker<QueuePolicies...>& worker, bool report_on_push_failure = true) :
-    enqueuer(worker.template get_enqueuer<Priority>()),
-    worker_tid(worker.get_id()),
-    worker_name(worker.worker_name()),
-    report_on_failure(report_on_push_failure)
+  priority_task_worker_executor(priority_enqueuer<unique_task, QueuePolicy> enqueuer_,
+                                task_priority                               prio_,
+                                std::thread::id                             tid_,
+                                const char*                                 worker_name_,
+                                bool                                        report_on_push_failure_) :
+    enqueuer(std::move(enqueuer_)),
+    prio(prio_),
+    worker_tid(tid_),
+    worker_name(worker_name_),
+    report_on_failure(report_on_push_failure_)
   {
   }
 
@@ -136,7 +142,7 @@ public:
         srslog::fetch_basic_logger("ALL").warning(
             "Cannot push more tasks into the {} worker queue with priority={}. Maximum size is {}",
             worker_name,
-            Priority,
+            prio,
             enqueuer.capacity());
       }
       return false;
@@ -145,14 +151,12 @@ public:
   }
 
   // Check whether task can be run inline or it needs to be dispatched to a queue.
-  bool can_run_task_inline() const
-  {
-    return Priority == task_priority::max and worker_tid == std::this_thread::get_id();
-  }
+  bool can_run_task_inline() const { return prio == task_priority::max and worker_tid == std::this_thread::get_id(); }
 
 private:
   /// Enqueuer interface with the provided Priority.
   priority_enqueuer<unique_task, QueuePolicy> enqueuer;
+  task_priority                               prio;
   std::thread::id                             worker_tid;
   const char*                                 worker_name;
   bool                                        report_on_failure = true;
@@ -162,8 +166,8 @@ private:
 template <task_priority Priority, concurrent_queue_policy... QueuePolicies>
 auto make_priority_task_worker_executor(priority_task_worker<QueuePolicies...>& worker, bool report_on_failure)
 {
-  return priority_task_worker_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>(
-      worker, report_on_failure);
+  return priority_task_worker_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>(
+      worker.template get_enqueuer<Priority>(), Priority, worker.get_id(), worker.worker_name(), report_on_failure);
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
@@ -171,9 +175,8 @@ template <task_priority Priority, concurrent_queue_policy... QueuePolicies>
 std::unique_ptr<task_executor> make_priority_task_executor_ptr(priority_task_worker<QueuePolicies...>& worker,
                                                                bool report_on_failure)
 {
-  return std::make_unique<
-      priority_task_worker_executor<Priority, get_priority_queue_policy<QueuePolicies...>(Priority)>>(
-      worker, report_on_failure);
+  return std::make_unique<priority_task_worker_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>>(
+      worker.template get_enqueuer<Priority>(), Priority, worker.get_id(), worker.worker_name(), report_on_failure);
 }
 
 namespace detail {
