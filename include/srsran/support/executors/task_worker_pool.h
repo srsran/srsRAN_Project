@@ -19,18 +19,18 @@ namespace srsran {
 namespace detail {
 
 // Pool of workers with no associated task enqueueing policy.
-class worker_pool_impl
+class base_worker_pool
 {
 public:
-  worker_pool_impl(unsigned                              nof_workers_,
+  base_worker_pool(unsigned                              nof_workers_,
                    const std::string&                    worker_pool_name,
                    const std::function<void()>&          run_tasks_job,
                    os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                    span<const os_sched_affinity_bitmask> cpu_masks = {});
-  worker_pool_impl(const worker_pool_impl&)            = delete;
-  worker_pool_impl(worker_pool_impl&&)                 = delete;
-  worker_pool_impl& operator=(const worker_pool_impl&) = delete;
-  worker_pool_impl& operator=(worker_pool_impl&&)      = delete;
+  base_worker_pool(const base_worker_pool&)            = delete;
+  base_worker_pool(base_worker_pool&&)                 = delete;
+  base_worker_pool& operator=(const base_worker_pool&) = delete;
+  base_worker_pool& operator=(base_worker_pool&&)      = delete;
 
   /// Name given to the pool.
   const char* name() const { return this->pool_name.c_str(); }
@@ -49,11 +49,11 @@ public:
 
 // Worker pool functionality that varies with the task enqueueing policies used.
 template <concurrent_queue_policy... QueuePolicies>
-class base_task_worker_pool;
+class base_worker_pool_with_policy;
 
 // Specialization for single queue.
 template <concurrent_queue_policy QueuePolicy>
-class base_task_worker_pool<QueuePolicy>
+class base_worker_pool_with_policy<QueuePolicy>
 {
   using queue_type = concurrent_queue<unique_task,
                                       QueuePolicy,
@@ -64,13 +64,13 @@ class base_task_worker_pool<QueuePolicy>
 public:
   template <concurrent_queue_policy P                                          = QueuePolicy,
             std::enable_if_t<P == concurrent_queue_policy::lockfree_mpmc, int> = 0>
-  base_task_worker_pool(unsigned queue_size, std::chrono::microseconds wait_sleep_time) :
+  base_worker_pool_with_policy(unsigned queue_size, std::chrono::microseconds wait_sleep_time) :
     pending_tasks(queue_size, wait_sleep_time)
   {
   }
   template <concurrent_queue_policy P                                          = QueuePolicy,
             std::enable_if_t<P != concurrent_queue_policy::lockfree_mpmc, int> = 0>
-  base_task_worker_pool(unsigned queue_size, std::chrono::microseconds /**/) : pending_tasks(queue_size)
+  base_worker_pool_with_policy(unsigned queue_size, std::chrono::microseconds /**/) : pending_tasks(queue_size)
   {
   }
 
@@ -91,13 +91,13 @@ protected:
 };
 
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_policy... QueuePolicies>
-class base_task_worker_pool<QueuePolicy, QueuePolicies...>
+class base_worker_pool_with_policy<QueuePolicy, QueuePolicies...>
 {
   using queue_type = concurrent_priority_queue<unique_task, QueuePolicy, QueuePolicies...>;
 
 public:
-  base_task_worker_pool(const std::array<unsigned, sizeof...(QueuePolicies) + 1>& task_queue_sizes,
-                        std::chrono::microseconds                                 wait_sleep_time) :
+  base_worker_pool_with_policy(const std::array<unsigned, sizeof...(QueuePolicies) + 1>& task_queue_sizes,
+                               std::chrono::microseconds                                 wait_sleep_time) :
     pending_tasks(task_queue_sizes, wait_sleep_time)
   {
   }
@@ -142,12 +142,12 @@ protected:
 /// \brief Simple pool of task workers/threads. The workers share the same queue of task and do not perform
 /// work-stealing.
 template <concurrent_queue_policy... QueuePolicies>
-class task_worker_pool : public detail::base_task_worker_pool<QueuePolicies...>, public detail::worker_pool_impl
+class task_worker_pool : public detail::base_worker_pool_with_policy<QueuePolicies...>, public detail::base_worker_pool
 {
   static_assert(sizeof...(QueuePolicies) >= 1, "Invalid number of queues");
 
-  using pool_type  = detail::worker_pool_impl;
-  using queue_type = detail::base_task_worker_pool<QueuePolicies...>;
+  using pool_type  = detail::base_worker_pool;
+  using queue_type = detail::base_worker_pool_with_policy<QueuePolicies...>;
 
 public:
   /// \brief Creates a task worker pool.
@@ -173,7 +173,7 @@ public:
   void stop();
 
   /// \brief Number of tasks currently enqueued.
-  uint32_t nof_pending_tasks() const { return this->pending_tasks.size(); }
+  unsigned nof_pending_tasks() const { return this->pending_tasks.size(); }
 
   /// \brief Wait for all the currently enqueued tasks to complete. If more tasks get enqueued after this function call
   /// those tasks are not accounted for in the waiting.
@@ -204,6 +204,10 @@ public:
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
+    if (can_run_task_inline()) {
+      task();
+      return true;
+    }
     bool ret = worker_pool->push_task(std::move(task));
     if (not ret and report_on_failure) {
       srslog::fetch_basic_logger("ALL").warning(
@@ -215,6 +219,10 @@ public:
   }
 
   SRSRAN_NODISCARD bool defer(unique_task task) override { return worker_pool->push_task(std::move(task)); }
+
+  /// Determine whether the caller is in one of the threads of the worker pool.
+  // TODO: this feature has been disabled while we don't correct the use of .execute in some places.
+  bool can_run_task_inline() const { return false; }
 
 private:
   task_worker_pool<QueuePolicy>* worker_pool       = nullptr;
@@ -229,49 +237,54 @@ public:
   priority_task_worker_pool_executor() = default;
   priority_task_worker_pool_executor(priority_enqueuer<unique_task, QueuePolicy> enqueuer_,
                                      enqueue_priority                            prio_,
-                                     const char*                                 worker_name_,
+                                     detail::base_worker_pool&                   workers_,
                                      bool                                        report_on_push_failure_) :
-    enqueuer(std::move(enqueuer_)),
-    prio(prio_),
-    worker_pool_name(worker_name_),
-    report_on_failure(report_on_push_failure_)
+    enqueuer(std::move(enqueuer_)), prio(prio_), workers(workers_), report_on_failure(report_on_push_failure_)
   {
   }
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
+    if (can_run_task_inline()) {
+      task();
+      return true;
+    }
     bool ret = enqueuer.try_push(std::move(task));
     if (not ret and report_on_failure) {
       srslog::fetch_basic_logger("ALL").warning(
           "Cannot push more tasks into the {} worker pool queue. Maximum size is {}",
-          worker_pool_name,
+          workers.name(),
           enqueuer.capacity());
     }
     return ret;
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return execute(std::move(task)); }
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return enqueuer.try_push(std::move(task)); }
+
+  /// Determine whether the caller is in one of the threads of the worker pool and the the task can run without
+  /// being dispatched.
+  bool can_run_task_inline() const { return prio == enqueue_priority::max and workers.is_in_thread_pool(); }
 
 private:
   priority_enqueuer<unique_task, QueuePolicy> enqueuer;
   enqueue_priority                            prio;
-  const char*                                 worker_pool_name;
+  detail::base_worker_pool&                   workers;
   bool                                        report_on_failure = true;
 };
 
 /// \brief Create task executor with \c Priority for \c task_worker_pool that supports multiple priorities.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
-auto make_priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker, bool report_on_failure)
+auto make_priority_task_worker_pool_executor(task_worker_pool<QueuePolicies...>& worker, bool report_on_failure = true)
 {
   return priority_task_worker_pool_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>(
-      worker.template get_enqueuer<Priority>(), Priority, worker.name(), report_on_failure);
+      worker.template get_enqueuer<Priority>(), Priority, worker, report_on_failure);
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c task_worker_pool that supports multiple
 /// priorities.
 template <enqueue_priority Priority, concurrent_queue_policy... QueuePolicies>
 std::unique_ptr<task_executor> make_priority_task_worker_pool_executor_ptr(task_worker_pool<QueuePolicies...>& worker,
-                                                                           bool report_on_failure)
+                                                                           bool report_on_failure = true)
 {
   return std::make_unique<priority_task_worker_pool_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>>(
       worker.template get_enqueuer<Priority>(), Priority, worker.name(), report_on_failure);

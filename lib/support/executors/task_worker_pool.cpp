@@ -13,7 +13,7 @@
 
 using namespace srsran;
 
-detail::worker_pool_impl::worker_pool_impl(unsigned                              nof_workers_,
+detail::base_worker_pool::base_worker_pool(unsigned                              nof_workers_,
                                            const std::string&                    worker_pool_name,
                                            const std::function<void()>&          run_tasks_job,
                                            os_thread_realtime_priority           prio,
@@ -39,7 +39,7 @@ detail::worker_pool_impl::worker_pool_impl(unsigned                             
   }
 }
 
-bool detail::worker_pool_impl::is_in_thread_pool() const
+bool detail::base_worker_pool::is_in_thread_pool() const
 {
   return std::any_of(worker_threads.begin(),
                      worker_threads.end(),

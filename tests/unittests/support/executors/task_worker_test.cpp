@@ -169,6 +169,26 @@ TYPED_TEST(prio_task_worker_pool_test, prio_worker_pool_runs_single_task)
   f.get();
 }
 
+TYPED_TEST(prio_task_worker_pool_test, prio_worker_pool_executor_can_run_inline)
+{
+  std::promise<bool> p;
+  std::future<bool>  f    = p.get_future();
+  auto               exec = make_priority_task_worker_pool_executor<enqueue_priority::max>(this->pool);
+  ASSERT_TRUE(exec.execute([&exec, &p]() {
+    bool run_inline = false;
+    fmt::print("Started in {}\n", this_thread_name());
+    if (not exec.execute([&p, &run_inline]() mutable {
+          run_inline = true;
+          fmt::print("Finished in {}\n", this_thread_name());
+        })) {
+      p.set_value(false);
+      return;
+    }
+    p.set_value(run_inline);
+  }));
+  ASSERT_TRUE(f.get());
+}
+
 TEST(spsc_task_worker_test, correct_initialization)
 {
   general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep> worker{
