@@ -175,6 +175,15 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   return pdu_buf;
 }
 
+size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src)
+{
+  auto* it = dst.begin();
+  for (span<const uint8_t> seg : src.segments()) {
+    it = std::copy(seg.begin(), seg.end(), it);
+  }
+  return src.length();
+}
+
 size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
   uint32_t grant_len = mac_sdu_buf.size();
@@ -239,15 +248,16 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
                    sdu.buf.length(),
                    grant_len);
 
-  // Copy payload
-  byte_buffer::iterator   payload_start = sdu.buf.begin() + next_so;
-  byte_buffer::iterator   payload_end   = payload_start + payload_len;
-  span<uint8_t>::iterator pdu_begin     = mac_sdu_buf.begin();
-  span<uint8_t>::iterator pdu_end       = std::copy(payload_start, payload_end, hdr_offset);
-  size_t                  pdu_size      = std::distance(pdu_begin, pdu_end);
+  // Assemble PDU
+  size_t nwritten = copy_bytes(mac_sdu_buf.subspan(head_len, mac_sdu_buf.size() - head_len),
+                               byte_buffer_view{sdu.buf, next_so, payload_len});
+  if (nwritten == 0 || nwritten != payload_len) {
+    logger.log_error("Could not write PDU payload. {} payload_len={} grant_len={}", header, payload_len, grant_len);
+    return 0;
+  }
 
-  // Assert number of bytes
-  logger.log_info(mac_sdu_buf.data(), pdu_size, "TX PDU. {} pdu_len={} grant_len={}", header, pdu_size, grant_len);
+  size_t pdu_size = head_len + nwritten;
+  logger.log_info(mac_sdu_buf.data(), pdu_size, "TX PDU. {} pdu_size={} grant_len={}", header, pdu_size, grant_len);
 
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
