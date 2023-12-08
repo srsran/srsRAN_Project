@@ -171,7 +171,8 @@ protected:
       for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
         queues[i] = execution_config_helper::task_queue{strand_cfg.queues[i].policy, strand_cfg.queues[i].size};
       }
-      auto strand_execs = make_strand_executor_ptrs(basic_exec, span<const concurrent_queue_params>(queues));
+      auto strand_execs =
+          make_strand_executor_ptrs(std::forward<OutExec>(basic_exec), span<const concurrent_queue_params>(queues));
       if (strand_execs.size() != strand_cfg.queues.size()) {
         return {};
       }
@@ -235,8 +236,7 @@ private:
   {
     typename base_type::task_executor_list execs;
 
-    executor_type basic_exec(this->worker, desc.report_on_failure);
-    return this->create_strand_executors_helper(desc, basic_exec);
+    return this->create_strand_executors_helper(desc, executor_type(this->worker, desc.report_on_failure));
   }
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::single_worker::executor& desc) override
@@ -341,7 +341,7 @@ private:
   {
     std::unique_ptr<task_executor> exec;
     visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &exec, &desc](auto&& prio_exec) {
-      exec = decorate_executor(desc, std::move(prio_exec), this->task_tracer);
+      exec = decorate_executor(desc, prio_exec, this->task_tracer);
     });
     return exec;
   }
@@ -351,8 +351,8 @@ private:
   {
     typename base_type::task_executor_list execs;
 
-    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto&& prio_exec) {
-      execs = this->create_strand_executors_helper(desc, prio_exec);
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto prio_exec) {
+      execs = this->create_strand_executors_helper(desc, std::move(prio_exec));
     });
     return execs;
   }
@@ -400,8 +400,7 @@ private:
   typename base_type::task_executor_list
   create_strand_executors(const execution_config_helper::worker_pool::executor& desc) override
   {
-    executor_type basic_exec(this->worker, desc.report_on_failure);
-    return this->create_strand_executors_helper(desc, basic_exec);
+    return this->create_strand_executors_helper(desc, executor_type(this->worker, desc.report_on_failure));
   }
 };
 
@@ -498,8 +497,8 @@ private:
   {
     typename base_type::task_executor_list execs;
 
-    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto&& prio_exec) {
-      execs = this->create_strand_executors_helper(desc, prio_exec);
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &execs, &desc](auto prio_exec) {
+      execs = this->create_strand_executors_helper(desc, std::move(prio_exec));
     });
     return execs;
   }

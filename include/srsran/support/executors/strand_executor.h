@@ -131,7 +131,7 @@ public:
   static size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
 
 private:
-  template <typename Func, size_t... Is>
+  template <size_t... Is>
   std::unique_ptr<task_executor> get_executor_ptr_impl(enqueue_priority priority, std::index_sequence<Is...> /*unused*/)
   {
     const size_t                   idx = detail::enqueue_priority_to_queue_index(priority, sizeof...(QueuePolicies));
@@ -320,7 +320,7 @@ std::vector<std::unique_ptr<task_executor>> make_strand_executor_ptrs(OutExec&& 
 
 namespace detail {
 
-constexpr size_t MAX_QUEUES_PER_STRAND = 1;
+constexpr size_t MAX_QUEUES_PER_STRAND = 2;
 
 // Special case to stop recursion for task queue policies.
 template <typename OutExec,
@@ -340,7 +340,7 @@ std::vector<std::unique_ptr<task_executor>>
 make_strand_executors_iter_helper(OutExec&& out_exec, span<const concurrent_queue_params> strand_queues)
 {
   constexpr static size_t Is = sizeof...(QueuePolicies);
-  if (strand_queues.empty()) {
+  if (strand_queues.empty() or Is > strand_queues.size()) {
     return {};
   }
   if (Is == strand_queues.size()) {
