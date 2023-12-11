@@ -118,15 +118,21 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // Configure non-RT worker pool.
   worker_pool non_rt_pool{
       "non_rt_pool",
-      3,
+      3U,
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-      {{"low_prio_exec", task_priority::max - 1}, {"high_prio_exec", task_priority::max}},
+      {{"low_prio_exec", task_priority::max - 1}, // used for pcap writing.
+       {"high_prio_exec", task_priority::max},    // used for control plane and timer management.
+       {"cu_up_strand", // used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
+        task_priority::max,
+        {}, // define strands below.
+        false}},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
       std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
   std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
   std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
+  std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   // The low priority executor will be used for PCAP writing via dedicated strands.
@@ -151,6 +157,17 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
 
+  // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
+  // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
+  // Each UE strand will have two queues, one for timer management and configuration and one for the data plane.
+  strand         ue_up_strand{{{"ue_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                               {"ue_up_data_exec", concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size}}};
+  const unsigned nof_ue_dl_queues = 1; // TODO: Fix, once CU-UP supports new gnb-cu exec mapper.
+  for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
+    ue_up_strand.queues[1].name = fmt::format("ue_up_data_exec#{}", i);
+    cu_up_strands.push_back(ue_up_strand);
+  }
+
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
@@ -160,44 +177,17 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   cu_cp_exec       = exec_map.at("ctrl_exec");
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");
   metrics_hub_exec = exec_map.at("ctrl_exec");
-
-  // Worker for handling UE PDU traffic.
-  priority_multiqueue_worker gnb_ue_worker{
-      "gnb_ue",
-      // Three queues, one for UE UP maintenance tasks, one for UL PDUs and one for DL PDUs.
-      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-       // The IO-broker is currently single threaded, so we can use a SPSC.
-       {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
-      std::chrono::microseconds{200},
-      {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, {}, false},
-       {"ue_dl_exec", task_priority::max - 2, {}, false}},
-      os_thread_realtime_priority::max() - 30,
-      affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
-
-  const unsigned nof_ue_dl_queues = 64;
-  for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
-    strand st_cfg{{{fmt::format("ue_dl_strand#{}", i),
-                    concurrent_queue_policy::lockfree_mpmc,
-                    appcfg.cu_up_cfg.gtpu_queue_size}}};
-    gnb_ue_worker.executors[2].strands.push_back(st_cfg);
-  }
-
-  if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
-    report_fatal_error("Failed to instantiate gNB UE execution context");
-  }
-  cu_up_ctrl_exec = exec_map.at("ue_up_ctrl_exec");
-  cu_up_ul_exec   = exec_map.at("ue_ul_exec");
-  cu_up_dl_exec   = exec_map.at("ue_dl_strand#0");
-  cu_up_e2_exec   = exec_map.at("ue_up_ctrl_exec");
+  cu_up_ctrl_exec  = exec_map.at("ue_up_ctrl_exec");
+  cu_up_ul_exec    = exec_map.at("ue_up_data_exec#0");
+  cu_up_dl_exec    = exec_map.at("ue_up_data_exec#0");
+  cu_up_e2_exec    = exec_map.at("ue_up_ctrl_exec");
 
   // Create CU-UP execution mapper object.
   std::vector<task_executor*> ue_up_dl_execs(nof_ue_dl_queues, nullptr);
   for (unsigned i = 0; i != nof_ue_dl_queues; ++i) {
-    ue_up_dl_execs[i] = exec_mng.executors().at(fmt::format("ue_dl_strand#{}", i));
+    ue_up_dl_execs[i] = exec_map.at(fmt::format("ue_up_data_exec#{}", i));
   }
-  std::vector<task_executor*> ue_up_ul_execs   = {exec_mng.executors().at("ue_ul_exec")};
+  std::vector<task_executor*> ue_up_ul_execs   = {exec_mng.executors().at("ue_up_data_exec#0")};
   std::vector<task_executor*> ue_up_ctrl_execs = {exec_mng.executors().at("ue_up_ctrl_exec")};
   cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
 
@@ -231,8 +221,8 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
                                                                    exec_list{exec_map.at("slot_exec#" + cell_id_str)});
     auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec")},
-                                                                     exec_list{exec_map.at("ue_ul_exec")},
-                                                                     exec_list{exec_map.at("ue_dl_exec")});
+                                                                     exec_list{exec_map.at("ue_up_data_exec#0")},
+                                                                     exec_list{exec_map.at("ue_up_data_exec#0")});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
                                                                                  *exec_map.at("ctrl_exec"),

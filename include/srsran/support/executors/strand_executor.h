@@ -185,7 +185,7 @@ private:
       run_enqueued_tasks();
     };
 
-    if (not out_exec.defer(run_pending_and_release_strand)) {
+    if (not detail::get_task_executor_ref(out_exec).defer(run_pending_and_release_strand)) {
       // Unable to dispatch executor job to run enqueued tasks.
       // Pop enqueued tasks until number of enqueued jobs is zero.
       // Note: Since we acquired the task_strand, the task enqueued in this call should always be the first being

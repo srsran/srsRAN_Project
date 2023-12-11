@@ -174,8 +174,15 @@ protected:
       for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
         queues[i] = execution_config_helper::task_queue{strand_cfg.queues[i].policy, strand_cfg.queues[i].size};
       }
-      auto strand_execs =
-          make_strand_executor_ptrs(std::forward<OutExec>(basic_exec), span<const concurrent_queue_params>(queues));
+      std::vector<std::unique_ptr<task_executor>> strand_execs;
+      if (desc.strand_queue_size.has_value()) {
+        strand_execs = make_strand_executor_ptrs(make_strand_executor_ptr<concurrent_queue_policy::lockfree_mpmc>(
+                                                     std::forward<OutExec>(basic_exec), *desc.strand_queue_size),
+                                                 span<const concurrent_queue_params>(queues));
+      } else {
+        strand_execs =
+            make_strand_executor_ptrs(std::forward<OutExec>(basic_exec), span<const concurrent_queue_params>(queues));
+      }
       if (strand_execs.size() != strand_cfg.queues.size()) {
         return {};
       }

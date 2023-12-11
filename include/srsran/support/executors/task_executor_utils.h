@@ -34,7 +34,7 @@ public:
 
 // Helper function to convert a task executor object, that can be a raw pointer or unique_ptr to a reference.
 template <typename T, std::enable_if_t<is_task_executor_ptr<T>::value, int> = 0>
-std::decay_t<T>& get_task_executor_ref(T&& exec)
+auto& get_task_executor_ref(T&& exec)
 {
   return *exec;
 }
