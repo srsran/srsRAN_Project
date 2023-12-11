@@ -91,17 +91,17 @@ private:
   gnb_os_sched_affinity_manager affinity_mng;
 
   /// Helper method to create workers with non zero priority.
-  void create_prio_worker(const std::string&                                                   name,
-                          unsigned                                                             queue_size,
-                          const std::vector<execution_config_helper::single_worker::executor>& execs,
-                          const os_sched_affinity_bitmask&                                     mask,
+  void create_prio_worker(const std::string&                                    name,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
+                          const os_sched_affinity_bitmask&                      mask,
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
 
   /// Helper method to create worker pool.
-  void create_worker_pool(const std::string&                                                 name,
-                          unsigned                                                           nof_workers,
-                          unsigned                                                           queue_size,
-                          const std::vector<execution_config_helper::worker_pool::executor>& execs,
+  void create_worker_pool(const std::string&                                    name,
+                          unsigned                                              nof_workers,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 

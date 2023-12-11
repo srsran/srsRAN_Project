@@ -63,12 +63,12 @@ void worker_manager::stop()
   exec_mng.stop();
 }
 
-void worker_manager::create_worker_pool(const std::string&                                                 name,
-                                        unsigned                                                           nof_workers,
-                                        unsigned                                                           queue_size,
-                                        const std::vector<execution_config_helper::worker_pool::executor>& execs,
-                                        os_thread_realtime_priority                                        prio,
-                                        span<const os_sched_affinity_bitmask>                              cpu_masks)
+void worker_manager::create_worker_pool(const std::string&                                    name,
+                                        unsigned                                              nof_workers,
+                                        unsigned                                              queue_size,
+                                        const std::vector<execution_config_helper::executor>& execs,
+                                        os_thread_realtime_priority                           prio,
+                                        span<const os_sched_affinity_bitmask>                 cpu_masks)
 {
   using namespace execution_config_helper;
 
@@ -86,11 +86,11 @@ void worker_manager::create_worker_pool(const std::string&                      
   }
 }
 
-void worker_manager::create_prio_worker(const std::string&                                                   name,
-                                        unsigned                                                             queue_size,
-                                        const std::vector<execution_config_helper::single_worker::executor>& execs,
-                                        const os_sched_affinity_bitmask&                                     mask,
-                                        os_thread_realtime_priority                                          prio)
+void worker_manager::create_prio_worker(const std::string&                                    name,
+                                        unsigned                                              queue_size,
+                                        const std::vector<execution_config_helper::executor>& execs,
+                                        const os_sched_affinity_bitmask&                      mask,
+                                        os_thread_realtime_priority                           prio)
 {
   using namespace execution_config_helper;
 
@@ -211,7 +211,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, {}, true, is_blocking_mode_active}},
+         {"slot_exec#" + cell_id_str, task_priority::max, {}, true, nullopt, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 

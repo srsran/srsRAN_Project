@@ -43,8 +43,6 @@ struct strand {
   std::vector<executor> queues;
 };
 
-namespace detail {
-
 /// Parameters of the task executor, including name and decorators.
 struct executor {
   /// Name of the executor.
@@ -55,6 +53,9 @@ struct executor {
   std::vector<strand> strands;
   /// Whether to log when task fails to be dispatched.
   bool report_on_failure = true;
+  /// \brief Present if the executor works as a strand, serializing all the enqueued tasks. The value is the size of
+  /// the strand queue size.
+  optional<unsigned> strand_queue_size;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
@@ -62,31 +63,33 @@ struct executor {
   executor(const std::string&         name_,
            const std::vector<strand>& strands_           = {},
            bool                       report_on_failure_ = true,
+           optional<unsigned>         strand_queue_size_ = nullopt,
            bool                       synchronous_       = false) :
-    name(name_), strands(strands_), report_on_failure(report_on_failure_), synchronous(synchronous_)
+    name(name_),
+    strands(strands_),
+    report_on_failure(report_on_failure_),
+    strand_queue_size(strand_queue_size_),
+    synchronous(synchronous_)
   {
   }
   executor(const std::string&         name_,
            task_priority              priority_,
            const std::vector<strand>& strands_           = {},
            bool                       report_on_failure_ = true,
+           optional<unsigned>         strand_queue_size_ = nullopt,
            bool                       synchronous_       = false) :
     name(name_),
     priority(priority_),
     strands(strands_),
     report_on_failure(report_on_failure_),
+    strand_queue_size(strand_queue_size_),
     synchronous(synchronous_)
   {
   }
 };
 
-} // namespace detail
-
 /// Arguments for a single task worker creation.
 struct single_worker {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor;
-
   /// Worker name.
   std::string name;
   /// Queue used by the task worker.
@@ -106,9 +109,6 @@ struct single_worker {
 
 /// Arguments for a task worker pool creation.
 struct worker_pool {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor;
-
   /// Worker Pool prefix name. Workers will be named as name#0, name#1, etc.
   std::string name;
   /// Number of workers in the pool.
@@ -129,8 +129,6 @@ struct worker_pool {
 
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue_worker {
-  using executor = detail::executor;
-
   /// Worker name.
   std::string name;
   /// \brief Queues of different priorities. The lower the index, the higher the priority.
