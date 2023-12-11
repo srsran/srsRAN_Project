@@ -129,16 +129,24 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
 {
   const bwp_uplink_common& bwp_ul_cmn = *ue_cfg->bwp(active_bwp_id()).ul_common;
 
+  // In the following, we allocate extra bits to account for the possible UCI overhead. At this point, we don't
+  // differentiate between HARQ-ACK bits and CSI bits, which would be necessary to compute the beta-offset values.
+  // Here, we only need to allocate some extra space.
+  const unsigned uci_bits_overallocation = 20U;
+  const bool     is_csi_report_slot     = false;
+
   pusch_config_params pusch_cfg;
   switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(*ue_cfg, bwp_ul_cmn, pusch_td_cfg);
+      pusch_cfg =
+          get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(*ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers());
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(
+          ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers(), uci_bits_overallocation, is_csi_report_slot);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");

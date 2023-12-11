@@ -8,9 +8,10 @@
  *
  */
 
+#include "../../../../lib/scheduler/ue_scheduling/dl_logical_channel_manager.h"
+#include "../../../../lib/scheduler/ue_scheduling/ta_manager.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_bench.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include <gtest/gtest.h>

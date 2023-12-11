@@ -516,9 +516,11 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::skip_slot;
   }
 
+  const bool is_csi_report_slot =
+      csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
+
   // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
-  if (csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and
-      cell_cfg.dl_carrier.nof_ant > 1U) {
+  if (is_csi_report_slot and cell_cfg.dl_carrier.nof_ant > 1U) {
     logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
                  u.crnti,
                  pusch_alloc.slot);
@@ -588,6 +590,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::skip_ue;
   }
 
+  const unsigned nof_harq_ack_bits =
+      get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
+
   // Fetch PUSCH parameters based on type of transmission.
   pusch_config_params pusch_cfg;
   switch (dci_type) {
@@ -595,11 +600,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg);
+      pusch_cfg =
+          get_pusch_config_f0_0_c_rnti(ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg =
-          get_pusch_config_f0_1_c_rnti(ue_cell_cfg, pusch_td_cfg, ue_cc->channel_state_manager().get_nof_ul_layers());
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg,
+                                               pusch_td_cfg,
+                                               ue_cc->channel_state_manager().get_nof_ul_layers(),
+                                               nof_harq_ack_bits,
+                                               is_csi_report_slot);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -632,7 +641,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
         pusch_cfg.tp_pi2bpsk_present ? "yes" : "no",
         pusch_cfg.nof_harq_ack_bits,
         pusch_cfg.nof_csi_part1_bits,
-        pusch_cfg.nof_csi_part2_bits,
+        pusch_cfg.max_nof_csi_part2_bits,
         static_cast<unsigned>(pusch_cfg.mcs_table),
         ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
         ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2
@@ -670,12 +679,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
   unsigned dai = 3;
   if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
-    unsigned total_harq_ack_in_uci = 0;
-    for (unsigned cell_idx = 0; cell_idx < u.nof_cells(); cell_idx++) {
-      const ue_cell& ue_cell_info = u.get_cell(static_cast<ue_cell_index_t>(cell_idx));
-      total_harq_ack_in_uci +=
-          get_uci_alloc(ue_cell_info.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
-    }
+    unsigned total_harq_ack_in_uci = nof_harq_ack_bits;
     if (total_harq_ack_in_uci != 0) {
       // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
       dai = ((total_harq_ack_in_uci - 1) % 4);

@@ -8,6 +8,7 @@
  *
  */
 
+#include "../../../../lib/scheduler/ue_scheduling/ue.h"
 #include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
 #include <gtest/gtest.h>

@@ -8,8 +8,6 @@
  *
  */
 
-#include "../pucch_scheduling/pucch_allocator.h"
-
 #pragma once
 
 namespace srsran {

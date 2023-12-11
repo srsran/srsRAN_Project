@@ -146,7 +146,9 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1))
+        1,
+        7,
+        true))
   {
   }
 
@@ -197,7 +199,9 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1))
+        1,
+        7,
+        true))
   {
   }
 
