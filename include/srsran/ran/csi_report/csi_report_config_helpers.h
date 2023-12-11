@@ -23,4 +23,11 @@ csi_report_configuration create_csi_report_configuration(const csi_meas_config& 
 /// CSI report configuration validator.
 bool is_valid(const csi_report_configuration& config);
 
+/// \brief Tells whether the CSI report is configured for PUSCH.
+///
+/// \remark There is no explicit statement defining this in the TS; however, we can infer from \c reportConfigType in \c
+/// CSI-ReportConfig, TS 38.331, that the CSI report is configured for PUSCH if it is either \c semiPersistentOnPUSCH or
+/// \c aperiodic, while it's configured for PUCCH if it is \c periodic or \c semiPersistentOnPUCCH.
+bool is_pusch_configured(const csi_meas_config& csi_meas);
+
 } // namespace srsran

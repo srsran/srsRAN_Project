@@ -541,8 +541,8 @@ TEST_F(test_uci_allocator_mimo_4x4, uci_alloc_csi_part2_over_existing_pusch)
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
   ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+  ASSERT_EQ(11, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
 }
 
 TEST_F(test_uci_allocator_mimo_4x4, uci_mplex_csi_part2_over_existing_pusch)
@@ -573,7 +573,7 @@ TEST_F(test_uci_allocator_mimo_4x4, uci_mplex_csi_part2_over_existing_pusch)
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
   ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+  ASSERT_EQ(11, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
   ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
 }

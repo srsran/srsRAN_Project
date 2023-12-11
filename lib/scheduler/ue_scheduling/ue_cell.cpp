@@ -133,7 +133,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
   // differentiate between HARQ-ACK bits and CSI bits, which would be necessary to compute the beta-offset values.
   // Here, we only need to allocate some extra space.
   const unsigned uci_bits_overallocation = 20U;
-  const bool     is_csi_report_slot     = false;
+  const bool     is_csi_report_slot      = false;
 
   pusch_config_params pusch_cfg;
   switch (dci_type) {
@@ -142,11 +142,11 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       pusch_cfg =
-          get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
+          get_pusch_config_f0_0_c_rnti(*ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       pusch_cfg = get_pusch_config_f0_1_c_rnti(
-          ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers(), uci_bits_overallocation, is_csi_report_slot);
+          *ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers(), uci_bits_overallocation, is_csi_report_slot);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");

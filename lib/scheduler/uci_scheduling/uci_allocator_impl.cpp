@@ -47,25 +47,47 @@ static void update_uci_on_pusch_harq_offsets(uci_info::harq_info& uci_harq, cons
 
 static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_configuration& ue_cell_cfg)
 {
-  uci_csi.csi_rep_cfg            = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
-  csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
-  uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
+  uci_csi.csi_rep_cfg = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
 
-  const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+  // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+  // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+  // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+  if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+    csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
+    uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
 
-  // We assume the configuration contains the values for beta_offsets.
-  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+    const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
-  if (uci_csi.csi_part1_nof_bits <= 11) {
-    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    // We assume the configuration contains the values for beta_offsets.
+    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci_csi.csi_part1_nof_bits <= 11) {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    } else {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+    }
+
+    if (csi_size.part2_min_size.value() > 0U) {
+      srsran_assert(csi_size.part2_max_size.value() <= 11U, "CSI Part 2 on UCI-PUSCH is only supported up to 11 bits");
+      uci_csi.beta_offset_csi_2.emplace(beta_offsets.beta_offset_csi_p2_idx_1.value());
+    }
+
   } else {
-    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
-  }
+    uci_csi.csi_part1_nof_bits = get_csi_report_pucch_size(uci_csi.csi_rep_cfg).value();
+    // NOTE: with PUCCH-configured CSI report, CSI patrt 2 is not supported.
 
-  if (csi_size.part2_min_size.value() > 0U) {
-    srsran_assert(csi_size.part2_max_size.value() <= 11U, "CSI Part 2 on UCI-PUSCH is only supported up to 11 bits");
-    uci_csi.beta_offset_csi_2.emplace(beta_offsets.beta_offset_csi_p2_idx_1.value());
+    const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+
+    // We assume the configuration contains the values for beta_offsets.
+    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci_csi.csi_part1_nof_bits <= 11) {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    } else {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+    }
   }
 }
 
@@ -199,11 +221,6 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_all
     }
 
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
-      // NOTE: For TX with more than 2 antenna, we avoid multiplexing HARQ-ACK with CSI in the slots for CSI because the
-      // CSI report is 11 bit, and the current PUCCH F2 capacity is exactly 11 bits.
-      if (cell_cfg.dl_carrier.nof_ant > 2U) {
-        continue;
-      }
       // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
       // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
       if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc, crnti) >= max_harq_bits_per_uci) {

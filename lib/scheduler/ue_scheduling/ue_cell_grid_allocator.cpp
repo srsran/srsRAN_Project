@@ -516,17 +516,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::skip_slot;
   }
 
-  const bool is_csi_report_slot =
-      csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
-
-  // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
-  if (is_csi_report_slot and cell_cfg.dl_carrier.nof_ant > 1U) {
-    logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
-                 u.crnti,
-                 pusch_alloc.slot);
-    return alloc_outcome::skip_slot;
-  }
-
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
     logger.warning("rnti={} Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
@@ -592,6 +581,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   const unsigned nof_harq_ack_bits =
       get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
+
+  const bool is_csi_report_slot =
+      csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
 
   // Fetch PUSCH parameters based on type of transmission.
   pusch_config_params pusch_cfg;

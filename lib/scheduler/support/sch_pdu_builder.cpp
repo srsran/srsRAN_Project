@@ -14,6 +14,7 @@
 #include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
@@ -197,9 +198,16 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
   if (is_csi_report_slot) {
     csi_report_configuration csi_rep_cfg =
         create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
-    csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
-    pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
-    pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+    // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+    // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    } else {
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+    }
   }
 
   return pusch;
@@ -252,9 +260,16 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   if (is_csi_report_slot) {
     csi_report_configuration csi_rep_cfg =
         create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
-    csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
-    pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
-    pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+    // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+    // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    } else {
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+    }
   }
 
   return pusch;
