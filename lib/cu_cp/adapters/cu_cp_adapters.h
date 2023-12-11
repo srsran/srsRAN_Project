@@ -23,12 +23,10 @@ class cu_cp_ngap_adapter : public cu_cp_ngap_control_notifier, public cu_cp_ngap
 {
 public:
   void connect_ngap(ngap_connection_manager&         ngap_conn_mng_,
-                    ngap_control_message_handler&    ngap_ctrl_handler_,
                     ngap_ue_context_removal_handler& ngap_ue_handler_,
                     ngap_statistics_handler&         ngap_statistic_handler_)
   {
     ngap_conn_mng          = &ngap_conn_mng_;
-    ngap_ctrl_handler      = &ngap_ctrl_handler_;
     ngap_ue_handler        = &ngap_ue_handler_;
     ngap_statistic_handler = &ngap_statistic_handler_;
   }
@@ -53,7 +51,6 @@ public:
 
 private:
   ngap_connection_manager*         ngap_conn_mng          = nullptr;
-  ngap_control_message_handler*    ngap_ctrl_handler      = nullptr;
   ngap_ue_context_removal_handler* ngap_ue_handler        = nullptr;
   ngap_statistics_handler*         ngap_statistic_handler = nullptr;
 };

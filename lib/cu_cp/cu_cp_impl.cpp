@@ -66,7 +66,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
-                            ngap_entity->get_ngap_control_message_handler(),
                             ngap_entity->get_ngap_ue_context_removal_handler(),
                             ngap_entity->get_ngap_statistics_handler());
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
