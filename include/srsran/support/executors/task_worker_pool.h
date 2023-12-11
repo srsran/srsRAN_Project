@@ -204,10 +204,8 @@ public:
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
-    if (can_run_task_inline()) {
-      task();
-      return true;
-    }
+    // TODO: Shortpath if can_run_task_inline() returns true. This feature has been disabled while we don't correct the
+    //  use of .execute in some places.
     bool ret = worker_pool->push_task(std::move(task));
     if (not ret and report_on_failure) {
       srslog::fetch_basic_logger("ALL").warning(
@@ -221,8 +219,7 @@ public:
   SRSRAN_NODISCARD bool defer(unique_task task) override { return worker_pool->push_task(std::move(task)); }
 
   /// Determine whether the caller is in one of the threads of the worker pool.
-  // TODO: this feature has been disabled while we don't correct the use of .execute in some places.
-  bool can_run_task_inline() const { return false; }
+  bool can_run_task_inline() const { return worker_pool->is_in_thread_pool(); }
 
 private:
   task_worker_pool<QueuePolicy>* worker_pool       = nullptr;
