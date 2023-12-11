@@ -9,14 +9,10 @@
  */
 
 #include "cu_cp_impl.h"
-#include "cu_up_processor/cu_up_processor_factory.h"
-#include "cu_up_processor/cu_up_processor_repository.h"
-#include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
-#include "srsran/support/async/event_sender_receiver.h"
 #include <chrono>
 #include <future>
 
