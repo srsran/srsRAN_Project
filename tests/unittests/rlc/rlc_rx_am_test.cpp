@@ -466,8 +466,8 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
   rlc_am_status_nack nack  = {};
   nack.nack_sn             = 1230;
   status.push_nack(nack);
-  byte_buffer pdu_buf = {};
-  EXPECT_TRUE(status.pack(pdu_buf));
+  std::array<uint8_t, 100> pdu_buf = {};
+  EXPECT_EQ(status.pack(pdu_buf), status.get_packed_size());
 
   // Pass through RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
@@ -488,10 +488,10 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 
   // Create status PDU
-  rlc_am_status_pdu status = {sn_size};
-  status.ack_sn            = 1234;
-  byte_buffer pdu_buf      = {};
-  EXPECT_TRUE(status.pack(pdu_buf));
+  rlc_am_status_pdu status         = {sn_size};
+  status.ack_sn                    = 1234;
+  std::array<uint8_t, 100> pdu_buf = {};
+  EXPECT_EQ(status.pack(pdu_buf), status.get_packed_size());
 
   // set reserved bits in CPT field
   *(pdu_buf.begin()) |= 0x70;

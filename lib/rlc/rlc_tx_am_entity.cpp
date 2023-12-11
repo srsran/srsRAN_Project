@@ -147,23 +147,21 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
       logger.log_info("Trimmed status PDU to fit into grant_len={}.", grant_len);
       logger.log_debug("Trimmed status PDU. {}", status_pdu);
     }
-    byte_buffer pdu;
-    if (not status_pdu.pack(pdu)) {
+    size_t pdu_len = status_pdu.pack(rlc_pdu_buf);
+    if (pdu_len == 0) {
       logger.log_error("Could not pack status pdu. {}", status_pdu);
       return 0;
     }
-    logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
+    logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX status PDU. pdu_len={} grant_len={}", pdu_len, grant_len);
 
     // Update metrics
-    metrics.metrics_add_ctrl_pdus(1, pdu.length());
+    metrics.metrics_add_ctrl_pdus(1, pdu_len);
 
     // Log state
     log_state(srslog::basic_levels::debug);
 
-    byte_buffer_chain pdu_buf{std::move(pdu)};
-    pcap.push_pdu(pcap_context, pdu_buf);
-
-    return copy_pdu(rlc_pdu_buf, pdu_buf); // TODO
+    pcap.push_pdu(pcap_context, rlc_pdu_buf.subspan(0, pdu_len));
+    return pdu_len;
   }
 
   // Retransmit if required

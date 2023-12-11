@@ -119,8 +119,8 @@ private:
 
   void     refresh_packed_size();
   uint32_t nack_size(const rlc_am_status_nack& nack) const;
-  bool     pack_12bit(byte_buffer& pdu) const;
-  bool     pack_18bit(byte_buffer& pdu) const;
+  size_t   pack_12bit(span<uint8_t> buf) const;
+  size_t   pack_18bit(span<uint8_t> buf) const;
   bool     unpack_12bit(const byte_buffer_view& pdu);
   bool     unpack_18bit(const byte_buffer_view& pdu);
 
@@ -155,10 +155,10 @@ public:
   uint32_t                               get_packed_size() const { return packed_size; }
   bool                                   trim(uint32_t max_packed_size);
 
-  /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly
-  /// \param[out] pdu A reference to a byte_buffer
-  /// \return true if PDU was written successfully, false otherwise
-  SRSRAN_NODISCARD bool pack(byte_buffer& pdu) const;
+  /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly.
+  /// \param[out] buf Buffer where to encode the status PDU. The encoded PDU size cannot exceed the size of the buffer.
+  /// \return Number of bytes taken by the written status PDU.
+  size_t pack(span<uint8_t> buf) const;
 
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
