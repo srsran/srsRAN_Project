@@ -201,7 +201,7 @@ private:
     cfg.f1ap.ue_mng.handle_ue_context_release_request(
         srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, current_cause});
 
-    // Release timer so no new RLF is triggered for the same UE, after is scheduled for release.
+    // Release timer so no new RLF is triggered for the same UE, after it is scheduled for release.
     disconnect();
   }
 
