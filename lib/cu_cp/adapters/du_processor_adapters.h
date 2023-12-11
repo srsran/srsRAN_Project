@@ -216,20 +216,20 @@ public:
     rrc_du_handler      = &rrc_du_handler_;
   }
 
-  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
+  bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
   {
     srsran_assert(rrc_du_cell_handler != nullptr, "RRC DU cell handler must not be nullptr");
     return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
   }
 
-  virtual rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
-                                                   const rrc_ue_creation_message& msg) override
+  rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
+                                           const rrc_ue_creation_message& msg) override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->add_ue(resource_mng, msg);
   }
 
-  virtual void on_release_ues() override
+  void on_release_ues() override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->release_ues();
@@ -253,31 +253,31 @@ public:
     srb_handler    = &srb_handler_;
   }
 
-  virtual async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
+  async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_ue_capability_transfer_request(msg);
   }
 
-  virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
-  virtual uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_handover_reconfiguration_request(msg);
   }
 
-  virtual async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id) override
+  async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_handover_reconfiguration_complete_expected(transaction_id);
   }
 
-  virtual rrc_ue_release_context get_rrc_ue_release_context() override
+  rrc_ue_release_context get_rrc_ue_release_context() override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->get_rrc_ue_release_context();
@@ -289,7 +289,7 @@ public:
     return rrc_ue_handler->get_transfer_context();
   }
 
-  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
+  optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->generate_meas_config(current_meas_config);
@@ -301,26 +301,26 @@ public:
     return rrc_ue_handler->get_packed_handover_preparation_message();
   }
 
-  virtual bool on_new_security_context(const security::security_context& sec_context) override
+  bool on_new_security_context(const security::security_context& sec_context) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_new_security_context(sec_context);
   }
 
-  virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
-                                                       unsigned transaction_id) override
+  byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                               unsigned                                     transaction_id) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->get_rrc_handover_command(request, transaction_id);
   }
 
-  virtual void create_srb(const srb_creation_message& msg) override
+  void create_srb(const srb_creation_message& msg) override
   {
     srsran_assert(srb_handler != nullptr, "RRC UE SRB handler must not be nullptr");
     return srb_handler->create_srb(msg);
   }
 
-  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override
+  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override
   {
     srsran_assert(srb_handler != nullptr, "RRC UE SRB handler must not be nullptr");
     return srb_handler->get_srbs();
