@@ -31,7 +31,7 @@ public:
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_ue_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
-  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) override;
+  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) override;
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;
@@ -84,8 +84,10 @@ private:
       double   sum_pucch_snrs        = 0;
       unsigned nof_pucch_snr_reports = 0;
       unsigned nof_pusch_snr_reports = 0;
+      unsigned dl_prbs_used          = 0;
     };
     pci_t                                  pci;
+    unsigned                               nof_prbs;
     du_ue_index_t                          ue_index;
     rnti_t                                 rnti;
     uint8_t                                last_cqi = 0;

@@ -193,7 +193,7 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
 
     if (ue_cfg_list[ue_index] == nullptr) {
       // UE creation case.
-      metrics_handler.handle_ue_creation(ue_index, next_cfg->crnti, next_cfg->pcell_common_cfg().pci);
+      metrics_handler.handle_ue_creation(ue_index, next_cfg->crnti, next_cfg->pcell_common_cfg().pci, next_cfg->common_cell_cfg().nof_dl_prbs);
     }
 
     // Stores new UE config and deletes old config.

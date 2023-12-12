@@ -20,10 +20,12 @@ namespace srsran {
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
   pci_t         pci;
+  unsigned      nof_prbs;
   rnti_t        rnti;
   uint8_t       cqi;
   uint8_t       ri;
   sch_mcs_index dl_mcs;
+  double        dl_prbs_used;
   double        dl_brate_kbps;
   unsigned      dl_nof_ok;
   unsigned      dl_nof_nok;
