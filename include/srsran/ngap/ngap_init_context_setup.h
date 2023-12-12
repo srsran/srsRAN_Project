@@ -12,20 +12,11 @@
 
 #include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ngap/ngap_handover.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/security/security.h"
 
 namespace srsran {
 namespace srs_cu_cp {
-
-// enum class ngap_handov_type { intra5gs = 0, fivegs_to_eps, eps_to_5gs, fivegs_to_utran };
-
-// struct ngap_ue_source_handover_context {
-//   std::map<pdu_session_id_t, std::vector<qos_flow_id_t>> pdu_sessions;
-//   /// Storage for the RRCContainer required in SourceNGRANNode-ToTargetNGRANNode-TransparentContainer (see TS 38.413)
-//   byte_buffer rrc_container;
-// };
 
 struct ngap_init_context_setup_request {
   ue_index_t                          ue_index = ue_index_t::invalid;
