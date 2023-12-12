@@ -268,7 +268,7 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list    = make_pdsch_time_domain_resource(
       params.search_space0_index,
       cfg.init_dl_bwp.pdcch_common,
-      nullopt,
+      make_ue_dedicated_pdcch_config(params),
       band_helper::get_duplex_mode(cfg.freq_info_dl.freq_band_list.back().band) == duplex_mode::TDD
              ? *params.tdd_ul_dl_cfg_common
              : optional<tdd_ul_dl_config_common>{});
@@ -706,15 +706,9 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   return pdsch_cfg;
 }
 
-serving_cell_config
-srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params_extended& params)
+pdcch_config srsran::config_helpers::make_ue_dedicated_pdcch_config(const cell_config_builder_params_extended& params)
 {
-  serving_cell_config serv_cell;
-  serv_cell.cell_index = to_du_cell_index(0);
-
-  // > PDCCH-Config.
-  serv_cell.init_dl_bwp.pdcch_cfg.emplace();
-  pdcch_config& pdcch_cfg = serv_cell.init_dl_bwp.pdcch_cfg.value();
+  pdcch_config pdcch_cfg{};
   // >> Add CORESET#1.
   pdcch_cfg.coresets.push_back(make_default_coreset_config(params));
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
@@ -722,6 +716,18 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].set_non_ss0_nof_candidates(
       {0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0});
+
+  return pdcch_cfg;
+}
+
+serving_cell_config
+srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params_extended& params)
+{
+  serving_cell_config serv_cell;
+  serv_cell.cell_index = to_du_cell_index(0);
+
+  // > PDCCH-Config.
+  serv_cell.init_dl_bwp.pdcch_cfg.emplace(make_ue_dedicated_pdcch_config(params));
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg = make_default_pdsch_config(params);
@@ -812,7 +818,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
   // TODO: Consider SearchSpace periodicity while generating PDSCH OFDM symbol range. If there is no PDCCH, there is no
   //  PDSCH since we dont support k0 != 0 yet.
 
-  // NOTE1: Number of DL PDSCH symbols must be atleast greater than SearchSpace monitoring symbol index + maximum
+  // NOTE1: Number of DL PDSCH symbols must be at least greater than SearchSpace monitoring symbol index + maximum
   // CORESET duration for PDSCH allocation in partial slot. Otherwise, it can be used only for UL PDCCH allocations.
   // NOTE2: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
   // NOTE3: It is assumed that a validator has ensured that a CORESET exists corresponding to the CORESET Id set in
