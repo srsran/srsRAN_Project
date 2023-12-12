@@ -28,14 +28,15 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  async_task<ng_setup_response> send_ng_setup_request();
-  void                          handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp);
+  ngap_ng_setup_request            fill_ng_setup_request();
+  async_task<ngap_ng_setup_result> send_ng_setup_request();
+  void                             handle_ng_setup_result();
 
   const ngap_configuration&       ngap_cfg;
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
-  ng_setup_response response_msg = {};
+  ngap_ng_setup_result result_msg = {};
 };
 
 } // namespace srs_cu_cp

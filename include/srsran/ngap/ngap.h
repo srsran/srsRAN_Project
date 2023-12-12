@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 
@@ -53,16 +53,6 @@ public:
   virtual void on_new_message(const ngap_message& msg) = 0;
 };
 
-struct ng_setup_request {
-  asn1::ngap::ng_setup_request_s msg;
-  unsigned                       max_setup_retries = 5;
-};
-
-struct ng_setup_response {
-  asn1::ngap::ng_setup_resp_s msg;
-  bool                        success = false;
-};
-
 /// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7
 class ngap_connection_manager
 {
@@ -71,11 +61,10 @@ public:
 
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
-  /// \return Returns a ng_setup_response struct with the success member set to 'true' in case of a
-  /// successful outcome, 'false' otherwise.
+  /// \return Returns a ngap_ng_setup_result struct.
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
   /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
-  virtual async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) = 0;
+  virtual async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) = 0;
 };
 
 /// Handle ue context removal

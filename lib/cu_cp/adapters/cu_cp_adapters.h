@@ -31,7 +31,7 @@ public:
     ngap_statistic_handler = &ngap_statistic_handler_;
   }
 
-  async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) override
+  async_task<ngap_ng_setup_result> on_ng_setup_request(const ngap_ng_setup_request& request) override
   {
     srsran_assert(ngap_conn_mng != nullptr, "NGAP handler must not be nullptr");
     return ngap_conn_mng->handle_ng_setup_request(request);

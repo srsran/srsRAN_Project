@@ -76,7 +76,7 @@ const static uint8_t ng_setup_request_packed[] = {
     0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
 
 /// \brief Generate a dummy NG Setup Request.
-ng_setup_request generate_ng_setup_request();
+ngap_ng_setup_request generate_ng_setup_request();
 
 /// \brief Generate a dummy NG Setup Response.
 ngap_message generate_ng_setup_response();

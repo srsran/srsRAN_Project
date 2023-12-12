@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_asn1_packer.h"
 #include "lib/ngap/ngap_asn1_utils.h"
 #include "ngap_test_messages.h"
@@ -63,7 +64,7 @@ TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
-  ngap_msg.pdu.init_msg().value.ng_setup_request() = generate_ng_setup_request().msg;
+  fill_asn1_ng_setup_request(ngap_msg.pdu.init_msg().value.ng_setup_request(), generate_ng_setup_request());
 
   // Pack message and forward to gateway
   packer->handle_message(ngap_msg);

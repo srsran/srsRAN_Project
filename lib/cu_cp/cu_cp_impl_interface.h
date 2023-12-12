@@ -29,7 +29,7 @@ public:
 
   /// \brief Notifies the NGAP to initiate a NG Setup Procedure.
   /// \param[in] request The NG Setup Request.
-  virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
+  virtual async_task<ngap_ng_setup_result> on_ng_setup_request(const ngap_ng_setup_request& request) = 0;
 
   /// \brief Remove the context of a UE at the NGAP.
   /// \param[in] ue_index The index of the UE to remove.

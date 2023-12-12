@@ -94,11 +94,24 @@ bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index
   return true;
 }
 
-async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_request& request)
+async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_ng_setup_request& request)
 {
   logger.info("Sending NgSetupRequest");
-  return launch_async<ng_setup_procedure>(
-      context, request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
+
+  auto& ng_setup_request = ngap_msg.pdu.init_msg().value.ng_setup_request();
+  fill_asn1_ng_setup_request(ng_setup_request, request);
+
+  return launch_async<ng_setup_procedure>(context,
+                                          ngap_msg,
+                                          request.max_setup_retries,
+                                          ngap_notifier,
+                                          ev_mng,
+                                          timer_factory{task_sched.get_timer_manager(), ctrl_exec},
+                                          logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)

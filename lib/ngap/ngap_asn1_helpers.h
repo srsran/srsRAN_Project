@@ -19,10 +19,7 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ngap/ngap.h"
-#include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
 #include <vector>
@@ -31,49 +28,113 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-// TODO: pass params using struct
 /// \brief Fills ASN.1 NGSetupRequest struct.
-/// \param[out] request The NGSetupRequest ASN.1 struct to fill.
-/// \param[in] ngap_config The NGAP configuration
-inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request, const ngap_configuration& ngap_config)
+/// \param[out] asn1_request The NGSetupRequest ASN.1 struct to fill.
+/// \param[in] request The common type NGSetupRequest.
+inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_request,
+                                       const ngap_ng_setup_request&    request)
 {
-  // convert PLMN to BCD
-  uint32_t plmn_bcd = plmn_string_to_bcd(ngap_config.plmn);
-
   // fill global ran node id
-  request->global_ran_node_id.set_global_gnb_id();
-  request->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
-  request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(ngap_config.gnb_id);
-  request->global_ran_node_id.global_gnb_id().plmn_id.from_number(plmn_bcd);
+  asn1_request->global_ran_node_id.set_global_gnb_id();
+  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
+  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(request.global_ran_node_id.gnb_id);
+  asn1_request->global_ran_node_id.global_gnb_id().plmn_id.from_number(
+      plmn_string_to_bcd(request.global_ran_node_id.plmn_id));
 
   // fill ran node name
-  request->ran_node_name_present = true;
-  request->ran_node_name.from_string(ngap_config.ran_node_name);
+  asn1_request->ran_node_name_present = true;
+  asn1_request->ran_node_name.from_string(request.ran_node_name);
 
   // fill supported ta list
-  // TODO: add support for more items
-  asn1::ngap::supported_ta_item_s supported_ta_item = {};
+  for (const auto& supported_ta_item : request.supported_ta_list) {
+    asn1::ngap::supported_ta_item_s asn1_supported_ta_item = {};
 
-  asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
-  broadcast_plmn_item.plmn_id.from_number(plmn_bcd);
+    // fill tac
+    asn1_supported_ta_item.tac.from_number(supported_ta_item.tac);
 
-  for (const auto& slice_config : ngap_config.slice_configurations) {
-    asn1::ngap::slice_support_item_s slice_support_item = {};
-    slice_support_item.s_nssai.sst.from_number(slice_config.sst);
-    if (slice_config.sd.has_value()) {
-      slice_support_item.s_nssai.sd_present = true;
-      slice_support_item.s_nssai.sd.from_number(slice_config.sd.value());
+    // fill broadcast plmn list
+    for (const auto& broadcast_plmn_item : supported_ta_item.broadcast_plmn_list) {
+      asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
+
+      // fill plmn id
+      asn1_broadcast_plmn_item.plmn_id.from_number(plmn_string_to_bcd(broadcast_plmn_item.plmn_id));
+
+      // fill tai slice support list
+      for (const auto& slice_support_item : broadcast_plmn_item.tai_slice_support_list) {
+        // fill s_nssai
+        asn1::ngap::slice_support_item_s asn1_slice_support_item = {};
+        asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item.s_nssai);
+
+        asn1_broadcast_plmn_item.tai_slice_support_list.push_back(asn1_slice_support_item);
+      }
+      asn1_supported_ta_item.broadcast_plmn_list.push_back(asn1_broadcast_plmn_item);
     }
-    broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+    asn1_request->supported_ta_list.push_back(asn1_supported_ta_item);
   }
 
-  supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
-  supported_ta_item.tac.from_number(ngap_config.tac);
-
-  request->supported_ta_list.push_back(supported_ta_item);
-
   // fill paging drx
-  request->default_paging_drx.value = asn1::ngap::paging_drx_opts::v256;
+  asn1::number_to_enum(asn1_request->default_paging_drx, request.default_paging_drx);
+}
+
+/// \brief Fills the common type \c ngap_ng_setup_result struct.
+/// \param[out] result The common type \c ngap_ng_setup_result struct to fill.
+/// \param[in] asn1_response The ASN.1 type NGSetupResponse.
+inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::ngap::ng_setup_resp_s& asn1_response)
+{
+  ngap_ng_setup_response response;
+
+  // fill amf name
+  response.amf_name = asn1_response->amf_name.to_string();
+
+  // fill served guami list
+  for (const auto& asn1_served_guami_item : asn1_response->served_guami_list) {
+    ngap_served_guami_item served_guami_item = {};
+    served_guami_item.guami                  = asn1_to_guami(asn1_served_guami_item.guami);
+    if (asn1_served_guami_item.backup_amf_name_present) {
+      served_guami_item.backup_amf_name = asn1_served_guami_item.backup_amf_name.to_string();
+    }
+    response.served_guami_list.push_back(served_guami_item);
+  }
+
+  // fill relative amf capacity
+  response.relative_amf_capacity = asn1_response->relative_amf_capacity;
+
+  // fill plmn support list
+  for (const auto& asn1_plmn_support_item : asn1_response->plmn_support_list) {
+    ngap_plmn_support_item plmn_support_item = {};
+    plmn_support_item.plmn_id                = asn1_plmn_support_item.plmn_id.to_string();
+
+    for (const auto& asn1_slice_support_item : asn1_plmn_support_item.slice_support_list) {
+      slice_support_item_t slice_support_item = {};
+      slice_support_item.s_nssai.sst          = asn1_slice_support_item.s_nssai.sst.to_number();
+      if (asn1_slice_support_item.s_nssai.sd_present) {
+        slice_support_item.s_nssai.sd = asn1_slice_support_item.s_nssai.sd.to_number();
+      }
+      plmn_support_item.slice_support_list.push_back(slice_support_item);
+    }
+    response.plmn_support_list.push_back(plmn_support_item);
+  }
+
+  // TODO: Fill crit diagnostics
+
+  // TODO: Add missing optional values
+
+  result = response;
+}
+
+/// \brief Fills the common type \c ngap_ng_setup_result struct.
+/// \param[out] result The common type \c ngap_ng_setup_result struct to fill.
+/// \param[in] asn1_fail The ASN.1 type NGSetupFailure.
+inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::ngap::ng_setup_fail_s& asn1_fail)
+{
+  ngap_ng_setup_failure fail;
+  fail.cause = asn1_to_cause(asn1_fail->cause);
+
+  if (asn1_fail->crit_diagnostics_present) {
+    // TODO: Add crit diagnostics
+  }
+
+  result = fail;
 }
 
 /// \brief Convert common type Initial UE Message to NGAP Initial UE Message.
@@ -562,10 +623,9 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
   }
 }
 
-/// \brief Convert common type PDU Session Resource Modify Response message to NGAP PDU Session Resource Modify Response
-/// message.
-/// \param[out] resp The ASN1 NGAP PDU Session Resource Modify Response message.
-/// \param[in] cu_cp_resp The CU-CP PDU Session Resource Modify Response message.
+/// \brief Convert common type PDU Session Resource Modify Response message to NGAP PDU Session Resource Modify
+/// Response message. \param[out] resp The ASN1 NGAP PDU Session Resource Modify Response message. \param[in]
+/// cu_cp_resp The CU-CP PDU Session Resource Modify Response message.
 inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_res_modify_resp_s&       resp,
                                                       const cu_cp_pdu_session_resource_modify_response cu_cp_resp)
 {
@@ -794,7 +854,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
         auto& asn1_global_ran_node_id = asn1_recommended_ran_node_item.amf_paging_target.set_global_ran_node_id();
         asn1_global_ran_node_id.set_global_gnb_id().plmn_id.from_string(
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().plmn_id);
-        asn1_global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id().from_string(
+        asn1_global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id().from_number(
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id);
       } else if (cu_cp_recommended_ran_node_item.amf_paging_target.is_tai) {
         // add tai
