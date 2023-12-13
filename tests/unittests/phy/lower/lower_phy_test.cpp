@@ -324,6 +324,10 @@ protected:
       if (dl_task) {
         tx_task_executor.run_pending_tasks();
       }
+
+      // Let the stop thread run after running the pending tasks.
+      std::this_thread::yield();
+
     } while (rx_task || dl_task);
 
     // Join asynchronous thread.
