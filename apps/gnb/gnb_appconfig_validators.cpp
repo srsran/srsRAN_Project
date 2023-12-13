@@ -513,8 +513,13 @@ static bool validate_cells_appconfig(const cell_appconfig& config)
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
 static bool validate_cells_appconfig(span<const cell_appconfig> config)
 {
+  unsigned tac = config[0].cell.tac;
   for (const auto& cell : config) {
     if (!validate_cells_appconfig(cell)) {
+      return false;
+    }
+    if (cell.cell.tac != tac) {
+      fmt::print("The TAC must be the same for all cells\n");
       return false;
     }
   }
