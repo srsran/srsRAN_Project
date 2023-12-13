@@ -314,7 +314,7 @@ struct dl_pdsch_pdu {
   dl_pdsch_ptrs_maintenance_v3             ptrs_maintenance_v3;
   // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
-  // Vendor specific parameters.
+  /// Vendor specific parameters.
   optional<pdsch_context> context;
 };
 
@@ -427,6 +427,8 @@ struct dl_tti_request_message : public base_message {
   static_vector<dl_tti_request_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
   //: TODO: groups array
   //: TODO: top level rate match patterns
+  /// Vendor specific parameters.
+  bool is_last_message_in_slot;
 };
 
 /// Downlink TTI response pdu information.
@@ -802,6 +804,8 @@ struct ul_dci_request_message : public base_message {
   uint16_t                                    slot;
   std::array<uint16_t, MAX_NUM_DL_TYPES>      num_pdus_of_each_type;
   static_vector<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
+  // Vendor specific parameters.
+  bool is_last_message_in_slot;
 };
 
 /// Encodes the generic information of a TLV.

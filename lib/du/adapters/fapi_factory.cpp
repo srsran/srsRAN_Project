@@ -17,19 +17,20 @@ using namespace srsran;
 using namespace fapi_adaptor;
 
 std::unique_ptr<phy_fapi_adaptor>
-srsran::build_phy_fapi_adaptor(unsigned                                                           sector_id,
-                               subcarrier_spacing                                                 scs,
-                               subcarrier_spacing                                                 scs_common,
-                               downlink_processor_pool&                                           dl_processor_pool,
-                               resource_grid_pool&                                                dl_rg_pool,
-                               uplink_request_processor&                                          ul_request_processor,
-                               resource_grid_pool&                                                ul_rg_pool,
-                               uplink_slot_pdu_repository&                                        ul_pdu_repository,
-                               const downlink_pdu_validator&                                      dl_pdu_validator,
-                               const uplink_pdu_validator&                                        ul_pdu_validator,
-                               const fapi::prach_config&                                          prach_cfg,
-                               const fapi::carrier_config&                                        carrier_cfg,
-                               std::unique_ptr<precoding_matrix_repository>                       pm_repo,
+srsran::build_phy_fapi_adaptor(unsigned                                     sector_id,
+                               unsigned                                     nof_slots_request_headroom,
+                               subcarrier_spacing                           scs,
+                               subcarrier_spacing                           scs_common,
+                               downlink_processor_pool&                     dl_processor_pool,
+                               resource_grid_pool&                          dl_rg_pool,
+                               uplink_request_processor&                    ul_request_processor,
+                               resource_grid_pool&                          ul_rg_pool,
+                               uplink_slot_pdu_repository&                  ul_pdu_repository,
+                               const downlink_pdu_validator&                dl_pdu_validator,
+                               const uplink_pdu_validator&                  ul_pdu_validator,
+                               const fapi::prach_config&                    prach_cfg,
+                               const fapi::carrier_config&                  carrier_cfg,
+                               std::unique_ptr<precoding_matrix_repository> pm_repo,
                                std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository> part2_repo,
                                task_executor&                                                     async_executor,
                                tx_buffer_pool&                                                    buffer_pool,
@@ -39,12 +40,13 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   report_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id   = sector_id;
-  phy_fapi_config.scs         = scs;
-  phy_fapi_config.scs_common  = scs_common;
-  phy_fapi_config.prach_cfg   = &prach_cfg;
-  phy_fapi_config.carrier_cfg = &carrier_cfg;
-  phy_fapi_config.prach_ports = std::move(prach_ports);
+  phy_fapi_config.sector_id                  = sector_id;
+  phy_fapi_config.nof_slots_request_headroom = nof_slots_request_headroom;
+  phy_fapi_config.scs                        = scs;
+  phy_fapi_config.scs_common                 = scs_common;
+  phy_fapi_config.prach_cfg                  = &prach_cfg;
+  phy_fapi_config.carrier_cfg                = &carrier_cfg;
+  phy_fapi_config.prach_ports                = std::move(prach_ports);
 
   phy_fapi_adaptor_factory_dependencies phy_fapi_dependencies;
   phy_fapi_dependencies.logger               = &srslog::fetch_basic_logger("FAPI");

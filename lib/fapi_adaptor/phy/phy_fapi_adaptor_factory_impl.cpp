@@ -19,12 +19,13 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
                                       phy_fapi_adaptor_factory_dependencies&& dependencies)
 {
   phy_fapi_adaptor_impl_config adaptor_config;
-  adaptor_config.sector_id   = config.sector_id;
-  adaptor_config.scs         = config.scs;
-  adaptor_config.scs_common  = config.scs_common;
-  adaptor_config.prach_cfg   = config.prach_cfg;
-  adaptor_config.carrier_cfg = config.carrier_cfg;
-  adaptor_config.prach_ports = config.prach_ports;
+  adaptor_config.sector_id                  = config.sector_id;
+  adaptor_config.nof_slots_request_headroom = config.nof_slots_request_headroom;
+  adaptor_config.scs                        = config.scs;
+  adaptor_config.scs_common                 = config.scs_common;
+  adaptor_config.prach_cfg                  = config.prach_cfg;
+  adaptor_config.carrier_cfg                = config.carrier_cfg;
+  adaptor_config.prach_ports                = config.prach_ports;
 
   phy_fapi_adaptor_impl_dependencies adaptor_dependencies;
   adaptor_dependencies.logger               = dependencies.logger;

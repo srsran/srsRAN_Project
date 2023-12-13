@@ -280,6 +280,8 @@ struct upper_phy_config {
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.
   unsigned ul_bw_rb;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// List of active subcarrier spacing, indexed by numerology.
   std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
   /// Transmit buffer pool configuration.

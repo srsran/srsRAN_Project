@@ -37,12 +37,14 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   report_fatal_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id   = sector_id;
-  phy_fapi_config.scs         = scs;
-  phy_fapi_config.scs_common  = scs_common;
-  phy_fapi_config.prach_cfg   = &prach_cfg;
-  phy_fapi_config.carrier_cfg = &carrier_cfg;
-  phy_fapi_config.prach_ports = std::move(prach_ports);
+  phy_fapi_config.sector_id = sector_id;
+  // Do not allow delay.
+  phy_fapi_config.nof_slots_request_headroom = 0;
+  phy_fapi_config.scs                        = scs;
+  phy_fapi_config.scs_common                 = scs_common;
+  phy_fapi_config.prach_cfg                  = &prach_cfg;
+  phy_fapi_config.carrier_cfg                = &carrier_cfg;
+  phy_fapi_config.prach_ports                = std::move(prach_ports);
 
   phy_fapi_adaptor_factory_dependencies phy_fapi_dependencies;
   phy_fapi_dependencies.logger               = &srslog::fetch_basic_logger("FAPI");

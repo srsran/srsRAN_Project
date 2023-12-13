@@ -22,6 +22,7 @@ namespace srsran {
 
 std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
 build_phy_fapi_adaptor(unsigned                                                           sector_id,
+                       unsigned                                                           nof_slots_request_headroom,
                        subcarrier_spacing                                                 scs,
                        subcarrier_spacing                                                 scs_common,
                        downlink_processor_pool&                                           dl_processor_pool,

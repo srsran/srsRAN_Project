@@ -36,6 +36,8 @@ namespace fapi_adaptor {
 struct fapi_to_phy_translator_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
@@ -107,8 +109,6 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   public:
     slot_based_upper_phy_controller();
 
-    explicit slot_based_upper_phy_controller(slot_point slot_);
-
     slot_based_upper_phy_controller(downlink_processor_pool& dl_processor_pool,
                                     resource_grid_pool&      rg_pool,
                                     slot_point               slot_,
@@ -124,9 +124,73 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
     downlink_processor* operator->() { return &dl_processor.get(); }
     /// Overloaded member of pointer operator.
     const downlink_processor* operator->() const { return &dl_processor.get(); }
+  };
 
-    /// Returns the associated slot for this controller.
-    slot_point get_slot() const { return slot; }
+  /// Manages slot based controllers.
+  class slot_based_upper_phy_controller_manager
+  {
+    slot_based_upper_phy_controller              dummy;
+    downlink_processor_pool&                     dl_processor_pool;
+    resource_grid_pool&                          rg_pool;
+    const unsigned                               sector_id;
+    std::vector<slot_based_upper_phy_controller> controllers;
+
+    /// Returns the controller for the given slot.
+    slot_based_upper_phy_controller& controller(slot_point slot)
+    {
+      return controllers[slot.system_slot() % controllers.size()];
+    }
+
+    /// Returns the controller for the given slot.
+    const slot_based_upper_phy_controller& controller(slot_point slot) const
+    {
+      return controllers[slot.system_slot() % controllers.size()];
+    }
+
+  public:
+    slot_based_upper_phy_controller_manager(downlink_processor_pool& dl_processor_pool_,
+                                            resource_grid_pool&      rg_pool_,
+                                            unsigned                 sector_id_,
+                                            unsigned                 nof_slots_request_headroom);
+
+    /// Acquires and returns the controller for the given slot.
+    slot_based_upper_phy_controller& adquire_controller(slot_point slot);
+
+    /// \brief Releases the controller for the given slot.
+    ///
+    /// If the controller has already been released, this function does nothing.
+    void release_controller(slot_point slot);
+
+    /// Handles a new slot.
+    void handle_new_slot(slot_point slot);
+
+    /// Returns the controller for the given slot.
+    slot_based_upper_phy_controller& get_controller(slot_point slot);
+  };
+
+  /// \brief PDSCH PDU repository.
+  ///
+  /// Stores the PDSCH PDUs for later processing.
+  struct pdsch_pdu_repository {
+    slot_point                                                     slot;
+    static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdus;
+
+    /// Returns true if the repository is empty, otherwise false.
+    bool empty() const { return pdus.empty(); }
+
+    /// Clears the repository.
+    void clear()
+    {
+      slot = slot_point();
+      pdus.clear();
+    }
+
+    /// Resets the repository by clearing the PDUs and setting the slot to the given one.
+    void reset(slot_point new_slot)
+    {
+      pdus.clear();
+      slot = new_slot;
+    }
   };
 
 public:
@@ -148,11 +212,9 @@ public:
   /// \brief Handles a new slot.
   ///
   /// Handling a new slot consists of the following steps.
-  /// - Finish processing the PDUs from the previous slot.
+  /// - Finish processing the PDUs from a past slot.
   /// - Update the current slot value to the new one.
-  /// - Obtain a new resource grid and a new downlink processor from the corresponding pools.
-  /// - Configure the downlink processor with the new resource grid.
-  /// - Reset the contents of the PDSCH PDU repository.
+  /// - Reset the contents of the uplink PDU repository.
   ///
   /// \param[in] slot Identifies the new slot.
   /// \note This method is thread safe and may be called from different threads.
@@ -167,21 +229,15 @@ public:
 private:
   /// Returns true if the given message arrived in time, otherwise returns false.
   template <typename T>
-  bool is_message_in_time(const T& msg) const
-  {
-    return (current_slot_controller.get_slot().slot_index() == msg.slot &&
-            current_slot_controller.get_slot().sfn() == msg.sfn);
-  }
+  bool is_message_in_time(const T& msg) const;
 
 private:
   /// Sector identifier.
   const unsigned sector_id;
+  /// Request headroom size in slots.
+  const unsigned nof_slots_request_headroom;
   /// Logger.
   srslog::basic_logger& logger;
-  /// Downlink processor pool.
-  downlink_processor_pool& dl_processor_pool;
-  /// Downlink resource grid pool.
-  resource_grid_pool& dl_rg_pool;
   /// Downlink PDU validator.
   const downlink_pdu_validator& dl_pdu_validator;
   /// PDSCH Softbuffer pool.
@@ -196,8 +252,10 @@ private:
   uplink_slot_pdu_repository& ul_pdu_repository;
   /// Asynchronous task executor.
   task_executor& asynchronous_executor;
-  /// Current slot task controller.
-  slot_based_upper_phy_controller current_slot_controller;
+  /// Current slot.
+  slot_point current_slot;
+  /// Slot controller manager.
+  slot_based_upper_phy_controller_manager slot_controller_mngr;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// UCI Part2 correspondence repository.
@@ -218,7 +276,7 @@ private:
   /// PRACH receive ports.
   const static_vector<uint8_t, MAX_PORTS> prach_ports;
   /// PDSCH PDU repository.
-  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
+  pdsch_pdu_repository pdsch_repository;
 };
 
 } // namespace fapi_adaptor

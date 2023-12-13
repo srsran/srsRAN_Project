@@ -104,6 +104,7 @@ du_impl::du_impl(const du_config& du_cfg) :
 
   // Create FAPI adaptors.
   const du_cell_config&    du_cell         = du_cfg.du_hi.cells.front();
+  const upper_phy_config&  upper_phy_cfg   = du_cfg.du_lo.upper_phy.front();
   const unsigned           sector          = du_cfg.fapi.sector;
   const subcarrier_spacing scs             = du_cell.scs_common;
   auto                     pm_tools        = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
@@ -112,6 +113,7 @@ du_impl::du_impl(const du_config& du_cfg) :
   // Instantiate adaptor of FAPI to DU-low.
   du_low_adaptor = build_phy_fapi_adaptor(
       sector,
+      upper_phy_cfg.nof_slots_request_headroom,
       scs,
       scs,
       du_lo->get_downlink_processor_pool(),
@@ -125,9 +127,10 @@ du_impl::du_impl(const du_config& du_cfg) :
       generate_carrier_config_tlv(du_cell),
       std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
       std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
-      *du_cfg.du_lo.upper_phy.front().dl_executors.front(),
+      *upper_phy_cfg.dl_executors.front(),
       du_lo->get_tx_buffer_pool(),
       du_cfg.fapi.prach_ports);
+
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());

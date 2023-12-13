@@ -34,6 +34,8 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_factory_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.

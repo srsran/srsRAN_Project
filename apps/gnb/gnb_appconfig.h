@@ -826,6 +826,11 @@ struct expert_upper_phy_appconfig {
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
   std::string pusch_sinr_calc_method = "evm";
+  /// \brief Request headroom size in slots.
+  ///
+  /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
+  /// current slot is M, the upper phy will consider the slot M - nof_slots_request_headroom as valid and process it.
+  unsigned nof_slots_request_headroom = 0U;
 };
 
 struct test_mode_ue_appconfig {

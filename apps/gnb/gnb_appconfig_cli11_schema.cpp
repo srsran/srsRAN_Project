@@ -456,6 +456,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
+  app.add_option("--max_request_headroom_slots",
+                 expert_phy_params.nof_slots_request_headroom,
+                 "Maximum request headroom size in slots.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
