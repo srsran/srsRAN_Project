@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue_configuration.h"
+#include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 
 namespace srsran {

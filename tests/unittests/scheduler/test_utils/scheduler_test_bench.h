@@ -11,7 +11,7 @@
 #pragma once
 
 #include "dummy_test_components.h"
-#include "lib/scheduler/cell/cell_configuration.h"
+#include "lib/scheduler/config/cell_configuration.h"
 #include "result_test_helpers.h"
 #include "scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"

@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "../config/ue_configuration.h"
 #include "../support/bwp_helpers.h"
 #include "harq_process.h"
 #include "ue_channel_state_manager.h"
-#include "ue_configuration.h"
 #include "ue_link_adaptation_controller.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"

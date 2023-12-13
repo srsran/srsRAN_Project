@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell_scheduler.h"
+#include "config/sched_config_manager.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_metrics_handler.h"
 #include "logging/scheduler_result_logger.h"
@@ -58,6 +59,9 @@ private:
 
   srslog::basic_logger&  logger;
   scheduler_event_logger sched_ev_logger;
+
+  // Manager of configurations forwarded to the scheduler.
+  sched_config_manager cfg_mng;
 
   // Slot metrics sink.
   scheduler_metrics_handler metrics;

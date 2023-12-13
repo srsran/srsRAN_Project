@@ -19,6 +19,7 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   expert_params(sched_cfg_.expert_params),
   config_notifier(sched_cfg_.config_notifier),
   logger(srslog::fetch_basic_logger("SCHED")),
+  cfg_mng(sched_cfg_),
   metrics(expert_params.metrics_report_period, sched_cfg_.metrics_notifier)
 {
 }

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
+#include "../config/cell_configuration.h"
 #include "../support/outer_loop_link_adaptation.h"
 #include "ue_channel_state_manager.h"
 

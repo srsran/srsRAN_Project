@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "cell/cell_configuration.h"
 #include "cell/resource_grid.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
@@ -19,6 +18,7 @@
 #include "common_scheduling/si_message_scheduler.h"
 #include "common_scheduling/sib_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
+#include "config/cell_configuration.h"
 #include "logging/scheduler_result_logger.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"

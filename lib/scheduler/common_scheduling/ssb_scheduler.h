@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
 #include "../cell/resource_grid.h"
+#include "../config/cell_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"

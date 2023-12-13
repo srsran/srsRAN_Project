@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
+#include "../config/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/slot_event_list.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"

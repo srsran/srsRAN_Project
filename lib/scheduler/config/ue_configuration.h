@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
 #include "../support/pdcch/search_space_helper.h"
+#include "cell_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
@@ -95,7 +95,7 @@ public:
                         const cell_configuration&  cell_cfg_common_,
                         const serving_cell_config& serv_cell_cfg_,
                         bool                       multi_cells_configured = false);
-  ue_cell_configuration(const ue_cell_configuration&)            = delete;
+  ue_cell_configuration(const ue_cell_configuration& other);
   ue_cell_configuration(ue_cell_configuration&&)                 = delete;
   ue_cell_configuration& operator=(const ue_cell_configuration&) = delete;
   ue_cell_configuration& operator=(ue_cell_configuration&&)      = delete;
@@ -163,6 +163,47 @@ private:
 
   /// Number of DL ports for this UE.
   unsigned nof_dl_ports = 1;
+};
+
+class ue_dedicated_configuration
+{
+public:
+  ue_dedicated_configuration(rnti_t crnti_);
+  ue_dedicated_configuration(rnti_t                                crnti_,
+                             const cell_common_configuration_list& common_cells,
+                             const sched_ue_config_request&        cfg_req);
+  ue_dedicated_configuration(const ue_dedicated_configuration& other);
+
+  const rnti_t crnti;
+
+  const cell_configuration& common_cell_cfg(du_cell_index_t cell_index) const
+  {
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    return du_cells[cell_index]->cell_cfg_common;
+  }
+
+  const ue_cell_configuration& ue_cell_cfg(du_cell_index_t cell_index) const
+  {
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    return *du_cells[cell_index];
+  }
+
+  const ue_cell_configuration& ue_cell_cfg(ue_cell_index_t ue_cell_index) const
+  {
+    srsran_assert(ue_cell_index < ue_cell_to_du_cell_index.size(), "Invalid cell_index={}", ue_cell_index);
+    return ue_cell_cfg(ue_cell_to_du_cell_index[ue_cell_index]);
+  }
+
+  const ue_cell_configuration& pcell_cfg() const { return ue_cell_cfg(to_ue_cell_index(0)); }
+
+  void update(const cell_common_configuration_list& common_cells, const sched_ue_config_request& cfg_req);
+
+private:
+  // List of cells configured for a UE.
+  slotted_id_vector<du_cell_index_t, std::unique_ptr<ue_cell_configuration>> du_cells;
+
+  // Mapping of UE Cell indexes to DU cell indexes.
+  std::vector<du_cell_index_t> ue_cell_to_du_cell_index;
 };
 
 } // namespace srsran

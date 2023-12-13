@@ -64,6 +64,9 @@ inline ue_cell_index_t to_ue_cell_index(std::underlying_type_t<ue_cell_index_t> 
 
 /// \brief DU-specific index to group of cells that might be aggregated into a UE-specific CellGroup, if the UE
 /// is CA-capable.
-enum du_cell_group_index_t : uint16_t { MAX_DU_CELL_GROUPS = du_cell_index_t::MAX_NOF_DU_CELLS };
+enum du_cell_group_index_t : uint16_t {
+  MAX_DU_CELL_GROUPS          = du_cell_index_t::MAX_NOF_DU_CELLS,
+  INVALID_DU_CELL_GROUP_INDEX = MAX_DU_CELL_GROUPS
+};
 
 } // namespace srsran

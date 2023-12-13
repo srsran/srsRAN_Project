@@ -9,7 +9,7 @@
  */
 
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
-#include "../cell/cell_configuration.h"
+#include "cell_configuration.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/support/config/validator_helpers.h"
 
