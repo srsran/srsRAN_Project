@@ -23,6 +23,9 @@ public:
   /// Notifier called from the scheduler.
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 
+  /// This can be called from another execution context to turn on the actual plotting.
+  void enable_print();
+
   /// This can be called from another execution context to turn on/off the actual plotting.
   void toggle_print();
 

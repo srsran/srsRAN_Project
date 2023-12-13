@@ -786,8 +786,9 @@ struct metrics_appconfig {
   unsigned cu_cp_statistics_report_period = 1;    // Statistics report period in seconds
   unsigned cu_up_statistics_report_period = 1;    // Statistics report period in seconds
   /// JSON metrics reporting.
-  bool        enable_json_metrics = false;
-  std::string json_filename       = "/tmp/gnb_metrics.json";
+  bool        enable_json_metrics      = false;
+  std::string json_filename            = "/tmp/gnb_metrics.json";
+  bool        autostart_stdout_metrics = false;
 };
 
 /// Lower physical layer thread profiles.

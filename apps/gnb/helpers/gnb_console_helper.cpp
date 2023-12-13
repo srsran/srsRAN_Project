@@ -21,8 +21,13 @@
 
 using namespace srsran;
 
-gnb_console_helper::gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_) :
-  logger(srslog::fetch_basic_logger("GNB")), io_broker_handle(io_broker_), metrics_json(log_chan_)
+gnb_console_helper::gnb_console_helper(io_broker&           io_broker_,
+                                       srslog::log_channel& log_chan_,
+                                       bool                 autostart_stdout_metrics_) :
+  logger(srslog::fetch_basic_logger("GNB")),
+  io_broker_handle(io_broker_),
+  metrics_json(log_chan_),
+  autostart_stdout_metrics(autostart_stdout_metrics_)
 {
   // set STDIN file descripter into non-blocking mode
   int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
@@ -126,6 +131,10 @@ void gnb_console_helper::on_app_running()
 
   fmt::print("==== gNodeB started ===\n");
   fmt::print("Type <t> to view trace\n");
+
+  if (autostart_stdout_metrics) {
+    metrics_plotter.enable_print();
+  }
 }
 
 void gnb_console_helper::on_app_stopping()

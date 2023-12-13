@@ -387,7 +387,7 @@ int main(int argc, char** argv)
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 
   // Create console helper object for commands and metrics printing.
-  gnb_console_helper console(*epoll_broker, json_channel);
+  gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);

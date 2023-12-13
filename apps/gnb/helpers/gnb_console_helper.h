@@ -36,7 +36,7 @@ public:
 class gnb_console_helper : public app_state_notifier
 {
 public:
-  gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_);
+  gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_, bool autostart_stdout_metrics_ = false);
   ~gnb_console_helper();
 
   scheduler_ue_metrics_notifier& get_stdout_metrics_notifier() { return metrics_plotter; };
@@ -58,6 +58,7 @@ private:
   metrics_plotter_stdout      metrics_plotter;
   metrics_plotter_json        metrics_json;
   std::vector<du_cell_config> cells;
+  bool                        autostart_stdout_metrics = false;
 };
 
 } // namespace srsran
