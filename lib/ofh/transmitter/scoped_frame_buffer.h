@@ -44,7 +44,7 @@ public:
       }
     }
 
-    srsran_terminate("No empty Ethernet frame available in slot={}", context.slot);
+    srsran_terminate("No empty Ethernet frame available in slot={}\n", context.slot);
   }
 
   /// Destructor marks the acquired buffers as ready to be sent.
