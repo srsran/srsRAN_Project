@@ -177,14 +177,14 @@ private:
 ///
 /// The information held by this structure includes configured cells and logical channels by the upper layers based on
 /// the UE RRC configuration, and other RRM-related parameters that can be controlled by the app or via O1/E2.
-class ue_dedicated_configuration
+class ue_configuration
 {
 public:
-  ue_dedicated_configuration(rnti_t crnti_);
-  ue_dedicated_configuration(rnti_t                                crnti_,
-                             const cell_common_configuration_list& common_cells,
-                             const sched_ue_config_request&        cfg_req);
-  ue_dedicated_configuration(const ue_dedicated_configuration& other);
+  ue_configuration(rnti_t crnti_);
+  ue_configuration(rnti_t                                crnti_,
+                   const cell_common_configuration_list& common_cells,
+                   const sched_ue_config_request&        cfg_req);
+  ue_configuration(const ue_configuration& other);
 
   const rnti_t crnti;
 

@@ -78,7 +78,7 @@ protected:
   const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
   cell_common_configuration_list       cell_cfg_list;
   cell_configuration*                  cell_cfg = nullptr;
-  optional<ue_dedicated_configuration> ue_ded_cfg;
+  optional<ue_configuration>           ue_ded_cfg;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   srslog::basic_logger& logger;

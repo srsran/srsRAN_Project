@@ -176,7 +176,7 @@ test_bench::test_bench(const test_bench_params& params) :
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
-  ue_ded_cfgs.push_back(std::make_unique<ue_dedicated_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
   ues.add_ue(std::make_unique<ue>(
       ue_creation_command{ue_req.ue_index, *ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
   last_allocated_rnti   = ue_req.crnti;
@@ -209,7 +209,7 @@ void test_bench::add_ue()
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
 
-  ue_ded_cfgs.push_back(std::make_unique<ue_dedicated_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
   ues.add_ue(std::make_unique<ue>(
       ue_creation_command{ue_req.ue_index, *ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
   last_allocated_rnti = ue_req.crnti;

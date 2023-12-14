@@ -21,24 +21,24 @@ class ue_config_update_event
 {
 public:
   ue_config_update_event() = default;
-  ue_config_update_event(du_ue_index_t                               ue_index_,
-                         sched_config_manager&                       parent_,
-                         std::unique_ptr<ue_dedicated_configuration> next_cfg = nullptr);
+  ue_config_update_event(du_ue_index_t                     ue_index_,
+                         sched_config_manager&             parent_,
+                         std::unique_ptr<ue_configuration> next_cfg = nullptr);
   ue_config_update_event(ue_config_update_event&&) noexcept;
   ue_config_update_event& operator=(ue_config_update_event&&) noexcept;
   ~ue_config_update_event();
 
   bool valid() const { return next_ded_cfg != nullptr; }
 
-  du_ue_index_t                     get_ue_index() const { return ue_index; }
-  const ue_dedicated_configuration& next_config() const { return *next_ded_cfg; }
+  du_ue_index_t           get_ue_index() const { return ue_index; }
+  const ue_configuration& next_config() const { return *next_ded_cfg; }
 
   void abort();
 
 private:
-  du_ue_index_t                               ue_index = INVALID_DU_UE_INDEX;
-  sched_config_manager*                       parent   = nullptr;
-  std::unique_ptr<ue_dedicated_configuration> next_ded_cfg;
+  du_ue_index_t                     ue_index = INVALID_DU_UE_INDEX;
+  sched_config_manager*             parent   = nullptr;
+  std::unique_ptr<ue_configuration> next_ded_cfg;
 };
 
 class ue_config_delete_event
@@ -93,7 +93,7 @@ private:
   friend class ue_config_update_event;
   friend class ue_config_delete_event;
 
-  void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_dedicated_configuration> next_cfg);
+  void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
   const scheduler_expert_config expert_params;
@@ -103,7 +103,7 @@ private:
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;
 
-  std::array<std::unique_ptr<ue_dedicated_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
+  std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
 
   /// Mapping of DU cells to DU Cell Groups.
   slotted_id_table<du_cell_index_t, du_cell_group_index_t, MAX_NOF_DU_CELLS> du_cell_to_cell_group_index;

@@ -14,9 +14,9 @@
 
 using namespace srsran;
 
-ue_config_update_event::ue_config_update_event(du_ue_index_t                               ue_index_,
-                                               sched_config_manager&                       parent_,
-                                               std::unique_ptr<ue_dedicated_configuration> next_cfg) :
+ue_config_update_event::ue_config_update_event(du_ue_index_t                     ue_index_,
+                                               sched_config_manager&             parent_,
+                                               std::unique_ptr<ue_configuration> next_cfg) :
   ue_index(ue_index_), parent(&parent_), next_ded_cfg(std::move(next_cfg))
 {
 }
@@ -146,7 +146,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   srsran_assert(ue_cfg_list[cfg_req.ue_index] == nullptr, "Invalid ue_index={}", cfg_req.ue_index);
 
   // Create UE configuration.
-  auto next_ded_cfg = std::make_unique<ue_dedicated_configuration>(cfg_req.crnti, added_cells, cfg_req.cfg);
+  auto next_ded_cfg = std::make_unique<ue_configuration>(cfg_req.crnti, added_cells, cfg_req.cfg);
 
   return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg)};
 }
@@ -162,7 +162,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
     return ue_config_update_event{cfg_req.ue_index, *this};
   }
   srsran_assert(ue_cfg_list[cfg_req.ue_index] != nullptr, "Invalid ue_index={}", cfg_req.ue_index);
-  const ue_dedicated_configuration& current_ue_cfg = *ue_cfg_list[cfg_req.ue_index];
+  const ue_configuration& current_ue_cfg = *ue_cfg_list[cfg_req.ue_index];
   if (current_ue_cfg.crnti != cfg_req.crnti) {
     logger.error("ue={} c-rnti={:#x}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  cfg_req.ue_index,
@@ -171,7 +171,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   }
 
   // Make a copy of the current UE dedicated config.
-  auto next_ded_cfg = std::make_unique<ue_dedicated_configuration>(current_ue_cfg);
+  auto next_ded_cfg = std::make_unique<ue_configuration>(current_ue_cfg);
 
   // Apply the delta config.
   next_ded_cfg->update(added_cells, cfg_req.cfg);
@@ -201,8 +201,7 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
   return ue_config_delete_event{ue_index, *this};
 }
 
-void sched_config_manager::handle_ue_config_complete(du_ue_index_t                               ue_index,
-                                                     std::unique_ptr<ue_dedicated_configuration> next_cfg)
+void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg)
 {
   if (next_cfg != nullptr) {
     // Config succeeded.

@@ -736,17 +736,17 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
   }
 }
 
-ue_dedicated_configuration::ue_dedicated_configuration(rnti_t crnti_) : crnti(crnti_) {}
+ue_configuration::ue_configuration(rnti_t crnti_) : crnti(crnti_) {}
 
-ue_dedicated_configuration::ue_dedicated_configuration(rnti_t                                crnti_,
-                                                       const cell_common_configuration_list& common_cells,
-                                                       const sched_ue_config_request&        cfg_req) :
+ue_configuration::ue_configuration(rnti_t                                crnti_,
+                                   const cell_common_configuration_list& common_cells,
+                                   const sched_ue_config_request&        cfg_req) :
   crnti(crnti_)
 {
   update(common_cells, cfg_req);
 }
 
-ue_dedicated_configuration::ue_dedicated_configuration(const ue_dedicated_configuration& other) : crnti(other.crnti)
+ue_configuration::ue_configuration(const ue_configuration& other) : crnti(other.crnti)
 {
   // Update UE logical channels.
   lc_list = other.lc_list;
@@ -758,8 +758,8 @@ ue_dedicated_configuration::ue_dedicated_configuration(const ue_dedicated_config
   ue_cell_to_du_cell_index = other.ue_cell_to_du_cell_index;
 }
 
-void ue_dedicated_configuration::update(const cell_common_configuration_list& common_cells,
-                                        const sched_ue_config_request&        cfg_req)
+void ue_configuration::update(const cell_common_configuration_list& common_cells,
+                              const sched_ue_config_request&        cfg_req)
 {
   // Update UE logical channels.
   if (cfg_req.lc_config_list.has_value()) {

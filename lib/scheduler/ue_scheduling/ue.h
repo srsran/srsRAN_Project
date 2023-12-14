@@ -21,15 +21,15 @@ namespace srsran {
 
 /// Parameters used to create a UE.
 struct ue_creation_command {
-  du_ue_index_t                     ue_index;
-  const ue_dedicated_configuration& cfg;
-  bool                              starts_in_fallback;
-  harq_timeout_handler&             harq_timeout_notifier;
+  du_ue_index_t           ue_index;
+  const ue_configuration& cfg;
+  bool                    starts_in_fallback;
+  harq_timeout_handler&   harq_timeout_notifier;
 };
 
 /// Parameters used to reconfigure a UE.
 struct ue_reconf_command {
-  const ue_dedicated_configuration& cfg;
+  const ue_configuration& cfg;
 };
 
 class ue
@@ -162,7 +162,7 @@ private:
   const cell_configuration& cell_cfg_common;
 
   /// Dedicated configuration for the UE.
-  const ue_dedicated_configuration* ue_ded_cfg = nullptr;
+  const ue_configuration* ue_ded_cfg = nullptr;
 
   /// Notifier used by HARQ processes to signal timeouts due to undetected HARQ ACKs/CRCs.
   ue_harq_timeout_notifier harq_timeout_notif;

@@ -73,7 +73,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 {
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
-  ue_dedicated_configuration ue_ded_cfg{ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
+  ue_configuration ue_ded_cfg{ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
   ue u{ue_creation_command{ue_create_msg.ue_index, ue_ded_cfg, ue_create_msg.starts_in_fallback, harq_timeout_handler}};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
@@ -82,7 +82,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.crnti    = ue_create_msg.crnti;
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
-  ue_dedicated_configuration ue_ded_cfg2{ue_ded_cfg};
+  ue_configuration ue_ded_cfg2{ue_ded_cfg};
   ue_ded_cfg2.update(cell_cfg_db, recfg.cfg);
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2});
   dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};

@@ -114,8 +114,7 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ue_ded_cell_cfg_list.push_back(
-        std::make_unique<ue_dedicated_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
+    ue_ded_cell_cfg_list.push_back(std::make_unique<ue_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
     ues.add_ue(std::make_unique<ue>(ue_creation_command{
         ue_req.ue_index, *ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
     return ues[ue_req.ue_index];
@@ -160,11 +159,11 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  srslog::basic_logger&             logger;
-  scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
-  cell_common_configuration_list    cell_cfg_list;
-  std::vector<std::unique_ptr<ue_dedicated_configuration>> ue_ded_cell_cfg_list;
+  srslog::basic_logger&                          logger;
+  scheduler_expert_config                        sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config&              expert_cfg{sched_cfg.ue};
+  cell_common_configuration_list                 cell_cfg_list;
+  std::vector<std::unique_ptr<ue_configuration>> ue_ded_cell_cfg_list;
 
   const cell_configuration&            cell_cfg;
   sched_cfg_dummy_notifier             dummy_mac_notif;

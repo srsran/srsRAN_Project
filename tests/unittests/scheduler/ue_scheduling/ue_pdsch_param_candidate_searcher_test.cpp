@@ -74,7 +74,7 @@ protected:
   cell_common_configuration_list       cell_cfg_list;
   const cell_configuration&            cell_cfg;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  optional<ue_dedicated_configuration> ue_ded_cfg;
+  optional<ue_configuration>           ue_ded_cfg;
 
   srslog::basic_logger& logger;
 
