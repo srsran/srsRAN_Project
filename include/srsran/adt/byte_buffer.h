@@ -1064,20 +1064,6 @@ inline size_t copy_segments(const byte_buffer& src, span<uint8_t> dst)
   return bytes_copied;
 }
 
-/// Perfoms a segment-wise copy of the byte_buffer to a generic iterator over uint8_t.
-/// The destination must have sufficient space to fit the whole byte_buffer's length.
-///
-/// \param src Source byte_buffer.
-/// \param dst_begin Destination iterator over uint8_t.
-template <typename It>
-void copy_segments(const byte_buffer& src, It dst_begin)
-{
-  static_assert(std::is_same<std::decay_t<decltype(*dst_begin)>, uint8_t>::value, "Iterator value type is not uint8_t");
-  for (const auto& src_segment : src.segments()) {
-    dst_begin = std::copy(src_segment.begin(), src_segment.end(), dst_begin);
-  }
-}
-
 /// Provides a contiguous view of a byte_buffer.
 /// It is bound to the lifetime of the byte_buffer \p src and the temporary buffer \p tmp_mem, whichever is shorter.
 /// Important: \p tmp_mem must be at least as large as \p src.

@@ -512,35 +512,6 @@ TEST(byte_buffer_test, copy_to_span)
   ASSERT_EQ(dst_span.data()[len], 0xfe);
 }
 
-TEST(byte_buffer_test, copy_to_iterator)
-{
-  byte_buffer          pdu;
-  std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
-  std::vector<uint8_t> bytes2       = test_rgen::random_vector<uint8_t>(random_vec_size());
-  auto                 bytes_concat = concat_vec(bytes, bytes2);
-
-  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0);
-  dst_vec.reserve(bytes_concat.size());
-  span<uint8_t> dst_span = {dst_vec};
-
-  // test copy of empty buffer
-  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
-
-  // test copy of small buffer
-  pdu.append(bytes);
-  dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
-
-  // test copy of large buffer
-  pdu.append(bytes2);
-  dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
-}
-
 TEST(byte_buffer_test, to_span)
 {
   byte_buffer          pdu;
