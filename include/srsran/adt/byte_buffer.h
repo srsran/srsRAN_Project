@@ -1047,7 +1047,8 @@ inline byte_buffer make_byte_buffer(const std::string& hex_str)
 /// \param src Source byte_buffer.
 /// \param dst Destination span<uint8_t>.
 /// \return Number of bytes copied.
-inline size_t copy_segments(const byte_buffer& src, span<uint8_t> dst)
+template <typename ByteBufferType>
+inline size_t copy_segments(const ByteBufferType& src, span<uint8_t> dst)
 {
   size_t bytes_copied    = 0;
   size_t bytes_remaining = std::min(src.length(), dst.size_bytes());

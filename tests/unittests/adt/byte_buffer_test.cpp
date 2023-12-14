@@ -472,7 +472,7 @@ TEST(byte_buffer_test, hexdump)
   ASSERT_EQ(pdu, bytes);
 }
 
-TEST(byte_buffer_test, copy_to_span)
+TEST(byte_buffer_test, copy_byte_buffer_to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -507,6 +507,46 @@ TEST(byte_buffer_test, copy_to_span)
   std::fill(dst_span.begin(), dst_span.end(), 0xfe);
   span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length() - 1);
   len                       = copy_segments(pdu, dst_subspan);
+  ASSERT_EQ(len, pdu.length() - 1);
+  ASSERT_TRUE(std::equal(dst_subspan.begin(), dst_subspan.end(), pdu.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+}
+
+TEST(byte_buffer_test, copy_byte_buffer_view_to_span)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
+  std::vector<uint8_t> bytes2       = test_rgen::random_vector<uint8_t>(random_vec_size());
+  auto                 bytes_concat = concat_vec(bytes, bytes2);
+
+  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0xfe);
+  span<uint8_t>        dst_span = {dst_vec};
+  size_t               len      = 0;
+
+  // test copy of empty buffer
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, 0);
+  ASSERT_EQ(pdu.length(), 0);
+  ASSERT_TRUE(std::all_of(dst_span.begin(), dst_span.end(), [](uint8_t v) { return v == 0xfe; }));
+
+  // test copy of small buffer
+  pdu.append(bytes);
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), dst_span.begin(), dst_span.begin() + len));
+  ASSERT_EQ(pdu, dst_span.subspan(0, len));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+
+  // test copy of large buffer
+  pdu.append(bytes2);
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_EQ(dst_span, pdu);
+
+  // test copy to short span
+  std::fill(dst_span.begin(), dst_span.end(), 0xfe);
+  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length() - 1);
+  len                       = copy_segments(byte_buffer_view{pdu}, dst_subspan);
   ASSERT_EQ(len, pdu.length() - 1);
   ASSERT_TRUE(std::equal(dst_subspan.begin(), dst_subspan.end(), pdu.begin()));
   ASSERT_EQ(dst_span.data()[len], 0xfe);
