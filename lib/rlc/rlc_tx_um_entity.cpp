@@ -175,15 +175,6 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   return pdu_buf;
 }
 
-size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src)
-{
-  auto* it = dst.begin();
-  for (span<const uint8_t> seg : src.segments()) {
-    it = std::copy(seg.begin(), seg.end(), it);
-  }
-  return src.length();
-}
-
 size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
   uint32_t grant_len = mac_sdu_buf.size();
@@ -249,8 +240,8 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
                    grant_len);
 
   // Assemble PDU
-  size_t nwritten = copy_bytes(mac_sdu_buf.subspan(head_len, mac_sdu_buf.size() - head_len),
-                               byte_buffer_view{sdu.buf, next_so, payload_len});
+  size_t nwritten = copy_segments(byte_buffer_view{sdu.buf, next_so, payload_len},
+                                  mac_sdu_buf.subspan(head_len, mac_sdu_buf.size() - head_len));
   if (nwritten == 0 || nwritten != payload_len) {
     logger.log_error("Could not write PDU payload. {} payload_len={} grant_len={}", header, payload_len, grant_len);
     return 0;
