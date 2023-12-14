@@ -90,15 +90,6 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
   }
 }
 
-size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src)
-{
-  auto* it = dst.begin();
-  for (span<const uint8_t> seg : src.segments()) {
-    it = std::copy(seg.begin(), seg.end(), it);
-  }
-  return src.length();
-}
-
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
 size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
 {
@@ -229,7 +220,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   }
 
   // Assemble PDU
-  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len), sdu_info.sdu);
+  size_t payload_len = copy_segments(sdu_info.sdu, rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len));
   if (payload_len == 0) {
     logger.log_error(
         "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
@@ -292,8 +283,8 @@ size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_
   }
 
   // Assemble PDU
-  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len),
-                                  byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len});
+  size_t payload_len = copy_segments(byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len},
+                                     rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len));
   if (payload_len == 0 || payload_len != segment_payload_len) {
     logger.log_error(
         "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
@@ -382,8 +373,8 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
   }
 
   // Assemble PDU
-  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len),
-                                  byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len});
+  size_t payload_len = copy_segments(byte_buffer_view{sdu_info.sdu, hdr.so, segment_payload_len},
+                                     rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len));
   if (payload_len == 0 || payload_len != segment_payload_len) {
     logger.log_error(
         "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
@@ -520,8 +511,8 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
                 expected_hdr_len);
 
   // Assemble PDU
-  size_t payload_len = copy_bytes(rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len),
-                                  byte_buffer_view{sdu_info.sdu, hdr.so, retx_payload_len});
+  size_t payload_len = copy_segments(byte_buffer_view{sdu_info.sdu, hdr.so, retx_payload_len},
+                                     rlc_pdu_buf.subspan(header_len, rlc_pdu_buf.size() - header_len));
   if (payload_len == 0 || payload_len != retx_payload_len) {
     logger.log_error(
         "Could not write PDU payload. {} payload_len={} grant_len={}", hdr, sdu_info.sdu.length(), grant_len);
