@@ -44,16 +44,19 @@ private:
 class ue_config_delete_event
 {
 public:
+  ue_config_delete_event() = default;
   ue_config_delete_event(du_ue_index_t ue_index_, sched_config_manager& parent_);
   ue_config_delete_event(ue_config_delete_event&& other) noexcept;
   ue_config_delete_event& operator=(ue_config_delete_event&& other) noexcept;
   ~ue_config_delete_event();
 
+  bool valid() const { return parent != nullptr; }
+
   du_ue_index_t ue_index() const { return ue_idx; }
 
 private:
-  du_ue_index_t         ue_idx;
-  sched_config_manager* parent;
+  du_ue_index_t         ue_idx = INVALID_DU_UE_INDEX;
+  sched_config_manager* parent = nullptr;
 };
 
 /// Note: We have the guarantee that each UE is not configured concurrently.

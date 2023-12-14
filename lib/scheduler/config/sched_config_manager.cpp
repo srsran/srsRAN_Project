@@ -187,10 +187,17 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
   // Check if UE already exists.
   const du_cell_group_index_t group_idx = ue_to_cell_group_index[ue_index].load(std::memory_order_relaxed);
   if (group_idx == INVALID_DU_CELL_GROUP_INDEX) {
+    srsran_assert(ue_cfg_list[ue_index] == nullptr, "Invalid ue_index={}", ue_index);
     logger.error("ue={}: Discarding UE deletion command. Cause: UE does not exist", ue_index);
-  } else {
-    srsran_assert(ue_cfg_list[ue_index] != nullptr, "Invalid ue_index={}", ue_index);
+
+    // Notifies MAC that event is complete.
+    // Note: There is no failure path for the deletion of a UE.
+    config_notifier.on_ue_delete_response(ue_index);
+
+    return ue_config_delete_event{};
   }
+
+  srsran_assert(ue_cfg_list[ue_index] != nullptr, "Invalid ue_index={}", ue_index);
   return ue_config_delete_event{ue_index, *this};
 }
 

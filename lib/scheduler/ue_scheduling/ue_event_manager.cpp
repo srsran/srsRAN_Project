@@ -92,6 +92,9 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
   // Create UE configuration deletion event.
   ue_config_delete_event ue_del_ev = cfg_handler.remove_ue(ue_index);
+  if(not ue_del_ev.valid()) {
+    return;
+  }
 
   common_events.emplace(ue_index, [this, ev = std::move(ue_del_ev)]() mutable {
     const du_ue_index_t ue_idx = ev.ue_index();
