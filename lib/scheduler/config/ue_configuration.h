@@ -176,6 +176,10 @@ public:
 
   const rnti_t crnti;
 
+  bool contains(du_cell_index_t cell_index) const { return du_cells.contains(cell_index); }
+
+  size_t nof_cells() const { return du_cells.size(); }
+
   const cell_configuration& common_cell_cfg(du_cell_index_t cell_index) const
   {
     srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);

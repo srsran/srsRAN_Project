@@ -23,9 +23,9 @@ public:
   ue_config_update_event() = default;
   ue_config_update_event(du_ue_index_t                               ue_index_,
                          sched_config_manager&                       parent_,
-                         std::unique_ptr<ue_dedicated_configuration> next_cfg);
-  ue_config_update_event(ue_config_update_event&&) noexcept            = default;
-  ue_config_update_event& operator=(ue_config_update_event&&) noexcept = default;
+                         std::unique_ptr<ue_dedicated_configuration> next_cfg = nullptr);
+  ue_config_update_event(ue_config_update_event&&) noexcept;
+  ue_config_update_event& operator=(ue_config_update_event&&) noexcept;
   ~ue_config_update_event();
 
   bool valid() const { return next_ded_cfg != nullptr; }
@@ -33,7 +33,7 @@ public:
   du_ue_index_t                     get_ue_index() const { return ue_index; }
   const ue_dedicated_configuration& next_config() const { return *next_ded_cfg; }
 
-  void set_update_successful();
+  void abort();
 
 private:
   du_ue_index_t                               ue_index = INVALID_DU_UE_INDEX;
@@ -61,11 +61,11 @@ class sched_config_manager
 public:
   sched_config_manager(const scheduler_config& sched_cfg_);
 
-  const cell_configuration* handle_cell_configuration_request(const sched_cell_configuration_request_message& msg);
+  const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
-  ue_config_update_event handle_new_ue_config(const sched_ue_creation_request_message& cfg_req);
+  ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
 
-  ue_config_update_event handle_ue_config_update(const sched_ue_reconfiguration_message& cfg_req);
+  ue_config_update_event update_ue(const sched_ue_reconfiguration_message& cfg_req);
 
   bool contains(du_cell_index_t cell_index) const { return added_cells.contains(cell_index); }
 
@@ -73,6 +73,12 @@ public:
   {
     return du_cell_to_cell_group_index.contains(cell_index) ? du_cell_to_cell_group_index[cell_index]
                                                             : INVALID_DU_CELL_GROUP_INDEX;
+  }
+
+  du_cell_group_index_t get_cell_group_index(du_ue_index_t ue_index) const
+  {
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    return ue_to_cell_group_index[ue_index].load(std::memory_order_relaxed);
   }
 
   const cell_common_configuration_list& common_cell_list() const { return added_cells; }
@@ -84,9 +90,9 @@ private:
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_dedicated_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
-  const scheduler_expert_config  expert_params;
-  sched_configuration_notifier&  config_notifier;
-  srslog::basic_logger&          logger;
+  const scheduler_expert_config expert_params;
+  sched_configuration_notifier& config_notifier;
+  srslog::basic_logger&         logger;
 
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;

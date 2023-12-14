@@ -22,6 +22,7 @@ namespace srsran {
 
 class scheduler_metrics_handler;
 class scheduler_event_logger;
+class sched_config_manager;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -33,7 +34,7 @@ class ue_event_manager final : public scheduler_ue_configurator,
 public:
   ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                    ue_repository&                    ue_db,
-                   sched_configuration_notifier&     mac_notifier,
+                   sched_config_manager&             cfg_handler,
                    scheduler_metrics_handler&        metrics_handler,
                    scheduler_event_logger&           ev_logger);
 
@@ -99,7 +100,7 @@ private:
 
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ue_db;
-  sched_configuration_notifier&     mac_notifier;
+  sched_config_manager&             cfg_handler;
   scheduler_metrics_handler&        metrics_handler;
   scheduler_event_logger&           ev_logger;
   srslog::basic_logger&             logger;

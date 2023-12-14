@@ -26,7 +26,7 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  const cell_configuration* cell_cfg = cfg_mng.handle_cell_configuration_request(msg);
+  const cell_configuration* cell_cfg = cfg_mng.add_cell(msg);
   if (cell_cfg == nullptr) {
     return false;
   }
@@ -34,8 +34,9 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
-    groups.emplace(msg.cell_group_index,
-                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
+    groups.emplace(
+        msg.cell_group_index,
+        std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, cfg_mng, metrics, sched_ev_logger));
   }
 
   // Create a new cell scheduler instance.
@@ -48,45 +49,34 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  // Add Mapping UE index -> DU Cell Group index.
+  // Ensure PCell exists.
   if (not ue_request.cfg.cells.has_value() or ue_request.cfg.cells->empty()) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided");
-    config_notifier.on_ue_config_complete(ue_request.ue_index, false);
-    return;
-  }
-  du_cell_index_t pcell_index = (*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index;
-
-  error_type<std::string> result =
-      config_validators::validate_sched_ue_creation_request_message(ue_request, cells[pcell_index]->cell_cfg);
-  if (result.is_error()) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: {}",
+    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided",
                    ue_request.ue_index,
-                   ue_request.crnti,
-                   result.error());
+                   ue_request.crnti);
     config_notifier.on_ue_config_complete(ue_request.ue_index, false);
     return;
   }
-
-  ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);
 
   // Dispatch UE creation to UE scheduler associated to the PCell.
+  const du_cell_index_t pcell_index = (*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index;
   cells[pcell_index]->ue_sched.get_ue_configurator().handle_ue_creation_request(ue_request);
 }
 
 void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
-  srsran_assert(ue_to_cell_group_index.contains(ue_request.ue_index), "UE={} not yet created", ue_request.ue_index);
-  du_cell_group_index_t group_index = ue_to_cell_group_index[ue_request.ue_index];
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_request.ue_index);
+  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_request.ue_index);
 
-  groups[group_index]->get_ue_configurator().handle_ue_reconfiguration_request(ue_request);
+  groups[grp_idx]->get_ue_configurator().handle_ue_reconfiguration_request(ue_request);
 }
 
 void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_to_cell_group_index.contains(ue_index), "UE={} not yet created", ue_index);
-  du_cell_group_index_t group_index = ue_to_cell_group_index[ue_index];
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_index);
+  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_index);
 
-  groups[group_index]->get_ue_configurator().handle_ue_removal_request(ue_index);
+  groups[grp_idx]->get_ue_configurator().handle_ue_removal_request(ue_index);
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
@@ -97,13 +87,13 @@ void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 
 void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
-  if (not ue_to_cell_group_index.contains(bsr.ue_index)) {
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(bsr.ue_index);
+  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
     logger.warning("ue={}: Discarding UL BSR. Cause: UE not recognized", bsr.ue_index);
     return;
   }
-  du_cell_group_index_t group_index = ue_to_cell_group_index[bsr.ue_index];
 
-  groups[group_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
+  groups[grp_idx]->get_feedback_handler().handle_ul_bsr_indication(bsr);
 }
 
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
@@ -121,13 +111,13 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
 
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  if (not ue_to_cell_group_index.contains(bs.ue_index)) {
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(bs.ue_index);
+  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
     logger.warning("ue={}: Discarding DL buffer status update. Cause: UE not recognized", bs.ue_index);
     return;
   }
-  du_cell_group_index_t group_index = ue_to_cell_group_index[bs.ue_index];
 
-  groups[group_index]->get_dl_buffer_state_indication_handler().handle_dl_buffer_state_indication(bs);
+  groups[grp_idx]->get_dl_buffer_state_indication_handler().handle_dl_buffer_state_indication(bs);
 }
 
 void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -146,13 +136,13 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)
 {
-  if (not ue_to_cell_group_index.contains(mac_ce.ue_index)) {
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(mac_ce.ue_index);
+  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
     logger.warning("ue={}: Discarding MAC CE update. Cause: UE not recognized", mac_ce.ue_index);
     return;
   }
-  du_cell_group_index_t group_index = ue_to_cell_group_index[mac_ce.ue_index];
 
-  groups[group_index]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
+  groups[grp_idx]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
 }
 
 const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)

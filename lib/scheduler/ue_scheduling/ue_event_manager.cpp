@@ -9,6 +9,7 @@
  */
 
 #include "ue_event_manager.h"
+#include "../config/sched_config_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 
@@ -16,12 +17,12 @@ using namespace srsran;
 
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                                    ue_repository&                    ue_db_,
-                                   sched_configuration_notifier&     mac_notifier_,
+                                   sched_config_manager&             cfg_mng_,
                                    scheduler_metrics_handler&        metrics_handler_,
                                    scheduler_event_logger&           ev_logger_) :
   expert_cfg(expert_cfg_),
   ue_db(ue_db_),
-  mac_notifier(mac_notifier_),
+  cfg_handler(cfg_mng_),
   metrics_handler(metrics_handler_),
   ev_logger(ev_logger_),
   logger(srslog::fetch_basic_logger("SCHED"))
@@ -30,17 +31,22 @@ ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_
 
 void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
+  // Create new UE dedicated configuration.
+  ue_config_update_event ue_cfg_ev = cfg_handler.add_ue(ue_request);
+  if (not ue_cfg_ev.valid()) {
+    return;
+  }
+
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(
-      expert_cfg, *du_cells[(*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
+  std::unique_ptr<ue> u = std::make_unique<ue>(expert_cfg, ue_cfg_ev.next_config(), ue_request, metrics_handler);
 
   // Defer UE object addition to ue list to the slot indication handler.
-  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
+  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u), cfg_ev = std::move(ue_cfg_ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
       logger.error("ue={} rnti={:#x}: Create of UE failed. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
-      mac_notifier.on_ue_config_complete(u->ue_index, false);
+      cfg_ev.abort();
       return;
     }
 
@@ -57,28 +63,28 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
     // Notify metrics handler.
     metrics_handler.handle_ue_creation(
         inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ueidx, true);
   });
 }
 
 void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
-  common_events.emplace(ue_request.ue_index, [this, ue_request]() {
+  // Create UE dedicated configuration for the reconfiguration.
+  ue_config_update_event ue_cfg_ev = cfg_handler.update_ue(ue_request);
+  if (not ue_cfg_ev.valid()) {
+    return;
+  }
+
+  common_events.emplace(ue_request.ue_index, [this, ue_request, cfg_ev = std::move(ue_cfg_ev)]() mutable {
     if (not ue_db.contains(ue_request.ue_index)) {
       log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
-      mac_notifier.on_ue_config_complete(ue_request.ue_index, false);
+      cfg_ev.abort();
       return;
     }
     // Configure existing UE.
-    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg);
+    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg, cfg_ev.next_config());
 
     // Log event.
     ev_logger.enqueue(ue_request);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ue_request.ue_index, true);
   });
 }
 

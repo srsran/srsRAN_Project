@@ -38,11 +38,10 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  ue_cell(du_ue_index_t              ue_index_,
-          rnti_t                     crnti_val,
-          const cell_configuration&  cell_cfg_common_,
-          const serving_cell_config& ue_serv_cell,
-          ue_harq_timeout_notifier   harq_timeout_notifier);
+  ue_cell(du_ue_index_t                ue_index_,
+          rnti_t                       crnti_val,
+          const ue_cell_configuration& ue_cell_cfg_,
+          ue_harq_timeout_notifier     harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -56,12 +55,12 @@ public:
   /// \brief Determines whether the UE cell is currently active.
   bool is_active() const { return active; }
 
-  const ue_cell_configuration& cfg() const { return ue_cfg; }
+  const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
   /// \brief Deactivates cell.
   void deactivate();
 
-  void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
+  void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
   void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
 
   std::pair<const dl_harq_process*, dl_harq_process::status_update>
@@ -141,7 +140,7 @@ private:
 
   rnti_t                         crnti_;
   const cell_configuration&      cell_cfg;
-  ue_cell_configuration          ue_cfg;
+  const ue_cell_configuration*   ue_cfg;
   sched_ue_resource_alloc_config ue_res_alloc_cfg;
   scheduler_ue_expert_config     expert_cfg;
   srslog::basic_logger&          logger;

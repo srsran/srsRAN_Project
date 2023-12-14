@@ -781,8 +781,6 @@ void ue_dedicated_configuration::update(const cell_common_configuration_list& co
       // Reconfiguration of existing cell.
       du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg);
     }
-
-    ue_cell_to_du_cell_index[i] = cell_index;
   }
 
   // Update UE cell to DU cell indexing

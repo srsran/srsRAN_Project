@@ -23,7 +23,7 @@ class ue
 {
 public:
   ue(const scheduler_ue_expert_config&        expert_cfg_,
-     const cell_configuration&                cell_cfg_common_,
+     const ue_dedicated_configuration&        ue_ded_cfg_,
      const sched_ue_creation_request_message& req,
      harq_timeout_handler&                    harq_timeout_notifier_);
   ue(const ue&)            = delete;
@@ -105,7 +105,7 @@ public:
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
   }
 
-  void handle_reconfiguration_request(const sched_ue_config_request& msg);
+  void handle_reconfiguration_request(const sched_ue_config_request& msg, const ue_dedicated_configuration& ue_ded_cfg);
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -150,6 +150,9 @@ private:
 
   /// Cell configuration. This is common to all UEs within the same cell.
   const cell_configuration& cell_cfg_common;
+
+  /// Dedicated configuration for the UE.
+  const ue_dedicated_configuration* ue_ded_cfg = nullptr;
 
   /// List of \c mac-LogicalChannelConfig, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<logical_channel_config> log_channels_configs;

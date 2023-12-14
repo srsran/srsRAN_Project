@@ -23,6 +23,8 @@ protected:
   sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
   sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
   scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
+
+  cell_common_configuration_list cell_cfg_db;
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
@@ -70,8 +72,9 @@ TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
 TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_logical_channel_states)
 {
   // Test Preamble.
-  cell_configuration cell_cfg{sched_cfg, msg};
-  ue                 u{sched_cfg.ue, cell_cfg, ue_create_msg, harq_timeout_handler};
+  cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
+  ue_dedicated_configuration ue_ded_cfg{ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
+  ue                         u{sched_cfg.ue, ue_ded_cfg, ue_create_msg, harq_timeout_handler};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};
@@ -79,7 +82,9 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.crnti    = ue_create_msg.crnti;
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
-  u.handle_reconfiguration_request(recfg.cfg);
+  ue_dedicated_configuration ue_ded_cfg2{ue_ded_cfg};
+  ue_ded_cfg2.update(cell_cfg_db, recfg.cfg);
+  u.handle_reconfiguration_request(recfg.cfg, ue_ded_cfg2);
   dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};
 
   // Verify that DL buffer state indications affect newly active logical channels.

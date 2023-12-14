@@ -29,7 +29,8 @@ protected:
         test_helpers::make_default_sched_cell_configuration_request(params);
 
     const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
-    cell_cfg.emplace(sched_cfg, sched_cell_cfg_req);
+    cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, sched_cell_cfg_req));
+    cell_cfg = cell_cfg_list[to_du_cell_index(0)].get();
 
     next_slot = test_helpers::generate_random_slot_point(cell_cfg->dl_cfg_common.init_dl_bwp.generic_params.scs);
 
@@ -40,7 +41,8 @@ protected:
     for (const lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ue_ptr = std::make_unique<ue>(expert_cfg, *cell_cfg, ue_creation_req, harq_timeout_handler);
+    ue_ded_cfg.emplace(ue_creation_req.crnti, cell_cfg_list, ue_creation_req.cfg);
+    ue_ptr = std::make_unique<ue>(expert_cfg, *ue_ded_cfg, ue_creation_req, harq_timeout_handler);
     ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
 
@@ -74,7 +76,9 @@ protected:
   }
 
   const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  optional<cell_configuration>         cell_cfg;
+  cell_common_configuration_list       cell_cfg_list;
+  cell_configuration*                  cell_cfg = nullptr;
+  optional<ue_dedicated_configuration> ue_ded_cfg;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   srslog::basic_logger& logger;
