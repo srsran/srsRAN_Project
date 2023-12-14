@@ -881,12 +881,6 @@ struct ru_sdr_expert_appconfig {
   float power_ramping_time_us = 0.0F;
 };
 
-/// gNB app SDR Radio Unit cell configuration.
-struct ru_sdr_cell_appconfig {
-  /// Amplitude control configuration.
-  amplitude_control_appconfig amplitude_cfg;
-};
-
 /// gNB app SDR Radio Unit configuration.
 struct ru_sdr_appconfig {
   /// Sampling frequency in MHz.
@@ -922,8 +916,8 @@ struct ru_sdr_appconfig {
   std::string otw_format = "default";
   /// Expert SDR Radio Unit settings.
   ru_sdr_expert_appconfig expert_cfg;
-  /// SDR Radio Unit cells configuration.
-  std::vector<ru_sdr_cell_appconfig> cells = {{}};
+  /// Amplitude control configuration.
+  amplitude_control_appconfig amplitude_cfg;
 };
 
 /// gNB app Open Fronthaul base cell configuration.

@@ -98,10 +98,8 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
     return false;
   }
 
-  for (const auto& cell : config.cells) {
-    if (!validate_amplitude_control_appconfig(cell.amplitude_cfg)) {
-      return false;
-    }
+  if (!validate_amplitude_control_appconfig(config.amplitude_cfg)) {
+    return false;
   }
 
   return true;
@@ -1196,14 +1194,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
-
-    if (config.cells_cfg.size() != sdr_cfg.cells.size()) {
-      fmt::print("Number of cells in the DU={} don't match the number of cells in the RU={}\n",
-                 config.cells_cfg.size(),
-                 sdr_cfg.cells.size());
-
-      return false;
-    }
 
     if (!validate_ru_sdr_appconfig(sdr_cfg, config.cells_cfg.front())) {
       return false;

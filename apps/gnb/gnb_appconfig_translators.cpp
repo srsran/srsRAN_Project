@@ -1116,7 +1116,6 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
 static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
                                     const cell_appconfig&              config,
                                     const ru_sdr_appconfig&            ru_cfg,
-                                    const ru_sdr_cell_appconfig&       ru_cell_cfg,
                                     const lower_phy_threads_appconfig& low_phy_threads_cfg,
                                     unsigned                           max_processing_delay_slot)
 {
@@ -1161,13 +1160,13 @@ static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
-      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
+      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.amplitude_cfg.gain_backoff_dB;
 
   // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
   // 0.1 dB of the radio full scale value.
-  out_cfg.amplitude_config.ceiling_dBFS = ru_cell_cfg.amplitude_cfg.power_ceiling_dBFS;
+  out_cfg.amplitude_config.ceiling_dBFS = ru_cfg.amplitude_cfg.power_ceiling_dBFS;
 
-  out_cfg.amplitude_config.enable_clipping = ru_cell_cfg.amplitude_cfg.enable_clipping;
+  out_cfg.amplitude_config.enable_clipping = ru_cfg.amplitude_cfg.enable_clipping;
 
   // Set the full scale amplitude reference to 1.
   out_cfg.amplitude_config.full_scale_lin = 1.0F;
@@ -1335,7 +1334,6 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
     generate_low_phy_config(out_cfg.lower_phy_config.back(),
                             config.cells_cfg[i],
                             ru_cfg,
-                            ru_cfg.cells[i],
                             config.expert_execution_cfg.threads.lower_threads,
                             config.expert_phy_cfg.max_processing_delay_slots);
   }

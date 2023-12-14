@@ -1567,13 +1567,6 @@ static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& t
   configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
 }
 
-static void configure_cli11_ru_sdr_cells_args(CLI::App& app, ru_sdr_cell_appconfig& config)
-{
-  // Amplitude control configuration.
-  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
-  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
-}
-
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
 {
   app.add_option("--low_phy_dl_throttling",
@@ -1630,26 +1623,13 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
       })
       ->default_str("auto");
 
+  // Amplitude control configuration.
+  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
+  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
+
   // Expert configuration.
   CLI::App* expert_subcmd = app.add_subcommand("expert_cfg", "Generic Radio Unit expert configuration");
   configure_cli11_ru_sdr_expert_args(*expert_subcmd, config.expert_cfg);
-
-  // Cell parameters.
-  app.add_option_function<std::vector<std::string>>(
-      "--cells",
-      [&config](const std::vector<std::string>& values) {
-        config.cells.resize(values.size());
-
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("RU SDR cells");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ru_sdr_cells_args(subapp, config.cells[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
 static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cell_appconfig& config)
