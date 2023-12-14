@@ -19,13 +19,23 @@
 
 namespace srsran {
 
+/// Parameters used to create a UE.
+struct ue_creation_command {
+  du_ue_index_t                     ue_index;
+  const ue_dedicated_configuration& cfg;
+  bool                              starts_in_fallback;
+  harq_timeout_handler&             harq_timeout_notifier;
+};
+
+/// Parameters used to reconfigure a UE.
+struct ue_reconf_command {
+  const ue_dedicated_configuration& cfg;
+};
+
 class ue
 {
 public:
-  ue(const scheduler_ue_expert_config&        expert_cfg_,
-     const ue_dedicated_configuration&        ue_ded_cfg_,
-     const sched_ue_creation_request_message& req,
-     harq_timeout_handler&                    harq_timeout_notifier_);
+  ue(const ue_creation_command& cmd);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
   ue& operator=(const ue&) = delete;
@@ -105,7 +115,7 @@ public:
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
   }
 
-  void handle_reconfiguration_request(const sched_ue_config_request& msg, const ue_dedicated_configuration& ue_ded_cfg);
+  void handle_reconfiguration_request(const ue_reconf_command& params);
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -153,12 +163,6 @@ private:
 
   /// Dedicated configuration for the UE.
   const ue_dedicated_configuration* ue_ded_cfg = nullptr;
-
-  /// List of \c mac-LogicalChannelConfig, TS 38.331; \ref sched_ue_creation_request_message.
-  std::vector<logical_channel_config> log_channels_configs;
-
-  /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
-  std::vector<scheduling_request_to_addmod> sched_request_configs;
 
   /// Notifier used by HARQ processes to signal timeouts due to undetected HARQ ACKs/CRCs.
   ue_harq_timeout_notifier harq_timeout_notif;

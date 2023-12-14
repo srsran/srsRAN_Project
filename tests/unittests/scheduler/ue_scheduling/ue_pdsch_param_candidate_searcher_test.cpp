@@ -39,7 +39,8 @@ protected:
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
     ue_ded_cfg.emplace(ue_creation_req.crnti, cell_cfg_list, ue_creation_req.cfg);
-    ue_ptr = std::make_unique<ue>(expert_cfg, *ue_ded_cfg, ue_creation_req, harq_timeout_handler);
+    ue_ptr = std::make_unique<ue>(ue_creation_command{
+        ue_creation_req.ue_index, *ue_ded_cfg, ue_creation_req.starts_in_fallback, harq_timeout_handler});
     ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
 

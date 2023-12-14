@@ -61,7 +61,6 @@ public:
   void deactivate();
 
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
-  void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
 
   std::pair<const dl_harq_process*, dl_harq_process::status_update>
   handle_dl_ack_info(slot_point                 uci_slot,
@@ -138,12 +137,11 @@ private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
   void apply_link_adaptation_procedures(const csi_report_data& csi_report);
 
-  rnti_t                         crnti_;
-  const cell_configuration&      cell_cfg;
-  const ue_cell_configuration*   ue_cfg;
-  sched_ue_resource_alloc_config ue_res_alloc_cfg;
-  scheduler_ue_expert_config     expert_cfg;
-  srslog::basic_logger&          logger;
+  rnti_t                            crnti_;
+  const cell_configuration&         cell_cfg;
+  const ue_cell_configuration*      ue_cfg;
+  const scheduler_ue_expert_config& expert_cfg;
+  srslog::basic_logger&             logger;
 
   /// \brief Whether cell is currently active.
   bool active = true;

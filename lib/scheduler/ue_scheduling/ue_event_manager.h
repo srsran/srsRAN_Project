@@ -32,11 +32,10 @@ class ue_event_manager final : public scheduler_ue_configurator,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                   ue_repository&                    ue_db,
-                   sched_config_manager&             cfg_handler,
-                   scheduler_metrics_handler&        metrics_handler,
-                   scheduler_event_logger&           ev_logger);
+  ue_event_manager(ue_repository&             ue_db,
+                   sched_config_manager&      cfg_handler,
+                   scheduler_metrics_handler& metrics_handler,
+                   scheduler_event_logger&    ev_logger);
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
@@ -98,12 +97,11 @@ private:
                        optional<float>                        pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
-  const scheduler_ue_expert_config& expert_cfg;
-  ue_repository&                    ue_db;
-  sched_config_manager&             cfg_handler;
-  scheduler_metrics_handler&        metrics_handler;
-  scheduler_event_logger&           ev_logger;
-  srslog::basic_logger&             logger;
+  ue_repository&             ue_db;
+  sched_config_manager&      cfg_handler;
+  scheduler_metrics_handler& metrics_handler;
+  scheduler_event_logger&    ev_logger;
+  srslog::basic_logger&      logger;
 
   /// List of added and configured cells.
   struct du_cell {

@@ -14,27 +14,22 @@
 
 using namespace srsran;
 
-ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
-       const ue_dedicated_configuration&        ue_ded_cfg_,
-       const sched_ue_creation_request_message& req,
-       harq_timeout_handler&                    harq_timeout_notifier_) :
-  ue_index(req.ue_index),
-  crnti(req.crnti),
-  expert_cfg(expert_cfg_),
-  cell_cfg_common(ue_ded_cfg_.pcell_cfg().cell_cfg_common),
-  ue_ded_cfg(&ue_ded_cfg_),
-  harq_timeout_notif(harq_timeout_notifier_, ue_index),
+ue::ue(const ue_creation_command& cmd) :
+  ue_index(cmd.ue_index),
+  crnti(cmd.cfg.crnti),
+  expert_cfg(cmd.cfg.expert_cfg()),
+  cell_cfg_common(cmd.cfg.pcell_cfg().cell_cfg_common),
+  ue_ded_cfg(&cmd.cfg),
+  harq_timeout_notif(cmd.harq_timeout_notifier, ue_index),
   logger(srslog::fetch_basic_logger("SCHED")),
   ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
 {
-  srsran_assert(req.cfg.cells.has_value(), "Creation of a UE requires at least Pcell configuration.");
-
   // Apply configuration.
-  handle_reconfiguration_request(req.cfg, *ue_ded_cfg);
+  handle_reconfiguration_request(ue_reconf_command{cmd.cfg});
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
-      cell->set_fallback_state(req.starts_in_fallback);
+      cell->set_fallback_state(cmd.starts_in_fallback);
     }
   }
 }
@@ -70,65 +65,46 @@ void ue::deactivate()
   }
 }
 
-void ue::handle_reconfiguration_request(const sched_ue_config_request&    cfg,
-                                        const ue_dedicated_configuration& ue_ded_cfg_)
+void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 {
-  ue_ded_cfg = &ue_ded_cfg_;
+  srsran_assert(cmd.cfg.nof_cells() > 0, "Creation of a UE requires at least PCell configuration.");
+  ue_ded_cfg = &cmd.cfg;
 
   // Configure Logical Channels.
-  if (cfg.lc_config_list.has_value()) {
-    log_channels_configs = cfg.lc_config_list.value();
-    dl_lc_ch_mgr.configure(log_channels_configs);
-    ul_lc_ch_mgr.configure(log_channels_configs);
-  }
-
-  // Scheduling Request config.
-  if (cfg.sched_request_config_list.has_value()) {
-    sched_request_configs = cfg.sched_request_config_list.value();
-  }
+  dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+  ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 
   // Cell configuration.
-  if (cfg.cells.has_value()) {
-    // Handle removed cells.
-    for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
-      if (ue_du_cells[i] != nullptr) {
-        if (not ue_ded_cfg->contains(to_du_cell_index(i))) {
-          // TODO: Handle SCell deletions.
-        }
+  // Handle removed cells.
+  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
+    if (ue_du_cells[i] != nullptr) {
+      if (not ue_ded_cfg->contains(to_du_cell_index(i))) {
+        // TODO: Handle SCell deletions.
       }
     }
-    // Handle new cell creations or reconfigurations.
-    for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
-      du_cell_index_t cell_index = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
-      auto&           ue_cell_inst = ue_du_cells[cell_index];
-      if (ue_cell_inst == nullptr) {
-        ue_cell_inst =
-            std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), harq_timeout_notif);
-        if (ue_cell_index >= ue_cells.size()) {
-          ue_cells.resize(ue_cell_index + 1);
-        }
-      } else {
-        // Reconfiguration of the cell.
-        ue_cell_inst->handle_reconfiguration_request(ue_ded_cfg->ue_cell_cfg(cell_index));
+  }
+  // Handle new cell creations or reconfigurations.
+  for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
+    du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
+    auto&           ue_cell_inst = ue_du_cells[cell_index];
+    if (ue_cell_inst == nullptr) {
+      ue_cell_inst =
+          std::make_unique<ue_cell>(ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), harq_timeout_notif);
+      if (ue_cell_index >= ue_cells.size()) {
+        ue_cells.resize(ue_cell_index + 1);
       }
-    }
-
-    // Recompute mapping of UE cell indexing to DU cell indexing.
-    ue_cells.resize(ue_ded_cfg->nof_cells(), nullptr);
-    for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
-      auto& ue_cell_inst =
-          ue_du_cells[ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index];
-      ue_cells[ue_cell_index] = ue_cell_inst.get();
+    } else {
+      // Reconfiguration of the cell.
+      ue_cell_inst->handle_reconfiguration_request(ue_ded_cfg->ue_cell_cfg(cell_index));
     }
   }
 
-  // Handle new resource allocation config.
-  if (cfg.res_alloc_cfg.has_value()) {
-    for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
-      if (ue_du_cells[i] != nullptr) {
-        ue_du_cells[i]->handle_resource_allocation_reconfiguration_request(cfg.res_alloc_cfg.value());
-      }
-    }
+  // Recompute mapping of UE cell indexing to DU cell indexing.
+  ue_cells.resize(ue_ded_cfg->nof_cells(), nullptr);
+  for (unsigned ue_cell_index = 0; ue_cell_index != ue_ded_cfg->nof_cells(); ++ue_cell_index) {
+    auto& ue_cell_inst =
+        ue_du_cells[ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index];
+    ue_cells[ue_cell_index] = ue_cell_inst.get();
   }
 }
 

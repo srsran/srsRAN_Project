@@ -78,10 +78,10 @@ void scheduler_event_logger::enqueue_impl(const ue_creation_event& ue_request)
   }
 }
 
-void scheduler_event_logger::enqueue_impl(const sched_ue_reconfiguration_message& ue_request)
+void scheduler_event_logger::enqueue_impl(const ue_reconf_event& ue_request)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- UE reconfiguration: ue={} rnti={:#x}", ue_request.ue_index, ue_request.crnti);
+    fmt::format_to(fmtbuf, "\n- UE reconfiguration: ue={} rnti={:#x}", ue_request.ue_index, ue_request.rnti);
   }
 }
 

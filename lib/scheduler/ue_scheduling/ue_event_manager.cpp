@@ -15,12 +15,10 @@
 
 using namespace srsran;
 
-ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                                   ue_repository&                    ue_db_,
-                                   sched_config_manager&             cfg_mng_,
-                                   scheduler_metrics_handler&        metrics_handler_,
-                                   scheduler_event_logger&           ev_logger_) :
-  expert_cfg(expert_cfg_),
+ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
+                                   sched_config_manager&      cfg_mng_,
+                                   scheduler_metrics_handler& metrics_handler_,
+                                   scheduler_event_logger&    ev_logger_) :
   ue_db(ue_db_),
   cfg_handler(cfg_mng_),
   metrics_handler(metrics_handler_),
@@ -34,16 +32,18 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
   // Create new UE dedicated configuration.
   ue_config_update_event ue_cfg_ev = cfg_handler.add_ue(ue_request);
   if (not ue_cfg_ev.valid()) {
+    // No need to enqueue an event if the UE does not exist.
     return;
   }
 
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(expert_cfg, ue_cfg_ev.next_config(), ue_request, metrics_handler);
+  std::unique_ptr<ue> u = std::make_unique<ue>(ue_creation_command{
+      ue_request.ue_index, ue_cfg_ev.next_config(), ue_request.starts_in_fallback, metrics_handler});
 
   // Defer UE object addition to ue list to the slot indication handler.
-  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u), cfg_ev = std::move(ue_cfg_ev)]() mutable {
+  common_events.emplace(INVALID_DU_UE_INDEX, [this, u = std::move(u), cfg_ev = std::move(ue_cfg_ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
-      logger.error("ue={} rnti={:#x}: Create of UE failed. Cause: A UE with the same index already exists",
+      logger.error("ue={} rnti={:#x}: Discarding UE creation. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
       cfg_ev.abort();
@@ -71,20 +71,23 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
   // Create UE dedicated configuration for the reconfiguration.
   ue_config_update_event ue_cfg_ev = cfg_handler.update_ue(ue_request);
   if (not ue_cfg_ev.valid()) {
+    // Abort if the UE does not exist or configuration is not valid.
     return;
   }
 
-  common_events.emplace(ue_request.ue_index, [this, ue_request, cfg_ev = std::move(ue_cfg_ev)]() mutable {
-    if (not ue_db.contains(ue_request.ue_index)) {
-      log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
+  common_events.emplace(ue_cfg_ev.get_ue_index(), [this, cfg_ev = std::move(ue_cfg_ev)]() mutable {
+    const du_ue_index_t ue_idx = cfg_ev.get_ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      log_invalid_ue_index(ue_idx, "UE Reconfig Request");
       cfg_ev.abort();
       return;
     }
+
     // Configure existing UE.
-    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg, cfg_ev.next_config());
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{cfg_ev.next_config()});
 
     // Log event.
-    ev_logger.enqueue(ue_request);
+    ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, ue_db[ue_idx].crnti});
   });
 }
 
@@ -92,7 +95,7 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
   // Create UE configuration deletion event.
   ue_config_delete_event ue_del_ev = cfg_handler.remove_ue(ue_index);
-  if(not ue_del_ev.valid()) {
+  if (not ue_del_ev.valid()) {
     return;
   }
 

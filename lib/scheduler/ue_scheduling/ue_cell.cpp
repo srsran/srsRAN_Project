@@ -57,11 +57,6 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
   ue_cfg = &ue_cell_cfg;
 }
 
-void ue_cell::handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg)
-{
-  ue_res_alloc_cfg = ra_cfg;
-}
-
 std::pair<const dl_harq_process*, dl_harq_process::status_update>
 ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
                             mac_harq_ack_report_status ack_value,
@@ -126,8 +121,8 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
   // Apply grant size limits specified in the config.
   nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop()),
                       cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start());
-  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pdsch_grant_size_limits.stop()),
-                      ue_res_alloc_cfg.pdsch_grant_size_limits.start());
+  nof_prbs = std::max(std::min(nof_prbs, ue_cfg->rrm_cfg().pdsch_grant_size_limits.stop()),
+                      ue_cfg->rrm_cfg().pdsch_grant_size_limits.start());
 
   return grant_prbs_mcs{mcs.value(), nof_prbs};
 }
@@ -168,8 +163,8 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
   unsigned nof_prbs = std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length());
 
   // Apply grant size limits specified in the config.
-  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pusch_grant_size_limits.stop()),
-                      ue_res_alloc_cfg.pusch_grant_size_limits.start());
+  nof_prbs = std::max(std::min(nof_prbs, ue_cfg->rrm_cfg().pusch_grant_size_limits.stop()),
+                      ue_cfg->rrm_cfg().pusch_grant_size_limits.start());
 
   return grant_prbs_mcs{mcs, nof_prbs};
 }

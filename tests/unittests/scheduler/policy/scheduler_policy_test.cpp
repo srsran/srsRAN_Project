@@ -116,7 +116,8 @@ protected:
   {
     ue_ded_cell_cfg_list.push_back(
         std::make_unique<ue_dedicated_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
-    ues.add_ue(std::make_unique<ue>(expert_cfg, *ue_ded_cell_cfg_list.back(), ue_req, harq_timeout_handler));
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{
+        ue_req.ue_index, *ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
     return ues[ue_req.ue_index];
   }
 

@@ -628,6 +628,11 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   }
 }
 
+void ue_cell_configuration::set_rrm_config(const sched_ue_resource_alloc_config& rrm_cfg_)
+{
+  ue_res_alloc_cfg = rrm_cfg_;
+}
+
 void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common)
 {
   // Compute DL BWP-Id lookup table.
@@ -743,6 +748,10 @@ ue_dedicated_configuration::ue_dedicated_configuration(rnti_t                   
 
 ue_dedicated_configuration::ue_dedicated_configuration(const ue_dedicated_configuration& other) : crnti(other.crnti)
 {
+  // Update UE logical channels.
+  lc_list = other.lc_list;
+
+  // Update UE dedicated cell config.
   for (const std::unique_ptr<ue_cell_configuration>& cell_cfg : other.du_cells) {
     du_cells.emplace(cell_cfg->cell_cfg_common.cell_index, std::make_unique<ue_cell_configuration>(*cell_cfg));
   }
@@ -752,6 +761,11 @@ ue_dedicated_configuration::ue_dedicated_configuration(const ue_dedicated_config
 void ue_dedicated_configuration::update(const cell_common_configuration_list& common_cells,
                                         const sched_ue_config_request&        cfg_req)
 {
+  // Update UE logical channels.
+  if (cfg_req.lc_config_list.has_value()) {
+    lc_list = cfg_req.lc_config_list.value();
+  }
+
   // Update UE dedicated cell configs.
   if (cfg_req.cells.has_value()) {
     // Check if any cell has been removed.
@@ -765,27 +779,34 @@ void ue_dedicated_configuration::update(const cell_common_configuration_list& co
         du_cells.erase(ue_cell->cell_cfg_common.cell_index);
       }
     }
-  }
 
-  // Check for cells that have been added/modified.
-  for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
-    const cell_config_dedicated& ded_cell   = cfg_req.cells.value()[i];
-    const du_cell_index_t        cell_index = ded_cell.serv_cell_cfg.cell_index;
+    // Check for cells that have been added/modified.
+    for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
+      const cell_config_dedicated& ded_cell   = cfg_req.cells.value()[i];
+      const du_cell_index_t        cell_index = ded_cell.serv_cell_cfg.cell_index;
 
-    if (not du_cells.contains(cell_index)) {
-      // New Cell.
-      du_cells.emplace(cell_index,
-                       std::make_unique<ue_cell_configuration>(
-                           crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, cfg_req.cells->size() > 1));
-    } else {
-      // Reconfiguration of existing cell.
-      du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg);
+      if (not du_cells.contains(cell_index)) {
+        // New Cell.
+        du_cells.emplace(cell_index,
+                         std::make_unique<ue_cell_configuration>(
+                             crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, cfg_req.cells->size() > 1));
+      } else {
+        // Reconfiguration of existing cell.
+        du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg);
+      }
+    }
+
+    // Update UE cell to DU cell indexing
+    ue_cell_to_du_cell_index.resize(cfg_req.cells.value().size());
+    for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
+      ue_cell_to_du_cell_index[i] = cfg_req.cells.value()[i].serv_cell_cfg.cell_index;
     }
   }
 
-  // Update UE cell to DU cell indexing
-  ue_cell_to_du_cell_index.resize(cfg_req.cells.value().size());
-  for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
-    ue_cell_to_du_cell_index[i] = cfg_req.cells.value()[i].serv_cell_cfg.cell_index;
+  // Update RRM policies for the UE.
+  if (cfg_req.res_alloc_cfg.has_value()) {
+    for (unsigned i = 0; i != nof_cells(); ++i) {
+      du_cells[ue_cell_to_du_cell_index[i]]->set_rrm_config(*cfg_req.res_alloc_cfg);
+    }
   }
 }
