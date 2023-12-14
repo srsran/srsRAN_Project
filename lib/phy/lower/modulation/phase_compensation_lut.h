@@ -46,10 +46,9 @@ public:
                   scs_to_khz(scs),
                   dft_size);
 
-    unsigned                          nslot_per_subframe = get_nof_slots_per_subframe(scs);
-    unsigned                          nsymb_per_slot     = get_nsymb_per_slot(cp);
-    double                            sign_two_pi        = ((is_tx) ? -1 : 1) * 2.0 * M_PI;
-    static const std::complex<double> i                  = {0.0, 1.0};
+    unsigned nslot_per_subframe = get_nof_slots_per_subframe(scs);
+    unsigned nsymb_per_slot     = get_nsymb_per_slot(cp);
+    double   sign_two_pi        = ((is_tx) ? -1 : 1) * 2.0 * M_PI;
 
     // For each symbol in a subframe.
     for (unsigned symbol = 0, symbol_offset = 0; symbol != nslot_per_subframe * nsymb_per_slot; ++symbol) {
@@ -63,7 +62,7 @@ public:
       double symbol_phase = sign_two_pi * center_frequency_Hz * start_time_s;
 
       // Calculate phase compensation.
-      coefficients.emplace_back(static_cast<cf_t>(std::exp(i * symbol_phase)));
+      coefficients.emplace_back(static_cast<cf_t>(std::polar(1.0, symbol_phase)));
 
       // Advance the symbol size.
       symbol_offset += dft_size;
