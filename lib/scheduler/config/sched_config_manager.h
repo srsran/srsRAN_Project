@@ -61,13 +61,19 @@ class sched_config_manager
 public:
   sched_config_manager(const scheduler_config& sched_cfg_);
 
-  bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg);
+  const cell_configuration* handle_cell_configuration_request(const sched_cell_configuration_request_message& msg);
 
   ue_config_update_event handle_new_ue_config(const sched_ue_creation_request_message& cfg_req);
 
   ue_config_update_event handle_ue_config_update(const sched_ue_reconfiguration_message& cfg_req);
 
   bool contains(du_cell_index_t cell_index) const { return added_cells.contains(cell_index); }
+
+  du_cell_group_index_t get_cell_group_index(du_cell_index_t cell_index) const
+  {
+    return du_cell_to_cell_group_index.contains(cell_index) ? du_cell_to_cell_group_index[cell_index]
+                                                            : INVALID_DU_CELL_GROUP_INDEX;
+  }
 
   const cell_common_configuration_list& common_cell_list() const { return added_cells; }
 
@@ -78,8 +84,9 @@ private:
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_dedicated_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
-  scheduler_config      sched_cfg;
-  srslog::basic_logger& logger;
+  const scheduler_expert_config  expert_params;
+  sched_configuration_notifier&  config_notifier;
+  srslog::basic_logger&          logger;
 
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;

@@ -38,6 +38,7 @@ class cell_scheduler
 public:
   explicit cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                           const sched_cell_configuration_request_message& msg,
+                          const cell_configuration&                       cell_cfg,
                           ue_scheduler&                                   ue_sched,
                           scheduler_event_logger&                         ev_logger,
                           scheduler_metrics_handler&                      metrics);
@@ -52,7 +53,7 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
 
-  const cell_configuration cell_cfg;
+  const cell_configuration& cell_cfg;
 
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler& ue_sched;

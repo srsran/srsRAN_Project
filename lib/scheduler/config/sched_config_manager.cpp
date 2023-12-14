@@ -60,28 +60,32 @@ ue_config_delete_event::~ue_config_delete_event()
   }
 }
 
-sched_config_manager::sched_config_manager(const scheduler_config& sched_cfg_) :
-  sched_cfg(sched_cfg_), logger(srslog::fetch_basic_logger("SCHED"))
+sched_config_manager::sched_config_manager(const scheduler_config& sched_cfg) :
+  expert_params(sched_cfg.expert_params),
+  config_notifier(sched_cfg.config_notifier),
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
   std::fill(ue_to_cell_group_index.begin(), ue_to_cell_group_index.end(), INVALID_DU_CELL_GROUP_INDEX);
 }
 
-bool sched_config_manager::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
+const cell_configuration*
+sched_config_manager::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
+  srsran_assert(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
   srsran_assert(not added_cells.contains(msg.cell_index), "cell={} already exists", msg.cell_index);
 
   // Ensure the common cell config is valid.
-  auto ret = config_validators::validate_sched_cell_configuration_request_message(msg, sched_cfg.expert_params);
+  auto ret = config_validators::validate_sched_cell_configuration_request_message(msg, expert_params);
   srsran_assert(not ret.is_error(), "Invalid cell configuration request message. Cause: {}", ret.error().c_str());
 
-  added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(sched_cfg.expert_params, msg));
+  added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
 
   // Update DU cell index to group lookup.
   du_cell_to_cell_group_index.emplace(msg.cell_index, msg.cell_group_index);
 
   logger.info("cell={}: Cell configured successfully.", msg.cell_index);
 
-  return true;
+  return &*added_cells[msg.cell_index];
 }
 
 ue_config_update_event sched_config_manager::handle_new_ue_config(const sched_ue_creation_request_message& cfg_req)
@@ -91,7 +95,7 @@ ue_config_update_event sched_config_manager::handle_new_ue_config(const sched_ue
     logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided",
                    cfg_req.ue_index,
                    cfg_req.crnti);
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
 
@@ -102,7 +106,7 @@ ue_config_update_event sched_config_manager::handle_new_ue_config(const sched_ue
                    cfg_req.ue_index,
                    cfg_req.crnti,
                    pcell_index);
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
 
@@ -111,7 +115,7 @@ ue_config_update_event sched_config_manager::handle_new_ue_config(const sched_ue
     logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: UE already exists",
                    cfg_req.ue_index,
                    cfg_req.crnti);
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
 
@@ -122,7 +126,7 @@ ue_config_update_event sched_config_manager::handle_new_ue_config(const sched_ue
                    cfg_req.ue_index,
                    cfg_req.crnti,
                    result.error());
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
 
@@ -140,7 +144,7 @@ ue_config_update_event sched_config_manager::handle_ue_config_update(const sched
   const du_cell_group_index_t group_idx = ue_to_cell_group_index[cfg_req.ue_index].load(std::memory_order_acquire);
   if (group_idx == INVALID_DU_CELL_GROUP_INDEX) {
     logger.error("ue={}: Discarding UE configuration. Cause: UE does not exist", cfg_req.ue_index);
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
   srsran_assert(ue_cfg_list[cfg_req.ue_index] != nullptr, "Invalid ue_index={}", cfg_req.ue_index);
@@ -149,7 +153,7 @@ ue_config_update_event sched_config_manager::handle_ue_config_update(const sched
     logger.error("ue={} c-rnti={:#x}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  cfg_req.ue_index,
                  cfg_req.crnti);
-    sched_cfg.config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
+    config_notifier.on_ue_config_complete(cfg_req.ue_index, false);
     return ue_config_update_event{};
   }
 
@@ -177,14 +181,14 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t              
                                            std::memory_order_release);
 
     // Notifies MAC that event is complete.
-    sched_cfg.config_notifier.on_ue_config_complete(ue_index, true);
+    config_notifier.on_ue_config_complete(ue_index, true);
 
   } else {
     // Config failed
     logger.warning("ue={}: UE configuration update event was not successful.", ue_index);
 
     // Notifies MAC that event has failed.
-    sched_cfg.config_notifier.on_ue_config_complete(ue_index, false);
+    config_notifier.on_ue_config_complete(ue_index, false);
   }
 }
 
@@ -197,5 +201,5 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
   ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);
 
   // Notifies MAC that event is complete.
-  sched_cfg.config_notifier.on_ue_delete_response(ue_index);
+  config_notifier.on_ue_delete_response(ue_index);
 }

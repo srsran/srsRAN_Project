@@ -26,32 +26,22 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  srsran_assert(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
-  srsran_assert(not cells.contains(msg.cell_index), "cell={} already exists", msg.cell_index);
-  // Cell group index must be unique since carrier Aggregation is not supported.
-  srsran_assert(not groups.contains(msg.cell_group_index),
-                "cell={} with cell group index={} already exists",
-                msg.cell_index,
-                msg.cell_group_index);
-  srsran_assert(
-      not config_validators::validate_sched_cell_configuration_request_message(msg, expert_params).is_error(),
-      "Invalid cell configuration request message. Cause: {}",
-      config_validators::validate_sched_cell_configuration_request_message(msg, expert_params).error().c_str());
+  const cell_configuration* cell_cfg = cfg_mng.handle_cell_configuration_request(msg);
+  if (cell_cfg == nullptr) {
+    return false;
+  }
 
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
     groups.emplace(msg.cell_group_index,
                    std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
-    cell_to_group_index.emplace(msg.cell_index, msg.cell_group_index);
   }
 
   // Create a new cell scheduler instance.
-  cells.emplace(
-      msg.cell_index,
-      std::make_unique<cell_scheduler>(expert_params, msg, *groups[msg.cell_group_index], sched_ev_logger, metrics));
-
-  logger.info("Cell with cell_index={} was configured.", msg.cell_index);
+  cells.emplace(msg.cell_index,
+                std::make_unique<cell_scheduler>(
+                    expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], sched_ev_logger, metrics));
 
   return true;
 }
@@ -184,8 +174,9 @@ const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
 void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
 {
-  srsran_assert(cell_to_group_index.contains(cell_index), "cell={} does not exist", cell_index);
-  ue_scheduler& ue_sched = *groups[cell_to_group_index[cell_index]];
+  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(cell_index);
+  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", cell_index);
+  ue_scheduler& ue_sched = *groups[group_idx];
   ue_sched.handle_error_indication(sl_tx, cell_index, event);
 }
 

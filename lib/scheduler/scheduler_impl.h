@@ -71,7 +71,6 @@ private:
 
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;
-  slotted_id_table<du_cell_index_t, du_cell_group_index_t, MAX_NOF_DU_CELLS>                 cell_to_group_index;
 
   /// Mapping of UEs to DU Cell Groups.
   slotted_id_table<du_ue_index_t, du_cell_group_index_t, MAX_NOF_DU_UES> ue_to_cell_group_index;
