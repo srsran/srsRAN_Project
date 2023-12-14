@@ -31,8 +31,7 @@ protected:
       auto* cfg             = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
-    }()),
-    ues(mac_notif)
+    }())
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
   }

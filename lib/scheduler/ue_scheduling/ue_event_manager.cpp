@@ -90,21 +90,25 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
 
 void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
-  common_events.emplace(ue_index, [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      logger.warning("Received request to delete ue={} that does not exist", ue_index);
+  // Create UE configuration deletion event.
+  ue_config_delete_event ue_del_ev = cfg_handler.remove_ue(ue_index);
+
+  common_events.emplace(ue_index, [this, ev = std::move(ue_del_ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received request to delete ue={} that does not exist", ue_idx);
       return;
     }
-    rnti_t rnti = ue_db[ue_index].crnti;
+    const rnti_t rnti = ue_db[ue_idx].crnti;
 
     // Scheduler UE removal from repository.
-    ue_db.schedule_ue_rem(ue_index);
+    ue_db.schedule_ue_rem(ue_idx, [this, ev = std::move(ev)]() {
+      // Notify metrics that the UE has been deleted.
+      metrics_handler.handle_ue_deletion(ev.ue_index());
+    });
 
-    // Log event.
-    ev_logger.enqueue(sched_ue_delete_message{ue_index, rnti});
-
-    // Notify metrics.
-    metrics_handler.handle_ue_deletion(ue_index);
+    // Log UE removal event.
+    ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
   });
 }
 

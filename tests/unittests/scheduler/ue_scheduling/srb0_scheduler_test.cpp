@@ -85,7 +85,7 @@ struct test_bench {
   pdcch_resource_allocator_impl pdcch_sch{cell_cfg};
   pucch_allocator_impl          pucch_alloc{cell_cfg};
   uci_allocator_impl            uci_alloc{pucch_alloc};
-  ue_repository                 ue_db{dummy_notif};
+  ue_repository                 ue_db;
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
 
@@ -460,14 +460,14 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
 
 TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 {
-  const unsigned                k0                 = 0;
-  const sch_mcs_index           max_msg4_mcs_index = 8;
-  const tdd_ul_dl_config_common tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
-                                        .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
-                                                     .nof_dl_slots              = 2,
-                                                     .nof_dl_symbols            = 8,
-                                                     .nof_ul_slots              = 2,
-                                                     .nof_ul_symbols            = 0}};
+  const unsigned                           k0                 = 0;
+  const sch_mcs_index                      max_msg4_mcs_index = 8;
+  const tdd_ul_dl_config_common            tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
+                                                   .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
+                                                                .nof_dl_slots              = 2,
+                                                                .nof_dl_symbols            = 8,
+                                                                .nof_ul_slots              = 2,
+                                                                .nof_ul_symbols            = 0}};
   sched_cell_configuration_request_message cell_cfg = create_custom_cell_config_request(k0, tdd_cfg);
   // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
   cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(

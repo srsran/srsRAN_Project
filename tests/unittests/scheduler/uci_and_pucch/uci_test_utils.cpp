@@ -121,7 +121,6 @@ test_bench::test_bench(const test_bench_params& params) :
   }()},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
-  ues(mac_notif),
   pucch_f2_more_prbs{params.pucch_f2_more_prbs},
   pucch_alloc{cell_cfg},
   uci_alloc(pucch_alloc),

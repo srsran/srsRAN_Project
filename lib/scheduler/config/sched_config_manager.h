@@ -43,15 +43,16 @@ private:
 
 class ue_config_delete_event
 {
+public:
   ue_config_delete_event(du_ue_index_t ue_index_, sched_config_manager& parent_);
   ue_config_delete_event(ue_config_delete_event&& other) noexcept;
   ue_config_delete_event& operator=(ue_config_delete_event&& other) noexcept;
   ~ue_config_delete_event();
 
-  du_ue_index_t get_ue_index() const { return ue_index; }
+  du_ue_index_t ue_index() const { return ue_idx; }
 
 private:
-  du_ue_index_t         ue_index;
+  du_ue_index_t         ue_idx;
   sched_config_manager* parent;
 };
 
@@ -66,6 +67,8 @@ public:
   ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
 
   ue_config_update_event update_ue(const sched_ue_reconfiguration_message& cfg_req);
+
+  ue_config_delete_event remove_ue(du_ue_index_t ue_index);
 
   bool contains(du_cell_index_t cell_index) const { return added_cells.contains(cell_index); }
 

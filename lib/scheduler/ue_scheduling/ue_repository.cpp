@@ -12,8 +12,7 @@
 
 using namespace srsran;
 
-ue_repository::ue_repository(sched_configuration_notifier& mac_notif_) :
-  mac_notif(mac_notif_), logger(srslog::fetch_basic_logger("SCHED"))
+ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED"))
 {
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
@@ -54,7 +53,8 @@ static auto search_rnti(const std::vector<std::pair<rnti_t, du_ue_index_t>>& rnt
 
 void ue_repository::slot_indication(slot_point sl_tx)
 {
-  for (du_ue_index_t& ue_index : ues_to_rem) {
+  for (std::pair<du_ue_index_t, unique_task>& p : ues_to_rem) {
+    du_ue_index_t& ue_index = p.first;
     if (ue_index == INVALID_DU_UE_INDEX) {
       // Already removed.
       continue;
@@ -62,8 +62,6 @@ void ue_repository::slot_indication(slot_point sl_tx)
     if (not ues.contains(ue_index)) {
       logger.error("ue={}: Unexpected UE removal", ue_index);
       ue_index = INVALID_DU_UE_INDEX;
-      // Notify MAC of the successful UE removal.
-      mac_notif.on_ue_delete_response(ue_index);
       continue;
     }
     ue&    u     = *ues[ue_index];
@@ -73,6 +71,10 @@ void ue_repository::slot_indication(slot_point sl_tx)
     if (not is_ue_ready_for_removal(u)) {
       continue;
     }
+
+    // Call on_removal callback.
+    p.second();
+    p.second = {};
 
     // Remove UE from lookup.
     auto it = search_rnti(rnti_to_ue_index_lookup, crnti);
@@ -86,9 +88,6 @@ void ue_repository::slot_indication(slot_point sl_tx)
     // Remove UE from the repository.
     ues.erase(ue_index);
 
-    // Notify MAC of the successful UE removal.
-    mac_notif.on_ue_delete_response(ue_index);
-
     logger.debug("ue={} rnti={:#x}: UE has been successfully removed.", ue_index, crnti);
 
     // Mark UE as ready for removal.
@@ -96,7 +95,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
   }
 
   // In case the elements at the front of the ring has been marked for removal, pop them from the queue.
-  while (not ues_to_rem.empty() and ues_to_rem[0] == INVALID_DU_UE_INDEX) {
+  while (not ues_to_rem.empty() and ues_to_rem[0].first == INVALID_DU_UE_INDEX) {
     ues_to_rem.pop();
   }
 
@@ -118,14 +117,14 @@ void ue_repository::add_ue(std::unique_ptr<ue> u)
   std::sort(rnti_to_ue_index_lookup.begin(), rnti_to_ue_index_lookup.end());
 }
 
-void ue_repository::schedule_ue_rem(du_ue_index_t ue_index)
+void ue_repository::schedule_ue_rem(du_ue_index_t ue_index, unique_task on_removal)
 {
   if (contains(ue_index)) {
     // Start deactivation of UE bearers.
     ues[ue_index]->deactivate();
 
     // Register UE for later removal.
-    ues_to_rem.push(ue_index);
+    ues_to_rem.push(std::make_pair(ue_index, std::move(on_removal)));
   }
 }
 

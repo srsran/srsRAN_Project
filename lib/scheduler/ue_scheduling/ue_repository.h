@@ -12,6 +12,7 @@
 
 #include "ue.h"
 #include "srsran/adt/ring_buffer.h"
+#include "srsran/adt/unique_function.h"
 
 namespace srsran {
 
@@ -25,7 +26,7 @@ public:
   using iterator       = ue_list::iterator;
   using const_iterator = ue_list::const_iterator;
 
-  explicit ue_repository(sched_configuration_notifier& mac_notif_);
+  explicit ue_repository();
 
   /// \brief Mark start of new slot and update UEs states.
   void slot_indication(slot_point sl_tx);
@@ -44,7 +45,7 @@ public:
   void add_ue(std::unique_ptr<ue> u);
 
   /// \brief Initiate removal of existing UE from the repository.
-  void schedule_ue_rem(du_ue_index_t ue_index);
+  void schedule_ue_rem(du_ue_index_t ue_index, unique_task on_removal);
 
   ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
   const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
@@ -61,8 +62,7 @@ public:
   const_iterator lower_bound(du_ue_index_t ue_index) const { return ues.lower_bound(ue_index); }
 
 private:
-  sched_configuration_notifier& mac_notif;
-  srslog::basic_logger&         logger;
+  srslog::basic_logger& logger;
 
   // Repository of UEs.
   ue_list ues;
@@ -71,7 +71,7 @@ private:
   std::vector<std::pair<rnti_t, du_ue_index_t>> rnti_to_ue_index_lookup;
 
   // Queue of UEs marked for later removal.
-  ring_buffer<du_ue_index_t> ues_to_rem{MAX_NOF_DU_UES};
+  ring_buffer<std::pair<du_ue_index_t, unique_task>> ues_to_rem{MAX_NOF_DU_UES};
 };
 
 } // namespace srsran

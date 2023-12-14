@@ -174,7 +174,7 @@ protected:
   ue_resource_grid_view             ue_res_grid;
   dummy_pdsch_allocator             pdsch_alloc{res_grid};
   dummy_pusch_allocator             pusch_alloc{res_grid};
-  ue_repository                     ues{dummy_mac_notif};
+  ue_repository                     ues;
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
