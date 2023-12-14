@@ -268,6 +268,19 @@ public:
     unsigned                                                nof_layers;
   };
 
+  struct dl_ack_info_result {
+    /// \brief HARQ process ID.
+    harq_id_t h_id;
+    /// \brief mcs_table used for the last PDSCH transmission.
+    pdsch_mcs_table mcs_table;
+    /// \brief MCS used for the last PDSCH transmission.
+    sch_mcs_index mcs;
+    /// \brief Number of bytes of the last PDSCH transmission.
+    unsigned tbs_bytes;
+    /// \brief HARQ process status update.
+    dl_harq_process::status_update update;
+  };
+
   using base_type::transport_block;
 
   using base_type::empty;
@@ -424,9 +437,9 @@ public:
   void slot_indication(slot_point slot_tx_);
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
-  /// \return HARQ process whose state was updated and the update that occurred. Nullptr, if no HARQ for which the
+  /// \return struct containing the HARQ process ID, MCS, TBS and status update.
   /// ACK/NACK was directed was found.
-  std::pair<const dl_harq_process*, dl_harq_process::status_update>
+  dl_harq_process::dl_ack_info_result
   dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.

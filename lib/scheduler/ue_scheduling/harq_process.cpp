@@ -396,11 +396,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-std::pair<const dl_harq_process*, dl_harq_process::status_update>
-harq_entity::dl_ack_info(slot_point                 uci_slot,
-                         mac_harq_ack_report_status ack,
-                         uint8_t                    harq_bit_idx,
-                         optional<float>            pucch_snr)
+dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point                 uci_slot,
+                                                             mac_harq_ack_report_status ack,
+                                                             uint8_t                    harq_bit_idx,
+                                                             optional<float>            pucch_snr)
 {
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
@@ -410,11 +409,15 @@ harq_entity::dl_ack_info(slot_point                 uci_slot,
         h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
       // Update HARQ state.
       dl_harq_process::status_update status_upd = h_dl.ack_info(tb_index, ack, pucch_snr);
-      return std::make_pair(&h_dl, status_upd);
+      return {h_dl.id,
+              h_dl.last_alloc_params().tb[0]->mcs_table,
+              h_dl.last_alloc_params().tb[0]->mcs,
+              h_dl.last_alloc_params().tb[0]->tbs_bytes,
+              status_upd};
     }
   }
   logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
-  return std::make_pair(nullptr, dl_harq_process::status_update::error);
+  return {INVALID_HARQ_ID, pdsch_mcs_table::qam64, sch_mcs_index{0}, 0, dl_harq_process::status_update::error};
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)

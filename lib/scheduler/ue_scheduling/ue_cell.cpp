@@ -57,22 +57,18 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
   ue_cfg = &ue_cell_cfg;
 }
 
-std::pair<const dl_harq_process*, dl_harq_process::status_update>
-ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
-                            mac_harq_ack_report_status ack_value,
-                            unsigned                   harq_bit_idx,
-                            optional<float>            pucch_snr)
+dl_harq_process::dl_ack_info_result ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
+                                                                mac_harq_ack_report_status ack_value,
+                                                                unsigned                   harq_bit_idx,
+                                                                optional<float>            pucch_snr)
 {
-  std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
-      harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx, pucch_snr);
-  const dl_harq_process* h_dl = result.first;
+  dl_harq_process::dl_ack_info_result result = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx, pucch_snr);
 
-  if (result.second == dl_harq_process::status_update::acked or
-      result.second == dl_harq_process::status_update::nacked) {
+  if (result.update == dl_harq_process::status_update::acked or
+      result.update == dl_harq_process::status_update::nacked) {
     // HARQ is not expecting more ACK bits. Consider the feedback in the link adaptation controller.
-    ue_mcs_calculator.handle_dl_ack_info(result.second == dl_harq_process::status_update::acked,
-                                         h_dl->last_alloc_params().tb[0]->mcs,
-                                         h_dl->last_alloc_params().tb[0]->mcs_table);
+    ue_mcs_calculator.handle_dl_ack_info(
+        result.update == dl_harq_process::status_update::acked, result.mcs, result.mcs_table);
   }
 
   return result;
