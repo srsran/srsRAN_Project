@@ -62,11 +62,11 @@ public:
   void handle_phr(const cell_ph_report& phr) { latest_phr = phr; }
 
 private:
-  /// \brief Number of indexes -> nof_layers for precoding (Options: 1 layer, 2 layers, 4 layers).
-  static constexpr size_t NOF_LAYER_CHOICES = 3;
+  /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
+  static constexpr size_t NOF_LAYER_CHOICES = 4;
 
   /// Mapping of number of layers to array index.
-  static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers >> 1U; }
+  static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers - 1U; }
 
   /// \brief Number of DL ports.
   unsigned nof_dl_ports;
@@ -80,8 +80,7 @@ private:
   /// \brief Recommended nof layers based on reports.
   unsigned recommended_dl_layers = 1;
 
-  /// \brief List of Recommended PMIs for different number of active layers. Position 0 is for 1 layer, position 1 is
-  /// for 2 layers and position 3 for 4 layers.
+  /// \brief List of Recommended PMIs for different number of active layers. Position n is for layer n+1.
   static_vector<pdsch_precoding_info::prg_info, NOF_LAYER_CHOICES> recommended_prg_info;
 
   /// Latest CSI report received from the UE.
