@@ -23,6 +23,13 @@ byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
   return pdu;
 }
 
+size_t copy_pdu_and_log(span<uint8_t> out_pdu, const span<uint8_t> in_pdu)
+{
+  TESTASSERT(in_pdu.size() <= out_pdu.size());
+  std::copy(in_pdu.begin(), in_pdu.end(), out_pdu.begin());
+  return in_pdu.size();
+}
+
 // RLC AM PDU 12bit with complete SDU
 void test_rlc_am_12bit_complete_sdu()
 {
@@ -42,8 +49,9 @@ void test_rlc_am_12bit_complete_sdu()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -70,8 +78,9 @@ void test_rlc_am_12bit_first_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -99,8 +108,9 @@ void test_rlc_am_12bit_middle_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -127,8 +137,9 @@ void test_rlc_am_12bit_last_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -154,8 +165,9 @@ void test_rlc_am_18bit_complete_sdu()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -182,8 +194,9 @@ void test_rlc_am_18bit_first_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -210,8 +223,9 @@ void test_rlc_am_18bit_middle_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -238,8 +252,9 @@ void test_rlc_am_18bit_last_segment()
   }
   {
     // Pack
-    byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    std::array<uint8_t, header_len + payload_len> buf;
+    TESTASSERT(rlc_am_write_data_pdu_header(buf, hdr) == header_len);
+    TESTASSERT_EQ(copy_pdu_and_log(span<uint8_t>(buf).subspan(header_len, payload_len), tv_sdu), payload_len);
     TESTASSERT(buf == tv_pdu);
   }
 }
