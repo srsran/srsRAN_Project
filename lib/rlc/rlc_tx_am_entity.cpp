@@ -90,35 +90,11 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
   }
 }
 
-// API transition
-byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
-{
-  byte_buffer pdu;
-  if (linear_pdu_buffer.size() < grant_len) {
-    linear_pdu_buffer.resize(grant_len);
-  }
-  size_t pdu_len = pull_pdu(span<uint8_t>{linear_pdu_buffer.data(), grant_len});
-  pdu.append(span<uint8_t>{linear_pdu_buffer.data(), pdu_len});
-  return byte_buffer_chain{std::move(pdu)};
-}
-
 size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src)
 {
   auto* it = dst.begin();
   for (span<const uint8_t> seg : src.segments()) {
     it = std::copy(seg.begin(), seg.end(), it);
-  }
-  return src.length();
-}
-
-// API transition helper function
-size_t copy_pdu(span<uint8_t> dst, const byte_buffer_chain& src)
-{
-  auto* it = dst.begin();
-  for (const auto& slice : src.slices()) {
-    for (span<const uint8_t> seg : slice.segments()) {
-      it = std::copy(seg.begin(), seg.end(), it);
-    }
   }
   return src.length();
 }
