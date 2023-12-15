@@ -156,71 +156,35 @@ inline size_t rlc_um_nr_packed_length(const rlc_um_pdu_header& header)
   return len;
 }
 
-inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
-{
-  byte_buffer        hdr_buf;
-  byte_buffer_writer hdr_writer = hdr_buf;
-  // write SI field
-  if (not hdr_writer.append((to_number(header.si) & 0x03U) << 6U)) { // 2 bits SI
-    return false;
-  }
-
-  if (header.si == rlc_si_field::full_sdu) {
-    // that's all
-  } else {
-    if (header.sn_size == rlc_um_sn_size::size6bits) {
-      // write SN
-      hdr_writer.back() |= (header.sn & 0x3fU); // 6 bit SN
-    } else {
-      // 12bit SN
-      hdr_writer.back() |= (header.sn >> 8U) & 0xfU;  // high part of SN (4 bit)
-      if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit SN
-        return false;
-      }
-    }
-    if (header.so != 0) {
-      // write SO
-      if (not hdr_writer.append((header.so) >> 8U)) { // first part of SO
-        return false;
-      }
-      if (not hdr_writer.append(header.so & 0xffU)) { // second part of SO
-        return false;
-      }
-    }
-  }
-  pdu.prepend(std::move(hdr_buf));
-  return true;
-}
-
-inline span<uint8_t>::iterator rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, span<uint8_t> buf)
+inline size_t rlc_um_write_data_pdu_header(span<uint8_t> buf, const rlc_um_pdu_header& header)
 {
   span<uint8_t>::iterator buf_it = buf.begin();
 
   *buf_it = (to_number(header.si) & 0x03U) << 6U; // 2 bits SI
 
   if (header.si == rlc_si_field::full_sdu) {
-    return ++buf_it; // that's all
+    return 1; // that's all
   }
 
   if (header.sn_size == rlc_um_sn_size::size6bits) {
-    // write SN
-    *buf_it |= (header.sn & 0x3fU); // 6 bit SN
+    // 6-bit SN
+    *buf_it |= (header.sn & 0x3fU); // write SN (6 bit)
     buf_it++;
   } else {
-    // 12bit SN
-    *buf_it |= (header.sn >> 8U) & 0xfU; // high part of SN (4 bit)
+    // 12-bit SN
+    *buf_it |= (header.sn >> 8U) & 0xfU; // upper 4 bits of SN
     buf_it++;
-    *buf_it = header.sn & 0xffU; // high part of SN (4 bit)
+    *buf_it = header.sn & 0xffU; // lower part 8 bits of SN
     buf_it++;
   }
   if (header.so != 0) {
     // write SO
-    *buf_it = header.so >> 8U; // first part of SO
+    *buf_it = header.so >> 8U; // upper part of SO
     buf_it++;
-    *buf_it = header.so & 0xffU;
+    *buf_it = header.so & 0xffU; // lower part of SO
     buf_it++;
   }
-  return buf_it;
+  return std::distance(buf.begin(), buf_it);
 }
 
 } // namespace srsran

@@ -108,40 +108,41 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   header.so                = next_so;
 
   // Get SI and expected header size
-  uint32_t head_len = 0;
-  if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), grant_len, header.si, head_len)) {
-    logger.log_debug("Cannot fit any payload into grant_len={}. head_len={} si={}", grant_len, head_len, header.si);
+  uint32_t expected_hdr_len = 0;
+  if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), grant_len, header.si, expected_hdr_len)) {
+    logger.log_debug(
+        "Cannot fit any payload into grant_len={}. expected_hdr_len={} si={}", grant_len, expected_hdr_len, header.si);
     return 0;
   }
 
   // Pack header
-  span<uint8_t>::iterator hdr_offset = rlc_um_write_data_pdu_header(header, mac_sdu_buf);
-  srsran_sanity_check(head_len == std::distance(mac_sdu_buf.begin(), hdr_offset),
-                      "Header length and expected header length do not match ({} != {})",
-                      std::distance(hdr_offset, mac_sdu_buf.begin()),
-                      head_len);
+  size_t header_len = rlc_um_write_data_pdu_header(mac_sdu_buf, header);
+  srsran_sanity_check(header_len = expected_hdr_len,
+                      "Failed to write header. header_len={} expected_hdr_len={}",
+                      header_len,
+                      expected_hdr_len);
 
   // Calculate the amount of data to move
-  uint32_t space       = grant_len - head_len;
+  uint32_t space       = grant_len - header_len;
   uint32_t payload_len = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
 
   // Log PDU info
-  logger.log_debug("Creating PDU. si={} payload_len={} head_len={} sdu_len={} grant_len={}",
+  logger.log_debug("Creating PDU. si={} payload_len={} header_len={} sdu_len={} grant_len={}",
                    header.si,
                    payload_len,
-                   head_len,
+                   header_len,
                    sdu.buf.length(),
                    grant_len);
 
   // Assemble PDU
   size_t nwritten = copy_segments(byte_buffer_view{sdu.buf, next_so, payload_len},
-                                  mac_sdu_buf.subspan(head_len, mac_sdu_buf.size() - head_len));
+                                  mac_sdu_buf.subspan(header_len, mac_sdu_buf.size() - header_len));
   if (nwritten == 0 || nwritten != payload_len) {
     logger.log_error("Could not write PDU payload. {} payload_len={} grant_len={}", header, payload_len, grant_len);
     return 0;
   }
 
-  size_t pdu_size = head_len + nwritten;
+  size_t pdu_size = header_len + nwritten;
   logger.log_info(mac_sdu_buf.data(), pdu_size, "TX PDU. {} pdu_size={} grant_len={}", header, pdu_size, grant_len);
 
   // Release SDU if needed
