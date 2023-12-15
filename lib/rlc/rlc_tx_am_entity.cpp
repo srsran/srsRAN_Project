@@ -57,8 +57,6 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
                               [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
 
-  linear_pdu_buffer.reserve(9100);
-
   logger.log_info("RLC AM configured. {}", cfg);
 }
 
