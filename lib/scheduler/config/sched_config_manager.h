@@ -17,7 +17,9 @@
 namespace srsran {
 
 class sched_config_manager;
+class sched_metrics_ue_configurator;
 
+/// Event to create/reconfigure a UE in the scheduler.
 class ue_config_update_event
 {
 public:
@@ -46,6 +48,7 @@ private:
   optional<bool>                                                set_fallback_mode;
 };
 
+/// Event to delete a UE in the scheduler.
 class ue_config_delete_event
 {
 public:
@@ -56,6 +59,8 @@ public:
   ~ue_config_delete_event();
 
   bool valid() const { return parent != nullptr; }
+
+  void reset();
 
   du_ue_index_t ue_index() const { return ue_idx; }
 
@@ -80,11 +85,16 @@ public:
   virtual void handle_ue_deletion(ue_config_delete_event ev) = 0;
 };
 
-/// Note: We have the guarantee that each UE is not configured concurrently.
+/// Class that handles the creation/reconfiguration/deletion of cell and UE configurations in the scheduler.
+///
+/// In particular, this class is responsible for:
+/// - notifying back to the MAC when the configurations are complete,
+/// - adding/removing UE entries in the scheduler reported metrics,
+/// - validating the configuration requests provided by the MAC.
 class sched_config_manager
 {
 public:
-  sched_config_manager(const scheduler_config& sched_cfg_);
+  sched_config_manager(const scheduler_config& sched_cfg_, sched_metrics_ue_configurator& metrics_handler_);
 
   const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
@@ -117,9 +127,10 @@ private:
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 
-  const scheduler_expert_config expert_params;
-  sched_configuration_notifier& config_notifier;
-  srslog::basic_logger&         logger;
+  const scheduler_expert_config  expert_params;
+  sched_configuration_notifier&  config_notifier;
+  sched_metrics_ue_configurator& metrics_handler;
+  srslog::basic_logger&          logger;
 
   // List of common configs for the scheduler cells.
   cell_common_configuration_list added_cells;

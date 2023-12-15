@@ -71,14 +71,15 @@ struct test_bench {
   // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
   static constexpr unsigned max_test_run_slots_per_ue = 40;
 
-  const scheduler_expert_config        sched_cfg;
-  const scheduler_ue_expert_config&    expert_cfg{sched_cfg.ue};
-  sched_cfg_dummy_notifier             dummy_notif;
-  scheduler_ue_metrics_dummy_notifier  metrics_notif;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  cell_config_builder_params           builder_params;
+  const scheduler_expert_config           sched_cfg;
+  const scheduler_ue_expert_config&       expert_cfg{sched_cfg.ue};
+  sched_cfg_dummy_notifier                dummy_notif;
+  scheduler_ue_metrics_dummy_notifier     metrics_notif;
+  scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
+  scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
+  cell_config_builder_params              builder_params;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}, metrics_ue_handler};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};

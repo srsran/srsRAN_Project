@@ -9,6 +9,7 @@
  */
 
 #include "sched_config_manager.h"
+#include "../logging/scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 
@@ -42,14 +43,22 @@ ue_config_delete_event::ue_config_delete_event(du_ue_index_t ue_index_, sched_co
 
 ue_config_delete_event::~ue_config_delete_event()
 {
+  reset();
+}
+
+void ue_config_delete_event::reset()
+{
   if (parent != nullptr) {
     parent->handle_ue_delete_complete(ue_idx);
+    parent = nullptr;
   }
 }
 
-sched_config_manager::sched_config_manager(const scheduler_config& sched_cfg) :
+sched_config_manager::sched_config_manager(const scheduler_config&        sched_cfg,
+                                           sched_metrics_ue_configurator& metrics_handler_) :
   expert_params(sched_cfg.expert_params),
   config_notifier(sched_cfg.config_notifier),
+  metrics_handler(metrics_handler_),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   std::fill(ue_to_cell_group_index.begin(), ue_to_cell_group_index.end(), INVALID_DU_CELL_GROUP_INDEX);
@@ -180,7 +189,12 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
 void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg)
 {
   if (next_cfg != nullptr) {
-    // Config succeeded.
+    // Creation/Reconfig succeeded.
+
+    if (ue_cfg_list[ue_index] == nullptr) {
+      // UE creation case.
+      metrics_handler.handle_ue_creation(ue_index, next_cfg->crnti, next_cfg->pcell_common_cfg().pci);
+    }
 
     // Stores new UE config and deletes old config.
     ue_cfg_list[ue_index] = std::move(next_cfg);
@@ -189,6 +203,11 @@ void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std
     config_notifier.on_ue_config_complete(ue_index, true);
 
   } else {
+    if (ue_cfg_list[ue_index] == nullptr) {
+      // In case of failed UE creation, mark the UE as released.
+      ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);
+    }
+
     // Notifies MAC that event has failed.
     config_notifier.on_ue_config_complete(ue_index, false);
   }
@@ -198,6 +217,9 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
 {
   // Deletes UE config.
   ue_cfg_list[ue_index].reset();
+
+  // Remove UE from metrics.
+  metrics_handler.handle_ue_deletion(ue_index);
 
   // Mark the UE as released.
   ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);

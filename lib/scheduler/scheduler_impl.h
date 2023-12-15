@@ -60,11 +60,11 @@ private:
   srslog::basic_logger&  logger;
   scheduler_event_logger sched_ev_logger;
 
-  // Manager of configurations forwarded to the scheduler.
-  sched_config_manager cfg_mng;
-
   // Slot metrics sink.
   scheduler_metrics_handler metrics;
+
+  // Manager of configurations forwarded to the scheduler.
+  sched_config_manager cfg_mng;
 
   /// Container of DU Cell-specific resources.
   slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;

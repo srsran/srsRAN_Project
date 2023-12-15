@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../config/sched_config_manager.h"
 #include "ue.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/adt/unique_function.h"
@@ -45,7 +46,7 @@ public:
   void add_ue(std::unique_ptr<ue> u);
 
   /// \brief Initiate removal of existing UE from the repository.
-  void schedule_ue_rem(du_ue_index_t ue_index, unique_task on_removal);
+  void schedule_ue_rem(ue_config_delete_event ev);
 
   ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
   const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
@@ -71,7 +72,7 @@ private:
   std::vector<std::pair<rnti_t, du_ue_index_t>> rnti_to_ue_index_lookup;
 
   // Queue of UEs marked for later removal.
-  ring_buffer<std::pair<du_ue_index_t, unique_task>> ues_to_rem{MAX_NOF_DU_UES};
+  ring_buffer<ue_config_delete_event> ues_to_rem{MAX_NOF_DU_UES};
 };
 
 } // namespace srsran

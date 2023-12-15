@@ -43,14 +43,9 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
     rnti_t          rnti        = u->crnti;
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
     ue_db.add_ue(std::move(u));
-    auto& inserted_ue = ue_db[ueidx];
 
     // Log Event.
     ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
-
-    // Notify metrics handler.
-    metrics_handler.handle_ue_creation(
-        inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
   });
 }
 
@@ -85,10 +80,7 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     const rnti_t rnti = ue_db[ue_idx].crnti;
 
     // Scheduler UE removal from repository.
-    ue_db.schedule_ue_rem(ue_idx, [this, ev = std::move(ev)]() {
-      // Notify metrics that the UE has been deleted.
-      metrics_handler.handle_ue_deletion(ev.ue_index());
-    });
+    ue_db.schedule_ue_rem(std::move(ev));
 
     // Log UE removal event.
     ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});

@@ -72,13 +72,14 @@ protected:
         &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config&    expert_cfg{sched_cfg.ue};
-  sched_cfg_dummy_notifier             mac_notif;
-  scheduler_ue_metrics_dummy_notifier  metrics_notif;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
+  const scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config&       expert_cfg{sched_cfg.ue};
+  sched_cfg_dummy_notifier                mac_notif;
+  scheduler_ue_metrics_dummy_notifier     metrics_notif;
+  scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
+  scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics_ue_handler};
   const cell_configuration& cell_cfg;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;

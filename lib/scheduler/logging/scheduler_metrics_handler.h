@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../ue_scheduling/harq_process.h"
+#include "scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -20,7 +21,7 @@
 namespace srsran {
 
 ///\brief Handler of scheduler slot metrics.
-class scheduler_metrics_handler : public harq_timeout_handler
+class scheduler_metrics_handler final : public harq_timeout_handler, public sched_metrics_ue_configurator
 {
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
@@ -30,10 +31,10 @@ public:
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_ue_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
-  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci);
+  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) override;
 
   /// \brief Register removal of a UE.
-  void handle_ue_deletion(du_ue_index_t ue_index);
+  void handle_ue_deletion(du_ue_index_t ue_index) override;
 
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
