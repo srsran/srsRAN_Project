@@ -35,7 +35,6 @@ class ue_scheduler_impl final : public ue_scheduler
 public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
                              sched_configuration_notifier&     mac_notif,
-                             sched_config_manager&             cfg_handler,
                              scheduler_metrics_handler&        metric_handler,
                              scheduler_event_logger&           sched_ev_logger);
 
@@ -48,7 +47,7 @@ public:
                                du_cell_index_t                       cell_index,
                                scheduler_slot_handler::error_outcome event) override;
 
-  scheduler_ue_configurator& get_ue_configurator() override { return event_mng; }
+  sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
 
   scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
 

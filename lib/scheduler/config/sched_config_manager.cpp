@@ -16,28 +16,16 @@ using namespace srsran;
 
 ue_config_update_event::ue_config_update_event(du_ue_index_t                     ue_index_,
                                                sched_config_manager&             parent_,
-                                               std::unique_ptr<ue_configuration> next_cfg) :
-  ue_index(ue_index_), parent(&parent_), next_ded_cfg(std::move(next_cfg))
+                                               std::unique_ptr<ue_configuration> next_cfg,
+                                               const optional<bool>&             set_fallback) :
+  ue_index(ue_index_), parent(&parent_), next_ded_cfg(std::move(next_cfg)), set_fallback_mode(set_fallback)
 {
-}
-
-ue_config_update_event::ue_config_update_event(ue_config_update_event&& other) noexcept :
-  ue_index(other.ue_index), parent(std::exchange(other.parent, nullptr)), next_ded_cfg(std::move(other.next_ded_cfg))
-{
-}
-
-ue_config_update_event& ue_config_update_event::operator=(ue_config_update_event&& other) noexcept
-{
-  ue_index     = other.ue_index;
-  parent       = std::exchange(other.parent, nullptr);
-  next_ded_cfg = std::move(other.next_ded_cfg);
-  return *this;
 }
 
 ue_config_update_event::~ue_config_update_event()
 {
   if (parent != nullptr) {
-    // Event failed.
+    // Event completed with success or failure.
     parent->handle_ue_config_complete(ue_index, std::move(next_ded_cfg));
   }
 }
@@ -50,18 +38,6 @@ void ue_config_update_event::abort()
 ue_config_delete_event::ue_config_delete_event(du_ue_index_t ue_index_, sched_config_manager& parent_) :
   ue_idx(ue_index_), parent(&parent_)
 {
-}
-
-ue_config_delete_event::ue_config_delete_event(ue_config_delete_event&& other) noexcept :
-  ue_idx(other.ue_idx), parent(std::exchange(other.parent, nullptr))
-{
-}
-
-ue_config_delete_event& ue_config_delete_event::operator=(ue_config_delete_event&& other) noexcept
-{
-  ue_idx = other.ue_idx;
-  parent = std::exchange(other.parent, nullptr);
-  return *this;
 }
 
 ue_config_delete_event::~ue_config_delete_event()
@@ -146,9 +122,9 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   srsran_assert(ue_cfg_list[cfg_req.ue_index] == nullptr, "Invalid ue_index={}", cfg_req.ue_index);
 
   // Create UE configuration.
-  auto next_ded_cfg = std::make_unique<ue_configuration>(cfg_req.crnti, added_cells, cfg_req.cfg);
+  auto next_ded_cfg = std::make_unique<ue_configuration>(cfg_req.ue_index, cfg_req.crnti, added_cells, cfg_req.cfg);
 
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg)};
+  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), cfg_req.starts_in_fallback};
 }
 
 ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfiguration_message& cfg_req)

@@ -109,8 +109,8 @@ struct test_bench {
     }
 
     // Add UE to UE DB.
-    auto u = std::make_unique<ue>(ue_creation_command{
-        create_req.ue_index, ev.next_config(), create_req.starts_in_fallback, harq_timeout_handler});
+    auto u = std::make_unique<ue>(
+        ue_creation_command{ev.next_config(), create_req.starts_in_fallback, harq_timeout_handler});
     if (ue_db.contains(create_req.ue_index)) {
       // UE already exists.
       ev.abort();

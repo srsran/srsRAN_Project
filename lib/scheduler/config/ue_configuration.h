@@ -180,13 +180,15 @@ private:
 class ue_configuration
 {
 public:
-  ue_configuration(rnti_t crnti_);
-  ue_configuration(rnti_t                                crnti_,
+  ue_configuration(du_ue_index_t ue_index, rnti_t crnti_);
+  ue_configuration(du_ue_index_t                         ue_index,
+                   rnti_t                                crnti_,
                    const cell_common_configuration_list& common_cells,
                    const sched_ue_config_request&        cfg_req);
   ue_configuration(const ue_configuration& other);
 
-  const rnti_t crnti;
+  const du_ue_index_t ue_index;
+  const rnti_t        crnti;
 
   /// Retrieve parameters set at the application level for the UEs instantiated in the gNB.
   const scheduler_ue_expert_config& expert_cfg() const { return pcell_common_cfg().expert_cfg.ue; }

@@ -21,7 +21,6 @@ namespace srsran {
 
 /// Parameters used to create a UE.
 struct ue_creation_command {
-  du_ue_index_t           ue_index;
   const ue_configuration& cfg;
   bool                    starts_in_fallback;
   harq_timeout_handler&   harq_timeout_notifier;

@@ -114,9 +114,10 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ue_ded_cell_cfg_list.push_back(std::make_unique<ue_configuration>(ue_req.crnti, cell_cfg_list, ue_req.cfg));
-    ues.add_ue(std::make_unique<ue>(ue_creation_command{
-        ue_req.ue_index, *ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
+    ue_ded_cell_cfg_list.push_back(
+        std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+    ues.add_ue(std::make_unique<ue>(
+        ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
     return ues[ue_req.ue_index];
   }
 

@@ -736,17 +736,18 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
   }
 }
 
-ue_configuration::ue_configuration(rnti_t crnti_) : crnti(crnti_) {}
+ue_configuration::ue_configuration(du_ue_index_t ue_index_, rnti_t crnti_) : ue_index(ue_index_), crnti(crnti_) {}
 
-ue_configuration::ue_configuration(rnti_t                                crnti_,
+ue_configuration::ue_configuration(du_ue_index_t                         ue_index_,
+                                   rnti_t                                crnti_,
                                    const cell_common_configuration_list& common_cells,
                                    const sched_ue_config_request&        cfg_req) :
-  crnti(crnti_)
+  ue_index(ue_index_), crnti(crnti_)
 {
   update(common_cells, cfg_req);
 }
 
-ue_configuration::ue_configuration(const ue_configuration& other) : crnti(other.crnti)
+ue_configuration::ue_configuration(const ue_configuration& other) : ue_index(other.ue_index), crnti(other.crnti)
 {
   // Update UE logical channels.
   lc_list = other.lc_list;

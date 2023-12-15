@@ -15,7 +15,7 @@
 using namespace srsran;
 
 ue::ue(const ue_creation_command& cmd) :
-  ue_index(cmd.ue_index),
+  ue_index(cmd.cfg.ue_index),
   crnti(cmd.cfg.crnti),
   expert_cfg(cmd.cfg.expert_cfg()),
   cell_cfg_common(cmd.cfg.pcell_cfg().cell_cfg_common),

@@ -12,13 +12,13 @@
 
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
-#include "ue.h" // TEMP
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 
 class pdcch_resource_allocator;
 struct cell_resource_allocator;
+class sched_ue_configuration_handler;
 
 struct ue_scheduler_cell_params {
   du_cell_index_t           cell_index;
@@ -46,7 +46,7 @@ public:
                                        scheduler_slot_handler::error_outcome event) = 0;
 
   /// Return UE configurator.
-  virtual scheduler_ue_configurator& get_ue_configurator() = 0;
+  virtual sched_ue_configuration_handler& get_ue_configurator() = 0;
 
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 

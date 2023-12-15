@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ue_configuration.h"
+#include "srsran/adt/detail/operations.h"
 #include "srsran/scheduler/config/scheduler_config.h"
 
 namespace srsran {
@@ -23,22 +24,26 @@ public:
   ue_config_update_event() = default;
   ue_config_update_event(du_ue_index_t                     ue_index_,
                          sched_config_manager&             parent_,
-                         std::unique_ptr<ue_configuration> next_cfg = nullptr);
-  ue_config_update_event(ue_config_update_event&&) noexcept;
-  ue_config_update_event& operator=(ue_config_update_event&&) noexcept;
+                         std::unique_ptr<ue_configuration> next_cfg     = nullptr,
+                         const optional<bool>&             set_fallback = {});
+  ue_config_update_event(ue_config_update_event&&) noexcept            = default;
+  ue_config_update_event& operator=(ue_config_update_event&&) noexcept = default;
   ~ue_config_update_event();
 
   bool valid() const { return next_ded_cfg != nullptr; }
 
   du_ue_index_t           get_ue_index() const { return ue_index; }
   const ue_configuration& next_config() const { return *next_ded_cfg; }
+  optional<bool>          get_fallback_command() const { return set_fallback_mode; }
 
   void abort();
 
 private:
-  du_ue_index_t                     ue_index = INVALID_DU_UE_INDEX;
-  sched_config_manager*             parent   = nullptr;
-  std::unique_ptr<ue_configuration> next_ded_cfg;
+  du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
+  // We use a unique_ptr with no deleter to automatically set the ptr to null on move.
+  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
+  std::unique_ptr<ue_configuration>                             next_ded_cfg;
+  optional<bool>                                                set_fallback_mode;
 };
 
 class ue_config_delete_event
@@ -46,8 +51,8 @@ class ue_config_delete_event
 public:
   ue_config_delete_event() = default;
   ue_config_delete_event(du_ue_index_t ue_index_, sched_config_manager& parent_);
-  ue_config_delete_event(ue_config_delete_event&& other) noexcept;
-  ue_config_delete_event& operator=(ue_config_delete_event&& other) noexcept;
+  ue_config_delete_event(ue_config_delete_event&&) noexcept            = default;
+  ue_config_delete_event& operator=(ue_config_delete_event&&) noexcept = default;
   ~ue_config_delete_event();
 
   bool valid() const { return parent != nullptr; }
@@ -55,8 +60,24 @@ public:
   du_ue_index_t ue_index() const { return ue_idx; }
 
 private:
-  du_ue_index_t         ue_idx = INVALID_DU_UE_INDEX;
-  sched_config_manager* parent = nullptr;
+  du_ue_index_t                                                 ue_idx = INVALID_DU_UE_INDEX;
+  std::unique_ptr<sched_config_manager, detail::noop_operation> parent;
+};
+
+/// \brief Internal scheduler interface to create/update/delete UEs.
+class sched_ue_configuration_handler
+{
+public:
+  virtual ~sched_ue_configuration_handler() = default;
+
+  /// \brief Create a new UE instance.
+  virtual void handle_ue_creation(ue_config_update_event ev) = 0;
+
+  /// \brief Reconfigure an existing UE instance.
+  virtual void handle_ue_reconfiguration(ue_config_update_event ev) = 0;
+
+  /// \brief Reconfigure an existing UE instance.
+  virtual void handle_ue_deletion(ue_config_delete_event ev) = 0;
 };
 
 /// Note: We have the guarantee that each UE is not configured concurrently.

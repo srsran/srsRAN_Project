@@ -34,9 +34,8 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
-    groups.emplace(
-        msg.cell_group_index,
-        std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, cfg_mng, metrics, sched_ev_logger));
+    groups.emplace(msg.cell_group_index,
+                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
   }
 
   // Create a new cell scheduler instance.
@@ -49,34 +48,45 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  // Ensure PCell exists.
-  if (not ue_request.cfg.cells.has_value() or ue_request.cfg.cells->empty()) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided",
-                   ue_request.ue_index,
-                   ue_request.crnti);
-    config_notifier.on_ue_config_complete(ue_request.ue_index, false);
+  // Validate the UE creation request and create a configuration of the UE that is internal to the scheduler.
+  ue_config_update_event ue_cfg_ev = cfg_mng.add_ue(ue_request);
+  if (not ue_cfg_ev.valid()) {
+    // No need to enqueue an event if the UE does not exist.
     return;
   }
 
-  // Dispatch UE creation to UE scheduler associated to the PCell.
-  const du_cell_index_t pcell_index = (*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index;
-  cells[pcell_index]->ue_sched.get_ue_configurator().handle_ue_creation_request(ue_request);
+  // Dispatch UE creation to UE scheduler associated to the cell group.
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_request.ue_index);
+  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_request.ue_index);
+  groups[grp_idx]->get_ue_configurator().handle_ue_creation(std::move(ue_cfg_ev));
 }
 
 void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
+  // Validate request and create new UE dedicated configuration
+  ue_config_update_event ue_cfg_ev = cfg_mng.update_ue(ue_request);
+  if (not ue_cfg_ev.valid()) {
+    // Abort if the UE does not exist or configuration is not valid.
+    return;
+  }
+
+  // Dispatch UE reconfiguration to UE scheduler associated to the cell group.
   du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_request.ue_index);
   srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_request.ue_index);
-
-  groups[grp_idx]->get_ue_configurator().handle_ue_reconfiguration_request(ue_request);
+  groups[grp_idx]->get_ue_configurator().handle_ue_reconfiguration(std::move(ue_cfg_ev));
 }
 
 void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
 {
+  // Validate request and create UE configuration deletion event.
+  ue_config_delete_event ue_del_ev = cfg_mng.remove_ue(ue_index);
+  if (not ue_del_ev.valid()) {
+    return;
+  }
+
   du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_index);
   srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_index);
-
-  groups[grp_idx]->get_ue_configurator().handle_ue_removal_request(ue_index);
+  groups[grp_idx]->get_ue_configurator().handle_ue_deletion(std::move(ue_del_ev));
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
