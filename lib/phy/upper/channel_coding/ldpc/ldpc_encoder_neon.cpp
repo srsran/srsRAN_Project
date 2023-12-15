@@ -182,6 +182,7 @@ void ldpc_encoder_neon::systematic_bits_inner()
   unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
 
   std::array<bool, BG_M_PH> m_mask;
+  m_mask.fill(false);
 
   for (const auto& element : parity_check_sparse) {
     unsigned m          = std::get<0>(element);

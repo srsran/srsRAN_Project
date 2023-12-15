@@ -184,7 +184,7 @@ void ldpc_encoder_avx2::systematic_bits_inner()
   unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
 
   std::array<bool, BG_M_PH> m_mask;
-  std::fill(m_mask.begin(), m_mask.end(), false);
+  m_mask.fill(false);
 
   for (const auto& element : parity_check_sparse) {
     unsigned m          = std::get<0>(element);

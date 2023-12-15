@@ -119,13 +119,13 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> time_end = std::chrono::steady_clock::now();
 
     // Calculate the UCI report latency if available.
-    std::chrono::nanoseconds time_uci_ns;
+    std::chrono::nanoseconds time_uci_ns(0);
     if (time_uci != std::chrono::time_point<std::chrono::steady_clock>()) {
       time_uci_ns = time_uci - time_start;
     }
 
     // Calculate the return latency if available.
-    std::chrono::nanoseconds time_return_ns = {};
+    std::chrono::nanoseconds time_return_ns(0);
     if (time_return != std::chrono::time_point<std::chrono::steady_clock>()) {
       time_return_ns = time_return - time_start;
     }
