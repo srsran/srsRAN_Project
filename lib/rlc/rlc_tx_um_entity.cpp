@@ -165,7 +165,7 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  // pcap.push_pdu(pcap_context, pdu_buf);
+  pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_size));
 
   return pdu_size;
 }
