@@ -1009,7 +1009,7 @@ struct ru_ofh_appconfig {
 };
 
 struct buffer_pool_appconfig {
-  std::size_t nof_segments = 524288;
+  std::size_t nof_segments = 1048576;
   std::size_t segment_size = 1024;
 };
 
