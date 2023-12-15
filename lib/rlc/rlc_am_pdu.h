@@ -155,7 +155,7 @@ public:
   uint32_t                               get_packed_size() const { return packed_size; }
   bool                                   trim(uint32_t max_packed_size);
 
-  /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly.
+  /// \brief Write the RLC AM status PDU to a PDU buffer and meets the length of the generate PDU accordingly.
   /// \param[out] buf Buffer where to encode the status PDU. The encoded PDU size cannot exceed the size of the buffer.
   /// \return Number of bytes taken by the written status PDU.
   size_t pack(span<uint8_t> buf) const;
