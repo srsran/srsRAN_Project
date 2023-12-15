@@ -294,7 +294,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Determine the space in the MAC PDU where the MAC SDU payload is going to be encoded.
     unsigned                    max_mac_sdu_len = get_mac_sdu_payload_size(rem_bytes);
     dl_sch_pdu::mac_sdu_encoder sdu_enc         = ue_pdu.get_sdu_encoder(lcid, max_mac_sdu_len);
-    if (!sdu_enc.valid()) {
+    if (not sdu_enc.valid()) {
       logger.info("ue={} rnti={:#x} lcid={}: Insufficient MAC SDU buffer length of size={}. rem_bytes={}",
                   ue_mng.get_ue_index(rnti),
                   rnti,

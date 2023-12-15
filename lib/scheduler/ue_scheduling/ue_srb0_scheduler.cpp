@@ -127,7 +127,10 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   // Search for empty HARQ.
   dl_harq_process* h_dl = ue_pcell.harqs.find_empty_dl_harq();
-  srsran_assert(h_dl != nullptr, "UE must have empty HARQs during SRB0 PDU allocation");
+  if (h_dl == nullptr) {
+    logger.warning("rnti={:#x}: UE must have empty HARQs during SRB0 PDU allocation", u.crnti);
+    return false;
+  }
 
   // Find available symbol x RB resources.
   const unsigned pending_bytes = u.pending_dl_srb0_newtx_bytes();
