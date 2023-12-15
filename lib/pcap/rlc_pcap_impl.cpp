@@ -51,11 +51,41 @@ void rlc_pcap_impl::close()
 
 void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu)
 {
-  byte_buffer buf{pdu};
-  push_pdu(context, byte_buffer_chain{std::move(buf)});
+  if (!is_write_enabled() || pdu.empty()) {
+    return;
+  }
+
+  // Filter DRBs if disabled
+  if (!drb_enabled && context.bearer_type == PCAP_RLC_BEARER_TYPE_DRB) {
+    return;
+  }
+
+  // Filter SRBs if disabled
+  if (!srb_enabled &&
+      (context.bearer_type == PCAP_RLC_BEARER_TYPE_SRB || context.bearer_type == PCAP_RLC_BEARER_TYPE_CCCH)) {
+    return;
+  }
+
+  // Encode RLC header.
+  uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
+  int     offset = nr_pcap_pack_rlc_context_to_buffer(context, &context_header[0], PCAP_CONTEXT_HEADER_MAX);
+  if (offset < 0) {
+    logger.warning("Discarding RLC PCAP PDU. Cause: Failed to generate header.");
+    return;
+  }
+
+  // Copy byte buffer.
+  byte_buffer buf;
+  if (not buf.append(pdu)) {
+    logger.warning("Discarding RLC PCAP PDU. Cause: Failed to allocate memory for PCAP PDU.");
+    return;
+  }
+
+  writer.write_pdu(pcap_pdu_data{
+      0xbeef, 0xdead, PCAP_RLC_NR_START_STRING, span<const uint8_t>(context_header, offset), std::move(buf)});
 }
 
-void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu)
+void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
     return;
@@ -72,8 +102,6 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
     return;
   }
 
-  byte_buffer buf;
-
   // Encode RLC header.
   uint8_t context_header[PCAP_CONTEXT_HEADER_MAX] = {};
   int     offset = nr_pcap_pack_rlc_context_to_buffer(context, &context_header[0], PCAP_CONTEXT_HEADER_MAX);
@@ -83,20 +111,14 @@ void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
   }
 
   // Copy byte buffer.
-  for (const auto& slice : pdu.slices()) { // TODO: optimize copy.
-    if (not buf.append(slice)) {
-      logger.warning("Discarding RLC PCAP PDU. Cause: Failed to allocate memory for PCAP PDU.");
-      return;
-    }
+  byte_buffer buf;
+  if (not buf.append(pdu)) {
+    logger.warning("Discarding RLC PCAP PDU. Cause: Failed to allocate memory for PCAP PDU.");
+    return;
   }
 
   writer.write_pdu(pcap_pdu_data{
       0xbeef, 0xdead, PCAP_RLC_NR_START_STRING, span<const uint8_t>(context_header, offset), std::move(buf)});
-}
-
-void rlc_pcap_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu)
-{
-  push_pdu(context, byte_buffer_chain{pdu.copy()});
 }
 
 /// Helper function to serialize RLC NR context

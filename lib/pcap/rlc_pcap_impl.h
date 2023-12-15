@@ -11,10 +11,8 @@
 #pragma once
 
 #include "backend_pcap_writer.h"
-#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/rlc_pcap.h"
-#include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
 
@@ -32,12 +30,9 @@ public:
   bool is_write_enabled() const override { return writer.is_write_enabled(); }
 
   void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu) override;
-  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
 private:
-  byte_buffer pack_context(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) const;
-
   bool srb_enabled = true;
   bool drb_enabled = true;
 
