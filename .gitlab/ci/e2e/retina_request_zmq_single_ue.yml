@@ -17,7 +17,7 @@
       requests: "8G"
     ephemeral-storage:
       requests: "3G"
-      limit: "3G"
+      limits: "3G"
   resources:
     - type: zmq
     - type: license
@@ -36,10 +36,10 @@
       requests: 1
     memory:
       requests: "8G"
-      limit: "8G"
+      limits: "8G"
     ephemeral-storage:
       requests: "3G"
-      limit: "3G"
+      limits: "3G"
   resources:
     - type: zmq
   environment:
@@ -59,5 +59,5 @@
       requests: "4G"
     ephemeral-storage:
       requests: "3G"
-      limit: "3G"
+      limits: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
