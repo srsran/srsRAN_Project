@@ -130,6 +130,7 @@ public:
     for (unsigned i = 0; i != nof_bytes; ++i) {
       mac_sdu_buf[i] = test_rgen::uniform_int<uint8_t>();
     }
+    last_sdus.emplace_back(mac_sdu_buf.first(nof_bytes));
     return nof_bytes;
   }
 
@@ -222,20 +223,21 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   for (unsigned i = 0; i != nof_sdus; ++i) {
     // Generate SDU size.
     sdu_payload_sizes[i] = test_rgen::uniform_int<unsigned>(MIN_LC_SCHED_BYTES_SIZE, 1000);
-    sdu_req_sizes[i]     = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
+    // Slighlty oversize the TB size.
+    sdu_req_sizes[i] = MAX_MAC_SDU_SUBHEADER_SIZE + sdu_payload_sizes[i];
     if (i == nof_sdus - 1 and tb_size + sdu_req_sizes[i] == 258) {
       // avoid special case with impossible subheader + SDU size.
       sdu_payload_sizes[i]++;
-      sdu_req_sizes[i] = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
+      sdu_req_sizes[i] = MAX_MAC_SDU_SUBHEADER_SIZE + sdu_payload_sizes[i];
     }
     tb_size += sdu_req_sizes[i];
 
     // Add pending SDU in MAC Tx SDU dummy notifier.
     this->dl_bearers[1].next_rlc_pdu_sizes.push_back(sdu_payload_sizes[i]);
   }
-  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size);
 
   // MAC schedules one TB with one LCID, and size to fill with upper layer data.
+  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size);
   dl_msg_tb_info tb_info;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
@@ -251,11 +253,19 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   byte_buffer expected_result;
   bit_encoder enc(expected_result);
   for (unsigned i = 0; i != nof_sdus; ++i) {
-    enc.pack(0b0, 1);                                                                           // R
-    enc.pack(sdu_payload_sizes[i] >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
-    enc.pack(LCID_SRB1, 6);                                                                     // LCID
-    enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(sdu_payload_sizes[i]) - 1)); // L
-    enc.pack_bytes(dl_bearers[1].last_sdus[i]);                                                 // SDU payload.
+    enc.pack(0b0, 1); // R
+    unsigned mac_expected_sdu_size = get_mac_sdu_payload_size(tb_size - expected_result.length());
+    enc.pack(mac_expected_sdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
+    enc.pack(LCID_SRB1, 6);                                                                      // LCID
+    enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(mac_expected_sdu_size) - 1)); // L
+    enc.pack_bytes(dl_bearers[1].last_sdus[i]);                                                  // SDU payload.
+  }
+  if (expected_result.length() < tb_size) {
+    // Padding.
+    enc.pack(0b00, 2);                   // R | F
+    enc.pack(lcid_dl_sch_t::PADDING, 6); // LCID
+    std::vector<uint8_t> padding_bits(result.begin() + expected_result.length(), result.end());
+    enc.pack_bytes(padding_bits);
   }
   ASSERT_EQ(expected_result, result);
 }
