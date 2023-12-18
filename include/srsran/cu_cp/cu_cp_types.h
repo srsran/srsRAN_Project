@@ -470,7 +470,7 @@ struct cu_cp_ue_context_release_command {
 
 struct cu_cp_global_gnb_id {
   std::string plmn_id;
-  std::string gnb_id;
+  uint64_t    gnb_id;
 };
 
 struct cu_cp_amf_paging_target {

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
+#include "../config/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"

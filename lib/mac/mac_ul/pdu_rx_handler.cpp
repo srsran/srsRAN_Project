@@ -384,14 +384,14 @@ void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu
     return;
   }
 
-  srsran::mac_nr_context_info context;
-  context.radioType = PCAP_FDD_RADIO;
-  context.direction = PCAP_DIRECTION_UPLINK;
-  context.rntiType  = PCAP_C_RNTI;
-  context.rnti      = pdu.rnti;
-  context.ueid      = rnti_table[pdu.rnti] == du_ue_index_t::INVALID_DU_UE_INDEX ? du_ue_index_t::INVALID_DU_UE_INDEX
-                                                                                 : rnti_table[pdu.rnti] + 1;
-  context.harqid    = pdu.harq_id;
+  srsran::mac_nr_context_info context = {};
+  context.radioType                   = PCAP_FDD_RADIO;
+  context.direction                   = PCAP_DIRECTION_UPLINK;
+  context.rntiType                    = PCAP_C_RNTI;
+  context.rnti                        = pdu.rnti;
+  context.ueid   = rnti_table[pdu.rnti] == du_ue_index_t::INVALID_DU_UE_INDEX ? du_ue_index_t::INVALID_DU_UE_INDEX
+                                                                              : rnti_table[pdu.rnti] + 1;
+  context.harqid = pdu.harq_id;
   context.system_frame_number = sl_rx.sfn();
   context.sub_frame_number    = sl_rx.subframe_index();
   context.length              = pdu.pdu.length();

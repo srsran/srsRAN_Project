@@ -36,8 +36,12 @@
 using namespace srsran;
 
 udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config                   config_,
-                                                   network_gateway_data_notifier_with_src_addr& data_notifier_) :
-  config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
+                                                   network_gateway_data_notifier_with_src_addr& data_notifier_,
+                                                   task_executor&                               io_tx_executor_) :
+  config(std::move(config_)),
+  data_notifier(data_notifier_),
+  logger(srslog::fetch_basic_logger("UDP-GW")),
+  io_tx_executor(io_tx_executor_)
 {
   logger.info("UDP GW configured. rx_max_mmsg={}", config.rx_max_mmsg);
 
@@ -58,7 +62,15 @@ bool udp_network_gateway_impl::is_initialized()
   return sock_fd != -1;
 }
 
-void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
+void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
+{
+  auto fn = [this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); };
+  if (not io_tx_executor.execute(std::move(fn))) {
+    logger.info("Dropped PDU, queue is full.");
+  }
+}
+
+void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -72,10 +84,7 @@ void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const sockaddr
     return;
   }
 
-  // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
-
-  span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
+  span<const uint8_t> pdu_span = to_span(pdu, tx_mem);
 
   int bytes_sent =
       sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, (sockaddr*)&dest_addr, sizeof(sockaddr_storage));

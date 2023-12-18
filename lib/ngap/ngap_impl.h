@@ -56,7 +56,7 @@ public:
   bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
 
   // ngap connection manager functions
-  async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) override;
+  async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
 
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
 

@@ -21,14 +21,10 @@
  */
 
 #include "cu_cp_impl.h"
-#include "cu_up_processor/cu_up_processor_factory.h"
-#include "cu_up_processor/cu_up_processor_repository.h"
-#include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
-#include "srsran/support/async/event_sender_receiver.h"
 #include <chrono>
 #include <future>
 
@@ -50,6 +46,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
+                             get_cu_cp_ue_context_handler(),
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
                              f1ap_cu_cp_notifier,
@@ -81,7 +78,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
-                            ngap_entity->get_ngap_control_message_handler(),
                             ngap_entity->get_ngap_ue_context_removal_handler(),
                             ngap_entity->get_ngap_statistics_handler());
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
@@ -254,13 +250,13 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
         logger.warning("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
         return false;
       }
-
-      // Transfer NGAP UE Context to new UE and remove the old context
-      ngap_entity->update_ue_index(ue_index, old_ue_index);
-
-      // Transfer E1AP UE Context to new UE and remove old context
-      cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
     }
+
+    // Transfer NGAP UE Context to new UE and remove the old context
+    ngap_entity->update_ue_index(ue_index, old_ue_index);
+
+    // Transfer E1AP UE Context to new UE and remove old context
+    cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
 
     return true;
   };

@@ -49,9 +49,10 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*                           cu_cp_exec    = nullptr;
-  task_executor*                           cu_up_exec    = nullptr;
-  task_executor*                           gtpu_pdu_exec = nullptr;
+  task_executor*                           cu_cp_exec      = nullptr;
+  task_executor*                           cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
+  task_executor*                           cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
+  task_executor*                           cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
   std::vector<task_executor*>              lower_phy_tx_exec;
   std::vector<task_executor*>              lower_phy_rx_exec;
   std::vector<task_executor*>              lower_phy_dl_exec;

@@ -399,7 +399,7 @@ int main(int argc, char** argv)
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 
   // Create console helper object for commands and metrics printing.
-  gnb_console_helper console(*epoll_broker, json_channel);
+  gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
@@ -466,9 +466,11 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg = generate_cu_up_config(gnb_cfg);
-  cu_up_cfg.cu_up_executor                         = workers.cu_up_exec;
+  cu_up_cfg.ctrl_executor                          = workers.cu_up_ctrl_exec;
   cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
-  cu_up_cfg.gtpu_pdu_executor                      = workers.gtpu_pdu_exec;
+  cu_up_cfg.dl_executor                            = workers.cu_up_dl_exec;
+  cu_up_cfg.ul_executor                            = workers.cu_up_ul_exec;
+  cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optinally select separate exec for UL IO
   cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
   cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker                           = epoll_broker.get();

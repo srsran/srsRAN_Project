@@ -165,6 +165,128 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_TRUE(f1u_gw->removed_ul_teid_list.empty());
 }
 
+/// Create a DRB with only one QFI, but the QFI is already mapped
+TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // prepare request
+  pdu_session_id_t psi     = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id1 = uint_to_drb_id(1);
+  drb_id_t         drb_id2 = uint_to_drb_id(2);
+  qos_flow_id_t    qfi     = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi);
+
+  // attempt to add session
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.pdu_session_id, psi);
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, drb_id1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, qfi);
+
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
+  gtpu_rx_demux->created_teid_list.pop_front();
+  ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
+
+  ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
+  f1u_gw->created_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
+
+  // prepare modification request adding a new DRB and map it to a QFI that is already mapped
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
+      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi});
+
+  // attempt to perform the modification
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  // check the result
+  EXPECT_TRUE(mod_result.success);
+  ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
+  EXPECT_FALSE(mod_result.drb_setup_results[0].success);
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+  ASSERT_EQ(mod_result.drb_setup_results[0].qos_flow_results.size(), 1);
+  EXPECT_FALSE(mod_result.drb_setup_results[0].qos_flow_results[0].success);
+  EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[0].cause,
+            cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+
+  // validate pdu session is not disconnected from GTP-U gateway
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  EXPECT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
+
+  // validate the dangling bearer was removed from F1-U gateway
+  EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 1);
+}
+
+/// Create a DRB with two QFIs, of which one QFI is already mapped
+TEST_F(pdu_session_manager_test, drb_create_with_two_qfi_of_which_one_is_already_mapped)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // prepare request
+  pdu_session_id_t psi     = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id1 = uint_to_drb_id(1);
+  drb_id_t         drb_id2 = uint_to_drb_id(2);
+  qos_flow_id_t    qfi1    = uint_to_qos_flow_id(8);
+  qos_flow_id_t    qfi2    = uint_to_qos_flow_id(9);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi1);
+
+  // attempt to add session
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.pdu_session_id, psi);
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, drb_id1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, qfi1);
+
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
+  gtpu_rx_demux->created_teid_list.pop_front();
+  ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
+
+  ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
+  f1u_gw->created_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
+
+  // prepare modification request adding a new DRB and map it to a QFI that is already mapped
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
+      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi1, qfi2});
+
+  // attempt to perform the modification
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  // check the result
+  EXPECT_TRUE(mod_result.success);
+  ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
+  EXPECT_TRUE(mod_result.drb_setup_results[0].success); // success, since at least one QFI mapping was valid
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::unspecified});
+  ASSERT_EQ(mod_result.drb_setup_results[0].qos_flow_results.size(), 2);
+  EXPECT_FALSE(mod_result.drb_setup_results[0].qos_flow_results[0].success); // the first was invalid
+  EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[0].cause,
+            cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+  EXPECT_TRUE(mod_result.drb_setup_results[0].qos_flow_results[1].success); // the second was valid
+  EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[1].cause, cause_t{cause_radio_network_t::unspecified});
+
+  // validate pdu session is not disconnected from GTP-U gateway
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  EXPECT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
+
+  // validate the dangling bearer was not removed from F1-U gateway
+  EXPECT_TRUE(f1u_gw->removed_ul_teid_list.empty());
+}
+
 TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
 {
   // no sessions added yet

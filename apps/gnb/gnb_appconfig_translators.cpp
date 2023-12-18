@@ -669,10 +669,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     unsigned             cset1_start_crb = 0;
     if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
       cset1_start_crb = base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value();
-    } else if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
-      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
-      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-      cset1_start_crb = 6;
     }
     unsigned cset1_l_crb = nof_crbs - cset1_start_crb;
     if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
@@ -716,15 +712,15 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0);
     }
 
-    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
-    if (band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD) {
-      const auto& tdd_cfg = out_cell.tdd_ul_dl_cfg_common.value();
-      out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
-          config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
-                                                          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
-                                                          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-                                                          tdd_cfg);
-    }
+    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot and/or dedicated PDCCH
+    // configuration.
+    out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+        config_helpers::make_pdsch_time_domain_resource(
+            param.search_space0_index,
+            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+            band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD ? out_cell.tdd_ul_dl_cfg_common.value()
+                                                                                 : optional<tdd_ul_dl_config_common>{});
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
@@ -1016,6 +1012,9 @@ srsran::rlc_am_config srsran::generate_rlc_am_config(const rlc_am_appconfig& in_
   }
   out_rlc.rx.t_reassembly      = in_cfg.rx.t_reassembly;
   out_rlc.rx.t_status_prohibit = in_cfg.rx.t_status_prohibit;
+  if (in_cfg.rx.max_sn_per_status != 0) {
+    out_rlc.rx.max_sn_per_status = in_cfg.rx.max_sn_per_status;
+  }
   return out_rlc;
 }
 
@@ -1594,8 +1593,9 @@ mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config
   mac_expert_config          out_cfg = {};
   const base_cell_appconfig& cell    = config.cells_cfg.front().cell;
 
-  out_cfg.max_consecutive_dl_kos = cell.pdsch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_ul_kos = cell.pusch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_dl_kos  = cell.pdsch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_ul_kos  = cell.pusch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_csi_dtx = cell.pucch_cfg.max_consecutive_kos;
 
   return out_cfg;
 }

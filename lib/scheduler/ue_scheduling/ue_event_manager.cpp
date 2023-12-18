@@ -21,38 +21,32 @@
  */
 
 #include "ue_event_manager.h"
+#include "../config/sched_config_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 
 using namespace srsran;
 
-ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                                   ue_repository&                    ue_db_,
-                                   sched_configuration_notifier&     mac_notifier_,
-                                   scheduler_metrics_handler&        metrics_handler_,
-                                   scheduler_event_logger&           ev_logger_) :
-  expert_cfg(expert_cfg_),
-  ue_db(ue_db_),
-  mac_notifier(mac_notifier_),
-  metrics_handler(metrics_handler_),
-  ev_logger(ev_logger_),
-  logger(srslog::fetch_basic_logger("SCHED"))
+ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
+                                   scheduler_metrics_handler& metrics_handler_,
+                                   scheduler_event_logger&    ev_logger_) :
+  ue_db(ue_db_), metrics_handler(metrics_handler_), ev_logger(ev_logger_), logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
-void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
+void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(
-      expert_cfg, *du_cells[(*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
+  std::unique_ptr<ue> u = std::make_unique<ue>(ue_creation_command{
+      ev.next_config(), ev.get_fallback_command().has_value() and ev.get_fallback_command().value(), metrics_handler});
 
   // Defer UE object addition to ue list to the slot indication handler.
-  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
+  common_events.emplace(INVALID_DU_UE_INDEX, [this, u = std::move(u), ev = std::move(ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
-      logger.error("ue={} rnti={:#x}: Create of UE failed. Cause: A UE with the same index already exists",
+      logger.error("ue={} rnti={:#x}: Discarding UE creation. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
-      mac_notifier.on_ue_config_complete(u->ue_index, false);
+      ev.abort();
       return;
     }
 
@@ -61,56 +55,47 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
     rnti_t          rnti        = u->crnti;
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
     ue_db.add_ue(std::move(u));
-    auto& inserted_ue = ue_db[ueidx];
 
     // Log Event.
     ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
-
-    // Notify metrics handler.
-    metrics_handler.handle_ue_creation(
-        inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ueidx, true);
   });
 }
 
-void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
+void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
-  common_events.emplace(ue_request.ue_index, [this, ue_request]() {
-    if (not ue_db.contains(ue_request.ue_index)) {
-      log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
-      mac_notifier.on_ue_config_complete(ue_request.ue_index, false);
+  du_ue_index_t ue_index = ev.get_ue_index();
+  common_events.emplace(ue_index, [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.get_ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      log_invalid_ue_index(ue_idx, "UE Reconfig Request");
+      ev.abort();
       return;
     }
+
     // Configure existing UE.
-    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg);
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
 
     // Log event.
-    ev_logger.enqueue(ue_request);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ue_request.ue_index, true);
+    ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, ue_db[ue_idx].crnti});
   });
 }
 
-void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
+void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
-  common_events.emplace(ue_index, [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      logger.warning("Received request to delete ue={} that does not exist", ue_index);
+  const du_ue_index_t ue_index = ev.ue_index();
+  common_events.emplace(ue_index, [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received request to delete ue={} that does not exist", ue_idx);
       return;
     }
-    rnti_t rnti = ue_db[ue_index].crnti;
+    const rnti_t rnti = ue_db[ue_idx].crnti;
 
     // Scheduler UE removal from repository.
-    ue_db.schedule_ue_rem(ue_index);
+    ue_db.schedule_ue_rem(std::move(ev));
 
-    // Log event.
-    ev_logger.enqueue(sched_ue_delete_message{ue_index, rnti});
-
-    // Notify metrics.
-    metrics_handler.handle_ue_deletion(ue_index);
+    // Log UE removal event.
+    ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
   });
 }
 
@@ -208,22 +193,21 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
-    std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
+    dl_harq_process::dl_ack_info_result result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
-    const dl_harq_process* h_dl = result.first;
 
-    if (h_dl != nullptr) {
+    if (result.h_id != INVALID_HARQ_ID) {
       // Respective HARQ was found.
-      const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
+      const units::bytes tbs{result.tbs_bytes};
 
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result.h_id, harq_bits[harq_idx], tbs});
 
-      if (result.second == dl_harq_process::status_update::acked or
-          result.second == dl_harq_process::status_update::nacked) {
+      if (result.update == dl_harq_process::status_update::acked or
+          result.update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.second == dl_harq_process::status_update::acked, tbs);
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.update == dl_harq_process::status_update::acked, tbs);
       }
     }
   }

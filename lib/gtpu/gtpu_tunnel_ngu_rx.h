@@ -119,7 +119,7 @@ protected:
 
     logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
 
-    if (!pdu.hdr.flags.seq_number) {
+    if (!pdu.hdr.flags.seq_number || config.t_reordering.count() == 0) {
       // Forward this SDU straight away.
       byte_buffer      rx_sdu      = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};

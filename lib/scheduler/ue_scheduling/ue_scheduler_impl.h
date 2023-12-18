@@ -59,7 +59,7 @@ public:
                                du_cell_index_t                       cell_index,
                                scheduler_slot_handler::error_outcome event) override;
 
-  scheduler_ue_configurator& get_ue_configurator() override { return event_mng; }
+  sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
 
   scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
 

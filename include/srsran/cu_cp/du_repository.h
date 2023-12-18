@@ -50,6 +50,9 @@ public:
 
   /// \brief Retrieve the F1AP UE notifier of the DU processor.
   virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
+
+  /// \brief Retrieve the UE Context notifier of the DU processor.
+  virtual du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() = 0;
 };
 
 /// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.

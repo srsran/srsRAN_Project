@@ -137,28 +137,47 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->pdcp_to_f1u_adapter.connect_f1u(new_drb->f1u->get_tx_sdu_handler());
 
   // Create QoS flows
-  for (auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
+  uint32_t nof_flow_success = 0;
+  for (const auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
     // prepare QoS flow creation result
     qos_flow_setup_result flow_result = {};
     flow_result.success               = false;
     flow_result.cause                 = cause_radio_network_t::unspecified;
     flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
 
-    // create QoS flow context
-    auto& qos_flow                           = qos_flow_info;
-    new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
-    auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
-    logger.log_debug("Created QoS flow with {} and {}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
+    if (!new_session.sdap->is_mapped(qos_flow_info.qos_flow_id)) {
+      // create QoS flow context
+      const auto& qos_flow                     = qos_flow_info;
+      new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
+      auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
+      logger.log_debug("Created QoS flow with {} and {}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
-    sdap_config sdap_cfg = make_sdap_drb_config(drb_to_setup.sdap_cfg);
-    new_session.sdap->add_mapping(
-        qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
-    new_qos_flow->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
-    new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
+      sdap_config sdap_cfg = make_sdap_drb_config(drb_to_setup.sdap_cfg);
+      new_session.sdap->add_mapping(
+          qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
+      new_qos_flow->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
+      new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
+      flow_result.success = true;
+      nof_flow_success++;
+    } else {
+      // fail if mapping already exists
+      flow_result.success = false;
+      flow_result.cause   = cause_radio_network_t::multiple_qos_flow_id_instances;
+      logger.log_error("Cannot overwrite existing mapping for {}", qos_flow_info.qos_flow_id);
+    }
 
     // Add QoS flow creation result
-    flow_result.success = true;
     drb_result.qos_flow_results.push_back(flow_result);
+  }
+
+  // If no flow could be created, we remove the rest of the dangling DRB again
+  if (nof_flow_success == 0) {
+    logger.log_error(
+        "Failed to create {} for psi={}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
+    new_session.drbs.erase(drb_to_setup.drb_id);
+    drb_result.cause   = cause_radio_network_t::multiple_qos_flow_id_instances;
+    drb_result.success = false;
+    return drb_result;
   }
 
   // Add result

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue_configuration.h"
+#include "../config/ue_configuration.h"
 #include "pdcch_resource_allocator.h"
 #include "srsran/scheduler/scheduler_dci.h"
 

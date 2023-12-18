@@ -314,7 +314,7 @@ pucch_resource_manager::fetch_allocated_f2_harq_resource(slot_point          slo
 
   // Check first if the target PUCCH resource (given the CRNTI and usage) exists within the resource tracker.
   auto* target_ue_resource = std::find_if(
-      slot_ue_res_array.begin(), slot_ue_res_array.end(), [target_rnti = crnti](const resource_tracker res) {
+      slot_ue_res_array.begin(), slot_ue_res_array.end(), [target_rnti = crnti](const resource_tracker& res) {
         return res.rnti == target_rnti and res.resource_usage == pucch_resource_usage::HARQ_F2;
       });
 
@@ -461,7 +461,7 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
 
   // Check first if the target PUCCH resource (given the CRNTI and usage) exists within the resource tracker.
   auto* target_res =
-      std::find_if(slot_ue_res_array.begin(), slot_ue_res_array.end(), [crnti, res_usage](const resource_tracker res) {
+      std::find_if(slot_ue_res_array.begin(), slot_ue_res_array.end(), [crnti, res_usage](const resource_tracker& res) {
         return res.rnti == crnti and res.resource_usage == res_usage;
       });
 
@@ -502,10 +502,11 @@ int pucch_resource_manager::fetch_pucch_res_indic(slot_point          slot_tx,
   span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], ue_res_id_set_for_harq.size());
 
   // Check first if the target PUCCH resource (given the CRNTI and usage) exists within the resource tracker.
-  auto* ue_resource = std::find_if(
-      slot_ue_res_array.begin(), slot_ue_res_array.end(), [target_rnti = crnti, res_usage](const resource_tracker res) {
-        return res.rnti == target_rnti and res.resource_usage == res_usage;
-      });
+  auto* ue_resource = std::find_if(slot_ue_res_array.begin(),
+                                   slot_ue_res_array.end(),
+                                   [target_rnti = crnti, res_usage](const resource_tracker& res) {
+                                     return res.rnti == target_rnti and res.resource_usage == res_usage;
+                                   });
 
   if (ue_resource != slot_ue_res_array.end() and static_cast<unsigned>(ue_resource - slot_ue_res_array.begin()) <
                                                      pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list.size()) {

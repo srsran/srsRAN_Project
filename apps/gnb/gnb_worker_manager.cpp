@@ -174,9 +174,10 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }
-  cu_up_exec    = exec_mng.executors().at("ue_up_ctrl_exec");
-  gtpu_pdu_exec = exec_mng.executors().at("ue_dl_exec");
-  cu_up_e2_exec = exec_mng.executors().at("ue_up_ctrl_exec");
+  cu_up_ctrl_exec = exec_mng.executors().at("ue_up_ctrl_exec");
+  cu_up_dl_exec   = exec_mng.executors().at("ue_dl_exec");
+  cu_up_ul_exec   = exec_mng.executors().at("ue_ul_exec");
+  cu_up_e2_exec   = exec_mng.executors().at("ue_up_ctrl_exec");
 
   // Worker for handling DU, CU and UE control procedures.
   const priority_multiqueue_worker gnb_ctrl_worker{

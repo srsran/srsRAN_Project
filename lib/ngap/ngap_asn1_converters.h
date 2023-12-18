@@ -474,6 +474,19 @@ inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
   return s_nssai;
 }
 
+inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
+{
+  asn1::ngap::s_nssai_s asn1_s_nssai;
+  asn1_s_nssai.sst.from_number(s_nssai.sst);
+
+  if (s_nssai.sd.has_value()) {
+    asn1_s_nssai.sd_present = true;
+    asn1_s_nssai.sd.from_number(s_nssai.sd.value());
+  }
+
+  return asn1_s_nssai;
+}
+
 inline cu_cp_tai ngap_asn1_to_tai(const asn1::ngap::tai_s& asn1_tai)
 {
   cu_cp_tai tai;
@@ -676,7 +689,7 @@ inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_g
   gnb_id.plmn_id = asn1_gnb_id.plmn_id.to_string();
 
   // gnb id
-  gnb_id.gnb_id = asn1_gnb_id.gnb_id.gnb_id().to_string();
+  gnb_id.gnb_id = asn1_gnb_id.gnb_id.gnb_id().to_number();
 
   return gnb_id;
 }

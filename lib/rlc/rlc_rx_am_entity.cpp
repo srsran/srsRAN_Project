@@ -67,6 +67,18 @@ rlc_rx_am_entity::rlc_rx_am_entity(uint32_t                          du_index,
                          [this](timer_id_t tid) { on_expired_reassembly_timer(); });
   }
 
+  // configure status report limits
+  if (cfg.max_sn_per_status.has_value()) {
+    uint32_t max_sn_per_status = cfg.max_sn_per_status.value();
+    srsran_assert(max_sn_per_status <= window_size(to_number(cfg.sn_field_length)),
+                  "Cannot create RLC RX AM, max_sn_per_status exceeds window_size. {}",
+                  cfg);
+    srsran_assert(max_sn_per_status > 0, "Cannot create RLC RX AM, max_sn_per_status must not be zero. {}", cfg);
+    max_nof_sn_per_status_report = max_sn_per_status;
+  } else {
+    max_nof_sn_per_status_report = window_size(to_number(cfg.sn_field_length));
+  }
+
   // initialize status report
   status_cached->ack_sn = st.rx_next_highest;
   status_report_size.store(status_cached->get_packed_size(), std::memory_order_relaxed);
@@ -481,8 +493,14 @@ void rlc_rx_am_entity::refresh_status_report()
    *   starting with SN = RX_Next up to the point where the resulting STATUS PDU still fits to the total size of RLC
    *   PDU(s) indicated by lower layer:
    */
-  logger.log_debug("Generating status PDU. rx_next={} rx_highest_status={}", st.rx_next, st.rx_highest_status);
-  for (uint32_t i = st.rx_next; rx_mod_base(i) < rx_mod_base(st.rx_highest_status); i = (i + 1) % mod) {
+  uint32_t stop_sn = st.rx_highest_status;
+  // Restrict execution time by limiting the number of visited SNs in the RX window
+  if (rx_mod_base(st.rx_highest_status) > rx_mod_base((st.rx_next + max_nof_sn_per_status_report) % mod)) {
+    stop_sn = (st.rx_next + max_nof_sn_per_status_report) % mod;
+  }
+  logger.log_debug(
+      "Generating status PDU. rx_next={} rx_highest_status={} stop_sn={}", st.rx_next, st.rx_highest_status, stop_sn);
+  for (uint32_t i = st.rx_next; rx_mod_base(i) < rx_mod_base(stop_sn); i = (i + 1) % mod) {
     if ((rx_window->has_sn(i) && (*rx_window)[i].fully_received)) {
       logger.log_debug("SDU complete. sn={}", i);
     } else {
@@ -549,7 +567,7 @@ void rlc_rx_am_entity::refresh_status_report()
    * - set the ACK_SN to the SN of the next not received RLC SDU which is not
    * indicated as missing in the resulting STATUS PDU.
    */
-  status_builder->ack_sn = st.rx_highest_status;
+  status_builder->ack_sn = stop_sn;
   logger.log_debug("Refreshed status_report. {}", *status_builder);
   store_status_report();
 }

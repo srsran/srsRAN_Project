@@ -22,29 +22,23 @@
 
 #pragma once
 
-#include "../cu_cp_impl_interface.h"
-#include "srsran/cu_cp/mobility_manager.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
-namespace srs_cu_cp {
 
-/// Adapter between cell measurement and mobility manager to trigger handover.
-class mobility_manager_cu_cp_adapter : public mobility_manager_cu_cp_notifier
+/// Adds/Removes UEs from the metrics.
+class sched_metrics_ue_configurator
 {
 public:
-  mobility_manager_cu_cp_adapter() = default;
+  virtual ~sched_metrics_ue_configurator() = default;
 
-  void connect_cu_cp(cu_cp_mobility_manager_handler& handler_) { handler = &handler_; }
+  /// Adds a new UE to the reported metrics.
+  virtual void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) = 0;
 
-  void on_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override
-  {
-    srsran_assert(handler != nullptr, "CU-CP handler must not be nullptr");
-    handler->handle_inter_du_handover_request(ue_index, target_pci);
-  }
-
-private:
-  cu_cp_mobility_manager_handler* handler = nullptr;
+  /// Removes a UE from the reported metrics.
+  virtual void handle_ue_deletion(du_ue_index_t ue_index) = 0;
 };
 
-} // namespace srs_cu_cp
 } // namespace srsran

@@ -35,17 +35,15 @@ class cu_cp_ngap_adapter : public cu_cp_ngap_control_notifier, public cu_cp_ngap
 {
 public:
   void connect_ngap(ngap_connection_manager&         ngap_conn_mng_,
-                    ngap_control_message_handler&    ngap_ctrl_handler_,
                     ngap_ue_context_removal_handler& ngap_ue_handler_,
                     ngap_statistics_handler&         ngap_statistic_handler_)
   {
     ngap_conn_mng          = &ngap_conn_mng_;
-    ngap_ctrl_handler      = &ngap_ctrl_handler_;
     ngap_ue_handler        = &ngap_ue_handler_;
     ngap_statistic_handler = &ngap_statistic_handler_;
   }
 
-  async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) override
+  async_task<ngap_ng_setup_result> on_ng_setup_request(const ngap_ng_setup_request& request) override
   {
     srsran_assert(ngap_conn_mng != nullptr, "NGAP handler must not be nullptr");
     return ngap_conn_mng->handle_ng_setup_request(request);
@@ -65,7 +63,6 @@ public:
 
 private:
   ngap_connection_manager*         ngap_conn_mng          = nullptr;
-  ngap_control_message_handler*    ngap_ctrl_handler      = nullptr;
   ngap_ue_context_removal_handler* ngap_ue_handler        = nullptr;
   ngap_statistics_handler*         ngap_statistic_handler = nullptr;
 };

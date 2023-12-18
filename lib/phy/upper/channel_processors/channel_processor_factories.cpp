@@ -441,12 +441,12 @@ public:
 
   std::unique_ptr<prach_detector> create() override
   {
-    dft_processor::configuration idft_long_config  = {};
-    idft_long_config.size                          = idft_long_size;
-    idft_long_config.dir                           = dft_processor::direction::INVERSE;
-    dft_processor::configuration idft_short_config = {};
-    idft_short_config.size                         = idft_short_size;
-    idft_short_config.dir                          = dft_processor::direction::INVERSE;
+    dft_processor::configuration idft_long_config;
+    idft_long_config.size = idft_long_size;
+    idft_long_config.dir  = dft_processor::direction::INVERSE;
+    dft_processor::configuration idft_short_config;
+    idft_short_config.size = idft_short_size;
+    idft_short_config.dir  = dft_processor::direction::INVERSE;
     return std::make_unique<prach_detector_generic_impl>(dft_factory->create(idft_long_config),
                                                          dft_factory->create(idft_short_config),
                                                          prach_gen_factory->create(),
@@ -485,7 +485,7 @@ public:
 
   std::unique_ptr<pucch_detector> create() override
   {
-    std::array<float, NRE> alphas = {};
+    std::array<float, NRE> alphas;
     std::generate(alphas.begin(), alphas.end(), [n = 0U]() mutable {
       return (TWOPI * static_cast<float>(n++) / static_cast<float>(NRE));
     });

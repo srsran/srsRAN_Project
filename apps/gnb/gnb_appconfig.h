@@ -306,6 +306,9 @@ struct pucch_appconfig {
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
   /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 15}.
   unsigned min_k1 = 4;
+
+  /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
+  unsigned max_consecutive_kos = 100;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -538,6 +541,10 @@ struct rlc_rx_am_appconfig {
   uint16_t sn_field_length;   ///< Number of bits used for sequence number
   int32_t  t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
   int32_t  t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+
+  // Implementation-specific parameters that are not specified by 3GPP
+  /// Maximum number of visited SNs in the RX window when building a status report. 0 means no limit.
+  uint32_t max_sn_per_status = 0;
 };
 
 /// RLC AM configuration
@@ -791,8 +798,9 @@ struct metrics_appconfig {
   unsigned cu_cp_statistics_report_period = 1;    // Statistics report period in seconds
   unsigned cu_up_statistics_report_period = 1;    // Statistics report period in seconds
   /// JSON metrics reporting.
-  bool        enable_json_metrics = false;
-  std::string json_filename       = "/tmp/gnb_metrics.json";
+  bool        enable_json_metrics      = false;
+  std::string json_filename            = "/tmp/gnb_metrics.json";
+  bool        autostart_stdout_metrics = false;
 };
 
 /// Lower physical layer thread profiles.

@@ -91,7 +91,7 @@ public:
   {
     du_cell_cfgs                                       = {config_helpers::make_default_du_cell_config(builder_params)};
     du_cell_cfgs[0].pucch_cfg.f2_params.max_code_rate  = max_pucch_code_rate::dot_35;
-    du_cell_cfgs[0].pucch_cfg.nof_csi_resources        = 2;
+    du_cell_cfgs[0].pucch_cfg.nof_csi_resources        = 4;
     du_cell_cfgs[0].pucch_cfg.nof_sr_resources         = 2;
     du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f1_res_harq = 3;
     du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_res_harq = 6;
@@ -103,9 +103,6 @@ public:
         du_cell_cfgs[0].pucch_cfg, cell_cfg_msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     sch->handle_cell_configuration_request(cell_cfg_msg);
 
-    du_cell_cfgs                                      = {config_helpers::make_default_du_cell_config(builder_params)};
-    du_cell_cfgs[0].pucch_cfg.f2_params.max_code_rate = max_pucch_code_rate::dot_35;
-    du_cell_cfgs[0].pucch_cfg.nof_csi_resources       = 4;
     pucch_res_mng.emplace(du_cell_cfgs);
 
     logger.set_context(next_sl_tx.sfn(), next_sl_tx.slot_index());

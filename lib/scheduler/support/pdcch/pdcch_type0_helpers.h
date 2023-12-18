@@ -24,7 +24,7 @@
 /// \brief Type0-PDCCH CSS n0/nc slot, SFNc set derivation as per TS 38.213, clause 13.
 #pragma once
 
-#include "../../cell/cell_configuration.h"
+#include "../../config/cell_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"

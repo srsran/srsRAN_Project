@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
 #include "../support/pdcch/search_space_helper.h"
+#include "cell_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
@@ -107,15 +107,20 @@ public:
                         const cell_configuration&  cell_cfg_common_,
                         const serving_cell_config& serv_cell_cfg_,
                         bool                       multi_cells_configured = false);
-  ue_cell_configuration(const ue_cell_configuration&)            = delete;
+  ue_cell_configuration(const ue_cell_configuration& other);
   ue_cell_configuration(ue_cell_configuration&&)                 = delete;
   ue_cell_configuration& operator=(const ue_cell_configuration&) = delete;
   ue_cell_configuration& operator=(ue_cell_configuration&&)      = delete;
 
   void reconfigure(const serving_cell_config& cell_cfg_ded_);
 
+  void set_rrm_config(const sched_ue_resource_alloc_config& ue_res_alloc_cfg);
+
   const rnti_t              crnti;
   const cell_configuration& cell_cfg_common;
+
+  /// Retrieve the parameters relative to the RRM of a UE in the scheduler.
+  const sched_ue_resource_alloc_config& rrm_cfg() const { return ue_res_alloc_cfg; }
 
   const serving_cell_config& cfg_dedicated() const { return cell_cfg_ded; }
 
@@ -175,6 +180,76 @@ private:
 
   /// Number of DL ports for this UE.
   unsigned nof_dl_ports = 1;
+
+  // Parameters relative to the RRM of a UE.
+  sched_ue_resource_alloc_config ue_res_alloc_cfg;
+};
+
+/// Structure that holds all the information related with the configuration of a UE in the scheduler.
+///
+/// The information held by this structure includes configured cells and logical channels by the upper layers based on
+/// the UE RRC configuration, and other RRM-related parameters that can be controlled by the app or via O1/E2.
+class ue_configuration
+{
+public:
+  ue_configuration(du_ue_index_t ue_index, rnti_t crnti_);
+  ue_configuration(du_ue_index_t                         ue_index,
+                   rnti_t                                crnti_,
+                   const cell_common_configuration_list& common_cells,
+                   const sched_ue_config_request&        cfg_req);
+  ue_configuration(const ue_configuration& other);
+
+  const du_ue_index_t ue_index;
+  const rnti_t        crnti;
+
+  /// Retrieve parameters set at the application level for the UEs instantiated in the gNB.
+  const scheduler_ue_expert_config& expert_cfg() const { return pcell_common_cfg().expert_cfg.ue; }
+
+  /// Checks whether the cell with the provided index is configured for the UE.
+  bool contains(du_cell_index_t cell_index) const { return du_cells.contains(cell_index); }
+
+  /// Number of configured cells in the UE cell group config.
+  size_t nof_cells() const { return ue_cell_to_du_cell_index.size(); }
+
+  /// Get the configuration of a cell that is common to all UEs.
+  const cell_configuration& common_cell_cfg(du_cell_index_t cell_index) const
+  {
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    return du_cells[cell_index]->cell_cfg_common;
+  }
+  const cell_configuration& pcell_common_cfg() const
+  {
+    return common_cell_cfg(ue_cell_to_du_cell_index[to_ue_cell_index(0)]);
+  }
+
+  /// Get the configuration of a cell that is dedicated to the UE.
+  const ue_cell_configuration& ue_cell_cfg(du_cell_index_t cell_index) const
+  {
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    return *du_cells[cell_index];
+  }
+  const ue_cell_configuration& ue_cell_cfg(ue_cell_index_t ue_cell_index) const
+  {
+    srsran_assert(ue_cell_index < ue_cell_to_du_cell_index.size(), "Invalid cell_index={}", ue_cell_index);
+    return ue_cell_cfg(ue_cell_to_du_cell_index[ue_cell_index]);
+  }
+  const ue_cell_configuration& pcell_cfg() const { return ue_cell_cfg(to_ue_cell_index(0)); }
+
+  /// Get logical channels configured for the UE.
+  span<const logical_channel_config> logical_channels() const { return lc_list; }
+
+  /// Update the UE dedicated configuration given a configuration request coming from outside the scheduler.
+  void update(const cell_common_configuration_list& common_cells, const sched_ue_config_request& cfg_req);
+
+private:
+  // List of configured logical channels
+  std::vector<logical_channel_config> lc_list;
+
+  // List of cells configured for a UE.
+  slotted_id_vector<du_cell_index_t, std::unique_ptr<ue_cell_configuration>> du_cells;
+
+  // Mapping of UE Cell indexes to DU cell indexes.
+  std::vector<du_cell_index_t> ue_cell_to_du_cell_index;
 };
 
 } // namespace srsran

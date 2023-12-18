@@ -33,8 +33,6 @@
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
-#include "task_schedulers/cu_up_task_scheduler.h"
-#include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cell_meas_manager.h"

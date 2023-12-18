@@ -21,9 +21,11 @@
  */
 
 #include "f1ap_cu_impl.h"
-#include "../../ran/gnb_format.h"
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "procedures/ue_context_modification_procedure.h"
+#include "procedures/ue_context_release_procedure.h"
+#include "procedures/ue_context_setup_procedure.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"

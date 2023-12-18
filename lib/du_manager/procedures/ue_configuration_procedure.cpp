@@ -38,7 +38,7 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
   ue_mng(ue_mng_),
   du_params(du_params_),
   ue(ue_mng.find_ue(request.ue_index)),
-  proc_logger(logger, name(), request.ue_index, ue->rnti)
+  proc_logger(logger, name(), request.ue_index, ue != nullptr ? ue->rnti : INVALID_RNTI)
 {
   srsran_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
@@ -100,7 +100,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                         ue->pcell_index,
                                                                         srb,
                                                                         du_params.services,
-                                                                        *ue->rlf_notifier,
+                                                                        ue->get_rlc_rlf_notifier(),
                                                                         du_params.rlc.pcap_writer));
   }
 
@@ -171,7 +171,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
                                                 du_params,
-                                                *ue->rlf_notifier);
+                                                ue->get_rlc_rlf_notifier());
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: Failed to allocate DU UE resources.",
                                    drbtoadd.drb_id);
@@ -312,9 +312,6 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
-
-  // Update the RLF timeout to account for potential RRC Reestablishments, now that the UE has a context.
-  ue->rlf_notifier->on_drb_and_srb2_configured();
 
   return resp;
 }

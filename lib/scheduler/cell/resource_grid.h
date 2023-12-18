@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "../config/cell_configuration.h"
 #include "../support/bwp_helpers.h"
 #include "../support/rb_helper.h"
-#include "cell_configuration.h"
 #include "resource_grid_util.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/ran/slot_point.h"

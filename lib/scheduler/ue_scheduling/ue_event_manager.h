@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../config/sched_config_manager.h"
 #include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
 #include "ue.h"
@@ -38,23 +39,19 @@ class scheduler_event_logger;
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
-class ue_event_manager final : public scheduler_ue_configurator,
+class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_feedback_handler,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                   ue_repository&                    ue_db,
-                   sched_configuration_notifier&     mac_notifier,
-                   scheduler_metrics_handler&        metrics_handler,
-                   scheduler_event_logger&           ev_logger);
+  ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
   /// UE Add/Mod/Remove interface.
-  void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;
-  void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override;
-  void handle_ue_removal_request(du_ue_index_t ue_index) override;
+  void handle_ue_creation(ue_config_update_event ev) override;
+  void handle_ue_reconfiguration(ue_config_update_event ev) override;
+  void handle_ue_deletion(ue_config_delete_event ev) override;
 
   /// Scheduler feedback handler interface.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
@@ -109,12 +106,10 @@ private:
                        optional<float>                        pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
-  const scheduler_ue_expert_config& expert_cfg;
-  ue_repository&                    ue_db;
-  sched_configuration_notifier&     mac_notifier;
-  scheduler_metrics_handler&        metrics_handler;
-  scheduler_event_logger&           ev_logger;
-  srslog::basic_logger&             logger;
+  ue_repository&             ue_db;
+  scheduler_metrics_handler& metrics_handler;
+  scheduler_event_logger&    ev_logger;
+  srslog::basic_logger&      logger;
 
   /// List of added and configured cells.
   struct du_cell {

@@ -525,8 +525,13 @@ static bool validate_cells_appconfig(const cell_appconfig& config)
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
 static bool validate_cells_appconfig(span<const cell_appconfig> config)
 {
+  unsigned tac = config[0].cell.tac;
   for (const auto& cell : config) {
     if (!validate_cells_appconfig(cell)) {
+      return false;
+    }
+    if (cell.cell.tac != tac) {
+      fmt::print("The TAC must be the same for all cells\n");
       return false;
     }
   }
@@ -721,6 +726,13 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
                "ms230, ms235, ms240, ms245, ms250, ms300,"
                "ms350, ms400, ms450, ms500, ms800, ms1000,"
                "ms1200, ms1600, ms2000, ms2400\n");
+    return false;
+  }
+  if (config.rx.max_sn_per_status >= window_size(config.rx.sn_field_length)) {
+    fmt::print("RLC AM RX max_sn_per_status={} exceeds window_size={}. sn_size={}\n",
+               config.rx.max_sn_per_status,
+               window_size(config.rx.sn_field_length),
+               config.rx.sn_field_length);
     return false;
   }
 
@@ -986,14 +998,6 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
     if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
         base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
-      return false;
-    }
-    if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
-        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
-        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
-      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
-      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-      fmt::print("Cannot start CORESET#1 from CRB0 in Common SearchSpace\n");
       return false;
     }
   }

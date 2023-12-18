@@ -42,7 +42,7 @@ ue_context_release_procedure::ue_context_release_procedure(const f1ap_ue_context
     command->rrc_container_present = true;
     command->rrc_container         = cmd_.rrc_release_pdu.copy();
 
-    srsran_assert(cmd_.srb_id.has_value(), "SRB-ID for UE Context Release Command with RRC Container must be set.");
+    srsran_assert(cmd_.srb_id.has_value(), "SRB-ID for UE Context Release Command with RRC Container must be set");
 
     command->srb_id_present = true;
     command->srb_id         = srb_id_to_uint(cmd_.srb_id.value());
@@ -53,7 +53,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 {
   CORO_BEGIN(ctx);
 
-  ue_ctxt.logger.log_debug("\"{}\" initialized.", name());
+  ue_ctxt.logger.log_debug("\"{}\" initialized", name());
 
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
@@ -97,7 +97,7 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
 
   if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_ids.ue_index;
-    ue_ctxt.logger.log_debug("\"{}\" finalized", ret, name());
+    ue_ctxt.logger.log_debug("\"{}\" finalized", name());
   } else {
     ue_ctxt.logger.log_error("\"{}\" failed", name());
   }

@@ -140,7 +140,7 @@ public:
 
 private:
   /// Payload data storage.
-  std::array<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> data = {};
+  std::array<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> data;
   /// Number of SR bits.
   unsigned nof_sr_bits = 0;
   /// Number of HARQ-ACK bits.

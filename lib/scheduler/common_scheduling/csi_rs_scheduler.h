@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../cell/cell_configuration.h"
 #include "../cell/resource_grid.h"
+#include "../config/cell_configuration.h"
 
 namespace srsran {
 

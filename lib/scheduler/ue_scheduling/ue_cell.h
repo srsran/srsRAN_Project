@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "../config/ue_configuration.h"
 #include "../support/bwp_helpers.h"
 #include "harq_process.h"
 #include "ue_channel_state_manager.h"
-#include "ue_configuration.h"
 #include "ue_link_adaptation_controller.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -50,11 +50,10 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  ue_cell(du_ue_index_t              ue_index_,
-          rnti_t                     crnti_val,
-          const cell_configuration&  cell_cfg_common_,
-          const serving_cell_config& ue_serv_cell,
-          ue_harq_timeout_notifier   harq_timeout_notifier);
+  ue_cell(du_ue_index_t                ue_index_,
+          rnti_t                       crnti_val,
+          const ue_cell_configuration& ue_cell_cfg_,
+          ue_harq_timeout_notifier     harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -68,19 +67,17 @@ public:
   /// \brief Determines whether the UE cell is currently active.
   bool is_active() const { return active; }
 
-  const ue_cell_configuration& cfg() const { return ue_cfg; }
+  const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
   /// \brief Deactivates cell.
   void deactivate();
 
-  void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
-  void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
+  void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
 
-  std::pair<const dl_harq_process*, dl_harq_process::status_update>
-  handle_dl_ack_info(slot_point                 uci_slot,
-                     mac_harq_ack_report_status ack_value,
-                     unsigned                   harq_bit_idx,
-                     optional<float>            pucch_snr);
+  dl_harq_process::dl_ack_info_result handle_dl_ack_info(slot_point                 uci_slot,
+                                                         mac_harq_ack_report_status ack_value,
+                                                         unsigned                   harq_bit_idx,
+                                                         optional<float>            pucch_snr);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -151,12 +148,11 @@ private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
   void apply_link_adaptation_procedures(const csi_report_data& csi_report);
 
-  rnti_t                         crnti_;
-  const cell_configuration&      cell_cfg;
-  ue_cell_configuration          ue_cfg;
-  sched_ue_resource_alloc_config ue_res_alloc_cfg;
-  scheduler_ue_expert_config     expert_cfg;
-  srslog::basic_logger&          logger;
+  rnti_t                            crnti_;
+  const cell_configuration&         cell_cfg;
+  const ue_cell_configuration*      ue_cfg;
+  const scheduler_ue_expert_config& expert_cfg;
+  srslog::basic_logger&             logger;
 
   /// \brief Whether cell is currently active.
   bool active = true;

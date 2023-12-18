@@ -87,7 +87,7 @@ class pusch_demodulator_factory_generic : public pusch_demodulator_factory
 public:
   std::unique_ptr<pusch_demodulator> create() override
   {
-    std::unique_ptr<evm_calculator> evm_calc = {};
+    std::unique_ptr<evm_calculator> evm_calc;
     if (enable_evm) {
       evm_calc = demodulation_factory->create_evm_calculator();
     }

@@ -29,30 +29,64 @@
 namespace srsran {
 namespace srs_du {
 
+class du_ue_dummy : public du_ue, public mac_ue_radio_link_notifier, public rlc_tx_upper_layer_control_notifier
+{
+public:
+  bool                    ue_notifiers_disconnected = false;
+  optional<du_ue_index_t> last_rlf_ue_index;
+  optional<rlf_cause>     last_rlf_cause;
+
+  du_ue_dummy(const du_ue_context&         ctx_,
+              ue_ran_resource_configurator resources_,
+              fifo_async_task_scheduler*   ue_ctrl_loop_) :
+    du_ue(ctx_, std::move(resources_)), ue_ctrl_loop(ue_ctrl_loop_)
+  {
+  }
+
+  fifo_async_task_scheduler* ue_ctrl_loop;
+
+  async_task<void> disconnect_notifiers() override
+  {
+    ue_notifiers_disconnected = true;
+    return launch_no_op_task();
+  }
+  void schedule_async_task(async_task<void> task) override { ue_ctrl_loop->schedule(std::move(task)); }
+  void handle_rlf_detection(rlf_cause cause) override {}
+  void handle_crnti_ce_detection() override {}
+  void stop_drb_traffic() override {}
+  mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *this; }
+  void                                 on_rlf_detected() override {}
+  void                                 on_crnti_ce_received() override {}
+  rlc_tx_upper_layer_control_notifier& get_rlc_rlf_notifier() override { return *this; }
+  void                                 on_protocol_failure() override {}
+  void                                 on_max_retx() override {}
+};
+
 class ue_manager_dummy : public du_ue_manager_repository
 {
   dummy_teid_pool teid_pool;
 
 public:
-  slotted_array<std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ues;
+  slotted_array<du_ue_dummy, MAX_NOF_DU_UES> ues;
 
-  optional<du_ue_index_t> last_rlf_ue_index;
-  optional<rlf_cause>     last_rlf_cause;
-
-  du_ue* add_ue(std::unique_ptr<du_ue> u) override
+  du_ue* add_ue(const du_ue_context& u, ue_ran_resource_configurator resources) override
   {
-    du_ue* ret = u.get();
-    ues.emplace(u->ue_index, std::move(u));
-    return ret;
+    du_ue_index_t ue_index = u.ue_index;
+    ues.emplace(ue_index, std::move(u), std::move(resources), &ue_ctrl_loop);
+    return &ues[ue_index];
   }
-  void   remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
-  void   update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
-  du_ue* find_ue(du_ue_index_t ue_index) override { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
+  void         remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
+  void         update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
+  du_ue*       find_ue(du_ue_index_t ue_index) override { return ues.contains(ue_index) ? &ues[ue_index] : nullptr; }
+  const du_ue* find_ue(du_ue_index_t ue_index) const override
+  {
+    return ues.contains(ue_index) ? &ues[ue_index] : nullptr;
+  }
   du_ue* find_rnti(rnti_t rnti) override
   {
     for (auto& u : ues) {
-      if (u->rnti == rnti) {
-        return u.get();
+      if (u.rnti == rnti) {
+        return &u;
       }
     }
     return nullptr;
@@ -60,16 +94,11 @@ public:
   du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override
   {
     for (auto& u : ues) {
-      if (u->f1ap_ue_id == f1ap_ue_id) {
-        return u.get();
+      if (u.f1ap_ue_id == f1ap_ue_id) {
+        return &u;
       }
     }
     return nullptr;
-  }
-  void handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) override
-  {
-    last_rlf_ue_index = ue_index;
-    last_rlf_cause    = cause;
   }
   gtpu_teid_pool& get_f1u_teid_pool() override { return teid_pool; }
 

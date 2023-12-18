@@ -21,7 +21,9 @@
  */
 
 #include "test_helpers.h"
+#include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
 
 using namespace srsran;
 
@@ -51,9 +53,9 @@ protected:
 
   void set_config(udp_network_gateway_config server_config, udp_network_gateway_config client_config)
   {
-    server = create_udp_network_gateway({server_config, server_data_notifier});
+    server = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
     ASSERT_NE(server, nullptr);
-    client = create_udp_network_gateway({client_config, client_data_notifier});
+    client = create_udp_network_gateway({client_config, client_data_notifier, io_tx_executor});
     ASSERT_NE(client, nullptr);
   }
 
@@ -73,7 +75,7 @@ protected:
 
   void run_client_receive() { client->receive(); }
 
-  void send_to_server(const byte_buffer& pdu, std::string dest_addr, uint16_t port)
+  void send_to_server(byte_buffer pdu, std::string dest_addr, uint16_t port)
   {
     in_addr          inaddr_v4    = {};
     in6_addr         inaddr_v6    = {};
@@ -92,7 +94,7 @@ protected:
     } else {
       FAIL();
     }
-    client->handle_pdu(pdu, addr_storage);
+    client->handle_pdu(std::move(pdu), addr_storage);
   }
 
 protected:
@@ -103,6 +105,8 @@ protected:
   dummy_network_gateway_data_notifier_with_src_addr client_data_notifier;
 
   std::unique_ptr<udp_network_gateway> server, client;
+
+  manual_task_worker io_tx_executor{128};
 
   std::string server_address_v4 = "127.0.0.1";
   std::string client_address_v4 = "127.0.1.1";
@@ -191,11 +195,11 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   start_receive_thread();
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small, server_address_v4, server_port);
+  send_to_server(pdu_small.copy(), server_address_v4, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large, server_address_v4, server_port);
+  send_to_server(pdu_large.copy(), server_address_v4, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized, server_address_v4, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v4, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -238,11 +242,11 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   start_receive_thread();
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small, server_address_v6, server_port);
+  send_to_server(pdu_small.copy(), server_address_v6, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large, server_address_v6, server_port);
+  send_to_server(pdu_large.copy(), server_address_v6, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized, server_address_v6, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v6, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -288,11 +292,11 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small, server_address, server_port);
+  send_to_server(pdu_small.copy(), server_address, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large, server_address, server_port);
+  send_to_server(pdu_large.copy(), server_address, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized, server_address, server_port);
+  send_to_server(pdu_oversized.copy(), server_address, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));

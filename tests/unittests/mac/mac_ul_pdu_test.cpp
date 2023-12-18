@@ -589,10 +589,11 @@ TEST(mac_ul_pdu, handle_the_case_when_pdu_length_is_too_short_to_decode_length_p
 
 int main(int argc, char** argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
-
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
+
+  ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }

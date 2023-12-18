@@ -210,6 +210,9 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
       ->always_capture_default();
   app.add_option("--json_metrics_filename", metrics_params.json_filename, "JSON metrics output path")
       ->capture_default_str();
+  app.add_option(
+         "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
+      ->capture_default_str();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
@@ -877,6 +880,11 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  "latency, but place a stricter requirement on the UE decode latency.")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+
+  app.add_option("--max_consecutive_kos",
+                 pucch_params.max_consecutive_kos,
+                 "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
+      ->capture_default_str();
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
@@ -1405,6 +1413,9 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_rx_am_subcmd->add_option("--t-status-prohibit", rlc_am_params.rx.t_status_prohibit, "RLC AM RX t-StatusProhibit")
       ->capture_default_str();
+  rlc_rx_am_subcmd->add_option("--max_sn_per_status", rlc_am_params.rx.max_sn_per_status, "RLC AM RX status SN limit")
+      ->capture_default_str();
+  ;
 }
 
 static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
