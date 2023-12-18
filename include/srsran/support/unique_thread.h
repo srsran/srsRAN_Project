@@ -126,6 +126,9 @@ public:
 
   uint64_t to_uint64() const { return cpu_bitset.to_uint64(); }
 
+  /// \brief Number of CPUs enabled in the bitmask.
+  size_t count() const { return cpu_bitset.count(); }
+
 private:
   bounded_bitset<1024> cpu_bitset;
 };
