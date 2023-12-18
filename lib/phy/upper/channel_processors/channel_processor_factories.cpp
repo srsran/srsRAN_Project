@@ -22,10 +22,12 @@
 #include "pdsch_processor_pool.h"
 #include "pdsch_processor_validator_impl.h"
 #include "prach_detector_generic_impl.h"
+#include "prach_detector_pool.h"
 #include "prach_generator_impl.h"
 #include "pucch_demodulator_impl.h"
 #include "pucch_detector_impl.h"
 #include "pucch_processor_impl.h"
+#include "pucch_processor_pool.h"
 #include "ssb_processor_impl.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
@@ -447,6 +449,45 @@ public:
   }
 };
 
+class prach_detector_pool_factory : public prach_detector_factory
+{
+public:
+  prach_detector_pool_factory(std::shared_ptr<prach_detector_factory> factory_, unsigned nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid PRACH detector factory.");
+    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
+  }
+
+  std::unique_ptr<prach_detector> create() override
+  {
+    std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
+
+    for (auto& detector : detectors) {
+      detector = factory->create();
+    }
+
+    return std::make_unique<prach_detector_pool>(std::move(detectors));
+  }
+
+  std::unique_ptr<prach_detector> create(srslog::basic_logger& logger, bool log_all_opportunities) override
+  {
+    std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
+
+    for (auto& detector : detectors) {
+      detector = factory->create(logger, log_all_opportunities);
+    }
+
+    return std::make_unique<prach_detector_pool>(std::move(detectors));
+  }
+
+  std::unique_ptr<prach_detector_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<prach_detector_factory> factory;
+  unsigned                                nof_concurrent_threads;
+};
+
 class prach_generator_factory_sw : public prach_generator_factory
 {
 public:
@@ -544,6 +585,45 @@ private:
   std::shared_ptr<pucch_demodulator_factory>    demodulator_factory;
   std::shared_ptr<uci_decoder_factory>          decoder_factory;
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
+};
+
+class pucch_processor_pool_factory : public pucch_processor_factory
+{
+public:
+  pucch_processor_pool_factory(std::shared_ptr<pucch_processor_factory> factory_, unsigned nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid PUCCH processor factory.");
+    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
+  }
+
+  std::unique_ptr<pucch_processor> create() override
+  {
+    std::vector<std::unique_ptr<pucch_processor>> processors(nof_concurrent_threads);
+
+    for (auto& processor : processors) {
+      processor = factory->create();
+    }
+
+    return std::make_unique<pucch_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<pucch_processor> create(srslog::basic_logger& logger) override
+  {
+    std::vector<std::unique_ptr<pucch_processor>> processors(nof_concurrent_threads);
+
+    for (auto& processor : processors) {
+      processor = factory->create(logger);
+    }
+
+    return std::make_unique<pucch_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<pucch_pdu_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<pucch_processor_factory> factory;
+  unsigned                                 nof_concurrent_threads;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory
@@ -729,6 +809,13 @@ srsran::create_prach_detector_factory_sw(std::shared_ptr<dft_processor_factory> 
   return std::make_shared<prach_detector_factory_sw>(std::move(dft_factory), std::move(prach_gen_factory), config);
 }
 
+std::shared_ptr<prach_detector_factory>
+srsran::create_prach_detector_pool_factory(std::shared_ptr<prach_detector_factory> factory,
+                                           unsigned                                nof_concurrent_threads)
+{
+  return std::make_shared<prach_detector_pool_factory>(std::move(factory), nof_concurrent_threads);
+}
+
 std::shared_ptr<pucch_processor_factory> srsran::create_pucch_processor_factory_sw(
     std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
     std::shared_ptr<pucch_detector_factory>              detector_factory,
@@ -738,6 +825,13 @@ std::shared_ptr<pucch_processor_factory> srsran::create_pucch_processor_factory_
 {
   return std::make_shared<pucch_processor_factory_sw>(
       dmrs_factory, detector_factory, demodulator_factory, decoder_factory, channel_estimate_dimensions);
+}
+
+std::shared_ptr<pucch_processor_factory>
+srsran::create_pucch_processor_pool_factory(std::shared_ptr<pucch_processor_factory> factory,
+                                            unsigned                                 nof_concurrent_threads)
+{
+  return std::make_shared<pucch_processor_pool_factory>(std::move(factory), nof_concurrent_threads);
 }
 
 std::shared_ptr<prach_generator_factory> srsran::create_prach_generator_factory_sw()

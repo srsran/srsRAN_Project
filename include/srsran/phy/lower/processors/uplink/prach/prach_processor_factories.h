@@ -35,12 +35,14 @@ public:
 /// \param ofdm_prach_factory          OFDM demodulator for PRACH factory.
 /// \param async_task_executor         Task executor for demodulating PRACH asynchronously.
 /// \param srate                       Sampling rate.
+/// \param max_nof_ports               Maximum number of PRACH reception ports.
 /// \param max_nof_concurrent_requests Maximum number of concurrent PRACH processing requests.
 /// \return A valid PRACH processor factory.
 std::shared_ptr<prach_processor_factory>
 create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory,
                                   task_executor&                                  async_task_executor,
                                   sampling_rate                                   srate,
+                                  unsigned                                        max_nof_ports,
                                   unsigned                                        max_nof_concurrent_requests);
 
 } // namespace srsran

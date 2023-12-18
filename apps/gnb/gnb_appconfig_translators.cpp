@@ -24,6 +24,7 @@
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/support/math_utils.h"
 #include <algorithm>
 #include <map>
 
@@ -1536,7 +1537,6 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_slots_dl_rg            = dl_pipeline_depth;
     cfg.nof_dl_processors          = dl_pipeline_depth;
     cfg.nof_slots_ul_rg            = ul_pipeline_depth;
-    cfg.nof_ul_processors          = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
     cfg.max_pusch_concurrency      = max_pusch_concurrency;
     cfg.nof_pusch_decoder_threads  = config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads +

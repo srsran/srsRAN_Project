@@ -164,7 +164,7 @@ public:
   virtual ~prach_detector_factory()                                    = default;
   virtual std::unique_ptr<prach_detector>           create()           = 0;
   virtual std::unique_ptr<prach_detector_validator> create_validator() = 0;
-  std::unique_ptr<prach_detector>                   create(srslog::basic_logger& logger, bool log_all_opportunities);
+  virtual std::unique_ptr<prach_detector>           create(srslog::basic_logger& logger, bool log_all_opportunities);
 };
 
 struct prach_detector_factory_sw_configuration {
@@ -177,6 +177,9 @@ std::shared_ptr<prach_detector_factory>
 create_prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory,
                                  std::shared_ptr<prach_generator_factory>       prach_gen_factory,
                                  const prach_detector_factory_sw_configuration& config = {});
+
+std::shared_ptr<prach_detector_factory>
+create_prach_detector_pool_factory(std::shared_ptr<prach_detector_factory> factory, unsigned nof_concurrent_threads);
 
 class prach_generator_factory
 {
@@ -217,7 +220,7 @@ public:
   virtual ~pucch_processor_factory()                              = default;
   virtual std::unique_ptr<pucch_processor>     create()           = 0;
   virtual std::unique_ptr<pucch_pdu_validator> create_validator() = 0;
-  std::unique_ptr<pucch_processor>             create(srslog::basic_logger& logger);
+  virtual std::unique_ptr<pucch_processor>     create(srslog::basic_logger& logger);
 };
 
 std::shared_ptr<pucch_processor_factory>
@@ -226,6 +229,9 @@ create_pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory> 
                                   std::shared_ptr<pucch_demodulator_factory>           demodulator_factory,
                                   std::shared_ptr<uci_decoder_factory>                 decoder_factory,
                                   const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions);
+
+std::shared_ptr<pucch_processor_factory>
+create_pucch_processor_pool_factory(std::shared_ptr<pucch_processor_factory> factory, unsigned nof_concurrent_threads);
 
 class ssb_processor_factory
 {

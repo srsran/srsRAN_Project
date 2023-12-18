@@ -24,16 +24,19 @@ private:
   std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory;
   task_executor&                                  async_task_executor;
   sampling_rate                                   srate;
+  unsigned                                        max_nof_ports;
   unsigned                                        max_nof_concurrent_requests;
 
 public:
   prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory>& ofdm_prach_factory_,
                              task_executor&                                   async_task_executor_,
                              sampling_rate                                    srate_,
+                             unsigned                                         max_nof_ports_,
                              unsigned                                         max_nof_concurrent_requests_) :
     ofdm_prach_factory(ofdm_prach_factory_),
     async_task_executor(async_task_executor_),
     srate(srate_),
+    max_nof_ports(max_nof_ports_),
     max_nof_concurrent_requests(max_nof_concurrent_requests_)
   {
     srsran_assert(ofdm_prach_factory, "Invalid OFDM PRACH factory.");
@@ -45,8 +48,8 @@ public:
     std::vector<std::unique_ptr<prach_processor_worker>> workers;
     workers.reserve(max_nof_concurrent_requests);
     for (unsigned count = 0; count != max_nof_concurrent_requests; ++count) {
-      workers.push_back(
-          std::make_unique<prach_processor_worker>(ofdm_prach_factory->create(), async_task_executor, srate));
+      workers.push_back(std::make_unique<prach_processor_worker>(
+          ofdm_prach_factory->create(), async_task_executor, srate, max_nof_ports));
     }
 
     return std::make_unique<prach_processor_impl>(std::move(workers));
@@ -59,8 +62,9 @@ std::shared_ptr<prach_processor_factory>
 srsran::create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory,
                                           task_executor&                                  async_task_executor,
                                           sampling_rate                                   srate,
+                                          unsigned                                        max_nof_ports,
                                           unsigned                                        max_nof_concurrent_requests)
 {
   return std::make_shared<prach_processor_factory_sw>(
-      ofdm_prach_factory, async_task_executor, srate, max_nof_concurrent_requests);
+      ofdm_prach_factory, async_task_executor, srate, max_nof_ports, max_nof_concurrent_requests);
 }

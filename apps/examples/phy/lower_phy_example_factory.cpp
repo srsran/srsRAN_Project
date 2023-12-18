@@ -15,6 +15,15 @@ using namespace srsran;
 
 std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config)
 {
+  // Get the maximum number of receive ports.
+  unsigned max_nof_rx_ports =
+      std::max_element(config.sectors.begin(),
+                       config.sectors.end(),
+                       [](const lower_phy_sector_description& left, const lower_phy_sector_description& right) {
+                         return left.nof_rx_ports > right.nof_rx_ports;
+                       })
+          ->nof_rx_ports;
+
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_fast();
@@ -44,8 +53,8 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
   report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
 
   // Create PRACH processor factory.
-  std::shared_ptr<prach_processor_factory> prach_proc_factory =
-      create_prach_processor_factory_sw(prach_demodulator_factory, *config.prach_async_executor, config.srate, 1);
+  std::shared_ptr<prach_processor_factory> prach_proc_factory = create_prach_processor_factory_sw(
+      prach_demodulator_factory, *config.prach_async_executor, config.srate, max_nof_rx_ports, 1);
   report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
 
   // Create PUxCH processor factory.

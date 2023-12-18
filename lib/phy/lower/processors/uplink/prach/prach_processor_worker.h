@@ -90,11 +90,12 @@ public:
   /// Creates a PRACH processor worker.
   prach_processor_worker(std::unique_ptr<ofdm_prach_demodulator> demodulator_,
                          task_executor&                          async_task_executor_,
-                         sampling_rate                           srate) :
+                         sampling_rate                           srate,
+                         unsigned                                max_nof_ports) :
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(srate.to_Hz()),
-    temp_baseband(MAX_PORTS, prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
+    temp_baseband(max_nof_ports, prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
   {
     srsran_assert(sampling_rate_Hz && prach_constants::MAX_WINDOW_LENGTH.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",

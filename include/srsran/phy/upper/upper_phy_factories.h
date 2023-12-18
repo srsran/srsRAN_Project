@@ -270,8 +270,6 @@ struct upper_phy_config {
   bool is_prach_long_format;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
-  /// Maximum number of concurrent uplink processes.
-  unsigned nof_ul_processors;
   /// Maximum uplink processor thread concurrency.
   unsigned max_ul_thread_concurrency;
   /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
