@@ -146,40 +146,42 @@ def _publish_data(
             if metric is None:
                 break
             try:
-                timestamp = datetime.utcfromtimestamp(metric["timestamp"]).isoformat()
-                # Number of UEs measurement
-                _influx_push(
-                    write_api,
-                    bucket=bucket,
-                    record={
-                        "measurement": "ue_count",
-                        "tags": {
-                            "testbed": testbed,
-                        },
-                        "fields": {"value": len(metric["ue_list"])},
-                        "time": timestamp,
-                    },
-                    record_time_key="time",
-                )
-                # UE Info measurement
-                for ue_info in metric["ue_list"]:
-                    ue_container = ue_info["ue_container"]
-                    rnti = ue_container.pop("rnti")
+                # Currently we only support ue_list metric
+                if "ue_list" in metric:
+                    timestamp = datetime.utcfromtimestamp(metric["timestamp"]).isoformat()
+                    # Number of UEs measurement
                     _influx_push(
                         write_api,
                         bucket=bucket,
                         record={
-                            "measurement": "ue_info",
+                            "measurement": "ue_count",
                             "tags": {
-                                "rnti": f"{rnti:x}",
                                 "testbed": testbed,
                             },
-                            "fields": dict(ue_container.items()),
+                            "fields": {"value": len(metric["ue_list"])},
                             "time": timestamp,
                         },
                         record_time_key="time",
                     )
-                logging.debug("Pushed %s", metric)
+                    # UE Info measurement
+                    for ue_info in metric["ue_list"]:
+                        ue_container = ue_info["ue_container"]
+                        rnti = ue_container.pop("rnti")
+                        _influx_push(
+                            write_api,
+                            bucket=bucket,
+                            record={
+                                "measurement": "ue_info",
+                                "tags": {
+                                    "rnti": f"{rnti:x}",
+                                    "testbed": testbed,
+                                },
+                                "fields": dict(ue_container.items()),
+                                "time": timestamp,
+                            },
+                            record_time_key="time",
+                        )
+                    logging.debug("Pushed %s", metric)
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 
