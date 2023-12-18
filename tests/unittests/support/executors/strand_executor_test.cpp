@@ -137,4 +137,6 @@ TEST(strand_executor_test, multi_priorities_in_strand)
     ASSERT_TRUE(order_of_tasks.pop_blocking(p));
     ASSERT_EQ(p, expected_values[i]);
   }
+
+  pool.stop();
 }
