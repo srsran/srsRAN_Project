@@ -740,43 +740,55 @@ protected:
 
 } // namespace detail
 
-/// \brief Object used to push elements to a \c concurrent_priority_queue with a given priority.
-///
-/// This class is useful to reduce the number of template instantiations needed to interact with the .
+/// \brief Static interface used to push elements to a \c concurrent_queue.
 /// \tparam T type of element pushed.
 /// \tparam QueuePolicy Queue policy used to push the element.
 template <typename T, concurrent_queue_policy QueuePolicy>
-class priority_enqueuer
+class non_blocking_enqueuer
 {
 public:
   constexpr static concurrent_queue_policy queue_policy = QueuePolicy;
 
-  priority_enqueuer(detail::concurrent_priority_queue_wait_policy&                                wait_policy_,
-                    concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>& q_) :
-    wait_policy(&wait_policy_), queue(&q_)
+  non_blocking_enqueuer(concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>& q_) : queue(&q_)
   {
   }
 
-  /// \brief Push new object with priority level \c Priority.
+  /// \brief Push new object with priority level \c Priority in a non-blocking fashion.
   template <typename U>
   SRSRAN_NODISCARD bool try_push(U&& u)
   {
     return queue->try_push(std::forward<U>(u));
   }
 
+  /// \brief Maximum capacity of the queue.
+  size_t capacity() const { return queue->capacity(); }
+
+protected:
+  concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>* queue;
+};
+
+/// \brief Static interface used to push elements to a \c concurrent_queue both in a blocking or non-blocking fashion.
+/// \tparam T type of element pushed.
+/// \tparam QueuePolicy Queue policy used to push the element.
+template <typename T, concurrent_queue_policy QueuePolicy>
+class priority_enqueuer : public non_blocking_enqueuer<T, QueuePolicy>
+{
+public:
+  priority_enqueuer(detail::concurrent_priority_queue_wait_policy&                                wait_policy_,
+                    concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>& q_) :
+    non_blocking_enqueuer<T, QueuePolicy>(q_), wait_policy(&wait_policy_)
+  {
+  }
+
   /// \brief Push new object with priority level \c Priority.
   template <enqueue_priority Priority, typename U>
   SRSRAN_NODISCARD bool push_blocking(U&& u)
   {
-    return wait_policy->run_until([this, &u]() mutable { return queue->try_push(std::forward<U>(u)); });
+    return wait_policy->run_until([this, &u]() mutable { return this->queue->try_push(std::forward<U>(u)); });
   }
 
-  /// \brief Maximum capacity of the queue.
-  size_t capacity() const { return queue->capacity(); }
-
 private:
-  detail::concurrent_priority_queue_wait_policy*                                wait_policy;
-  concurrent_queue<T, QueuePolicy, concurrent_queue_wait_policy::non_blocking>* queue;
+  detail::concurrent_priority_queue_wait_policy* wait_policy;
 };
 
 /// \brief Gets the queue policy for a given priority.
@@ -895,6 +907,14 @@ public:
   {
     auto& q = std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues);
     return priority_enqueuer<T, get_priority_queue_policy<QueuePolicies...>(Priority)>{wait_policy, q};
+  }
+
+  /// \brief Gets the non-blocking enqueue point for a given priority.
+  template <enqueue_priority Priority>
+  auto get_non_blocking_enqueuer()
+  {
+    auto& q = std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues);
+    return non_blocking_enqueuer<T, get_priority_queue_policy<QueuePolicies...>(Priority)>{q};
   }
 
 private:
