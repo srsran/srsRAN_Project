@@ -569,7 +569,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   }
 
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
-    logger.log_warning("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
+    logger.log_error("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
     return;
   }
 
