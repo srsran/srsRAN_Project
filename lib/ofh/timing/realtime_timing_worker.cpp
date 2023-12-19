@@ -163,12 +163,6 @@ void realtime_timing_worker::poll()
                    delta);
   }
 
-  // Print a warning when the sleep is bigger than one slot.
-  // :TODO: this is active in a different PR. Make sure to remove it when the other is merged.
-  if (delta > 14) {
-    logger.warning("Real-time timing worker late, skipped {} symbols", delta);
-  }
-
   slot_symbol_point symbol_point(
       calculate_slot_point(scs,
                            std::chrono::time_point_cast<std::chrono::seconds>(now).time_since_epoch().count(),

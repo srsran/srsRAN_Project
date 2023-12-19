@@ -13,6 +13,7 @@ set(SOURCES
         ofh_receiver_controller.cpp
         ofh_receiver_factories.cpp
         ofh_receiver_impl.cpp
+        ofh_rx_lost_message_logger_decorator.cpp
         ofh_rx_window_checker.cpp
         ofh_uplane_rx_symbol_data_flow_notifier.cpp
         ofh_uplane_rx_symbol_data_flow_writer.cpp

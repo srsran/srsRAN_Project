@@ -73,7 +73,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.mtu_size                    = sector_cfg.mtu_size;
   tx_config.ru_working_bw               = sector_cfg.ru_operating_bw;
   tx_config.symbol_handler_cfg          = {
-               sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
+      sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
   tx_config.dl_compr_params                      = sector_cfg.dl_compression_params;
   tx_config.ul_compr_params                      = sector_cfg.ul_compression_params;
   tx_config.prach_compr_params                   = sector_cfg.prach_compression_params;

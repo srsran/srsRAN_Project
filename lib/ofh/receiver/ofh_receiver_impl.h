@@ -15,6 +15,7 @@
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_message_receiver.h"
 #include "ofh_receiver_controller.h"
+#include "ofh_rx_lost_message_logger_decorator.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -36,6 +37,10 @@ struct receiver_impl_dependencies {
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
   std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
+  /// PRACH context repository.
+  std::shared_ptr<prach_context_repository> prach_context_repo_ptr;
+  /// Uplink context repository.
+  std::shared_ptr<uplink_context_repository> ul_context_repo_ptr;
 };
 
 /// \brief Open Fronthaul receiver.
@@ -62,9 +67,10 @@ public:
   }
 
 private:
-  rx_window_checker   window_checker;
-  message_receiver    msg_receiver;
-  receiver_controller ctrl;
+  rx_window_checker                window_checker;
+  rx_lost_message_logger_decorator lost_message_decorator;
+  message_receiver                 msg_receiver;
+  receiver_controller              ctrl;
 };
 
 } // namespace ofh
