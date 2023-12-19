@@ -36,6 +36,7 @@
 
 /// \cond
 using namespace srsran;
+using namespace units::literals;
 
 static bool     use_early_stop      = false;
 static unsigned nof_ldpc_iterations = 6;
@@ -303,6 +304,12 @@ int main(int argc, char** argv)
     dec_cfg.new_data            = true;
     dec_cfg.nof_ldpc_iterations = nof_ldpc_iterations;
     dec_cfg.use_early_stop      = use_early_stop;
+
+    // List of bit indexes within the codeword at which point the PUSCH decoder will be informed of the total number of
+    // UL-SCH CW bits. This enables the PUSCH decoder to start decoding codeblocks.
+    std::vector<units::bits> i_cw_decoding_start_list = {0_bits, units::bits((cws / 2) + 1), units::bits(cws - 1)};
+    unsigned                 cw_dec_start_idx         = 0;
+
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs.truncate_to_bytes().value());
@@ -326,7 +333,25 @@ int main(int argc, char** argv)
       pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, std::move(buffer), decoder_notifier_spy, dec_cfg);
 
       // Feed codeword.
-      decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));
+      span<const log_likelihood_ratio> llrs_cw = span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws);
+
+      // Bit index within the CW at which point the set_nof_softbits decoder function will be called.
+      units::bits i_cw_dec_start = i_cw_decoding_start_list[cw_dec_start_idx];
+
+      if (i_cw_dec_start > 0_bits) {
+        // Feed bits before passing the number of UL-SCH CW bits to the decoder.
+        span<const log_likelihood_ratio> llrs_before_nof_softbits_call = llrs_cw.first(i_cw_dec_start.value());
+        decoder_buffer.on_new_softbits(llrs_before_nof_softbits_call);
+      }
+
+      if (i_cw_dec_start != units::bits(cws - 1)) {
+        // Pass the number of soft bits to the decoder.
+        decoder->set_nof_softbits(units::bits(cws));
+      }
+
+      // Feed the remaining softbits.
+      span<const log_likelihood_ratio> llrs_after_nof_softbits_call = llrs_cw.last(cws - i_cw_dec_start.value());
+      decoder_buffer.on_new_softbits(llrs_after_nof_softbits_call);
       decoder_buffer.on_end_softbits();
 
       // Extract decoding results.
@@ -350,6 +375,9 @@ int main(int argc, char** argv)
                       dec_stats.ldpc_decoder_stats.get_min(),
                       "Something wrong with iteration counting (no early stop).");
       }
+
+      ++cw_dec_start_idx;
+      cw_dec_start_idx %= i_cw_decoding_start_list.size();
     }
   }
 }

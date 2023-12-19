@@ -81,6 +81,12 @@ public:
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
+  // See interface for the documentation.
+  void set_nof_softbits(units::bits nof_softbits) override
+  {
+    // Not implemented.
+  }
+
 private:
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_rx> segmenter;

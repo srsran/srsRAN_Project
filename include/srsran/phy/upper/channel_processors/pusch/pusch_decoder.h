@@ -76,6 +76,14 @@ public:
                                          unique_rx_buffer        rm_buffer,
                                          pusch_decoder_notifier& notifier,
                                          const configuration&    cfg) = 0;
+
+  /// \brief Sets the number of UL-SCH codeword softbits expected by the PUSCH decoder.
+  ///
+  /// It allows the decoder to start decoding codeblocks before receiving the entire codeword. If it is called before
+  /// \ref new_data or after decoding has started, it has no effect.
+  ///
+  /// \param[in] nof_softbits Number of codeword softbits, parameter \f$G^\textup{UL-SCH}\f$ in TS38.212 Section 6.2.7.
+  virtual void set_nof_softbits(units::bits nof_softbits) = 0;
 };
 
 } // namespace srsran

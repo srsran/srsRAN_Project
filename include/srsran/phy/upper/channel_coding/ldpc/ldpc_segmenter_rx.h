@@ -31,10 +31,16 @@ public:
   ///
   /// The LLRs corresponding to the received codeword are split into codeblocks to feed the decoder. Each codeblock is
   /// described by all the metadata needed for rate-dematching and decoding, as per TS38.212 Section 5.4.2.1.
-  /// \param[out] described_codeblocks  Codeblock LLRs and corresponding metadata.
-  /// \param[in]  codeword_llrs         Log-likelihood ratios of the received codeword.
-  /// \param[in]  tbs                   Transport block size (not including CRC), as a number of bits.
-  /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
+  ///
+  /// It is possible to call this method when only part of the codeword LLRs are available. In that case, all possible
+  /// code blocks are generated in \c described_codeblocks. Then, it can be called again once more LLRs are available.
+  /// If the previously generated codeblock information is present in \c described_codeblocks, segmentation of previous
+  /// codeblocks is skipped.
+  ///
+  /// \param[in,out] described_codeblocks  Codeblock LLRs and corresponding metadata.
+  /// \param[in]     codeword_llrs         Log-likelihood ratios of the received codeword.
+  /// \param[in]     tbs                   Transport block size (not including CRC), as a number of bits.
+  /// \param[in]     cfg                   Parameters affecting splitting and codeblock metadata.
   /// \remark The output codeblocks are just views (not copies) of the proper block of codeword log-likelihood ratios in
   /// \c codeword_llrs.
   virtual void segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,

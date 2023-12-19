@@ -86,6 +86,9 @@ public:
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
+  // See interface for the documentation.
+  void set_nof_softbits(units::bits nof_softbits) override;
+
 private:
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_rx> segmenter;
@@ -111,12 +114,20 @@ private:
   pusch_decoder_notifier* result_notifier = nullptr;
   /// Current PUSCH decoder configuration.
   pusch_decoder::configuration current_config;
+  /// Segmentation configuration parameters.
+  segmenter_config segmentation_config;
   /// Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs;
   /// Counts code blocks.
   std::atomic<unsigned> cb_counter;
   /// Enqueues code block decoder statistics.
   concurrent_queue<unsigned, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep> cb_stats;
+  /// Number of UL-SCH codeword softbits. If set, the decoder will start decoding codeblocks as they become available.
+  optional<units::bits> nof_ulsch_softbits;
+  /// Number of codeblocks in the current codeword.
+  unsigned nof_codeblocks;
+  /// CRC calculator for inner codeblock checks.
+  crc_calculator* block_crc;
 
   // See interface for the documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override;
@@ -126,6 +137,11 @@ private:
 
   // See interface for the documentation.
   void on_end_softbits() override;
+
+  /// \brief Creates a codeblock decoding task.
+  ///
+  /// \param[in] cb_id Identifier of the codeblock to decode.
+  void fork_codeblock_task(unsigned cb_id);
 
   /// \brief Joins the multiple code block processing.
   ///
