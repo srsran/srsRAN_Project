@@ -174,7 +174,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     if (ue_dl_grant.context.olla_offset.has_value()) {
       fmt::format_to(fmtbuf, " olla={:.3}", ue_dl_grant.context.olla_offset.value());
     }
-    if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
+    if (ue_dl_grant.pdsch_cfg.precoding.has_value() and not ue_dl_grant.pdsch_cfg.precoding.value().prg_infos.empty()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
       fmt::format_to(fmtbuf, " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
     }
