@@ -98,10 +98,14 @@ async_task<e2_setup_response_message> e2_entity::start_initial_e2_setup_routine(
 
 void e2_entity::handle_connection_loss()
 {
-  task_exec.execute([this]() { decorated_e2_iface->handle_connection_loss(); });
+  if (not task_exec.execute([this]() { decorated_e2_iface->handle_connection_loss(); })) {
+    logger.error("Unable to dispatch handling of connection loss");
+  }
 }
 
 void e2_entity::handle_message(const e2_message& msg)
 {
-  task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); });
+  if (not task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); })) {
+    logger.error("Unable to dispatch handling of message");
+  }
 }

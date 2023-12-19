@@ -47,8 +47,11 @@ public:
     data_flow_uplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_uplane_downlink_data&                  data_flow_uplane = *dispatcher.data_flow_uplane;
 
-    dispatcher.executor.execute(
-        [&data_flow_uplane, context, &grid]() { data_flow_uplane.enqueue_section_type_1_message(context, grid); });
+    if (not dispatcher.executor.execute([&data_flow_uplane, context, &grid]() {
+          data_flow_uplane.enqueue_section_type_1_message(context, grid);
+        })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch type 1 message");
+    }
   }
 
 private:

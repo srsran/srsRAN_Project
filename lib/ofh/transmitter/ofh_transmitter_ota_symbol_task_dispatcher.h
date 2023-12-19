@@ -32,7 +32,9 @@ public:
   {
     window_checker.on_new_symbol(symbol_point);
 
-    executor.execute([&, symbol_point]() { symbol_handler.on_new_symbol(symbol_point); });
+    if (not executor.execute([&, symbol_point]() { symbol_handler.on_new_symbol(symbol_point); })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch new symbol task");
+    }
   }
 
 private:

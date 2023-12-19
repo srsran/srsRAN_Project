@@ -121,14 +121,16 @@ TEST(strand_executor_test, multi_priorities_in_strand)
   concurrent_queue<enqueue_priority, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
       order_of_tasks(10);
 
-  strand_execs[0]->execute([&]() {
+  ASSERT_TRUE(strand_execs[0]->execute([&]() {
     order_of_tasks.try_push(enqueue_priority::max);
 
     // Strand tasks are being pushed from within worker pool, but strand is already locked.
     // So, they will run right after this lambda returns, respecting the strand task priorities.
-    strand_execs[1]->execute([&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max - 1)); });
-    strand_execs[0]->execute([&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max)); });
-  });
+    ASSERT_TRUE(strand_execs[1]->execute(
+        [&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max - 1)); }));
+    ASSERT_TRUE(
+        strand_execs[0]->execute([&order_of_tasks]() { EXPECT_TRUE(order_of_tasks.try_push(enqueue_priority::max)); }));
+  }));
 
   std::array<enqueue_priority, 3> expected_values{
       enqueue_priority::max, enqueue_priority::max, enqueue_priority::max - 1};

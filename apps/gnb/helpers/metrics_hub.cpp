@@ -47,12 +47,14 @@ void scheduler_ue_metrics_source::report_metrics(span<const scheduler_ue_metrics
 {
   srsran_assert(executor != nullptr, "Task executor must not be nullptr");
   std::vector<scheduler_ue_metrics> ue_metrics_copy(ue_metrics.begin(), ue_metrics.end());
-  executor->execute([this, ue_metrics_copy]() {
-    for (auto& subscriber : subscribers) {
-      span<const scheduler_ue_metrics> ue_metrics_span(ue_metrics_copy);
-      subscriber->report_metrics(ue_metrics_span);
-    }
-  });
+  if (not executor->execute([this, ue_metrics_copy]() {
+        for (auto& subscriber : subscribers) {
+          span<const scheduler_ue_metrics> ue_metrics_span(ue_metrics_copy);
+          subscriber->report_metrics(ue_metrics_span);
+        }
+      })) {
+    srslog::fetch_basic_logger("ALL").warning("Failed to dispatch scheduler UE metrics");
+  }
 }
 
 void scheduler_ue_metrics_source::add_subscriber(scheduler_ue_metrics_notifier& subscriber)
@@ -63,11 +65,13 @@ void scheduler_ue_metrics_source::add_subscriber(scheduler_ue_metrics_notifier& 
 void rlc_metrics_source::report_metrics(const rlc_metrics& metrics)
 {
   srsran_assert(executor != nullptr, "Task executor must not be nullptr");
-  executor->execute([this, metrics]() {
-    for (auto& subscriber : subscribers) {
-      subscriber->report_metrics(metrics);
-    }
-  });
+  if (not executor->execute([this, metrics]() {
+        for (auto& subscriber : subscribers) {
+          subscriber->report_metrics(metrics);
+        }
+      })) {
+    srslog::fetch_basic_logger("ALL").warning("Failed to dispatch RLC metrics");
+  }
 }
 
 void rlc_metrics_source::add_subscriber(rlc_metrics_notifier& subscriber)
