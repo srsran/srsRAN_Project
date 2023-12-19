@@ -15,12 +15,79 @@
 
 using namespace srsran;
 
+class ue_event_manager::ue_dl_buffer_occupancy_manager
+{
+public:
+  ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
+  {
+    std::fill(ue_rlc_bo_list.begin(), ue_rlc_bo_list.end(), -1);
+  }
+
+  void enqueue_rlc_buffer_occupancy_update(const dl_buffer_state_indication_message& rlc_dl_bo)
+  {
+    unsigned idx          = rlc_dl_bo.ue_index * MAX_NOF_RB_LCIDS + rlc_dl_bo.lcid;
+    bool     first_rlc_bo = ue_rlc_bo_list[idx].exchange(rlc_dl_bo.bs, std::memory_order_acquire) < 0;
+
+    if (not first_rlc_bo) {
+      return;
+    }
+
+    pending_evs.push(rlc_dl_bo);
+  }
+
+  void slot_indication()
+  {
+    // Retrieve pending UEs.
+    pending_evs.slot_indication();
+    span<dl_buffer_state_indication_message> ues_to_process = pending_evs.get_events();
+
+    // Process RLC buffer updates of pending UEs.
+    for (dl_buffer_state_indication_message& dl_bo : ues_to_process) {
+      if (not parent.ue_db.contains(dl_bo.ue_index)) {
+        parent.log_invalid_ue_index(dl_bo.ue_index);
+        continue;
+      }
+      ue& u = parent.ue_db[dl_bo.ue_index];
+
+      // Update DL buffer state with latest RLC buffer occupancy update for this UE.
+      unsigned idx = dl_bo.ue_index * MAX_NOF_RB_LCIDS + dl_bo.lcid;
+      dl_bo.bs     = ue_rlc_bo_list[idx].exchange(-1, std::memory_order_acq_rel);
+
+      // Forward DL buffer state to UE.
+      u.handle_dl_buffer_state_indication(dl_bo);
+      if (dl_bo.lcid == LCID_SRB0) {
+        // Signal SRB0 scheduler with the new SRB0 buffer state.
+        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(dl_bo.ue_index);
+      }
+
+      // Log event.
+      parent.ev_logger.enqueue(dl_bo);
+
+      // Report event.
+      parent.metrics_handler.handle_dl_buffer_state_indication(dl_bo);
+    }
+  }
+
+private:
+  ue_event_manager& parent;
+
+  std::array<std::atomic<int>, MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS> ue_rlc_bo_list;
+
+  slot_event_list<dl_buffer_state_indication_message> pending_evs;
+};
+
 ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
                                    scheduler_metrics_handler& metrics_handler_,
                                    scheduler_event_logger&    ev_logger_) :
-  ue_db(ue_db_), metrics_handler(metrics_handler_), ev_logger(ev_logger_), logger(srslog::fetch_basic_logger("SCHED"))
+  ue_db(ue_db_),
+  metrics_handler(metrics_handler_),
+  ev_logger(ev_logger_),
+  logger(srslog::fetch_basic_logger("SCHED")),
+  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
 }
+
+ue_event_manager::~ue_event_manager() {}
 
 void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
@@ -323,30 +390,13 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  common_events.emplace(bs.ue_index, [this, bs]() {
-    if (not ue_db.contains(bs.ue_index)) {
-      log_invalid_ue_index(bs.ue_index, "DL Buffer State");
-      return;
-    }
-    ue& u = ue_db[bs.ue_index];
-
-    u.handle_dl_buffer_state_indication(bs);
-    if (bs.lcid == LCID_SRB0) {
-      // Signal SRB0 scheduler with the new SRB0 buffer state.
-      du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
-    }
-
-    // Log event.
-    ev_logger.enqueue(bs);
-
-    // Report event.
-    metrics_handler.handle_dl_buffer_state_indication(bs);
-  });
+  dl_bo_mng->enqueue_rlc_buffer_occupancy_update(bs);
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 {
-  if (last_sl != sl) {
+  bool new_slot_detected = last_sl != sl;
+  if (new_slot_detected) {
     // Pop pending common events.
     common_events.slot_indication();
     last_sl = sl;
@@ -376,6 +426,10 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
         ev.callback = {};
       }
     }
+  }
+
+  if (new_slot_detected) {
+    dl_bo_mng->slot_indication();
   }
 }
 

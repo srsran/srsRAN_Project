@@ -33,6 +33,7 @@ class ue_event_manager final : public sched_ue_configuration_handler,
 {
 public:
   ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
+  ~ue_event_manager();
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
@@ -55,6 +56,8 @@ public:
   void run(slot_point sl, du_cell_index_t cell_index);
 
 private:
+  class ue_dl_buffer_occupancy_manager;
+
   struct common_event_t {
     du_ue_index_t           ue_index = MAX_NOF_DU_UES;
     unique_function<void()> callback;
@@ -115,6 +118,8 @@ private:
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).
   slot_event_list<common_event_t> common_events;
   slot_point                      last_sl;
+
+  std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
 };
 
 } // namespace srsran
