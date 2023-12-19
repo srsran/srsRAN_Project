@@ -1,0 +1,56 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 22
+      limits: 22
+    memory:
+      requests: "64G"
+      limits: "64G"
+    hugepages-1Gi:
+      requests: 2Gi
+      limits: 2Gi
+    ephemeral-storage:
+      requests: "9G"
+      limits: "9G"
+  taints: ["ci-amd64-avx512-onprem"]
+  resources:
+    - type: emulator
+      model: viavi
+    - type: ru
+      model: viavi
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+    - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
+
+- name: metrics-server
+  type: generic
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "500Mi"
+    ephemeral-storage:
+      requests: "1G"
+  environment:
+    - URL: ${RETINA_METRICS_SERVER_URL}
+    - ORG: ${RETINA_METRICS_SERVER_ORG}
+    - BUCKET: ${RETINA_METRICS_SERVER_BUCKET}
+    - TESTBED: ${RETINA_METRICS_SERVER_TESTBED}
+    - TOKEN: ${RETINA_METRICS_SERVER_TOKEN}
+  image: ${SRSGNB_REGISTRY_URI}/metrics_server:${METRICS_SERVER_VERSION}

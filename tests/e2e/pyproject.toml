@@ -36,6 +36,7 @@ markers = [
   "test",
   "zmq_4x4_mimo",
   "zmq_srsue",
+  "viavi",
 ]
 minversion = "6.0"
 python_files = [

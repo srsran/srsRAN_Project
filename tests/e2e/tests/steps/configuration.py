@@ -16,6 +16,7 @@ from typing import Optional, Union
 
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.public import MetricServerInfo
 
 
 # pylint: disable=too-many-arguments
@@ -152,3 +153,23 @@ def get_minimum_sample_rate_for_bandwidth(bandwidth: int) -> int:
     f_s_list = [5.76, 7.68, 11.52, 15.36, 23.04, 30.72, 61.44, 122.88, 245.76]
     f_s_min = int(1e6 * min(filter(lambda f: f > bandwidth, f_s_list)))
     return f_s_min
+
+
+def configure_metric_server_for_gnb(
+    retina_manager: RetinaTestManager, retina_data: RetinaTestData, metrics_server: MetricServerInfo
+):
+    """
+    Set parameters to set up a metrics server
+    """
+
+    if "gnb" not in retina_data.test_config:
+        retina_data.test_config["gnb"] = {}
+    if "parameters" not in retina_data.test_config["gnb"]:
+        retina_data.test_config["gnb"]["parameters"] = {}
+
+    retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.address
+    retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
+
+    logging.info("Test config: \n%s", pformat(retina_data.test_config))
+    retina_manager.parse_configuration(retina_data.test_config)
+    retina_manager.push_all_config()

@@ -354,6 +354,29 @@ android-n300:
     TESTBED: "android_n300"
 
 ################################################################################
+# VIAVI
+###############################################################################
+
+viavi:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: manual
+      allow_failure: true
+      # when: delayed
+      # start_in: 7 hours
+  variables:
+    GROUP: "viavi"
+    TESTBED: "viavi"
+    MARKERS: "viavi"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+
+################################################################################
 # Garbage collector
 ################################################################################
 
