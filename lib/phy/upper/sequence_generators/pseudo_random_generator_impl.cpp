@@ -499,7 +499,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
     }
 #endif // __aarch64__
     for (; j != max_nof_bits_step; ++j) {
-      out[i + j] = in[i + j].to_value_type() * (((c << j) & 2147483648U) ? -1 : +1);
+      out[i + j] = in[i + j].to_value_type() * ((c << j & 0x80000000) ? -1 : +1);
     }
   }
 
