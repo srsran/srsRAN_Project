@@ -156,7 +156,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
 {
   data_direction direction = context.direction;
   slot_point     slot      = context.slot;
-  logger.debug("Creating Control-Plane message type 1 for {} at slot={}, eaxc={}",
+  logger.debug("Packing a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
                (direction == data_direction::downlink) ? "downlink" : "uplink",
                slot,
                context.eaxc);
@@ -207,7 +207,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
     const data_flow_cplane_scheduling_prach_context& context)
 {
   slot_point slot = context.slot;
-  logger.debug("Creating Control-Plane message type 3 for PRACH at slot={}", slot);
+  logger.debug("Packing a type 3 PRACH Control-Plane message for slot '{}' and eAxC '{}'", slot, context.eaxc);
 
   // Get an ethernet frame buffer.
   scoped_frame_buffer scoped_buffer(
@@ -222,8 +222,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   span<uint8_t> ofh_buffer      = buffer.last(buffer.size() - offset.value());
   const auto&   ofh_ctrl_params = generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
 
-  logger.debug("PRACH request at slot={}: numSymbols={}, startSym={}, start_re={}, scs={}, prach_scs={}, nof_rb={}, "
-               "timeOffset={}, freqOffset={}",
+  logger.debug("Generated a PRACH request for slot '{}': numSymbols={}, startSym={}, start_re={}, scs={}, "
+               "prach_scs={}, nof_rb={}, timeOffset={}, freqOffset={}",
                slot,
                context.nof_repetitions,
                context.start_symbol,

@@ -30,17 +30,17 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
                }
                return controllers;
              }(&ofh_timing_mngr->get_controller(), sectors)),
-  downlink_handler([](span<std::unique_ptr<ofh::sector>> sects) {
+  downlink_handler([](span<std::unique_ptr<ofh::sector>> sectors_) {
     std::vector<ofh::downlink_handler*> out;
-    for (unsigned i = 0, e = sects.size(); i != e; ++i) {
-      out.emplace_back(&sects[i].get()->get_transmitter().get_downlink_handler());
+    for (const auto& sector : sectors_) {
+      out.emplace_back(&sector.get()->get_transmitter().get_downlink_handler());
     }
     return out;
   }(sectors)),
-  uplink_handler([](span<std::unique_ptr<ofh::sector>> sects) {
+  uplink_handler([](span<std::unique_ptr<ofh::sector>> sectors_) {
     std::vector<ofh::uplink_request_handler*> out;
-    for (unsigned i = 0, e = sects.size(); i != e; ++i) {
-      out.emplace_back(&sects[i].get()->get_transmitter().get_uplink_request_handler());
+    for (const auto& sector : sectors_) {
+      out.emplace_back(&sector.get()->get_transmitter().get_uplink_request_handler());
     }
     return out;
   }(sectors))

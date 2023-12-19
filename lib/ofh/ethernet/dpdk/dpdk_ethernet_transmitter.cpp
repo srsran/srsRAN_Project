@@ -128,13 +128,15 @@ static void dpdk_port_configure(const gw_config& config, ::rte_mempool*& mbuf_po
 void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
 {
   if (frames.size() >= MAX_BURST_SIZE) {
-    logger.warning("Unable to send a transmission burst size of {} frames", frames.size());
+    logger.warning("Unable to send a transmission burst size of '{}' frames in the DPDK Ethernet transmitter",
+                   frames.size());
     return;
   }
 
   static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frames.size());
   if (::rte_pktmbuf_alloc_bulk(mbuf_pool, mbufs.data(), frames.size()) < 0) {
-    logger.warning("Not enough entries in the mempool to send {} frames in DPDK Ethernet transmitter", frames.size());
+    logger.warning("Not enough entries in the mempool to send '{}' frames in the DPDK Ethernet transmitter",
+                   frames.size());
     return;
   }
 
@@ -144,7 +146,8 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
 
     if (::rte_pktmbuf_append(mbuf, frame.size()) == nullptr) {
       ::rte_pktmbuf_free(mbuf);
-      logger.warning("Unable to append {} bytes to allocated mbuf in DPDK Ethernet transmitter", frame.size());
+      logger.warning("Unable to append '{}' bytes to the allocated mbuf in the DPDK Ethernet transmitter",
+                     frame.size());
       ::rte_pktmbuf_free_bulk(mbufs.data(), mbufs.size());
       return;
     }
@@ -158,7 +161,9 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
   unsigned nof_sent_packets = ::rte_eth_tx_burst(port_id, 0, mbufs.data(), mbufs.size());
 
   if (SRSRAN_UNLIKELY(nof_sent_packets < mbufs.size())) {
-    logger.warning("Dropped {} packets in the DPDK Ethernet transmitter", mbufs.size() - nof_sent_packets);
+    logger.warning("DPDK dropped '{}' packets out of a total of '{}' in the tx burst",
+                   mbufs.size() - nof_sent_packets,
+                   mbufs.size());
     for (unsigned buf_idx = nof_sent_packets, last_idx = mbufs.size(); buf_idx != last_idx; ++buf_idx) {
       ::rte_pktmbuf_free(mbufs[buf_idx]);
     }

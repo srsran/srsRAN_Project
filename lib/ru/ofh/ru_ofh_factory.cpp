@@ -76,7 +76,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                                                   ru_ofh_dependencies&&       dependencies)
 {
   report_fatal_error_if_not(config.max_processing_delay_slots >= 1,
-                            "max_processing_delay_slots option should be greater or equal to 1");
+                            "max_processing_delay_slots option should be greater than or equal to 1");
   report_fatal_error_if_not(dependencies.timing_notifier, "Invalid timing notifier");
 
   ru_ofh_impl_dependencies ofh_dependencies;
@@ -91,17 +91,25 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     const auto& sector_cfg = config.sector_configs[i];
 
     if (sector_cfg.ru_operating_bw) {
-      report_fatal_error_if_not(sector_cfg.ru_operating_bw.value() >= sector_cfg.bw,
-                                "The RU operating bandwidth should be greater or equal to the bandwidth of the cell");
+      report_fatal_error_if_not(
+          sector_cfg.ru_operating_bw.value() >= sector_cfg.bw,
+          "The RU operating bandwidth should be greater than or equal to the bandwidth of the cell");
     }
     if (sector_cfg.is_downlink_broadcast_enabled) {
       report_fatal_error_if_not(
           sector_cfg.dl_eaxc.size() > 1,
-          "Downlink broadcast option only available when the number of downlink ports is more than one");
+          "The downlink broadcast option is only available when the number of downlink ports is greater than one");
     }
 
-    fmt::print("Initializing Open Fronthaul Interface sector={}: ul_comp=[{},{}], dl_comp=[{},{}], prach_comp=[{},{}] "
-               "prach_cp_enabled={}, downlink_broadcast={}.{}\n",
+    // Create OFH sector.
+    auto sector = ofh::create_ofh_sector(
+        generate_sector_configuration(config, sector_cfg),
+        generate_sector_dependencies(std::move(dependencies.sector_dependencies[i]), ul_data_notifier));
+    report_fatal_error_if_not(sector, "Unable to create OFH sector");
+    ofh_dependencies.sectors.emplace_back(std::move(sector));
+
+    fmt::print("Initializing the Open FrontHaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
+               "prach_compr=[{},{}] prach_cp_enabled={}, downlink_broadcast={}.{}\n",
                i,
                to_string(sector_cfg.ul_compression_params.type),
                sector_cfg.ul_compression_params.data_width,
@@ -116,13 +124,6 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                                  sector_cfg.bw,
                                  *sector_cfg.ru_operating_bw)
                    : fmt::format(""));
-
-    // Create OFH sector.
-    auto sector = ofh::create_ofh_sector(
-        generate_sector_configuration(config, sector_cfg),
-        generate_sector_dependencies(std::move(dependencies.sector_dependencies[i]), ul_data_notifier));
-    report_fatal_error_if_not(sector, "Unable to create OFH sector");
-    ofh_dependencies.sectors.emplace_back(std::move(sector));
   }
 
   // Prepare OFH controller configuration.

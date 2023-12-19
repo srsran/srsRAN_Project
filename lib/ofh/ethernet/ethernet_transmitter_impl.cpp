@@ -41,10 +41,10 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
     } else {
       current_mtu = if_idx.ifr_mtu;
     }
-    report_error(
-        "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes",
-        config.mtu_size,
-        current_mtu);
+    report_error("Unable to set MTU size to '{}' bytes for NIC interface in the Ethernet transmitter, current MTU size "
+                 "set to '{}' bytes",
+                 config.mtu_size,
+                 current_mtu);
   }
 
   // Get the index of the NIC.
@@ -75,7 +75,8 @@ void transmitter_impl::send(span<span<const uint8_t>> frames)
                  0,
                  reinterpret_cast<::sockaddr*>(&socket_address),
                  sizeof(socket_address)) < 0) {
-      logger.warning("sendto failed to transmit {} bytes, consider tuning the NIC for higher performance",
+      logger.warning("Ethernet transmitter call to sendto failed as it could not transmit '{}' bytes, consider tuning "
+                     "the NIC system settings to obtain higher performance or use DPDK",
                      frame.size());
     }
   }

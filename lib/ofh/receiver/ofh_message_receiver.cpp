@@ -54,11 +54,11 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
       seq_id_checker.update_and_compare_seq_id(ecpri_iq_params.pc_id, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (nof_skipped_seq_id < 0) {
-    logger.debug("Dropping Open Fronthaul User-Plane message as sequence identifier was from the past");
-
+    logger.info("Dropped received Open Fronthaul User-Plane packet as sequence identifier field is from the past");
     return;
-  } else if (nof_skipped_seq_id > 0) {
-    logger.warning("Detected {} lost messages", nof_skipped_seq_id);
+  }
+  if (nof_skipped_seq_id > 0) {
+    logger.warning("Potentially lost '{}' messages sent by the RU", nof_skipped_seq_id);
   }
 
   slot_symbol_point slot_point = uplane_decoder->peek_slot_symbol_point(ofh_pdu);
@@ -82,7 +82,7 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
 bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
 {
   if (ecpri_params.header.msg_type != ecpri::message_type::iq_data) {
-    logger.debug("Dropping Open Fronthaul User-Plane message as decoded eCPRI message type is not IQ data");
+    logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eCPRI message type is not for IQ data");
 
     return true;
   }
@@ -90,7 +90,8 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
       (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
-    logger.debug("Dropping Open Fronthaul User-Plane message as decoded eAxC is {}", ecpri_iq_params.pc_id);
+    logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured",
+                ecpri_iq_params.pc_id);
 
     return true;
   }
@@ -101,8 +102,7 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
 bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
-    logger.debug("Dropping Ethernet packet as source MAC addresses doesn't match(detected={:x}, "
-                 "expected={:x})",
+    logger.debug("Dropped received Ethernet frame as source MAC addresses do not match (detected={:x}, expected={:x})",
                  span<const uint8_t>(eth_params.mac_src_address),
                  span<const uint8_t>(vlan_params.mac_src_address));
 
@@ -110,7 +110,7 @@ bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame
   }
 
   if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
-    logger.debug("Dropping Ethernet packet as destination MAC addresses doesn't match(detected={:x}, "
+    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:x}, "
                  "expected={:x})",
                  span<const uint8_t>(eth_params.mac_dst_address),
                  span<const uint8_t>(vlan_params.mac_dst_address));
@@ -119,9 +119,9 @@ bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame
   }
 
   if (eth_params.eth_type != vlan_params.eth_type) {
-    logger.debug("Dropping Ethernet packet as decoded Ethernet type is {} and it is expected {}",
-                 eth_params.eth_type,
-                 vlan_params.eth_type);
+    logger.info("Dropped received Ethernet frame as decoded Ethernet type is '{}' but expected '{}'",
+                eth_params.eth_type,
+                vlan_params.eth_type);
 
     return true;
   }

@@ -24,7 +24,7 @@ void iq_compression_none_impl::compress(span<compressed_prb>         output,
   quantizer q(params.data_width);
 
   // Determine a scaling factor to scale input IQ data to the range [-1: +1) and convert it to int16_t below.
-  span<const float> float_samples((const float*)(input.data()), input.size() * 2);
+  span<const float> float_samples(reinterpret_cast<const float*>(input.data()), input.size() * 2);
 
   unsigned in_sample_idx = 0;
   for (compressed_prb& c_prb : output) {

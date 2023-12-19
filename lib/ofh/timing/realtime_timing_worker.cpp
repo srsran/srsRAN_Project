@@ -87,7 +87,7 @@ void realtime_timing_worker::start()
         previous_symb_index = get_symbol_index(ns_fraction, symbol_duration);
         timing_loop();
       })) {
-    report_fatal_error("Unable to start realtime timing worker");
+    report_fatal_error("Unable to start the realtime timing worker");
   }
 }
 
@@ -155,7 +155,12 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (delta > 1) {
-    logger.debug("Real-time timing worker late, skipped {} symbols", delta);
+    logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
+  }
+  if (delta >= nof_symbols_per_slot) {
+    logger.warning("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
+                   std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+                   delta);
   }
 
   slot_symbol_point symbol_point(

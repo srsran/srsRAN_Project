@@ -100,7 +100,10 @@ void uplane_message_builder_impl::serialize_iq_data(network_order_binary_seriali
                                                     unsigned                         nof_prbs,
                                                     const ru_compression_params&     compr_params)
 {
-  logger.debug("Writing {} PRBs to OFH User-Plane message", nof_prbs);
+  logger.debug("Packing '{}' PRBs inside a User-Plane message using compression type '{}' and bitwidth '{}'",
+               nof_prbs,
+               to_string(compr_params.type),
+               compr_params.data_width);
 
   std::array<compressed_prb, MAX_NOF_PRBS> compressed_prbs_buffer;
   span<compressed_prb>                     compressed_prbs(compressed_prbs_buffer.data(), nof_prbs);
@@ -135,7 +138,7 @@ unsigned uplane_message_builder_impl::build_message(span<uint8_t>               
 {
   srsran_assert(params.sect_type == section_type::type_1, "Unsupported section type");
   srsran_assert(iq_data.size() == params.nof_prb * NOF_SUBCARRIERS_PER_RB,
-                "Number of PRBs in IQ samples is {} and requested number to write is {}",
+                "The number of PRBs derived from the IQ samples is '{}' and requested number of PRBs to pack is '{}'",
                 iq_data.size() / NOF_SUBCARRIERS_PER_RB,
                 params.nof_prb);
 

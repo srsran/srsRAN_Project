@@ -38,6 +38,7 @@ static filter_index_type get_prach_cplane_filter_index(const prach_buffer_contex
 
 uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
                                                          uplink_request_handler_impl_dependencies&& dependencies) :
+  logger(*dependencies.logger),
   is_prach_cp_enabled(config.is_prach_cp_enabled),
   cp(config.cp),
   tdd_config(config.tdd_config),
@@ -56,6 +57,8 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
 
 void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer)
 {
+  logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
+
   // Sampling rate defining the \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$ parameter, see 3GPP TS38.211,
   // clause 4.1.
   // Open Fronthaul parameters timeOffset and cpLength are expressed in multiple of \f$T_s\f$ units.
@@ -133,6 +136,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
 void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
+  logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
+
   // Store the context in the repository.
   ul_slot_repo.add(context, grid);
 

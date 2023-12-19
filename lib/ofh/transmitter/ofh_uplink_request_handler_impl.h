@@ -36,6 +36,8 @@ struct uplink_request_handler_impl_config {
 
 /// Uplink request handler implmentation dependencies.
 struct uplink_request_handler_impl_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
   /// Uplink slot context repository.
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
@@ -58,6 +60,7 @@ public:
   void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
 
 private:
+  srslog::basic_logger&                                 logger;
   bool                                                  is_prach_cp_enabled;
   const cyclic_prefix                                   cp;
   const optional<tdd_ul_dl_config_common>               tdd_config;

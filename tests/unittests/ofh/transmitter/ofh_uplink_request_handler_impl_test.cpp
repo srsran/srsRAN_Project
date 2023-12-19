@@ -177,6 +177,7 @@ protected:
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_disabled()
   {
     uplink_request_handler_impl_dependencies dependencies;
+    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
     dependencies.ul_slot_repo  = ul_slot_repo;
     dependencies.ul_prach_repo = ul_prach_repo;
     auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
@@ -189,6 +190,7 @@ protected:
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_enabled()
   {
     uplink_request_handler_impl_dependencies dependencies;
+    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
     dependencies.ul_slot_repo  = ul_slot_repo;
     dependencies.ul_prach_repo = ul_prach_repo;
     auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();

@@ -80,7 +80,7 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
     case compression_type::mod_selective:
       return std::make_unique<iq_compression_death_impl>();
     default:
-      report_fatal_error("Compression of {} type is not implemented", to_string(type));
+      report_fatal_error("Compression type '{}' is not implemented", to_string(type));
   }
 }
 
@@ -130,7 +130,7 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
     case compression_type::mod_selective:
       return std::make_unique<iq_compression_death_impl>();
     default:
-      report_fatal_error("Compression of {} type is not implemented", to_string(type));
+      report_fatal_error("Compression type '{}' is not implemented", to_string(type));
   }
 }
 

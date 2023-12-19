@@ -92,7 +92,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
 }
 
 span<const cf_t>
-data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid)
+data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid) const
 {
   if (ru_nof_prbs == grid.get_nof_subc()) {
     return grid.get_view(port, symbol);
@@ -135,7 +135,9 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
       // Skip frame buffers so small that cannot carry one PRB.
       if (fragment_nof_prbs == 0) {
-        logger.warning("Skipping frame buffer as it cannot carry a PRB. Frame buffer size={}", data.size());
+        logger.warning(
+            "Skipped frame buffer as it cannot store data for a single PRB, required buffer size is '{}' bytes",
+            data.size());
 
         continue;
       }
@@ -177,13 +179,14 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_header_size.value() + bytes_written);
   eth_builder->build_vlan_frame(eth_buffer, vlan_params);
 
-  logger.debug("Creating User-Plane message for downlink at slot={}, symbol_id={}, prbs={}:{}, size={}, eaxc={}",
+  logger.debug("Packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB range '{}:{}', "
+               "size '{}' bytes",
                params.slot,
+               eaxc,
                params.symbol_id,
                params.start_prb,
                params.nof_prb,
-               eth_buffer.size(),
-               eaxc);
+               eth_buffer.size());
 
   return eth_buffer.size();
 }

@@ -32,7 +32,7 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
       to_numerology_value(config.scs))
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
-  srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
+  srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
 }
 
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
@@ -40,7 +40,9 @@ void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context
 {
   if (window_checker.is_late(context.slot)) {
     logger.warning(
-        "Dropping downlink resource grid at slot={} and sector={} as it arrived late", context.slot, context.sector);
+        "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",
+        context.slot,
+        context.sector);
 
     return;
   }

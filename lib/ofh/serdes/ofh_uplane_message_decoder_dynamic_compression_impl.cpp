@@ -20,9 +20,9 @@ bool uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
     bool                               is_a_prach_msg)
 {
   if (deserializer.remaining_bytes() < 2 * sizeof(uint8_t)) {
-    logger.debug(
-        "Incoming Open Fronthaul message size is {} and it is smaller than the user data compression header length",
-        deserializer.remaining_bytes());
+    logger.info("Received an Open Fronthaul packet with size of '{}' bytes that is smaller than the user data "
+                "compression header length",
+                deserializer.remaining_bytes());
 
     return false;
   }
