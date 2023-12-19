@@ -18,6 +18,7 @@
 #include "srsran/e2/e2_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
+#include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"
 
 using namespace srsran;
@@ -55,7 +56,10 @@ class du_high_slot_handler final : public mac_cell_slot_handler
 {
 public:
   du_high_slot_handler(timer_manager& timers_, mac_interface& mac_, task_executor& tick_exec_) :
-    timers(timers_), mac(mac_), tick_exec(tick_exec_)
+    timers(timers_),
+    mac(mac_),
+    tick_exec(tick_exec_, [this]() { timers.tick(); }),
+    logger(srslog::fetch_basic_logger("MAC"))
   {
   }
   void handle_slot_indication(slot_point sl_tx) override
@@ -63,7 +67,9 @@ public:
     // Step timers by one millisecond.
     if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
       // The timer tick is handled in a separate execution context.
-      tick_exec.execute([this]() { timers.tick(); });
+      if (not tick_exec.defer()) {
+        logger.info("Discarding timer tick={} due to full queue. Retrying later...", sl_tx);
+      }
     }
 
     // Handle slot indication in MAC & Scheduler.
@@ -76,9 +82,10 @@ public:
   }
 
 private:
-  timer_manager& timers;
-  mac_interface& mac;
-  task_executor& tick_exec;
+  timer_manager&                    timers;
+  mac_interface&                    mac;
+  task_redispatcher<task_executor&> tick_exec;
+  srslog::basic_logger&             logger;
 };
 
 class scheduler_ue_metrics_null_notifier final : public scheduler_ue_metrics_notifier
