@@ -464,6 +464,7 @@ int main(int argc, char** argv)
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
   cu_up_cfg.gtpu_pcap                              = gtpu_p.get();
   cu_up_cfg.timers                                 = cu_timers;
+  cu_up_cfg.qos                                    = generate_cu_up_qos_config(gnb_cfg);
 
   // create and start CU-UP
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);

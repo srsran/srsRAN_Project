@@ -11,6 +11,7 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/cu_up/cu_up_configuration_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
@@ -976,6 +977,44 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // >> t-Reordering
     if (!pdcp_t_reordering_from_int(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
       report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+    }
+  }
+  return out_cfg;
+}
+
+std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig& config)
+{
+  std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
+  if (config.qos_cfg.empty()) {
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list();
+    return out_cfg;
+  }
+
+  // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
+  std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(config);
+
+  for (const qos_appconfig& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+    }
+    if (du_qos.find(qos.five_qi) == du_qos.end()) {
+      report_error("Cannot create CU-UP config: No entry for 5QI={} in DU QoS config\n", qos.five_qi);
+    }
+    // Convert PDCP custom config
+    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
+
+    // Obtain RLC config parameters from the respective RLC mode
+    const auto& du_five_qi = du_qos[qos.five_qi];
+    if (du_five_qi.rlc.mode == rlc_mode::um_bidir) {
+      // Take from UM config
+      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.um.tx.queue_size;
+    } else if (du_five_qi.rlc.mode == rlc_mode::am) {
+      // Take from AM config
+      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.am.tx.queue_size;
+    } else {
+      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for 5QI={} in DU QoS config\n.",
+                   du_five_qi.rlc.mode,
+                   qos.five_qi);
     }
   }
   return out_cfg;

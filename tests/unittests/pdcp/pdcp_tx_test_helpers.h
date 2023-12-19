@@ -89,7 +89,7 @@ protected:
     config.rlc_mode               = rlc_mode_;
     config.direction              = pdcp_security_direction::downlink;
     config.discard_timer          = discard_timer;
-    config.max_count              = max_count;
+    config.custom.max_count       = max_count;
     config.status_report_required = true;
 
     // RB_id and security domain

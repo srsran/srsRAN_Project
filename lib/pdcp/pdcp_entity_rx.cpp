@@ -166,14 +166,14 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
   // notification COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
   // we reach a hard maximum RCVD_COUNT, after which we refuse to receive any further.
-  if (rcvd_count > cfg.max_count.notify) {
+  if (rcvd_count > cfg.custom.max_count.notify) {
     if (!max_count_notified) {
       logger.log_warning("Approaching max_count, notifying RRC. count={}", rcvd_count);
       upper_cn.on_max_count_reached();
       max_count_notified = true;
     }
   }
-  if (rcvd_count >= cfg.max_count.hard) {
+  if (rcvd_count >= cfg.custom.max_count.hard) {
     if (!max_count_overflow) {
       logger.log_error("Reached max_count, refusing further RX. count={}", rcvd_count);
       upper_cn.on_protocol_failure();

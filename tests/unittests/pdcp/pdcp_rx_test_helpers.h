@@ -73,7 +73,7 @@ protected:
     config.direction             = pdcp_security_direction::downlink;
     config.out_of_order_delivery = false;
     config.t_reordering          = t_reordering;
-    config.max_count             = max_count;
+    config.custom.max_count      = max_count;
 
     // RB_id and security domain
     rb_id_t rb_id;
