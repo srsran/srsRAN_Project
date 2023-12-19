@@ -381,7 +381,11 @@ harq_entity::harq_entity(rnti_t                   rnti_,
   dl_harqs.reserve(nof_dl_harq_procs);
   ul_harqs.reserve(nof_ul_harq_procs);
   for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
-    dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
+    if (ntn_harq.active()) {
+      dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, nop_timeout_notifier, ntn_harq.ntn_harq_timeout);
+    } else {
+      dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
+    }
   }
 
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
@@ -397,11 +401,14 @@ void harq_entity::slot_indication(slot_point slot_tx_)
 {
   slot_tx = slot_tx_;
   for (dl_harq_process& dl_h : dl_harqs) {
+    if (ntn_harq.active()) {
+      ntn_harq.save_dl_harq_info(dl_h, slot_tx_);
+    }
     dl_h.slot_indication(slot_tx);
   }
   for (ul_harq_process& ul_h : ul_harqs) {
     if (ntn_harq.active()) {
-      ntn_harq.save_tbs(ul_h, slot_tx);
+      ntn_harq.save_ul_harq_info(ul_h, slot_tx_);
     }
     ul_h.slot_indication(slot_tx);
   }
@@ -425,6 +432,8 @@ dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point         
               h_dl.last_alloc_params().tb[0]->mcs,
               h_dl.last_alloc_params().tb[0]->tbs_bytes,
               status_upd};
+    } else if (ntn_harq.active()) {
+      return ntn_harq.pop_ack_info(uci_slot, ack);
     }
   }
   logger.warning("DL HARQ for rnti={}, uci slot={} not found.", rnti, uci_slot);
@@ -473,5 +482,6 @@ harq_entity::ntn_tbs_history::ntn_tbs_history(unsigned ntn_cs_koffset_) : ntn_cs
 {
   if (ntn_cs_koffset > 0) {
     slot_tbs.resize(NTN_CELL_SPECIFIC_KOFFSET_MAX);
+    slot_ack_info.resize(NTN_CELL_SPECIFIC_KOFFSET_MAX);
   }
 }

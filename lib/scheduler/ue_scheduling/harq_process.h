@@ -206,6 +206,9 @@ public:
   /// Cancelled HARQ processes do not require the HARQ-ACK to be received to get flushed.
   void cancel_harq(unsigned tb_idx);
 
+  /// \brief Getter of the slot when the HARQ process will assume that the ACK/CRC went missing.
+  slot_point get_slot_ack_timeout() const { return slot_ack_timeout; }
+
 protected:
   void tx_common(slot_point slot_tx, slot_point slot_ack);
   void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t harq_bit_idx);
@@ -360,6 +363,7 @@ public:
 
   using base_type::transport_block;
 
+  using base_type::get_slot_ack_timeout;
   using base_type::harq_process;
   using base_type::id;
   using base_type::reset;
@@ -404,9 +408,6 @@ public:
 
   /// \brief Getter of the number of bytes of the last transmitted TB.
   int get_tbs_bytes() const { return prev_tx_params.tbs_bytes; }
-
-  /// \brief Getter of the slot when the HARQ process will assume that the ACK/CRC went missing.
-  slot_point get_slot_ack_timeout() const { return slot_ack_timeout; }
 
 private:
   /// Parameters used for the last Tx of this HARQ process.
@@ -577,29 +578,58 @@ private:
   class ntn_tbs_history
   {
   public:
-    /// \brief This class is used to store the TBS of the HARQ processes that have to be released before receiving the
-    /// associated PUSCH.
+    /// \brief This class is used to store the TBS of the HARQ processes that have to be released before they have been
+    /// completed by an ACK or a PUSCH.
     explicit ntn_tbs_history(unsigned ntn_cs_koffset_);
 
     bool active() const { return ntn_cs_koffset != 0; }
 
     /// \brief This function is used to save the TBS of the HARQ process.
-    void save_tbs(ul_harq_process& ul_h, slot_point _slot_tx)
+    void save_dl_harq_info(const dl_harq_process& harq, const slot_point& _slot_tx)
     {
-      if (ul_h.empty()) {
+      if (harq.empty()) {
         return;
       }
-      if (ul_h.get_slot_ack_timeout() <= _slot_tx) {
-        int tbs          = ul_h.get_tbs_bytes();
-        int idx          = (ul_h.slot_ack().to_uint() + ntn_cs_koffset) % slot_tbs.size();
-        slot_tbs.at(idx) = tbs;
+      if (harq.get_slot_ack_timeout() <= _slot_tx) {
+        int idx                         = (harq.slot_ack().to_uint() + ntn_cs_koffset) % slot_ack_info.size();
+        slot_ack_info.at(idx).tbs_bytes = harq.last_alloc_params().tb[0]->tbs_bytes;
+        slot_ack_info.at(idx).h_id      = harq.id;
+        slot_ack_info.at(idx).mcs       = harq.last_alloc_params().tb[0]->mcs;
+        slot_ack_info.at(idx).mcs_table = harq.last_alloc_params().tb[0]->mcs_table;
+        slot_ack_info.at(idx).update    = dl_harq_process::status_update::acked;
       }
     }
 
-    /// \brief This function is used to pop the TBS of the HARQ process saved at the slot _slot_tx.
-    int pop_tbs(slot_point _slot_tx)
+    /// \brief This function is used to save the ack info of the HARQ process.
+    void save_ul_harq_info(const ul_harq_process& harq, const slot_point& _slot_tx)
     {
-      int ret = slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size());
+      if (harq.empty()) {
+        return;
+      }
+      if (harq.get_slot_ack_timeout() <= _slot_tx) {
+        int idx          = (harq.slot_ack().to_uint() + ntn_cs_koffset) % slot_tbs.size();
+        slot_tbs.at(idx) = harq.get_tbs_bytes();
+      }
+    }
+
+    /// \brief This function is used to pop the ack info of the HARQ process saved at the slot _slot_tx.
+    dl_harq_process::dl_ack_info_result pop_ack_info(const slot_point& _slot_tx, mac_harq_ack_report_status ack)
+    {
+      auto ret = slot_ack_info.at(_slot_tx.to_uint() % slot_ack_info.size());
+      if (ret.tbs_bytes) {
+        slot_ack_info.at(_slot_tx.to_uint() % slot_ack_info.size()) = {};
+      } else {
+        return {};
+      }
+      ret.update = ack == mac_harq_ack_report_status::ack ? dl_harq_process::status_update::acked
+                                                          : dl_harq_process::status_update::nacked;
+      return ret;
+    }
+
+    /// \brief This function is used to pop the TBS of the HARQ process saved at the slot _slot_tx.
+    int pop_tbs(const slot_point& _slot_tx)
+    {
+      unsigned ret = slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size());
       if (ret) {
         slot_tbs.at(_slot_tx.to_uint() % slot_tbs.size()) = 0;
       } else {
@@ -614,10 +644,13 @@ private:
     int get_total_tbs() const { return std::accumulate(slot_tbs.begin(), slot_tbs.end(), 0); }
     // We timeout the HARQ since we need to reuse the process before the PUSCH arrives.
     const unsigned ntn_harq_timeout = 1;
+    /// \brief The function is used to get the ntn koffset.
+    unsigned get_ntn_koffset() const { return ntn_cs_koffset; }
 
   private:
     std::vector<unsigned> slot_tbs;
-    unsigned              ntn_cs_koffset;
+    std::vector<dl_harq_process::dl_ack_info_result> slot_ack_info;
+    unsigned                                         ntn_cs_koffset;
   };
   rnti_t                rnti;
   srslog::basic_logger& logger;
