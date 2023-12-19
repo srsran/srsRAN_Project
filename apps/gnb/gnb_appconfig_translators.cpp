@@ -1505,6 +1505,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_harq_process = MAX_NOF_HARQS;
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
+    // Deduce the number of slots per frame.
+    unsigned nof_slots_per_frame = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
+    // Number of slots per system frame.
+    unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
     // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
     const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
     // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
@@ -1531,8 +1535,14 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_tx_nof_codeblocks =
         std::max(expire_pdsch_harq_timeout_slots * max_nof_pdsch_cb_slot, min_cb_softbuffer * nof_buffers);
 
-    unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
-    unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
+    // depths.
+    unsigned dl_pipeline_depth = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
+      ++dl_pipeline_depth;
+    }
+    unsigned ul_pipeline_depth = dl_pipeline_depth;
+
     static constexpr unsigned prach_pipeline_depth = 1;
 
     // Get band, frequency range and duplex mode from the band.
