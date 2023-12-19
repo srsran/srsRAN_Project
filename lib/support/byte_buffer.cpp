@@ -15,7 +15,7 @@ using namespace srsran;
 
 size_t srsran::byte_buffer_segment_pool_default_segment_size()
 {
-  return 1024;
+  return 2048;
 }
 
 /// Get default byte buffer segment pool. Initialize pool if not initialized before.
