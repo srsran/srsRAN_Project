@@ -18,11 +18,12 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
+TEST(mac_to_fapi_pusch_pdu_test, valid_pusch_pdu_shoul_pass)
 {
-  const ul_sched_info& mac_pdu = build_valid_pusch_pdu();
-  fapi::ul_pusch_pdu   fapi_pdu;
-  auto                 uci_part2_tools = generate_uci_part2_correspondence(1);
+  const ul_sched_info_test_helper& pdu_test = build_valid_pusch_pdu();
+  const ul_sched_info&             mac_pdu  = pdu_test.info;
+  fapi::ul_pusch_pdu               fapi_pdu;
+  auto                             uci_part2_tools = generate_uci_part2_correspondence(1);
 
   convert_pusch_mac_to_fapi(fapi_pdu, mac_pdu, *std::get<0>(uci_part2_tools));
 

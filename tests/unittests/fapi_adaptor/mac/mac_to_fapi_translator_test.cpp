@@ -87,7 +87,6 @@ public:
 
 } // namespace
 
-#if 0
 TEST(mac_to_fapi_translator, valid_dl_sched_results_generate_correct_dl_tti_request)
 {
   slot_message_gateway_spy       gateway_spy;
@@ -104,7 +103,8 @@ TEST(mac_to_fapi_translator, valid_dl_sched_results_generate_correct_dl_tti_requ
 
   ASSERT_FALSE(gateway_spy.has_dl_tti_request_method_called());
 
-  const mac_dl_sched_result& result = srsran::unittests::build_valid_mac_dl_sched_result();
+  const unittests::mac_dl_sched_result_test_helper& result_test = srsran::unittests::build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&                        result      = result_test.result;
   translator.on_new_downlink_scheduler_results(result);
 
   ASSERT_TRUE(gateway_spy.has_dl_tti_request_method_called());
@@ -113,12 +113,11 @@ TEST(mac_to_fapi_translator, valid_dl_sched_results_generate_correct_dl_tti_requ
   ASSERT_EQ((msg.pdus.begin() + 1)->pdu_type, fapi::dl_pdu_type::PDCCH);
   ASSERT_EQ(msg.pdus.back().pdu_type, fapi::dl_pdu_type::PDSCH);
   ASSERT_EQ(msg.pdus.front().pdu_type, fapi::dl_pdu_type::PDCCH);
-  ASSERT_EQ(msg.pdus.front().pdcch_pdu.dl_dci.size(), 3U);
-  ASSERT_EQ((msg.pdus.begin() + 1)->pdcch_pdu.dl_dci.size(), 1U);
+  ASSERT_EQ(msg.pdus.front().pdcch_pdu.dl_dci.size(), 1U);
+  ASSERT_EQ((msg.pdus.begin() + 1)->pdcch_pdu.dl_dci.size(), 3U);
   ASSERT_EQ((msg.pdus.end() - 2)->pdu_type, fapi::dl_pdu_type::SSB);
   ASSERT_EQ((msg.pdus.end() - 3)->pdu_type, fapi::dl_pdu_type::SSB);
 }
-#endif
 
 TEST(mac_to_fapi_translator, valid_ul_sched_results_generate_correct_ul_tti_request)
 {
@@ -136,7 +135,8 @@ TEST(mac_to_fapi_translator, valid_ul_sched_results_generate_correct_ul_tti_requ
 
   ASSERT_FALSE(gateway_spy.has_ul_tti_request_method_called());
 
-  const mac_ul_sched_result& result = srsran::unittests::build_valid_mac_ul_sched_result();
+  const unittests::mac_ul_sched_result_test_helper& result_test = srsran::unittests::build_valid_mac_ul_sched_result();
+  const mac_ul_sched_result&                        result      = result_test.result;
   translator.on_new_uplink_scheduler_results(result);
 
   ASSERT_TRUE(gateway_spy.has_ul_tti_request_method_called());
@@ -148,7 +148,6 @@ TEST(mac_to_fapi_translator, valid_ul_sched_results_generate_correct_ul_tti_requ
   ASSERT_EQ(msg.pdus.back().pdu_type, fapi::ul_pdu_type::PUCCH);
 }
 
-#if 0
 TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_tx_data_request)
 {
   slot_message_gateway_spy       gateway_spy;
@@ -165,7 +164,8 @@ TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_tx_data_requ
 
   ASSERT_FALSE(gateway_spy.has_tx_data_request_method_called());
 
-  const mac_dl_sched_result& result = srsran::unittests::build_valid_mac_dl_sched_result();
+  const unittests::mac_dl_sched_result_test_helper& result_test = srsran::unittests::build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&                        result      = result_test.result;
   translator.on_new_downlink_scheduler_results(result);
   const mac_dl_data_result& data_result = srsran::unittests::build_valid_mac_data_result();
   translator.on_new_downlink_data(data_result);
@@ -174,7 +174,6 @@ TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_tx_data_requ
   const fapi::tx_data_request_message& msg = gateway_spy.tx_data_request_msg();
   ASSERT_EQ(msg.pdus.size(), 1);
 }
-#endif
 
 TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_ul_dci_request)
 {
@@ -192,7 +191,8 @@ TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_ul_dci_reque
 
   ASSERT_FALSE(gateway_spy.has_ul_dci_request_method_called());
 
-  const mac_dl_sched_result& result = srsran::unittests::build_valid_mac_dl_sched_result();
+  const unittests::mac_dl_sched_result_test_helper& result_test = srsran::unittests::build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&                        result      = result_test.result;
   translator.on_new_downlink_scheduler_results(result);
 
   ASSERT_TRUE(gateway_spy.has_ul_dci_request_method_called());

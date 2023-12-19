@@ -17,7 +17,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(mac_fapi_ssb_pdu_conversor_test, mac_to_fapi_conversion_is_valid)
+TEST(mac_fapi_ssb_pdu_conversor_test, valid_pdu_should_pass)
 {
   srsran::dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
