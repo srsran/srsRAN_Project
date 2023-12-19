@@ -355,7 +355,8 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
   // Custom config
-  config.custom = {};
+  config.custom                  = {};
+  config.custom.tx.rlc_sdu_queue = 512;
 
   return config;
 }
