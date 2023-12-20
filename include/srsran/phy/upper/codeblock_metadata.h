@@ -16,9 +16,10 @@
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+// TODO(david,borja): fix dependency.
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/modulation_scheme.h"
-// TODO(david,borja): fix dependency.
+#include "srsran/ran/sch/sch_constants.h"
 
 namespace srsran {
 
@@ -65,17 +66,6 @@ struct codeblock_metadata {
   /// Contains specific code block parameters.
   cb_specific_metadata cb_specific;
 };
-
-/// \brief Maximum segment length.
-///
-/// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
-/// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
-static constexpr units::bits MAX_SEG_LENGTH{22 * 384};
-
-/// \brief Maximum number of segments per transport block.
-///
-/// It assumes 156 resource elements for a maximum of 275 PRB, four layers and eight bits per RE.
-static constexpr unsigned MAX_NOF_SEGMENTS = (156 * 275 * 4 * 8) / MAX_SEG_LENGTH.value();
 
 /// \brief Describes an LDPC segment or codeblock.
 ///

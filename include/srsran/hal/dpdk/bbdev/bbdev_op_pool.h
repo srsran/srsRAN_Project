@@ -16,26 +16,25 @@
 namespace srsran {
 namespace dpdk {
 
-/// RAII wrapping for dpdk memory buffer pool structures.
-class mbuf_pool
+/// RAII wrapping for dpdk bbdev operation pool structures.
+class bbdev_op_pool
 {
 public:
   /// Constructor.
   /// \param[in] pool_ Pointer to a dpdk memory pool.
-  explicit mbuf_pool(::rte_mempool* pool_) : pool(*pool_) { srsran_assert(pool_, "Invalid mbuf pool."); }
-
+  explicit bbdev_op_pool(::rte_mempool* pool_) : pool(*pool_) { srsran_assert(pool_, "Invalid bbdev op pool."); }
   /// Destructor.
-  ~mbuf_pool()
+  ~bbdev_op_pool()
   {
     // Free the memory buffer pool.
     ::rte_mempool_free(&pool);
   }
 
-  /// Returns a pointer to the actual memory pool object.
+  // Returns a pointer to the actual memory pool object.
   /// \return Pointer to the memory pool.
   ::rte_mempool* get_pool() { return &pool; }
 
-  /// Returns a pointer to a constant memory pool object.
+  // Returns a pointer to a constant memory pool object.
   /// \return Pointer to a constant memory pool.
   const ::rte_mempool* get_pool() const { return &pool; }
 

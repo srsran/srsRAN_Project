@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsran/hal/dpdk/dpdk_eal.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 
 namespace srsran {
 namespace dpdk {
 
-/// Returns a dpdk_eal instance on success, otherwise returns nullptr.
-std::unique_ptr<dpdk_eal> create_dpdk_eal(const std::string& args, srslog::basic_logger& logger);
+/// Returns a bbdev_acc instance on success, otherwise returns nullptr.
+std::shared_ptr<bbdev_acc> create_bbdev_acc(const bbdev_acc_configuration& cfg, srslog::basic_logger& logger);
 
 } // namespace dpdk
 } // namespace srsran

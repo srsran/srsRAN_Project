@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "mbuf_pool.h"
+#include "srsran/hal/dpdk/mbuf_pool.h"
 #include "srsran/srslog/logger.h"
 #include <memory>
 

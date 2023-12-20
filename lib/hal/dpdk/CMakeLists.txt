@@ -6,11 +6,11 @@
 # the distribution.
 #
 
+add_subdirectory(bbdev)
+
 set(SOURCES
-  dpdk_eal.cpp
   dpdk_eal_factory.cpp
   dpdk.cpp
-  mbuf_pool.cpp
   mbuf_pool_factory.cpp
 )
 

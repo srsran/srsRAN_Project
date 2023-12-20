@@ -5,6 +5,12 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+set(SOURCES 
+  bbdev_acc.cpp
+  bbdev_acc_factory.cpp
+  bbdev.cpp
+  bbdev_op_pool_factory.cpp
+  ldpc/bbdev_ldpc_decoder.cpp
+)
 
-add_subdirectory(dpdk)
-add_subdirectory(phy)
+add_library(hal_bbdev STATIC ${SOURCES})

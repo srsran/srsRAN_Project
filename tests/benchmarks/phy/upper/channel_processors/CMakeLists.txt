@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(pusch)
+
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
@@ -30,15 +32,3 @@ target_link_libraries(prach_detector_benchmark
         srslog
         srsvec)
 add_test(prach_detector_benchmark prach_detector_benchmark -R 1)
-
-add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
-target_link_libraries(pusch_processor_benchmark
-        srsran_phy_support
-        srsran_pusch_processor
-        srsran_channel_equalizer
-        srsran_channel_precoder
-        srsran_channel_processors
-        srsran_sched
-        srslog
-        srsvec)
-add_test(pusch_processor_benchmark pusch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)
