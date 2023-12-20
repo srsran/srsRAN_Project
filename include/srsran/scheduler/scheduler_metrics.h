@@ -32,6 +32,7 @@ struct scheduler_ue_metrics {
   float         pusch_snr_db;
   float         pucch_snr_db;
   sch_mcs_index ul_mcs;
+  double        ul_prbs_used;
   double        ul_brate_kbps;
   unsigned      ul_nof_ok;
   unsigned      ul_nof_nok;

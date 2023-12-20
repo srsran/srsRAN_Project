@@ -178,6 +178,15 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
       // UE not found.
       continue;
     }
+    if (ul_grant.pusch_cfg.rbs.is_type0()) {
+      ues[it->second].data.ul_prbs_used += convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
+                                                                {0, ues[it->second].nof_prbs},
+                                                                get_nominal_rbg_size(ues[it->second].nof_prbs, false))
+                                               .count();
+    } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
+      ues[it->second].data.ul_prbs_used +=
+          (ul_grant.pusch_cfg.rbs.type1().stop() - ul_grant.pusch_cfg.rbs.type1().start());
+    }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
     u.data.nof_puschs++;
@@ -213,7 +222,8 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs        = sch_mcs_index{mcs};
-  ret.dl_prbs_used  = static_cast<double>(data.dl_prbs_used / metric_report_period.count());
+  ret.dl_prbs_used  = data.nof_dl_cws > 0 ? static_cast<double>(data.dl_prbs_used / data.nof_dl_cws) : 0;
+  ret.ul_prbs_used  = data.nof_puschs > 0 ? static_cast<double>(data.ul_prbs_used / data.nof_puschs) : 0;
   ret.dl_brate_kbps = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
   ret.ul_brate_kbps = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
   ret.dl_nof_ok     = data.count_uci_harq_acks;

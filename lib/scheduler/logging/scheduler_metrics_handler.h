@@ -85,6 +85,7 @@ private:
       unsigned nof_pucch_snr_reports = 0;
       unsigned nof_pusch_snr_reports = 0;
       unsigned dl_prbs_used          = 0;
+      unsigned ul_prbs_used          = 0;
     };
     pci_t                                  pci;
     unsigned                               nof_prbs;
