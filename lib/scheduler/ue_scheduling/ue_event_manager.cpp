@@ -15,45 +15,67 @@
 
 using namespace srsran;
 
-class ue_event_manager::ue_dl_buffer_occupancy_manager
+/// \brief More than one DL buffer occupancy update may be received per slot for the same UE and bearer. This class
+/// ensures that the UE DL buffer occupancy is updated only once per bearer per slot for efficiency reasons.
+class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_dl_buffer_state_indication_handler
 {
+  using bearer_key                        = uint32_t;
+  static constexpr size_t NOF_BEARER_KEYS = MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS;
+
+  static bearer_key    get_bearer_key(du_ue_index_t ue_index, lcid_t lcid) { return lcid * MAX_NOF_DU_UES + ue_index; }
+  static du_ue_index_t get_ue_index(bearer_key key) { return to_du_ue_index(key % MAX_NOF_DU_UES); }
+  static lcid_t        get_lcid(bearer_key key) { return uint_to_lcid(key / MAX_NOF_DU_UES); }
+
 public:
   ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
   {
-    std::fill(ue_rlc_bo_list.begin(), ue_rlc_bo_list.end(), -1);
+    std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), -1);
   }
 
-  void enqueue_rlc_buffer_occupancy_update(const dl_buffer_state_indication_message& rlc_dl_bo)
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& rlc_dl_bo) override
   {
-    unsigned idx          = rlc_dl_bo.ue_index * MAX_NOF_RB_LCIDS + rlc_dl_bo.lcid;
-    bool     first_rlc_bo = ue_rlc_bo_list[idx].exchange(rlc_dl_bo.bs, std::memory_order_acquire) < 0;
+    // Update DL Buffer Occupancy for the given UE and bearer.
+    unsigned key          = get_bearer_key(rlc_dl_bo.ue_index, rlc_dl_bo.lcid);
+    bool     first_rlc_bo = ue_dl_bo_table[key].exchange(rlc_dl_bo.bs, std::memory_order_acquire) < 0;
 
     if (not first_rlc_bo) {
+      // If another DL BO update has been received before for this same bearer, we do not need to enqueue a new event.
       return;
     }
 
-    pending_evs.push(rlc_dl_bo);
+    // Signal that this bearer needs its BO state updated.
+    pending_evs.push(key);
   }
 
   void slot_indication()
   {
     // Retrieve pending UEs.
     pending_evs.slot_indication();
-    span<dl_buffer_state_indication_message> ues_to_process = pending_evs.get_events();
+    span<bearer_key> ues_to_process = pending_evs.get_events();
 
     // Process RLC buffer updates of pending UEs.
-    for (dl_buffer_state_indication_message& dl_bo : ues_to_process) {
+    for (bearer_key key : ues_to_process) {
+      // Recreate latest DL BO update.
+      dl_buffer_state_indication_message dl_bo;
+      // > Extract UE index and LCID.
+      dl_bo.ue_index = get_ue_index(key);
+      dl_bo.lcid     = get_lcid(key);
+      // > Extract last DL BO value for the respective bearer and reset BO table position.
+      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_acq_rel);
+      if (dl_bo.bs < 0) {
+        parent.logger.warning(
+            "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);
+        continue;
+      }
+
+      // Retrieve UE.
       if (not parent.ue_db.contains(dl_bo.ue_index)) {
         parent.log_invalid_ue_index(dl_bo.ue_index);
         continue;
       }
       ue& u = parent.ue_db[dl_bo.ue_index];
 
-      // Update DL buffer state with latest RLC buffer occupancy update for this UE.
-      unsigned idx = dl_bo.ue_index * MAX_NOF_RB_LCIDS + dl_bo.lcid;
-      dl_bo.bs     = ue_rlc_bo_list[idx].exchange(-1, std::memory_order_acq_rel);
-
-      // Forward DL buffer state to UE.
+      // Forward DL BO update to UE.
       u.handle_dl_buffer_state_indication(dl_bo);
       if (dl_bo.lcid == LCID_SRB0) {
         // Signal SRB0 scheduler with the new SRB0 buffer state.
@@ -71,9 +93,10 @@ public:
 private:
   ue_event_manager& parent;
 
-  std::array<std::atomic<int>, MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS> ue_rlc_bo_list;
+  // Table of pending DL Buffer Occupancy values. -1 means that no DL Buffer Occupancy is set.
+  std::array<std::atomic<int>, NOF_BEARER_KEYS> ue_dl_bo_table;
 
-  slot_event_list<dl_buffer_state_indication_message> pending_evs;
+  slot_event_list<bearer_key> pending_evs;
 };
 
 ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
@@ -390,7 +413,7 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  dl_bo_mng->enqueue_rlc_buffer_occupancy_update(bs);
+  dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
