@@ -18,8 +18,8 @@
       requests: "2G"
       limits: "2G"
     ephemeral-storage:
-      requests: "3G"
-      limits: "3G"
+      requests: "6G"
+      limits: "6G"
   resources:
     - type: android
       model: one-plus-9-pro
@@ -36,8 +36,8 @@
       requests: "10G"
       limits: "10G"
     ephemeral-storage:
-      requests: "3G"
-      limits: "3G"
+      requests: "6G"
+      limits: "6G"
   resources:
     - type: sdr
       model: b200
@@ -60,5 +60,5 @@
       requests: "4G"
       limits: "4G"
     ephemeral-storage:
-      requests: "3G"
-      limits: "3G"
+      requests: "6G"
+      limits: "6G"
