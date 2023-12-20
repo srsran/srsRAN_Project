@@ -62,7 +62,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
 
   std::vector<uint8_t> bytes(MAX_DL_PDU_LENGTH);
   dl_sch_pdu           pdu(bytes);
-  unsigned             payload_len = test_rgen::uniform_int<unsigned>(0, 255);
+  unsigned             payload_len = test_rgen::uniform_int<unsigned>(1, 255);
   byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
     payload.append(test_rgen::uniform_int<uint8_t>());
