@@ -50,7 +50,8 @@ public:
 
     if (not dispatcher.executor.execute(
             [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_1_message(context); })) {
-      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch type 1 message");
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 1 message for slot={}",
+                                                context.slot);
     }
   }
 
@@ -63,7 +64,8 @@ public:
 
     if (not dispatcher.executor.execute(
             [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_3_prach_message(context); })) {
-      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch type 3 prach message");
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 3 message for slot={}",
+                                                context.slot);
     }
   }
 
