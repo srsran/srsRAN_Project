@@ -51,8 +51,6 @@ struct executor {
   task_priority priority = task_priority::min;
   /// Strands instantiated on top of this executor.
   std::vector<strand> strands;
-  /// Whether to log when task fails to be dispatched.
-  bool report_on_failure = false;
   /// \brief Present if the executor works as a strand, serializing all the enqueued tasks. The value is the size of
   /// the strand queue size.
   optional<unsigned> strand_queue_size;
@@ -62,26 +60,19 @@ struct executor {
 
   executor(const std::string&         name_,
            const std::vector<strand>& strands_           = {},
-           bool                       report_on_failure_ = false,
            optional<unsigned>         strand_queue_size_ = nullopt,
            bool                       synchronous_       = false) :
-    name(name_),
-    strands(strands_),
-    report_on_failure(report_on_failure_),
-    strand_queue_size(strand_queue_size_),
-    synchronous(synchronous_)
+    name(name_), strands(strands_), strand_queue_size(strand_queue_size_), synchronous(synchronous_)
   {
   }
   executor(const std::string&         name_,
            task_priority              priority_,
            const std::vector<strand>& strands_           = {},
-           bool                       report_on_failure_ = false,
            optional<unsigned>         strand_queue_size_ = nullopt,
            bool                       synchronous_       = false) :
     name(name_),
     priority(priority_),
     strands(strands_),
-    report_on_failure(report_on_failure_),
     strand_queue_size(strand_queue_size_),
     synchronous(synchronous_)
   {

@@ -126,7 +126,6 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {"cu_up_strand", // used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
         task_priority::max,
         {}, // define strands below.
-        false,
         task_worker_queue_size}},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
@@ -187,7 +186,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, {}, true, nullopt, is_blocking_mode_active}},
+         {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 
