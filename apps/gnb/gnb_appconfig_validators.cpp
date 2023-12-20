@@ -62,10 +62,25 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
           ? get_prach_preamble_long_info(prach_info.format)
           : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
   if (!preamble_info.cp_length.is_sample_accurate(config.srate_MHz * 1e6)) {
-    fmt::print("PRACH Format {} with subcarrier spacing of {} is not compatible with {:.2f}MHz sampling rate.\n",
+    // List of common sampling rates for offering an alternative.
+    static const std::array<double, 10> sampling_rates = {
+        7.68, 11.52, 15.36, 23.04, 30.76, 46.08, 61.44, 92.16, 122.88, 184.32};
+    std::vector<double> valid_sampling_rates;
+    for (double sampling_rate : sampling_rates) {
+      // A valid alternative sampling rate must be larger than the cell bandwidth and be sample accurate with the
+      // preamble cyclic prefix.
+      if ((sampling_rate > bs_channel_bandwidth_to_MHz(cell_config.cell.channel_bw_mhz)) &&
+          (preamble_info.cp_length.is_sample_accurate(sampling_rate * 1e6))) {
+        valid_sampling_rates.push_back(sampling_rate);
+      }
+    }
+
+    fmt::print("PRACH Format {} with subcarrier spacing of {} is not compatible with {:.2f}MHz sampling rate. "
+               "Valid sampling rates are {:,} MHz.\n",
                to_string(prach_info.format),
                to_string(common_scs),
-               config.srate_MHz);
+               config.srate_MHz,
+               span<const double>(valid_sampling_rates));
     return false;
   }
 
