@@ -72,10 +72,10 @@ du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& 
     CORO_BEGIN(ctx);
 
     CORO_AWAIT(launch_async<ue_creation_procedure>(
-        du_ue_creation_request{msg.ue_index, msg.pcell_index, INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
+        du_ue_creation_request{msg.ue_index, msg.pcell_index, rnti_t::INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
 
     bool result = ue_db.contains(msg.ue_index);
-    CORO_RETURN(f1ap_ue_context_creation_response{result, result ? find_ue(msg.ue_index)->rnti : INVALID_RNTI});
+    CORO_RETURN(f1ap_ue_context_creation_response{result, result ? find_ue(msg.ue_index)->rnti : rnti_t::INVALID_RNTI});
   });
 }
 
@@ -199,7 +199,8 @@ du_ue* du_ue_manager::find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id)
 
 du_ue* du_ue_manager::add_ue(const du_ue_context& ue_ctx, ue_ran_resource_configurator ue_ran_res)
 {
-  if (not is_du_ue_index_valid(ue_ctx.ue_index) or (not is_crnti(ue_ctx.rnti) and ue_ctx.rnti != INVALID_RNTI)) {
+  if (not is_du_ue_index_valid(ue_ctx.ue_index) or
+      (not is_crnti(ue_ctx.rnti) and ue_ctx.rnti != rnti_t::INVALID_RNTI)) {
     // UE identifiers are invalid.
     return nullptr;
   }
@@ -215,7 +216,7 @@ du_ue* du_ue_manager::add_ue(const du_ue_context& ue_ctx, ue_ran_resource_config
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  if (u.rnti != INVALID_RNTI) {
+  if (u.rnti != rnti_t::INVALID_RNTI) {
     rnti_to_ue_index.insert(std::make_pair(u.rnti, ue_index));
   }
 

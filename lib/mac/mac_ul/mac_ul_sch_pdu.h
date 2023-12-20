@@ -78,7 +78,7 @@ private:
 inline rnti_t decode_crnti_ce(byte_buffer_view payload)
 {
   if (payload.length() < 2) {
-    return INVALID_RNTI;
+    return rnti_t::INVALID_RNTI;
   }
 
   // Conversion between Little Endian to RNTI value. See TS 38.321, 6.1.3.2 - C-RNTI MAC CE.

@@ -282,7 +282,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   rnti_t crnti = to_rnti(msg->c_rnti);
-  if (crnti == INVALID_RNTI) {
+  if (crnti == rnti_t::INVALID_RNTI) {
     logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
     return;
   }

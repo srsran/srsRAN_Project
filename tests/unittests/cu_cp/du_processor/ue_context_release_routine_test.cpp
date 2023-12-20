@@ -66,7 +66,7 @@ protected:
 TEST_F(ue_context_release_test, when_ue_context_release_command_received_then_release_succeeds)
 {
   // Add UE
-  ue_index_t ue_index = add_ue(MIN_PCI, MIN_CRNTI);
+  ue_index_t ue_index = add_ue(MIN_PCI, rnti_t::MIN_CRNTI);
 
   // Generate UE context release command message
   cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);

@@ -1384,7 +1384,7 @@ public:
   uci_pusch_pdu_builder& set_basic_parameters(uint32_t handle, rnti_t rnti)
   {
     pdu.handle = handle;
-    pdu.rnti   = rnti;
+    pdu.rnti   = to_value(rnti);
 
     return *this;
   }
@@ -1510,7 +1510,7 @@ public:
   uci_pucch_pdu_format_0_1_builder& set_basic_parameters(uint32_t handle, rnti_t rnti, pucch_format type)
   {
     pdu.handle = handle;
-    pdu.rnti   = rnti;
+    pdu.rnti   = to_value(rnti);
     switch (type) {
       case pucch_format::FORMAT_0:
         pdu.pucch_format = uci_pucch_pdu_format_0_1::format_type::format_0;
@@ -1627,7 +1627,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder& set_basic_parameters(uint32_t handle, rnti_t rnti, pucch_format type)
   {
     pdu.handle = handle;
-    pdu.rnti   = rnti;
+    pdu.rnti   = to_value(rnti);
     switch (type) {
       case pucch_format::FORMAT_2:
         pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_2;

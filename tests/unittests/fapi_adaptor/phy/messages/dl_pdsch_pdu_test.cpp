@@ -254,7 +254,7 @@ static void pdsch_conversion_test()
                         TESTASSERT_EQ(slot, proc_pdu.slot.slot_index());
                         TESTASSERT_EQ(static_cast<unsigned>(cyclic_p), static_cast<unsigned>(proc_pdu.cp.value));
 
-                        TESTASSERT_EQ(rnti, proc_pdu.rnti);
+                        TESTASSERT_EQ(to_value(rnti), proc_pdu.rnti);
                         TESTASSERT_EQ(bwp_size, proc_pdu.bwp_size_rb);
                         TESTASSERT_EQ(bwp_start, proc_pdu.bwp_start_rb);
 

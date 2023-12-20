@@ -60,7 +60,7 @@ static void fill_format2_parameters(pucch_processor::format2_configuration& conf
   config.start_symbol_index = fapi_pdu.start_symbol_index;
   config.nof_symbols        = fapi_pdu.nr_of_symbols;
 
-  config.rnti   = fapi_pdu.rnti;
+  config.rnti   = to_value(fapi_pdu.rnti);
   config.n_id   = fapi_pdu.nid_pucch_scrambling;
   config.n_id_0 = fapi_pdu.nid0_pucch_dmrs_scrambling;
 

@@ -132,7 +132,7 @@ struct ue_creation_complete_message {
 struct ue_update_message {
   ue_index_t          ue_index = ue_index_t::invalid;
   nr_cell_global_id_t cgi;
-  rnti_t              c_rnti = INVALID_RNTI;
+  rnti_t              c_rnti = rnti_t::INVALID_RNTI;
   byte_buffer         cell_group_cfg;
   byte_buffer         meas_gap_cfg;
   byte_buffer         requested_p_max_fr1;

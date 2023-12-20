@@ -106,7 +106,8 @@ public:
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info("ue={} old_pci={} old_c_rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
+    logger.info(
+        "ue={} old_pci={} old_c_rnti={:#x}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
 
     return reest_context;
   }

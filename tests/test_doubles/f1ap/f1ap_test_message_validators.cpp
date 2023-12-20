@@ -20,5 +20,5 @@ bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&
     return false;
   }
   const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return rrcmsg->c_rnti == rnti;
+  return rrcmsg->c_rnti == to_value(rnti);
 }

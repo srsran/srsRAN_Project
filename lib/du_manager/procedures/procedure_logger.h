@@ -62,7 +62,7 @@ public:
   ue_procedure_logger(srslog::basic_logger& logger_,
                       const char*           proc_name_,
                       du_ue_index_t         ue_index_,
-                      rnti_t                rnti_ = INVALID_RNTI) :
+                      rnti_t                rnti_ = rnti_t::INVALID_RNTI) :
     logger(logger_), proc_name(proc_name_), ue_index(ue_index_), rnti(rnti_)
   {
   }
@@ -91,7 +91,7 @@ public:
 private:
   void log_impl(srslog::log_channel& log_ch, const char* result_str)
   {
-    if (rnti == INVALID_RNTI) {
+    if (rnti == rnti_t::INVALID_RNTI) {
       log_ch("ue={} proc=\"{}\": {}.", ue_index, proc_name, result_str);
     } else {
       log_ch("ue={} rnti={:#x} proc=\"{}\": {}.", ue_index, rnti, proc_name, result_str);

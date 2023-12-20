@@ -90,7 +90,7 @@ std::vector<test_grant_info> srsran::get_dl_grants(const cell_configuration& cel
   for (const ssb_information& ssb : dl_res.bc.ssb_info) {
     grants.emplace_back();
     grants.back().type  = test_grant_info::SSB;
-    grants.back().rnti  = INVALID_RNTI;
+    grants.back().rnti  = rnti_t::INVALID_RNTI;
     grants.back().grant = grant_info{cell_cfg.ssb_cfg.scs, ssb.symbols, ssb.crbs};
   }
 
@@ -168,7 +168,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
       crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prbs);
       grants.emplace_back();
       grants.back().type  = test_grant_info::PRACH;
-      grants.back().rnti  = INVALID_RNTI;
+      grants.back().rnti  = rnti_t::INVALID_RNTI;
       grants.back().grant = grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
     }
   }
@@ -180,7 +180,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
     crb_interval             crbs    = prb_to_crb(bwp_cfg, prbs);
     grants.emplace_back();
     grants.back().type  = test_grant_info::UE_UL;
-    grants.back().rnti  = INVALID_RNTI;
+    grants.back().rnti  = rnti_t::INVALID_RNTI;
     grants.back().grant = grant_info{pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
   }
 
@@ -189,7 +189,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
     const bwp_configuration& bwp_cfg = *pucch.bwp_cfg;
     grants.emplace_back();
     grants.back().type = test_grant_info::PUCCH;
-    grants.back().rnti = INVALID_RNTI;
+    grants.back().rnti = rnti_t::INVALID_RNTI;
     if (not pucch.resources.second_hop_prbs.empty()) {
       ofdm_symbol_range first_hop_symbols{pucch.resources.symbols.start(),
                                           pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2};
@@ -202,7 +202,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
       // Add a second resource for Frequency Hopping.
       grants.emplace_back();
       grants.back().type = test_grant_info::PUCCH;
-      grants.back().rnti = INVALID_RNTI;
+      grants.back().rnti = rnti_t::INVALID_RNTI;
       grants.back().grant =
           grant_info{bwp_cfg.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + 1}};
     } else {

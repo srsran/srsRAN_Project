@@ -291,7 +291,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 {
   srsran_assert(msg.ue_index != ue_index_t::invalid, "Invalid UE index", msg.ue_index);
   srsran_assert(srsran::config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
-  srsran_assert(msg.c_rnti != INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.c_rnti);
+  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.c_rnti);
 
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
@@ -351,7 +351,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
 
   // Create RRC object if it doesn't already exist.
   if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
-    if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
+    if (!msg.cell_group_cfg.empty() && msg.c_rnti != rnti_t::INVALID_RNTI) {
       if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy(), {} /* no previous context */)) {
         logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
         return ue_update_complete_msg;

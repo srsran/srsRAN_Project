@@ -186,7 +186,7 @@ byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(
   asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
   auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
-  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
+  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = to_value(c_rnti);
   rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
   rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0);
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
@@ -209,7 +209,7 @@ byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pc
   asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
   auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
-  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
+  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = to_value(c_rnti);
   rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
   rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string(short_mac_i);
   rrc_reest_req.rrc_reest_request.reest_cause = cause;

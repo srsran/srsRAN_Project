@@ -94,7 +94,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   unsigned N_rb_dl_bwp     = 0;
   switch (pdcch.dci.type) {
     case dci_dl_rnti_config_type::si_f1_0: {
-      TESTASSERT_EQ(pdcch.ctx.rnti, SI_RNTI);
+      TESTASSERT_EQ(pdcch.ctx.rnti, rnti_t::SI_RNTI);
       time_assignment = pdcch.dci.si_f1_0.time_resource;
       freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
@@ -196,7 +196,7 @@ void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   effective_init_bwp_cfg.crbs              = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 
   for (const sib_information& sib : sibs) {
-    ASSERT_EQ(sib.pdsch_cfg.rnti, SI_RNTI);
+    ASSERT_EQ(sib.pdsch_cfg.rnti, rnti_t::SI_RNTI);
     ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(sib.pdsch_cfg.rbs.is_type1());
     ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));

@@ -40,7 +40,7 @@ get_scrambling_n_RNTI(rnti_t rnti, const coreset_configuration& cs_cfg, const se
   // \f$n_{RNTI}\f$ is given by the C-RNTI for a PDCCH in a UE-speicfic search space if the higher-layer parameter
   // pdcch-DMRS-ScramblingID is configured.
   if (not ss_cfg.is_common_search_space() and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
-    return rnti;
+    return to_value(rnti);
   }
   return 0;
 }

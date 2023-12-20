@@ -24,7 +24,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
   }
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
-    if (not log_broadcast and pdcch.ctx.rnti == SI_RNTI) {
+    if (not log_broadcast and pdcch.ctx.rnti == rnti_t::SI_RNTI) {
       continue;
     }
     fmt::format_to(fmtbuf,

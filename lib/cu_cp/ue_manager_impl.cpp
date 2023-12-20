@@ -92,7 +92,7 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
-  srsran_assert(rnti != INVALID_RNTI, "Invalid rnti={:#x}", rnti);
+  srsran_assert(rnti != rnti_t::INVALID_RNTI, "Invalid rnti={:#x}", rnti);
 
   // check if ue_index is in db
   if (ues.find(ue_index) == ues.end()) {

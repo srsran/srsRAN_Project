@@ -20,7 +20,7 @@ using namespace srsran;
 
 std::random_device                      rd;
 std::mt19937                            gen(rd());
-std::uniform_int_distribution<unsigned> rnti_dist(MIN_CRNTI, MAX_CRNTI);
+std::uniform_int_distribution<unsigned> rnti_dist(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
 std::uniform_int_distribution<unsigned> rapid_dist(0, 63);
 std::uniform_int_distribution<unsigned> mcs_dist(0, 15);
 std::uniform_int_distribution<unsigned> time_res_dist(0, 15);

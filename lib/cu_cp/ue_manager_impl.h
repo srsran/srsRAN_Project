@@ -93,13 +93,13 @@ public:
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(pci_t pci_ = INVALID_PCI, rnti_t c_rnti_ = INVALID_RNTI) override
+  void update_du_ue(pci_t pci_ = INVALID_PCI, rnti_t c_rnti_ = rnti_t::INVALID_RNTI) override
   {
     if (pci_ != INVALID_PCI) {
       pci = pci_;
     }
 
-    if (c_rnti_ != INVALID_RNTI) {
+    if (c_rnti_ != rnti_t::INVALID_RNTI) {
       c_rnti = c_rnti_;
     }
   }

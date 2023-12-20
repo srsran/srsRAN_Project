@@ -30,7 +30,7 @@ struct ue_event_prefix {
 
   ue_event_prefix(const char*     dir_      = "CTRL",
                   ue_index_t      ue_index_ = MAX_NOF_UES,
-                  rnti_t          rnti_     = INVALID_RNTI,
+                  rnti_t          rnti_     = rnti_t::INVALID_RNTI,
                   du_cell_index_t cell_idx_ = MAX_NOF_DU_CELLS,
                   const char*     channel_  = nullptr,
                   lcid_t          lcid_     = INVALID_LCID) :
@@ -174,7 +174,7 @@ void log_ul_pdu(srslog::basic_logger& logger,
 template <typename... Args>
 void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, const char* cause_fmt, Args&&... args)
 {
-  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
+  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_UES, to_value(rnti), cc}, cause_fmt, std::forward<Args>(args)...);
 }
 
 } // namespace srs_cu_cp
@@ -202,7 +202,7 @@ struct formatter<srsran::srs_cu_cp::ue_event_prefix> {
     } else {
       ret = format_to(ctx.out(), "{: <7}", "");
     }
-    if (ue_prefix.rnti != srsran::INVALID_RNTI) {
+    if (ue_prefix.rnti != srsran::rnti_t::INVALID_RNTI) {
       ret = format_to(ctx.out(), " {:#x}", ue_prefix.rnti);
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");

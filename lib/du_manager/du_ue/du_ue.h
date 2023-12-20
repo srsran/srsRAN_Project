@@ -27,7 +27,7 @@ struct du_ue_context {
   }
 
   const du_ue_index_t ue_index;
-  rnti_t              rnti = INVALID_RNTI;
+  rnti_t              rnti = rnti_t::INVALID_RNTI;
   gnb_du_ue_f1ap_id_t f1ap_ue_id;
   du_cell_index_t     pcell_index;
 };

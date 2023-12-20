@@ -26,7 +26,7 @@ public:
 
 private:
   friend struct fmt::formatter<pusch_context>;
-  rnti_t    rnti = INVALID_RNTI;
+  rnti_t    rnti = rnti_t::INVALID_RNTI;
   harq_id_t h_id = INVALID_HARQ_ID;
 };
 

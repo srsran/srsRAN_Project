@@ -26,7 +26,7 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
   ue_mng(ue_mng_),
   du_params(du_params_),
   ue(ue_mng.find_ue(request.ue_index)),
-  proc_logger(logger, name(), request.ue_index, ue != nullptr ? ue->rnti : INVALID_RNTI)
+  proc_logger(logger, name(), request.ue_index, ue != nullptr ? ue->rnti : rnti_t::INVALID_RNTI)
 {
   srsran_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }

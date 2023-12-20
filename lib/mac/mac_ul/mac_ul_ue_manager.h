@@ -28,7 +28,7 @@ public:
   explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
 
   const du_ue_index_t ue_index = MAX_NOF_DU_UES;
-  const rnti_t        rnti     = INVALID_RNTI;
+  const rnti_t        rnti     = rnti_t::INVALID_RNTI;
 
   /// List of UL PDU notification endpoints associated to UE's logical channels.
   slotted_vector<mac_sdu_rx_notifier*> ul_bearers;

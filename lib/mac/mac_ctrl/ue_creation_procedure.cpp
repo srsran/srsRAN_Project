@@ -20,7 +20,7 @@ void mac_ue_create_request_procedure::operator()(coro_context<async_task<mac_ue_
 
   // > Create UE in MAC CTRL.
   crnti_assigned = ctrl_unit.add_ue(req.ue_index, req.cell_index, req.crnti);
-  if (crnti_assigned == INVALID_RNTI) {
+  if (crnti_assigned == rnti_t::INVALID_RNTI) {
     CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
   }
 
@@ -66,7 +66,7 @@ mac_ue_create_response mac_ue_create_request_procedure::handle_mac_ue_create_res
     log_proc_failure(logger, req.ue_index, req.crnti, name());
   }
 
-  if (not result and crnti_assigned != INVALID_RNTI) {
+  if (not result and crnti_assigned != rnti_t::INVALID_RNTI) {
     // Remove created UE object
     ctrl_unit.remove_ue(req.ue_index);
   }
@@ -75,6 +75,6 @@ mac_ue_create_response mac_ue_create_request_procedure::handle_mac_ue_create_res
   mac_ue_create_response resp{};
   resp.ue_index        = req.ue_index;
   resp.cell_index      = req.cell_index;
-  resp.allocated_crnti = result ? crnti_assigned : INVALID_RNTI;
+  resp.allocated_crnti = result ? crnti_assigned : rnti_t::INVALID_RNTI;
   return resp;
 }

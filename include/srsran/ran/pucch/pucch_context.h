@@ -25,7 +25,7 @@ public:
 
 private:
   friend struct fmt::formatter<pucch_context>;
-  rnti_t rnti = INVALID_RNTI;
+  rnti_t rnti = rnti_t::INVALID_RNTI;
 };
 
 } // namespace srsran

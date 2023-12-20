@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
-  if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
+  if (gnb_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
     // In case test mode is enabled, we pass dummy timers to the upper layers.
     dummy_timers = std::make_unique<timer_manager>(256);
     cu_timers    = dummy_timers.get();

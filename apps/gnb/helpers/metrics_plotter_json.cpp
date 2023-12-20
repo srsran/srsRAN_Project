@@ -74,7 +74,7 @@ void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_me
     auto& output = ctx.get<mlist_ues>().back();
 
     output.write<metric_pci>(ue.pci);
-    output.write<metric_rnti>(ue.rnti);
+    output.write<metric_rnti>(to_value(ue.rnti));
     if (ue.cqi) {
       output.write<metric_cqi>(ue.cqi);
     }

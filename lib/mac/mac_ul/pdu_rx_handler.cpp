@@ -376,7 +376,7 @@ void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu
   context.radioType                   = PCAP_FDD_RADIO;
   context.direction                   = PCAP_DIRECTION_UPLINK;
   context.rntiType                    = PCAP_C_RNTI;
-  context.rnti                        = pdu.rnti;
+  context.rnti                        = to_value(pdu.rnti);
   context.ueid   = rnti_table[pdu.rnti] == du_ue_index_t::INVALID_DU_UE_INDEX ? du_ue_index_t::INVALID_DU_UE_INDEX
                                                                               : rnti_table[pdu.rnti] + 1;
   context.harqid = pdu.harq_id;

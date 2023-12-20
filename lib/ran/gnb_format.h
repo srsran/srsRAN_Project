@@ -28,7 +28,7 @@ struct ue_event_prefix {
 
   ue_event_prefix(const char*     dir_      = "CTRL",
                   du_ue_index_t   ue_index_ = MAX_NOF_DU_UES,
-                  rnti_t          rnti_     = INVALID_RNTI,
+                  rnti_t          rnti_     = rnti_t::INVALID_RNTI,
                   du_cell_index_t cell_idx_ = MAX_NOF_DU_CELLS,
                   const char*     channel_  = nullptr,
                   lcid_t          lcid_     = INVALID_LCID) :
@@ -201,7 +201,7 @@ struct formatter<srsran::ue_event_prefix> {
     } else {
       ret = format_to(ctx.out(), "{: <7}", "");
     }
-    if (ue_prefix.rnti != srsran::INVALID_RNTI) {
+    if (ue_prefix.rnti != srsran::rnti_t::INVALID_RNTI) {
       ret = format_to(ctx.out(), " {:#x}", ue_prefix.rnti);
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");

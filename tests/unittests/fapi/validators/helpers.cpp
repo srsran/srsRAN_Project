@@ -603,7 +603,7 @@ uci_pusch_pdu unittest::build_valid_uci_pusch_pdu()
   uci_pusch_pdu pdu;
 
   pdu.handle                   = generate_handle();
-  pdu.rnti                     = generate_rnti();
+  pdu.rnti                     = to_value(generate_rnti());
   pdu.ul_sinr_metric           = static_cast<int16_t>(generate_ul_sinr_metric());
   pdu.timing_advance_offset    = generate_timing_advance_offset();
   pdu.timing_advance_offset_ns = static_cast<int16_t>(generate_timing_advance_offset_in_ns());
@@ -653,7 +653,7 @@ uci_pucch_pdu_format_0_1 unittest::build_valid_uci_pucch_format01_pdu()
   uci_pucch_pdu_format_0_1 pdu;
 
   pdu.handle                   = generate_handle();
-  pdu.rnti                     = generate_rnti();
+  pdu.rnti                     = to_value(generate_rnti());
   pdu.ul_sinr_metric           = static_cast<int16_t>(generate_ul_sinr_metric());
   pdu.timing_advance_offset    = generate_timing_advance_offset();
   pdu.timing_advance_offset_ns = static_cast<int16_t>(generate_timing_advance_offset_in_ns());
@@ -687,7 +687,7 @@ uci_pucch_pdu_format_2_3_4 unittest::build_valid_uci_pucch_format234_pdu()
   uci_pucch_pdu_format_2_3_4 pdu;
 
   pdu.handle                   = generate_handle();
-  pdu.rnti                     = generate_rnti();
+  pdu.rnti                     = to_value(generate_rnti());
   pdu.ul_sinr_metric           = static_cast<int16_t>(generate_ul_sinr_metric());
   pdu.timing_advance_offset    = generate_timing_advance_offset();
   pdu.timing_advance_offset_ns = static_cast<int16_t>(generate_timing_advance_offset_in_ns());

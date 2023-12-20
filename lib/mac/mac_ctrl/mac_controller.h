@@ -21,7 +21,7 @@ namespace srsran {
 
 struct mac_ue_context {
   du_ue_index_t   du_ue_index = MAX_NOF_DU_UES;
-  rnti_t          rnti        = INVALID_RNTI;
+  rnti_t          rnti        = rnti_t::INVALID_RNTI;
   du_cell_index_t pcell_idx   = MAX_NOF_DU_CELLS;
 };
 

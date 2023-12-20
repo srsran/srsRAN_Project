@@ -74,11 +74,14 @@ public:
 private:
   static constexpr rnti_t MIN_CRNTI  = rnti_t::MIN_CRNTI;
   static constexpr rnti_t MAX_CRNTI  = rnti_t::MAX_CRNTI;
-  static constexpr int    RNTI_RANGE = MAX_CRNTI + 1 - MIN_CRNTI;
+  static constexpr int    RNTI_RANGE = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
   using array_type                   = std::array<std::atomic<T>, RNTI_RANGE>;
 
-  std::atomic<T>&       get(rnti_t rnti) { return (*rnti_to_ue_index_map)[rnti - MIN_CRNTI]; }
-  const std::atomic<T>& get(rnti_t rnti) const { return (*rnti_to_ue_index_map)[rnti - MIN_CRNTI]; }
+  std::atomic<T>& get(rnti_t rnti) { return (*rnti_to_ue_index_map)[to_value(rnti) - to_value(rnti_t::MIN_CRNTI)]; }
+  const std::atomic<T>& get(rnti_t rnti) const
+  {
+    return (*rnti_to_ue_index_map)[to_value(rnti) - to_value(rnti_t::MIN_CRNTI)];
+  }
 
   // Table of RNTI -> UE index with size 65535.
   std::unique_ptr<array_type> rnti_to_ue_index_map;
