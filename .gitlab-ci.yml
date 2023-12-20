@@ -73,7 +73,8 @@ trigger docker:
       changes:
         paths:
           - .gitlab/ci/docker.yml
-          - docker/**/*
+          - docker/**/*.{yml,env,json,toml,py,sh,csv}
+          - docker/**/Dockerfile
   trigger:
     include: .gitlab/ci/docker.yml
     strategy: depend
