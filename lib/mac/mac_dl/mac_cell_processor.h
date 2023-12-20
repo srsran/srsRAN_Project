@@ -34,6 +34,7 @@ public:
                      mac_cell_result_notifier&        phy_notifier,
                      task_executor&                   cell_exec,
                      task_executor&                   slot_exec,
+                     task_executor&                   err_ind_exec,
                      task_executor&                   ctrl_exec,
                      mac_pcap&                        pcap);
 
@@ -72,6 +73,7 @@ private:
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
   task_executor&                  slot_exec;
+  task_executor&                  err_ind_exec;
   task_executor&                  ctrl_exec;
   mac_cell_result_notifier&       phy_cell;
 

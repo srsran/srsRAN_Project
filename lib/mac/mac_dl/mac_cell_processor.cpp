@@ -25,12 +25,14 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                        mac_cell_result_notifier&        phy_notifier_,
                                        task_executor&                   cell_exec_,
                                        task_executor&                   slot_exec_,
+                                       task_executor&                   err_ind_exec_,
                                        task_executor&                   ctrl_exec_,
                                        mac_pcap&                        pcap_) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
   slot_exec(slot_exec_),
+  err_ind_exec(err_ind_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
   // The PDU pool has to be large enough to fit the maximum number of RARs and Paging PDUs per slot for all possible K0
@@ -74,7 +76,7 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event event)
 {
   // Change execution context to slot indication executor.
-  if (not slot_exec.execute(
+  if (not err_ind_exec.execute(
           [this, sl_tx, event]() { sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event); })) {
     logger.warning("slot={}: Skipped error indication. Cause: DL task queue is full.", sl_tx);
   }

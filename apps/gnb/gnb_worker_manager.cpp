@@ -181,11 +181,14 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     const std::string                cell_id_str = std::to_string(cell_id);
     const priority_multiqueue_worker du_cell_worker{
         "du_cell#" + cell_id_str,
-        {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+        {{concurrent_queue_policy::lockfree_spsc, 4},
+         {concurrent_queue_policy::lockfree_spsc, 8},
+         {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
         std::chrono::microseconds{10},
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
-        {{"cell_exec#" + cell_id_str, task_priority::min},
+        {{"cell_exec#" + cell_id_str, task_priority::max - 2},
+         {"err_ind#" + cell_id_str, task_priority ::max - 1},
          {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
@@ -224,7 +227,8 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     // DU-high executor mapper.
     using exec_list       = std::initializer_list<task_executor*>;
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
-                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
+                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)},
+                                                                   exec_list{exec_map.at("err_ind#" + cell_id_str)});
     auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec#0")},
                                                                      exec_list{exec_map.at("ue_up_ul_exec#0")},
                                                                      exec_list{exec_map.at("ue_up_dl_exec#0")});
