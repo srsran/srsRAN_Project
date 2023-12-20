@@ -24,7 +24,7 @@ using namespace srsran;
 ///
 /// \param sdu Buffer that hold the SDU from higher layers.
 /// \ref TS 38.323 section 5.2.1: Transmit operation
-void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
+void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
   trace_point tx_tp = up_tracer.now();
   // Avoid TX'ing if we are close to overload RLC SDU queue
@@ -41,8 +41,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     return;
   }
 
-  metrics_add_sdus(1, sdu.length());
-  logger.log_debug(sdu.begin(), sdu.end(), "TX SDU. sdu_len={}", sdu.length());
+  metrics_add_sdus(1, buf.length());
+  logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
@@ -64,6 +64,12 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     }
   }
 
+  // We will need a copy of the SDU for the discard timer when using AM
+  byte_buffer sdu;
+  if (cfg.discard_timer.has_value() && is_am()) {
+    sdu = buf.deep_copy();
+  }
+
   // Perform header compression
   // TODO
 
@@ -72,16 +78,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   hdr.sn                   = SN(st.tx_next);
 
   // Pack header
-  byte_buffer header_buf = {};
-  if (not write_data_pdu_header(header_buf, hdr)) {
+  if (not write_data_pdu_header(buf, hdr)) {
     logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
     upper_cn.on_protocol_failure();
     return;
   }
 
   // Apply ciphering and integrity protection
-  expected<byte_buffer> exp_buf =
-      apply_ciphering_and_integrity_protection(std::move(header_buf), sdu.deep_copy(), st.tx_next);
+  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
   if (exp_buf.is_error()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
@@ -256,60 +260,35 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-expected<byte_buffer>
-pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer sdu, uint32_t count)
+expected<byte_buffer> pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
-  security::sec_mac mac = {};
+  unsigned          hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+  security::sec_mac mac      = {};
+  byte_buffer_view  sdu_plus_header{buf.begin(), buf.end()};
   if (integrity_enabled == security::integrity_enabled::on) {
-    byte_buffer buf = {};
-    if (not buf.append(hdr)) {
+    integrity_generate(mac, sdu_plus_header, count);
+  }
+  // Append MAC-I
+  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
+    if (not buf.append(mac)) {
       return default_error_t{};
     }
-    if (not buf.append(sdu)) {
-      return default_error_t{};
-    }
-    integrity_generate(mac, buf, count);
   }
 
   // TS 38.323, section 5.8: Ciphering
   // The data unit that is ciphered is the MAC-I and the
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
-  byte_buffer ct;
+  byte_buffer_view sdu_plus_mac{buf.begin() + hdr_size, buf.end()};
   if (ciphering_enabled == security::ciphering_enabled::on &&
       sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      if (not sdu.append(mac)) {
-        return default_error_t{};
-      }
-    }
-    cipher_encrypt(sdu, count);
-    ct = std::move(sdu);
-  } else {
-    ct = std::move(sdu);
-
-    // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      if (not ct.append(mac)) {
-        return default_error_t{};
-      }
-    }
+    cipher_encrypt(sdu_plus_mac, count);
   }
 
-  // Construct the protected buffer
-  byte_buffer protected_buf;
-  if (not protected_buf.append(std::move(hdr))) {
-    return default_error_t{};
-  }
-  if (not protected_buf.append(std::move(ct))) {
-    return default_error_t{};
-  }
-
-  return protected_buf;
+  return std::move(buf);
 }
 
 void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
@@ -342,7 +321,7 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
 
-void pdcp_entity_tx::cipher_encrypt(byte_buffer& buf, uint32_t count)
+void pdcp_entity_tx::cipher_encrypt(byte_buffer_view& buf, uint32_t count)
 {
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher encrypt key.");
@@ -424,8 +403,8 @@ void pdcp_entity_tx::retransmit_all_pdus()
       hdr.sn                   = SN(sdu_info.count);
 
       // Pack header
-      byte_buffer header_buf = {};
-      if (not write_data_pdu_header(header_buf, hdr)) {
+      byte_buffer buf = sdu_info.sdu.deep_copy();
+      if (not write_data_pdu_header(buf, hdr)) {
         logger.log_error(
             "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
         upper_cn.on_protocol_failure();
@@ -436,8 +415,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
       // (TODO)
 
       // Perform integrity protection and ciphering
-      expected<byte_buffer> exp_buf =
-          apply_ciphering_and_integrity_protection(std::move(header_buf), sdu_info.sdu.deep_copy(), sdu_info.count);
+      expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), sdu_info.count);
       if (exp_buf.is_error()) {
         logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
                          "notifying RRC. count={} {}",
@@ -554,37 +532,49 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
   srsran_assert(
       !(is_srb() && cfg.sn_size == pdcp_sn_size::size18bits), "Invalid SN size for SRB. sn_size={}", cfg.sn_size);
 
-  byte_buffer_writer hdr_writer = buf;
+  unsigned hdr_len = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
+  auto     view    = buf.reserve_prepend(cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3);
+  if (view.length() != hdr_len) {
+    logger.log_error("Not enough space to write header. sn_size={}", cfg.sn_size);
+    return false;
+  }
+
+  byte_buffer::iterator hdr_writer = buf.begin();
+  if (hdr_writer == buf.end()) {
+    logger.log_error("Not enough space to write header. sn_size={}", cfg.sn_size);
+  }
 
   // Set D/C if required
   if (is_drb()) {
     // D/C bit field (1).
-    if (not hdr_writer.append(0x80)) {
-      return false;
-    }
+    *hdr_writer = 0x80;
   } else {
     // No D/C bit field.
-    if (not hdr_writer.append(0x00)) {
-      return false;
-    }
+    *hdr_writer = 0x00;
   }
 
   // Add SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
-      hdr_writer.back() |= (hdr.sn & 0x00000f00U) >> 8U;
-      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
-        return false;
+      *hdr_writer |= (hdr.sn & 0x00000f00U) >> 8U;
+      hdr_writer++;
+      if (hdr_writer == buf.end()) {
+        logger.log_error("Not enough space to write header. sn_size={}", cfg.sn_size);
       }
+      *hdr_writer = hdr.sn & 0x000000ffU;
       break;
     case pdcp_sn_size::size18bits:
-      hdr_writer.back() |= (hdr.sn & 0x00030000U) >> 16U;
-      if (not hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U)) {
-        return false;
+      *hdr_writer |= (hdr.sn & 0x00030000U) >> 16U;
+      hdr_writer++;
+      if (hdr_writer == buf.end()) {
+        logger.log_error("Not enough space to write header. sn_size={}", cfg.sn_size);
       }
-      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
-        return false;
+      *hdr_writer = (hdr.sn & 0x0000ff00U) >> 8U;
+      hdr_writer++;
+      if (hdr_writer == buf.end()) {
+        logger.log_error("Not enough space to write header. sn_size={}", cfg.sn_size);
       }
+      *hdr_writer = hdr.sn & 0x000000ffU;
       break;
     default:
       logger.log_error("Invalid sn_size={}", cfg.sn_size);

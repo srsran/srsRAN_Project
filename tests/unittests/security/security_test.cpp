@@ -69,7 +69,9 @@ TEST(security_nea1_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
+
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -99,7 +101,8 @@ TEST(security_nea1_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -125,7 +128,8 @@ TEST(security_nea1_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -155,7 +159,8 @@ TEST(security_nea1_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -187,7 +192,8 @@ TEST(security_nea1_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -231,7 +237,8 @@ TEST(security_nea1_test, testset6)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea1(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea1(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -477,7 +484,8 @@ TEST(security_nea2_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -505,7 +513,8 @@ TEST(security_nea2_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -529,7 +538,8 @@ TEST(security_nea2_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -557,7 +567,8 @@ TEST(security_nea2_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -587,7 +598,8 @@ TEST(security_nea2_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -629,7 +641,8 @@ TEST(security_nea2_test, testset6)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea2(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea2(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -902,7 +915,8 @@ TEST(security_nea3_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea3(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea3(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -932,7 +946,8 @@ TEST(security_nea3_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea3(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea3(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -966,7 +981,8 @@ TEST(security_nea3_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea3(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea3(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -1006,7 +1022,8 @@ TEST(security_nea3_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea3(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea3(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -1050,7 +1067,8 @@ TEST(security_nea3_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  security_nea3(key, count, bearer, dir, plaintext, length);
+  byte_buffer_view plaintext_view{plaintext};
+  security_nea3(key, count, bearer, dir, plaintext_view, length);
   EXPECT_EQ(ciphertext, plaintext);
 }
 
@@ -1382,6 +1400,7 @@ TEST(short_mac, short_mac_valid)
 
 int main(int argc, char** argv)
 {
+  srslog::init();
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

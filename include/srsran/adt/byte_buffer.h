@@ -96,6 +96,11 @@ public:
   /// Returns a non-owning list of segments that compose the byte_buffer.
   const_byte_buffer_segment_span_range segments() const { return {it, length()}; }
 
+  /// Returns a non-owning list of segments that compose the byte_buffer.
+  /// The segments are not const, so that the callee can modify the bytes,
+  /// but not layout of the buffer.
+  byte_buffer_segment_span_range modifiable_segments() { return {it, length()}; };
+
   /// \brief Equality comparison between byte buffer view and another range.
   template <typename T>
   friend bool operator==(const byte_buffer_view& lhs, const T& r)
@@ -479,7 +484,7 @@ public:
 
   /// Converts to non-owning byte buffer view.
   byte_buffer_view view() const { return sliced_view; }
-  explicit         operator byte_buffer_view() const { return sliced_view; }
+  explicit operator byte_buffer_view() const { return sliced_view; }
 
   /// Returns another owning sub-view with dimensions specified in arguments.
   byte_buffer_slice make_slice(size_t offset, size_t size) const

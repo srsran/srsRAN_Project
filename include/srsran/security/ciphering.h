@@ -28,7 +28,7 @@ inline void security_nea1(const sec_128_key& key,
                           uint32_t           count,
                           uint8_t            bearer,
                           security_direction direction,
-                          byte_buffer&       msg,
+                          byte_buffer_view&  msg,
                           uint32_t           msg_len)
 {
   S3G_STATE state, *state_ptr;
@@ -79,7 +79,7 @@ inline void security_nea1(const sec_128_key& key,
     }
 
     // Zero tailing bits
-    zero_tailing_bits(msg.back(), msg_len);
+    zero_tailing_bits(msg[offset - 1], msg_len);
 
     // Clean up
     free(ks);
@@ -87,8 +87,11 @@ inline void security_nea1(const sec_128_key& key,
   }
 }
 
-inline void
-security_nea1(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+inline void security_nea1(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg)
 {
   return security_nea1(key, count, bearer, direction, msg, msg.length() * 8);
 }
@@ -97,7 +100,7 @@ inline void security_nea2(const sec_128_key& key,
                           uint32_t           count,
                           uint8_t            bearer,
                           security_direction direction,
-                          byte_buffer&       msg,
+                          byte_buffer_view&  msg,
                           uint32_t           msg_len)
 {
   aes_context   ctx;
@@ -124,7 +127,7 @@ inline void security_nea2(const sec_128_key& key,
       nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
 
       // Encryption
-      byte_buffer_segment_span_range segments = msg.segments();
+      byte_buffer_segment_span_range segments = msg.modifiable_segments();
       for (const auto& segment : segments) {
         ret = aes_crypt_ctr(&ctx, segment.size(), &nc_off, nonce_cnt, stream_blk, segment.data(), segment.data());
       }
@@ -132,12 +135,15 @@ inline void security_nea2(const sec_128_key& key,
   }
   if (ret == 0) {
     //  Zero tailing bits
-    zero_tailing_bits(msg.back(), msg_len);
+    zero_tailing_bits(msg[msg.length() - 1], msg_len);
   }
 }
 
-inline void
-security_nea2(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+inline void security_nea2(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg)
 {
   return security_nea2(key, count, bearer, direction, msg, msg.length() * 8);
 }
@@ -146,7 +152,7 @@ inline void security_nea3(const sec_128_key& key,
                           uint32_t           count,
                           uint8_t            bearer,
                           security_direction direction,
-                          byte_buffer&       msg,
+                          byte_buffer_view&  msg,
                           uint32_t           msg_len)
 {
   uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -203,15 +209,18 @@ inline void security_nea3(const sec_128_key& key,
       offset++;
     }
 
-    zero_tailing_bits(msg.back(), msg_len);
+    zero_tailing_bits(msg[msg.length() - 1], msg_len);
 
     // Clean up
     free(ks);
   }
 }
 
-inline void
-security_nea3(const sec_128_key& key, uint32_t count, uint8_t bearer, security_direction direction, byte_buffer& msg)
+inline void security_nea3(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg)
 {
   security_nea3(key, count, bearer, direction, msg, msg.length() * 8);
 }

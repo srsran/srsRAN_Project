@@ -189,14 +189,10 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
    * data part of the PDCP Data PDU except the
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
-  byte_buffer sdu = pdu.deep_copy();
+  byte_buffer_view sdu_plus_mac = byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()};
   if (ciphering_enabled == security::ciphering_enabled::on &&
       sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    sdu.trim_head(hdr_len_bytes);
-    cipher_decrypt(sdu, rcvd_count);
-    std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
-    std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
-    sdu.prepend(span<uint8_t>{header_buf.data(), hdr_len_bytes});
+    cipher_decrypt(sdu_plus_mac, rcvd_count);
   }
 
   /*
@@ -205,7 +201,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
    */
   security::sec_mac mac = {};
   if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-    extract_mac(sdu, mac);
+    extract_mac(pdu, mac);
   }
 
   /*
@@ -215,19 +211,19 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
    * and the data part of the PDU before ciphering.
    */
   if (integrity_enabled == security::integrity_enabled::on) {
-    bool is_valid = integrity_verify(sdu, rcvd_count, mac);
+    bool is_valid = integrity_verify(pdu, rcvd_count, mac);
     if (!is_valid) {
-      logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed, dropping PDU.");
+      logger.log_warning(pdu.begin(), pdu.end(), "Integrity failed, dropping PDU.");
       metrics_add_integrity_failed_pdus(1);
       // TODO: Re-enable once the RRC supports notifications from the PDCP
       // upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
     metrics_add_integrity_verified_pdus(1);
-    logger.log_debug(sdu.begin(), sdu.end(), "Integrity passed.");
+    logger.log_debug(pdu.begin(), pdu.end(), "Integrity passed.");
   }
   // After checking the integrity, we can discard the header.
-  discard_data_header(sdu);
+  discard_data_header(pdu);
 
   /*
    * Check valid rcvd_count:
@@ -255,7 +251,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
 
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window->add_sn(rcvd_count);
-  sdu_info.sdu               = std::move(sdu);
+  sdu_info.sdu               = std::move(pdu);
   sdu_info.count             = rcvd_count;
 
   // Update RX_NEXT
@@ -470,7 +466,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
   return is_valid;
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer& msg, uint32_t count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view& msg, uint32_t count)
 {
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
