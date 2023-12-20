@@ -21,10 +21,11 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
   unsigned       symbol     = results.params.symbol_id;
   uplink_context ul_context = ul_context_repo.get(slot, symbol);
   if (ul_context.empty()) {
-    logger.warning(
-        "Dropped received Open Fronthaul message as no uplink slot context was found for slot '{}' and symbol '{}'",
-        results.params.slot,
-        results.params.symbol_id);
+    logger.warning("Dropped received Open Fronthaul message as no uplink slot context was found for slot '{}', symbol "
+                   "'{}' and eAxC '{}'",
+                   results.params.slot,
+                   results.params.symbol_id,
+                   eaxc);
 
     return;
   }

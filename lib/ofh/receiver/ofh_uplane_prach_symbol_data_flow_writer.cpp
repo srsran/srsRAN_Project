@@ -21,7 +21,10 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
 
   prach_context prach_context = prach_context_repo.get(slot);
   if (prach_context.empty()) {
-    logger.info("Dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}'", slot);
+    logger.info(
+        "Dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}' and eAxC '{}'",
+        slot,
+        eaxc);
     return;
   }
 

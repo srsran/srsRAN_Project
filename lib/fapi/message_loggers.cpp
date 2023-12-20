@@ -125,7 +125,8 @@ static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
 void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "DL_TTI.request slot={}.{}", msg.sfn, msg.slot);
+  fmt::format_to(
+      buffer, "DL_TTI.request slot={}.{}, is_last_message_in_slot={}", msg.sfn, msg.slot, msg.is_last_message_in_slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
@@ -430,7 +431,8 @@ void srsran::fapi::log_slot_indication(const slot_indication_message& msg, srslo
 void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "UL_DCI.request slot={}.{}", msg.sfn, msg.slot);
+  fmt::format_to(
+      buffer, "UL_DCI.request slot={}.{}, is_last_message_in_slot={}", msg.sfn, msg.slot, msg.is_last_message_in_slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {

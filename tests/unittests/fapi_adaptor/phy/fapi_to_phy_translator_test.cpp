@@ -109,10 +109,10 @@ protected:
   resource_grid_pool_dummy        rg_pool;
   uplink_request_processor_dummy  ul_request_processor;
   uplink_slot_pdu_repository      pdu_repo;
-  const unsigned                  sector_id           = 0;
-  const unsigned                  allowed_delay_slots = 2;
-  const subcarrier_spacing        scs                 = subcarrier_spacing::kHz15;
-  const slot_point                slot                = {scs, 1, 0};
+  const unsigned                  sector_id         = 0;
+  const unsigned                  headroom_in_slots = 2;
+  const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
+  const slot_point                slot              = {scs, 1, 0};
   fapi::prach_config              prach_cfg;
   fapi::carrier_config            carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
   downlink_pdu_validator_dummy    dl_pdu_validator;
@@ -120,8 +120,7 @@ protected:
   slot_error_message_notifier_spy error_notifier_spy;
   manual_task_worker              worker;
   tx_softbuffer_pool_spy          softbuffer_pool_spy;
-  fapi_to_phy_translator_config   config =
-      {sector_id, allowed_delay_slots, scs, scs_common, &prach_cfg, &carrier_cfg, {0}};
+  fapi_to_phy_translator_config config = {sector_id, headroom_in_slots, scs, scs_common, &prach_cfg, &carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
@@ -148,10 +147,6 @@ public:
 
 TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_not_configured_on_new_slot)
 {
-  ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  // Assert that the downlink processor is configured.
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
@@ -246,7 +241,7 @@ TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_within_allowed_delay_is_proces
   translator.handle_new_slot(msg_slot);
 
   // Increase the slots.
-  for (unsigned i = 1; i != allowed_delay_slots; ++i) {
+  for (unsigned i = 1; i != headroom_in_slots; ++i) {
     translator.handle_new_slot(msg_slot + i);
   }
 
@@ -272,7 +267,7 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous
   msg.is_last_message_in_slot = false;
 
   // Increase the slots.
-  for (unsigned i = 1; i != allowed_delay_slots; ++i) {
+  for (unsigned i = 1; i != headroom_in_slots; ++i) {
     translator.handle_new_slot(slot + i);
   }
 
@@ -305,7 +300,7 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_from_a_slot_de
   msg.is_last_message_in_slot = false;
 
   // Increase the slots.
-  for (unsigned i = 0, e = allowed_delay_slots + 1; i != e; ++i) {
+  for (unsigned i = 0, e = headroom_in_slots + 1; i != e; ++i) {
     current_slot += 1;
     translator.handle_new_slot(current_slot);
   }
@@ -322,6 +317,39 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_from_a_slot_de
   ASSERT_EQ(error_msg.slot, slot.slot_index());
   ASSERT_EQ(error_msg.expected_sfn, current_slot.sfn());
   ASSERT_EQ(error_msg.expected_slot, current_slot.slot_index());
+}
+
+TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message_for_the_next_slot_is_received)
+{
+  ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+
+  fapi::dl_tti_request_message msg;
+  msg.sfn                     = slot.sfn();
+  msg.slot                    = slot.slot_index();
+  msg.is_last_message_in_slot = false;
+
+  // Send a DL_TTI.request.
+  translator.dl_tti_request(msg);
+
+  // Assert that the downlink processor is configured.
+  ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  // Assert that the resource grid has NOT been set to zero.
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
+
+  // Increase the slots.
+  ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
+
+  translator.handle_new_slot(slot + headroom_in_slots);
+
+  ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
+
+  ++msg.slot;
+  translator.dl_tti_request(msg);
+
+  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
+  ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
+  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 
 TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_the_current_slot_is_bigger_than_the_allowed)
@@ -342,13 +370,15 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_the_curre
   // Assert that the resource grid has NOT been set to zero.
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
+  // The manager headroom size is the number of headroom in slots plus 3.
+  unsigned manager_headroom_size = headroom_in_slots + 3U;
   // Increase the slots.
-  for (unsigned i = 0; i != allowed_delay_slots; ++i) {
+  for (unsigned i = 1; i != (manager_headroom_size - 1U); ++i) {
     translator.handle_new_slot(slot + i);
     ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
   }
 
-  translator.handle_new_slot(slot + allowed_delay_slots);
+  translator.handle_new_slot(slot + (manager_headroom_size - 1U));
 
   // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());

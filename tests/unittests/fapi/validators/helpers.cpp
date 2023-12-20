@@ -319,6 +319,8 @@ dl_tti_request_message unittest::build_valid_dl_tti_request()
   msg.pdus.back().pdu_type   = dl_pdu_type::CSI_RS;
   msg.pdus.back().csi_rs_pdu = build_valid_dl_csi_pdu();
 
+  msg.is_last_message_in_slot = false;
+
   return msg;
 }
 
@@ -336,6 +338,8 @@ ul_dci_request_message unittest::build_valid_ul_dci_request()
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type = ul_dci_pdu_type::PDCCH;
   msg.pdus.back().pdu      = build_valid_dl_pdcch_pdu();
+
+  msg.is_last_message_in_slot = true;
 
   return msg;
 }

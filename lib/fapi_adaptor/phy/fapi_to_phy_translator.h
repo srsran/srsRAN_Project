@@ -231,6 +231,12 @@ private:
   template <typename T>
   bool is_message_in_time(const T& msg) const;
 
+  /// Returns this adaptor current slot.
+  slot_point get_current_slot() const
+  {
+    return slot_point(scs, current_slot_count_val.load(std::memory_order_acquire));
+  }
+
 private:
   /// Sector identifier.
   const unsigned sector_id;
@@ -252,8 +258,8 @@ private:
   uplink_slot_pdu_repository& ul_pdu_repository;
   /// Asynchronous task executor.
   task_executor& asynchronous_executor;
-  /// Current slot.
-  slot_point current_slot;
+  /// Current slot count value.
+  std::atomic<uint32_t> current_slot_count_val;
   /// Slot controller manager.
   slot_based_upper_phy_controller_manager slot_controller_mngr;
   /// Precoding matrix repository.
@@ -262,9 +268,6 @@ private:
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Error indication notifier.
   std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
-  /// Protects concurrent access to shared variables.
-  // :TODO: make this lock free.
-  std::mutex mutex;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   const subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
