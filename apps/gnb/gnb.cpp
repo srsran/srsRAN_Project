@@ -383,7 +383,7 @@ int main(int argc, char** argv)
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
-      srslog::fetch_udp_sink("127.0.0.1", 10000, srslog::create_json_formatter());
+      srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
   srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 

@@ -790,7 +790,8 @@ struct metrics_appconfig {
   unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.
   bool        enable_json_metrics      = false;
-  std::string json_filename            = "/tmp/gnb_metrics.json";
+  std::string addr                     = "127.0.0.1";
+  uint16_t    port                     = 55555;
   bool        autostart_stdout_metrics = false;
 };
 
