@@ -35,6 +35,18 @@ docker compose -f docker/docker-compose.yml down
 
 If you're not familiarized with `docker compose` tool, it will be recommended to check its [website](https://docs.docker.com/compose/) and `docker compose --help` output.
 
+## Enabling metrics reporting in the gnb
+
+To be able to see gnb's metric in the UI solution (grafana + influxdb + metrics-server) it's required to enable metrics reporting in the gnb config.
+For example:
+
+```yml
+metrics:
+  enable_json_metrics: true
+  addr: 172.19.1.4  # Metrics-server IP
+  port: 55555       # Metrics-server Port
+```
+
 ## Run some services
 
 Instead of running all services provided, a partial run is allowed by doing:
