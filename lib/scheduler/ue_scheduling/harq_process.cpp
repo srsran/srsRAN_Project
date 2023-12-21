@@ -432,9 +432,20 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 
 void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
 {
+  // Maximum number of UCI indications that a HARQ process can expect.
+  static constexpr size_t MAX_ACKS_PER_HARQ = 4;
+
   for (dl_harq_process& h_dl : dl_harqs) {
     if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
-      h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
+      dl_harq_process::status_update ret = dl_harq_process::status_update::no_update;
+      for (unsigned count = 0; count != MAX_ACKS_PER_HARQ and ret == dl_harq_process::status_update::no_update;
+           ++count) {
+        ret = h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
+      }
+      if (ret == dl_harq_process::status_update::no_update) {
+        dl_h_logger.warning(h_dl.id, "DL HARQ in some invalid state. Resetting it...");
+        h_dl.reset();
+      }
     }
   }
 }
