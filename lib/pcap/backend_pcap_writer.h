@@ -13,6 +13,7 @@
 #include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/unique_function.h"
+#include <mutex>
 
 namespace srsran {
 

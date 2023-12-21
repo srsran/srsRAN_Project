@@ -9,6 +9,7 @@
  */
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <list>

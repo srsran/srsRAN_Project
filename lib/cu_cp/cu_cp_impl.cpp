@@ -15,6 +15,7 @@
 #include "srsran/rrc/rrc_du.h"
 #include <chrono>
 #include <future>
+#include <thread>
 
 using namespace srsran;
 using namespace srs_cu_cp;

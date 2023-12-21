@@ -14,6 +14,7 @@
 #include "procedures/initial_du_setup_procedure.h"
 #include <condition_variable>
 #include <future>
+#include <thread>
 
 using namespace srsran;
 using namespace srs_du;

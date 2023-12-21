@@ -31,17 +31,4 @@ inline detail::byte_buffer_segment_pool& get_default_byte_buffer_segment_pool()
 }
 
 } // namespace detail
-
-/// Initialize pool of byte buffer segments with specific number of segments. Assert if the pool was already initialized
-/// with a different number of segments.
-inline void init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t memory_block_size = 1024)
-{
-  auto& pool = detail::byte_buffer_segment_pool::get_instance(nof_segments, memory_block_size);
-  srsran_assert(nof_segments == pool.nof_memory_blocks(),
-                "The pool was already initialized with a different number of segments ({} != {})",
-                nof_segments,
-                pool.nof_memory_blocks());
-  srsran_assert(memory_block_size > 64U, "memory blocks must be larger than the segment control header");
-}
-
 } // namespace srsran
