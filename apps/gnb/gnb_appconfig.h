@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gnb_os_sched_affinity_manager.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
@@ -1019,7 +1020,7 @@ struct ru_ofh_appconfig {
 
 struct buffer_pool_appconfig {
   std::size_t nof_segments = 1048576;
-  std::size_t segment_size = 1024;
+  std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
 };
 
 /// CPU isolation configuration in the gNB app.

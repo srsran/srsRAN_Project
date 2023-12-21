@@ -13,6 +13,11 @@
 
 using namespace srsran;
 
+size_t srsran::byte_buffer_segment_pool_default_segment_size()
+{
+  return 1024;
+}
+
 /// Get default byte buffer segment pool. Initialize pool if not initialized before.
 detail::byte_buffer_segment_pool& srsran::detail::get_default_byte_buffer_segment_pool()
 {
@@ -20,7 +25,7 @@ detail::byte_buffer_segment_pool& srsran::detail::get_default_byte_buffer_segmen
   // Note: In case of unit tests, this function will be called rather than init_byte_buffer_segment_pool(...)
   constexpr static size_t default_byte_buffer_segment_pool_size = 16384;
   static auto&            pool = detail::byte_buffer_segment_pool::get_instance(default_byte_buffer_segment_pool_size,
-                                                                     default_byte_buffer_segment_size);
+                                                                     byte_buffer_segment_pool_default_segment_size());
   return pool;
 }
 
