@@ -15,13 +15,17 @@
 
 namespace srsran {
 
+/// Default byte buffer segment size in the byte buffer pool.
+constexpr static size_t default_byte_buffer_segment_size = 1024;
+
 /// \brief Sets the default size of the default byte_buffer segment pool.
 ///
 /// This function asserts if the pool has already been initialized.
 /// \param nof_segments Number of byte_buffer_segments stored in the pool.
 /// \param memory_block_size Number, in bytes, for each memory block on which a buffer_byte_segment header and payload
 /// will be stored.
-void init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t memory_block_size = 1024);
+void init_byte_buffer_segment_pool(std::size_t nof_segments,
+                                   std::size_t memory_block_size = default_byte_buffer_segment_size);
 
 /// \brief Non-owning view to a byte sequence.
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of

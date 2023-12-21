@@ -48,8 +48,10 @@ static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunct
 
 namespace {
 
+const size_t memory_block_size = detail::get_default_byte_buffer_segment_pool().memory_block_size();
+
 const size_t  small_vec_size = 6;
-const size_t  large_vec_size = detail::get_default_byte_buffer_segment_pool().memory_block_size() * 4;
+const size_t  large_vec_size = memory_block_size * 4;
 static size_t random_vec_size(unsigned lb = 1, unsigned ub = large_vec_size)
 {
   return test_rgen::uniform_int<unsigned>(lb, ub);
@@ -391,10 +393,9 @@ TEST(byte_buffer_test, trim)
 
 TEST(byte_buffer_test, prepend_and_trim_tail)
 {
-  byte_buffer pdu;
-  byte_buffer sdu;
-  uint32_t    pdu_len =
-      detail::get_default_byte_buffer_segment_pool().memory_block_size() - 5 + test_rgen::uniform_int<unsigned>(0, 10);
+  byte_buffer        pdu;
+  byte_buffer        sdu;
+  uint32_t           pdu_len    = memory_block_size - 5 + test_rgen::uniform_int<unsigned>(0, 10);
   constexpr uint32_t trim_len   = 4;
   constexpr uint32_t prefix_len = 3;
   for (uint32_t i = 0; i < pdu_len; i++) {
