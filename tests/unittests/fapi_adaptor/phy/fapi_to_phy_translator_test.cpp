@@ -27,8 +27,6 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
 
-static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-
 namespace {
 
 /// Slot error message notifier spy implementation.
@@ -104,23 +102,23 @@ public:
 class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
-  resource_grid_spy               grid;
-  downlink_processor_pool_dummy   dl_processor_pool;
-  resource_grid_pool_dummy        rg_pool;
-  uplink_request_processor_dummy  ul_request_processor;
-  uplink_slot_pdu_repository      pdu_repo;
-  const unsigned                  sector_id         = 0;
-  const unsigned                  headroom_in_slots = 2;
-  const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
-  const slot_point                slot              = {scs, 1, 0};
-  fapi::prach_config              prach_cfg;
-  fapi::carrier_config            carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
-  downlink_pdu_validator_dummy    dl_pdu_validator;
-  uplink_pdu_validator_dummy      ul_pdu_validator;
-  slot_error_message_notifier_spy error_notifier_spy;
-  manual_task_worker              worker;
-  tx_softbuffer_pool_spy          softbuffer_pool_spy;
-  fapi_to_phy_translator_config config = {sector_id, headroom_in_slots, scs, scs_common, &prach_cfg, &carrier_cfg, {0}};
+  resource_grid_spy                   grid;
+  downlink_processor_pool_dummy       dl_processor_pool;
+  resource_grid_pool_dummy            rg_pool;
+  uplink_request_processor_dummy      ul_request_processor;
+  uplink_slot_pdu_repository          pdu_repo;
+  const unsigned                      sector_id         = 0;
+  const unsigned                      headroom_in_slots = 2;
+  const subcarrier_spacing            scs               = subcarrier_spacing::kHz15;
+  const slot_point                    slot              = {scs, 1, 0};
+  fapi::prach_config                  prach_cfg;
+  fapi::carrier_config                carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
+  downlink_pdu_validator_dummy        dl_pdu_validator;
+  uplink_pdu_validator_dummy          ul_pdu_validator;
+  slot_error_message_notifier_spy     error_notifier_spy;
+  manual_task_worker                  worker;
+  tx_softbuffer_pool_spy              softbuffer_pool_spy;
+  fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, &prach_cfg, &carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,

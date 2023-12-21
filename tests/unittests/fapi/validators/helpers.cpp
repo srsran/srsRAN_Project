@@ -1190,8 +1190,7 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   pdu.pdu_index         = 4231;
   pdu.tlv_custom.length = units::bytes{12};
 
-  static uint8_t payload;
-  pdu.tlv_custom.payload = &payload;
+  pdu.tlv_custom.payload = &msg.padding[0];
 
   return msg;
 }
