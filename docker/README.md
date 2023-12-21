@@ -106,6 +106,12 @@ By default 5gc is launched. If you want to run another binary, remember you can 
 docker compose -f docker/docker-compose.yml run 5gc epc -c open5gs-5gc.yml
 ```
 
+If you need to use custom configuration files, remember you can share folder and files between your local PC (host) and the container:
+
+```bash
+docker compose -f docker/docker-compose.yml run -v /tmp/my-open5gs-5gc.yml:/config/my-open5gs-5gc.yml 5gc epc -c /config/my-open5gs-5gc.yml
+```
+
 ### Metric UI Setup
 
 Change the environment variables define in `.env` that are used to setup and deploy the stack
