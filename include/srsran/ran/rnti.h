@@ -48,3 +48,22 @@ constexpr inline uint16_t to_value(rnti_t rnti)
 }
 
 } // namespace srsran
+
+// Formatters
+namespace fmt {
+template <>
+struct formatter<srsran::rnti_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::rnti_t rnti, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:#x}", to_value(rnti));
+  }
+};
+
+} // namespace fmt

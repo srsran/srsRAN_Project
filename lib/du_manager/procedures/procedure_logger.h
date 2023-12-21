@@ -94,7 +94,7 @@ private:
     if (rnti == rnti_t::INVALID_RNTI) {
       log_ch("ue={} proc=\"{}\": {}.", ue_index, proc_name, result_str);
     } else {
-      log_ch("ue={} rnti={:#x} proc=\"{}\": {}.", ue_index, rnti, proc_name, result_str);
+      log_ch("ue={} rnti={} proc=\"{}\": {}.", ue_index, rnti, proc_name, result_str);
     }
   }
 

@@ -77,8 +77,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
     if (it != rnti_to_ue_index_lookup.end()) {
       rnti_to_ue_index_lookup.erase(it);
     } else {
-      logger.error(
-          "ue={} rnti={:#x}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.", ue_idx, crnti);
+      logger.error("ue={} rnti={}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.", ue_idx, crnti);
     }
 
     // Remove UE from the repository.
@@ -87,7 +86,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
     // Marks UE config removal as complete.
     p.reset();
 
-    logger.debug("ue={} rnti={:#x}: UE has been successfully removed.", ue_idx, crnti);
+    logger.debug("ue={} rnti={}: UE has been successfully removed.", ue_idx, crnti);
   }
 
   // In case the elements at the front of the ring has been marked for removal, pop them from the queue.

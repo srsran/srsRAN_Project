@@ -31,7 +31,7 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(INVALID_DU_UE_INDEX, [this, u = std::move(u), ev = std::move(ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
-      logger.error("ue={} rnti={:#x}: Discarding UE creation. Cause: A UE with the same index already exists",
+      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
       ev.abort();

@@ -10,8 +10,6 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/cu_types.h"
-#include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 #include <string.h>
@@ -25,7 +23,7 @@ public:
   rrc_ue_log_prefix(ue_index_t ue_index, rnti_t c_rnti)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} c_rnti={:#04x}: ", ue_index, c_rnti);
+    fmt::format_to(buffer, "ue={} c_rnti={}: ", ue_index, c_rnti);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }

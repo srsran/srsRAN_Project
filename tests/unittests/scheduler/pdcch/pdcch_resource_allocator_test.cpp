@@ -503,7 +503,7 @@ struct fmt::formatter<multi_alloc_test_params> {
     fmt::format_to(ctx.out(), "bw={}MHz allocs=[", bs_channel_bandwidth_to_MHz(params.cell_bw));
     for (const auto& a : params.allocs) {
       fmt::format_to(ctx.out(),
-                     "{}{{{}={:#x} al={}, ss_id={} -> cce={}}}",
+                     "{}{{{}={} al={}, ss_id={} -> cce={}}}",
                      &a == params.allocs.data() ? "" : ", ",
                      to_string(a.type),
                      a.rnti,
@@ -641,7 +641,7 @@ TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
   for (const multi_alloc_test_params::alloc& a : params.allocs) {
     const dci_context_information* ctx = this->find_pdcch_alloc(a);
     ASSERT_EQ(ctx != nullptr, a.expected_ncce.has_value())
-        << fmt::format("For rnti={:#x} expected cce={}", a.rnti, a.expected_ncce);
+        << fmt::format("For rnti={} expected cce={}", a.rnti, a.expected_ncce);
     if (ctx != nullptr) {
       if (a.type == alloc_type::dl_crnti or a.type == alloc_type::ul_crnti) {
         ASSERT_NO_FATAL_FAILURE(verify_pdcch_context(*ctx, test_ues.at(a.rnti), a.ss_id));

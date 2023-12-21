@@ -277,14 +277,14 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       srsran_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
       auto& pending_msg3 = pending_msg3s[to_value(crc.rnti) % MAX_NOF_MSG3];
       if (pending_msg3.preamble.tc_rnti != crc.rnti) {
-        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
+        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: Inexistent rnti.",
                        cell_cfg.cell_index,
                        crc.rnti,
                        crc.harq_id);
         continue;
       }
       if (pending_msg3.harq.id != crc.harq_id) {
-        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
+        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
                        cell_cfg.cell_index,
                        crc.rnti,
                        crc.harq_id,
@@ -695,7 +695,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     pdcch_ul_information* pdcch =
         pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
     if (pdcch == nullptr) {
-      logger.debug("tc-rnti={:#x}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
+      logger.debug("tc-rnti={}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
                    msg3_ctx.preamble.tc_rnti);
       continue;
     }
@@ -755,5 +755,5 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
 {
-  logger.debug("RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
+  logger.debug("RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
 }

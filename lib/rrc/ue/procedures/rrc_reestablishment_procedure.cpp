@@ -158,7 +158,7 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
 
   // check if reestablishment context exists
   if (reestablishment_context.ue_index == ue_index_t::invalid) {
-    logger.log_debug("Reestablishment context for UE with pci={} and rnti={:#04x} not found",
+    logger.log_debug("Reestablishment context for UE with pci={} and rnti={} not found",
                      reestablishment_request.rrc_reest_request.ue_id.pci,
                      to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
   } else {
@@ -199,10 +199,10 @@ bool rrc_reestablishment_procedure::verify_security_context()
 
   logger.log_debug(var_short_mac_input_packed.begin(),
                    var_short_mac_input_packed.end(),
-                   "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={:#04x}",
+                   "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
                    var_short_mac_input.source_pci,
                    var_short_mac_input.target_cell_id.to_number(),
-                   var_short_mac_input.source_c_rnti);
+                   to_rnti(var_short_mac_input.source_c_rnti));
 
   // Verify ShortMAC-I
   if (reestablishment_context.sec_context.sel_algos.algos_selected) {

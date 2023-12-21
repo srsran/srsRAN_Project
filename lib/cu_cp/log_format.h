@@ -29,9 +29,9 @@ struct ue_event_prefix {
   lcid_t          lcid;
 
   ue_event_prefix(const char*     dir_      = "CTRL",
-                  ue_index_t      ue_index_ = MAX_NOF_UES,
+                  ue_index_t      ue_index_ = ue_index_t::invalid,
                   rnti_t          rnti_     = rnti_t::INVALID_RNTI,
-                  du_cell_index_t cell_idx_ = MAX_NOF_DU_CELLS,
+                  du_cell_index_t cell_idx_ = uint_to_du_cell_index(MAX_NOF_DU_CELLS),
                   const char*     channel_  = nullptr,
                   lcid_t          lcid_     = INVALID_LCID) :
     direction(dir_), ue_index(ue_index_), rnti(rnti_), cell_index(cell_idx_), channel(channel_), lcid(lcid_)
@@ -174,7 +174,7 @@ void log_ul_pdu(srslog::basic_logger& logger,
 template <typename... Args>
 void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, const char* cause_fmt, Args&&... args)
 {
-  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_UES, to_value(rnti), cc}, cause_fmt, std::forward<Args>(args)...);
+  log_ue_event(logger, ue_event_prefix{"UL", ue_index_t::invalid, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
 }
 
 } // namespace srs_cu_cp
@@ -197,17 +197,17 @@ struct formatter<srsran::srs_cu_cp::ue_event_prefix> {
   {
     using namespace srsran;
     auto ret = format_to(ctx.out(), "{:<4}", ue_prefix.direction);
-    if (ue_prefix.ue_index != srsran::srs_cu_cp::MAX_NOF_UES) {
+    if (ue_prefix.ue_index != srsran::srs_cu_cp::ue_index_t::invalid) {
       ret = format_to(ctx.out(), " ueId={}", ue_prefix.ue_index);
     } else {
       ret = format_to(ctx.out(), "{: <7}", "");
     }
     if (ue_prefix.rnti != srsran::rnti_t::INVALID_RNTI) {
-      ret = format_to(ctx.out(), " {:#x}", ue_prefix.rnti);
+      ret = format_to(ctx.out(), " {}", ue_prefix.rnti);
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");
     }
-    if (ue_prefix.cell_index != srsran::srs_cu_cp::MAX_NOF_DU_CELLS) {
+    if (ue_prefix.cell_index != srsran::srs_cu_cp::du_cell_index_t::invalid) {
       ret = format_to(ctx.out(), " cell={}", ue_prefix.cell_index);
     }
     if (ue_prefix.channel != nullptr) {

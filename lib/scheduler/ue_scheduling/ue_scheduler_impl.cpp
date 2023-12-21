@@ -73,13 +73,13 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
       // expected to be sent.
       if (user == nullptr) {
         logger.warning(
-            "rnti={:#x}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
+            "rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
             pucch.crnti,
             slot_alloc.slot);
         continue;
       }
       srsran_assert(pucch.format == pucch_format::FORMAT_1 or pucch.format == pucch_format::FORMAT_2,
-                    "rnti={:#x}: Only PUCCH format 1 and format 2 are supported",
+                    "rnti={}: Only PUCCH format 1 and format 2 are supported",
                     pucch.crnti);
       const unsigned nof_harqs_per_rnti_per_slot =
           pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.harq_ack_nof_bits : pucch.format_2.harq_ack_nof_bits;
@@ -89,7 +89,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         dl_harq_process* h_dl = user->get_pcell().harqs.find_dl_harq_waiting_ack_slot(slot_alloc.slot, harq_bit_idx);
         if (h_dl == nullptr) {
           logger.warning(
-              "ue={} rnti={:#x}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index",
+              "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index",
               user->ue_index,
               user->crnti,
               slot_alloc.slot,
@@ -130,7 +130,7 @@ void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_allo
         csi_bits  = pucch.format_2.csi_part1_bits;
         sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
       }
-      logger.error("rnti={:#x}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
+      logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
                    "harq-bits={} csi-1-bits={} sr-bits={}",
                    pucch.crnti,
                    slot_alloc.slot,

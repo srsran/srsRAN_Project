@@ -183,7 +183,7 @@ const du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index) const
 du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 {
   auto it = rnti_to_ue_index.find(rnti);
-  srsran_assert(ue_db.contains(it->second), "Detected invalid container state for rnti={:#x}", rnti);
+  srsran_assert(ue_db.contains(it->second), "Detected invalid container state for rnti={}", rnti);
   return it != rnti_to_ue_index.end() ? &ue_db[it->second] : nullptr;
 }
 
@@ -246,7 +246,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
 void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
 {
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
-  srsran_assert(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
+  srsran_assert(is_crnti(crnti), "Invalid c-rnti={}", crnti);
   srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", ue_index);
   du_ue& u = ue_db[ue_index];
 

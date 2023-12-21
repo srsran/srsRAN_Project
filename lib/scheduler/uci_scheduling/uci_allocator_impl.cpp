@@ -138,7 +138,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
     // BetaOffsets).
     // Due to the lack of clarity, in the following, we avoid scheduling a UCI on PUSCH during fallback mode.
     if (fallback_mode) {
-      logger.debug("UCI for HARQ-ACK allocation on PUSCH skipped for ue={:#x}. Cause: we don't multiplex UCI on "
+      logger.debug("UCI for HARQ-ACK allocation on PUSCH skipped for ue={}. Cause: we don't multiplex UCI on "
                    "PUSCH during fallback mode",
                    crnti);
       return {};
@@ -158,7 +158,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
     update_uci_on_pusch_harq_offsets(
         existing_pusch->uci.value().harq.value(),
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
-    logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
+    logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={}", crnti);
     return {uci_allocation{}};
   }
   // No PUSCH grants; allocate on PUCCH.
@@ -303,7 +303,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
         uci.harq.value(), ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
   }
 
-  logger.debug("rnti={:#x}: UCI mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot);
+  logger.debug("rnti={}: UCI mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot);
 }
 
 void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
@@ -320,7 +320,7 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
 
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
   if (has_pusch_grants) {
-    logger.debug("rnti={:#x}: SR allocation skipped due to PUSCH grant allocated.", crnti);
+    logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", crnti);
     return;
   }
 
@@ -348,7 +348,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
 
     add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(), ue_cell_cfg);
 
-    logger.debug("rnti={:#x} UCI with 0 H-ACK, {} CSI-p1 and {} CSI-p2 bits for slot={} allocated on PUSCH",
+    logger.debug("rnti={} UCI with 0 H-ACK, {} CSI-p1 and {} CSI-p2 bits for slot={} allocated on PUSCH",
                  crnti,
                  existing_pusch->uci.value().csi.value().csi_part1_nof_bits,
                  existing_pusch->uci.value().csi.value().beta_offset_csi_2.has_value() ? "up to 11" : "0",

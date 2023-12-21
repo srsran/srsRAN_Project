@@ -290,7 +290,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialUlRrcMessageTransfer",
                msg->gnb_du_ue_f1ap_id,
                cgi.nci,
-               msg->c_rnti,
+               crnti,
                cgi.plmn);
 
   if (msg->sul_access_ind_present) {

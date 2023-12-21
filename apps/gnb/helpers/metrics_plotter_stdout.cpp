@@ -124,7 +124,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
 
   for (const auto& ue : ue_metrics) {
     fmt::print("{:>4}", ue.pci);
-    fmt::print("{:>5x}", ue.rnti);
+    fmt::print("{:>5x}", to_value(ue.rnti));
     if (!iszero(ue.cqi)) {
       fmt::print("  {:>3}", int(ue.cqi));
     } else {

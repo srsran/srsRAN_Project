@@ -48,7 +48,7 @@ protected:
 
   void push_ul_ccch_message(ul_ccch_indication_message ccch_ind)
   {
-    test_logger.info("TEST: Pushing UL CCCH indication for RNTI={:#x}...", ccch_ind.tc_rnti);
+    test_logger.info("TEST: Pushing UL CCCH indication for rnti={}...", ccch_ind.tc_rnti);
     ue_mng.handle_ue_create_request(ccch_ind);
   }
 

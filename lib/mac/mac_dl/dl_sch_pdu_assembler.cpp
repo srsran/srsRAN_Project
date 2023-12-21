@@ -208,7 +208,7 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    logger.info("DL PDU: ue={} rnti={:#x} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU: ue={} rnti={} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:
@@ -239,7 +239,7 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
 {
   span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
   if (buffer.size() < tb_size_bytes) {
-    logger.error("DL ue={} rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+    logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
                  ue_mng.get_ue_index(rnti),
                  rnti,
                  h_id);
@@ -295,7 +295,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     unsigned                    max_mac_sdu_len = get_mac_sdu_payload_size(rem_bytes);
     dl_sch_pdu::mac_sdu_encoder sdu_enc         = ue_pdu.get_sdu_encoder(lcid, max_mac_sdu_len);
     if (not sdu_enc.valid()) {
-      logger.info("ue={} rnti={:#x} lcid={}: Insufficient MAC SDU buffer length of size={}. rem_bytes={}",
+      logger.info("ue={} rnti={} lcid={}: Insufficient MAC SDU buffer length of size={}. rem_bytes={}",
                   ue_mng.get_ue_index(rnti),
                   rnti,
                   lcid,
@@ -307,7 +307,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Fetch MAC Tx SDU from upper layers.
     size_t nwritten_sdu = bearer->on_new_tx_sdu(sdu_enc.sdu_space());
     if (nwritten_sdu == 0) {
-      logger.debug("ue={} rnti={:#x} lcid={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
+      logger.debug("ue={} rnti={} lcid={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
                    ue_mng.get_ue_index(rnti),
                    rnti,
                    lcid,
@@ -318,7 +318,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Encode MAC SDU.
     size_t nwritten_tot = sdu_enc.encode_sdu(nwritten_sdu);
     if (nwritten_tot == 0) {
-      logger.error("ue={} rnti={:#x} lcid={}: Scheduled SubPDU with size={} cannot fit in scheduled DL grant",
+      logger.error("ue={} rnti={} lcid={}: Scheduled SubPDU with size={} cannot fit in scheduled DL grant",
                    ue_mng.get_ue_index(rnti),
                    rnti,
                    lc_grant_info.lcid.to_lcid(),
@@ -337,13 +337,13 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
     // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
     if (rem_bytes < MIN_MAC_SDU_SIZE) {
-      logger.warning("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
+      logger.warning("ue={} rnti={} lcid={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
                      ue_mng.get_ue_index(rnti),
                      rnti,
                      lc_grant_info.lcid.to_lcid(),
                      lc_grant_info.sched_bytes);
     } else {
-      logger.info("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
+      logger.info("ue={} rnti={} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
                   ue_mng.get_ue_index(rnti),
                   rnti,
                   lc_grant_info.lcid.to_lcid());
@@ -381,7 +381,7 @@ dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb
 {
   span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
   if (buffer.size() < tbs_bytes) {
-    logger.error("DL ue={} rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+    logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
                  ue_mng.get_ue_index(rnti),
                  rnti,
                  h_id);

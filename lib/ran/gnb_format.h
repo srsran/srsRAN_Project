@@ -202,7 +202,7 @@ struct formatter<srsran::ue_event_prefix> {
       ret = format_to(ctx.out(), "{: <7}", "");
     }
     if (ue_prefix.rnti != srsran::rnti_t::INVALID_RNTI) {
-      ret = format_to(ctx.out(), " {:#x}", ue_prefix.rnti);
+      ret = format_to(ctx.out(), " {}", ue_prefix.rnti);
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");
     }

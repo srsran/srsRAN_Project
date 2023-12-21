@@ -89,7 +89,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
 
   // Ensure PCell exists.
   if (not cfg_req.cfg.cells.has_value() or cfg_req.cfg.cells->empty()) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided",
+    logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: PCell config not provided",
                    cfg_req.ue_index,
                    cfg_req.crnti);
     return ue_config_update_event{cfg_req.ue_index, *this};
@@ -98,7 +98,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   // Ensure configured cells exist.
   const du_cell_index_t pcell_index = (*cfg_req.cfg.cells)[0].serv_cell_cfg.cell_index;
   if (not contains(pcell_index)) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell={} does not exist",
+    logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: PCell={} does not exist",
                    cfg_req.ue_index,
                    cfg_req.crnti,
                    pcell_index);
@@ -108,7 +108,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(cfg_req, *added_cells[pcell_index]);
   if (result.is_error()) {
-    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: {}",
+    logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: {}",
                    cfg_req.ue_index,
                    cfg_req.crnti,
                    result.error());
@@ -123,7 +123,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
                                                                            std::memory_order::memory_order_acquire,
                                                                            std::memory_order::memory_order_acquire)) {
     logger.warning(
-        "ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: UE with the same index already exists",
+        "ue={} rnti={}: Discarding invalid UE creation request. Cause: UE with the same index already exists",
         cfg_req.ue_index,
         cfg_req.crnti);
     return ue_config_update_event{cfg_req.ue_index, *this};
@@ -149,7 +149,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   srsran_assert(ue_cfg_list[cfg_req.ue_index] != nullptr, "Invalid ue_index={}", cfg_req.ue_index);
   const ue_configuration& current_ue_cfg = *ue_cfg_list[cfg_req.ue_index];
   if (current_ue_cfg.crnti != cfg_req.crnti) {
-    logger.error("ue={} c-rnti={:#x}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
+    logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  cfg_req.ue_index,
                  cfg_req.crnti);
     return ue_config_update_event{cfg_req.ue_index, *this};

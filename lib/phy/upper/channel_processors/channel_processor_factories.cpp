@@ -874,7 +874,7 @@ static std::chrono::nanoseconds time_execution(Func&& func)
 
 static bool is_broadcast_rnti(uint16_t rnti)
 {
-  return ((rnti < rnti_t::MIN_CRNTI) || (rnti > rnti_t::MAX_CRNTI));
+  return ((rnti < to_value(rnti_t::MIN_CRNTI)) || (rnti > to_value(rnti_t::MAX_CRNTI)));
 }
 
 namespace {

@@ -291,7 +291,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 {
   srsran_assert(msg.ue_index != ue_index_t::invalid, "Invalid UE index", msg.ue_index);
   srsran_assert(srsran::config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
-  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.c_rnti);
+  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.ue_index);
 
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;

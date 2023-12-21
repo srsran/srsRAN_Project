@@ -117,7 +117,7 @@ public:
   void set_fallback_state(bool fallback_state_)
   {
     if (fallback_state_ != is_fallback_mode) {
-      logger.debug("ue={} rnti={:#x}: {} fallback mode", ue_index, rnti(), fallback_state_ ? "Entering" : "Leaving");
+      logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), fallback_state_ ? "Entering" : "Leaving");
     }
     is_fallback_mode = fallback_state_;
   }

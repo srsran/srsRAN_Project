@@ -113,7 +113,7 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
         // Start UE create procedure
         ue_mng.handle_ue_create_request(msg);
       })) {
-    logger.warning("Discarding UL-CCCH message cell={} tc-rnti={:#x} slot_rx={}. Cause: DU manager task queue is full",
+    logger.warning("Discarding UL-CCCH message cell={} tc-rnti={} slot_rx={}. Cause: DU manager task queue is full",
                    msg.cell_index,
                    msg.tc_rnti,
                    msg.slot_rx);

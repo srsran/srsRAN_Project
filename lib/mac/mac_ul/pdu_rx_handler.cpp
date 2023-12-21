@@ -40,7 +40,7 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   template <typename FormatContext>
   auto format(const pdu_log_prefix& p, FormatContext& ctx)
   {
-    fmt::format_to(ctx.out(), "{} rnti={:#x}", p.type, p.rnti);
+    fmt::format_to(ctx.out(), "{} rnti={}", p.type, p.rnti);
     if (p.ue_index != srsran::INVALID_DU_UE_INDEX) {
       fmt::format_to(ctx.out(), " ue={}", p.ue_index);
     }
