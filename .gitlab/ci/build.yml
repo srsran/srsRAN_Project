@@ -62,6 +62,9 @@ variables:
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
+  DPDK_VERSION:
+    description: must be one version supported in the specified OS
+    value: ""
 
 ################
 # Build caches #

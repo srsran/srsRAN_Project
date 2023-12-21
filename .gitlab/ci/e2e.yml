@@ -24,6 +24,7 @@ variables:
       - "android_b200"
       - "android_n300"
       - "android_x300"
+      - "viavi"
       - "none"
     value: "zmq"
   MARKERS:
