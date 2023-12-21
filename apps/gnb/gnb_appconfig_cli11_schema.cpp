@@ -1842,6 +1842,17 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
   app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
+static void validate_cpu_range(const os_sched_affinity_bitmask& allowed_cpus_mask,
+                               const os_sched_affinity_bitmask& mask,
+                               const std::string&               name)
+{
+  for (unsigned i = 0; i != mask.size(); ++i) {
+    if (mask.test(i) && !allowed_cpus_mask.test(i)) {
+      report_error("CPU core {} selected in '{}' option doesn't belong to isolated cpuset.", i, name);
+    }
+  }
+}
+
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
   unsigned nof_cpus = compute_host_nof_hardware_threads();
@@ -2036,6 +2047,26 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
       },
       "CPU cores isolated for gNB application");
+
+  // Callback function for validating that thread affinities do use allowed set of CPUs in case the 'isolated_cpus'
+  // option was specified.
+  auto validate_isolation = [parsing_fcn](CLI::App& cli_app, cpu_affinities_appconfig& cfg) {
+    unsigned isol_cpus_option_count = cli_app.count("--isolated_cpus");
+    if (!isol_cpus_option_count) {
+      return;
+    }
+    os_sched_affinity_bitmask isol_cpus_bitmask;
+    parsing_fcn(isol_cpus_bitmask, cfg.isol_cpus.value().isolated_cpus, "isolated_cpus");
+
+    validate_cpu_range(isol_cpus_bitmask, cfg.l1_dl_cpu_cfg.mask, "l1_dl_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.l1_ul_cpu_cfg.mask, "l1_ul_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.l2_cell_cpu_cfg.mask, "l2_cell_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.ru_cpu_cfg.mask, "ru_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.low_priority_cpu_cfg.mask, "low_priority_cpus");
+  };
+
+  // Post-parsing callback for the case when both manual pinning and isolated_cpus were used.
+  app.callback([&]() { validate_isolation(app, config); });
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)

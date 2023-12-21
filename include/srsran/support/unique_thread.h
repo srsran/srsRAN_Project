@@ -99,6 +99,8 @@ public:
 
   explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(compute_host_nof_hardware_threads()) { set(cpu_idx); }
 
+  os_sched_affinity_bitmask(size_t bitset_size, size_t cpu_idx) : cpu_bitset(bitset_size) { set(cpu_idx); }
+
   size_t size() const { return cpu_bitset.size(); }
 
   void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }

@@ -40,19 +40,24 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
   return true;
 }
 
-static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap)
+static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap, const std::string& name)
 {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
+  cpu_set_t* cpusetp     = CPU_ALLOC(bitmap.size());
+  size_t     cpuset_size = CPU_ALLOC_SIZE(bitmap.size());
+  CPU_ZERO_S(cpuset_size, cpusetp);
+
   for (size_t i = 0; i < bitmap.size(); ++i) {
     if (bitmap.test(i)) {
-      CPU_SET(i, &cpuset);
+      CPU_SET_S(i, cpuset_size, cpusetp);
     }
   }
-  if (pthread_setaffinity_np(t, sizeof(cpu_set_t), &cpuset) != 0) {
-    perror("pthread_setaffinity_np");
+  int ret;
+  if ((ret = pthread_setaffinity_np(t, cpuset_size, cpusetp)) != 0) {
+    fmt::print("Couldn't set affinity for {} thread. Cause: '{}'\n", name, strerror(ret));
+    CPU_FREE(cpusetp);
     return false;
   }
+  CPU_FREE(cpusetp);
   return true;
 }
 
@@ -153,7 +158,7 @@ std::thread unique_thread::make_thread(const std::string&               name,
       thread_set_param(tself, prio);
     }
     if (cpu_mask.any()) {
-      thread_set_affinity(tself, cpu_mask);
+      thread_set_affinity(tself, cpu_mask, name);
     }
 #endif
 
