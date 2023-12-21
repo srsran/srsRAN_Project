@@ -24,14 +24,14 @@
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/support/test_utils.h"
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hal_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 #include <getopt.h>
 
 /// \cond
@@ -42,13 +42,13 @@ static unsigned nof_ldpc_iterations = 6;
 
 static std::string decoder_type = "generic";
 
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
 static bool        test_harq      = true;
 static bool        ext_softbuffer = true;
 static bool        std_out_sink   = true;
 static std::string hal_log_level  = "error";
 static std::string eal_arguments  = "";
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 
 static void usage(const char* prog)
 {
@@ -56,16 +56,16 @@ static void usage(const char* prog)
   fmt::print("\t-T       PUSCH decoder type [generic,acc100][Default {}]\n", decoder_type);
   fmt::print("\t-e       Use LDPC decoder early stop [Default {}]\n", use_early_stop);
   fmt::print("\t-i       Number of LDPC iterations [Default {}]\n", nof_ldpc_iterations);
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
   fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
   fmt::print("\teal_args EAL arguments\n");
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
   fmt::print("\t-h       This help\n");
 }
 
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
 // Separates EAL and non-EAL arguments.
 // The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
 static std::string capture_eal_args(int* argc, char*** argv)
@@ -96,7 +96,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 
   return eal_argv;
 }
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 
 static void parse_args(int argc, char** argv)
 {
@@ -112,7 +112,7 @@ static void parse_args(int argc, char** argv)
       case 'i':
         nof_ldpc_iterations = strtol(optarg, nullptr, 10);
         break;
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
       case 'x':
         ext_softbuffer = false;
         break;
@@ -122,7 +122,7 @@ static void parse_args(int argc, char** argv)
       case 'z':
         hal_log_level = std::string(optarg);
         break;
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
       case 'h':
       default:
         usage(argv[0]);
@@ -156,7 +156,7 @@ static std::shared_ptr<pusch_decoder_factory> create_generic_pusch_decoder_facto
 
 static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
 {
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
   srslog::sink* log_sink =
       std_out_sink ? srslog::create_stdout_sink() : srslog::create_file_sink("pusch_decoder_vectortest.log");
   srslog::set_default_sink(*log_sink);
@@ -198,9 +198,9 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
   // ACC100 hardware-accelerator implementation.
   return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
-#else  // DPDK_FOUND
+#else  // HWACC_PUSCH_ENABLED
   return nullptr;
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 }
 
 static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factory()
@@ -245,10 +245,10 @@ static std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory()
 
 int main(int argc, char** argv)
 {
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
   // Separate EAL and non-EAL arguments.
   eal_arguments = capture_eal_args(&argc, &argv);
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 
   // Parse generic arguments.
   parse_args(argc, argv);
@@ -287,11 +287,11 @@ int main(int argc, char** argv)
     pool_config.max_nof_codeblocks   = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = false;
-#ifdef DPDK_FOUND
+#ifdef HWACC_PUSCH_ENABLED
     if (decoder_type == "acc100") {
       pool_config.external_soft_bits = ext_softbuffer;
     }
-#endif // DPDK_FOUND
+#endif // HWACC_PUSCH_ENABLED
 
     // Create Rx softbuffer pool.
     std::unique_ptr<rx_softbuffer_pool> pool = create_rx_softbuffer_pool(pool_config);

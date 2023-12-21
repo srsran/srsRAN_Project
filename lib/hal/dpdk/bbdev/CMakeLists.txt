@@ -14,3 +14,5 @@ set(SOURCES
 )
 
 add_library(hal_bbdev STATIC ${SOURCES})
+target_compile_options(hal_bbdev PRIVATE ${DPDK_CFLAGS})
+target_link_libraries(hal_bbdev srslog ${DPDK_LIBRARIES})
