@@ -23,6 +23,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/support/error_handling.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -284,41 +285,33 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
 {
   // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-  unsigned                                    nof_sectors = 1;
-  unsigned                                    nof_slots   = config.nof_slots_dl_rg;
-  std::vector<std::unique_ptr<resource_grid>> grids;
-  grids.reserve(nof_sectors * nof_slots);
-  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid =
-          rg_factory->create(config.nof_tx_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE);
-      report_fatal_error_if_not(grid, "Invalid resource grid.");
-      grids.push_back(std::move(grid));
-    }
-  }
 
-  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
+  // Generate resource grid instances.
+  std::vector<std::unique_ptr<resource_grid>> grids(config.nof_dl_rg);
+  std::generate(
+      grids.begin(), grids.end(), [&rg_factory, nof_tx_ports = config.nof_tx_ports, dl_bw_rb = config.dl_bw_rb]() {
+        return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
+      });
+
+  return create_asynchronous_resource_grid_pool(
+      config.dl_rg_expire_timeout_slots, *config.dl_executors.front(), std::move(grids));
 }
 
 static std::unique_ptr<resource_grid_pool>
 create_ul_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<resource_grid_factory> rg_factory)
 {
+  // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-  unsigned                                    nof_sectors = 1;
-  unsigned                                    nof_slots   = config.nof_slots_ul_rg;
-  std::vector<std::unique_ptr<resource_grid>> grids;
-  grids.reserve(nof_sectors * nof_slots);
-  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid =
-          rg_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.ul_bw_rb * NRE);
-      report_fatal_error_if_not(grid, "Invalid resource grid.");
-      grids.push_back(std::move(grid));
-    }
-  }
+
+  // Generate resource grid instances.
+  std::vector<std::unique_ptr<resource_grid>> grids(config.nof_ul_rg);
+  std::generate(
+      grids.begin(), grids.end(), [&rg_factory, nof_rx_ports = config.nof_rx_ports, ul_bw_rb = config.ul_bw_rb]() {
+        return rg_factory->create(nof_rx_ports, MAX_NSYMB_PER_SLOT, ul_bw_rb * NRE);
+      });
 
   // Create UL resource grid pool.
-  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
+  return create_generic_resource_grid_pool(std::move(grids));
 }
 
 static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
@@ -544,7 +537,7 @@ public:
     phy_config.rx_symbol_printer_port      = config.rx_symbol_printer_port;
     phy_config.rx_symbol_printer_prach     = config.rx_symbol_printer_prach;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
-    phy_config.nof_slots_ul_pdu_repository = config.nof_slots_ul_rg;
+    phy_config.nof_slots_ul_pdu_repository = config.nof_ul_rg;
 
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");

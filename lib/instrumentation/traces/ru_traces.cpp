@@ -8,8 +8,6 @@
  *
  */
 
-#include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/instrumentation/traces/ru_traces.h"
 
-srsran::file_event_tracer<srsran::L1_TRACE_ENABLED> srsran::l1_tracer;
-
-srsran::file_event_tracer<srsran::L2_TRACE_ENABLED> srsran::l2_tracer;
+srsran::file_event_tracer<srsran::RU_TRACE_ENABLED> srsran::ru_tracer;

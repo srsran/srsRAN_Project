@@ -10,9 +10,11 @@
 
 #include "pdsch_processor_concurrent_impl.h"
 #include "pdsch_processor_validator_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/tx_buffer.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/support/event_tracing.h"
 
 using namespace srsran;
 
@@ -253,6 +255,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     pseudo_random_generator::state_s c_init = scrambler->get_state();
 
     auto async_task = [this, cb_batch_size, c_init, i_cb]() {
+      trace_point process_pdsch_tp = l1_tracer.now();
+
       // Select codeblock processor.
       pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
@@ -310,6 +314,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
           notifier->on_finish_processing();
         }
       }
+
+      l1_tracer << trace_event("CB batch", process_pdsch_tp);
     };
 
     // Try to execute task asynchronously.
@@ -334,6 +340,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
 void pdsch_processor_concurrent_impl::process_dmrs()
 {
+  trace_point process_dmrs_tp = l1_tracer.now();
+
   bounded_bitset<MAX_RB> rb_mask_bitset = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // Select the DM-RS reference point.
@@ -356,6 +364,8 @@ void pdsch_processor_concurrent_impl::process_dmrs()
 
   // Put DM-RS.
   dmrs_generator_pool->get().map(*mapper, dmrs_config);
+
+  l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
 
   // Decrement asynchronous task counter.
   if (async_task_counter.fetch_sub(1) == 1) {

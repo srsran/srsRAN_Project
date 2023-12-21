@@ -1113,32 +1113,16 @@ static bool validate_upper_phy_threads_appconfig(const upper_phy_threads_appconf
     valid = false;
   }
 
-  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
+  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_dl_threads)) {
+    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {}.\n",
+               config.nof_dl_threads,
                nof_pdsch_threads_range);
     valid = false;
-  } else if ((config.pdsch_processor_type == "auto") && !nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For auto PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
-               nof_ul_dl_threads_range);
-    valid = false;
-  } else if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
-             (config.nof_pdsch_threads > 1)) {
-    fmt::print("Number of PHY PDSCH threads (i.e., {}) is ignored.\n", config.nof_pdsch_threads);
   }
 
   if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
     fmt::print(
         "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
-    valid = false;
-  }
-
-  if (config.nof_dl_threads > max_processing_delay_slots) {
-    fmt::print("Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots "
-               "(i.e., {}).\n",
-               config.nof_dl_threads,
-               max_processing_delay_slots);
     valid = false;
   }
 

@@ -10,6 +10,7 @@
 
 #include "lower_phy_baseband_processor.h"
 #include "srsran/adt/interval.h"
+#include "srsran/instrumentation/traces/ru_traces.h"
 
 using namespace srsran;
 
@@ -116,18 +117,24 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
+  trace_point                           tp          = ru_tracer.now();
   baseband_gateway_transmitter_metadata baseband_md = downlink_processor.process(dl_buffer->get_writer(), timestamp);
+  ru_tracer << trace_event("downlink_baseband", tp);
 
   // Set transmission timestamp.
   baseband_md.ts = timestamp + tx_time_offset;
 
   // Enqueue transmission.
   report_fatal_error_if_not(tx_executor.execute([this, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
+    trace_point tx_tp = ru_tracer.now();
+
     // Transmit buffer.
     transmitter.transmit(tx_buffer->get_reader(), baseband_md);
 
     // Return transmit buffer to the queue.
     tx_buffers.push_blocking(std::move(tx_buffer));
+
+    ru_tracer << trace_event("transmit_baseband", tx_tp);
   }),
                             "Failed to execute transmit task.");
 
@@ -148,7 +155,9 @@ void lower_phy_baseband_processor::ul_process()
   std::unique_ptr<baseband_gateway_buffer_dynamic> rx_buffer = rx_buffers.pop_blocking();
 
   // Receive baseband.
+  trace_point                         tp          = ru_tracer.now();
   baseband_gateway_receiver::metadata rx_metadata = receiver.receive(rx_buffer->get_writer());
+  ru_tracer << trace_event("receive_baseband", tp);
 
   // Update last timestamp.
   {
@@ -159,11 +168,15 @@ void lower_phy_baseband_processor::ul_process()
 
   // Queue uplink buffer processing.
   report_fatal_error_if_not(uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
+    trace_point ul_tp = ru_tracer.now();
+
     // Process UL.
     uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts);
 
     // Return buffer to receive.
     rx_buffers.push_blocking(std::move(ul_buffer));
+
+    ru_tracer << trace_event("uplink_baseband", ul_tp);
   }),
                             "Failed to execute uplink processing task.");
 

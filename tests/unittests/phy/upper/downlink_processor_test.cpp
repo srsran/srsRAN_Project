@@ -329,20 +329,6 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   resource_grid_spy grid(0, 0, 0);
   dl_processor->configure_resource_grid({slot, sector}, grid);
 
-  // The resource grid should not have been set to zero yet.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  // The resource grid set all zero should be enqueued.
-  ASSERT_TRUE(executor.has_pending_tasks());
-
-  // Run resource grid zero set.
-  executor.run_pending_tasks();
-
-  // The resource grid set all zero should have been called.
-  ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
-
-  ASSERT_FALSE(gw.sent);
-
   // By finishing PDUs, the resource grid should be sent.
   dl_processor->finish_processing_pdus();
 

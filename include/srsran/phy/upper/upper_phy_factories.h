@@ -256,10 +256,13 @@ struct upper_phy_config {
   unsigned nof_tx_ports;
   /// Number of receive antenna ports.
   unsigned nof_rx_ports;
-  /// Number of slots the downlink resource grid will support.
-  unsigned nof_slots_dl_rg;
-  /// Number of slots the uplink resource grid will support.
-  unsigned nof_slots_ul_rg;
+  /// Number of downlink resource grids. Downlink resource grids minimum reuse time is \c dl_rg_expire_timeout_slots
+  /// slots.
+  unsigned nof_dl_rg;
+  /// Downlink resource grid timeout expiration in number of slots.
+  unsigned dl_rg_expire_timeout_slots;
+  /// Number of uplink resource grids. They are reused after \c nof_ul_rg slots.
+  unsigned nof_ul_rg;
   /// Number of PRACH buffer.
   unsigned nof_prach_buffer;
   /// Maximum number of time-domain occasions.

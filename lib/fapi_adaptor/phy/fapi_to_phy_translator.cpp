@@ -280,8 +280,9 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 {
   // :TODO: check the current slot matches the DL_TTI.request slot. Do this in a different class.
   // :TODO: check the messages order. Do this in a different class.
-  slot_point slot(scs, msg.sfn, msg.slot);
-  slot_point current_slot = get_current_slot();
+  slot_point  slot(scs, msg.sfn, msg.slot);
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   if (!pdsch_repository.empty()) {
     logger.warning(
@@ -340,6 +341,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
                   slot);
     slot_controller_mngr.release_controller(slot);
   }
+  l1_tracer << trace_event("dl_tti_request", tp);
 }
 
 /// Returns true if the given PUCCH PDU is valid, otherwise false.
@@ -442,8 +444,9 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
 void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& msg)
 {
   // :TODO: check the messages order. Do this in a different class.
-  slot_point slot(scs, msg.sfn, msg.slot);
-  slot_point current_slot = get_current_slot();
+  slot_point  slot(scs, msg.sfn, msg.slot);
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Clear the repository for the message slot.
   ul_pdu_repository.clear_slot(slot);
@@ -500,11 +503,13 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   resource_grid& ul_rg               = ul_rg_pool.get_resource_grid(pool_context);
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
+  l1_tracer << trace_event("ul_tti_request", tp);
 }
 
 void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& msg)
 {
-  slot_point current_slot = get_current_slot();
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
@@ -547,11 +552,13 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
                   slot);
     slot_controller_mngr.release_controller(slot);
   }
+  l1_tracer << trace_event("ul_dci_request", tp);
 }
 
 void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message& msg)
 {
-  slot_point current_slot = get_current_slot();
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
@@ -636,10 +643,14 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 
   // All the PDSCH PDUs have been processed. Clear the repository.
   pdsch_repository.clear();
+
+  l1_tracer << trace_event("tx_data_request", tp);
 }
 
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
+  trace_point tp = l1_tracer.now();
+
   // Update the atomic variable that holds the slot point.
   current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
 
@@ -653,6 +664,8 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 
   // Update the logger context.
   logger.set_context(slot.sfn(), slot.slot_index());
+
+  l1_tracer << trace_event("handle_new_slot", tp);
 }
 
 template <typename T>

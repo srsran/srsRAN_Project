@@ -33,7 +33,7 @@ void test(unsigned nof_slots, unsigned nof_sectors)
   }
 
   // Create resource grid pool
-  std::unique_ptr<resource_grid_pool> pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(grid_pool));
+  std::unique_ptr<resource_grid_pool> pool = create_generic_resource_grid_pool(std::move(grid_pool));
 
   // Iterate all parameters and assert grid reference
   for (unsigned slot_count = 0; slot_count != nof_slots; ++slot_count) {

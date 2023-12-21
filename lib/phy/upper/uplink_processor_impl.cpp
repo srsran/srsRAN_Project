@@ -9,6 +9,7 @@
  */
 
 #include "uplink_processor_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
@@ -55,12 +56,16 @@ void uplink_processor_impl::process_prach(upper_phy_rx_results_notifier& notifie
                                           const prach_buffer&            buffer,
                                           const prach_buffer_context&    context)
 {
+  trace_point tp = l1_tracer.now();
+
   ul_prach_results ul_results;
   ul_results.context = context;
   ul_results.result  = prach->detect(buffer, get_prach_dectector_config_from_prach_context(context));
 
   // Notify the PRACH results.
   notifier.on_new_prach_results(ul_results);
+
+  l1_tracer << trace_event("process_prach", tp);
 }
 
 void uplink_processor_impl::process_pusch(span<uint8_t>                      data,
@@ -69,6 +74,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
 {
+  trace_point tp = l1_tracer.now();
   // Pop an adaptor identifier.
   optional<unsigned> adaptor_id = free_pusch_adaptors.try_pop();
   if (!adaptor_id.has_value()) {
@@ -86,12 +92,16 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
 
   // Process PUSCH.
   pusch_proc->process(data, std::move(softbuffer), processor_notifier, grid, pdu.pdu);
+
+  l1_tracer << trace_event("process_pusch", tp);
 }
 
 void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     notifier,
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pucch_pdu& pdu)
 {
+  trace_point tp = l1_tracer.now();
+
   srsran_assert(pdu.context.format == pucch_format::FORMAT_1 || pdu.context.format == pucch_format::FORMAT_2,
                 "Currently supporting PUCCH Format 1 and 2 only.");
 
@@ -124,4 +134,6 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
 
   // Notify the PUCCH results.
   notifier.on_new_pucch_results(result);
+
+  l1_tracer << trace_event("process_pucch", tp);
 }

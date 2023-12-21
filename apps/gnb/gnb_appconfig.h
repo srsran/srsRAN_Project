@@ -1057,8 +1057,6 @@ struct upper_phy_threads_appconfig {
   /// - \c concurrent: for using a processor that processes code blocks in parallel, or
   /// - \c lite: for using a memory optimized processor.
   std::string pdsch_processor_type = "auto";
-  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
-  unsigned nof_pdsch_threads = 1;
   /// \brief Number of threads for concurrent PUSCH decoding.
   ///
   /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and
@@ -1095,29 +1093,25 @@ struct expert_threads_appconfig {
     if (nof_threads < 4) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 0;
-      upper_threads.nof_pdsch_threads         = 1;
-      upper_threads.nof_dl_threads            = 1;
+      upper_threads.nof_dl_threads            = 2;
       lower_threads.execution_profile         = lower_phy_thread_profile::single;
       ofh_threads.is_downlink_parallelized    = false;
     } else if (nof_threads < 8) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 1;
-      upper_threads.nof_pdsch_threads         = 2;
-      upper_threads.nof_dl_threads            = 2;
+      upper_threads.nof_dl_threads            = 4;
       lower_threads.execution_profile         = lower_phy_thread_profile::dual;
       ofh_threads.is_downlink_parallelized    = true;
     } else if (nof_threads < 16) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 1;
-      upper_threads.nof_pdsch_threads         = 4;
-      upper_threads.nof_dl_threads            = 2;
+      upper_threads.nof_dl_threads            = 4;
       lower_threads.execution_profile         = lower_phy_thread_profile::quad;
       ofh_threads.is_downlink_parallelized    = true;
     } else {
       upper_threads.nof_ul_threads            = 2;
       upper_threads.nof_pusch_decoder_threads = 2;
-      upper_threads.nof_pdsch_threads         = 8;
-      upper_threads.nof_dl_threads            = 4;
+      upper_threads.nof_dl_threads            = 6;
       lower_threads.execution_profile         = lower_phy_thread_profile::quad;
       ofh_threads.is_downlink_parallelized    = true;
     }

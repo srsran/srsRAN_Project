@@ -9,6 +9,7 @@
  */
 
 #include "pusch_decoder_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 #include "srsran/phy/upper/rx_softbuffer.h"
@@ -155,6 +156,8 @@ void pusch_decoder_impl::on_end_softbits()
 
     // Code block processing task.
     auto cb_process_task = [this, cb_meta, rm_buffer, cb_llrs, &cb_crc = cb_crcs[cb_id], block_crc, message]() {
+      trace_point tp = l1_tracer.now();
+
       // Check current CRC status.
       if (cb_crc) {
         // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime,
@@ -189,6 +192,8 @@ void pusch_decoder_impl::on_end_softbits()
       if (cb_counter.fetch_sub(1) == 1) {
         join_and_notify();
       }
+
+      l1_tracer << trace_event("cb_decode", tp);
     };
 
     // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "downlink_processor_single_executor_state.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include <mutex>
@@ -99,7 +100,12 @@ private:
       // Do nothing.
     }
 
-    void on_finish_processing() override { callback.on_task_completion(); }
+    void on_finish_processing() override
+    {
+      l1_tracer << instant_trace_event("pdsch_on_finish_processing", instant_trace_event::cpu_scope::thread);
+
+      callback.on_task_completion();
+    }
 
   private:
     detail::downlink_processor_callback& callback;

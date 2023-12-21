@@ -112,7 +112,6 @@ private:
   void create_du_low_executors(bool                       is_blocking_mode_active,
                                unsigned                   nof_ul_workers,
                                unsigned                   nof_dl_workers,
-                               unsigned                   nof_pdsch_workers,
                                unsigned                   nof_pusch_decoder_workers,
                                span<const cell_appconfig> cells_cfg,
                                unsigned                   pipeline_depth);

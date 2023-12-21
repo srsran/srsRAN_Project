@@ -340,11 +340,11 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
     }
 
     // Create DL resource grid pool.
-    dl_rg_pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(dl_grids));
+    dl_rg_pool = create_generic_resource_grid_pool(std::move(dl_grids));
     ASSERT_FACTORY(dl_rg_pool);
 
     // Create UL resource grid pool.
-    ul_rg_pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(ul_grids));
+    ul_rg_pool = create_generic_resource_grid_pool(std::move(ul_grids));
     ASSERT_FACTORY(ul_rg_pool);
   }
 

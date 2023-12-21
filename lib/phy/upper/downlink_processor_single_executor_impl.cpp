@@ -9,6 +9,7 @@
  */
 
 #include "downlink_processor_single_executor_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
@@ -60,11 +61,15 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, pdu]() {
+    trace_point process_pdcch_tp = l1_tracer.now();
+
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
       pdcch_proc->process(mapper, pdu);
     }
+
+    l1_tracer << trace_event("process_pdcch", process_pdcch_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -100,10 +105,14 @@ void downlink_processor_single_executor_impl::process_pdsch(
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, sb = std::move(softbuffer), data, pdu]() mutable {
+    trace_point process_pdsch_tp = l1_tracer.now();
+
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
       pdsch_proc->process(mapper, std::move(sb), pdsch_notifier, data, pdu);
+
+      l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {
       // Inform about the dropped PDSCH.
       logger.warning(pdu.slot.sfn(), pdu.slot.slot_index(), "Resource grid not configured. Ignoring PDSCH {:s}.", pdu);
@@ -140,10 +149,14 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, pdu]() {
+    trace_point process_ssb_tp = l1_tracer.now();
+
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       ssb_proc->process(current_grid->get_writer(), pdu);
     }
+
+    l1_tracer << trace_event("process_ssb", process_ssb_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -178,11 +191,15 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, config]() {
+    trace_point process_nzp_csi_rs_tp = l1_tracer.now();
+
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
       csi_rs_proc->map(mapper, config);
     }
+
+    l1_tracer << trace_event("process_nzp_csi_rs", process_nzp_csi_rs_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -200,43 +217,30 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 bool downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
                                                                       resource_grid&               grid)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
 
-    // Don't configure the grid if the DL processor is not available.
-    if (!state.is_idle()) {
-      return false;
-    }
-
-    report_fatal_error_if_not(current_grid == nullptr, "A previously configured resource grid is still in use.");
-
-    current_grid = &grid;
-    rg_context   = context;
-
-    // update internal state to allow processing PDUs and increase the pending task counter.
-    state.on_resource_grid_configured();
-    state.on_task_creation();
-  }
-
-  // Set the resource grid to zero asynchronously.
-  bool enqueued = executor.execute([this]() {
-    current_grid->set_all_zero();
-    // Report task completion to FSM.
-    on_task_completion();
-  });
-
-  // If que task could not be enqueued.
-  if (!enqueued) {
-    // Report task drop to FSM.
-    on_task_completion();
+  // Don't configure the grid if the DL processor is not available.
+  if (!state.is_idle()) {
     return false;
   }
+
+  report_fatal_error_if_not(current_grid == nullptr, "A previously configured resource grid is still in use.");
+
+  current_grid = &grid;
+  rg_context   = context;
+
+  // update internal state to allow processing PDUs and increase the pending task counter.
+  state.on_resource_grid_configured();
+
+  l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::thread);
 
   return true;
 }
 
 void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()
 {
+  l1_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::global);
+
   bool can_send_grid = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -251,6 +255,8 @@ void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()
 
 void downlink_processor_single_executor_impl::send_resource_grid()
 {
+  l1_tracer << instant_trace_event("send_resource_grid", instant_trace_event::cpu_scope::global);
+
   // Send the resource grid if available.
   if (current_grid != nullptr) {
     gateway.send(rg_context, current_grid->get_reader());
