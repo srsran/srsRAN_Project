@@ -82,7 +82,7 @@ bool srsran::srs_cu_cp::is_valid(five_qi_t                      five_qi,
     logger.warning("No config for {} present", five_qi);
     logger.warning("Currently configured 5QIs:");
     for (const auto& qos : cfg.five_qi_config) {
-      logger.warning(" - 5QI={}: PDCP={}", qos.first, qos.second.pdcp);
+      logger.warning(" - {}: {}", qos.first, qos.second.pdcp);
     }
     return false;
   }

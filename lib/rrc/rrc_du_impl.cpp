@@ -34,7 +34,7 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                 cfg_,
   logger(srslog::fetch_basic_logger("RRC", false))
 {
   for (const auto& qos : cfg.drb_config) {
-    logger.debug("5QI DRB config. 5QI={} PDCP={}", qos.first, qos.second.pdcp);
+    logger.debug("5QI DRB config: {} {}", qos.first, qos.second.pdcp);
   }
 }
 
