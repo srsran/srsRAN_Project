@@ -153,7 +153,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       if (std::any_of(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [&drb](const auto& item) {
             return *drb.lcid == item.lcid;
           })) {
-        logger.warning("Failed to allocate DRB-Id={}. Cause: Specified lcid={} already exists", drb.drb_id, lcid);
+        logger.warning("Failed to allocate {}. Cause: Specified lcid={} already exists", drb.drb_id, lcid);
         resp.failed_drbs.push_back(drb.drb_id);
         continue;
       }
@@ -161,7 +161,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       // >> Allocate LCID if not specified by F1AP.
       lcid = find_empty_lcid(ue_mcg.rlc_bearers);
       if (lcid > LCID_MAX_DRB) {
-        logger.warning("Failed to allocate DRB-Id={}. Cause: No available LCIDs", drb.drb_id);
+        logger.warning("Failed to allocate {}. Cause: No available LCIDs", drb.drb_id);
         resp.failed_drbs.push_back(drb.drb_id);
         continue;
       }
@@ -169,11 +169,11 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
 
     // >> Get RLC config from 5QI
     if (qos_config.find(drb.five_qi) == qos_config.end()) {
-      logger.warning("Failed to allocate DRB-Id={}. Cause: No 5QI={} configured", drb.drb_id, drb.five_qi);
+      logger.warning("Failed to allocate {}. Cause: No {} configured", drb.drb_id, drb.five_qi);
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
-    logger.debug("Getting RLC and MAC config for DRB-Id={} from 5QI={}", drb.drb_id, drb.five_qi);
+    logger.debug("Getting RLC and MAC config for {} from {}", drb.drb_id, drb.five_qi);
     const du_qos_config& qos = qos_config.at(drb.five_qi);
 
     ue_mcg.rlc_bearers.emplace_back();

@@ -114,7 +114,7 @@ void ue_configuration_procedure::update_ue_context()
   // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
   for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
     if (ue->bearers.drbs().count(drb_to_rem) == 0) {
-      proc_logger.log_proc_warning("Failed to release DRB-Id={}. Cause: DRB does not exist", drb_to_rem);
+      proc_logger.log_proc_warning("Failed to release {}. Cause: DRB does not exist", drb_to_rem);
       continue;
     }
     srsran_assert(std::any_of(prev_cell_group.rlc_bearers.begin(),
@@ -128,13 +128,11 @@ void ue_configuration_procedure::update_ue_context()
   // > Create DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
-      proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: No UL UP TNL Info List provided.",
-                                   drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to create {}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
-      proc_logger.log_proc_warning("Failed to modify DRB-Id={}. Cause: DRB modifications not supported.",
-                                   drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to modify {}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
       continue;
     }
 
@@ -146,7 +144,7 @@ void ue_configuration_procedure::update_ue_context()
 
     // Find the F1-U configuration for this DRB.
     auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
-    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for 5QI={}", drbtoadd.five_qi);
+    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", drbtoadd.five_qi);
 
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(ue->ue_index,
@@ -161,8 +159,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 du_params,
                                                 ue->get_rlc_rlf_notifier());
     if (drb == nullptr) {
-      proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: Failed to allocate DU UE resources.",
-                                   drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;
     }
     ue->bearers.add_drb(std::move(drb));
