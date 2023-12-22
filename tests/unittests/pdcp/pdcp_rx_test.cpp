@@ -50,7 +50,7 @@ TEST_P(pdcp_rx_test, sn_unpack)
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
     pdcp_data_pdu_header hdr;
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(hdr, byte_buffer_chain{std::move(test_pdu)}));
+    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(hdr, test_pdu));
     ASSERT_EQ(hdr.sn, SN(count));
   };
 

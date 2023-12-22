@@ -21,9 +21,11 @@
  */
 
 #include "f1ap_cu_impl.h"
-#include "../../ran/gnb_format.h"
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "procedures/ue_context_modification_procedure.h"
+#include "procedures/ue_context_release_procedure.h"
+#include "procedures/ue_context_setup_procedure.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -292,7 +294,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   rnti_t crnti = to_rnti(msg->c_rnti);
-  if (crnti == INVALID_RNTI) {
+  if (crnti == rnti_t::INVALID_RNTI) {
     logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
     return;
   }
@@ -300,7 +302,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialUlRrcMessageTransfer",
                msg->gnb_du_ue_f1ap_id,
                cgi.nci,
-               msg->c_rnti,
+               crnti,
                cgi.plmn);
 
   if (msg->sul_access_ind_present) {

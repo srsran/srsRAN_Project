@@ -31,8 +31,8 @@
       requests: "12G"
       limits: "12G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
+      requests: "6G"
+      limits: "6G"
   resources:
     - type: sdr
       model: b200
@@ -52,7 +52,7 @@
       limits: "12G"
     ephemeral-storage:
       requests: "9G"
-      limit: "9G"
+      limits: "9G"
   resources:
     - type: sdr
       model: b200
@@ -75,5 +75,5 @@
       requests: "4G"
       limits: "4G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
+      requests: "6G"
+      limits: "6G"

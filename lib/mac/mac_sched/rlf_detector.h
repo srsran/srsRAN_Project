@@ -27,6 +27,7 @@
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <atomic>
+#include <mutex>
 
 namespace srsran {
 
@@ -34,8 +35,9 @@ namespace srsran {
 class rlf_detector
 {
 public:
-  rlf_detector(unsigned max_consecutive_dl_kos, unsigned max_consecutive_ul_kos) :
-    max_consecutive_kos({max_consecutive_dl_kos, max_consecutive_ul_kos}), logger(srslog::fetch_basic_logger("MAC"))
+  rlf_detector(unsigned max_consecutive_dl_kos, unsigned max_consecutive_ul_kos, unsigned max_consecutive_csi_dtx) :
+    max_consecutive_kos({max_consecutive_dl_kos, max_consecutive_ul_kos, max_consecutive_csi_dtx}),
+    logger(srslog::fetch_basic_logger("MAC"))
   {
   }
 
@@ -45,6 +47,7 @@ public:
 
     ues[ue_index].ko_counters[0] = 0;
     ues[ue_index].ko_counters[1] = 0;
+    ues[ue_index].ko_counters[2] = 0;
     std::lock_guard<std::mutex> lock(ues[ue_index].notifier_mutex);
     ues[ue_index].notifier = &notifier;
   }
@@ -55,6 +58,7 @@ public:
 
     ues[ue_index].ko_counters[0] = max_consecutive_kos[0] + 1;
     ues[ue_index].ko_counters[1] = max_consecutive_kos[1] + 1;
+    ues[ue_index].ko_counters[2] = max_consecutive_kos[2] + 1;
     std::lock_guard<std::mutex> lock(ues[ue_index].notifier_mutex);
     ues[ue_index].notifier = nullptr;
   }
@@ -63,10 +67,35 @@ public:
 
   void handle_crc(du_ue_index_t ue_index, bool crc) { handle_ack_common(ue_index, crc, 1); }
 
+  void handle_csi(du_ue_index_t ue_index, bool csi_decoded)
+  {
+    srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+    auto& u = ues[ue_index];
+
+    const unsigned csi_index = 2U;
+
+    if (csi_decoded) {
+      u.ko_counters[csi_index].store(0, std::memory_order::memory_order_relaxed);
+    } else {
+      unsigned current_count = u.ko_counters[csi_index].fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
+      // Note: We use == instead of <= to ensure only one notification is sent.
+      if (current_count == max_consecutive_kos[csi_index]) {
+        std::lock_guard<std::mutex> lock(u.notifier_mutex);
+        if (u.notifier != nullptr) {
+          logger.info("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
+
+          // Notify upper layers.
+          u.notifier->on_rlf_detected();
+        }
+      }
+    }
+  }
+
   void handle_crnti_ce(du_ue_index_t ue_index)
   {
     ues[ue_index].ko_counters[0] = 0;
     ues[ue_index].ko_counters[1] = 0;
+    ues[ue_index].ko_counters[2] = 0;
     std::lock_guard<std::mutex> lock(ues[ue_index].notifier_mutex);
     if (ues[ue_index].notifier != nullptr) {
       ues[ue_index].notifier->on_crnti_ce_received();
@@ -99,12 +128,13 @@ private:
     }
   }
 
-  // DL for index 0 and UL for index 1.
-  std::array<const unsigned, 2> max_consecutive_kos;
+  // DL for index 0, UL for index 1, CSI for index 2.
+  std::array<const unsigned, 3> max_consecutive_kos;
   srslog::basic_logger&         logger;
 
   struct ue_context {
-    std::array<std::atomic<unsigned>, 2> ko_counters{};
+    // DL for index 0, UL for index 1, CSI for index 2.
+    std::array<std::atomic<unsigned>, 3> ko_counters{};
     mac_ue_radio_link_notifier*          notifier = nullptr;
     // Access to the notifier is protected, as many threads may access it.
     std::mutex notifier_mutex;

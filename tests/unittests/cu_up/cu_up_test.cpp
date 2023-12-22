@@ -117,8 +117,10 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor               = executor.get();
-    cfg.gtpu_pdu_executor            = executor.get();
+    cfg.ctrl_executor                = executor.get();
+    cfg.dl_executor                  = executor.get();
+    cfg.ul_executor                  = executor.get();
+    cfg.io_ul_executor               = executor.get();
     cfg.e1ap.e1ap_conn_client        = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.epoll_broker                 = broker.get();

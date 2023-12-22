@@ -51,7 +51,9 @@ make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& 
 
 srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_) :
   rnti_mng(rnti_mng_),
-  rlf_handler(params.mac_cfg.max_consecutive_dl_kos, params.mac_cfg.max_consecutive_ul_kos),
+  rlf_handler(params.mac_cfg.max_consecutive_dl_kos,
+              params.mac_cfg.max_consecutive_ul_kos,
+              params.mac_cfg.max_consecutive_csi_dtx),
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),

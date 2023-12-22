@@ -23,11 +23,21 @@
 #pragma once
 
 #include "srsran/adt/detail/byte_buffer_range_helpers.h"
-#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "fmt/format.h"
-#include <vector>
 
 namespace srsran {
+
+/// Default byte buffer segment size in the byte buffer pool.
+size_t byte_buffer_segment_pool_default_segment_size();
+
+/// \brief Sets the default size of the default byte_buffer segment pool.
+///
+/// This function asserts if the pool has already been initialized.
+/// \param nof_segments Number of byte_buffer_segments stored in the pool.
+/// \param memory_block_size Number, in bytes, for each memory block on which a buffer_byte_segment header and payload
+/// will be stored.
+void init_byte_buffer_segment_pool(std::size_t nof_segments,
+                                   std::size_t memory_block_size = byte_buffer_segment_pool_default_segment_size());
 
 /// \brief Non-owning view to a byte sequence.
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
@@ -146,101 +156,9 @@ class byte_buffer
     /// One of the segments shares the same memory block with the byte_buffer control block.
     node_t* segment_in_cb_memory_block = nullptr;
 
-    void destroy_node(node_t* node)
-    {
-      node->~node_t();
-      if (node != segment_in_cb_memory_block) {
-        detail::byte_buffer_segment_pool::get_instance().deallocate_node(node);
-      }
-    }
+    void destroy_node(node_t* node) const;
 
-    ~control_block()
-    {
-      // Destroy and return all segments back to the segment memory pool.
-      for (node_t* node = segments.head; node != nullptr; node = node->next) {
-        destroy_node(node);
-      }
-    }
-  };
-
-  /// \brief Linear allocator for memory_block obtained from byte_buffer_segment_pool.
-  struct memory_arena_linear_allocator {
-    /// Pointer to the memory block obtained from byte_buffer_segment_pool.
-    void* mem_block = nullptr;
-    /// Offset in bytes from the beginning of the memory block, determining where the next allocation will be made.
-    size_t offset = 0;
-
-    memory_arena_linear_allocator() noexcept :
-      mem_block([]() {
-        static auto& pool = detail::get_default_byte_buffer_segment_pool();
-        return pool.allocate_node(pool.memory_block_size());
-      }())
-    {
-    }
-
-    void* allocate(size_t sz, size_t al) noexcept
-    {
-      void* p = align_next(static_cast<char*>(mem_block) + offset, al);
-      offset  = (static_cast<char*>(p) - static_cast<char*>(mem_block)) + sz;
-      return p;
-    }
-
-    bool empty() const { return mem_block == nullptr; }
-
-    size_t space_left() const { return detail::get_default_byte_buffer_segment_pool().memory_block_size() - offset; }
-  };
-
-  /// Allocator for byte_buffer control_block that will leverage the \c memory_arena_linear_allocator.
-  template <typename T>
-  struct control_block_allocator {
-  public:
-    using value_type = T;
-
-    template <typename U>
-    struct rebind {
-      typedef control_block_allocator<U> other;
-    };
-
-    control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_) {}
-
-    control_block_allocator(const control_block_allocator<T>& other) noexcept = default;
-
-    template <typename U, std::enable_if_t<not std::is_same<U, T>::value, int> = 0>
-    control_block_allocator(const control_block_allocator<U>& other) noexcept : arena(other.arena)
-    {
-    }
-
-    control_block_allocator& operator=(const control_block_allocator<T>& other) noexcept = default;
-
-    value_type* allocate(size_t n) noexcept
-    {
-      srsran_sanity_check(n == 1, "control_block_allocator can only allocate one control block at a time.");
-      srsran_sanity_check(not arena->empty(), "Memory arena is empty");
-      srsran_assert(arena->space_left() >= sizeof(value_type),
-                    "control_block_allocator memory block size is too small.");
-
-      return static_cast<value_type*>(arena->allocate(sizeof(value_type), alignof(std::max_align_t)));
-    }
-
-    void deallocate(value_type* p, size_t n) noexcept
-    {
-      // Note: at this stage the arena ptr is probably dangling. Do not touch it.
-
-      static auto& pool = detail::get_default_byte_buffer_segment_pool();
-
-      srsran_assert(n == 1, "control_block_allocator can only deallocate one control block at a time.");
-
-      pool.deallocate_node(static_cast<void*>(p));
-    }
-
-    bool operator==(const control_block_allocator& other) const { return arena == other.arena; }
-    bool operator!=(const control_block_allocator& other) const { return !(*this == other); }
-
-  private:
-    template <typename U>
-    friend struct control_block_allocator;
-
-    memory_arena_linear_allocator* arena;
+    ~control_block();
   };
 
   /// Headroom given to the first segment of the byte_buffer.
@@ -442,116 +360,19 @@ public:
   bool append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
-  bool prepend(span<const uint8_t> bytes)
-  {
-    if (empty()) {
-      // the byte buffer is empty. Prepending is the same as appending.
-      return append(bytes);
-    }
-    for (size_t count = 0; count < bytes.size();) {
-      if (ctrl_blk_ptr->segments.head->headroom() == 0) {
-        if (not prepend_segment(bytes.size() - count)) {
-          return false;
-        }
-      }
-      size_t              to_write = std::min(ctrl_blk_ptr->segments.head->headroom(), bytes.size() - count);
-      span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write - count, to_write);
-      ctrl_blk_ptr->segments.head->prepend(subspan);
-      ctrl_blk_ptr->pkt_len += to_write;
-      count += to_write;
-    }
-    return true;
-  }
+  bool prepend(span<const uint8_t> bytes);
 
   /// \brief Prepend data of byte buffer to this byte buffer.
-  bool prepend(const byte_buffer& other)
-  {
-    srsran_assert(&other != this, "Self-append not supported");
-    if (other.empty()) {
-      return true;
-    }
-    if (empty()) {
-      // the byte buffer is empty. Prepending is the same as appending.
-      return append(other);
-    }
-    for (span<const uint8_t> seg : other.segments()) {
-      node_t* node = create_segment(0);
-      if (node == nullptr) {
-        return false;
-      }
-      node->append(seg);
-      node->next                  = ctrl_blk_ptr->segments.head;
-      ctrl_blk_ptr->segments.head = node;
-      ctrl_blk_ptr->pkt_len += seg.size();
-    }
-    return true;
-  }
+  bool prepend(const byte_buffer& other);
 
   /// \brief Prepend data of r-value byte buffer to this byte buffer. The segments of the provided byte buffer can get
   /// "stolen" if the byte buffer is the last reference to the segments.
-  bool prepend(byte_buffer&& other)
-  {
-    srsran_assert(&other != this, "Self-append not supported");
-    if (other.empty()) {
-      return true;
-    }
-    if (empty()) {
-      // the byte buffer is empty. Prepending is the same as appending.
-      append(std::move(other));
-      return true;
-    }
-    if (not other.ctrl_blk_ptr.unique()) {
-      // Deep copy of segments.
-      prepend(other);
-      return true;
-    }
-
-    // This is the last reference to "other". Shallow copy, except control segment.
-    node_t* node = create_segment(0);
-    if (node == nullptr) {
-      return false;
-    }
-    node->append(span<uint8_t>{other.ctrl_blk_ptr->segment_in_cb_memory_block->data(),
-                               other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
-    ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
-    other.ctrl_blk_ptr->segments.tail->next = ctrl_blk_ptr->segments.head;
-    node->next                              = other.ctrl_blk_ptr->segment_in_cb_memory_block->next;
-    if (other.ctrl_blk_ptr->segment_in_cb_memory_block == other.ctrl_blk_ptr->segments.head) {
-      ctrl_blk_ptr->segments.head = node;
-    } else {
-      for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg->next != nullptr; seg = seg->next) {
-        if (seg->next == other.ctrl_blk_ptr->segment_in_cb_memory_block) {
-          seg->next = node;
-          break;
-        }
-      }
-    }
-    other.ctrl_blk_ptr->segments.head       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-    other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-    other.ctrl_blk_ptr->segments.head->next = nullptr;
-    other.ctrl_blk_ptr.reset();
-    return true;
-  }
+  bool prepend(byte_buffer&& other);
 
   /// Prepends space in byte_buffer. This function may allocate new segments.
   /// \param nof_bytes Number of bytes to reserve at header.
   /// \return range of bytes that were reserved.
-  byte_buffer_view reserve_prepend(size_t nof_bytes)
-  {
-    size_t rem_bytes = nof_bytes;
-    while (rem_bytes > 0) {
-      if (empty() or ctrl_blk_ptr->segments.head->headroom() == 0) {
-        if (not prepend_segment(rem_bytes)) {
-          return {};
-        }
-      }
-      size_t to_reserve = std::min(ctrl_blk_ptr->segments.head->headroom(), rem_bytes);
-      ctrl_blk_ptr->segments.head->reserve_prepend(to_reserve);
-      rem_bytes -= to_reserve;
-    }
-    ctrl_blk_ptr->pkt_len += nof_bytes;
-    return byte_buffer_view{begin(), begin() + nof_bytes};
-  }
+  byte_buffer_view reserve_prepend(size_t nof_bytes);
 
   /// Clear byte buffer.
   void clear() { ctrl_blk_ptr.reset(); }
@@ -724,79 +545,13 @@ public:
   }
 
 private:
-  node_t* create_head_segment(size_t headroom)
-  {
-    static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-    static const size_t block_size = pool.memory_block_size();
+  node_t* create_head_segment(size_t headroom);
 
-    // Create control block using allocator.
-    memory_arena_linear_allocator arena;
-    if (arena.empty()) {
-      byte_buffer::warn_alloc_failure();
-      return nullptr;
-    }
-    ctrl_blk_ptr = std::allocate_shared<control_block>(control_block_allocator<control_block>{arena});
-    if (ctrl_blk_ptr == nullptr) {
-      return nullptr;
-    }
+  static node_t* create_segment(size_t headroom);
 
-    // For first segment of byte_buffer, add a headroom.
-    void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
-    srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-    size_t  segment_size  = block_size - arena.offset;
-    void*   payload_start = arena.allocate(segment_size, 1);
-    node_t* node          = new (segment_start)
-        node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
+  bool append_segment(size_t headroom_suggestion);
 
-    // Register segment as sharing the same memory block with control block.
-    ctrl_blk_ptr->segment_in_cb_memory_block = node;
-
-    return node;
-  }
-
-  node_t* create_segment(size_t headroom)
-  {
-    static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-    static const size_t block_size = pool.memory_block_size();
-
-    // Allocate memory block.
-    memory_arena_linear_allocator arena;
-    if (arena.empty()) {
-      byte_buffer::warn_alloc_failure();
-      return nullptr;
-    }
-    void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
-    srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-    size_t segment_size  = block_size - arena.offset;
-    void*  payload_start = arena.allocate(segment_size, 1);
-    return new (segment_start)
-        node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
-  }
-
-  bool append_segment(size_t headroom_suggestion)
-  {
-    node_t* segment = empty() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
-    if (segment == nullptr) {
-      return false;
-    }
-
-    // Append new segment to linked list.
-    ctrl_blk_ptr->segments.push_back(*segment);
-    return true;
-  }
-
-  bool prepend_segment(size_t headroom_suggestion)
-  {
-    // Note: Add HEADROOM for first segment.
-    node_t* segment = empty() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
-    if (segment == nullptr) {
-      return false;
-    }
-
-    // Prepend new segment to linked list.
-    ctrl_blk_ptr->segments.push_front(*segment);
-    return true;
-  }
+  bool prepend_segment(size_t headroom_suggestion);
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
@@ -817,11 +572,7 @@ private:
     ctrl_blk_ptr->destroy_node(tail);
   }
 
-  static void warn_alloc_failure()
-  {
-    static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
-    logger.warning("POOL: Failure to allocate byte buffer segment");
-  }
+  static void warn_alloc_failure();
 
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need. It is also hard to determine the size
   // of the shared_ptr control block allocation and how much we need to discount in the segment.
@@ -1059,7 +810,8 @@ inline byte_buffer make_byte_buffer(const std::string& hex_str)
 /// \param src Source byte_buffer.
 /// \param dst Destination span<uint8_t>.
 /// \return Number of bytes copied.
-inline size_t copy_segments(const byte_buffer& src, span<uint8_t> dst)
+template <typename ByteBufferType>
+inline size_t copy_segments(const ByteBufferType& src, span<uint8_t> dst)
 {
   size_t bytes_copied    = 0;
   size_t bytes_remaining = std::min(src.length(), dst.size_bytes());
@@ -1074,20 +826,6 @@ inline size_t copy_segments(const byte_buffer& src, span<uint8_t> dst)
     }
   }
   return bytes_copied;
-}
-
-/// Perfoms a segment-wise copy of the byte_buffer to a generic iterator over uint8_t.
-/// The destination must have sufficient space to fit the whole byte_buffer's length.
-///
-/// \param src Source byte_buffer.
-/// \param dst_begin Destination iterator over uint8_t.
-template <typename It>
-void copy_segments(const byte_buffer& src, It dst_begin)
-{
-  static_assert(std::is_same<std::decay_t<decltype(*dst_begin)>, uint8_t>::value, "Iterator value type is not uint8_t");
-  for (const auto& src_segment : src.segments()) {
-    dst_begin = std::copy(src_segment.begin(), src_segment.end(), dst_begin);
-  }
 }
 
 /// Provides a contiguous view of a byte_buffer.

@@ -20,16 +20,25 @@
  *
  */
 
-#include "srsran/hal/dpdk/dpdk_eal.h"
-#include "dpdk.h"
+#pragma once
 
-using namespace srsran;
-using namespace dpdk;
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/rnti.h"
 
-dpdk_eal::dpdk_eal(srslog::basic_logger& logger_) : logger(logger_) {}
+namespace srsran {
 
-dpdk_eal::~dpdk_eal()
+/// Adds/Removes UEs from the metrics.
+class sched_metrics_ue_configurator
 {
-  // Clean up the EAL.
-  ::rte_eal_cleanup();
-}
+public:
+  virtual ~sched_metrics_ue_configurator() = default;
+
+  /// Adds a new UE to the reported metrics.
+  virtual void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) = 0;
+
+  /// Removes a UE from the reported metrics.
+  virtual void handle_ue_deletion(du_ue_index_t ue_index) = 0;
+};
+
+} // namespace srsran

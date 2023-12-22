@@ -61,7 +61,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
         init_msg->gnb_du_ue_f1ap_id                      = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
         init_msg->nr_cgi.plmn_id.from_number(plmn_string_to_bcd(nr_cgi.plmn));
         init_msg->nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
-        init_msg->c_rnti = ue_ctxt.rnti;
+        init_msg->c_rnti = to_value(ue_ctxt.rnti);
         init_msg->rrc_container.append(sdu.begin(), sdu.end());
         init_msg->du_to_cu_rrc_container_present           = true;
         init_msg->du_to_cu_rrc_container                   = std::move(du_cu_rrc_container);

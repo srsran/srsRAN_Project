@@ -169,6 +169,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
     cfg.rlc.am.rx.t_reassembly      = 20;
     cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;

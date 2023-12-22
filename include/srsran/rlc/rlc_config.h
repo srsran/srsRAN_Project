@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
@@ -674,6 +675,10 @@ struct rlc_rx_am_config {
   // Timers Ref: 3GPP TS 38.322 Section 7.3
   int32_t t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
   int32_t t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+
+  // Implementation-specific parameters that are not specified by 3GPP
+  /// Maximum number of visited SNs in the RX window when building a status report.
+  optional<uint32_t> max_sn_per_status;
 };
 
 /// \brief Configurable Tx parameters for RLC AM
@@ -912,10 +917,11 @@ struct formatter<srsran::rlc_rx_am_config> {
   auto format(srsran::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rx_sn_size={} t_reassembly={} t_status_prohibit={}",
+                     "rx_sn_size={} t_reassembly={} t_status_prohibit={} max_sn_per_status={}",
                      cfg.sn_field_length,
                      cfg.t_reassembly,
-                     cfg.t_status_prohibit);
+                     cfg.t_status_prohibit,
+                     cfg.max_sn_per_status);
   }
 };
 

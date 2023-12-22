@@ -193,8 +193,10 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
-  app.add_option("--rlc_report_period", metrics_params.rlc_report_period, "RLC metrics report period")
+  app.add_option("--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period")
       ->capture_default_str();
+  app.add_option("--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
+      ->always_capture_default();
 
   app.add_option("--cu_cp_statistics_report_period",
                  metrics_params.cu_cp_statistics_report_period,
@@ -208,7 +210,14 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
 
   app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
-  app.add_option("--json_metrics_filename", metrics_params.json_filename, "JSON metrics output path")
+
+  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
+  app.add_option("--port", metrics_params.port, "Metrics UDP port.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 65535));
+
+  app.add_option(
+         "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
 }
 
@@ -463,6 +472,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
+  app.add_option("--max_request_headroom_slots",
+                 expert_phy_params.nof_slots_request_headroom,
+                 "Maximum request headroom size in slots.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
@@ -877,6 +891,11 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  "latency, but place a stricter requirement on the UE decode latency.")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+
+  app.add_option("--max_consecutive_kos",
+                 pucch_params.max_consecutive_kos,
+                 "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
+      ->capture_default_str();
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
@@ -1405,6 +1424,9 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_rx_am_subcmd->add_option("--t-status-prohibit", rlc_am_params.rx.t_status_prohibit, "RLC AM RX t-StatusProhibit")
       ->capture_default_str();
+  rlc_rx_am_subcmd->add_option("--max_sn_per_status", rlc_am_params.rx.max_sn_per_status, "RLC AM RX status SN limit")
+      ->capture_default_str();
+  ;
 }
 
 static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
@@ -1530,7 +1552,7 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
 {
   app.add_option("--rnti", test_params.rnti, "C-RNTI (0x0 if not configured)")
       ->capture_default_str()
-      ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
+      ->check(CLI::Range(to_value((rnti_t::INVALID_RNTI)), to_value(rnti_t::MAX_CRNTI)));
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
@@ -1566,13 +1588,6 @@ static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& t
 {
   CLI::App* test_ue = app.add_subcommand("test_ue", "automatically created UE for testing purposes");
   configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
-}
-
-static void configure_cli11_ru_sdr_cells_args(CLI::App& app, ru_sdr_cell_appconfig& config)
-{
-  // Amplitude control configuration.
-  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
-  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
 }
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
@@ -1631,26 +1646,13 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
       })
       ->default_str("auto");
 
+  // Amplitude control configuration.
+  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
+  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
+
   // Expert configuration.
   CLI::App* expert_subcmd = app.add_subcommand("expert_cfg", "Generic Radio Unit expert configuration");
   configure_cli11_ru_sdr_expert_args(*expert_subcmd, config.expert_cfg);
-
-  // Cell parameters.
-  app.add_option_function<std::vector<std::string>>(
-      "--cells",
-      [&config](const std::vector<std::string>& values) {
-        config.cells.resize(values.size());
-
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("RU SDR cells");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ru_sdr_cells_args(subapp, config.cells[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
 static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cell_appconfig& config)
@@ -1852,6 +1854,17 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
   app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
+static void validate_cpu_range(const os_sched_affinity_bitmask& allowed_cpus_mask,
+                               const os_sched_affinity_bitmask& mask,
+                               const std::string&               name)
+{
+  for (unsigned i = 0; i != mask.size(); ++i) {
+    if (mask.test(i) && !allowed_cpus_mask.test(i)) {
+      report_error("CPU core {} selected in '{}' option doesn't belong to isolated cpuset.", i, name);
+    }
+  }
+}
+
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
   unsigned nof_cpus = compute_host_nof_hardware_threads();
@@ -2046,6 +2059,26 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
       },
       "CPU cores isolated for gNB application");
+
+  // Callback function for validating that thread affinities do use allowed set of CPUs in case the 'isolated_cpus'
+  // option was specified.
+  auto validate_isolation = [parsing_fcn](CLI::App& cli_app, cpu_affinities_appconfig& cfg) {
+    unsigned isol_cpus_option_count = cli_app.count("--isolated_cpus");
+    if (!isol_cpus_option_count) {
+      return;
+    }
+    os_sched_affinity_bitmask isol_cpus_bitmask;
+    parsing_fcn(isol_cpus_bitmask, cfg.isol_cpus.value().isolated_cpus, "isolated_cpus");
+
+    validate_cpu_range(isol_cpus_bitmask, cfg.l1_dl_cpu_cfg.mask, "l1_dl_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.l1_ul_cpu_cfg.mask, "l1_ul_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.l2_cell_cpu_cfg.mask, "l2_cell_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.ru_cpu_cfg.mask, "ru_cpus");
+    validate_cpu_range(isol_cpus_bitmask, cfg.low_priority_cpu_cfg.mask, "low_priority_cpus");
+  };
+
+  // Post-parsing callback for the case when both manual pinning and isolated_cpus were used.
+  app.callback([&]() { validate_isolation(app, config); });
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)

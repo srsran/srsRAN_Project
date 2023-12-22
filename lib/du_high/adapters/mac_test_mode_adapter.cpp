@@ -59,11 +59,12 @@ class test_ue_mac_sdu_tx_builder_adapter : public mac_sdu_tx_builder
 public:
   test_ue_mac_sdu_tx_builder_adapter() { tx_sdu.append(std::vector<uint8_t>(TX_SDU_MAX_SIZE, 0)); }
 
-  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
+  size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
     // Return empty MAC SDU so that the MAC PDU is padded.
-    return byte_buffer_chain{};
+    return 0;
   }
+
   unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
 
 private:

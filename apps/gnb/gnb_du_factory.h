@@ -59,6 +59,7 @@ std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&              
                                               gnb_console_helper&                   console_helper,
                                               e2_connection_client&                 e2_client_handler,
                                               e2_metric_connector_manager&          e2_metric_connectors,
+                                              rlc_metrics_notifier&                 rlc_json_metrics,
                                               metrics_hub&                          metrics_hub);
 
 } // namespace srsran

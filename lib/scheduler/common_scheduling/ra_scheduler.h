@@ -73,7 +73,7 @@ public:
 
 private:
   struct pending_rar_t {
-    rnti_t                                                  ra_rnti = INVALID_RNTI;
+    rnti_t                                                  ra_rnti = rnti_t::INVALID_RNTI;
     slot_point                                              prach_slot_rx;
     slot_interval                                           rar_window;
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
@@ -81,7 +81,7 @@ private:
   struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
     rach_indication_message::preamble preamble{};
-    harq_logger msg3_harq_logger{srslog::fetch_basic_logger("SCHED"), INVALID_RNTI, to_du_cell_index(0), false};
+    harq_logger msg3_harq_logger{srslog::fetch_basic_logger("SCHED"), rnti_t::INVALID_RNTI, to_du_cell_index(0), false};
     /// UL Harq used to schedule Msg3.
     /// Note: [TS 38.321, 5.4.2.1] "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is
     /// used".

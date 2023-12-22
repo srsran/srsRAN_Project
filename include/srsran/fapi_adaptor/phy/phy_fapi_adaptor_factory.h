@@ -25,6 +25,7 @@
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/executors/task_executor.h"
@@ -45,6 +46,8 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_factory_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
@@ -79,6 +82,8 @@ struct phy_fapi_adaptor_factory_dependencies {
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// UCI Part2 correspondence repository.
+  std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Task executor for asynchronous tasks.
   task_executor* async_executor;
 };

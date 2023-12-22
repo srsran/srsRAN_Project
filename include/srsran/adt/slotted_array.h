@@ -627,9 +627,10 @@ public:
   /// \param id ID of the constructed element in the table
   /// \param args Arguments to pass to element ctor
   template <typename... Args>
-  void emplace(key_type id, Args&&... args)
+  T& emplace(key_type id, Args&&... args)
   {
     sl_vec.emplace(to_index(id), std::forward<Args>(args)...);
+    return sl_vec[to_index(id)];
   }
 
   /// Erase object pointed by the given index

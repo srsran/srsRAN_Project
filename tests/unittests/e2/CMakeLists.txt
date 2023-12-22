@@ -21,8 +21,8 @@
 set_directory_properties(PROPERTIES LABELS "e2ap")
 add_executable(e2_asn1_packer_test common/e2_asn1_packer_test.cpp)
 target_link_libraries(e2_asn1_packer_test
-                      srsran_e2
                       srsran_support
+                      srsran_e2
                       srslog
                       e2ap_asn1
                       srsran_ran

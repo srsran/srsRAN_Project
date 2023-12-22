@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
@@ -56,6 +57,16 @@ struct pusch_decoder_factory_sw_configuration {
 };
 
 std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config);
+
+/// HW-accelerated PUSCH decoder factory configuration parameters.
+struct pusch_decoder_factory_hw_configuration {
+  std::shared_ptr<ldpc_segmenter_rx_factory>             segmenter_factory;
+  std::shared_ptr<crc_calculator_factory>                crc_factory;
+  std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory;
+};
+
+std::shared_ptr<pusch_decoder_factory>
+create_pusch_decoder_factory_hw(const pusch_decoder_factory_hw_configuration& config);
 
 class pusch_demodulator_factory
 {

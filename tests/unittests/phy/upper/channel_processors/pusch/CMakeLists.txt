@@ -39,8 +39,15 @@ target_link_libraries(pusch_processor_unittest srsran_channel_processors srslog 
 add_test(pusch_processor_unittest pusch_processor_unittest)
 
 if (USE_PHY_TESTVECTORS)
-     add_executable(pusch_decoder_test pusch_decoder_test.cpp)
-    target_link_libraries(pusch_decoder_test srsran_channel_processors srslog srsran_upper_phy_support)
+    add_executable(pusch_decoder_test pusch_decoder_vectortest.cpp)
+    set(PUSCH_DECODER_LIBRARIES srsran_channel_processors srslog srsran_upper_phy_support)
+
+    if (ENABLE_PUSCH_HWACC)
+        set_source_files_properties(pusch_decoder_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
+        list(APPEND PUSCH_DECODER_LIBRARIES hal_hwacc_pusch)
+    endif (ENABLE_PUSCH_HWACC)
+
+    target_link_libraries(pusch_decoder_test ${PUSCH_DECODER_LIBRARIES})
     add_test_vector(pusch_decoder_test pusch_decoder_test_data.tar.gz "-e0 -i2")
     add_test(pusch_decoder_early_stop_test pusch_decoder_test -e1 -i6)
 

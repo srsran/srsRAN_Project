@@ -26,6 +26,7 @@
 #include "procedures/initial_du_setup_procedure.h"
 #include <condition_variable>
 #include <future>
+#include <thread>
 
 using namespace srsran;
 using namespace srs_du;
@@ -125,7 +126,7 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
         // Start UE create procedure
         ue_mng.handle_ue_create_request(msg);
       })) {
-    logger.warning("Discarding UL-CCCH message cell={} tc-rnti={:#x} slot_rx={}. Cause: DU manager task queue is full",
+    logger.warning("Discarding UL-CCCH message cell={} tc-rnti={} slot_rx={}. Cause: DU manager task queue is full",
                    msg.cell_index,
                    msg.tc_rnti,
                    msg.slot_rx);
@@ -164,7 +165,7 @@ size_t du_manager_impl::nof_ues()
   // TODO: This is temporary code.
   std::promise<size_t> p;
   std::future<size_t>  fut = p.get_future();
-  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.get_ues().size()); })) {
+  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.nof_ues()); })) {
     logger.warning("Unable to compute the number of UEs active in the DU");
     return std::numeric_limits<size_t>::max();
   }

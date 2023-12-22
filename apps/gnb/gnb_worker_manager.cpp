@@ -65,8 +65,6 @@ static std::vector<gnb_os_sched_affinity_config> build_affinity_manager_dependen
 
 worker_manager::worker_manager(const gnb_appconfig& appcfg) : affinity_mng(build_affinity_manager_dependencies(appcfg))
 {
-  create_non_rt_worker_pool(appcfg);
-
   create_du_cu_executors(appcfg);
 
   create_ru_executors(appcfg);
@@ -77,12 +75,12 @@ void worker_manager::stop()
   exec_mng.stop();
 }
 
-void worker_manager::create_worker_pool(const std::string&                                                 name,
-                                        unsigned                                                           nof_workers,
-                                        unsigned                                                           queue_size,
-                                        const std::vector<execution_config_helper::worker_pool::executor>& execs,
-                                        os_thread_realtime_priority                                        prio,
-                                        span<const os_sched_affinity_bitmask>                              cpu_masks)
+void worker_manager::create_worker_pool(const std::string&                                    name,
+                                        unsigned                                              nof_workers,
+                                        unsigned                                              queue_size,
+                                        const std::vector<execution_config_helper::executor>& execs,
+                                        os_thread_realtime_priority                           prio,
+                                        span<const os_sched_affinity_bitmask>                 cpu_masks)
 {
   using namespace execution_config_helper;
 
@@ -90,10 +88,9 @@ void worker_manager::create_worker_pool(const std::string&                      
 
   const worker_pool pool{name,
                          nof_workers,
-                         {queue_policy, queue_size},
+                         {{queue_policy, queue_size}},
                          execs,
-                         queue_policy == concurrent_queue_policy::locking_mpmc ? optional<std::chrono::microseconds>{}
-                                                                               : std::chrono::microseconds{10},
+                         std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 10},
                          prio,
                          std::vector<os_sched_affinity_bitmask>{cpu_masks.begin(), cpu_masks.end()}};
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
@@ -101,11 +98,11 @@ void worker_manager::create_worker_pool(const std::string&                      
   }
 }
 
-void worker_manager::create_prio_worker(const std::string&                                                   name,
-                                        unsigned                                                             queue_size,
-                                        const std::vector<execution_config_helper::single_worker::executor>& execs,
-                                        const os_sched_affinity_bitmask&                                     mask,
-                                        os_thread_realtime_priority                                          prio)
+void worker_manager::create_prio_worker(const std::string&                                    name,
+                                        unsigned                                              queue_size,
+                                        const std::vector<execution_config_helper::executor>& execs,
+                                        const os_sched_affinity_bitmask&                      mask,
+                                        os_thread_realtime_priority                           prio)
 {
   using namespace execution_config_helper;
 
@@ -116,100 +113,97 @@ void worker_manager::create_prio_worker(const std::string&                      
   }
 }
 
-void worker_manager::create_non_rt_worker_pool(const gnb_appconfig& appcfg)
-{
-  using namespace execution_config_helper;
-
-  task_queue                         strand_cfg{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size};
-  std::vector<worker_pool::executor> executors = {{"pcap_exec", strand_cfg}};
-  if (appcfg.pcap_cfg.gtpu.enabled) {
-    executors.push_back({"gtpu_pcap_exec", strand_cfg});
-  }
-  if (appcfg.pcap_cfg.mac.enabled) {
-    executors.push_back({"mac_pcap_exec", strand_cfg});
-  }
-  if (appcfg.pcap_cfg.rlc.enabled) {
-    executors.push_back({"rlc_pcap_exec", strand_cfg});
-  }
-
-  const worker_pool pool{
-      "non_rt_pool",
-      2,
-      {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-      executors,
-      std::chrono::microseconds{100},
-      os_thread_realtime_priority::no_realtime(),
-      std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
-  if (not exec_mng.add_execution_context(create_execution_context(pool))) {
-    report_fatal_error("Failed to instantiate {} execution context", pool.name);
-  }
-}
-
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
+  const auto& exec_map = exec_mng.executors();
 
+  // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
   if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
     const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
     is_blocking_mode_active         = sdr_cfg.device_driver == "zmq";
   }
-
   span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
+  const unsigned             nof_cells = cells_cfg.size();
 
-  // Worker for handling UE PDU traffic.
-  const priority_multiqueue_worker gnb_ue_worker{
-      "gnb_ue",
-      // Three queues, one for UE UP maintenance tasks, one for UL PDUs and one for DL PDUs.
-      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-       // The IO-broker is currently single threaded, so we can use a SPSC.
-       {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
-      std::chrono::microseconds{200},
-      {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, nullopt, false},
-       {"ue_dl_exec", task_priority::max - 2, nullopt, false}},
-      os_thread_realtime_priority::max() - 30,
-      affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
-  if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
-    report_fatal_error("Failed to instantiate gNB UE execution context");
-  }
-  cu_up_exec    = exec_mng.executors().at("ue_up_ctrl_exec");
-  gtpu_pdu_exec = exec_mng.executors().at("ue_dl_exec");
-  cu_up_e2_exec = exec_mng.executors().at("ue_up_ctrl_exec");
+  // Configure non-RT worker pool.
+  worker_pool non_rt_pool{
+      "non_rt_pool",
+      std::max(3U, (unsigned)appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask.count()),
+      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
+       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+      {{"low_prio_exec", task_priority::max - 1}, // used for pcap writing.
+       {"high_prio_exec", task_priority::max},    // used for control plane and timer management.
+       {"cu_up_strand", // used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
+        task_priority::max,
+        {}, // define strands below.
+        task_worker_queue_size}},
+      std::chrono::microseconds{100},
+      os_thread_realtime_priority::no_realtime(),
+      std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
+  std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
+  std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
+  std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
-  // Worker for handling DU, CU and UE control procedures.
-  const priority_multiqueue_worker gnb_ctrl_worker{
-      "gnb_ctrl",
-      {{concurrent_queue_policy::lockfree_spsc, 64}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
-      std::chrono::microseconds{200},
-      // The handling of timer ticks has higher priority.
-      {{"cu_cp_exec", task_priority::min},
-       {"cu_cp_e2_exec", task_priority::min},
-       {"metrics_hub_exec", task_priority::min},
-       {"du_ctrl_exec", task_priority::min},
-       {"du_timer_exec", task_priority::max},
-       {"du_e2_exec", task_priority::min}},
-      os_thread_realtime_priority::max() - 20,
-      affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
-  if (not exec_mng.add_execution_context(create_execution_context(gnb_ctrl_worker))) {
-    report_fatal_error("Failed to instantiate gNB control execution context");
+  // Configuration of strands for PCAP writing. These strands will use the low priority executor.
+  // The low priority executor will be used for PCAP writing via dedicated strands.
+  strand strand_cfg{{{"pcap_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  low_prio_strands.emplace_back(strand_cfg);
+  if (appcfg.pcap_cfg.gtpu.enabled) {
+    strand_cfg.queues[0].name = "gtpu_pcap_exec";
+    low_prio_strands.emplace_back(strand_cfg);
   }
-  cu_cp_exec       = exec_mng.executors().at("cu_cp_exec");
-  cu_cp_e2_exec    = exec_mng.executors().at("cu_cp_e2_exec");
-  metrics_hub_exec = exec_mng.executors().at("metrics_hub_exec");
+  if (appcfg.pcap_cfg.mac.enabled) {
+    strand_cfg.queues[0].name = "mac_pcap_exec";
+    low_prio_strands.emplace_back(strand_cfg);
+  }
+  if (appcfg.pcap_cfg.rlc.enabled) {
+    strand_cfg.queues[0].name = "rlc_pcap_exec";
+    low_prio_strands.emplace_back(strand_cfg);
+  }
+
+  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
+  // support two priority levels, the highest being for timer management.
+  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                    {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  high_prio_strands.push_back(cp_strand);
+
+  // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
+  // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
+  // Each UE strand will have three queues, one for timer management and configuration, one for DL data plane and one
+  // for UL data plane.
+  const unsigned nof_up_strands = 1; // TODO: Fix, once CU-UP supports new gnb-cu exec mapper.
+  for (unsigned i = 0; i != nof_up_strands; ++i) {
+    cu_up_strands.push_back(
+        strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                {fmt::format("ue_up_ul_exec#{}", i),
+                 concurrent_queue_policy::lockfree_mpmc,
+                 appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
+                {fmt::format("ue_up_dl_exec#{}", i),
+                 concurrent_queue_policy::lockfree_spsc,
+                 appcfg.cu_up_cfg.gtpu_queue_size}}});
+  }
+
+  // Create non-RT worker pool.
+  if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
+    report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
+  }
 
   // Workers for handling cell slot indications of different cells.
   for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
     const std::string                cell_id_str = std::to_string(cell_id);
     const priority_multiqueue_worker du_cell_worker{
         "du_cell#" + cell_id_str,
-        {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+        {{concurrent_queue_policy::lockfree_spsc, 4},
+         {concurrent_queue_policy::lockfree_spsc, 8},
+         {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
         std::chrono::microseconds{10},
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.
-        {{"cell_exec#" + cell_id_str, task_priority::min},
-         {"slot_exec#" + cell_id_str, task_priority::max, nullopt, true, is_blocking_mode_active}},
+        {{"cell_exec#" + cell_id_str, task_priority::max - 2},
+         {"err_ind#" + cell_id_str, task_priority ::max - 1},
+         {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 
@@ -218,25 +212,45 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     }
   }
 
+  // Update executor pointer mapping
+  cu_cp_exec       = exec_map.at("ctrl_exec");
+  cu_cp_e2_exec    = exec_map.at("ctrl_exec");
+  metrics_hub_exec = exec_map.at("ctrl_exec");
+  cu_up_ctrl_exec  = exec_map.at("ue_up_ctrl_exec#0");
+  cu_up_ul_exec    = exec_map.at("ue_up_ul_exec#0");
+  cu_up_dl_exec    = exec_map.at("ue_up_dl_exec#0");
+  cu_up_e2_exec    = exec_map.at("ue_up_ctrl_exec#0");
+
+  // Create CU-UP execution mapper object.
+  std::vector<task_executor*> ue_up_dl_execs(nof_up_strands, nullptr);
+  std::vector<task_executor*> ue_up_ul_execs   = {nof_up_strands, nullptr};
+  std::vector<task_executor*> ue_up_ctrl_execs = {nof_up_strands, nullptr};
+  for (unsigned i = 0; i != nof_up_strands; ++i) {
+    ue_up_dl_execs[i]   = exec_map.at(fmt::format("ue_up_dl_exec#{}", i));
+    ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
+    ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
+  }
+  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
+
   // Instantiate DU-high executor mapper.
-  du_high_executors.resize(cells_cfg.size());
-  for (unsigned i = 0, e = cells_cfg.size(); i != e; ++i) {
+  du_high_executors.resize(nof_cells);
+  for (unsigned i = 0; i != nof_cells; ++i) {
     auto&             du_item     = du_high_executors[i];
     const std::string cell_id_str = std::to_string(i);
 
     // DU-high executor mapper.
-    const auto& exec_map  = exec_mng.executors();
     using exec_list       = std::initializer_list<task_executor*>;
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
-                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
-    auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec")},
-                                                                     exec_list{exec_map.at("ue_ul_exec")},
-                                                                     exec_list{exec_map.at("ue_dl_exec")});
+                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)},
+                                                                   exec_list{exec_map.at("err_ind#" + cell_id_str)});
+    auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec#0")},
+                                                                     exec_list{exec_map.at("ue_up_ul_exec#0")},
+                                                                     exec_list{exec_map.at("ue_up_dl_exec#0")});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
-                                                                                 *exec_map.at("du_ctrl_exec"),
-                                                                                 *exec_map.at("du_timer_exec"),
-                                                                                 *exec_map.at("du_e2_exec"));
+                                                                                 *exec_map.at("ctrl_exec"),
+                                                                                 *exec_map.at("timer_exec"),
+                                                                                 *exec_map.at("ctrl_exec"));
   }
 
   // Select the PDSCH concurrent thread only if the PDSCH processor type is set to concurrent or auto.

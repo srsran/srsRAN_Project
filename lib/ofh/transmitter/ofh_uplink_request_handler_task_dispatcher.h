@@ -43,13 +43,17 @@ public:
   // See interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
-    executor.execute([this, context, &buffer]() { ul_handler->handle_prach_occasion(context, buffer); });
+    if (not executor.execute([this, context, &buffer]() { ul_handler->handle_prach_occasion(context, buffer); })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch PRACH occasion for slot={}", context.slot);
+    }
   }
 
   // See interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override
   {
-    executor.execute([this, context, &grid]() { ul_handler->handle_new_uplink_slot(context, grid); });
+    if (not executor.execute([this, context, &grid]() { ul_handler->handle_new_uplink_slot(context, grid); })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch new uplink slot for slot={}", context.slot);
+    }
   }
 
 private:

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
 namespace pdcch_helper {

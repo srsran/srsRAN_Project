@@ -81,8 +81,8 @@ TEST(security_nea1_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA1 Test Set 2
@@ -111,8 +111,8 @@ TEST(security_nea1_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA1 Test Set 3
@@ -137,8 +137,8 @@ TEST(security_nea1_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA1 Test Set 4
@@ -167,8 +167,8 @@ TEST(security_nea1_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA1 Test Set 5
@@ -199,8 +199,8 @@ TEST(security_nea1_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA1 Test Set 6
@@ -243,8 +243,8 @@ TEST(security_nea1_test, testset6)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NIA1 Test Set 1
@@ -489,8 +489,8 @@ TEST(security_nea2_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA2 Test Set 2
@@ -517,8 +517,8 @@ TEST(security_nea2_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA2 Test Set 3
@@ -541,9 +541,8 @@ TEST(security_nea2_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out.length(), ciphertext.length());
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA2 Test Set 4
@@ -570,8 +569,8 @@ TEST(security_nea2_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA2 Test Set 5
@@ -600,8 +599,8 @@ TEST(security_nea2_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA2 Test Set 6
@@ -642,8 +641,8 @@ TEST(security_nea2_test, testset6)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NIA2 Test Set 1
@@ -915,8 +914,8 @@ TEST(security_nea3_test, testset1)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea3(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA3 Test Set 2
@@ -945,8 +944,8 @@ TEST(security_nea3_test, testset2)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea3(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA3 Test Set 3
@@ -979,8 +978,8 @@ TEST(security_nea3_test, testset3)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea3(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA3 Test Set 4
@@ -1019,8 +1018,8 @@ TEST(security_nea3_test, testset4)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea3(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NEA3 Test Set 5
@@ -1063,8 +1062,8 @@ TEST(security_nea3_test, testset5)
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
   // Apply ciphering and compare results
-  byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext.begin(), plaintext.end(), length);
-  EXPECT_EQ(ciphertext_out, ciphertext);
+  security_nea3(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext, plaintext);
 }
 
 /// 128-NIA3 Test Set 1

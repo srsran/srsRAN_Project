@@ -124,7 +124,7 @@ void receiver_impl::receive()
   auto                             nof_bytes = ::recvfrom(socket_fd, buffer.data(), BUFFER_SIZE, 0, nullptr, nullptr);
 
   if (nof_bytes < 0) {
-    logger.warning("recvfrom failed");
+    logger.warning("Ethernet receiver call to recvfrom failed");
     return;
   }
 

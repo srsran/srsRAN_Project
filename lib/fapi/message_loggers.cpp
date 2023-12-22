@@ -57,11 +57,8 @@ void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog:
   fmt::format_to(buffer, "CRC.indication slot={}.{}", msg.sfn, msg.slot);
 
   for (const auto& pdu : msg.pdus) {
-    fmt::format_to(buffer,
-                   "\n\t- CRC rnti={:#x} harq_id={} tb_status={}",
-                   pdu.rnti,
-                   pdu.harq_id,
-                   pdu.tb_crc_status_ok ? "OK" : "KO");
+    fmt::format_to(
+        buffer, "\n\t- CRC rnti={} harq_id={} tb_status={}", pdu.rnti, pdu.harq_id, pdu.tb_crc_status_ok ? "OK" : "KO");
     if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
       fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
     }
@@ -100,7 +97,7 @@ static void log_ssb_pdu(const dl_ssb_pdu& pdu, fmt::memory_buffer& buffer)
 static void log_pdsch_pdu(const dl_pdsch_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PDSCH rnti={:#x} bwp={}:{} symb={}:{} CW: tbs={} mod={} rv_idx={}",
+                 "\n\t- PDSCH rnti={} bwp={}:{} symb={}:{} CW: tbs={} mod={} rv_idx={}",
                  pdu.rnti,
                  pdu.bwp_start,
                  pdu.bwp_size,
@@ -140,7 +137,8 @@ static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
 void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "DL_TTI.request slot={}.{}", msg.sfn, msg.slot);
+  fmt::format_to(
+      buffer, "DL_TTI.request slot={}.{}, is_last_message_in_slot={}", msg.sfn, msg.slot, msg.is_last_message_in_slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
@@ -217,7 +215,7 @@ void srsran::fapi::log_rx_data_indication(const rx_data_indication_message& msg,
   fmt::format_to(buffer, "Rx_Data.indication slot={}.{}", msg.sfn, msg.slot);
 
   for (const auto& pdu : msg.pdus) {
-    fmt::format_to(buffer, "\n\t- DATA rnti={:#x} harq_id={} tbs={}", pdu.rnti, pdu.harq_id, pdu.pdu_length);
+    fmt::format_to(buffer, "\n\t- DATA rnti={} harq_id={} tbs={}", pdu.rnti, pdu.harq_id, pdu.pdu_length);
   }
 
   logger.debug("{}", to_c_str(buffer));
@@ -243,7 +241,7 @@ static float to_uci_ul_rsrp(unsigned rsrp)
 static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(
-      buffer, "\n\t- UCI PUCCH format 0/1 format={} rnti={:#x}", static_cast<unsigned>(pdu.pucch_format), pdu.rnti);
+      buffer, "\n\t- UCI PUCCH format 0/1 format={} rnti={}", static_cast<unsigned>(pdu.pucch_format), pdu.rnti);
 
   if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
@@ -274,10 +272,8 @@ static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::me
 
 static void log_uci_pucch_f234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, fmt::memory_buffer& buffer)
 {
-  fmt::format_to(buffer,
-                 "\n\t- UCI PUCCH format 2/3/4 format={} rnti={:#x}",
-                 static_cast<unsigned>(pdu.pucch_format) + 2,
-                 pdu.rnti);
+  fmt::format_to(
+      buffer, "\n\t- UCI PUCCH format 2/3/4 format={} rnti={}", static_cast<unsigned>(pdu.pucch_format) + 2, pdu.rnti);
 
   if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
@@ -303,7 +299,7 @@ static void log_uci_pucch_f234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, fmt::m
 
 static void log_uci_pusch_pdu(const uci_pusch_pdu& pdu, fmt::memory_buffer& buffer)
 {
-  fmt::format_to(buffer, "\n\t- UCI PUSCH rnti={:#x}", pdu.rnti);
+  fmt::format_to(buffer, "\n\t- UCI PUSCH rnti={}", pdu.rnti);
 
   if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
@@ -362,7 +358,7 @@ static void log_prach_pdu(const ul_prach_pdu& pdu, fmt::memory_buffer& buffer)
 static void log_pusch_pdu(const ul_pusch_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PUSCH rnti={:#x} bwp={}:{} symb={}:{} mod={}",
+                 "\n\t- PUSCH rnti={} bwp={}:{} symb={}:{} mod={}",
                  pdu.rnti,
                  pdu.bwp_start,
                  pdu.bwp_size,
@@ -388,20 +384,19 @@ static void log_pusch_pdu(const ul_pusch_pdu& pdu, fmt::memory_buffer& buffer)
 
 static void log_pucch_pdu(const ul_pucch_pdu& pdu, fmt::memory_buffer& buffer)
 {
-  fmt::format_to(
-      buffer,
-      "\n\t- PUCCH rnti={:#x} bwp={}:{} format={} prb={}:{} prb2={} symb={}:{} harq_bit_len={} sr_bit_len={}",
-      pdu.rnti,
-      pdu.bwp_start,
-      pdu.bwp_size,
-      pdu.format_type,
-      pdu.prb_start,
-      pdu.prb_size,
-      pdu.second_hop_prb,
-      pdu.start_symbol_index,
-      pdu.nr_of_symbols,
-      pdu.bit_len_harq,
-      pdu.sr_bit_len);
+  fmt::format_to(buffer,
+                 "\n\t- PUCCH rnti={} bwp={}:{} format={} prb={}:{} prb2={} symb={}:{} harq_bit_len={} sr_bit_len={}",
+                 pdu.rnti,
+                 pdu.bwp_start,
+                 pdu.bwp_size,
+                 pdu.format_type,
+                 pdu.prb_start,
+                 pdu.prb_size,
+                 pdu.second_hop_prb,
+                 pdu.start_symbol_index,
+                 pdu.nr_of_symbols,
+                 pdu.bit_len_harq,
+                 pdu.sr_bit_len);
 
   switch (pdu.format_type) {
     case pucch_format::FORMAT_2:
@@ -448,7 +443,8 @@ void srsran::fapi::log_slot_indication(const slot_indication_message& msg, srslo
 void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "UL_DCI.request slot={}.{}", msg.sfn, msg.slot);
+  fmt::format_to(
+      buffer, "UL_DCI.request slot={}.{}, is_last_message_in_slot={}", msg.sfn, msg.slot, msg.is_last_message_in_slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {

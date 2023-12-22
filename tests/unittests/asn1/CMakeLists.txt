@@ -21,11 +21,11 @@
 set_directory_properties(PROPERTIES LABELS "asn1")
 
 add_executable(asn1_utils_test asn1_utils_test.cpp)
-target_link_libraries(asn1_utils_test asn1_utils gtest gtest_main)
+target_link_libraries(asn1_utils_test asn1_utils srsran_support gtest gtest_main)
 add_test(asn1_utils_test asn1_utils_test)
 
 add_executable(asn1_rrc_nr_test asn1_rrc_nr_test.cpp)
-target_link_libraries(asn1_rrc_nr_test asn1_utils rrc_nr_asn1 gtest gtest_main)
+target_link_libraries(asn1_rrc_nr_test asn1_utils srsran_support rrc_nr_asn1 gtest gtest_main)
 gtest_discover_tests(asn1_rrc_nr_test)
 
 add_executable(asn1_e1ap_test asn1_e1ap_test.cpp)
@@ -44,5 +44,5 @@ target_include_directories(asn1_f1ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_f1ap_test)
 
 add_executable(asn1_ngap_test asn1_ngap_test.cpp)
-target_link_libraries(asn1_ngap_test ngap_asn1 srslog srsran_pcap gtest gtest_main)
+target_link_libraries(asn1_ngap_test ngap_asn1 srslog srsran_support srsran_pcap gtest gtest_main)
 gtest_discover_tests(asn1_ngap_test)

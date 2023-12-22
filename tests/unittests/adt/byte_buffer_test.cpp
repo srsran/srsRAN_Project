@@ -21,6 +21,7 @@
  */
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -59,8 +60,10 @@ static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunct
 
 namespace {
 
+const size_t memory_block_size = detail::get_default_byte_buffer_segment_pool().memory_block_size();
+
 const size_t  small_vec_size = 6;
-const size_t  large_vec_size = detail::get_default_byte_buffer_segment_pool().memory_block_size() * 4;
+const size_t  large_vec_size = memory_block_size * 4;
 static size_t random_vec_size(unsigned lb = 1, unsigned ub = large_vec_size)
 {
   return test_rgen::uniform_int<unsigned>(lb, ub);
@@ -402,10 +405,9 @@ TEST(byte_buffer_test, trim)
 
 TEST(byte_buffer_test, prepend_and_trim_tail)
 {
-  byte_buffer pdu;
-  byte_buffer sdu;
-  uint32_t    pdu_len =
-      detail::get_default_byte_buffer_segment_pool().memory_block_size() - 5 + test_rgen::uniform_int<unsigned>(0, 10);
+  byte_buffer        pdu;
+  byte_buffer        sdu;
+  uint32_t           pdu_len    = memory_block_size - 5 + test_rgen::uniform_int<unsigned>(0, 10);
   constexpr uint32_t trim_len   = 4;
   constexpr uint32_t prefix_len = 3;
   for (uint32_t i = 0; i < pdu_len; i++) {
@@ -484,7 +486,7 @@ TEST(byte_buffer_test, hexdump)
   ASSERT_EQ(pdu, bytes);
 }
 
-TEST(byte_buffer_test, copy_to_span)
+TEST(byte_buffer_test, copy_byte_buffer_to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -524,33 +526,44 @@ TEST(byte_buffer_test, copy_to_span)
   ASSERT_EQ(dst_span.data()[len], 0xfe);
 }
 
-TEST(byte_buffer_test, copy_to_iterator)
+TEST(byte_buffer_test, copy_byte_buffer_view_to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
   std::vector<uint8_t> bytes2       = test_rgen::random_vector<uint8_t>(random_vec_size());
   auto                 bytes_concat = concat_vec(bytes, bytes2);
 
-  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0);
-  dst_vec.reserve(bytes_concat.size());
-  span<uint8_t> dst_span = {dst_vec};
+  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0xfe);
+  span<uint8_t>        dst_span = {dst_vec};
+  size_t               len      = 0;
 
   // test copy of empty buffer
-  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, 0);
+  ASSERT_EQ(pdu.length(), 0);
+  ASSERT_TRUE(std::all_of(dst_span.begin(), dst_span.end(), [](uint8_t v) { return v == 0xfe; }));
 
   // test copy of small buffer
   pdu.append(bytes);
-  dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), dst_span.begin(), dst_span.begin() + len));
+  ASSERT_EQ(pdu, dst_span.subspan(0, len));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
 
   // test copy of large buffer
   pdu.append(bytes2);
-  dst_subspan = dst_span.subspan(0, pdu.length());
-  copy_segments(pdu, dst_subspan.begin());
-  ASSERT_EQ(pdu, dst_subspan);
+  len = copy_segments(byte_buffer_view{pdu}, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_EQ(dst_span, pdu);
+
+  // test copy to short span
+  std::fill(dst_span.begin(), dst_span.end(), 0xfe);
+  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length() - 1);
+  len                       = copy_segments(byte_buffer_view{pdu}, dst_subspan);
+  ASSERT_EQ(len, pdu.length() - 1);
+  ASSERT_TRUE(std::equal(dst_subspan.begin(), dst_subspan.end(), pdu.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
 }
 
 TEST(byte_buffer_test, to_span)

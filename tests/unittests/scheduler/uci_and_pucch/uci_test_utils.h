@@ -121,17 +121,20 @@ public:
 
   void fill_all_grid(slot_point slot_tx);
 
-  scheduler_expert_config              expert_cfg;
-  cell_configuration                   cell_cfg;
-  sched_cfg_dummy_notifier             mac_notif;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  cell_resource_allocator              res_grid{cell_cfg};
-  pdcch_dl_information                 dci_info;
-  const unsigned                       k0;
-  const unsigned                       k1{4};
-  du_ue_index_t                        main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
-  ue_repository                        ues;
-  bool                                 pucch_f2_more_prbs;
+  scheduler_expert_config                        expert_cfg;
+  sched_cfg_dummy_notifier                       mac_notif;
+  scheduler_harq_timeout_dummy_handler           harq_timeout_handler;
+  cell_common_configuration_list                 cell_cfg_list{};
+  const cell_configuration&                      cell_cfg;
+  std::vector<std::unique_ptr<ue_configuration>> ue_ded_cfgs;
+
+  cell_resource_allocator res_grid{cell_cfg};
+  pdcch_dl_information    dci_info;
+  const unsigned          k0;
+  const unsigned          k1{4};
+  du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
+  ue_repository           ues;
+  bool                    pucch_f2_more_prbs;
 
   // last_allocated_rnti keeps track of the last RNTI allocated.
   rnti_t                last_allocated_rnti;

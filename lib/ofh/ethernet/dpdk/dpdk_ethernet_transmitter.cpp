@@ -140,28 +140,46 @@ static void dpdk_port_configure(const gw_config& config, ::rte_mempool*& mbuf_po
 void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
 {
   if (frames.size() >= MAX_BURST_SIZE) {
-    logger.warning("Unable to send a transmission burst size of {} frames", frames.size());
+    logger.warning("Unable to send a transmission burst size of '{}' frames in the DPDK Ethernet transmitter",
+                   frames.size());
     return;
   }
 
-  static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-  for (const auto frame : frames) {
-    ::rte_mbuf* mbuf = mbufs.emplace_back(::rte_pktmbuf_alloc(mbuf_pool));
+  static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frames.size());
+  if (::rte_pktmbuf_alloc_bulk(mbuf_pool, mbufs.data(), frames.size()) < 0) {
+    logger.warning("Not enough entries in the mempool to send '{}' frames in the DPDK Ethernet transmitter",
+                   frames.size());
+    return;
+  }
+
+  for (unsigned idx = 0, end = frames.size(); idx != end; ++idx) {
+    const auto  frame = frames[idx];
+    ::rte_mbuf* mbuf  = mbufs[idx];
 
     if (::rte_pktmbuf_append(mbuf, frame.size()) == nullptr) {
       ::rte_pktmbuf_free(mbuf);
-      logger.warning("Unable to append {} bytes to allocated mbuf", frame.size());
+      logger.warning("Unable to append '{}' bytes to the allocated mbuf in the DPDK Ethernet transmitter",
+                     frame.size());
+      ::rte_pktmbuf_free_bulk(mbufs.data(), mbufs.size());
       return;
     }
-
     mbuf->data_len = frame.size();
     mbuf->pkt_len  = frame.size();
 
-    ::rte_ether_hdr* eth_hdr = rte_pktmbuf_mtod(mbuf, ::rte_ether_hdr*);
-    std::memcpy(eth_hdr, frame.data(), frame.size());
+    uint8_t* data = rte_pktmbuf_mtod(mbuf, uint8_t*);
+    std::memcpy(data, frame.data(), frame.size());
   }
 
-  ::rte_eth_tx_burst(port_id, 0, mbufs.data(), mbufs.size());
+  unsigned nof_sent_packets = ::rte_eth_tx_burst(port_id, 0, mbufs.data(), mbufs.size());
+
+  if (SRSRAN_UNLIKELY(nof_sent_packets < mbufs.size())) {
+    logger.warning("DPDK dropped '{}' packets out of a total of '{}' in the tx burst",
+                   mbufs.size() - nof_sent_packets,
+                   mbufs.size());
+    for (unsigned buf_idx = nof_sent_packets, last_idx = mbufs.size(); buf_idx != last_idx; ++buf_idx) {
+      ::rte_pktmbuf_free(mbufs[buf_idx]);
+    }
+  }
 }
 
 dpdk_transmitter_impl::dpdk_transmitter_impl(const gw_config& config, srslog::basic_logger& logger_) : logger(logger_)

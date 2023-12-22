@@ -94,7 +94,7 @@ bool srsran::srs_cu_cp::is_valid(five_qi_t                      five_qi,
     logger.warning("No config for {} present", five_qi);
     logger.warning("Currently configured 5QIs:");
     for (const auto& qos : cfg.five_qi_config) {
-      logger.warning(" - 5QI={}: PDCP={}", qos.first, qos.second.pdcp);
+      logger.warning(" - {}: {}", qos.first, qos.second.pdcp);
     }
     return false;
   }
@@ -151,10 +151,16 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
       return false;
     }
 
-    // Reject request if OoS flow requirements can't be met.
+    // Reject request if QoS flow requirements can't be met.
     for (const auto& qos_flow : pdu_session.transfer.qos_flow_add_or_modify_request_list) {
       if (get_five_qi(qos_flow, cfg, logger) == five_qi_t::invalid) {
-        logger.warning("QoS flow configuration for flow ID {} can't be derived", qos_flow.qos_flow_id);
+        logger.warning("QoS flow configuration for {} can't be derived", qos_flow.qos_flow_id);
+        return false;
+      }
+      // TODO: Add DRB modification support.
+      // Until then: Reject request if QoS flow to add already exists.
+      if (context.qos_flow_map.find(qos_flow.qos_flow_id) != context.qos_flow_map.end()) {
+        logger.warning("{} already exists", qos_flow.qos_flow_id);
         return false;
       }
     }
@@ -169,7 +175,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
 
     // Reject request if it removes all exisiting QoS flows.
     if (pdu_session.transfer.qos_flow_to_release_list.size() >= context.qos_flow_map.size()) {
-      logger.warning("Modification requests tries to remove {} from {} existing QoS flows.",
+      logger.warning("Modification request tries to remove {} from {} existing QoS flows",
                      pdu_session.transfer.qos_flow_to_release_list.size(),
                      context.qos_flow_map.size());
       return false;
@@ -264,7 +270,7 @@ up_config_update srsran::srs_cu_cp::calculate_update(
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
   for (const auto& pdu_session : setup_items) {
     srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
-                  "PDU session already exists.");
+                  "PDU session already exists");
     // Create new PDU session context.
     up_pdu_session_context_update new_ctxt(pdu_session.pdu_session_id);
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {

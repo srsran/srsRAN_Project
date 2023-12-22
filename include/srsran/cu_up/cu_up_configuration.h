@@ -30,6 +30,7 @@
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
+#include <map>
 
 namespace srsran {
 
@@ -68,14 +69,18 @@ struct e1ap_config_params {
 
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  task_executor*     cu_up_executor    = nullptr;
-  task_executor*     gtpu_pdu_executor = nullptr;
-  task_executor*     cu_up_e2_exec     = nullptr;
+  task_executor*     ctrl_executor  = nullptr; ///< CU-UP executor for control
+  task_executor*     dl_executor    = nullptr; ///< CU-UP executor for DL data flow
+  task_executor*     ul_executor    = nullptr; ///< CU-UP executor for UL data flow
+  task_executor*     io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
+  task_executor*     cu_up_e2_exec  = nullptr;
   e1ap_config_params e1ap;
   f1u_cu_up_gateway* f1u_gateway  = nullptr;
   io_broker*         epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
   timer_manager*     timers       = nullptr;
   dlt_pcap*          gtpu_pcap    = nullptr;
+
+  std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 
   network_interface_config net_cfg;
   n3_interface_config      n3_cfg;

@@ -49,7 +49,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", request.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
   // Create UE context in CU-CP.
   if (not allocate_cu_ue_id()) {
@@ -59,7 +59,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   srsran_assert(new_cu_ue_f1ap_id != gnb_cu_ue_f1ap_id_t::invalid, "CU F1AP UE ID must not be invalid");
-  srsran_assert(ue_ctxt_list.contains(new_cu_ue_f1ap_id), "UE context must exist at this point.");
+  srsran_assert(ue_ctxt_list.contains(new_cu_ue_f1ap_id), "UE context must exist at this point");
 
   // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ue_ctxt_list[new_cu_ue_f1ap_id].ev_mng.context_setup_outcome);
@@ -74,9 +74,9 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   create_ue_context_setup_result();
 
   if (response.success) {
-    logger.debug("ue={}: \"{}\" finalized.", request.ue_index, name());
+    logger.debug("ue={}: \"{}\" finalized", request.ue_index, name());
   } else {
-    logger.error("ue={}: \"{}\" failed.", request.ue_index, name());
+    logger.error("ue={}: \"{}\" failed", request.ue_index, name());
 
     // Remove F1AP context.
     ue_ctxt_list.remove_ue(request.ue_index);
@@ -130,7 +130,7 @@ bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_r
   // Add F1AP to RRC UE notifier to UE context.
   ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
 
-  logger.debug("ue={} Added RRC UE notifier.", ue_creation_complete_msg.ue_index);
+  logger.debug("ue={} Added RRC UE notifier", ue_creation_complete_msg.ue_index);
 
   return true;
 }
@@ -162,11 +162,11 @@ void ue_context_setup_procedure::create_ue_context_setup_result()
 {
   if (new_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid || new_ue_index == ue_index_t::invalid) {
     response.success = false;
-    logger.error("\"{}\" failed.", name());
+    logger.error("\"{}\" failed", name());
     return;
   }
 
-  srsran_assert(ue_ctxt_list.contains(new_cu_ue_f1ap_id), "UE context must exist at this point.");
+  srsran_assert(ue_ctxt_list.contains(new_cu_ue_f1ap_id), "UE context must exist at this point");
 
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");

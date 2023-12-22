@@ -22,6 +22,7 @@
 
 #include "helpers.h"
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>
 
@@ -29,12 +30,14 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
+TEST(mac_to_fapi_pusch_pdu_test, valid_pusch_pdu_shoul_pass)
 {
-  const ul_sched_info& mac_pdu = build_valid_pusch_pdu();
-  fapi::ul_pusch_pdu   fapi_pdu;
+  const ul_sched_info_test_helper& pdu_test = build_valid_pusch_pdu();
+  const ul_sched_info&             mac_pdu  = pdu_test.info;
+  fapi::ul_pusch_pdu               fapi_pdu;
+  auto                             uci_part2_tools = generate_uci_part2_correspondence(1);
 
-  convert_pusch_mac_to_fapi(fapi_pdu, mac_pdu);
+  convert_pusch_mac_to_fapi(fapi_pdu, mac_pdu, *std::get<0>(uci_part2_tools));
 
   // BWP.
   const pusch_information& pusch_cfg = mac_pdu.pusch_cfg;
@@ -103,12 +106,12 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   const uci_info&           mac_uci  = mac_pdu.uci.value();
   ASSERT_EQ(mac_uci.harq.has_value() ? mac_uci.harq->harq_ack_nof_bits : 0U, fapi_uci.harq_ack_bit_length);
   ASSERT_EQ(mac_uci.csi.has_value() ? mac_uci.csi->csi_part1_nof_bits : 0U, fapi_uci.csi_part1_bit_length);
-  ASSERT_EQ(mac_uci.csi.has_value() and mac_uci.csi->beta_offset_csi_2.has_value() ? 65535U : 0U,
+  ASSERT_EQ(mac_uci.csi.has_value() && mac_uci.csi->beta_offset_csi_2.has_value() ? 65535U : 0U,
             fapi_uci.flags_csi_part2);
   ASSERT_EQ(mac_uci.alpha, fapi_uci.alpha_scaling);
   ASSERT_EQ(mac_uci.harq.has_value() ? mac_uci.harq->beta_offset_harq_ack : 0U, fapi_uci.beta_offset_harq_ack);
   ASSERT_EQ(mac_uci.csi.has_value() ? mac_uci.csi->beta_offset_csi_1 : 0U, fapi_uci.beta_offset_csi1);
-  ASSERT_EQ(mac_uci.csi.has_value() and mac_uci.csi->beta_offset_csi_2.has_value()
+  ASSERT_EQ(mac_uci.csi.has_value() && mac_uci.csi->beta_offset_csi_2.has_value()
                 ? mac_uci.csi->beta_offset_csi_2.value()
                 : 0U,
             fapi_uci.beta_offset_csi2);

@@ -63,21 +63,21 @@ void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
-byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
+size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
 {
   if (sdu_queue.is_empty()) {
-    logger.log_debug("SDU queue empty. grant_len={}", grant_len);
+    logger.log_debug("SDU queue empty. grant_len={}", rlc_pdu_buf.size());
     return {};
   }
 
   uint32_t front_len = {};
   if (not sdu_queue.front_size_bytes(front_len)) {
-    logger.log_warning("Could not get sdu_len of SDU queue front. grant_len={}", grant_len);
+    logger.log_warning("Could not get sdu_len of SDU queue front. grant_len={}", rlc_pdu_buf.size());
     return {};
   }
 
-  if (front_len > grant_len) {
-    logger.log_info("SDU/PDU exeeds provided space. front_len={} grant_len={}", front_len, grant_len);
+  if (front_len > rlc_pdu_buf.size()) {
+    logger.log_info("SDU/PDU exeeds provided space. front_len={} grant_len={}", front_len, rlc_pdu_buf.size());
     metrics.metrics_add_small_alloc(1);
     return {};
   }
@@ -85,7 +85,7 @@ byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   rlc_sdu sdu = {};
   logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
   if (not sdu_queue.read(sdu)) {
-    logger.log_warning("Could not read SDU from non-empty queue. grant_len={} {}", grant_len, sdu_queue);
+    logger.log_warning("Could not read SDU from non-empty queue. grant_len={} {}", rlc_pdu_buf.size(), sdu_queue);
     return {};
   }
 
@@ -93,16 +93,21 @@ byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   srsran_sanity_check(sdu_len == front_len, "Length mismatch. sdu_len={} front_len={}", sdu_len, front_len);
 
   // In TM there is no header, just pass the plain SDU
-  byte_buffer_chain pdu_buf{std::move(sdu.buf)};
+  auto out_it = rlc_pdu_buf.begin();
+  for (span<uint8_t> seg : sdu.buf.segments()) {
+    out_it = std::copy(seg.begin(), seg.end(), out_it);
+  }
 
-  logger.log_info(pdu_buf.begin(), pdu_buf.end(), "TX PDU. pdu_len={} grant_len={}", pdu_buf.length(), grant_len);
+  logger.log_info(sdu.buf.begin(), sdu.buf.end(), "TX PDU. pdu_len={} grant_len={}", sdu_len, rlc_pdu_buf.size());
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_pdus(1, sdu_len);
 
-  pcap.push_pdu(pcap_context, pdu_buf);
+  // Push PDU into PCAP.
+  pcap.push_pdu(pcap_context, sdu.buf);
 
-  return pdu_buf;
+  // Return number of bytes written.
+  return out_it - rlc_pdu_buf.begin();
 }
 
 void rlc_tx_tm_entity::handle_changed_buffer_state()

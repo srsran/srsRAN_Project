@@ -45,8 +45,9 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 
   // Run single task in created execution environment.
   std::promise<std::string> p;
-  std::future<std::string>  f = p.get_future();
-  mng.executors().at("EXEC")->execute([&p]() { p.set_value(this_thread_name()); });
+  std::future<std::string>  f       = p.get_future();
+  bool                      success = mng.executors().at("EXEC")->execute([&p]() { p.set_value(this_thread_name()); });
+  ASSERT_TRUE(success);
   std::string thread_name = f.get();
   ASSERT_EQ(thread_name, "WORKER");
 }
@@ -54,7 +55,7 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{"WORKER_POOL", 4, {concurrent_queue_policy::locking_mpmc, 8}, {{"EXEC"}}};
+  worker_pool cfg{"WORKER_POOL", 4, {{concurrent_queue_policy::locking_mpmc, 8}}, {{"EXEC"}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -64,8 +65,9 @@ TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 
   // Run single task in created execution environment.
   std::promise<std::string> p;
-  std::future<std::string>  f = p.get_future();
-  mng.executors().at("EXEC")->execute([&p]() { p.set_value(this_thread_name()); });
+  std::future<std::string>  f       = p.get_future();
+  bool                      success = mng.executors().at("EXEC")->execute([&p]() { p.set_value(this_thread_name()); });
+  ASSERT_TRUE(success);
   std::string thread_name = f.get();
   ASSERT_EQ(thread_name.find("WORKER_POOL#"), 0);
 }
@@ -77,8 +79,7 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
       "WORKER",
       {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
       std::chrono::microseconds{10},
-      {priority_multiqueue_worker::executor{"EXEC1", enqueue_priority::max},
-       priority_multiqueue_worker::executor{"EXEC2", enqueue_priority::min}}};
+      {executor{"EXEC1", enqueue_priority::max}, executor{"EXEC2", enqueue_priority::min}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -90,7 +91,7 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
 
   std::atomic<int> counter{0};
   std::vector<int> execs_called;
-  mng.executors().at("EXEC1")->execute([&mng, &execs_called, &counter]() {
+  bool             success = mng.executors().at("EXEC1")->execute([&mng, &execs_called, &counter]() {
     ASSERT_TRUE(mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
       execs_called.push_back(2);
       counter++;
@@ -100,6 +101,7 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
       counter++;
     }));
   });
+  ASSERT_TRUE(success);
 
   while (counter != 2) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -112,10 +114,8 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
 TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{"WORKER",
-                  2,
-                  {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
-                  {worker_pool::executor{"EXEC", nullopt, true, true}}};
+  worker_pool cfg{
+      "WORKER", 2, {task_queue{concurrent_queue_policy::locking_mpmc, 8}}, {executor{"EXEC", {}, nullopt, true}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -126,7 +126,8 @@ TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
   // Run single task in created execution environment.
   // Note: Given that the executor was decorated as synchronous, the "execute" call will only return once the task
   // has completed.
-  bool done = false;
-  mng.executors().at("EXEC")->execute([&done]() { done = true; });
+  bool done    = false;
+  bool success = mng.executors().at("EXEC")->execute([&done]() { done = true; });
+  ASSERT_TRUE(success);
   ASSERT_TRUE(done);
 }

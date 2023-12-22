@@ -21,38 +21,122 @@
  */
 
 #include "ue_event_manager.h"
+#include "../config/sched_config_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 
 using namespace srsran;
 
-ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                                   ue_repository&                    ue_db_,
-                                   sched_configuration_notifier&     mac_notifier_,
-                                   scheduler_metrics_handler&        metrics_handler_,
-                                   scheduler_event_logger&           ev_logger_) :
-  expert_cfg(expert_cfg_),
+/// \brief More than one DL buffer occupancy update may be received per slot for the same UE and bearer. This class
+/// ensures that the UE DL buffer occupancy is updated only once per bearer per slot for efficiency reasons.
+class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_dl_buffer_state_indication_handler
+{
+  using bearer_key                        = uint32_t;
+  static constexpr size_t NOF_BEARER_KEYS = MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS;
+
+  static bearer_key    get_bearer_key(du_ue_index_t ue_index, lcid_t lcid) { return lcid * MAX_NOF_DU_UES + ue_index; }
+  static du_ue_index_t get_ue_index(bearer_key key) { return to_du_ue_index(key % MAX_NOF_DU_UES); }
+  static lcid_t        get_lcid(bearer_key key) { return uint_to_lcid(key / MAX_NOF_DU_UES); }
+
+public:
+  ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
+  {
+    std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), -1);
+  }
+
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& rlc_dl_bo) override
+  {
+    // Update DL Buffer Occupancy for the given UE and bearer.
+    unsigned key          = get_bearer_key(rlc_dl_bo.ue_index, rlc_dl_bo.lcid);
+    bool     first_rlc_bo = ue_dl_bo_table[key].exchange(rlc_dl_bo.bs, std::memory_order_acquire) < 0;
+
+    if (not first_rlc_bo) {
+      // If another DL BO update has been received before for this same bearer, we do not need to enqueue a new event.
+      return;
+    }
+
+    // Signal that this bearer needs its BO state updated.
+    pending_evs.push(key);
+  }
+
+  void slot_indication()
+  {
+    // Retrieve pending UEs.
+    pending_evs.slot_indication();
+    span<bearer_key> ues_to_process = pending_evs.get_events();
+
+    // Process RLC buffer updates of pending UEs.
+    for (bearer_key key : ues_to_process) {
+      // Recreate latest DL BO update.
+      dl_buffer_state_indication_message dl_bo;
+      // > Extract UE index and LCID.
+      dl_bo.ue_index = get_ue_index(key);
+      dl_bo.lcid     = get_lcid(key);
+      // > Extract last DL BO value for the respective bearer and reset BO table position.
+      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_acq_rel);
+      if (dl_bo.bs < 0) {
+        parent.logger.warning(
+            "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);
+        continue;
+      }
+
+      // Retrieve UE.
+      if (not parent.ue_db.contains(dl_bo.ue_index)) {
+        parent.log_invalid_ue_index(dl_bo.ue_index);
+        continue;
+      }
+      ue& u = parent.ue_db[dl_bo.ue_index];
+
+      // Forward DL BO update to UE.
+      u.handle_dl_buffer_state_indication(dl_bo);
+      if (dl_bo.lcid == LCID_SRB0) {
+        // Signal SRB0 scheduler with the new SRB0 buffer state.
+        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(dl_bo.ue_index);
+      }
+
+      // Log event.
+      parent.ev_logger.enqueue(dl_bo);
+
+      // Report event.
+      parent.metrics_handler.handle_dl_buffer_state_indication(dl_bo);
+    }
+  }
+
+private:
+  ue_event_manager& parent;
+
+  // Table of pending DL Buffer Occupancy values. -1 means that no DL Buffer Occupancy is set.
+  std::array<std::atomic<int>, NOF_BEARER_KEYS> ue_dl_bo_table;
+
+  slot_event_list<bearer_key> pending_evs;
+};
+
+ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
+                                   scheduler_metrics_handler& metrics_handler_,
+                                   scheduler_event_logger&    ev_logger_) :
   ue_db(ue_db_),
-  mac_notifier(mac_notifier_),
   metrics_handler(metrics_handler_),
   ev_logger(ev_logger_),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  logger(srslog::fetch_basic_logger("SCHED")),
+  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
 }
 
-void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
+ue_event_manager::~ue_event_manager() {}
+
+void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(
-      expert_cfg, *du_cells[(*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
+  std::unique_ptr<ue> u = std::make_unique<ue>(ue_creation_command{
+      ev.next_config(), ev.get_fallback_command().has_value() and ev.get_fallback_command().value(), metrics_handler});
 
   // Defer UE object addition to ue list to the slot indication handler.
-  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
+  common_events.emplace(INVALID_DU_UE_INDEX, [this, u = std::move(u), ev = std::move(ev)]() mutable {
     if (ue_db.contains(u->ue_index)) {
-      logger.error("ue={} rnti={:#x}: Create of UE failed. Cause: A UE with the same index already exists",
+      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
                    u->ue_index,
                    u->crnti);
-      mac_notifier.on_ue_config_complete(u->ue_index, false);
+      ev.abort();
       return;
     }
 
@@ -61,56 +145,47 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
     rnti_t          rnti        = u->crnti;
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
     ue_db.add_ue(std::move(u));
-    auto& inserted_ue = ue_db[ueidx];
 
     // Log Event.
     ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
-
-    // Notify metrics handler.
-    metrics_handler.handle_ue_creation(
-        inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ueidx, true);
   });
 }
 
-void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
+void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
 {
-  common_events.emplace(ue_request.ue_index, [this, ue_request]() {
-    if (not ue_db.contains(ue_request.ue_index)) {
-      log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
-      mac_notifier.on_ue_config_complete(ue_request.ue_index, false);
+  du_ue_index_t ue_index = ev.get_ue_index();
+  common_events.emplace(ue_index, [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.get_ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      log_invalid_ue_index(ue_idx, "UE Reconfig Request");
+      ev.abort();
       return;
     }
+
     // Configure existing UE.
-    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg);
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
 
     // Log event.
-    ev_logger.enqueue(ue_request);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ue_request.ue_index, true);
+    ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, ue_db[ue_idx].crnti});
   });
 }
 
-void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
+void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
 {
-  common_events.emplace(ue_index, [this, ue_index]() {
-    if (not ue_db.contains(ue_index)) {
-      logger.warning("Received request to delete ue={} that does not exist", ue_index);
+  const du_ue_index_t ue_index = ev.ue_index();
+  common_events.emplace(ue_index, [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received request to delete ue={} that does not exist", ue_idx);
       return;
     }
-    rnti_t rnti = ue_db[ue_index].crnti;
+    const rnti_t rnti = ue_db[ue_idx].crnti;
 
     // Scheduler UE removal from repository.
-    ue_db.schedule_ue_rem(ue_index);
+    ue_db.schedule_ue_rem(std::move(ev));
 
-    // Log event.
-    ev_logger.enqueue(sched_ue_delete_message{ue_index, rnti});
-
-    // Notify metrics.
-    metrics_handler.handle_ue_deletion(ue_index);
+    // Log UE removal event.
+    ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
   });
 }
 
@@ -208,22 +283,21 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
-    std::pair<const dl_harq_process*, dl_harq_process::status_update> result =
+    dl_harq_process::dl_ack_info_result result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
-    const dl_harq_process* h_dl = result.first;
 
-    if (h_dl != nullptr) {
+    if (result.h_id != INVALID_HARQ_ID) {
       // Respective HARQ was found.
-      const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
+      const units::bytes tbs{result.tbs_bytes};
 
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result.h_id, harq_bits[harq_idx], tbs});
 
-      if (result.second == dl_harq_process::status_update::acked or
-          result.second == dl_harq_process::status_update::nacked) {
+      if (result.update == dl_harq_process::status_update::acked or
+          result.update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.second == dl_harq_process::status_update::acked, tbs);
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.update == dl_harq_process::status_update::acked, tbs);
       }
     }
   }
@@ -351,30 +425,13 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  common_events.emplace(bs.ue_index, [this, bs]() {
-    if (not ue_db.contains(bs.ue_index)) {
-      log_invalid_ue_index(bs.ue_index, "DL Buffer State");
-      return;
-    }
-    ue& u = ue_db[bs.ue_index];
-
-    u.handle_dl_buffer_state_indication(bs);
-    if (bs.lcid == LCID_SRB0) {
-      // Signal SRB0 scheduler with the new SRB0 buffer state.
-      du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
-    }
-
-    // Log event.
-    ev_logger.enqueue(bs);
-
-    // Report event.
-    metrics_handler.handle_dl_buffer_state_indication(bs);
-  });
+  dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 {
-  if (last_sl != sl) {
+  bool new_slot_detected = last_sl != sl;
+  if (new_slot_detected) {
     // Pop pending common events.
     common_events.slot_indication();
     last_sl = sl;
@@ -404,6 +461,10 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
         ev.callback = {};
       }
     }
+  }
+
+  if (new_slot_detected) {
+    dl_bo_mng->slot_indication();
   }
 }
 

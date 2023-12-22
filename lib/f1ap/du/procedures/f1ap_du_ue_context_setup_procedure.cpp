@@ -178,7 +178,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   // been allocated by the gNB-DU for this UE context.
   if (du_ue_create_response.has_value()) {
     resp->c_rnti_present = true;
-    resp->c_rnti         = du_ue_create_response->crnti;
+    resp->c_rnti         = to_value(du_ue_create_response->crnti);
   }
 
   // > SRBs setup list.

@@ -39,9 +39,21 @@ static bool exec_system_command(const std::string& command, const std::string& c
   return true;
 }
 
+/// Writing the value 0 to a cgroup.procs file causes the writing process to be moved to the corresponding cgroup.
+static void move_to_cgroup(const std::string& cgroup_path)
+{
+  std::ofstream output(cgroup_path + "/cgroup.procs");
+  if (output.fail()) {
+    fmt::print("Could not open {} for writing. error=\"{}\"\n", cgroup_path + "/cgroup.procs", strerror(errno));
+  }
+  output.write("0\n", 2);
+}
+
 /// Moves processes from source cgroup to destination cgroup.
 static bool move_procs_between_cgroups(const std::string& dst_path, const std::string& src_path)
 {
+  using namespace std::chrono_literals;
+
   std::ifstream source_file(src_path);
   if (source_file.fail()) {
     fmt::print("Could not open {} directory. error=\"{}\"\n", src_path, strerror(errno));
@@ -56,6 +68,8 @@ static bool move_procs_between_cgroups(const std::string& dst_path, const std::s
     }
     destination_file << std::stoi(pid) << "\n";
   }
+  std::this_thread::sleep_for(50ms);
+
   return true;
 }
 
@@ -67,6 +81,9 @@ bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus)
     fmt::print("Could not find {}, make sure cgroups-v2 is mounted. error=\"{}\"\n", cgroup_path, strerror(errno));
     return false;
   }
+
+  /// First move itself to root cgroup.
+  move_to_cgroup(cgroup_path);
 
   /// Create cgroup for OS tasks, call it 'housekeeping' cgroup.
   if (!os_cpus.empty()) {
@@ -113,17 +130,9 @@ bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus)
   if (!exec_system_command(set_cpus_cmd, isol_cgroup_path)) {
     return false;
   }
-  std::string set_partition_cmd = "echo root > " + isol_cgroup_path + "/cpuset.cpus.partition";
-  if (!exec_system_command(set_partition_cmd, isol_cgroup_path)) {
-    return false;
-  }
 
-  /// Writing the value 0 to a cgroup.procs file causes the writing process to be moved to the corresponding cgroup.
-  std::ofstream output(isol_cgroup_path + "/cgroup.procs");
-  if (output.fail()) {
-    fmt::print("Could not open {} for writing. error=\"{}\"\n", isol_cgroup_path + "/cgroup.procs", strerror(errno));
-  }
-  output.write("0\n", 2);
+  /// Finally move itself to isolcated cgroup.
+  move_to_cgroup(isol_cgroup_path);
 
   return true;
 }
@@ -136,6 +145,11 @@ void cleanup_cgroups()
   std::string isolated_cgroup_path     = "/sys/fs/cgroup/isolated";
   std::string housekeeping_cgroup_path = "/sys/fs/cgroup/housekeeping";
   std::string root_cgroup_path         = "/sys/fs/cgroup/cgroup.procs";
+
+  struct stat sysfs_info;
+  if (::stat("/sys/fs/cgroup", &sysfs_info) < 0) {
+    return;
+  }
 
   struct stat info;
   if (::stat(housekeeping_cgroup_path.c_str(), &info) == 0) {
@@ -158,4 +172,5 @@ void cleanup_cgroups()
   if (cgroup_changed) {
     std::this_thread::sleep_for(100ms);
   }
+  move_to_cgroup("/sys/fs/cgroup");
 }

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "cell/cell_configuration.h"
 #include "cell/resource_grid.h"
 #include "common_scheduling/csi_rs_scheduler.h"
 #include "common_scheduling/paging_scheduler.h"
@@ -31,6 +30,7 @@
 #include "common_scheduling/si_message_scheduler.h"
 #include "common_scheduling/sib_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
+#include "config/cell_configuration.h"
 #include "logging/scheduler_result_logger.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
@@ -50,6 +50,7 @@ class cell_scheduler
 public:
   explicit cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                           const sched_cell_configuration_request_message& msg,
+                          const cell_configuration&                       cell_cfg,
                           ue_scheduler&                                   ue_sched,
                           scheduler_event_logger&                         ev_logger,
                           scheduler_metrics_handler&                      metrics);
@@ -64,7 +65,7 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
 
-  const cell_configuration cell_cfg;
+  const cell_configuration& cell_cfg;
 
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler& ue_sched;

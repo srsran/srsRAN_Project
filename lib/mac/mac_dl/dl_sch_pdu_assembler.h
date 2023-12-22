@@ -37,7 +37,33 @@ class byte_buffer_chain;
 class dl_sch_pdu
 {
 public:
+  /// Encoder of a MAC SDU.
+  class mac_sdu_encoder
+  {
+  public:
+    mac_sdu_encoder() = default;
+    mac_sdu_encoder(dl_sch_pdu& pdu_, lcid_t lcid_, unsigned subhdr_len_, unsigned max_sdu_size_);
+
+    bool valid() const { return pdu != nullptr; }
+
+    /// \brief Returns the space that is reserved for this MAC SDU payload.
+    span<uint8_t> sdu_space() const;
+
+    /// \brief Updates the DL-SCH PDU with the encoded MAC SDU subheader and payload.
+    /// \return Number of bytes written to the DL-SCH PDU (MAC SDU subheader + payload).
+    unsigned encode_sdu(unsigned sdu_bytes_written);
+
+  private:
+    dl_sch_pdu* pdu = nullptr;
+    lcid_t      lcid;
+    unsigned    subhr_len;
+    unsigned    max_sdu_size;
+  };
+
   explicit dl_sch_pdu(span<uint8_t> pdu_buffer_) : pdu(pdu_buffer_) {}
+
+  /// \brief Gets a MAC SDU encoder for a given LCID and scheduler grant size.
+  mac_sdu_encoder get_sdu_encoder(lcid_t lcid, unsigned sdu_payload_len_estimate);
 
   /// Adds a MAC SDU as a subPDU.
   unsigned add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu);

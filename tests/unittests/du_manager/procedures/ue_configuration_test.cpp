@@ -68,7 +68,7 @@ protected:
   void mac_finishes_ue_config(du_ue_index_t ue_index, bool result)
   {
     this->mac.wait_ue_reconf.result.result   = result;
-    this->mac.wait_ue_reconf.result.ue_index = this->ue_mng.ues.begin()->get()->ue_index;
+    this->mac.wait_ue_reconf.result.ue_index = this->ue_mng.ues.begin()->ue_index;
     this->mac.wait_ue_reconf.ready_ev.set();
   }
 
@@ -221,10 +221,11 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push F1-C Rx SDU through F1-C bearer Rx SDU notifier.
   f1ap.last_ue_config->f1c_bearers_to_add[0].rx_sdu_notifier->on_new_sdu(std::move(f1c_rx_sdu), {});
   // > Check arrival of MAC Tx SDU to MAC logical channel.
-  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
-                                                                                          dummy_rlc_header.size());
-  byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
-  ASSERT_EQ(test_payload, extracted_payload);
+  std::vector<uint8_t> mac_tx_sdu(test_payload.length() + dummy_rlc_header.size());
+  size_t               nwritten = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(mac_tx_sdu);
+  byte_buffer          extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten);
+  ASSERT_EQ(test_payload, extracted_payload)
+      << fmt::format("Byte buffers do not match:\n{}\n{}\n", test_payload, extracted_payload);
 }
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1u_bearers_are_connected)
@@ -254,9 +255,9 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push F1-U Rx SDU through F1-U bearer Rx SDU notifier.
   bearer.du_rx.on_new_sdu(std::move(rx_sdu));
   // > Check arrival of MAC Tx SDU to MAC logical channel.
-  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
-                                                                                          dummy_rlc_header.size());
-  byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
+  std::vector<uint8_t> mac_tx_sdu(test_payload.length() + dummy_rlc_header.size());
+  unsigned             nwritten = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(mac_tx_sdu);
+  byte_buffer          extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten);
   ASSERT_EQ(test_payload, extracted_payload);
 }
 

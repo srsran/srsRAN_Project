@@ -67,7 +67,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_no_pending_txs_then_ue_removal_is_imme
 {
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, to_value(rnti_t::MAX_CRNTI)));
   add_ue(ue_index, rnti);
   ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
@@ -85,7 +85,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
 {
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, to_value(rnti_t::MAX_CRNTI)));
   add_ue(ue_index, rnti);
 
   // Push DL buffer status update for UE DRB.
@@ -151,7 +151,7 @@ TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_c
 
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, to_value(rnti_t::MAX_CRNTI)));
   add_ue(ue_index, rnti);
   ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
@@ -187,7 +187,7 @@ TEST_F(sched_ue_removal_test,
 {
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, to_value(rnti_t::MAX_CRNTI)));
   add_ue(ue_index, rnti);
 
   // Push BSR update for UE.

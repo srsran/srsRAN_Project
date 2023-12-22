@@ -32,10 +32,7 @@ static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
 bool mm256::iq_width_packing_supported(unsigned iq_width)
 {
-  if (iq_width == 9) {
-    return true;
-  }
-  return false;
+  return iq_width == 9;
 }
 
 /// \brief Packs 16bit IQ samples in one AVX2 register using 9bit big-endian format.
@@ -173,7 +170,7 @@ void mm256::pack_prbs_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256
       avx2_pack_prbs_9b_big_endian(c_prbs, r0, r1, r2);
       break;
     default:
-      report_fatal_error("Unsupported bit width requested");
+      report_fatal_error("Unsupported bit width");
   }
 }
 
@@ -239,6 +236,6 @@ void mm256::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
       unpack_prb_9b_be(unpacked_iq_data, packed_data);
       break;
     default:
-      report_fatal_error("Unsupported bit width requested");
+      report_fatal_error("Unsupported bit width");
   }
 }

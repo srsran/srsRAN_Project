@@ -49,7 +49,9 @@ public:
 
   /// \brief Notifies that a MAC C-RNTI CE was received with old C-RNTI set to equal to the given UE.
   ///
-  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF.
+  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF due to out-of-sync
+  /// (e.g. PUCCH/PUSCH KOs). It should not have an effect on RLFs due the RLC max retransmissions or protocol failure
+  /// as those problems are not possible to recover from without Reestablishment.
   virtual void on_crnti_ce_received() = 0;
 };
 
@@ -84,7 +86,7 @@ struct mac_ue_create_response {
   du_cell_index_t cell_index = INVALID_DU_CELL_INDEX;
   du_ue_index_t   ue_index   = INVALID_DU_UE_INDEX;
   /// C-RNTI allocated to the created UE in the MAC. INVALID_RNTI if the UE was not created.
-  rnti_t allocated_crnti = INVALID_RNTI;
+  rnti_t allocated_crnti = rnti_t::INVALID_RNTI;
 };
 
 /// Input parameters used to reconfigure a UE in the scheduler.

@@ -31,12 +31,13 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
                                       phy_fapi_adaptor_factory_dependencies&& dependencies)
 {
   phy_fapi_adaptor_impl_config adaptor_config;
-  adaptor_config.sector_id   = config.sector_id;
-  adaptor_config.scs         = config.scs;
-  adaptor_config.scs_common  = config.scs_common;
-  adaptor_config.prach_cfg   = config.prach_cfg;
-  adaptor_config.carrier_cfg = config.carrier_cfg;
-  adaptor_config.prach_ports = config.prach_ports;
+  adaptor_config.sector_id                  = config.sector_id;
+  adaptor_config.nof_slots_request_headroom = config.nof_slots_request_headroom;
+  adaptor_config.scs                        = config.scs;
+  adaptor_config.scs_common                 = config.scs_common;
+  adaptor_config.prach_cfg                  = config.prach_cfg;
+  adaptor_config.carrier_cfg                = config.carrier_cfg;
+  adaptor_config.prach_ports                = config.prach_ports;
 
   phy_fapi_adaptor_impl_dependencies adaptor_dependencies;
   adaptor_dependencies.logger               = dependencies.logger;
@@ -49,6 +50,7 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
   adaptor_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;
   adaptor_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
   adaptor_dependencies.pm_repo              = std::move(dependencies.pm_repo);
+  adaptor_dependencies.part2_repo           = std::move(dependencies.part2_repo);
   adaptor_dependencies.async_executor       = dependencies.async_executor;
 
   return std::make_unique<phy_fapi_adaptor_impl>(adaptor_config, std::move(adaptor_dependencies));

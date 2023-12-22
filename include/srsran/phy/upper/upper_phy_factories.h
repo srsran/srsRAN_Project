@@ -282,8 +282,6 @@ struct upper_phy_config {
   bool is_prach_long_format;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
-  /// Maximum number of concurrent uplink processes.
-  unsigned nof_ul_processors;
   /// Maximum uplink processor thread concurrency.
   unsigned max_ul_thread_concurrency;
   /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
@@ -294,6 +292,8 @@ struct upper_phy_config {
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.
   unsigned ul_bw_rb;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// List of active subcarrier spacing, indexed by numerology.
   std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
   /// Transmit buffer pool configuration.

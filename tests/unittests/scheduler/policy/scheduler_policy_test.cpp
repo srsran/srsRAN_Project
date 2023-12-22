@@ -78,7 +78,9 @@ protected:
   base_scheduler_policy_test(policy_type                                     policy,
                              const sched_cell_configuration_request_message& msg =
                                  test_helpers::make_default_sched_cell_configuration_request()) :
-    logger(srslog::fetch_basic_logger("SCHED", true)), cell_cfg(sched_cfg, msg)
+    logger(srslog::fetch_basic_logger("SCHED", true)), cell_cfg(*[this, &msg]() {
+      return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
+    }())
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -124,7 +126,10 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req, harq_timeout_handler));
+    ue_ded_cell_cfg_list.push_back(
+        std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+    ues.add_ue(std::make_unique<ue>(
+        ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
     return ues[ue_req.ue_index];
   }
 
@@ -167,11 +172,14 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  srslog::basic_logger&             logger;
-  scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
-  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier          dummy_mac_notif;
+  srslog::basic_logger&                          logger;
+  scheduler_expert_config                        sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config&              expert_cfg{sched_cfg.ue};
+  cell_common_configuration_list                 cell_cfg_list;
+  std::vector<std::unique_ptr<ue_configuration>> ue_ded_cell_cfg_list;
+
+  const cell_configuration&            cell_cfg;
+  sched_cfg_dummy_notifier             dummy_mac_notif;
   scheduler_ue_metrics_dummy_notifier  metrics_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
@@ -179,7 +187,7 @@ protected:
   ue_resource_grid_view             ue_res_grid;
   dummy_pdsch_allocator             pdsch_alloc{res_grid};
   dummy_pusch_allocator             pusch_alloc{res_grid};
-  ue_repository                     ues{dummy_mac_notif};
+  ue_repository                     ues;
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };

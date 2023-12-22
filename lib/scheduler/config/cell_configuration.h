@@ -167,4 +167,9 @@ private:
   std::vector<unsigned> ul_symbols_per_slot_lst;
 };
 
+/// \brief List of common configurations for the cells currently added in the scheduler.
+///
+/// Note: Pointers to cell configurations should remain valid on cell removal/addition.
+using cell_common_configuration_list = slotted_id_vector<du_cell_index_t, std::unique_ptr<cell_configuration>>;
+
 } // namespace srsran

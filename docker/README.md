@@ -35,6 +35,18 @@ docker compose -f docker/docker-compose.yml down
 
 If you're not familiarized with `docker compose` tool, it will be recommended to check its [website](https://docs.docker.com/compose/) and `docker compose --help` output.
 
+## Enabling metrics reporting in the gnb
+
+To be able to see gnb's metric in the UI solution (grafana + influxdb + metrics-server) it's required to enable metrics reporting in the gnb config.
+For example:
+
+```yml
+metrics:
+  enable_json_metrics: true
+  addr: 172.19.1.4  # Metrics-server IP
+  port: 55555       # Metrics-server Port
+```
+
 ## Run some services
 
 Instead of running all services provided, a partial run is allowed by doing:
@@ -74,13 +86,13 @@ More info here: <https://docs.docker.com/compose/networking/>
 
 ### Open5GS Container Parameters
 
-For a more advanced parametrization of the Open5GS container, e.g. to load subscriber data from a csv-file the `open5gs.env` file in `srsgnb/docker/open5gs` can be used by running:
+Advanced parameters for the Open5GS container are stored in [open5gs.env](open5gs/open5gs.env) file. You can modify it or use a totally different file by setting `OPEN_5GS_ENV_FILE` variable like in:
 
 ```bash
-docker compose -f docker/docker-compose.yml --env-file docker/open5gs/open5gs.env up
+OPEN_5GS_ENV_FILE=/my/open5gs.env docker compose -f docker/docker-compose.yml up 5gc
 ```
 
-In [open5gs.env](open5gs/open5gs.env) the following parameters can be set:
+The following parameters can be set:
 
 - MONGODB_IP (default: 127.0.0.1): This is the IP of the mongodb to use. 127.0.0.1 is the mongodb that runs inside this container.
 - SUBSCRIBER_DB (default: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"): This adds subscriber data for a single or multiple users to the Open5GS mongodb. It contains either:
@@ -91,6 +103,26 @@ In [open5gs.env](open5gs/open5gs.env) the following parameters can be set:
 - DEBUG (default: false): This can be set to true to run Open5GS in debug mode.
 
 For more info, please check it's own [README.md](open5gs/README.md).
+
+### Open5GS Container Applications
+
+Open5Gs container includes other binaries such as
+
+- 5gc: 5G Core Only
+- epc: EPC Only
+- app: Both 5G Core and EPC
+
+By default 5gc is launched. If you want to run another binary, remember you can use `docker compose run` to run any command inside the container. For example:
+
+```bash
+docker compose -f docker/docker-compose.yml run 5gc epc -c open5gs-5gc.yml
+```
+
+If you need to use custom configuration files, remember you can share folder and files between your local PC (host) and the container:
+
+```bash
+docker compose -f docker/docker-compose.yml run -v /tmp/my-open5gs-5gc.yml:/config/my-open5gs-5gc.yml 5gc epc -c /config/my-open5gs-5gc.yml
+```
 
 ### Metric UI Setup
 

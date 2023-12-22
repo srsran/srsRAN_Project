@@ -167,22 +167,31 @@ public:
   /// \param cell_execs_ List of task executors that will be used by the MAC DL and scheduler.
   /// \param blocking_slot_ind sets whether slot indication tasks are processed synchronously or asynchronously
   explicit cell_executor_mapper(const std::initializer_list<task_executor*>& cell_execs_,
-                                const std::initializer_list<task_executor*>& slot_execs_ = {}) :
-    cell_execs(cell_execs_.begin(), cell_execs_.end()), slot_execs(slot_execs_.begin(), slot_execs_.end())
+                                const std::initializer_list<task_executor*>& slot_execs_    = {},
+                                const std::initializer_list<task_executor*>& err_ind_execs_ = {}) :
+    cell_execs(cell_execs_.begin(), cell_execs_.end()),
+    slot_execs(slot_execs_.begin(), slot_execs_.end()),
+    err_ind_execs(cell_execs_.begin(), cell_execs_.end())
   {
     srsran_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
     if (slot_execs.empty()) {
       slot_execs = cell_execs;
     }
+    if (err_ind_execs.empty()) {
+      err_ind_execs = cell_execs;
+    }
   }
 
-  /// \brief Fetches a default task executor for a given cell.
   task_executor& executor(du_cell_index_t cell_index) override { return *cell_execs[cell_index % cell_execs.size()]; }
 
-  /// \brief Fetches a task executor for slot indications, given a cell index.
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
   {
-    return *slot_execs[cell_index % cell_execs.size()];
+    return *slot_execs[cell_index % slot_execs.size()];
+  }
+
+  task_executor& error_ind_executor(du_cell_index_t cell_index) override
+  {
+    return *err_ind_execs[cell_index % err_ind_execs.size()];
   }
 
 private:
@@ -193,6 +202,9 @@ private:
   /// \c cell_execs or point to a sync_task_executor adapter stored in \c blocking_slot_execs, depending on whether
   /// slot indication tasks are processed synchronously or asynchronously.
   std::vector<task_executor*> slot_execs;
+
+  /// \brief Executors to handle error indications triggered from the FAPI.
+  std::vector<task_executor*> err_ind_execs;
 };
 
 /// \brief Task Executor Mapper for DU-high.

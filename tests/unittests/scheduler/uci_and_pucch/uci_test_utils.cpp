@@ -124,10 +124,15 @@ bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 test_bench::test_bench(const test_bench_params& params) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
-  cell_cfg{expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
+  cell_cfg{[this, &params]() -> const cell_configuration& {
+    cell_cfg_list.emplace(
+        to_du_cell_index(0),
+        std::make_unique<cell_configuration>(
+            expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)));
+    return *cell_cfg_list[to_du_cell_index(0)];
+  }()},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
-  ues(mac_notif),
   pucch_f2_more_prbs{params.pucch_f2_more_prbs},
   pucch_alloc{cell_cfg},
   uci_alloc(pucch_alloc),
@@ -183,7 +188,9 @@ test_bench::test_bench(const test_bench_params& params) :
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, harq_timeout_handler));
+  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ues.add_ue(
+      std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
   slot_indication(sl_tx);
@@ -213,7 +220,10 @@ void test_bench::add_ue()
   ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(test_helpers::make_test_ue_uplink_config(cfg_params));
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, harq_timeout_handler));
+
+  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ues.add_ue(
+      std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
   last_allocated_rnti = ue_req.crnti;
 }
 

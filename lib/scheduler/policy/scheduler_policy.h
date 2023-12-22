@@ -35,7 +35,7 @@ public:
     cell_res_grids.emplace(cell_grid.cell_index(), &cell_grid);
   }
 
-  slot_point get_pdcch_slot() const { return cell_res_grids[to_du_cell_index(0)]->slot_tx(); }
+  slot_point get_pdcch_slot(du_cell_index_t cell_index) const { return cell_res_grids[cell_index]->slot_tx(); }
 
   const cell_configuration& get_cell_cfg_common(du_cell_index_t cell_index) const
   {

@@ -434,6 +434,34 @@ TEST_P(pdcp_tx_test, count_wraparound)
   }
 }
 
+/// \brief Test correct discard when RLC SDU queue is full
+TEST_P(pdcp_tx_test_short_rlc_queue, discard_on_full_rlc_sdu_queue)
+{
+  init(GetParam());
+  byte_buffer sdu = {sdu1};
+
+  // Fill the RLC SDU queue
+  for (uint32_t i = 0; i < config.custom.rlc_sdu_queue; i++) {
+    pdcp_tx->handle_sdu(sdu.deep_copy());
+    ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+    test_frame.pdu_queue.pop();
+  }
+
+  // Any further SDUs should be discarded and not forwarded to lower layers
+  pdcp_tx->handle_sdu(sdu.deep_copy());
+  ASSERT_TRUE(test_frame.pdu_queue.empty());
+
+  // Make room for one more SDU and check if one PDU will be passed to lower layers
+  pdcp_tx->handle_transmit_notification(0);
+  pdcp_tx->handle_sdu(sdu.deep_copy());
+  ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+  test_frame.pdu_queue.pop();
+
+  // Any further SDUs should be discarded and not forwarded to lower layers
+  pdcp_tx->handle_sdu(sdu.deep_copy());
+  ASSERT_TRUE(test_frame.pdu_queue.empty());
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
@@ -450,6 +478,12 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_test,
+                         ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                                            ::testing::Values(1, 2, 3)),
+                         test_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
+                         pdcp_tx_test_short_rlc_queue,
                          ::testing::Combine(::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                                             ::testing::Values(1, 2, 3)),
                          test_param_info_to_string);

@@ -86,76 +86,9 @@ TEST_F(ue_deletion_tester,
   ASSERT_TRUE(proc.ready());
 }
 
-TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlc_buffer_states_have_no_effect)
+TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_then_ue_notifier_disconnection_gets_called)
 {
-  // RLC buffer state updates of DRBs should reach the MAC.
-  ASSERT_FALSE(mac.last_dl_bs.has_value());
-  test_ue->bearers.drbs().at(drb_id_t::drb1)->connector.rlc_tx_buffer_state_notif.on_buffer_state_update(10);
-  ASSERT_TRUE(mac.last_dl_bs.has_value());
-  ASSERT_EQ(mac.last_dl_bs->ue_index, test_ue->ue_index);
-  ASSERT_EQ(mac.last_dl_bs->lcid, lcid_t::LCID_MIN_DRB);
-  ASSERT_EQ(mac.last_dl_bs->bs, 10);
-
-  // RLC buffer state updates of SRBs should reach the MAC.
-  mac.last_dl_bs.reset();
-  ASSERT_FALSE(mac.last_dl_bs.has_value());
-  test_ue->bearers.srbs()[srb_id_t::srb1].connector.rlc_tx_buffer_state_notif.on_buffer_state_update(100);
-  ASSERT_TRUE(mac.last_dl_bs.has_value());
-  ASSERT_EQ(mac.last_dl_bs->ue_index, test_ue->ue_index);
-  ASSERT_EQ(mac.last_dl_bs->lcid, LCID_SRB1);
-  ASSERT_EQ(mac.last_dl_bs->bs, 100);
-
+  ASSERT_FALSE(ue_mng.ues[test_ue->ue_index].ue_notifiers_disconnected);
   start_procedure();
-
-  // RLC buffer state updates should not reach the MAC while UE is being removed.
-  mac.last_dl_bs.reset();
-  test_ue->bearers.drbs().at(drb_id_t::drb1)->connector.rlc_tx_buffer_state_notif.on_buffer_state_update(10);
-  ASSERT_FALSE(mac.last_dl_bs.has_value());
-  test_ue->bearers.srbs()[srb_id_t::srb1].connector.rlc_tx_buffer_state_notif.on_buffer_state_update(10);
-  ASSERT_FALSE(mac.last_dl_bs.has_value());
-}
-
-TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlf_notifications_have_no_effect)
-{
-  rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
-
-  // RLF notification should be handled.
-  if (cause == rlf_cause::max_mac_kos_reached) {
-    test_ue->rlf_notifier->on_rlf_detected();
-  } else if (cause == rlf_cause::max_rlc_retxs_reached) {
-    test_ue->rlf_notifier->on_max_retx();
-  } else {
-    test_ue->rlf_notifier->on_protocol_failure();
-  }
-  const unsigned release_timeout =
-      (du_cells[0].ue_timers_and_constants.t310 + du_cells[0].ue_timers_and_constants.t311).count();
-  for (unsigned i = 0; i != release_timeout; ++i) {
-    timers.tick();
-    worker.run_pending_tasks();
-  }
-  ASSERT_EQ(ue_mng.last_rlf_ue_index, test_ue->ue_index);
-  ASSERT_EQ(ue_mng.last_rlf_cause, cause);
-
-  // RLFs have no effect after the RLF timer is triggered.
-  ue_mng.last_rlf_ue_index.reset();
-  ue_mng.last_rlf_cause.reset();
-  test_ue->rlf_notifier->on_max_retx();
-  for (unsigned i = 0; i != release_timeout; ++i) {
-    timers.tick();
-    worker.run_pending_tasks();
-  }
-  ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
-  ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
-
-  // Start UE deletion.
-  start_procedure();
-
-  // RLF notifications should not be handled.
-  test_ue->rlf_notifier->on_rlf_detected();
-  for (unsigned i = 0; i != release_timeout; ++i) {
-    timers.tick();
-    worker.run_pending_tasks();
-  }
-  ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
-  ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
+  ASSERT_TRUE(ue_mng.ues[test_ue->ue_index].ue_notifiers_disconnected);
 }

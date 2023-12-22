@@ -53,17 +53,18 @@ void iq_compression_none_avx512::compress(span<srsran::ofh::compressed_prb>     
   span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
   q.to_fixed_point(input_quantized_span, float_samples_span, iq_scaling);
 
-  if (logger.debug.enabled() && input_quantized_span.size() > 0) {
+  if (SRSRAN_UNLIKELY(logger.debug.enabled() && !input_quantized_span.empty())) {
     // Calculate and print RMS of quantized samples.
     float sum_squares = srsvec::dot_prod(input_quantized_span, input_quantized_span, 0);
     float rms         = std::sqrt(sum_squares / input_quantized_span.size());
     if (std::isnormal(rms)) {
-      logger.debug("IQ samples RMS = {}", rms);
+      logger.debug("Quantized IQ samples RMS value of '{}'", rms);
     }
   }
 
-  unsigned        sample_idx = 0, rb = 0;
-  const __mmask32 load_mask = 0x00ffffff;
+  unsigned        sample_idx = 0;
+  unsigned        rb         = 0;
+  const __mmask32 load_mask  = 0x00ffffff;
 
   // Process one PRB at a time.
   for (size_t rb_index_end = output.size(); rb != rb_index_end; ++rb) {

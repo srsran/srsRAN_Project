@@ -22,6 +22,7 @@
 
 #include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
+#include "lib/scheduler/config/sched_config_manager.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -35,14 +36,14 @@ class ue_grid_allocator_tester : public ::testing::Test
 {
 protected:
   ue_grid_allocator_tester() :
-    cell_cfg(sched_cfg,
-             []() {
-               cell_config_builder_params params;
-               params.dl_arfcn       = 536020;
-               params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
-               return test_helpers::make_default_sched_cell_configuration_request(params);
-             }()),
-    ues(mac_notif)
+    cell_cfg(*[this]() {
+      cell_config_builder_params params;
+      params.dl_arfcn       = 536020;
+      params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      auto* cfg             = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(params));
+      srsran_assert(cfg != nullptr, "Cell configuration failed");
+      return cfg;
+    }())
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
   }
@@ -55,14 +56,15 @@ protected:
     for (lcid_t lcid : lcids_to_activate) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
 
-    return ues[ue_index];
+    return add_ue(ue_creation_req);
   }
 
   ue& add_ue(const sched_ue_creation_request_message& ue_creation_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
+    auto ev = cfg_mng.add_ue(ue_creation_req);
+    ues.add_ue(std::make_unique<ue>(
+        ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, harq_timeout_handler}));
     return ues[ue_creation_req.ue_index];
   }
 
@@ -82,11 +84,15 @@ protected:
         &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
-  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier          mac_notif;
-  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
+  const scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config&       expert_cfg{sched_cfg.ue};
+  sched_cfg_dummy_notifier                mac_notif;
+  scheduler_ue_metrics_dummy_notifier     metrics_notif;
+  scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
+  scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
+
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics_ue_handler};
+  const cell_configuration& cell_cfg;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
   dummy_uci_allocator            dummy_uci_alloc;

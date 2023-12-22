@@ -72,11 +72,12 @@ static void validate_pdsch_information(const pdsch_information& pdsch_cfg, const
   ASSERT_EQ(prb_cfg.type1().length(), fapi_pdu.rb_size);
 }
 
-TEST(mac_fapi_pdsch_pdu_conversor_test, sib1_mac_to_fapi_conversion_is_valid)
+TEST(mac_fapi_pdsch_pdu_conversor_test, valid_sib1_pdu_should_pass)
 {
-  sib_information pdu          = build_valid_sib1_information_pdu();
-  unsigned        nof_csi_pdus = 2;
-  unsigned        nof_prbs     = 51U;
+  sib_information_test_helper pdu_test     = build_valid_sib1_information_pdu();
+  sib_information             pdu          = pdu_test.pdu;
+  unsigned                    nof_csi_pdus = 2;
+  unsigned                    nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
   auto               pm_tools = generate_precoding_matrix_tables(1);
@@ -92,11 +93,12 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, sib1_mac_to_fapi_conversion_is_valid)
   }
 }
 
-TEST(mac_fapi_pdsch_pdu_conversor_test, rar_mac_to_fapi_conversion_is_valid)
+TEST(mac_fapi_pdsch_pdu_conversor_test, valid_rar_pdu_should_pass)
 {
-  rar_information pdu          = build_valid_rar_information_pdu();
-  unsigned        nof_csi_pdus = 2;
-  unsigned        nof_prbs     = 51U;
+  rar_information_test_helper pdu_test     = build_valid_rar_information_pdu();
+  rar_information             pdu          = pdu_test.pdu;
+  unsigned                    nof_csi_pdus = 2;
+  unsigned                    nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
   auto               pm_tools = generate_precoding_matrix_tables(1);
@@ -112,11 +114,12 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, rar_mac_to_fapi_conversion_is_valid)
   }
 }
 
-TEST(mac_fapi_pdsch_pdu_conversor_test, dl_paging_mac_to_fapi_conversion_is_valid)
+TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_paging_pdu_should_pass)
 {
-  dl_paging_allocation pdu          = build_valid_dl_paging_pdu();
-  unsigned             nof_csi_pdus = 2;
-  unsigned             nof_prbs     = 51U;
+  dl_paging_allocation_test_helper pdu_test     = build_valid_dl_paging_pdu();
+  dl_paging_allocation             pdu          = pdu_test.pdu;
+  unsigned                         nof_csi_pdus = 2;
+  unsigned                         nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
   auto               pm_tools = generate_precoding_matrix_tables(1);
@@ -132,11 +135,12 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, dl_paging_mac_to_fapi_conversion_is_vali
   }
 }
 
-TEST(mac_fapi_pdsch_pdu_conversor_test, dl_msg_alloc_mac_to_fapi_conversion_is_valid)
+TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_msg_alloc_pdu_should_pass)
 {
-  dl_msg_alloc pdu          = build_valid_dl_msg_alloc_pdu();
-  unsigned     nof_csi_pdus = 2;
-  unsigned     nof_prbs     = 51U;
+  dl_msg_allocation_test_helper pdu_test     = build_valid_dl_msg_alloc_pdu();
+  dl_msg_alloc                  pdu          = pdu_test.pdu;
+  unsigned                      nof_csi_pdus = 2;
+  unsigned                      nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
   auto               pm_tools = generate_precoding_matrix_tables(1);

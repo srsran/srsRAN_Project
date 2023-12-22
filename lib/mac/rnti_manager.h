@@ -45,16 +45,16 @@ public:
     rnti_t temp_crnti;
     do {
       uint16_t prev_counter = rnti_counter.fetch_add(1, std::memory_order_relaxed) % CRNTI_RANGE;
-      temp_crnti            = to_rnti(prev_counter + rnti_t::MIN_CRNTI);
+      temp_crnti            = to_rnti(prev_counter + to_value(rnti_t::MIN_CRNTI));
     } while (this->has_rnti(temp_crnti));
     return temp_crnti;
   }
 
 private:
-  static constexpr int    CRNTI_RANGE  = rnti_t::MAX_CRNTI + 1 - rnti_t::MIN_CRNTI;
+  static constexpr int    CRNTI_RANGE  = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
   static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
 
-  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter{INITIAL_RNTI - rnti_t::MIN_CRNTI};
+  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter{to_value(INITIAL_RNTI) - to_value(rnti_t::MIN_CRNTI)};
 };
 
 } // namespace srsran

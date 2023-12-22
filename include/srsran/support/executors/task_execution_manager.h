@@ -36,36 +36,63 @@ class file_event_tracer;
 
 namespace execution_config_helper {
 
+using task_priority = enqueue_priority;
+
 /// Parameters of a queue of tasks.
-struct task_queue {
-  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
-  concurrent_queue_policy policy;
-  /// Task queue size.
-  unsigned size;
+using task_queue = concurrent_queue_params;
+
+/// Parameters of a strand executor.
+struct strand {
+  struct executor {
+    /// \brief Name of the strand executor.
+    std::string name;
+    /// \brief Queueing policy associated with this strand executor.
+    concurrent_queue_policy policy;
+    /// \brief Size of the queue used.
+    unsigned size;
+  };
+  /// Queues of different priorities. The lower the index, the higher the priority.
+  std::vector<executor> queues;
 };
 
-namespace detail {
-
 /// Parameters of the task executor, including name and decorators.
-struct executor_common {
+struct executor {
   /// Name of the executor.
   std::string name;
-  /// In case of non-empty, the executor is instantiated as a strand executor.
-  optional<task_queue> strand{};
-  /// Whether to log when task fails to be dispatched.
-  bool report_on_failure = true;
+  /// Priority assigned to the tasks dispatched through this executor.
+  task_priority priority = task_priority::min;
+  /// Strands instantiated on top of this executor.
+  std::vector<strand> strands;
+  /// \brief Present if the executor works as a strand, serializing all the enqueued tasks. The value is the size of
+  /// the strand queue size.
+  optional<unsigned> strand_queue_size;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
-};
 
-} // namespace detail
+  executor(const std::string&         name_,
+           const std::vector<strand>& strands_           = {},
+           optional<unsigned>         strand_queue_size_ = nullopt,
+           bool                       synchronous_       = false) :
+    name(name_), strands(strands_), strand_queue_size(strand_queue_size_), synchronous(synchronous_)
+  {
+  }
+  executor(const std::string&         name_,
+           task_priority              priority_,
+           const std::vector<strand>& strands_           = {},
+           optional<unsigned>         strand_queue_size_ = nullopt,
+           bool                       synchronous_       = false) :
+    name(name_),
+    priority(priority_),
+    strands(strands_),
+    strand_queue_size(strand_queue_size_),
+    synchronous(synchronous_)
+  {
+  }
+};
 
 /// Arguments for a single task worker creation.
 struct single_worker {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor_common;
-
   /// Worker name.
   std::string name;
   /// Queue used by the task worker.
@@ -85,20 +112,16 @@ struct single_worker {
 
 /// Arguments for a task worker pool creation.
 struct worker_pool {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  using executor = detail::executor_common;
-
   /// Worker Pool prefix name. Workers will be named as name#0, name#1, etc.
   std::string name;
   /// Number of workers in the pool.
   unsigned nof_workers;
-  /// Queue used by the task worker.
-  task_queue queue;
+  /// Queue(s) used by the task worker. The lower the index, the higher the priority.
+  std::vector<task_queue> queues;
   /// Executors associated with this execution context.
   std::vector<executor> executors;
-  /// \brief Wait time in microseconds, when task queue has no pending tasks. This value should be set when the queue
-  /// policy is lockfree MPMC.
-  optional<std::chrono::microseconds> sleep_time;
+  /// \brief Wait time in microseconds, when task queue has no pending tasks.
+  std::chrono::microseconds sleep_time;
   /// OS priority of the worker thread.
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Array of CPU bitmasks to assign to each worker in the pool.
@@ -107,25 +130,8 @@ struct worker_pool {
   file_event_tracer<true>* tracer = nullptr;
 };
 
-using task_priority = enqueue_priority;
-
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue_worker {
-  /// Parameters for the creation of an executor of a single worker execution context.
-  struct executor : public detail::executor_common {
-    /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
-    task_priority priority;
-
-    executor(const std::string&   name_,
-             task_priority        priority_,
-             optional<task_queue> strand_            = {},
-             bool                 report_on_failure_ = true,
-             bool                 synchronous_       = false) :
-      executor_common{name_, strand_, report_on_failure_, synchronous_}, priority(priority_)
-    {
-    }
-  };
-
   /// Worker name.
   std::string name;
   /// \brief Queues of different priorities. The lower the index, the higher the priority.

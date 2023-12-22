@@ -46,8 +46,7 @@ srsran::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_reso
                 "Unsupported number of CSI-RS resources");
 
   unsigned map_index = 0;
-  std::vector<
-      static_vector<uci_part2_correspondence_information, uci_part2_correspondence_information::max_nof_part1_params>>
+  std::vector<static_vector<uci_part2_correspondence_information, uci_part2_size_description::max_nof_entries>>
                                                                                    mapper_map;
   std::vector<static_vector<uint16_t, uci_part2_size_description::max_size_table>> repo_map;
 
@@ -73,9 +72,9 @@ srsran::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_reso
           report_cfg.quantities           = static_cast<csi_report_quantities>(quantities_index);
 
           uci_part2_size_description part2_correspondence = get_csi_report_pusch_size(report_cfg).part2_correspondence;
-          auto&                      map_entry            = add_map_entry(
-              mapper_map,
-              get_uci_part2_correspondence_index(csi_resource_index, codebook_index, ri_index, quantities_index));
+          unsigned                   repo_index =
+              get_uci_part2_correspondence_index(csi_resource_index, codebook_index, ri_index, quantities_index);
+          auto& map_entry = add_map_entry(mapper_map, repo_index);
 
           for (const auto& entry : part2_correspondence.entries) {
             uci_part2_correspondence_information info;
@@ -84,7 +83,8 @@ srsran::fapi_adaptor::generate_uci_part2_correspondence(unsigned nof_csi_rs_reso
             info.priority = 0;
 
             for (const auto& param : entry.parameters) {
-              info.part1_params.push_back({param.offset, param.width});
+              info.part1_param_offsets.push_back(param.offset);
+              info.part1_param_sizes.push_back(param.width);
             }
 
             info.part2_map_index = map_index;

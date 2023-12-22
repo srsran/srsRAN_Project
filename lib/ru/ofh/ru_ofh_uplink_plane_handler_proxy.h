@@ -30,7 +30,7 @@ class task_executor;
 
 namespace ofh {
 class uplink_request_handler;
-}
+} // namespace ofh
 
 /// This proxy implementation dispatches the requests to the corresponding OFH sector.
 class ru_uplink_plane_handler_proxy : public ru_uplink_plane_handler

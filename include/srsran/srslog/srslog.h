@@ -203,6 +203,11 @@ sink& fetch_syslog_sink(const std::string&             preamble_  = "",
                         syslog_local_type              log_local_ = syslog_local_type::local0,
                         std::unique_ptr<log_formatter> f          = get_default_log_formatter());
 
+/// Returns an instance of a sink that writes to a UDP socket using the given remote IP address and port.
+sink& fetch_udp_sink(const std::string&             remote_ip,
+                     unsigned                       port,
+                     std::unique_ptr<log_formatter> f = get_default_log_formatter());
+
 /// Installs a custom user defined sink in the framework getting associated to
 /// the specified id. Returns true on success, otherwise false.
 /// WARNING: This function is an advanced feature and users should really know

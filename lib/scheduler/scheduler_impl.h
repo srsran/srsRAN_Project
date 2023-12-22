@@ -23,6 +23,7 @@
 #pragma once
 
 #include "cell_scheduler.h"
+#include "config/sched_config_manager.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_metrics_handler.h"
 #include "logging/scheduler_result_logger.h"
@@ -74,15 +75,14 @@ private:
   // Slot metrics sink.
   scheduler_metrics_handler metrics;
 
+  // Manager of configurations forwarded to the scheduler.
+  sched_config_manager cfg_mng;
+
   /// Container of DU Cell-specific resources.
   slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
 
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;
-  slotted_id_table<du_cell_index_t, du_cell_group_index_t, MAX_NOF_DU_CELLS>                 cell_to_group_index;
-
-  /// Mapping of UEs to DU Cell Groups.
-  slotted_id_table<du_ue_index_t, du_cell_group_index_t, MAX_NOF_DU_UES> ue_to_cell_group_index;
 };
 
 } // namespace srsran

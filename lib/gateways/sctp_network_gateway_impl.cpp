@@ -22,6 +22,7 @@
 
 #include "sctp_network_gateway_impl.h"
 #include "srsran/gateways/addr_info.h"
+#include "srsran/support/error_handling.h"
 #include <fcntl.h>
 #include <srsran/support/sockets.h>
 #include <utility>

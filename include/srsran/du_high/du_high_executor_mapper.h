@@ -12,9 +12,14 @@ class du_high_cell_executor_mapper
 public:
   virtual ~du_high_cell_executor_mapper() = default;
 
+  /// \brief Default executor to handle events for a given cell.
   virtual task_executor& executor(du_cell_index_t cell_index) = 0;
 
+  /// \brief Executor to handle slot_indication events for a given cell.
   virtual task_executor& slot_ind_executor(du_cell_index_t cell_index) = 0;
+
+  /// \brief Executor to handle error_indication events for a given cell.
+  virtual task_executor& error_ind_executor(du_cell_index_t cell_index) = 0;
 };
 
 /// This interface is used to allow the DU to choose between different UE-specific task executors.

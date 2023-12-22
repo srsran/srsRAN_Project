@@ -303,7 +303,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 {
   srsran_assert(msg.ue_index != ue_index_t::invalid, "Invalid UE index", msg.ue_index);
   srsran_assert(srsran::config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
-  srsran_assert(msg.c_rnti != INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.c_rnti);
+  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.ue_index);
 
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
@@ -363,7 +363,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
 
   // Create RRC object if it doesn't already exist.
   if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
-    if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
+    if (!msg.cell_group_cfg.empty() && msg.c_rnti != rnti_t::INVALID_RNTI) {
       if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy(), {} /* no previous context */)) {
         logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
         return ue_update_complete_msg;
@@ -641,13 +641,17 @@ optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
 
 async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(
     const cu_cp_inter_du_handover_request& msg,
-    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_)
+    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
+    du_processor_ue_context_notifier&      target_du_processor_notifier_)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.source_ue_index);
 
-  return routine_mng->start_inter_du_handover_routine(
-      msg, cu_cp_notifier, target_du_f1ap_ue_ctxt_notif_, ue->get_rrc_ue_notifier());
+  return routine_mng->start_inter_du_handover_routine(msg,
+                                                      cu_cp_notifier,
+                                                      target_du_f1ap_ue_ctxt_notif_,
+                                                      get_du_processor_ue_context_notifier(),
+                                                      target_du_processor_notifier_);
 }
 
 async_task<cu_cp_inter_ngran_node_n2_handover_response>

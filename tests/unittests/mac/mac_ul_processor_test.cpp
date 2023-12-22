@@ -120,8 +120,8 @@ struct test_bench {
   // Add a UE to the RNTI table and UE context repository.
   void add_ue(rnti_t rnti, du_ue_index_t du_ue_idx)
   {
-    srsran_assert(not rnti_mng.has_rnti(rnti), "RNTI={:#x} already exists", rnti);
-    srsran_assert(not test_ues.contains(du_ue_idx), "ueId={:#x} already exists", rnti);
+    srsran_assert(not rnti_mng.has_rnti(rnti), "rnti={} already exists", rnti);
+    srsran_assert(not test_ues.contains(du_ue_idx), "ueId={} already exists", rnti);
     rnti_mng.add_ue(rnti, du_ue_idx);
     test_ues.emplace(du_ue_idx);
     test_ues[du_ue_idx].rnti     = rnti;

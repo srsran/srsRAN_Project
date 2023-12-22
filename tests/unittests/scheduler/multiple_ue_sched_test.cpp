@@ -528,7 +528,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
       if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].new_data)
-            << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
+            << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
         continue;
       }
 
@@ -554,8 +554,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0)
-        << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
+    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0) << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
   }
 }
 
@@ -634,7 +633,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
     ASSERT_EQ(test_ue.ul_bsr_list.back().nof_bytes, 0)
-        << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
+        << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
   }
 }
 
@@ -731,12 +730,12 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
       if (pdcch_grant != nullptr) {
         const auto& ss_cfg = get_ss_cfg(test_ue, pdcch_grant->ctx.context.ss_id);
         ASSERT_TRUE(ss_cfg.has_value()) << fmt::format(
-            "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+            "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
         if (ss_cfg->is_common_search_space()) {
           // Checking for only TC-RNTI and C-RNTI F1_0.
           ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0 or
                       pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0)
-              << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+              << fmt::format("Condition failed for UE with c-rnti={} and SS id={}",
                              test_ue.crnti,
                              pdcch_grant->ctx.context.ss_id);
         } else {
@@ -744,10 +743,10 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
               variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
           if (dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0) << fmt::format(
-                "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+                "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
           } else {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_1) << fmt::format(
-                "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+                "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
           }
         }
       }
@@ -767,7 +766,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
       if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].new_data)
-            << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
+            << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
         continue;
       }
 
@@ -856,12 +855,12 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
       if (pdcch_grant != nullptr) {
         const auto& ss_cfg = get_ss_cfg(test_ue, pdcch_grant->ctx.context.ss_id);
         ASSERT_TRUE(ss_cfg.has_value()) << fmt::format(
-            "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+            "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
         if (ss_cfg->is_common_search_space()) {
           // Checking for only TC-RNTI and C-RNTI F1_0.
           ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_0 or
                       pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::tc_rnti_f0_0)
-              << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+              << fmt::format("Condition failed for UE with c-rnti={} and SS id={}",
                              test_ue.crnti,
                              pdcch_grant->ctx.context.ss_id);
         } else {
@@ -869,10 +868,10 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
               variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
           if (dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_0) << fmt::format(
-                "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+                "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
           } else {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_1) << fmt::format(
-                "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+                "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
           }
         }
       }

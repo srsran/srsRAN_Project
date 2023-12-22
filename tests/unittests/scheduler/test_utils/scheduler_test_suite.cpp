@@ -106,7 +106,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   unsigned N_rb_dl_bwp     = 0;
   switch (pdcch.dci.type) {
     case dci_dl_rnti_config_type::si_f1_0: {
-      TESTASSERT_EQ(pdcch.ctx.rnti, SI_RNTI);
+      TESTASSERT_EQ(pdcch.ctx.rnti, rnti_t::SI_RNTI);
       time_assignment = pdcch.dci.si_f1_0.time_resource;
       freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
@@ -208,7 +208,7 @@ void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   effective_init_bwp_cfg.crbs              = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 
   for (const sib_information& sib : sibs) {
-    ASSERT_EQ(sib.pdsch_cfg.rnti, SI_RNTI);
+    ASSERT_EQ(sib.pdsch_cfg.rnti, rnti_t::SI_RNTI);
     ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(sib.pdsch_cfg.rbs.is_type1());
     ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));
@@ -232,7 +232,7 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
-    ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
+    ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-rnti={} has no corresponding MSG3 grants", ra_rnti);
     ASSERT_EQ(rar.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(rar.pdsch_cfg.rbs.is_type1()) << "Invalid allocation type for RAR";
     ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->id, ss_cfg.get_coreset_id());
@@ -246,7 +246,7 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
     crb_interval rar_crbs = prb_to_crb(init_bwp_cfg, rar_vrbs);
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
-    TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-RNTI={:#x} detected", ra_rnti);
+    TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-rnti={} detected", ra_rnti);
     ra_rntis.emplace(ra_rnti);
   }
 }
@@ -312,7 +312,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration& cell_cfg,
 {
   TESTASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
   TESTASSERT(msg3_pusch.rbs.is_type1());
-  TESTASSERT(not msg3_pusch.rbs.any(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3_pusch.rnti);
+  TESTASSERT(not msg3_pusch.rbs.any(), "Msg3 with temp-c-rnti={} has no RBs", msg3_pusch.rnti);
 
   unsigned     N_rb_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   vrb_interval vrbs        = msg3_pusch.rbs.type1();
@@ -359,7 +359,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
         return ulgrant.pusch_cfg.rnti == rar_grant.temp_crnti;
       });
       TESTASSERT(it != ul_grants.end(),
-                 "Msg3 was not found for the scheduled RAR grant with TC-RNTI={:#x}",
+                 "Msg3 was not found for the scheduled RAR grant with tc-rnti={}",
                  rar_grant.temp_crnti);
       assert_rar_grant_msg3_pusch_consistency(cell_cfg, rar_grant, it->pusch_cfg);
 
@@ -376,7 +376,7 @@ void srsran::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : dl_grants) {
     TESTASSERT(not test_grant.grant.crbs.empty(), "Resource is empty");
-    TESTASSERT(not grid.collides(test_grant.grant), "Resource collision for grant with rnti={:#x}", test_grant.rnti);
+    TESTASSERT(not grid.collides(test_grant.grant), "Resource collision for grant with rnti={}", test_grant.rnti);
     grid.fill(test_grant.grant);
   }
 }
@@ -414,7 +414,7 @@ void srsran::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
   for (const test_grant_info& test_grant : ul_grants) {
     if (test_grant.type != test_grant_info::PUCCH) {
       ASSERT_FALSE(grid.collides(test_grant.grant))
-          << fmt::format("Resource collision for grant with rnti={:#x}", test_grant.rnti);
+          << fmt::format("Resource collision for grant with rnti={}", test_grant.rnti);
     }
     grid.fill(test_grant.grant);
   }
@@ -441,7 +441,7 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
   for (const test_grant_info& test_grant : dl_grants) {
     if (test_grant.type != srsran::test_grant_info::DL_PDCCH) {
       TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
-                 "The allocation with rnti={:#x}, type={}, crbs={} was not registered in the cell resource grid",
+                 "The allocation with rnti={}, type={}, crbs={} was not registered in the cell resource grid",
                  test_grant.rnti,
                  test_grant.type,
                  test_grant.grant.crbs);

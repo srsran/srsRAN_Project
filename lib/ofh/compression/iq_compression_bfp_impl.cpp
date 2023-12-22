@@ -38,12 +38,12 @@ void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const float
   // Convert input to int16_t representation.
   q.to_fixed_point(out, in, iq_scaling);
 
-  if (logger.debug.enabled() && out.size() > 0) {
+  if (SRSRAN_UNLIKELY(logger.debug.enabled() && !out.empty())) {
     // Calculate and print RMS of quantized samples.
     float sum_squares = srsvec::dot_prod(out, out, 0);
     float rms         = std::sqrt(sum_squares / out.size());
     if (std::isnormal(rms)) {
-      logger.debug("IQ samples RMS = {}", rms);
+      logger.debug("Quantized IQ samples RMS value of '{}'", rms);
     }
   }
 }

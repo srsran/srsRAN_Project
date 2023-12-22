@@ -360,7 +360,7 @@ TEST(uci_indication_builder, add_pusch_pdu_passes)
   ASSERT_EQ(uci_pdu_type::PUSCH, msg.pdus.back().pdu_type);
 
   const auto& pdu = msg.pdus.back().pusch_pdu;
-  ASSERT_EQ(rnti, pdu.rnti);
+  ASSERT_EQ(to_value(rnti), pdu.rnti);
   ASSERT_EQ(handle, pdu.handle);
 }
 
@@ -379,7 +379,7 @@ TEST(uci_indication_builder, add_pucch_f01_passes)
   ASSERT_EQ(uci_pdu_type::PUCCH_format_0_1, msg.pdus.back().pdu_type);
 
   const auto& pdu = msg.pdus.back().pucch_pdu_f01;
-  ASSERT_EQ(rnti, pdu.rnti);
+  ASSERT_EQ(to_value(rnti), pdu.rnti);
   ASSERT_EQ(handle, pdu.handle);
   ASSERT_EQ((format == srsran::pucch_format::FORMAT_0) ? uci_pucch_pdu_format_0_1::format_type::format_0
                                                        : uci_pucch_pdu_format_0_1::format_type::format_1,
@@ -401,7 +401,7 @@ TEST(uci_indication_builder, add_pucch_f234_passes)
   ASSERT_EQ(uci_pdu_type::PUCCH_format_2_3_4, msg.pdus.back().pdu_type);
 
   const auto& pdu = msg.pdus.back().pucch_pdu_f234;
-  ASSERT_EQ(rnti, pdu.rnti);
+  ASSERT_EQ(to_value(rnti), pdu.rnti);
   ASSERT_EQ(handle, pdu.handle);
   ASSERT_EQ((static_cast<unsigned>(format) - 2U), static_cast<unsigned>(pdu.pucch_format));
 }

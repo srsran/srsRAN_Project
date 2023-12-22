@@ -25,13 +25,18 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway&              msg_gw,
-                                             fapi::slot_last_message_notifier&        last_msg_notifier,
-                                             std::unique_ptr<precoding_matrix_mapper> pm_mapper,
-                                             unsigned                                 sector_id_,
-                                             unsigned                                 cell_nof_prbs,
-                                             subcarrier_spacing                       scs) :
-  mac_translator(srslog::fetch_basic_logger("FAPI"), msg_gw, last_msg_notifier, std::move(pm_mapper), cell_nof_prbs),
+mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway&                      msg_gw,
+                                             fapi::slot_last_message_notifier&                last_msg_notifier,
+                                             std::unique_ptr<precoding_matrix_mapper>         pm_mapper,
+                                             std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper,
+                                             unsigned                                         cell_nof_prbs,
+                                             subcarrier_spacing                               scs) :
+  mac_translator(srslog::fetch_basic_logger("FAPI"),
+                 msg_gw,
+                 last_msg_notifier,
+                 std::move(pm_mapper),
+                 std::move(part2_mapper),
+                 cell_nof_prbs),
   fapi_data_translator(scs),
   fapi_time_translator(scs),
   fapi_error_translator(scs)

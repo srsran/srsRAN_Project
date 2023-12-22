@@ -55,6 +55,15 @@ protected:
     srslog::flush();
   }
 
+  size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src) const
+  {
+    auto* it = dst.begin();
+    for (span<const uint8_t> seg : src.segments()) {
+      it = std::copy(seg.begin(), seg.end(), it);
+    }
+    return src.length();
+  }
+
   /// \brief Creates a byte_buffer serving as SDU for RLC
   ///
   /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
@@ -85,12 +94,12 @@ protected:
   /// \param[in] sdu_size Size of the SDU
   /// \param[in] segment_size Maximum payload size of each SDU or SDU segment.
   /// \param[in] first_byte Value of the first SDU payload byte
-  void create_pdus(std::list<byte_buffer>& pdu_list,
-                   byte_buffer&            sdu,
-                   uint32_t                sn,
-                   uint32_t                sdu_size,
-                   uint32_t                segment_size,
-                   uint8_t                 first_byte = 0) const
+  void create_pdus(std::list<std::vector<uint8_t>>& pdu_list,
+                   byte_buffer&                     sdu,
+                   uint32_t                         sn,
+                   uint32_t                         sdu_size,
+                   uint32_t                         segment_size,
+                   uint8_t                          first_byte = 0) const
   {
     ASSERT_GT(sdu_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU";
     ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
@@ -133,10 +142,12 @@ protected:
         payload = std::move(rest);
         rest    = {};
       }
-      byte_buffer pdu_buf;
+      std::vector<uint8_t> pdu_buf;
+      pdu_buf.resize(payload.length() + 5);
       logger.debug("AMD PDU header: {}", hdr);
-      ASSERT_TRUE(rlc_am_write_data_pdu_header(hdr, pdu_buf));
-      pdu_buf.append(payload);
+      size_t pdu_len = rlc_am_write_data_pdu_header(span<uint8_t>(pdu_buf), hdr);
+      pdu_len += copy_bytes(span<uint8_t>(pdu_buf).subspan(pdu_len, payload.length()), payload);
+      pdu_buf.resize(pdu_len);
       pdu_list.push_back(std::move(pdu_buf));
 
       // update segment offset for next iteration
@@ -157,13 +168,13 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   uint32_t sn_state = 0;
   uint32_t sdu_size = 1;
 
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
 
   rlc_tx_am_config tx_cfg;
   tx_cfg.sn_field_length               = config.sn_field_length;
   srsran::pcap_rlc_pdu_context context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
-  pcap_writer->push_pdu(context, pdu_list.front().deep_copy());
+  pcap_writer->push_pdu(context, pdu_list.front());
 }

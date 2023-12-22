@@ -12,8 +12,8 @@ ru_sdr:
   device_args: type=b200,num_recv_frames=64,num_send_frames=64    # Optionally pass arguments to the selected RF driver.
   srate: 23.04                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
   otw_format: sc12  
-  tx_gain: 50                                                     # Transmit gain of the RF might need to adjusted to the given situation.
-  rx_gain: 60                                                     # Receive gain of the RF might need to adjusted to the given situation.
+  tx_gain: 80                                                     # Transmit gain of the RF might need to adjusted to the given situation.
+  rx_gain: 40                                                     # Receive gain of the RF might need to adjusted to the given situation.
 
 cell_cfg:
   dl_arfcn: 632628                                                # ARFCN of the downlink carrier (center frequency).

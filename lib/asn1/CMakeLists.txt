@@ -22,7 +22,7 @@
 # ASN1 utils
 add_library(asn1_utils STATIC asn1_utils.cpp)
 target_compile_options(asn1_utils PRIVATE -fno-exceptions)
-target_link_libraries(asn1_utils srslog)
+target_link_libraries(asn1_utils srslog srsran_support)
 
 # RRC NR ASN1
 add_library(rrc_nr_asn1 STATIC rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp

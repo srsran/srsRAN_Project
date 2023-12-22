@@ -20,20 +20,13 @@
  *
  */
 
-#include "srsran/hal/dpdk/mbuf_pool.h"
-#include "dpdk.h"
-#include "srsran/support/srsran_assert.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
 
 using namespace srsran;
-using namespace dpdk;
+using namespace hal;
 
-mbuf_pool::mbuf_pool(rte_mempool* pool_) : pool(*pool_)
+std::shared_ptr<ext_harq_buffer_context_repository>
+srsran::hal::create_ext_harq_buffer_context_repository(unsigned nof_rnti, unsigned nof_harq_id, bool debug_mode)
 {
-  srsran_assert(pool_, "Invalid mbuf pool.");
-}
-
-mbuf_pool::~mbuf_pool()
-{
-  // Free the memory buffer pool.
-  ::free_mem_pool(pool);
+  return std::make_shared<ext_harq_buffer_context_repository>(nof_rnti, nof_harq_id, debug_mode);
 }

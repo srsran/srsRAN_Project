@@ -217,6 +217,13 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
                                *pm_mapper,
                                cell_nof_prbs);
 
+  bool is_pdsch_pdu_present_in_dl_tti = msg.num_pdus_of_each_type[static_cast<size_t>(fapi::dl_pdu_type::PDSCH)] != 0;
+  bool is_ul_dci_present              = dl_res.dl_res->ul_pdcchs.size() != 0;
+
+  if (!is_pdsch_pdu_present_in_dl_tti && !is_ul_dci_present) {
+    builder.set_last_message_in_slot_flag();
+  }
+
   // Validate the DL_TTI.request message.
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
@@ -229,7 +236,9 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   // Send the message.
   msg_gw.dl_tti_request(msg);
 
-  handle_ul_dci_request(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
+  bool is_ul_dci_last_message_in_slot = !is_pdsch_pdu_present_in_dl_tti && is_ul_dci_present;
+
+  handle_ul_dci_request(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot, is_ul_dci_last_message_in_slot);
 }
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
@@ -306,7 +315,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   // Add PUSCH PDUs to the UL_TTI.request message.
   for (const auto& pdu : ul_res.ul_res->puschs) {
     fapi::ul_pusch_pdu_builder pdu_builder = builder.add_pusch_pdu();
-    convert_pusch_mac_to_fapi(pdu_builder, pdu);
+    convert_pusch_mac_to_fapi(pdu_builder, pdu, *part2_mapper);
   }
 
   for (const auto& pdu : ul_res.ul_res->pucchs) {
@@ -329,7 +338,8 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
 
 void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_information> pdcch_info,
                                                    span<const dci_payload>          payloads,
-                                                   slot_point                       slot)
+                                                   slot_point                       slot,
+                                                   bool                             is_last_message_in_slot)
 {
   // This message is optional, do not send it empty.
   if (pdcch_info.empty()) {
@@ -341,6 +351,10 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
 
   builder.set_basic_parameters(slot.sfn(), slot.slot_index());
   add_pdcch_pdus_to_builder(builder, pdcch_info, payloads, *pm_mapper, cell_nof_prbs);
+
+  if (is_last_message_in_slot) {
+    builder.set_last_message_in_slot_flag();
+  }
 
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);

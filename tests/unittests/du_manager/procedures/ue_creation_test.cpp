@@ -105,7 +105,7 @@ TEST_F(du_manager_ue_creation_tester,
 {
   // Start Procedure.
   du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, to_value(rnti_t::MAX_CRNTI)));
   start_procedure(ue_index, rnti);
 
   // Check MAC received request to create UE with valid params.
@@ -128,7 +128,7 @@ TEST_F(du_manager_ue_creation_tester,
 {
   // Start Procedure.
   du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, to_value(rnti_t::MAX_CRNTI)));
   start_procedure(ue_index, rnti);
 
   ASSERT_FALSE(proc.ready());
@@ -184,7 +184,7 @@ TEST_F(du_manager_ue_creation_tester, when_ul_ccch_flush_fails_then_ue_is_destro
 {
   // Start Procedure.
   du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
-  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, MAX_CRNTI));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, to_value(rnti_t::MAX_CRNTI)));
   start_procedure(ue_index, rnti);
 
   // MAC fails to dispatch UL-CCCH to upper layers.

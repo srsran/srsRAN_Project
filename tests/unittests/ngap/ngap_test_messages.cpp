@@ -31,30 +31,30 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::ngap;
 
-ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
+ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
-  ng_setup_request request_msg = {};
-  request_msg.msg              = {};
-  request_msg.msg->global_ran_node_id.set_global_gnb_id();
-  request_msg.msg->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
-  request_msg.msg->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(411);
-  request_msg.msg->global_ran_node_id.global_gnb_id().plmn_id.from_string("00f110");
+  ngap_ng_setup_request request_msg;
+  request_msg.global_ran_node_id.gnb_id  = 411;
+  request_msg.global_ran_node_id.plmn_id = "00101";
 
-  request_msg.msg->ran_node_name_present = true;
-  request_msg.msg->ran_node_name.from_string("srsgnb01");
+  request_msg.ran_node_name = "srsgnb01";
 
-  supported_ta_item_s supported_ta_item = {};
-  supported_ta_item.tac.from_number(7);
-  broadcast_plmn_item_s broadcast_plmn_item = {};
-  broadcast_plmn_item.plmn_id.from_string("00f110");
-  slice_support_item_s slice_support_item = {};
-  slice_support_item.s_nssai.sst.from_number(1);
+  ngap_supported_ta_item supported_ta_item;
+  supported_ta_item.tac = 7;
+
+  ngap_broadcast_plmn_item broadcast_plmn_item;
+  broadcast_plmn_item.plmn_id = "00101";
+
+  slice_support_item_t slice_support_item;
+  slice_support_item.s_nssai.sst = 1;
+
   broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+
   supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
 
-  request_msg.msg->supported_ta_list.push_back(supported_ta_item);
+  request_msg.supported_ta_list.push_back(supported_ta_item);
 
-  request_msg.msg->default_paging_drx.value = paging_drx_opts::v256;
+  request_msg.default_paging_drx = 256;
 
   return request_msg;
 }

@@ -82,7 +82,7 @@ rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index
 
   if (ue_db.contains(ue_index)) {
     // UE already existed with same ue_index.
-    return INVALID_RNTI;
+    return rnti_t::INVALID_RNTI;
   }
 
   // Create UE object.
@@ -91,7 +91,7 @@ rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index
   u.du_ue_index     = ue_index;
   u.pcell_idx       = cell_index;
 
-  if (tc_rnti != INVALID_RNTI) {
+  if (tc_rnti != rnti_t::INVALID_RNTI) {
     // We reuse the TC-RNTI as the C-RNTI, if it was already chosen.
     u.rnti = tc_rnti;
   } else {
@@ -103,7 +103,7 @@ rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index
   if (not rnti_table.add_ue(u.rnti, ue_index)) {
     logger.error("ue={} rnti={}: The update of the RNTI table overwrote a previous entry", ue_index, u.rnti);
     rnti_table.rem_ue(u.rnti);
-    return INVALID_RNTI;
+    return rnti_t::INVALID_RNTI;
   }
   return u.rnti;
 }

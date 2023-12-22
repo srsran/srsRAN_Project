@@ -21,6 +21,7 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/ran/pusch/pusch_uci_beta_offset.h"
 
 using namespace srsran;
@@ -65,7 +66,9 @@ static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_
 }
 
 /// Fills the \c UCI parameters of the PUSCH PDU.
-static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
+static void fill_uci(pusch_processor::pdu_t&              proc_pdu,
+                     const fapi::ul_pusch_pdu&            fapi_pdu,
+                     uci_part2_correspondence_repository& part2_repo)
 {
   if (!fapi_pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_UCI_BIT)) {
     // Set every bitlength to 0.
@@ -82,23 +85,40 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
 
   phy_uci.nof_harq_ack          = fapi_uci.harq_ack_bit_length;
   phy_uci.nof_csi_part1         = fapi_uci.csi_part1_bit_length;
-  phy_uci.csi_part2_size        = {};
   phy_uci.alpha_scaling         = alpha_scaling_to_float(fapi_uci.alpha_scaling);
   phy_uci.beta_offset_harq_ack  = beta_harq_ack_to_float(fapi_uci.beta_offset_harq_ack);
   phy_uci.beta_offset_csi_part1 = beta_csi_to_float(fapi_uci.beta_offset_csi1);
   phy_uci.beta_offset_csi_part2 = beta_csi_to_float(fapi_uci.beta_offset_csi2);
+  if (!fapi_uci.flags_csi_part2) {
+    phy_uci.csi_part2_size = {};
+    return;
+  }
+
+  // UCI Part2 present.
+  for (const auto& part2 : fapi_pdu.uci_correspondence.part2) {
+    srsran_assert(part2.param_offsets.size() == part2.param_sizes.size(), "Both vectors sizes should be equal");
+    uci_part2_size_description::entry& entry = phy_uci.csi_part2_size.entries.emplace_back();
+
+    for (unsigned i = 0, e = part2.param_offsets.size(); i != e; ++i) {
+      entry.parameters.push_back({part2.param_offsets[i], part2.param_sizes[i]});
+    }
+
+    span<const uint16_t> indices = part2_repo.get_uci_part2_correspondence(part2.part2_size_map_index);
+    entry.map.assign(indices.begin(), indices.end());
+  }
 }
 
-void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
-                                                     const fapi::ul_pusch_pdu&    fapi_pdu,
-                                                     uint16_t                     sfn,
-                                                     uint16_t                     slot,
-                                                     uint16_t                     num_rx_ant)
+void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu&         pdu,
+                                                     const fapi::ul_pusch_pdu&            fapi_pdu,
+                                                     uint16_t                             sfn,
+                                                     uint16_t                             slot,
+                                                     uint16_t                             num_rx_ant,
+                                                     uci_part2_correspondence_repository& part2_repo)
 {
   // Fill the PUSCH processor parameters.
   pusch_processor::pdu_t& proc_pdu    = pdu.pdu;
   proc_pdu.slot                       = slot_point(fapi_pdu.scs, sfn, slot);
-  proc_pdu.rnti                       = fapi_pdu.rnti;
+  proc_pdu.rnti                       = to_value(fapi_pdu.rnti);
   proc_pdu.bwp_start_rb               = fapi_pdu.bwp_start;
   proc_pdu.bwp_size_rb                = fapi_pdu.bwp_size;
   proc_pdu.cp                         = fapi_pdu.cp;
@@ -130,7 +150,7 @@ void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
 
   fill_codeword(pdu, fapi_pdu);
 
-  fill_uci(proc_pdu, fapi_pdu);
+  fill_uci(proc_pdu, fapi_pdu, part2_repo);
 
   proc_pdu.context = fapi_pdu.context;
 

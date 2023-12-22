@@ -18,6 +18,11 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+###################
+# Package Builder #
+###################
+FROM python:3.12-alpine as builder
+
 # Add the folder
 ADD . /src
 WORKDIR /src

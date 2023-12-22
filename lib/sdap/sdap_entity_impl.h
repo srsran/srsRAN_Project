@@ -68,12 +68,14 @@ public:
     tx_it->second->handle_sdu(std::move(sdu));
   }
 
+  bool is_mapped(qos_flow_id_t qfi) final { return tx_map.find(qfi) != tx_map.end(); }
+
   void
   add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
   {
     logger.log_info("Mapping {} {} {}", qfi, drb_id, sdap_cfg);
     // check preconditions
-    if (tx_map.find(qfi) != tx_map.end()) {
+    if (is_mapped(qfi)) {
       logger.log_error("Cannot overwrite existing DL mapping for {}", qfi);
       return;
     }

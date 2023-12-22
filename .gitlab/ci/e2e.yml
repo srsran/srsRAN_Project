@@ -36,6 +36,7 @@ variables:
       - "android_b200"
       - "android_n300"
       - "android_x300"
+      - "viavi"
       - "none"
     value: "zmq"
   MARKERS:
@@ -312,11 +313,13 @@ rf-asan:
     - job: "basic asan"
       artifacts: true
     - *retina-needs
+  allow_failure: true
 
 rf-b200-config:
   extends: .rf
   variables:
     MARKERS: "rf_b200"
+  allow_failure: true
 
 rf-n300-config:
   extends: .rf
@@ -362,6 +365,29 @@ android-n300:
   extends: android-x300
   variables:
     TESTBED: "android_n300"
+
+################################################################################
+# VIAVI
+###############################################################################
+
+viavi:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: manual
+      allow_failure: true
+      # when: delayed
+      # start_in: 7 hours
+  variables:
+    GROUP: "viavi"
+    TESTBED: "viavi"
+    MARKERS: "viavi"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
 
 ################################################################################
 # Garbage collector

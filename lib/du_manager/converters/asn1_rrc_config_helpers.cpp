@@ -2833,7 +2833,7 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
   // ss-PBCH-BlockPower INTEGER (-60..50)
   out.sp_cell_cfg_common.ss_pbch_block_pwr = du_cell_cfg.ssb_cfg.ssb_block_power;
 
-  out.new_ue_id = rnti;
+  out.new_ue_id = to_value(rnti);
 
   out.t304.value = recfg_with_sync_s::t304_opts::ms2000;
 

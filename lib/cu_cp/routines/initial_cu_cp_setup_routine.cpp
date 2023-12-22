@@ -21,7 +21,7 @@
  */
 
 #include "initial_cu_cp_setup_routine.h"
-#include "../../ngap/ngap_asn1_helpers.h"
+#include "srsran/ngap/ngap_setup.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -38,32 +38,68 @@ void initial_cu_cp_setup_routine::operator()(coro_context<async_task<void>>& ctx
   CORO_BEGIN(ctx);
 
   // Initiate NG Setup.
-  CORO_AWAIT_VALUE(response_msg, send_ng_setup_request());
+  CORO_AWAIT_VALUE(result_msg, send_ng_setup_request());
 
   // Handle NG setup result.
-  if (response_msg.success) {
-    // In case of NG Setup Response.
-    handle_ng_setup_response(response_msg.msg);
-  }
+  handle_ng_setup_result();
 
   // TODO process response
 
   CORO_RETURN();
 }
 
-async_task<ng_setup_response> initial_cu_cp_setup_routine::send_ng_setup_request()
+ngap_ng_setup_request initial_cu_cp_setup_routine::fill_ng_setup_request()
 {
-  // Prepare request to send to ng.
-  ng_setup_request request_msg = {};
+  ngap_ng_setup_request request;
 
-  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg);
+  // fill global ran node id
+  request.global_ran_node_id.gnb_id  = ngap_cfg.gnb_id;
+  request.global_ran_node_id.plmn_id = ngap_cfg.plmn;
+  // fill ran node name
+  request.ran_node_name = ngap_cfg.ran_node_name;
+  // fill supported ta list
+  // TODO: add support for more items
+  ngap_supported_ta_item supported_ta_item;
 
-  // Initiate NG Setup Request.
-  return ngap_ctrl_notifier.on_ng_setup_request(request_msg);
+  ngap_broadcast_plmn_item broadcast_plmn_item;
+  broadcast_plmn_item.plmn_id = ngap_cfg.plmn;
+
+  for (const auto& slice_config : ngap_cfg.slice_configurations) {
+    slice_support_item_t slice_support_item;
+    slice_support_item.s_nssai.sst = slice_config.sst;
+    if (slice_config.sd.has_value()) {
+      slice_support_item.s_nssai.sd = slice_config.sd.value();
+    }
+    broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+  }
+
+  supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
+  supported_ta_item.tac = ngap_cfg.tac;
+
+  request.supported_ta_list.push_back(supported_ta_item);
+
+  // fill paging drx
+  request.default_paging_drx = 256;
+
+  return request;
 }
 
-void initial_cu_cp_setup_routine::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)
+async_task<ngap_ng_setup_result> initial_cu_cp_setup_routine::send_ng_setup_request()
 {
-  cu_cp_ngap_ev_notifier.on_amf_connection();
-  // TODO
+  // Prepare request to send to ng.
+  ngap_ng_setup_request request = fill_ng_setup_request();
+  request.max_setup_retries     = 5;
+
+  // Initiate NG Setup Request.
+  return ngap_ctrl_notifier.on_ng_setup_request(request);
+}
+
+void initial_cu_cp_setup_routine::handle_ng_setup_result()
+{
+  if (variant_holds_alternative<ngap_ng_setup_response>(result_msg)) {
+    cu_cp_ngap_ev_notifier.on_amf_connection();
+    // TODO
+  } else {
+    // TODO
+  }
 }

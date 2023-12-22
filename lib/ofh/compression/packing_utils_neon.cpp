@@ -31,10 +31,7 @@ static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
 bool neon::iq_width_packing_supported(unsigned iq_width)
 {
-  if (iq_width == 9) {
-    return true;
-  }
-  return false;
+  return iq_width == 9;
 }
 
 /// \brief Reads eight 16bit IQ values from input NEON register and packs them to the first 72 bits of the output NEON
@@ -112,7 +109,7 @@ void neon::pack_prb_big_endian(ofh::compressed_prb& c_prb, int16x8x3_t regs, uns
   if (iq_width == 9) {
     return pack_prb_9b_big_endian(c_prb, regs);
   }
-  report_fatal_error("Unsupported bit width requested");
+  report_fatal_error("Unsupported bit width");
 }
 
 /// \brief Unpacks packed 9bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
@@ -157,5 +154,5 @@ void neon::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint
   if (iq_width == 9) {
     return unpack_prb_9b_big_endian(unpacked_iq_data, packed_data);
   }
-  report_fatal_error("Unsupported bit width requested");
+  report_fatal_error("Unsupported bit width");
 }

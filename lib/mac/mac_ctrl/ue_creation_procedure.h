@@ -65,7 +65,7 @@ private:
   mac_dl_configurator&        dl_unit;
   mac_scheduler_configurator& sched_configurator;
 
-  rnti_t crnti_assigned = INVALID_RNTI;
+  rnti_t crnti_assigned = rnti_t::INVALID_RNTI;
   bool   add_ue_result  = false;
 };
 

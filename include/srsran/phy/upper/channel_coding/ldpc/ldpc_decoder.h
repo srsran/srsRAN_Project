@@ -51,9 +51,9 @@ public:
     };
 
     /// Codeblock configuration.
-    codeblock_metadata block_conf = {};
+    codeblock_metadata block_conf;
     /// LDPC decoding algorithm configuration.
-    algorithm_details algorithm_conf = {};
+    algorithm_details algorithm_conf;
   };
 
   /// \brief Decodes a codeblock.

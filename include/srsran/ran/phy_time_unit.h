@@ -211,6 +211,12 @@ public:
     return phy_time_unit(static_cast<value_type>(units_of_Tc));
   }
 
+  /// Creates a physical layer time from a timing advance command \f$T_A\f$, as per TS38.213 Section 4.2.
+  static constexpr inline phy_time_unit from_timing_advance(unsigned units_of_Ta, subcarrier_spacing scs)
+  {
+    return from_units_of_Tc(units_of_Ta * 16U * KAPPA / pow2(to_numerology_value(scs)));
+  }
+
   /// Creates a physical layer time from seconds.
   static constexpr inline phy_time_unit from_seconds(double seconds)
   {

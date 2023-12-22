@@ -32,12 +32,13 @@ using namespace unittests;
 
 TEST(mac_fapi_pdcch_pdu_conversor_test, mac_to_fapi_conversion_is_valid)
 {
-  unsigned                   nof_prbs = 51;
-  const mac_dl_sched_result& result   = build_valid_mac_dl_sched_result();
-  const mac_pdcch_pdu&       mac_pdu  = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
-                                         result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
-                                         result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
-                                         {{&result.dl_res->dl_pdcchs.front().ctx, &result.dl_pdcch_pdus.front()}}};
+  unsigned                               nof_prbs    = 51;
+  const mac_dl_sched_result_test_helper& result_test = build_valid_mac_dl_sched_result();
+  const mac_dl_sched_result&             result      = result_test.result;
+  const mac_pdcch_pdu&                   mac_pdu     = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
+                                                        result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
+                                                        result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
+                                                        {{&result.dl_res->dl_pdcchs.front().ctx, &result.dl_pdcch_pdus.front()}}};
 
   fapi::dl_pdcch_pdu fapi_pdu;
   auto               pm_tools = generate_precoding_matrix_tables(1);

@@ -294,11 +294,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demux_config.nof_csi_part1_bits          = ulsch_config.nof_csi_part1_bits.value();
   demux_config.nof_enc_csi_part1_bits      = info.nof_csi_part1_bits.value();
 
-  // Convert DM-RS symbol mask to array.
-  std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
-  pdu.dmrs_symbol_mask.for_each(
-      0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
-
   bool has_sch_data = pdu.codeword.has_value();
 
   // Prepare decoder buffers with dummy instances.
@@ -354,7 +349,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.modulation                  = pdu.mcs_descr.modulation;
   demod_config.start_symbol_index          = pdu.start_symbol_index;
   demod_config.nof_symbols                 = pdu.nof_symbols;
-  demod_config.dmrs_symb_pos               = dmrs_symbol_mask;
+  demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
   demod_config.dmrs_config_type            = pdu.dmrs;
   demod_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   demod_config.n_id                        = pdu.n_id;

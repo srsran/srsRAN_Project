@@ -217,7 +217,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
 
     pending_rar_t* rar_req = nullptr;
     for (pending_rar_t& rar : pending_rars) {
-      if (rar.ra_rnti == ra_rnti and rar.prach_slot_rx == msg.slot_rx) {
+      if (to_value(rar.ra_rnti) == ra_rnti and rar.prach_slot_rx == msg.slot_rx) {
         rar_req = &rar;
         break;
       }
@@ -258,7 +258,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
                                                             prach_preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs)});
 
       // Check if TC-RNTI value to be scheduled is already under use
-      if (not pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].harq.empty()) {
+      if (not pending_msg3s[to_value(prach_preamble.tc_rnti) % MAX_NOF_MSG3].harq.empty()) {
         logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", prach_preamble.tc_rnti);
         continue;
       }
@@ -267,8 +267,8 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
       rar_req->tc_rntis.emplace_back(prach_preamble.tc_rnti);
 
       // Store Msg3 to allocate.
-      pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].preamble = prach_preamble;
-      pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].msg3_harq_logger.set_rnti(prach_preamble.tc_rnti);
+      pending_msg3s[to_value(prach_preamble.tc_rnti) % MAX_NOF_MSG3].preamble = prach_preamble;
+      pending_msg3s[to_value(prach_preamble.tc_rnti) % MAX_NOF_MSG3].msg3_harq_logger.set_rnti(prach_preamble.tc_rnti);
     }
   }
 }
@@ -287,16 +287,16 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   for (const ul_crc_indication& crc_ind : new_crc_inds) {
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
       srsran_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
-      auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
+      auto& pending_msg3 = pending_msg3s[to_value(crc.rnti) % MAX_NOF_MSG3];
       if (pending_msg3.preamble.tc_rnti != crc.rnti) {
-        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
+        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: Inexistent rnti.",
                        cell_cfg.cell_index,
                        crc.rnti,
                        crc.harq_id);
         continue;
       }
       if (pending_msg3.harq.id != crc.harq_id) {
-        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
+        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
                        cell_cfg.cell_index,
                        crc.rnti,
                        crc.harq_id,
@@ -607,7 +607,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
     const vrb_interval            vrbs       = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
 
-    auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
+    auto& pending_msg3 = pending_msg3s[to_value(rar_request.tc_rntis[i]) % MAX_NOF_MSG3];
     srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Allocate Msg3 UL HARQ
@@ -707,7 +707,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     pdcch_ul_information* pdcch =
         pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
     if (pdcch == nullptr) {
-      logger.debug("tc-rnti={:#x}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
+      logger.debug("tc-rnti={}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
                    msg3_ctx.preamble.tc_rnti);
       continue;
     }
@@ -767,5 +767,5 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
 {
-  logger.debug("RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
+  logger.debug("RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
 }

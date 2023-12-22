@@ -37,7 +37,7 @@ struct pusch_decoder_result {
   /// Provides access to LDPC decoding statistics such as the number of decoded codeblocks (via
   /// <tt>ldpc_stats->get_nof_observations()</tt>) or the average number of iterations for correctly decoded
   /// codeblocks (via <tt>ldpc_stats->get_mean()</tt>).
-  sample_statistics<unsigned> ldpc_decoder_stats = {};
+  sample_statistics<unsigned> ldpc_decoder_stats;
 };
 
 } // namespace srsran

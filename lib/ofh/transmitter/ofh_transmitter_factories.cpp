@@ -180,6 +180,7 @@ create_uplink_request_handler(const transmitter_config&                         
   config.cp                  = tx_config.cp;
 
   uplink_request_handler_impl_dependencies dependencies;
+  dependencies.logger        = &logger;
   dependencies.ul_slot_repo  = ul_slot_context_repo;
   dependencies.ul_prach_repo = prach_context_repo;
   dependencies.data_flow     = create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo);

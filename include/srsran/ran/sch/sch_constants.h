@@ -22,29 +22,19 @@
 
 #pragma once
 
-#include "../cu_cp_impl_interface.h"
-#include "srsran/cu_cp/mobility_manager.h"
+#include "srsran/support/units.h"
 
 namespace srsran {
-namespace srs_cu_cp {
 
-/// Adapter between cell measurement and mobility manager to trigger handover.
-class mobility_manager_cu_cp_adapter : public mobility_manager_cu_cp_notifier
-{
-public:
-  mobility_manager_cu_cp_adapter() = default;
+/// \brief Maximum segment length.
+///
+/// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
+/// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
+static constexpr units::bits MAX_SEG_LENGTH{22 * 384};
 
-  void connect_cu_cp(cu_cp_mobility_manager_handler& handler_) { handler = &handler_; }
+/// \brief Maximum number of segments per transport block.
+///
+/// It assumes 156 resource elements for a maximum of 275 PRB, four layers and eight bits per RE.
+static constexpr unsigned MAX_NOF_SEGMENTS = (156 * 275 * 4 * 8) / MAX_SEG_LENGTH.value();
 
-  void on_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override
-  {
-    srsran_assert(handler != nullptr, "CU-CP handler must not be nullptr");
-    handler->handle_inter_du_handover_request(ue_index, target_pci);
-  }
-
-private:
-  cu_cp_mobility_manager_handler* handler = nullptr;
-};
-
-} // namespace srs_cu_cp
 } // namespace srsran

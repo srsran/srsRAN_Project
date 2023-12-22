@@ -30,12 +30,13 @@ static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(cons
 {
   fapi_to_phy_translator_config fapi_config;
 
-  fapi_config.sector_id   = config.sector_id;
-  fapi_config.scs         = config.scs;
-  fapi_config.scs_common  = config.scs_common;
-  fapi_config.prach_cfg   = config.prach_cfg;
-  fapi_config.carrier_cfg = config.carrier_cfg;
-  fapi_config.prach_ports = config.prach_ports;
+  fapi_config.sector_id                  = config.sector_id;
+  fapi_config.nof_slots_request_headroom = config.nof_slots_request_headroom;
+  fapi_config.scs                        = config.scs;
+  fapi_config.scs_common                 = config.scs_common;
+  fapi_config.prach_cfg                  = config.prach_cfg;
+  fapi_config.carrier_cfg                = config.carrier_cfg;
+  fapi_config.prach_ports                = config.prach_ports;
 
   return fapi_config;
 }
@@ -56,6 +57,7 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_adaptor_impl_dependencies&
   fapi_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;
   fapi_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
   fapi_dependencies.pm_repo              = std::move(dependencies.pm_repo);
+  fapi_dependencies.part2_repo           = std::move(dependencies.part2_repo);
   fapi_dependencies.async_executor       = dependencies.async_executor;
 
   return fapi_dependencies;

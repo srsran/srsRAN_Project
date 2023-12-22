@@ -121,7 +121,8 @@ protected:
               cs_cfg.pdcch_dmrs_scrambling_id.has_value() ? *cs_cfg.pdcch_dmrs_scrambling_id : cell_cfg.pci)
         << "Invalid N_{ID} (see TS38.211, 7.4.1.3.1)";
     ASSERT_EQ(pdcch_ctx.n_rnti_pdcch_data,
-              cs_cfg.pdcch_dmrs_scrambling_id.has_value() and (not ss_cfg.is_common_search_space()) ? u.rnti : 0)
+              cs_cfg.pdcch_dmrs_scrambling_id.has_value() and (not ss_cfg.is_common_search_space()) ? to_value(u.rnti)
+                                                                                                    : 0)
         << "Invalid n_{RNTI} (see TS38.211, 7.3.2.3)";
     unsigned expected_n_id = cs_cfg.pdcch_dmrs_scrambling_id.has_value() and (not ss_cfg.is_common_search_space())
                                  ? *cs_cfg.pdcch_dmrs_scrambling_id
@@ -291,12 +292,12 @@ TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
   run_slot();
 
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], rnti_t::SI_RNTI, to_search_space_id(0), aggregation_level::n4);
 
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
   ASSERT_EQ(pdcch, &res_grid[0].result.dl.dl_pdcchs[0]) << "Returned PDCCH ptr does not match allocated ptr";
-  ASSERT_EQ(SI_RNTI, pdcch->ctx.rnti);
+  ASSERT_EQ(rnti_t::SI_RNTI, pdcch->ctx.rnti);
   ASSERT_EQ(pdcch->ctx.bwp_cfg, &cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   ASSERT_EQ(pdcch->ctx.coreset_cfg, &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   ASSERT_EQ(pdcch->ctx.n_id_pdcch_dmrs, cell_cfg.pci) << "Invalid N_{ID} (see TS38.211, 7.4.1.3.1)";
@@ -514,7 +515,7 @@ struct fmt::formatter<multi_alloc_test_params> {
     fmt::format_to(ctx.out(), "bw={}MHz allocs=[", bs_channel_bandwidth_to_MHz(params.cell_bw));
     for (const auto& a : params.allocs) {
       fmt::format_to(ctx.out(),
-                     "{}{{{}={:#x} al={}, ss_id={} -> cce={}}}",
+                     "{}{{{}={} al={}, ss_id={} -> cce={}}}",
                      &a == params.allocs.data() ? "" : ", ",
                      to_string(a.type),
                      a.rnti,
@@ -594,7 +595,7 @@ protected:
         // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
         run_slot();
         pdcch_dl_information* sib_pdcch =
-            pdcch_sch.alloc_dl_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), alloc.aggr_lvl);
+            pdcch_sch.alloc_dl_pdcch_common(res_grid[0], rnti_t::SI_RNTI, to_search_space_id(0), alloc.aggr_lvl);
         return sib_pdcch != nullptr ? &sib_pdcch->ctx : nullptr;
       } break;
       case alloc_type::ra_rnti: {
@@ -652,7 +653,7 @@ TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
   for (const multi_alloc_test_params::alloc& a : params.allocs) {
     const dci_context_information* ctx = this->find_pdcch_alloc(a);
     ASSERT_EQ(ctx != nullptr, a.expected_ncce.has_value())
-        << fmt::format("For rnti={:#x} expected cce={}", a.rnti, a.expected_ncce);
+        << fmt::format("For rnti={} expected cce={}", a.rnti, a.expected_ncce);
     if (ctx != nullptr) {
       if (a.type == alloc_type::dl_crnti or a.type == alloc_type::ul_crnti) {
         ASSERT_NO_FATAL_FAILURE(verify_pdcch_context(*ctx, test_ues.at(a.rnti), a.ss_id));
@@ -691,13 +692,13 @@ INSTANTIATE_TEST_SUITE_P(
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
   multi_alloc_test_params{cell_bw::MHz10, nullopt,
-    {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
+    {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), nullopt}}},
   multi_alloc_test_params{cell_bw::MHz10, nullopt,
-    {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
+    {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
   multi_alloc_test_params{cell_bw::MHz20, nullopt,
-    {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
+    {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 8}}},
   multi_alloc_test_params{cell_bw::MHz10, std::array<uint8_t, 5>{0,5,0,0,0},
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n2, to_search_space_id(2), 0},

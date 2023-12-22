@@ -278,12 +278,13 @@ struct sib_test_bench {
     // Test SIB_information message
     const sib_information& test_sib1 = res_grid[0].result.dl.bc.sibs.back();
     TESTASSERT_EQ(sib_information::si_indicator_type::sib1, test_sib1.si_indicator);
-    TESTASSERT_EQ(SI_RNTI, test_sib1.pdsch_cfg.rnti);
+    TESTASSERT_EQ(rnti_t::SI_RNTI, test_sib1.pdsch_cfg.rnti);
 
     // Test PDCCH_grant and DCI
-    const pdcch_dl_information* pdcch = std::find_if(res_grid[0].result.dl.dl_pdcchs.begin(),
-                                                     res_grid[0].result.dl.dl_pdcchs.end(),
-                                                     [](const auto& pdcch_) { return pdcch_.ctx.rnti == SI_RNTI; });
+    const pdcch_dl_information* pdcch =
+        std::find_if(res_grid[0].result.dl.dl_pdcchs.begin(),
+                     res_grid[0].result.dl.dl_pdcchs.end(),
+                     [](const auto& pdcch_) { return pdcch_.ctx.rnti == rnti_t::SI_RNTI; });
     TESTASSERT(pdcch != nullptr);
     TESTASSERT_EQ(dci_dl_rnti_config_type::si_f1_0, pdcch->dci.type);
     TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.si_f1_0.modulation_coding_scheme);
