@@ -168,7 +168,8 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU; it++) {
+  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+       it++) {
     rnti_t     rnti     = to_rnti(it);
     ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
     auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
@@ -209,7 +210,8 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU; it++) {
+  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+       it++) {
     rnti_t     rnti     = to_rnti(it);
     ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
     auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
@@ -356,7 +358,8 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
   for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= du_index_to_uint(du_index_t::max); du_idx++) {
     unsigned du_offset = du_idx * MAX_NOF_UES_PER_DU;
 
-    for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU; it++) {
+    for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+         it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), MIN_PCI, to_rnti(du_offset + it));
       auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
@@ -390,7 +393,8 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
   for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= du_index_to_uint(du_index_t::max); du_idx++) {
     unsigned du_offset = du_idx * MAX_NOF_UES_PER_DU;
 
-    for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU; it++) {
+    for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+         it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), MIN_PCI, to_rnti(du_offset + it));
       auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
