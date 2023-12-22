@@ -923,7 +923,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
     // Convert PDCP config
     pdcp_config& out_pdcp = out_cfg[qos.five_qi].pdcp;
@@ -934,14 +934,14 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // RLC mode
     rlc_mode mode = {};
     if (!from_string(mode, qos.rlc.mode)) {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
     if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_dl) {
       out_pdcp.rlc_mode = pdcp_rlc_mode::um;
     } else if (mode == rlc_mode::am) {
       out_pdcp.rlc_mode = pdcp_rlc_mode::am;
     } else {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
 
     // Integrity Protection required
@@ -953,7 +953,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // > Tx
     // >> SN size
     if (!pdcp_sn_size_from_uint(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {
-      report_error("Invalid PDCP TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
+      report_error("Invalid PDCP TX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
     }
 
     // >> discard timer
@@ -968,7 +968,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // > Rx
     // >> SN size
     if (!pdcp_sn_size_from_uint(out_pdcp.rx.sn_size, qos.pdcp.rx.sn_field_length)) {
-      report_error("Invalid PDCP RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
+      report_error("Invalid PDCP RX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
     }
 
     // >> out of order delivery
@@ -976,7 +976,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
 
     // >> t-Reordering
     if (!pdcp_t_reordering_from_int(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
-      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+      report_error("Invalid PDCP t-Reordering. {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
     }
   }
   return out_cfg;
@@ -995,10 +995,10 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
     if (du_qos.find(qos.five_qi) == du_qos.end()) {
-      report_error("Cannot create CU-UP config: No entry for 5QI={} in DU QoS config\n", qos.five_qi);
+      report_error("Cannot create CU-UP config: No entry for {} in DU QoS config\n", qos.five_qi);
     }
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
@@ -1012,7 +1012,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
       // Take from AM config
       out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.am.tx.queue_size;
     } else {
-      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for 5QI={} in DU QoS config\n.",
+      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for {} in DU QoS config\n.",
                    du_five_qi.rlc.mode,
                    qos.five_qi);
     }
@@ -1070,25 +1070,25 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
     // Convert RLC config
     auto& out_rlc = out_cfg[qos.five_qi].rlc;
     if (!from_string(out_rlc.mode, qos.rlc.mode)) {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
 
     if (out_rlc.mode == rlc_mode::um_bidir) {
       // UM Config
       //< RX SN
       if (!from_number(out_rlc.um.rx.sn_field_length, qos.rlc.um.rx.sn_field_length)) {
-        report_error("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
+        report_error("Invalid RLC UM RX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
       }
       //< RX t-reassembly
       out_rlc.um.rx.t_reassembly = qos.rlc.um.rx.t_reassembly;
       //< TX SN
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
-        report_error("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
+        report_error("Invalid RLC UM TX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
       out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
     } else if (out_rlc.mode == rlc_mode::am) {
