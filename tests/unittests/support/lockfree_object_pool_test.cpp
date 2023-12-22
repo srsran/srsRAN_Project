@@ -33,16 +33,16 @@ TEST(lockfree_object_pool_test, pool_allocates_elements_with_initialized_value)
   std::vector<lockfree_object_pool<int>::ptr> allocated_objs;
   for (unsigned i = 0; i != nof_objs; ++i) {
     ASSERT_EQ(pool.estimated_size(), pool.capacity() - i);
-    allocated_objs.push_back(pool.allocate());
+    allocated_objs.push_back(pool.get());
     ASSERT_EQ(*allocated_objs.back(), val);
   }
   ASSERT_EQ(pool.estimated_size(), 0);
-  ASSERT_EQ(pool.allocate(), nullptr);
+  ASSERT_EQ(pool.get(), nullptr);
 
   allocated_objs.clear();
   ASSERT_EQ(pool.estimated_size(), nof_objs);
 
-  auto ptr = pool.allocate();
+  auto ptr = pool.get();
   ASSERT_EQ(*ptr, val);
   ASSERT_EQ(pool.estimated_size(), nof_objs - 1);
 }
