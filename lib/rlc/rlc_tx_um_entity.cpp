@@ -81,14 +81,15 @@ void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
-byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
+size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
+  uint32_t grant_len = mac_sdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
 
   // Check available space -- we need at least the minimum header + 1 payload Byte
   if (grant_len <= head_len_full) {
     logger.log_debug("Cannot fit SDU into grant_len={}. head_len_full={}", grant_len, head_len_full);
-    return {};
+    return 0;
   }
 
   // Multiple threads can read from the SDU queue and change the
@@ -112,55 +113,49 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
     }
   }
 
+  // Prepare header
   rlc_um_pdu_header header = {};
   header.sn                = st.tx_next;
   header.sn_size           = cfg.sn_field_length;
   header.so                = next_so;
 
   // Get SI and expected header size
-  uint32_t head_len = 0;
-  if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), grant_len, header.si, head_len)) {
-    logger.log_debug("Cannot fit any payload into grant_len={}. head_len={} si={}", grant_len, head_len, header.si);
-    return {};
+  uint32_t expected_hdr_len = 0;
+  if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), grant_len, header.si, expected_hdr_len)) {
+    logger.log_debug(
+        "Cannot fit any payload into grant_len={}. expected_hdr_len={} si={}", grant_len, expected_hdr_len, header.si);
+    return 0;
   }
 
   // Pack header
-  byte_buffer header_buf = {};
-  rlc_um_write_data_pdu_header(header, header_buf);
-  srsran_sanity_check(head_len == header_buf.length(),
-                      "Header length and expected header length do not match ({} != {})",
-                      header_buf.length(),
-                      head_len);
-
-  // Sanity check: can this SDU be sent considering header overhead?
-  // TODO: verify if this check is redundant; see get_si_and_expected_header_size() above
-  if (grant_len <= head_len) {
-    logger.log_debug("Cannot fit any payload into grant_len={}. head_len={} si={}", grant_len, head_len, header.si);
-    return {};
-  }
+  size_t header_len = rlc_um_write_data_pdu_header(mac_sdu_buf, header);
+  srsran_sanity_check(header_len = expected_hdr_len,
+                      "Failed to write header. header_len={} expected_hdr_len={}",
+                      header_len,
+                      expected_hdr_len);
 
   // Calculate the amount of data to move
-  uint32_t space       = grant_len - head_len;
+  uint32_t space       = grant_len - header_len;
   uint32_t payload_len = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
 
   // Log PDU info
-  logger.log_debug("Creating PDU. si={} payload_len={} head_len={} sdu_len={} grant_len={}",
+  logger.log_debug("Creating PDU. si={} payload_len={} header_len={} sdu_len={} grant_len={}",
                    header.si,
                    payload_len,
-                   head_len,
+                   header_len,
                    sdu.buf.length(),
                    grant_len);
 
   // Assemble PDU
-  byte_buffer_chain pdu_buf = {};
-  pdu_buf.prepend(std::move(header_buf));
-  pdu_buf.append(byte_buffer_slice{sdu.buf, next_so, payload_len});
+  size_t nwritten = copy_segments(byte_buffer_view{sdu.buf, next_so, payload_len},
+                                  mac_sdu_buf.subspan(header_len, mac_sdu_buf.size() - header_len));
+  if (nwritten == 0 || nwritten != payload_len) {
+    logger.log_error("Could not write PDU payload. {} payload_len={} grant_len={}", header, payload_len, grant_len);
+    return 0;
+  }
 
-  // Assert number of bytes
-  srsran_assert(
-      pdu_buf.length() <= grant_len, "Resulting pdu_len={} exceeds grant_len={}.", pdu_buf.length(), grant_len);
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", header, pdu_buf.length(), grant_len);
+  size_t pdu_size = header_len + nwritten;
+  logger.log_info(mac_sdu_buf.data(), pdu_size, "TX PDU. {} pdu_size={} grant_len={}", header, pdu_size, grant_len);
 
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
@@ -177,14 +172,14 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_pdus(1, pdu_size);
 
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  pcap.push_pdu(pcap_context, pdu_buf);
+  pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_size));
 
-  return pdu_buf;
+  return pdu_size;
 }
 
 /// Helper to get SI of an PDU

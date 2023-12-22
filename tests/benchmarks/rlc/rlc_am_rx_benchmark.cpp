@@ -22,7 +22,6 @@
 
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "lib/rlc/rlc_tx_am_entity.h"
-#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
@@ -177,8 +176,11 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
     sdu.buf                  = std::move(pdcp_hdr_buf);
     sdu.buf.append(std::move(sdu_buf));
     rlc_tx->handle_sdu(std::move(sdu));
-    byte_buffer_chain pdu = rlc_tx->pull_pdu(1550);
-    pdus.push_back(pdu.deep_copy());
+    std::vector<uint8_t> pdu_buf;
+    pdu_buf.resize(1550);
+    size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
+    pdu_buf.resize(pdu_len);
+    pdus.push_back(byte_buffer{pdu_buf});
   }
 
   // shuffle PDUs according to requested order

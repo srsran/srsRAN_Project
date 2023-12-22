@@ -242,6 +242,30 @@ struct pdcp_max_count {
   uint32_t hard;
 };
 
+struct pdcp_custom_config_base {
+  pdcp_max_count max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+};
+
+struct pdcp_custom_config_tx : public pdcp_custom_config_base {
+  uint16_t rlc_sdu_queue = 4096;
+};
+
+struct pdcp_custom_config_rx : public pdcp_custom_config_base {
+  // Empty
+};
+
+/// \brief Non-standard configurable parameters for PDCP
+///
+/// Configurable parameters for the PDCP entity
+/// that are not explicitly specified in the RRC specifications.
+/// This separation is necessary, as the CU-CP cannot transmit
+/// these parameters to the CU-UP, so it's necessary for the
+/// CU-UP to store these configurations itself.
+struct pdcp_custom_config {
+  pdcp_custom_config_tx tx = {};
+  pdcp_custom_config_rx rx = {};
+};
+
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.
 ///
@@ -258,13 +282,13 @@ struct pdcp_config_common {
 struct pdcp_tx_config : pdcp_config_common {
   optional<pdcp_discard_timer> discard_timer;
   bool                         status_report_required;
-  pdcp_max_count               max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  pdcp_custom_config_tx        custom;
 };
 
 struct pdcp_rx_config : pdcp_config_common {
-  bool              out_of_order_delivery;
-  pdcp_t_reordering t_reordering;
-  pdcp_max_count    max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
+  bool                  out_of_order_delivery;
+  pdcp_t_reordering     t_reordering;
+  pdcp_custom_config_rx custom;
 };
 
 /// \brief Configurable parameters for PDCP
@@ -283,15 +307,14 @@ struct pdcp_config {
     pdcp_security_direction      direction;
     optional<pdcp_discard_timer> discard_timer;
     bool                         status_report_required;
-    pdcp_max_count               max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
   } tx;
   struct {
     pdcp_sn_size            sn_size;
     pdcp_security_direction direction;
     bool                    out_of_order_delivery;
     pdcp_t_reordering       t_reordering;
-    pdcp_max_count          max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
   } rx;
+  pdcp_custom_config custom;
 
   pdcp_tx_config get_tx_config() const
   {
@@ -303,7 +326,7 @@ struct pdcp_config {
     cfg.direction                     = tx.direction;
     cfg.discard_timer                 = tx.discard_timer;
     cfg.status_report_required        = tx.status_report_required;
-    cfg.max_count                     = tx.max_count;
+    cfg.custom                        = custom.tx;
     return cfg;
   }
   pdcp_rx_config get_rx_config() const
@@ -316,7 +339,7 @@ struct pdcp_config {
     cfg.direction                     = rx.direction;
     cfg.out_of_order_delivery         = rx.out_of_order_delivery;
     cfg.t_reordering                  = rx.t_reordering;
-    cfg.max_count                     = rx.max_count;
+    cfg.custom                        = custom.rx;
     return cfg;
   }
 };
@@ -342,6 +365,10 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.rx.direction             = pdcp_security_direction::uplink;
   config.rx.out_of_order_delivery = false;
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
+
+  // Custom config
+  config.custom                  = {};
+  config.custom.tx.rlc_sdu_queue = 512;
 
   return config;
 }
@@ -442,6 +469,42 @@ struct formatter<srsran::pdcp_discard_timer> {
   }
 };
 
+// Custom TX config
+template <>
+struct formatter<srsran::pdcp_custom_config_tx> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "count_notify={} count_max={} rlc_sdu_queue={}",
+                     cfg.max_count.notify,
+                     cfg.max_count.hard,
+                     cfg.rlc_sdu_queue);
+  }
+};
+
+// Custom RX config
+template <>
+struct formatter<srsran::pdcp_custom_config_rx> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::pdcp_custom_config_rx cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "count_notify={} count_max={}", cfg.max_count.notify, cfg.max_count.hard);
+  }
+};
+
 // TX config
 template <>
 struct formatter<srsran::pdcp_tx_config> {
@@ -455,13 +518,12 @@ struct formatter<srsran::pdcp_tx_config> {
   auto format(srsran::pdcp_tx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={} rlc_mode={} sn_size={} discard_timer={} count_notify={} count_max={}",
+                     "rb_type={} rlc_mode={} sn_size={} discard_timer={} {}",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,
                      cfg.discard_timer,
-                     cfg.max_count.notify,
-                     cfg.max_count.hard);
+                     cfg.custom);
   }
 };
 
@@ -478,13 +540,12 @@ struct formatter<srsran::pdcp_rx_config> {
   auto format(srsran::pdcp_rx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={} rlc_mode={} sn_size={} t_reordering={} count_notify={} count_max={}",
+                     "rb_type={} rlc_mode={} sn_size={} t_reordering={} {}",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,
                      cfg.t_reordering,
-                     cfg.max_count.notify,
-                     cfg.max_count.hard);
+                     cfg.custom);
   }
 };
 
@@ -502,7 +563,7 @@ struct formatter<srsran::pdcp_config> {
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
-                     "RX=[sn_size={} t_reordering={} out_of_order={}]",
+                     "RX=[sn_size={} t_reordering={} out_of_order={}] custom_tx=[{}] custom_rx=[{}]",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.integrity_protection_required,
@@ -511,7 +572,9 @@ struct formatter<srsran::pdcp_config> {
                      cfg.tx.discard_timer,
                      cfg.rx.sn_size,
                      cfg.rx.t_reordering,
-                     cfg.rx.out_of_order_delivery);
+                     cfg.rx.out_of_order_delivery,
+                     cfg.custom.tx,
+                     cfg.custom.rx);
   }
 };
 } // namespace fmt

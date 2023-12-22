@@ -117,8 +117,8 @@ protected:
 
   static rach_indication_message::preamble create_preamble()
   {
-    static auto       next_rnti = test_rgen::uniform_int<unsigned>(MIN_CRNTI, MAX_CRNTI);
-    static const auto rnti_inc  = test_rgen::uniform_int<unsigned>(1, 5);
+    static auto next_rnti = test_rgen::uniform_int<unsigned>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
+    static const auto rnti_inc = test_rgen::uniform_int<unsigned>(1, 5);
 
     rach_indication_message::preamble preamble{};
     preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);

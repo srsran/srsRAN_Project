@@ -50,7 +50,8 @@ void iq_compression_bfp_avx2::compress(span<compressed_prb>         output,
   quantize_input(input_quantized_span, float_samples_span);
 
   // Compression algorithm implemented according to O-RAN.WG4.CUS Annex A.1.2.
-  unsigned sample_idx = 0, rb = 0;
+  unsigned sample_idx = 0;
+  unsigned rb         = 0;
 
   // One AVX2 register stores 8 16bit IQ pairs. We can process 2 PRBs at a time by using 3 AVX2 registers.
   for (size_t rb_index_end = (output.size() / 2) * 2; rb != rb_index_end; rb += 2) {

@@ -122,8 +122,9 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
     {
       continuation = suspending_coro;
       dispatch_exec.execute([this]() mutable {
-        result = task();
-        resume_exec.execute([this]() { continuation.resume(); });
+        result          = task();
+        bool dispatched = resume_exec.execute([this]() { continuation.resume(); });
+        srsran_assert(dispatched, "Failed to dispatch task");
       });
     }
 

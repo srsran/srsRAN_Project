@@ -435,35 +435,47 @@ public:
     process_pucch_grants();
 
     // Send any pending UCI indications.
-    for (const auto& uci_ind : pending_ucis) {
-      if (uci_ind.sl_rx == next_sl_tx - tx_rx_delay) {
-        du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+    auto uci_ind = pending_ucis.begin();
+    while (uci_ind != pending_ucis.end()) {
+      if (uci_ind->sl_rx == next_sl_tx - tx_rx_delay) {
+        du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(*uci_ind);
+        uci_ind = pending_ucis.erase(uci_ind);
+        continue;
       }
+      ++uci_ind;
     }
 
     // Process PUSCH grants.
     process_pusch_grants();
 
     // Send any pending Rx Data indications.
-    for (const auto& rx_data_ind : pending_puschs) {
-      if (rx_data_ind.sl_rx == next_sl_tx - tx_rx_delay) {
-        du_hi->get_pdu_handler().handle_rx_data_indication(rx_data_ind);
+    auto rx_data_ind = pending_puschs.begin();
+    while (rx_data_ind != pending_puschs.end()) {
+      if (rx_data_ind->sl_rx == next_sl_tx - tx_rx_delay) {
+        du_hi->get_pdu_handler().handle_rx_data_indication(*rx_data_ind);
+        rx_data_ind = pending_puschs.erase(rx_data_ind);
+        continue;
       }
+      ++rx_data_ind;
     }
 
     // Push UL CRC indications for PUSCH grants.
     push_ul_crc_indication();
 
     // Send any pending CRC indications.
-    for (const auto& crc_ind : pending_crc) {
-      if (crc_ind.sl_rx == next_sl_tx - tx_rx_delay) {
-        du_hi->get_control_info_handler(to_du_cell_index(0)).handle_crc(crc_ind);
+    auto crc_ind = pending_crc.begin();
+    while (crc_ind != pending_crc.end()) {
+      if (crc_ind->sl_rx == next_sl_tx - tx_rx_delay) {
+        du_hi->get_control_info_handler(to_du_cell_index(0)).handle_crc(*crc_ind);
+        crc_ind = pending_crc.erase(crc_ind);
+        continue;
       }
+      ++crc_ind;
     }
 
     // Advance slot.
     ++next_sl_tx;
-    slot_count++;
+    ++slot_count;
   }
 
   /// \brief Add a UE to the DU-high and wait for the DU-high to finish the setup of the UE.
@@ -841,6 +853,9 @@ void benchmark_dl_ul_only_rlc_um(benchmarker& bm,
 
 int main(int argc, char** argv)
 {
+  static const std::size_t byte_buffer_nof_segments = 1048576;
+  static const std::size_t byte_buffer_segment_size = 1024;
+
   // Set DU-high logging.
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
@@ -853,6 +868,9 @@ int main(int argc, char** argv)
   // Parses benchmark parameters.
   bench_params params{};
   parse_args(argc, argv, params);
+
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(byte_buffer_nof_segments, byte_buffer_segment_size);
 
   // Start benchmarker.
   benchmarker bm("DU-High", params.nof_repetitions);

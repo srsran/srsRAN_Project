@@ -288,7 +288,7 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   const vrb_interval         vrbs =
       crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, bwp_dl.pdcch_common.coreset0->get_coreset_start_crb());
 
-  pdsch.rnti        = SI_RNTI;
+  pdsch.rnti        = rnti_t::SI_RNTI;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &*bwp_dl.pdcch_common.coreset0;
   pdsch.symbols     = symbols;
@@ -326,7 +326,7 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   const vrb_interval vrbs =
       crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, bwp_dl.pdcch_common.coreset0->get_coreset_start_crb());
 
-  pdsch.rnti        = P_RNTI;
+  pdsch.rnti        = rnti_t::P_RNTI;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
   pdsch.symbols     = symbols;

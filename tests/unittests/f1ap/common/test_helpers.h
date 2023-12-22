@@ -25,6 +25,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/gateways/network_gateway.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

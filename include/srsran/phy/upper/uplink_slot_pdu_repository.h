@@ -49,25 +49,45 @@ public:
   /// Adds the given PUSCH PDU to the repository at the given slot.
   void add_pusch_pdu(slot_point slot, const uplink_processor::pusch_pdu& pdu)
   {
+    assert_slot(slot);
     repository[slot.to_uint() % nof_slots].push_back(pdu);
   }
 
   /// Adds the given PUCCH PDU to the repository at the given slot.
   void add_pucch_pdu(slot_point slot, const uplink_processor::pucch_pdu& pdu)
   {
+    assert_slot(slot);
     repository[slot.to_uint() % nof_slots].push_back(pdu);
   }
 
   /// Clears the given slot of the registry.
-  void clear_slot(slot_point slot) { repository[slot.to_uint() % nof_slots].clear(); }
+  void clear_slot(slot_point slot)
+  {
+    assert_slot(slot);
+    repository[slot.to_uint() % nof_slots].clear();
+  }
 
   /// Returns a span that contains the PDUs for the given slot.
-  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot) const { return repository[slot.to_uint() % nof_slots]; }
+  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot) const
+  {
+    assert_slot(slot);
+    return repository[slot.to_uint() % nof_slots];
+  }
 
 private:
   /// Number of slots.
   const size_t nof_slots;
   /// Repository that contains the PDUs.
   std::vector<slot_entry> repository;
+
+  /// Asserts the slot numerology with the pool dimensions.
+  void assert_slot(slot_point slot) const
+  {
+    srsran_assert(slot.nof_slots_per_system_frame() % nof_slots == 0,
+                  "The minimum supported number of slots per system frame (i.e., {}) must be divisible by the number "
+                  "of slots (i.e., {})",
+                  slot.nof_slots_per_system_frame(),
+                  nof_slots);
+  }
 };
 } // namespace srsran

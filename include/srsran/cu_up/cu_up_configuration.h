@@ -30,6 +30,7 @@
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
+#include <map>
 
 namespace srsran {
 
@@ -78,6 +79,8 @@ struct cu_up_configuration {
   io_broker*         epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
   timer_manager*     timers       = nullptr;
   dlt_pcap*          gtpu_pcap    = nullptr;
+
+  std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 
   network_interface_config net_cfg;
   n3_interface_config      n3_cfg;

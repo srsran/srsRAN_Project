@@ -98,7 +98,7 @@ f1ap_message srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_
 
   init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000000000000001100110110000"); // 6576 in decimal
   init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
-  init_ul_rrc->c_rnti = crnti;
+  init_ul_rrc->c_rnti = to_value(crnti);
 
   init_ul_rrc->sul_access_ind_present = true;
   init_ul_rrc->sul_access_ind.value   = asn1::f1ap::sul_access_ind_opts::options::true_value;

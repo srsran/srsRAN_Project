@@ -91,7 +91,8 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
   quantize_input(input_quantized_span, float_samples_span);
 
   // Compression algorithm implemented according to Annex A.1.2 in O-RAN.WG4.CUS.
-  unsigned sample_idx = 0, rb = 0;
+  unsigned sample_idx = 0;
+  unsigned rb         = 0;
 
   // One NEON register can store 8 16bit samples. A PRB is comprised of 24 16bit IQ samples, thus we need three NEON
   // registers to process one PRB.

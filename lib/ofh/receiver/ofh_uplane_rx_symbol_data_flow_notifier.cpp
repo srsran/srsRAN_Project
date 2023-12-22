@@ -42,8 +42,8 @@ void uplane_rx_symbol_data_flow_notifier::notify_received_symbol(slot_point slot
   uplane_rx_symbol_context notification_context = {ctx_value.context.slot, symbol, ctx_value.context.sector};
   notifier.on_new_uplink_symbol(notification_context, ctx_value.grid->get_reader());
 
-  logger.debug("Notifying symbol={} at slot={} and sector={}",
-               notification_context.symbol,
+  logger.debug("Notifying UL symbol in slot '{}', symbol '{}' for sector#{}",
                notification_context.slot,
+               notification_context.symbol,
                notification_context.sector);
 }

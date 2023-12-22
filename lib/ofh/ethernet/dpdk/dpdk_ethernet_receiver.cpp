@@ -36,7 +36,7 @@ void dpdk_receiver_impl::start()
 {
   logger.info("Starting the DPDK ethernet frame receiver");
   if (not executor.defer([this]() { receive_loop(); })) {
-    report_error("Unable to start the DPDK ethernet frame receiver");
+    report_error("Unable to start the OFH DPDK ethernet frame receiver");
   }
 }
 

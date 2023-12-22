@@ -146,6 +146,11 @@ void cleanup_cgroups()
   std::string housekeeping_cgroup_path = "/sys/fs/cgroup/housekeeping";
   std::string root_cgroup_path         = "/sys/fs/cgroup/cgroup.procs";
 
+  struct stat sysfs_info;
+  if (::stat("/sys/fs/cgroup", &sysfs_info) < 0) {
+    return;
+  }
+
   struct stat info;
   if (::stat(housekeeping_cgroup_path.c_str(), &info) == 0) {
     move_procs_between_cgroups(root_cgroup_path, housekeeping_cgroup_path + "/cgroup.procs");
@@ -167,4 +172,5 @@ void cleanup_cgroups()
   if (cgroup_changed) {
     std::this_thread::sleep_for(100ms);
   }
+  move_to_cgroup("/sys/fs/cgroup");
 }

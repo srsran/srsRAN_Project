@@ -23,6 +23,7 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/cu_up/cu_up_configuration_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
@@ -36,6 +37,7 @@
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/support/math_utils.h"
 #include <algorithm>
 #include <map>
 
@@ -933,7 +935,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
     // Convert PDCP config
     pdcp_config& out_pdcp = out_cfg[qos.five_qi].pdcp;
@@ -944,14 +946,14 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // RLC mode
     rlc_mode mode = {};
     if (!from_string(mode, qos.rlc.mode)) {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
     if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_dl) {
       out_pdcp.rlc_mode = pdcp_rlc_mode::um;
     } else if (mode == rlc_mode::am) {
       out_pdcp.rlc_mode = pdcp_rlc_mode::am;
     } else {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
 
     // Integrity Protection required
@@ -963,7 +965,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // > Tx
     // >> SN size
     if (!pdcp_sn_size_from_uint(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {
-      report_error("Invalid PDCP TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
+      report_error("Invalid PDCP TX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
     }
 
     // >> discard timer
@@ -978,7 +980,7 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     // > Rx
     // >> SN size
     if (!pdcp_sn_size_from_uint(out_pdcp.rx.sn_size, qos.pdcp.rx.sn_field_length)) {
-      report_error("Invalid PDCP RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
+      report_error("Invalid PDCP RX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
     }
 
     // >> out of order delivery
@@ -986,7 +988,45 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
 
     // >> t-Reordering
     if (!pdcp_t_reordering_from_int(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
-      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+      report_error("Invalid PDCP t-Reordering. {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+    }
+  }
+  return out_cfg;
+}
+
+std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig& config)
+{
+  std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
+  if (config.qos_cfg.empty()) {
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list();
+    return out_cfg;
+  }
+
+  // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
+  std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(config);
+
+  for (const qos_appconfig& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
+    }
+    if (du_qos.find(qos.five_qi) == du_qos.end()) {
+      report_error("Cannot create CU-UP config: No entry for {} in DU QoS config\n", qos.five_qi);
+    }
+    // Convert PDCP custom config
+    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
+
+    // Obtain RLC config parameters from the respective RLC mode
+    const auto& du_five_qi = du_qos[qos.five_qi];
+    if (du_five_qi.rlc.mode == rlc_mode::um_bidir) {
+      // Take from UM config
+      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.um.tx.queue_size;
+    } else if (du_five_qi.rlc.mode == rlc_mode::am) {
+      // Take from AM config
+      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.am.tx.queue_size;
+    } else {
+      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for {} in DU QoS config\n.",
+                   du_five_qi.rlc.mode,
+                   qos.five_qi);
     }
   }
   return out_cfg;
@@ -1036,38 +1076,38 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc_report_period);
+    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc.report_period);
     return out_cfg;
   }
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
     // Convert RLC config
     auto& out_rlc = out_cfg[qos.five_qi].rlc;
     if (!from_string(out_rlc.mode, qos.rlc.mode)) {
-      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
 
     if (out_rlc.mode == rlc_mode::um_bidir) {
       // UM Config
       //< RX SN
       if (!from_number(out_rlc.um.rx.sn_field_length, qos.rlc.um.rx.sn_field_length)) {
-        report_error("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
+        report_error("Invalid RLC UM RX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
       }
       //< RX t-reassembly
       out_rlc.um.rx.t_reassembly = qos.rlc.um.rx.t_reassembly;
       //< TX SN
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
-        report_error("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
+        report_error("Invalid RLC UM TX SN: {}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
       out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
       out_rlc.am = generate_rlc_am_config(qos.rlc.am);
     }
-    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc_report_period);
+    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc.report_period);
 
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
@@ -1127,7 +1167,6 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
 static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
                                     const cell_appconfig&              config,
                                     const ru_sdr_appconfig&            ru_cfg,
-                                    const ru_sdr_cell_appconfig&       ru_cell_cfg,
                                     const lower_phy_threads_appconfig& low_phy_threads_cfg,
                                     unsigned                           max_processing_delay_slot)
 {
@@ -1172,13 +1211,13 @@ static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
-      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
+      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.amplitude_cfg.gain_backoff_dB;
 
   // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
   // 0.1 dB of the radio full scale value.
-  out_cfg.amplitude_config.ceiling_dBFS = ru_cell_cfg.amplitude_cfg.power_ceiling_dBFS;
+  out_cfg.amplitude_config.ceiling_dBFS = ru_cfg.amplitude_cfg.power_ceiling_dBFS;
 
-  out_cfg.amplitude_config.enable_clipping = ru_cell_cfg.amplitude_cfg.enable_clipping;
+  out_cfg.amplitude_config.enable_clipping = ru_cfg.amplitude_cfg.enable_clipping;
 
   // Set the full scale amplitude reference to 1.
   out_cfg.amplitude_config.full_scale_lin = 1.0F;
@@ -1346,7 +1385,6 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
     generate_low_phy_config(out_cfg.lower_phy_config.back(),
                             config.cells_cfg[i],
                             ru_cfg,
-                            ru_cfg.cells[i],
                             config.expert_execution_cfg.threads.lower_threads,
                             config.expert_phy_cfg.max_processing_delay_slots);
   }
@@ -1479,6 +1517,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_harq_process = MAX_NOF_HARQS;
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
+    // Deduce the number of slots per frame.
+    unsigned nof_slots_per_frame = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
+    // Number of slots per system frame.
+    unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
     // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
     const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
     // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
@@ -1505,8 +1547,14 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_tx_nof_codeblocks =
         std::max(expire_pdsch_harq_timeout_slots * max_nof_pdsch_cb_slot, min_cb_softbuffer * nof_buffers);
 
-    unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
-    unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
+    // depths.
+    unsigned dl_pipeline_depth = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
+      ++dl_pipeline_depth;
+    }
+    unsigned ul_pipeline_depth = dl_pipeline_depth;
+
     static constexpr unsigned prach_pipeline_depth = 1;
 
     // Get band, frequency range and duplex mode from the band.
@@ -1534,6 +1582,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
       max_pusch_concurrency = 1;
     }
 
+    cfg.nof_slots_request_headroom = config.expert_phy_cfg.nof_slots_request_headroom;
     cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
@@ -1548,7 +1597,6 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_slots_dl_rg            = dl_pipeline_depth;
     cfg.nof_dl_processors          = dl_pipeline_depth;
     cfg.nof_slots_ul_rg            = ul_pipeline_depth;
-    cfg.nof_ul_processors          = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
     cfg.max_pusch_concurrency      = max_pusch_concurrency;
     cfg.nof_pusch_decoder_threads  = config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads +

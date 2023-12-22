@@ -109,7 +109,7 @@ private:
     }
     fmt::memory_buffer fmtbuf;
     fmt::format_to(fmtbuf, fmtstr, std::forward<Args>(args)...);
-    ch("{} HARQ rnti={:#x} cell={} h_id={}: {}", is_dl ? "DL" : "UL", rnti, cell_index, h_id, to_c_str(fmtbuf));
+    ch("{} HARQ rnti={} cell={} h_id={}: {}", is_dl ? "DL" : "UL", rnti, cell_index, h_id, to_c_str(fmtbuf));
   }
 
   srslog::basic_logger& logger;

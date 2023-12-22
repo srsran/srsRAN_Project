@@ -87,7 +87,7 @@ private:
                                                  span<uint8_t>                buffer);
 
   /// Reads the contents of the resource grid.
-  span<const cf_t> read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid);
+  span<const cf_t> read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid) const;
 
 private:
   srslog::basic_logger&                      logger;

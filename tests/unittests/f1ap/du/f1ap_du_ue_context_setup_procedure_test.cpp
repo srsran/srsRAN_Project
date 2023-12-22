@@ -210,7 +210,7 @@ TEST_F(
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   ASSERT_TRUE(resp->c_rnti_present)
       << "UE CONTEXT SETUP RESPONSE should contain C-RNTI IE if it created a UE in the process";
-  ASSERT_EQ(resp->c_rnti, this->f1ap_du_cfg_handler.next_ue_context_creation_response.crnti);
+  ASSERT_EQ(resp->c_rnti, to_value(this->f1ap_du_cfg_handler.next_ue_context_creation_response.crnti));
   ASSERT_TRUE(resp->drbs_setup_list_present);
   ASSERT_EQ(resp->drbs_setup_list.size(), 1);
   auto& drb_setup = resp->drbs_setup_list[0].value().drbs_setup_item();

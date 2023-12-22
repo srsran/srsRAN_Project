@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "dpdk_eal.h"
+#include "srsran/hal/dpdk/dpdk_eal.h"
 
 namespace srsran {
 namespace dpdk {

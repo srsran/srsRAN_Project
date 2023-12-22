@@ -129,7 +129,7 @@ protected:
 
     // Create factory.
     std::shared_ptr<prach_processor_factory> factory = create_prach_processor_factory_sw(
-        ofdm_prach_factory_spy, task_executor_spy, srate, max_nof_concurrent_requests);
+        ofdm_prach_factory_spy, task_executor_spy, srate, max_nof_ports, max_nof_concurrent_requests);
     ASSERT_TRUE(factory);
 
     // Create processor.
@@ -147,6 +147,7 @@ protected:
   }
 
   static constexpr unsigned unused_integer = UINT32_MAX;
+  static constexpr unsigned max_nof_ports  = 1;
 
   std::shared_ptr<ofdm_prach_demodulator_factory_spy> ofdm_prach_factory_spy;
   std::unique_ptr<prach_processor>                    processor;

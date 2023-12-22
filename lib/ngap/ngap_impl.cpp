@@ -200,22 +200,24 @@ void ngap_impl::handle_message(const ngap_message& msg)
   }
 
   // Run NGAP protocols in Control executor.
-  ctrl_exec.execute([this, msg]() {
-    switch (msg.pdu.type().value) {
-      case ngap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case ngap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case ngap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+  if (not ctrl_exec.execute([this, msg]() {
+        switch (msg.pdu.type().value) {
+          case ngap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case ngap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case ngap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.error("Discarding Rx NGAP PDU. Cause: task queue is full");
+  }
 }
 
 void ngap_impl::handle_initiating_message(const init_msg_s& msg)

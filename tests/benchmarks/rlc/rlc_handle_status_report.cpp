@@ -143,7 +143,8 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
       sdu.buf                  = std::move(pdcp_hdr_buf);
       sdu.buf.append(std::move(sdu_buf));
       rlc->handle_sdu(std::move(sdu));
-      rlc->pull_pdu(100);
+      std::array<uint8_t, 100> pdu_buf;
+      rlc->pull_pdu(pdu_buf);
     }
     timers.tick();
   };

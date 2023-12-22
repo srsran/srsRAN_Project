@@ -139,11 +139,7 @@ class general_task_worker_executor final : public task_executor
 public:
   general_task_worker_executor() = default;
 
-  general_task_worker_executor(general_task_worker<QueuePolicy, WaitPolicy>& worker_,
-                               bool                                          report_on_push_failure = true) :
-    worker(&worker_), report_on_failure(report_on_push_failure)
-  {
-  }
+  general_task_worker_executor(general_task_worker<QueuePolicy, WaitPolicy>& worker_) : worker(&worker_) {}
 
   bool execute(unique_task task) override
   {
@@ -155,25 +151,13 @@ public:
     return defer(std::move(task));
   }
 
-  bool defer(unique_task task) override
-  {
-    if (not worker->push_task(std::move(task))) {
-      if (report_on_failure) {
-        srslog::fetch_basic_logger("ALL").warning("Cannot push more tasks into the {} worker queue. Maximum size is {}",
-                                                  worker->worker_name(),
-                                                  worker->max_pending_tasks());
-      }
-      return false;
-    }
-    return true;
-  }
+  bool defer(unique_task task) override { return worker->push_task(std::move(task)); }
 
   /// Determine whether the caller is in the same thread as the worker this executor adapts.
   bool can_run_task_inline() const { return worker->get_id() == std::this_thread::get_id(); }
 
 private:
-  general_task_worker<QueuePolicy, WaitPolicy>* worker            = nullptr;
-  bool                                          report_on_failure = true;
+  general_task_worker<QueuePolicy, WaitPolicy>* worker = nullptr;
 };
 
 using task_worker_executor = general_task_worker_executor<>;

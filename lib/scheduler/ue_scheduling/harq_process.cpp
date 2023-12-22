@@ -428,7 +428,7 @@ dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point         
               status_upd};
     }
   }
-  logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
+  logger.warning("DL HARQ for rnti={}, uci slot={} not found.", rnti, uci_slot);
   return {INVALID_HARQ_ID, pdsch_mcs_table::qam64, sch_mcs_index{0}, 0, dl_harq_process::status_update::error};
 }
 

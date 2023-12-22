@@ -169,7 +169,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
                    u.ue_index,
                    u.crnti);
     return alloc_outcome::skip_slot;
@@ -177,7 +177,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // Verify CRBs fit in the chosen BWP.
   if (not ss_info->dl_crb_lims.contains(grant.crbs)) {
-    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: CRBs={} are outside the valid limits={}.",
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: CRBs={} are outside the valid limits={}.",
                    u.ue_index,
                    u.crnti,
                    grant.crbs,
@@ -187,7 +187,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.type1().length()) {
-    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during "
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during "
                    "retxs (Harq-id={}, nof_prbs expected={} != actual={})",
                    u.ue_index,
                    u.crnti,
@@ -199,10 +199,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // Verify there is no RB collision.
   if (pdsch_alloc.dl_res_grid.collides(bwp_dl_cmn.generic_params.scs, pdsch_td_cfg.symbols, grant.crbs)) {
-    logger.warning(
-        "ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.",
-        u.ue_index,
-        u.crnti);
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.",
+                   u.ue_index,
+                   u.crnti);
     return alloc_outcome::invalid_params;
   }
 
@@ -216,7 +215,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                 .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   }
   if (pdcch == nullptr) {
-    logger.info("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
+    logger.info("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
     // TODO: For now, given that only one searchSpace is used, we skip the UE. In the future, we might still try
     // different searchSpaces.
     return alloc_outcome::skip_ue;
@@ -236,7 +235,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     k1                                      = uci.value().k1;
     pdcch->ctx.context.harq_feedback_timing = k1;
   } else {
-    logger.info("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space in PUCCH.", u.ue_index, u.crnti);
+    logger.info("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space in PUCCH.", u.ue_index, u.crnti);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     // TODO: For now, given that only one searchSpace is used, we skip the UE. In the future, we might still try
     // different searchSpaces.
@@ -286,14 +285,14 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
     logger.warning(
-        "ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.", u.ue_index, u.crnti);
+        "ue={} rnti={}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.", u.ue_index, u.crnti);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return alloc_outcome::invalid_params;
   }
 
   // In case of retx, ensure the TBS does not change.
   if (not h_dl.empty() and mcs_tbs_info->tbs != h_dl.last_alloc_params().tb[0]->tbs_bytes) {
-    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: TBS has to remain constant during retxs "
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: TBS has to remain constant during retxs "
                    "(Harq-id={}, tbs expected={} != actual={})",
                    u.ue_index,
                    u.crnti,
@@ -499,7 +498,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // that DCI format.
   if (dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0 and dci_type != ss_supported_crnti_dci_type) {
     logger.info(
-        "rnti={:#x} Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
+        "rnti={} Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
         u.crnti,
         dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
         grant.ss_id);
@@ -512,13 +511,13 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset];
 
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",
+    logger.warning("rnti={} Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",
                    u.crnti,
                    pusch_alloc.slot);
     return alloc_outcome::skip_slot;
   }
   if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
-    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
+    logger.warning("rnti={} Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
                    u.crnti,
                    pusch_alloc.slot,
                    pusch_td_cfg.k2);
@@ -533,7 +532,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
   if (csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and
       cell_cfg.dl_carrier.nof_ant > 1U) {
-    logger.debug("rnti={:#x} Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
+    logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
                  u.crnti,
                  pusch_alloc.slot);
     return alloc_outcome::skip_slot;
@@ -541,7 +540,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
-    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
+    logger.warning("rnti={} Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
                    u.crnti,
                    pusch_alloc.slot);
     return alloc_outcome::skip_slot;
@@ -557,7 +556,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                      pusch_alloc.result.ul.pucchs.end(),
                      [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
     if (pucch_grant_it != pusch_alloc.result.ul.pucchs.end()) {
-      logger.debug("rnti={:#x} Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
+      logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
                    "PUCCH grants scheduled",
                    u.crnti,
                    pusch_alloc.slot);
@@ -567,7 +566,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Verify CRBs allocation.
   if (not ss_info->ul_crb_lims.contains(grant.crbs)) {
-    logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: CRBs {} allocated outside the BWP {}",
+    logger.warning("rnti={} Failed to allocate PUSCH. Cause: CRBs {} allocated outside the BWP {}",
                    u.crnti,
                    grant.crbs,
                    ss_info->ul_crb_lims);
@@ -577,7 +576,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().rbs.type1().length()) {
     logger.warning(
-        "rnti={:#x} Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
+        "rnti={} Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
         "nof_prbs={}!={})",
         u.crnti,
         h_ul.id,
@@ -588,7 +587,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Verify there is no RB collision.
   if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
+    logger.warning("rnti={} Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
                    u.crnti);
     return alloc_outcome::invalid_params;
   }
@@ -598,7 +597,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       get_pdcch_sched(grant.cell_index)
           .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.info("rnti={:#x}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.crnti);
+    logger.info("rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.crnti);
     return alloc_outcome::skip_ue;
   }
 
@@ -633,7 +632,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
     logger.warning(
-        "rnti={:#x} Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
+        "rnti={} Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
         "configuration: mcs={} crbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
         "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
         u.crnti,

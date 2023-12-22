@@ -54,7 +54,7 @@ protected:
 
   bool procedure_is_complete() const { return proc.ready(); }
 
-  bool is_procedure_successful() const { return proc.get().allocated_crnti != INVALID_RNTI; }
+  bool is_procedure_successful() const { return proc.get().allocated_crnti != rnti_t::INVALID_RNTI; }
 
   bool mac_ul_unit_received_ue_create_command() const { return mac_ul.last_ue_create_request.has_value(); }
 

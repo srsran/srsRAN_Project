@@ -127,7 +127,7 @@ def start_network(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    with _handle_start_error(name=f"5GC [{id(fivegc)}]"):
+    with handle_start_error(name=f"5GC [{id(fivegc)}]"):
         # 5GC Start
         fivegc.Start(
             FiveGCStartInfo(
@@ -136,7 +136,7 @@ def start_network(
             )
         )
 
-    with _handle_start_error(name=f"GNB [{id(gnb)}]"):
+    with handle_start_error(name=f"GNB [{id(gnb)}]"):
         # GNB Start
         gnb.Start(
             GNBStartInfo(
@@ -164,7 +164,7 @@ def ue_start_and_attach(
     """
 
     for ue_stub in ue_array:
-        with _handle_start_error(name=f"UE [{id(ue_stub)}]"):
+        with handle_start_error(name=f"UE [{id(ue_stub)}]"):
             ue_stub.Start(
                 UEStartInfo(
                     gnb_definition=gnb.GetDefinition(Empty()),
@@ -193,7 +193,10 @@ def ue_start_and_attach(
 
 
 @contextmanager
-def _handle_start_error(name: str) -> Generator[None, None, None]:
+def handle_start_error(name: str) -> Generator[None, None, None]:
+    """
+    Fail the test if the stub `name` could not start
+    """
     raise_failed = False
     try:
         yield
@@ -395,8 +398,8 @@ def _iperf_dir_to_str(direction):
 
 def stop(
     ue_array: Sequence[UEStub],
-    gnb: GNBStub,
-    fivegc: FiveGCStub,
+    gnb: Optional[GNBStub],
+    fivegc: Optional[FiveGCStub],
     retina_data: RetinaTestData,
     ue_stop_timeout: int = 0,  # Auto
     gnb_stop_timeout: int = 0,
@@ -421,17 +424,19 @@ def stop(
                 warning_as_errors,
             )
         )
-    error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
-    error_msg_array.append(
-        _stop_stub(
-            fivegc,
-            "5GC",
-            retina_data,
-            fivegc_stop_timeout,
-            log_search,
-            warning_as_errors,
+    if gnb is not None:
+        error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
+    if fivegc is not None:
+        error_msg_array.append(
+            _stop_stub(
+                fivegc,
+                "5GC",
+                retina_data,
+                fivegc_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
         )
-    )
 
     # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
@@ -445,8 +450,10 @@ def stop(
     metrics_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         metrics_msg_array.append(_get_metrics(ue_stub, f"UE_{index+1}", fail_if_kos=fail_if_kos))
-    metrics_msg_array.append(_get_metrics(gnb, "GNB", fail_if_kos=fail_if_kos))
-    metrics_msg_array.append(_get_metrics(fivegc, "5GC", fail_if_kos=fail_if_kos))
+    if gnb is not None:
+        metrics_msg_array.append(_get_metrics(gnb, "GNB", fail_if_kos=fail_if_kos))
+    if fivegc is not None:
+        metrics_msg_array.append(_get_metrics(fivegc, "5GC", fail_if_kos=fail_if_kos))
 
     # Fail if metric errors
     metrics_msg_array = list(filter(bool, metrics_msg_array))

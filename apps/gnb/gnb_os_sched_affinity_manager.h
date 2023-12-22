@@ -68,7 +68,7 @@ struct gnb_os_sched_affinity_config {
   /// Affinity mask.
   os_sched_affinity_bitmask mask;
   /// Thread pinning policy.
-  gnb_sched_affinity_mask_policy pinning_policy = gnb_sched_affinity_mask_policy::round_robin;
+  gnb_sched_affinity_mask_policy pinning_policy = gnb_sched_affinity_mask_policy::mask;
 };
 
 /// \brief Scheduler affinity mask manager.
@@ -113,7 +113,7 @@ class gnb_os_sched_affinity_manager
         last_pos_used = (pos < 0) ? 0 : pos + 1;
       }
 
-      return os_sched_affinity_bitmask(pos);
+      return os_sched_affinity_bitmask(mask.size(), pos);
     }
 
   private:

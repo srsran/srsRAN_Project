@@ -113,8 +113,9 @@ private:
     }
 
     if (type == "concurrent") {
-      worker_pool = std::make_unique<task_worker_pool<>>(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
-      executor    = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+      worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
+          NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
+      executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
       return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                           ldpc_encoder_factory,
@@ -146,8 +147,8 @@ protected:
   // Softbuffer pool.
   std::unique_ptr<tx_buffer_pool> softbuffer_pool;
   // Worker pool.
-  std::unique_ptr<task_worker_pool<>>          worker_pool;
-  std::unique_ptr<task_worker_pool_executor<>> executor;
+  std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool;
+  std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
 
   void SetUp() override
   {

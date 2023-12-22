@@ -111,6 +111,8 @@ public:
 
   explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(compute_host_nof_hardware_threads()) { set(cpu_idx); }
 
+  os_sched_affinity_bitmask(size_t bitset_size, size_t cpu_idx) : cpu_bitset(bitset_size) { set(cpu_idx); }
+
   size_t size() const { return cpu_bitset.size(); }
 
   void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }
@@ -137,6 +139,9 @@ public:
   bool any() const { return cpu_bitset.any(); }
 
   uint64_t to_uint64() const { return cpu_bitset.to_uint64(); }
+
+  /// \brief Number of CPUs enabled in the bitmask.
+  size_t count() const { return cpu_bitset.count(); }
 
 private:
   bounded_bitset<1024> cpu_bitset;

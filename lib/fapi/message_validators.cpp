@@ -278,7 +278,7 @@ error_type<validator_report> srsran::fapi::validate_crc_indication(const crc_ind
   // Validate each PDU.
   for (const auto& pdu : msg.pdus) {
     // NOTE: Handle property will not be validated as the values are not specified in the document.
-    success &= validate_rnti(pdu.rnti, message_type_id::crc_indication, report);
+    success &= validate_rnti(to_value(pdu.rnti), message_type_id::crc_indication, report);
     success &= validate_rapid(pdu.rapid, message_type_id::crc_indication, report);
     success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
     // NOTE: CB CRC status bitmap property will not be validated.
@@ -628,7 +628,7 @@ error_type<validator_report> srsran::fapi::validate_rx_data_indication(const rx_
 
   for (const auto& pdu : msg.pdus) {
     // NOTE: Handle property will not be validated.
-    success &= validate_rnti(pdu.rnti, msg_id, report);
+    success &= validate_rnti(to_value(pdu.rnti), msg_id, report);
     success &= validate_rapid(pdu.rapid, msg_id, report);
     success &= validate_harq_id(pdu.harq_id, msg_id, report);
     // NOTE: PDU length property will not be validated.

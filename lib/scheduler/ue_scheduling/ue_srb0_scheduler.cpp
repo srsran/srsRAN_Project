@@ -116,7 +116,7 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
   }
 
   // No resource found in UE's carriers and Search spaces.
-  logger.debug("rnti={:#x}: Not enough PDSCH space for SRB0 message. Will re-try in next slot.", u.crnti);
+  logger.debug("rnti={}: Not enough PDSCH space for SRB0 message. Will re-try in next slot.", u.crnti);
   return false;
 }
 
@@ -132,14 +132,17 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.debug("rnti={:#x}: Failed to allocate PDSCH for SRB0. Cause: No space available in scheduler output list.",
+    logger.debug("rnti={}: Failed to allocate PDSCH for SRB0. Cause: No space available in scheduler output list.",
                  u.crnti);
     return false;
   }
 
   // Search for empty HARQ.
   dl_harq_process* h_dl = ue_pcell.harqs.find_empty_dl_harq();
-  srsran_assert(h_dl != nullptr, "UE must have empty HARQs during SRB0 PDU allocation");
+  if (h_dl == nullptr) {
+    logger.warning("rnti={}: UE must have empty HARQs during SRB0 PDU allocation", u.crnti);
+    return false;
+  }
 
   // Find available symbol x RB resources.
   const unsigned pending_bytes = u.pending_dl_srb0_newtx_bytes();
@@ -177,12 +180,12 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   if (prbs_tbs.tbs_bytes < pending_bytes) {
     logger.debug(
-        "rnti={:#x}: SRB0 PDU size ({}) exceeds TBS calculated ({}).", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
+        "rnti={}: SRB0 PDU size ({}) exceeds TBS calculated ({}).", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
     return false;
   }
 
   if (mcs_idx > expert_cfg.max_msg4_mcs) {
-    logger.debug("rnti={:#x}: MCS index chosen ({}) for SRB0 exceeds maximum allowed MCS index ({}).",
+    logger.debug("rnti={}: MCS index chosen ({}) for SRB0 exceeds maximum allowed MCS index ({}).",
                  u.crnti,
                  mcs_idx,
                  expert_cfg.max_msg4_mcs);
@@ -191,7 +194,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
   if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
-    logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: Not enough PRBs ({} < {})",
+    logger.debug("rnti={}: Postponed SRB0 PDU scheduling. Cause: Not enough PRBs ({} < {})",
                  u.crnti,
                  ue_grant_crbs.length(),
                  prbs_tbs.nof_prbs);
@@ -202,7 +205,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
+    logger.debug("rnti={}: Postponed SRB0 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
     return false;
   }
 

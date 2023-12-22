@@ -143,7 +143,7 @@ void mm512::pack_prb_big_endian(compressed_prb& c_prb, __m512i reg, unsigned iq_
   if (iq_width == 16) {
     return avx512_pack_prb_16b_big_endian(c_prb, reg);
   }
-  report_fatal_error("Unsupported bit width requested");
+  report_fatal_error("Unsupported bit width");
 }
 
 /// \brief Unpacks packed 9bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
@@ -215,5 +215,5 @@ void mm512::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
   if (iq_width == 16) {
     return avx512_unpack_prb_16b_be(unpacked_iq_data, packed_data);
   }
-  report_fatal_error("Unsupported bit width requested");
+  report_fatal_error("Unsupported bit width");
 }

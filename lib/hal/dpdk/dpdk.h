@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "rte_eal.h"
-#include "rte_mbuf.h"
 #include "srsran/hal/dpdk/dpdk_eal.h"
 #include "srsran/srslog/logger.h"
+#include <rte_eal.h>
+#include <rte_mbuf.h>
 
 namespace srsran {
 namespace dpdk {
@@ -55,10 +55,6 @@ rte_mempool* create_mem_pool(const char*           pool_name,
                              unsigned              mempool_cache_size,
                              unsigned              mbuf_data_size,
                              srslog::basic_logger& logger);
-
-/// Frees a memory pool used by a given hardware-accelerator device.
-/// \param[in] mem_pool mbuf pool to be freed.
-void free_mem_pool(rte_mempool& mem_pool);
 
 } // namespace dpdk
 } // namespace srsran

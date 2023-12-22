@@ -18,8 +18,8 @@
       requests: "2G"
       limits: "2G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
+      requests: "6G"
+      limits: "6G"
   resources:
     - type: android
       model: one-plus-9-pro
@@ -36,8 +36,8 @@
       requests: "10G"
       limits: "10G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
+      requests: "6G"
+      limits: "6G"
   resources:
     - type: sdr
       model: b200
@@ -60,23 +60,5 @@
       requests: "4G"
       limits: "4G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
-
-- name: metrics-server
-  type: generic
-  requirements:
-    arch: amd64
-    cpu:
-      requests: 1
-    memory:
-      requests: "500Mi"
-    ephemeral-storage:
-      requests: "1G"
-  environment:
-    - URL: ${RETINA_METRICS_SERVER_URL}
-    - ORG: ${RETINA_METRICS_SERVER_ORG}
-    - BUCKET: ${RETINA_METRICS_SERVER_BUCKET}
-    - TESTBED: ${RETINA_METRICS_SERVER_TESTBED}
-    - TOKEN: ${RETINA_METRICS_SERVER_TOKEN}
-  image: ${SRSGNB_REGISTRY_URI}/metrics_server:${METRICS_SERVER_VERSION}
+      requests: "6G"
+      limits: "6G"

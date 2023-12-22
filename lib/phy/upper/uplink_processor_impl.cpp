@@ -86,7 +86,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
   if (!adaptor_id.has_value()) {
     logger.warning(pdu.pdu.slot.sfn(),
                    pdu.pdu.slot.slot_index(),
-                   "UL rnti={:#x} h_id={}: insufficient number of PUSCH notifier adaptor. Dropping PDU.",
+                   "UL rnti={} h_id={}: insufficient number of PUSCH notifier adaptor. Dropping PDU.",
                    pdu.pdu.rnti,
                    pdu.harq_id);
     return;

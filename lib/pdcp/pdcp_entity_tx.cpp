@@ -44,8 +44,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
     return;
   }
-  if ((st.tx_next - st.tx_trans) >= 4096) {
-    logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
+  if ((st.tx_next - st.tx_trans) >= cfg.custom.rlc_sdu_queue) {
+    logger.log_info("Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
     return;
   }
   if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
@@ -60,7 +60,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
   // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until
   // we reached a maximum hard COUNT, after which we simply refuse to TX any further.
-  if (st.tx_next >= cfg.max_count.hard) {
+  if (st.tx_next >= cfg.custom.max_count.hard) {
     if (!max_count_overflow) {
       logger.log_error("Reached maximum count, refusing to transmit further. count={}", st.tx_next);
       upper_cn.on_protocol_failure();
@@ -68,7 +68,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     }
     return;
   }
-  if (st.tx_next >= cfg.max_count.notify) {
+  if (st.tx_next >= cfg.custom.max_count.notify) {
     if (!max_count_notified) {
       logger.log_warning("Approaching count wrap-around, notifying RRC. count={}", st.tx_next);
       upper_cn.on_max_count_reached();

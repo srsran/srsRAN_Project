@@ -25,6 +25,7 @@
 #include "gnb_appconfig.h"
 #include "gnb_os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
+#include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
@@ -73,6 +74,8 @@ struct worker_manager {
   task_executor*                           cu_up_e2_exec    = nullptr;
   task_executor*                           metrics_hub_exec = nullptr;
 
+  std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
+
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
   // Gets the DU-low downlink executors.
@@ -100,21 +103,19 @@ private:
   gnb_os_sched_affinity_manager affinity_mng;
 
   /// Helper method to create workers with non zero priority.
-  void create_prio_worker(const std::string&                                                   name,
-                          unsigned                                                             queue_size,
-                          const std::vector<execution_config_helper::single_worker::executor>& execs,
-                          const os_sched_affinity_bitmask&                                     mask,
+  void create_prio_worker(const std::string&                                    name,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
+                          const os_sched_affinity_bitmask&                      mask,
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
 
   /// Helper method to create worker pool.
-  void create_worker_pool(const std::string&                                                 name,
-                          unsigned                                                           nof_workers,
-                          unsigned                                                           queue_size,
-                          const std::vector<execution_config_helper::worker_pool::executor>& execs,
+  void create_worker_pool(const std::string&                                    name,
+                          unsigned                                              nof_workers,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
-
-  void create_non_rt_worker_pool(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the Control and Distributed Units executors.
   void create_du_cu_executors(const gnb_appconfig& appcfg);

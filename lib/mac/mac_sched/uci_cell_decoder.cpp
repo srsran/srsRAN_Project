@@ -223,7 +223,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
             }
           }
           if (not pdu.csi.has_value()) {
-            logger.warning("cell={} ue={} rnti={:#x}: Discarding CSI report. Cause: Unable to find CSI report config.",
+            logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
                            cell_index,
                            uci_pdu.ue_index,
                            uci_pdu.crnti);

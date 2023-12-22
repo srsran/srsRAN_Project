@@ -26,6 +26,7 @@
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 
 using namespace srsran;
 
@@ -48,7 +49,9 @@ public:
   void on_last_message(slot_point slot) override {}
 };
 
-fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
+} // namespace
+
+static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
 {
   srsran_assert(cell_cfg.size() == 1, "Currently supporting one cell");
 
@@ -79,7 +82,7 @@ fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& 
   return config;
 }
 
-fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du_cell)
+static fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du_cell)
 {
   // Deduce common numerology and grid size for DL and UL.
   unsigned numerology       = to_numerology_value(du_cell.scs_common);
@@ -103,8 +106,6 @@ fapi::carrier_config generate_carrier_config_tlv(const du_cell_config& du_cell)
   return fapi_config;
 }
 
-} // namespace
-
 du_impl::du_impl(const du_config& du_cfg) :
   logger(srslog::fetch_basic_logger("DU")),
   du_lo(std::make_unique<du_low_impl>(du_cfg.du_lo)),
@@ -114,29 +115,34 @@ du_impl::du_impl(const du_config& du_cfg) :
   report_error_if_not(du_cfg.du_hi.cells.size() == 1, "Only one cell per DU is supported");
 
   // Create FAPI adaptors.
-  const du_cell_config&    du_cell  = du_cfg.du_hi.cells.front();
-  const unsigned           sector   = du_cfg.fapi.sector;
-  const subcarrier_spacing scs      = du_cell.scs_common;
-  auto                     pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
+  const du_cell_config&    du_cell         = du_cfg.du_hi.cells.front();
+  const upper_phy_config&  upper_phy_cfg   = du_cfg.du_lo.upper_phy.front();
+  const unsigned           sector          = du_cfg.fapi.sector;
+  const subcarrier_spacing scs             = du_cell.scs_common;
+  auto                     pm_tools        = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
+  auto                     uci_part2_tools = fapi_adaptor::generate_uci_part2_correspondence(1);
 
   // Instantiate adaptor of FAPI to DU-low.
-  du_low_adaptor =
-      build_phy_fapi_adaptor(sector,
-                             scs,
-                             scs,
-                             du_lo->get_downlink_processor_pool(),
-                             du_lo->get_downlink_resource_grid_pool(),
-                             du_lo->get_uplink_request_processor(),
-                             du_lo->get_uplink_resource_grid_pool(),
-                             du_lo->get_uplink_slot_pdu_repository(),
-                             du_lo->get_downlink_pdu_validator(),
-                             du_lo->get_uplink_pdu_validator(),
-                             generate_prach_config_tlv(du_cfg.du_hi.cells),
-                             generate_carrier_config_tlv(du_cell),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
-                             *du_cfg.du_lo.upper_phy.front().dl_executors.front(),
-                             du_lo->get_tx_buffer_pool(),
-                             du_cfg.fapi.prach_ports);
+  du_low_adaptor = build_phy_fapi_adaptor(
+      sector,
+      upper_phy_cfg.nof_slots_request_headroom,
+      scs,
+      scs,
+      du_lo->get_downlink_processor_pool(),
+      du_lo->get_downlink_resource_grid_pool(),
+      du_lo->get_uplink_request_processor(),
+      du_lo->get_uplink_resource_grid_pool(),
+      du_lo->get_uplink_slot_pdu_repository(),
+      du_lo->get_downlink_pdu_validator(),
+      du_lo->get_uplink_pdu_validator(),
+      generate_prach_config_tlv(du_cfg.du_hi.cells),
+      generate_carrier_config_tlv(du_cell),
+      std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
+      std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
+      *upper_phy_cfg.dl_executors.front(),
+      du_lo->get_tx_buffer_pool(),
+      du_cfg.fapi.prach_ports);
+
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());
@@ -145,13 +151,14 @@ du_impl::du_impl(const du_config& du_cfg) :
     // Create gateway loggers and intercept MAC adaptor calls.
     logging_slot_gateway = fapi::create_logging_slot_gateway(du_low_adaptor->get_slot_message_gateway());
     report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    du_high_adaptor =
-        build_mac_fapi_adaptor(sector,
-                               scs,
-                               *logging_slot_gateway,
-                               *last_msg_notifier,
-                               std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-                               get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
+    du_high_adaptor = build_mac_fapi_adaptor(
+        sector,
+        scs,
+        *logging_slot_gateway,
+        *last_msg_notifier,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
+        get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
     logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(du_high_adaptor->get_slot_time_notifier());
@@ -166,13 +173,14 @@ du_impl::du_impl(const du_config& du_cfg) :
     du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
     du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
-    du_high_adaptor =
-        build_mac_fapi_adaptor(0,
-                               scs,
-                               du_low_adaptor->get_slot_message_gateway(),
-                               *last_msg_notifier,
-                               std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-                               get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
+    du_high_adaptor = build_mac_fapi_adaptor(
+        0,
+        scs,
+        du_low_adaptor->get_slot_message_gateway(),
+        *last_msg_notifier,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
+        get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
     report_error_if_not(du_high_adaptor, "Unable to create MAC adaptor.");
     du_low_adaptor->set_slot_time_message_notifier(du_high_adaptor->get_slot_time_notifier());
     du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());

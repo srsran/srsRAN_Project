@@ -90,7 +90,7 @@ private:
 inline rnti_t decode_crnti_ce(byte_buffer_view payload)
 {
   if (payload.length() < 2) {
-    return INVALID_RNTI;
+    return rnti_t::INVALID_RNTI;
   }
 
   // Conversion between Little Endian to RNTI value. See TS 38.321, 6.1.3.2 - C-RNTI MAC CE.
@@ -125,7 +125,7 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
         format_to(ctx.out(), "CCCH48: len={}", subpdu.sdu_length());
         break;
       case lcid_ul_sch_t::CRNTI:
-        format_to(ctx.out(), "C-RNTI: {:#04x}", decode_crnti_ce(subpdu.payload()));
+        format_to(ctx.out(), "C-RNTI: {:#x}", to_value(decode_crnti_ce(subpdu.payload())));
         break;
       case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
         lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());

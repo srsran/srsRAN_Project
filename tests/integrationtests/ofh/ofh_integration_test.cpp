@@ -395,7 +395,9 @@ public:
   /// Generates UL packets with random IQ data for the specified slot and sends to loopback ethernet interface.
   void send_uplink_data(slot_point slot)
   {
-    executor.execute([this, slot]() { send_uplink(slot); });
+    if (not executor.execute([this, slot]() { send_uplink(slot); })) {
+      logger.warning("Failed to dispatch uplink task");
+    }
   }
 
 private:
@@ -616,7 +618,9 @@ public:
   void start()
   {
     slot_duration_us = std::chrono::microseconds(1000 * SUBFRAME_DURATION_MSEC / slot.nof_slots_per_subframe());
-    executor.execute([this]() { run_test(); });
+    if (not executor.execute([this]() { run_test(); })) {
+      report_fatal_error("Failed to start DU emulator");
+    }
   }
 
   bool finished() { return test_finished; }

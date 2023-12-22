@@ -53,6 +53,7 @@
 
 #include "helpers/gnb_console_helper.h"
 #include "helpers/metrics_hub.h"
+#include "helpers/rlc_metrics_plotter_json.h"
 
 #include "gnb_du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
@@ -379,7 +380,7 @@ int main(int argc, char** argv)
   timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
-  if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
+  if (gnb_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
     // In case test mode is enabled, we pass dummy timers to the upper layers.
     dummy_timers = std::make_unique<timer_manager>(256);
     cu_timers    = dummy_timers.get();
@@ -394,9 +395,14 @@ int main(int argc, char** argv)
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
-      srslog::fetch_file_sink(gnb_cfg.metrics_cfg.json_filename, 0, false, srslog::create_json_formatter());
+      srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
   srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
+
+  // Set up RLC JSON log channel used by metrics.
+  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
+  rlc_json_channel.set_enabled(gnb_cfg.metrics_cfg.rlc.json_enabled);
+  rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 
   // Create console helper object for commands and metrics printing.
   gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
@@ -476,6 +482,7 @@ int main(int argc, char** argv)
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
   cu_up_cfg.gtpu_pcap                              = gtpu_p.get();
   cu_up_cfg.timers                                 = cu_timers;
+  cu_up_cfg.qos                                    = generate_cu_up_qos_config(gnb_cfg);
 
   // create and start CU-UP
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -528,6 +535,7 @@ int main(int argc, char** argv)
                                                           console,
                                                           e2_gw,
                                                           e2_metric_connectors,
+                                                          rlc_json_plotter,
                                                           *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "gnb_os_sched_affinity_manager.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
@@ -794,12 +795,16 @@ struct pcap_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  unsigned rlc_report_period              = 1000; // RLC report period in ms
-  unsigned cu_cp_statistics_report_period = 1;    // Statistics report period in seconds
-  unsigned cu_up_statistics_report_period = 1;    // Statistics report period in seconds
+  struct {
+    unsigned report_period = 1000; // RLC report period in ms
+    bool     json_enabled  = false;
+  } rlc;
+  unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
+  unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.
   bool        enable_json_metrics      = false;
-  std::string json_filename            = "/tmp/gnb_metrics.json";
+  std::string addr                     = "127.0.0.1";
+  uint16_t    port                     = 55555;
   bool        autostart_stdout_metrics = false;
 };
 
@@ -835,11 +840,16 @@ struct expert_upper_phy_appconfig {
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
   std::string pusch_sinr_calc_method = "evm";
+  /// \brief Request headroom size in slots.
+  ///
+  /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
+  /// current slot is M, the upper phy will consider the slot M - nof_slots_request_headroom as valid and process it.
+  unsigned nof_slots_request_headroom = 0U;
 };
 
 struct test_mode_ue_appconfig {
   /// C-RNTI to assign to the test UE.
-  rnti_t rnti = INVALID_RNTI;
+  rnti_t rnti = rnti_t::INVALID_RNTI;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
@@ -893,12 +903,6 @@ struct ru_sdr_expert_appconfig {
   float power_ramping_time_us = 0.0F;
 };
 
-/// gNB app SDR Radio Unit cell configuration.
-struct ru_sdr_cell_appconfig {
-  /// Amplitude control configuration.
-  amplitude_control_appconfig amplitude_cfg;
-};
-
 /// gNB app SDR Radio Unit configuration.
 struct ru_sdr_appconfig {
   /// Sampling frequency in MHz.
@@ -934,8 +938,8 @@ struct ru_sdr_appconfig {
   std::string otw_format = "default";
   /// Expert SDR Radio Unit settings.
   ru_sdr_expert_appconfig expert_cfg;
-  /// SDR Radio Unit cells configuration.
-  std::vector<ru_sdr_cell_appconfig> cells = {{}};
+  /// Amplitude control configuration.
+  amplitude_control_appconfig amplitude_cfg;
 };
 
 /// gNB app Open Fronthaul base cell configuration.
@@ -1027,8 +1031,8 @@ struct ru_ofh_appconfig {
 };
 
 struct buffer_pool_appconfig {
-  std::size_t nof_segments = 524288;
-  std::size_t segment_size = 1024;
+  std::size_t nof_segments = 1048576;
+  std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
 };
 
 /// CPU isolation configuration in the gNB app.

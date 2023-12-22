@@ -40,16 +40,15 @@ public:
   /// \param[in] msg_gw              FAPI message gateway.
   /// \param[in] last_msg_notifier   Slot-specific last message notifier.
   /// \param[in] pm_mapper           Precoding matrix mapper.
-  /// \param[in] sector_id_          Sector identifier.
+  /// \param[in] part2_mapper        UCI Part2 mapper.
   /// \param[in] cell_nof_prbs       Cell bandwidth in PRBs.
   /// \param[in] scs                 Subcarrier spacing, as per TS38.331 Section 6.2.2.
-  mac_fapi_adaptor_impl(fapi::slot_message_gateway&              msg_gw,
-                        fapi::slot_last_message_notifier&        last_msg_notifier,
-                        std::unique_ptr<precoding_matrix_mapper> pm_mapper,
-                        unsigned                                 sector_id_,
-                        unsigned                                 cell_nof_prbs,
-                        subcarrier_spacing                       scs);
-
+  mac_fapi_adaptor_impl(fapi::slot_message_gateway&                      msg_gw,
+                        fapi::slot_last_message_notifier&                last_msg_notifier,
+                        std::unique_ptr<precoding_matrix_mapper>         pm_mapper,
+                        std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper,
+                        unsigned                                         cell_nof_prbs,
+                        subcarrier_spacing                               scs);
   // See interface for documentation.
   fapi::slot_time_message_notifier& get_slot_time_notifier() override;
 

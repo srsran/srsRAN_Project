@@ -33,10 +33,10 @@ variables:
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
-      - "aws-spot-amd64"
-      - "aws-spot-arm64"
       - "on-prem-amd64"
       - "on-prem-arm64"
+      - "aws-spot-amd64"
+      - "aws-spot-arm64"
     value: "aws-spot-amd64"
   OS:
     description: Operating system
@@ -72,6 +72,9 @@ variables:
     description: It will be passed to make
     value: ""
   UHD_VERSION:
+    description: must be one version supported in the specified OS
+    value: ""
+  DPDK_VERSION:
     description: must be one version supported in the specified OS
     value: ""
 
@@ -734,6 +737,32 @@ basic asan:
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+basic avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: RelWithDebInfo
+    TEST_MODE: default
+    ASSERT_LEVEL: PARANOID
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.07"
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+    SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX512_TAG}"]
   artifacts:
     <<: *build_artifacts
     expire_in: 1 day

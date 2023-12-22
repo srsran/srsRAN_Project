@@ -57,7 +57,7 @@ public:
   int update_and_compare_seq_id(unsigned eaxc, uint8_t seq_id)
   {
     srsran_assert(eaxc < MAX_SUPPORTED_EAXC_ID_VALUE,
-                  "Invalid eAxC={} detected. Maximum supported eAxC value = {}",
+                  "Invalid eAxC value '{}'. Maximum eAxC value is '{}'",
                   eaxc,
                   MAX_SUPPORTED_EAXC_ID_VALUE);
 

@@ -39,7 +39,7 @@ struct formatter<srsran::tx_buffer_identifier> {
   auto format(const srsran::tx_buffer_identifier& value, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "rnti={:#x} h_id={}", value.rnti, value.harq_ack_id);
+    return format_to(ctx.out(), "rnti={} h_id={}", value.rnti, value.harq_ack_id);
   }
 };
 

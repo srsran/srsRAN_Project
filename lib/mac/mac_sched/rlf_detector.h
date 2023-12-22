@@ -27,6 +27,7 @@
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <atomic>
+#include <mutex>
 
 namespace srsran {
 

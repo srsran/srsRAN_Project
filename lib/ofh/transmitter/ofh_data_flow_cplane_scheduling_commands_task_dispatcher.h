@@ -60,8 +60,11 @@ public:
     data_flow_cplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_cplane_scheduling_commands&            data_flow_cplane = *dispatcher.data_flow_cplane;
 
-    dispatcher.executor.execute(
-        [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_1_message(context); });
+    if (not dispatcher.executor.execute(
+            [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_1_message(context); })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 1 message for slot={}",
+                                                context.slot);
+    }
   }
 
   // See interface for documentation.
@@ -71,8 +74,11 @@ public:
     data_flow_cplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_cplane_scheduling_commands&            data_flow_cplane = *dispatcher.data_flow_cplane;
 
-    dispatcher.executor.execute(
-        [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_3_prach_message(context); });
+    if (not dispatcher.executor.execute(
+            [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_3_prach_message(context); })) {
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 3 message for slot={}",
+                                                context.slot);
+    }
   }
 
 private:

@@ -140,8 +140,8 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n8, cset_cfg),
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
 
-  cell_configuration    cell_cfg{sched_cfg, msg};
-  rnti_t                crnti = to_rnti(test_rgen::uniform_int<uint16_t>(MIN_CRNTI, MAX_CRNTI));
+  cell_configuration cell_cfg{sched_cfg, msg};
+  rnti_t crnti = to_rnti(test_rgen::uniform_int<uint16_t>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI)));
   ue_cell_configuration ue_cfg{crnti, cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
 
   const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));

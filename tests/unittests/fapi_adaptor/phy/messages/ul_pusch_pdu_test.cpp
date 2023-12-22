@@ -22,6 +22,7 @@
 
 #include "../../../fapi/validators/helpers.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -41,15 +42,21 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
 
   std::uniform_int_distribution<unsigned> nof_antenna_ports_dist(1, 4);
   unsigned                                nof_antenna_ports = nof_antenna_ports_dist(rgen);
+  auto                                    uci_part2_tools   = fapi_adaptor::generate_uci_part2_correspondence(1);
 
   uplink_processor::pusch_pdu pdu;
-  convert_pusch_fapi_to_phy(pdu, fapi_pdu, sfn, slot, nof_antenna_ports);
+  convert_pusch_fapi_to_phy(pdu,
+                            fapi_pdu,
+                            sfn,
+                            slot,
+                            nof_antenna_ports,
+                            *std::get<std::unique_ptr<uci_part2_correspondence_repository>>(uci_part2_tools));
 
   const pusch_processor::pdu_t& phy_pdu = pdu.pdu;
   ASSERT_EQ(slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot), phy_pdu.slot);
   ASSERT_EQ(fapi_pdu.start_symbol_index, phy_pdu.start_symbol_index);
   ASSERT_EQ(fapi_pdu.nr_of_symbols, phy_pdu.nof_symbols);
-  ASSERT_EQ(fapi_pdu.rnti, phy_pdu.rnti);
+  ASSERT_EQ(to_value(fapi_pdu.rnti), phy_pdu.rnti);
   ASSERT_EQ(fapi_pdu.bwp_start, phy_pdu.bwp_start_rb);
   ASSERT_EQ(fapi_pdu.bwp_size, phy_pdu.bwp_size_rb);
   ASSERT_EQ(fapi_pdu.cp, phy_pdu.cp);

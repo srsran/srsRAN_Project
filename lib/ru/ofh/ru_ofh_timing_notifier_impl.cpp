@@ -22,7 +22,6 @@
 
 #include "ru_ofh_timing_notifier_impl.h"
 #include "srsran/ru/ru_timing_notifier.h"
-#include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
 

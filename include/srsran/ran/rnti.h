@@ -22,13 +22,14 @@
 
 #pragma once
 
+#include "fmt/format.h"
 #include <cstdint>
 #include <type_traits>
 
 namespace srsran {
 
 /// \remark See TS 38.331 - RNTI-Value and TS 38.321, Table 7.1-1: RNTI Values. Values: (0..65535)
-enum rnti_t : uint16_t {
+enum class rnti_t : uint16_t {
   INVALID_RNTI = 0x0,
   MIN_CRNTI    = 0x1,
   // ...
@@ -52,4 +53,29 @@ constexpr rnti_t to_rnti(std::underlying_type_t<rnti_t> number)
   return static_cast<rnti_t>(number);
 }
 
+/// Converts RNTI value to integer.
+constexpr inline uint16_t to_value(rnti_t rnti)
+{
+  return static_cast<uint16_t>(rnti);
+}
+
 } // namespace srsran
+
+// Formatters
+namespace fmt {
+template <>
+struct formatter<srsran::rnti_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::rnti_t rnti, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:#x}", to_value(rnti));
+  }
+};
+
+} // namespace fmt

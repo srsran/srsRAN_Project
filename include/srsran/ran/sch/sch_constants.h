@@ -20,20 +20,21 @@
  *
  */
 
-#include "srsran/hal/dpdk/mbuf_pool.h"
-#include "dpdk.h"
-#include "srsran/support/srsran_assert.h"
+#pragma once
 
-using namespace srsran;
-using namespace dpdk;
+#include "srsran/support/units.h"
 
-mbuf_pool::mbuf_pool(rte_mempool* pool_) : pool(*pool_)
-{
-  srsran_assert(pool_, "Invalid mbuf pool.");
-}
+namespace srsran {
 
-mbuf_pool::~mbuf_pool()
-{
-  // Free the memory buffer pool.
-  ::free_mem_pool(pool);
-}
+/// \brief Maximum segment length.
+///
+/// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
+/// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
+static constexpr units::bits MAX_SEG_LENGTH{22 * 384};
+
+/// \brief Maximum number of segments per transport block.
+///
+/// It assumes 156 resource elements for a maximum of 275 PRB, four layers and eight bits per RE.
+static constexpr unsigned MAX_NOF_SEGMENTS = (156 * 275 * 4 * 8) / MAX_SEG_LENGTH.value();
+
+} // namespace srsran

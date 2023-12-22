@@ -131,8 +131,8 @@ private:
 
   void     refresh_packed_size();
   uint32_t nack_size(const rlc_am_status_nack& nack) const;
-  bool     pack_12bit(byte_buffer& pdu) const;
-  bool     pack_18bit(byte_buffer& pdu) const;
+  size_t   pack_12bit(span<uint8_t> buf) const;
+  size_t   pack_18bit(span<uint8_t> buf) const;
   bool     unpack_12bit(const byte_buffer_view& pdu);
   bool     unpack_18bit(const byte_buffer_view& pdu);
 
@@ -167,10 +167,10 @@ public:
   uint32_t                               get_packed_size() const { return packed_size; }
   bool                                   trim(uint32_t max_packed_size);
 
-  /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly
-  /// \param[out] pdu A reference to a byte_buffer
-  /// \return true if PDU was written successfully, false otherwise
-  SRSRAN_NODISCARD bool pack(byte_buffer& pdu) const;
+  /// \brief Write the RLC AM status PDU to a PDU buffer and meets the length of the generate PDU accordingly.
+  /// \param[out] buf Buffer where to encode the status PDU. The encoded PDU size cannot exceed the size of the buffer.
+  /// \return Number of bytes taken by the written status PDU.
+  size_t pack(span<uint8_t> buf) const;
 
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
@@ -257,46 +257,39 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
-inline SRSRAN_NODISCARD bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
+inline size_t rlc_am_write_data_pdu_header(span<uint8_t> buf, const rlc_am_pdu_header& header)
 {
-  byte_buffer        hdr_buf;
-  byte_buffer_writer hdr_writer = hdr_buf;
+  span<uint8_t>::iterator buf_it = buf.begin();
 
   // fixed header part
-  if (not hdr_writer.append((to_number(header.dc) & 0x01U) << 7U)) { // 1 bit D/C field
-    return false;
-  }
-  hdr_writer.back() |= (header.p & 0x01U) << 6U;             // 1 bit P flag
-  hdr_writer.back() |= (to_number(header.si) & 0x03U) << 4U; // 2 bits SI
+  *buf_it = (to_number(header.dc) & 0x01U) << 7U; // 1 bit D/C field
+
+  *buf_it |= (header.p & 0x01U) << 6U;             // 1 bit P flag
+  *buf_it |= (to_number(header.si) & 0x03U) << 4U; // 2 bits SI
 
   if (header.sn_size == rlc_am_sn_size::size12bits) {
-    // write first 4 bit of SN
-    hdr_writer.back() |= (header.sn >> 8U) & 0x0fU; // 4 bit SN
-    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
-      return false;
-    }
+    // 12-bit SN
+    *buf_it |= (header.sn >> 8U) & 0x0fU; // upper 4 bits of SN
+    ++buf_it;
+    *buf_it = header.sn & 0xffU; // remaining 8 bits of SN
   } else {
-    // 18bit SN
-    hdr_writer.back() |= (header.sn >> 16U) & 0x3U; // 2 bit SN
-    if (not hdr_writer.append(header.sn >> 8U)) {   // bit 3 - 10 of SN
-      return false;
-    }
-    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
-      return false;
-    }
+    // 18-bit SN
+    *buf_it |= (header.sn >> 16U) & 0x3U; // upper 2 bits of SN
+    ++buf_it;
+    *buf_it = header.sn >> 8U; // center 8 bits of SN
+    ++buf_it;
+    *buf_it = header.sn & 0xffU; // lower 8 bits of SN
   }
+  ++buf_it;
 
   if (header.so != 0) {
     // write SO
-    if (not hdr_writer.append(header.so >> 8U)) { // first part of SO
-      return false;
-    }
-    if (not hdr_writer.append(header.so & 0xffU)) { // second part of SO
-      return false;
-    }
+    *buf_it = header.so >> 8U; // upper part of SO
+    ++buf_it;
+    *buf_it = header.so & 0xffU; // lower part of SO
+    ++buf_it;
   }
-  pdu.prepend(std::move(hdr_buf));
-  return true;
+  return std::distance(buf.begin(), buf_it);
 }
 
 } // namespace srsran

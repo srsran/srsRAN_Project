@@ -37,7 +37,7 @@ ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
   if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {
     return pci_rnti_to_ue_index.at(std::make_tuple(pci, rnti));
   }
-  logger.debug("UE index for pci={} and rnti={:#x} not found", pci, rnti);
+  logger.debug("UE index for pci={} and rnti={} not found", pci, rnti);
   return ue_index_t::invalid;
 }
 
@@ -104,7 +104,7 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
-  srsran_assert(rnti != INVALID_RNTI, "Invalid rnti={:#x}", rnti);
+  srsran_assert(rnti != rnti_t::INVALID_RNTI, "Invalid rnti={}", rnti);
 
   // check if ue_index is in db
   if (ues.find(ue_index) == ues.end()) {
@@ -114,7 +114,7 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 
   // check if the UE is already present
   if (get_ue_index(pci, rnti) != ue_index_t::invalid) {
-    logger.warning("UE with pci={} and rnti={:#x} already exists", pci, rnti);
+    logger.warning("UE with pci={} and rnti={} already exists", pci, rnti);
     return nullptr;
   }
 
@@ -124,7 +124,7 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
   // Add PCI and RNTI to lookup.
   pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), ue_index);
 
-  logger.debug("ue={}: Updated UE with pci={} and rnti={:#x}", ue_index, pci, rnti);
+  logger.debug("ue={}: Updated UE with pci={} and rnti={}", ue_index, pci, rnti);
 
   return &ue;
 }

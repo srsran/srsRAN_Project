@@ -78,7 +78,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Initiate MAC UE creation and await result.
   CORO_AWAIT_VALUE(mac_resp, create_mac_ue());
-  if (mac_resp.allocated_crnti == INVALID_RNTI) {
+  if (mac_resp.allocated_crnti == rnti_t::INVALID_RNTI) {
     proc_logger.log_proc_failure("Failed to create MAC UE context");
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
@@ -120,7 +120,7 @@ async_task<void> ue_creation_procedure::clear_ue()
       du_params.f1ap.ue_mng.handle_ue_deletion_request(req.ue_index);
     }
 
-    if (mac_resp.allocated_crnti != INVALID_RNTI) {
+    if (mac_resp.allocated_crnti != rnti_t::INVALID_RNTI) {
       CORO_AWAIT(du_params.mac.ue_cfg.handle_ue_delete_request(
           mac_ue_delete_request{req.pcell_index, req.ue_index, mac_resp.allocated_crnti}));
     }

@@ -77,7 +77,14 @@ public:
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
 class pdcp_tx_test_helper
 {
+public:
+  virtual ~pdcp_tx_test_helper() = default;
+
 protected:
+  /// Virtual function to be called just before creating the PDCP entity.
+  /// This function provides an interface for config adjustments of selected testcases with different PDCP config.
+  virtual void init_adjustments() {}
+
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
   void init(std::tuple<pdcp_sn_size, unsigned> cfg_tuple,
@@ -101,7 +108,7 @@ protected:
     config.rlc_mode               = rlc_mode_;
     config.direction              = pdcp_security_direction::downlink;
     config.discard_timer          = discard_timer;
-    config.max_count              = max_count;
+    config.custom.max_count       = max_count;
     config.status_report_required = true;
 
     // RB_id and security domain
@@ -124,6 +131,9 @@ protected:
     // Set encription/integrity algorithms
     sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(std::get<unsigned>(cfg_tuple));
     sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(std::get<unsigned>(cfg_tuple));
+
+    // Allow for config adjustments
+    init_adjustments();
 
     // Create PDCP entity
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker});

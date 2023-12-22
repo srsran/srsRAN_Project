@@ -33,7 +33,7 @@ iq_decompressor_selector::iq_decompressor_selector(
   // Sanity check that all the positions in the array has a decompressor.
   for (unsigned i = 0, e = decompressors.size(); i != e; ++i) {
     report_fatal_error_if_not(decompressors[i],
-                              "Null decompressor detected for compression type {}",
+                              "Null decompressor detected for compression type '{}'",
                               to_string(static_cast<compression_type>(i)));
   }
 }

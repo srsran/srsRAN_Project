@@ -39,7 +39,7 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
 
   pdcch_processor::dci_description& dci = proc_pdu.dci;
 
-  dci.rnti              = fapi_dci.rnti;
+  dci.rnti              = to_value(fapi_dci.rnti);
   dci.n_id_pdcch_data   = fapi_dci.nid_pdcch_data;
   dci.n_id_pdcch_dmrs   = fapi_dci_v4.nid_pdcch_dmrs;
   dci.n_rnti            = fapi_dci.nrnti_pdcch_data;

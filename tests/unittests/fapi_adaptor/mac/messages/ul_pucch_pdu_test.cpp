@@ -28,10 +28,11 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(ULPUCCHFormat1PDUTest, ValidPUCCHFormat1ShouldPass)
+TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_should_pass)
 {
-  const pucch_info&  mac_pdu = build_valid_pucch_format_1_pdu();
-  fapi::ul_pucch_pdu fapi_pdu;
+  const pucch_info_test_helper& pdu_test = build_valid_pucch_format_1_pdu();
+  const pucch_info&             mac_pdu  = pdu_test.info;
+  fapi::ul_pucch_pdu            fapi_pdu;
 
   convert_pucch_mac_to_fapi(fapi_pdu, mac_pdu);
 
@@ -64,10 +65,11 @@ TEST(ULPUCCHFormat1PDUTest, ValidPUCCHFormat1ShouldPass)
   ASSERT_EQ(f1.time_domain_occ, fapi_pdu.time_domain_occ_index);
 }
 
-TEST(ul_pucch_format2_pdu_valid, valid_pucch_format2_should_pass)
+TEST(mac_fapi_ul_pucch_format2_pdu_conversor_test, ul_pucch_format2_pdu_valid_should_pass)
 {
-  const pucch_info&  mac_pdu = build_valid_pucch_format_2_pdu();
-  fapi::ul_pucch_pdu fapi_pdu;
+  const pucch_info_test_helper& pdu_test = build_valid_pucch_format_2_pdu();
+  const pucch_info&             mac_pdu  = pdu_test.info;
+  fapi::ul_pucch_pdu            fapi_pdu;
 
   convert_pucch_mac_to_fapi(fapi_pdu, mac_pdu);
 

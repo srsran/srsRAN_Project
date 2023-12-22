@@ -31,6 +31,7 @@ namespace srsran {
 
 /// Container to hold TX/RX metrics
 struct rlc_metrics {
+  uint32_t       du_index;
   du_ue_index_t  ue_index;
   rb_id_t        rb_id;
   rlc_tx_metrics tx;

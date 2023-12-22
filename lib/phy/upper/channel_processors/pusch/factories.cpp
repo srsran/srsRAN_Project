@@ -23,6 +23,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "logging_pusch_processor_decorator.h"
 #include "pusch_codeblock_decoder.h"
+#include "pusch_decoder_hw_impl.h"
 #include "pusch_decoder_impl.h"
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
@@ -80,6 +81,36 @@ private:
   std::shared_ptr<crc_calculator_factory>                     crc_factory;
   std::shared_ptr<ldpc_segmenter_rx_factory>                  segmenter_factory;
   task_executor*                                              executor;
+};
+
+/// HW-accelerated PUSCH decoder factory.
+class pusch_decoder_factory_hw : public pusch_decoder_factory
+{
+private:
+  std::shared_ptr<ldpc_segmenter_rx_factory>             segmenter_factory;
+  std::shared_ptr<crc_calculator_factory>                crc_factory;
+  std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory;
+
+public:
+  explicit pusch_decoder_factory_hw(const pusch_decoder_factory_hw_configuration& config) :
+    segmenter_factory(std::move(config.segmenter_factory)),
+    crc_factory(std::move(config.crc_factory)),
+    hw_decoder_factory(std::move(config.hw_decoder_factory))
+  {
+    srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsran_assert(crc_factory, "Invalid CRC factory.");
+    srsran_assert(hw_decoder_factory, "Invalid hardware accelerator factory.");
+  }
+
+  std::unique_ptr<pusch_decoder> create() override
+  {
+    pusch_decoder_hw_impl::sch_crc crc = {
+        crc_factory->create(crc_generator_poly::CRC16),
+        crc_factory->create(crc_generator_poly::CRC24A),
+        crc_factory->create(crc_generator_poly::CRC24B),
+    };
+    return std::make_unique<pusch_decoder_hw_impl>(segmenter_factory->create(), crc, hw_decoder_factory->create());
+  }
 };
 
 class pusch_demodulator_factory_generic : public pusch_demodulator_factory
@@ -231,6 +262,12 @@ std::shared_ptr<pusch_decoder_factory>
 srsran::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config)
 {
   return std::make_shared<pusch_decoder_factory_generic>(std::move(config));
+}
+
+std::shared_ptr<pusch_decoder_factory>
+srsran::create_pusch_decoder_factory_hw(const pusch_decoder_factory_hw_configuration& config)
+{
+  return std::make_shared<pusch_decoder_factory_hw>(config);
 }
 
 std::shared_ptr<pusch_demodulator_factory>

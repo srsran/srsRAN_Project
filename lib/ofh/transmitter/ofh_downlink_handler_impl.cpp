@@ -45,14 +45,14 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   frame_pool(*frame_pool_ptr)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
-  srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
+  srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
   srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid)
 {
   srsran_assert(grid.get_nof_ports() <= dl_eaxc.size(),
-                "RU number of ports={} must be equal or greater than cell number of ports={}",
+                "Number of RU ports is '{}' and must be equal or greater than the number of cell ports which is '{}'",
                 dl_eaxc.size(),
                 grid.get_nof_ports());
 
@@ -61,7 +61,9 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
 
   if (window_checker.is_late(context.slot)) {
     logger.warning(
-        "Dropping downlink resource grid at slot={} and sector={} as it arrived late", context.slot, context.sector);
+        "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",
+        context.slot,
+        context.sector);
 
     return;
   }

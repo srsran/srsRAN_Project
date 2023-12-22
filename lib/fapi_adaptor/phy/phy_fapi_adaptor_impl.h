@@ -41,6 +41,8 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_impl_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Request headroom size in slots.
+  unsigned nof_slots_request_headroom;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
   /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.
@@ -75,6 +77,8 @@ struct phy_fapi_adaptor_impl_dependencies {
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// UCI Part2 correspondence repository.
+  std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Asynchronous task executor.
   task_executor* async_executor;
 };

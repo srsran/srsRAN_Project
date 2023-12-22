@@ -33,7 +33,7 @@ mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config&  co
   return std::make_unique<mac_fapi_adaptor_impl>(*dependencies.gateway,
                                                  *dependencies.last_msg_notifier,
                                                  std::move(dependencies.pm_mapper),
-                                                 config.sector_id,
+                                                 std::move(dependencies.part2_mapper),
                                                  config.cell_nof_prbs,
                                                  config.scs);
 }

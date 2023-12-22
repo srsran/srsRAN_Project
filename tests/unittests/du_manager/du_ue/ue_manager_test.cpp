@@ -60,7 +60,7 @@ protected:
 
   void push_ul_ccch_message(ul_ccch_indication_message ccch_ind)
   {
-    test_logger.info("TEST: Pushing UL CCCH indication for RNTI={:#x}...", ccch_ind.tc_rnti);
+    test_logger.info("TEST: Pushing UL CCCH indication for rnti={}...", ccch_ind.tc_rnti);
     ue_mng.handle_ue_create_request(ccch_ind);
   }
 
@@ -74,9 +74,10 @@ protected:
 
   void mac_completes_ue_creation(bool result)
   {
-    mac_dummy.wait_ue_create.result.ue_index        = get_last_ue_index();
-    mac_dummy.wait_ue_create.result.cell_index      = to_du_cell_index(0);
-    mac_dummy.wait_ue_create.result.allocated_crnti = result ? mac_dummy.last_ue_create_msg->crnti : INVALID_RNTI;
+    mac_dummy.wait_ue_create.result.ue_index   = get_last_ue_index();
+    mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);
+    mac_dummy.wait_ue_create.result.allocated_crnti =
+        result ? mac_dummy.last_ue_create_msg->crnti : rnti_t::INVALID_RNTI;
     mac_dummy.wait_ue_create.ready_ev.set();
   }
 
@@ -134,7 +135,7 @@ TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_reque
 
   // TEST: DU UE manager registers UE being created.
   ASSERT_TRUE(ue_mng.find_ue(ue_index) != nullptr);
-  ASSERT_EQ(ue_mng.find_ue(ue_index)->rnti, 0x4601);
+  ASSERT_EQ(to_value(ue_mng.find_ue(ue_index)->rnti), 0x4601);
 }
 
 TEST_F(du_ue_manager_tester,
@@ -211,7 +212,7 @@ TEST_F(du_ue_manager_tester,
   du_ue_index_t ue_index1 = get_last_ue_index();
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
-  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+  ASSERT_EQ(to_value(mac_dummy.last_ue_create_msg.value().crnti), 0x4601);
   mac_completes_ue_creation(true);
 
   // Action 2: UL CCCH Message received concurrently.
@@ -219,7 +220,7 @@ TEST_F(du_ue_manager_tester,
   du_ue_index_t ue_index2 = get_last_ue_index();
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index2);
-  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4602);
+  ASSERT_EQ(to_value(mac_dummy.last_ue_create_msg.value().crnti), 0x4602);
   mac_completes_ue_creation(true);
 
   // TEST: UEs should have different UE indexes.
@@ -235,14 +236,14 @@ TEST_F(du_ue_manager_tester,
   du_ue_index_t ue_index1 = get_last_ue_index();
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
-  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+  ASSERT_EQ(to_value(mac_dummy.last_ue_create_msg.value().crnti), 0x4601);
 
   // Action 2: UL CCCH Message received concurrently.
   push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4602)));
   du_ue_index_t ue_index2 = get_last_ue_index();
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index2);
-  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4602);
+  ASSERT_EQ(to_value(mac_dummy.last_ue_create_msg.value().crnti), 0x4602);
 
   // TEST: UEs should have different UE indexes.
   ASSERT_NE(ue_index1, ue_index2);
@@ -260,7 +261,7 @@ TEST_F(du_ue_manager_tester,
   // TEST: MAC only processes the first request.
   ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
   ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
-  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+  ASSERT_EQ(to_value(mac_dummy.last_ue_create_msg.value().crnti), 0x4601);
   ASSERT_TRUE(is_ue_creation_complete());
   ASSERT_EQ(ue_mng.nof_ues(), 1);
 }

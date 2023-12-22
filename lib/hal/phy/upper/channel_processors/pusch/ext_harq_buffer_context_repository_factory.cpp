@@ -20,16 +20,13 @@
  *
  */
 
-#include "srsran/hal/dpdk/dpdk_eal.h"
-#include "dpdk.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
 
 using namespace srsran;
-using namespace dpdk;
+using namespace hal;
 
-dpdk_eal::dpdk_eal(srslog::basic_logger& logger_) : logger(logger_) {}
-
-dpdk_eal::~dpdk_eal()
+std::shared_ptr<ext_harq_buffer_context_repository>
+srsran::hal::create_ext_harq_buffer_context_repository(unsigned nof_rnti, unsigned nof_harq_id, bool debug_mode)
 {
-  // Clean up the EAL.
-  ::rte_eal_cleanup();
+  return std::make_shared<ext_harq_buffer_context_repository>(nof_rnti, nof_harq_id, debug_mode);
 }

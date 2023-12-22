@@ -121,6 +121,15 @@ protected:
     srslog::flush();
   }
 
+  size_t copy_bytes(span<uint8_t> dst, byte_buffer_view src) const
+  {
+    auto* it = dst.begin();
+    for (span<const uint8_t> seg : src.segments()) {
+      it = std::copy(seg.begin(), seg.end(), it);
+    }
+    return src.length();
+  }
+
   /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments
   ///
   /// The associated SDU contains an incremental sequence of bytes starting with the value given by first_byte,
@@ -135,12 +144,12 @@ protected:
   /// \param[in] sdu_size Size of the SDU
   /// \param[in] segment_size Maximum payload size of each SDU or SDU segment.
   /// \param[in] first_byte Value of the first SDU payload byte
-  void create_pdus(std::list<byte_buffer>& pdu_list,
-                   byte_buffer&            sdu,
-                   uint32_t                sn,
-                   uint32_t                sdu_size,
-                   uint32_t                segment_size,
-                   uint8_t                 first_byte = 0) const
+  void create_pdus(std::list<std::vector<uint8_t>>& pdu_list,
+                   byte_buffer&                     sdu,
+                   uint32_t                         sn,
+                   uint32_t                         sdu_size,
+                   uint32_t                         segment_size,
+                   uint8_t                          first_byte = 0) const
   {
     ASSERT_GT(sdu_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU";
     ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
@@ -183,10 +192,12 @@ protected:
         payload = std::move(rest);
         rest    = {};
       }
-      byte_buffer pdu_buf;
+      std::vector<uint8_t> pdu_buf;
+      pdu_buf.resize(payload.length() + 5);
       logger.debug("AMD PDU header: {}", hdr);
-      ASSERT_TRUE(rlc_am_write_data_pdu_header(hdr, pdu_buf));
-      pdu_buf.append(payload);
+      size_t pdu_len = rlc_am_write_data_pdu_header(span<uint8_t>(pdu_buf), hdr);
+      pdu_len += copy_bytes(span<uint8_t>(pdu_buf).subspan(pdu_len, payload.length()), payload);
+      pdu_buf.resize(pdu_len);
       pdu_list.push_back(std::move(pdu_buf));
 
       // update segment offset for next iteration
@@ -205,11 +216,11 @@ protected:
     uint32_t pdu_counter       = 0;
 
     // Create SDUs and PDUs with full SDUs
-    std::list<byte_buffer> pdu_originals = {};
-    std::list<byte_buffer> sdu_originals = {};
+    std::list<std::vector<uint8_t>> pdu_originals = {};
+    std::list<byte_buffer>          sdu_originals = {};
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::list<byte_buffer> pdu_list = {};
-      byte_buffer            sdu;
+      std::list<std::vector<uint8_t>> pdu_list = {};
+      byte_buffer                     sdu;
       ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
       sn_state++;
 
@@ -226,7 +237,7 @@ protected:
     }
 
     // Push PDUs into RLC
-    for (byte_buffer& pdu_buf : pdu_originals) {
+    for (std::vector<uint8_t>& pdu_buf : pdu_originals) {
       // write PDU into lower end
       byte_buffer_slice pdu = {std::move(pdu_buf)};
       rlc->handle_pdu(std::move(pdu));
@@ -282,13 +293,13 @@ protected:
     uint32_t pdu_counter       = 0;
 
     // Create SDUs and PDUs
-    std::list<std::list<byte_buffer>> pdu_originals = {};
-    std::list<byte_buffer>            sdu_originals = {};
+    std::list<std::list<std::vector<uint8_t>>> pdu_originals = {};
+    std::list<byte_buffer>                     sdu_originals = {};
 
     // Create SDUs and PDUs with SDU segments
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::list<byte_buffer> pdu_list = {};
-      byte_buffer            sdu;
+      std::list<std::vector<uint8_t>> pdu_list = {};
+      byte_buffer                     sdu;
       ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
       sn_state++;
 
@@ -309,8 +320,8 @@ protected:
     }
 
     // Push PDUs into RLC
-    for (std::list<byte_buffer>& segment_list : pdu_originals) {
-      for (byte_buffer& pdu_buf : segment_list) {
+    for (std::list<std::vector<uint8_t>>& segment_list : pdu_originals) {
+      for (std::vector<uint8_t>& pdu_buf : segment_list) {
         byte_buffer_slice pdu = {std::move(pdu_buf)};
         rlc->handle_pdu(std::move(pdu));
       }
@@ -363,18 +374,18 @@ protected:
     EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
     // Create SDU and PDUs with SDU segments
-    std::list<byte_buffer> pdu_list_a = {};
-    std::list<byte_buffer> pdu_list_b = {};
-    byte_buffer            sdu;
+    std::list<std::vector<uint8_t>> pdu_list_a = {};
+    std::list<std::vector<uint8_t>> pdu_list_b = {};
+    byte_buffer                     sdu;
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list_a, sdu, sn_state, sdu_size, segment_size_a, sn_state));
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list_b, sdu, sn_state, sdu_size, segment_size_b, sn_state));
     sn_state++;
 
     // Push A PDUs except for one into RLC
     uint32_t i = 0;
-    for (const byte_buffer& pdu_buf : pdu_list_a) {
+    for (const std::vector<uint8_t>& pdu_buf : pdu_list_a) {
       if (i != skip_a1 && i != skip_a2) {
-        byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+        byte_buffer_slice pdu = {pdu_buf};
         rlc->handle_pdu(std::move(pdu));
       }
       i++;
@@ -385,8 +396,8 @@ protected:
 
     // Push all PDUs again; check that nothing is forwarded to upper layer before except after Rx of 5th segment
     // Push B PDUs into RLC
-    for (const byte_buffer& pdu_buf : pdu_list_b) {
-      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+    for (const std::vector<uint8_t>& pdu_buf : pdu_list_b) {
+      byte_buffer_slice pdu = {pdu_buf};
       rlc->handle_pdu(std::move(pdu));
     }
     ASSERT_EQ(tester->sdu_queue.size(), 1);
@@ -478,8 +489,8 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
   rlc_am_status_nack nack  = {};
   nack.nack_sn             = 1230;
   status.push_nack(nack);
-  byte_buffer pdu_buf = {};
-  EXPECT_TRUE(status.pack(pdu_buf));
+  std::array<uint8_t, 100> pdu_buf = {};
+  EXPECT_EQ(status.pack(pdu_buf), status.get_packed_size());
 
   // Pass through RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
@@ -500,10 +511,10 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 
   // Create status PDU
-  rlc_am_status_pdu status = {sn_size};
-  status.ack_sn            = 1234;
-  byte_buffer pdu_buf      = {};
-  EXPECT_TRUE(status.pack(pdu_buf));
+  rlc_am_status_pdu status         = {sn_size};
+  status.ack_sn                    = 1234;
+  std::array<uint8_t, 100> pdu_buf = {};
+  EXPECT_EQ(status.pack(pdu_buf), status.get_packed_size());
 
   // set reserved bits in CPT field
   *(pdu_buf.begin()) |= 0x70;
@@ -583,8 +594,8 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
   uint32_t sdu_size = 1;
 
   // Create SDU and PDU with full SDU
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
   sn_state++;
 
@@ -616,8 +627,8 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
   uint32_t sdu_size = 1;
 
   // Create SDU and PDU with full SDU
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
   sn_state++;
 
@@ -646,13 +657,13 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
   uint32_t sdu_size = 1;
 
   // Create SDU and PDU with full SDU
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
   sn_state++;
 
   // Push into RLC
-  byte_buffer_slice pdu = {pdu_list.front().deep_copy()};
+  byte_buffer_slice pdu = {pdu_list.front()};
   rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit has not changed
@@ -669,7 +680,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
   *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
 
   // Push into RLC
-  pdu = {pdu_list.front().deep_copy()};
+  pdu = {pdu_list.front()};
   rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit was considered, despite duplicate SN
@@ -700,16 +711,16 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
   // Create SDU and PDUs with SDU segments
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
   sn_state++;
 
   // Push PDUs except for 5th into RLC
   int i = 0;
-  for (const byte_buffer& pdu_buf : pdu_list) {
+  for (const std::vector<uint8_t>& pdu_buf : pdu_list) {
     if (i != 5) {
-      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      byte_buffer_slice pdu = {pdu_buf};
       rlc->handle_pdu(std::move(pdu));
     }
     i++;
@@ -720,8 +731,8 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
 
   // Push all PDUs again; check that nothing is forwarded to upper layer before except after Rx of 5th segment
   i = 0;
-  for (const byte_buffer& pdu_buf : pdu_list) {
-    byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+  for (const std::vector<uint8_t>& pdu_buf : pdu_list) {
+    byte_buffer_slice pdu = {pdu_buf};
     rlc->handle_pdu(std::move(pdu));
     if (i == 5) {
       // check if SDU has been assembled correctly
@@ -839,8 +850,8 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   }
 
   // Create SDU and PDU with full SDU
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
   sn_state++;
 
@@ -902,16 +913,16 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   }
 
   // Create SDU and PDUs with SDU segments
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
   sn_state++;
 
   // Push PDUs except for 5th into RLC
   int i = 0;
-  for (const byte_buffer& pdu_buf : pdu_list) {
+  for (const std::vector<uint8_t>& pdu_buf : pdu_list) {
     if (i != 5) {
-      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      byte_buffer_slice pdu = {pdu_buf};
       rlc->handle_pdu(std::move(pdu));
     }
     i++;
@@ -961,8 +972,8 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
   uint32_t segment_size = 1;
 
   // Create SDU and PDUs with SDU segments
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
   sn_state++;
 
@@ -971,7 +982,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
   ///     with SN = RX_Next before the last byte of all received segments of this SDU:
   // Push PDUs except for 5th into RLC (rx_next=0 rx_next_highest=1)
   int i = 0;
-  for (const byte_buffer& pdu_buf : pdu_list) {
+  for (const std::vector<uint8_t>& pdu_buf : pdu_list) {
     rlc_rx_am_state st = rlc->get_state();
     if (i == 0) {
       ASSERT_EQ(0, st.rx_next_highest);
@@ -980,7 +991,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
     }
     ASSERT_EQ(0, st.rx_next);
     if (i != 5) {
-      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      byte_buffer_slice pdu = {pdu_buf};
       rlc->handle_pdu(std::move(pdu));
     }
     i++;
@@ -1007,13 +1018,13 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer
   uint32_t n_sdus       = 10;
 
   // Create SDU and PDUs with SDU segments
-  std::list<std::list<byte_buffer>> pdus = {};
-  std::list<byte_buffer>            sdus = {};
+  std::list<std::list<std::vector<uint8_t>>> pdus = {};
+  std::list<byte_buffer>                     sdus = {};
 
   // Create 10 PDUs out of 10 SDUs
   for (uint32_t i = 0; i < n_sdus; i++) {
-    std::list<byte_buffer> pdu_list = {};
-    byte_buffer            sdu;
+    std::list<std::vector<uint8_t>> pdu_list = {};
+    byte_buffer                     sdu;
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
     sn_state++;
 
@@ -1030,7 +1041,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer
   int i = 0;
   for (const auto& pdu_it : pdus) {
     if (i != 5) {
-      byte_buffer_slice pdu = {pdu_it.front().deep_copy()};
+      byte_buffer_slice pdu = {pdu_it.front()};
       rlc->handle_pdu(std::move(pdu));
     }
     i++;
@@ -1056,8 +1067,8 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing
   uint32_t segment_size = 1;
 
   // Create SDU and PDUs with SDU segments
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
   sn_state++;
 
@@ -1066,7 +1077,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing
   ///     with SN = RX_Next before the last byte of all received segments of this SDU:
   // Push PDUs except for 5th into RLC (rx_next=0 rx_next_highest=1)
   int i = 0;
-  for (const byte_buffer& pdu_buf : pdu_list) {
+  for (const std::vector<uint8_t>& pdu_buf : pdu_list) {
     rlc_rx_am_state st = rlc->get_state();
     if (i == 0) {
       ASSERT_EQ(0, st.rx_next_highest);
@@ -1075,7 +1086,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing
     }
     ASSERT_EQ(0, st.rx_next);
     if (i != 9) {
-      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      byte_buffer_slice pdu = {pdu_buf};
       rlc->handle_pdu(std::move(pdu));
     }
     i++;
@@ -1112,17 +1123,17 @@ TEST_P(rlc_rx_am_test, status_report)
   }
 
   // Create SDU and PDUs with SDU segments
-  std::list<byte_buffer> pdu_list = {};
-  byte_buffer            sdu;
+  std::list<std::vector<uint8_t>> pdu_list = {};
+  byte_buffer                     sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
   sn_state++;
 
   // Keep missing PDUs for later
-  std::list<byte_buffer> missing_pdus = {};
+  std::list<std::vector<uint8_t>> missing_pdus = {};
 
   // Push PDUs except for 4th, 6th and 7th into RLC
   uint32_t i = 0;
-  for (byte_buffer& pdu_buf : pdu_list) {
+  for (std::vector<uint8_t>& pdu_buf : pdu_list) {
     if (i != 4 && i != 6 && i != 7 && i != 9) {
       byte_buffer_slice pdu = {std::move(pdu_buf)};
       rlc->handle_pdu(std::move(pdu));
@@ -1295,12 +1306,12 @@ TEST_P(rlc_rx_am_test_with_limit, status_report_large_window)
 
   {
     // Create SDU and PDUs with SDU segments
-    std::list<byte_buffer> pdu_list = {};
-    byte_buffer            sdu;
+    std::list<std::vector<uint8_t>> pdu_list = {};
+    byte_buffer                     sdu;
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
 
     // Push only first segment
-    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    byte_buffer_slice pdu = {pdu_list.front()};
     rlc->handle_pdu(std::move(pdu));
   }
 
@@ -1309,12 +1320,12 @@ TEST_P(rlc_rx_am_test_with_limit, status_report_large_window)
 
   {
     // Create SDU and PDUs with SDU segments
-    std::list<byte_buffer> pdu_list = {};
-    byte_buffer            sdu;
+    std::list<std::vector<uint8_t>> pdu_list = {};
+    byte_buffer                     sdu;
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
 
     // Push only first segment
-    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    byte_buffer_slice pdu = {pdu_list.front()};
     rlc->handle_pdu(std::move(pdu));
   }
 
@@ -1323,12 +1334,12 @@ TEST_P(rlc_rx_am_test_with_limit, status_report_large_window)
     sn_state++;
 
     // Create SDU and PDUs with SDU segments
-    std::list<byte_buffer> pdu_list = {};
-    byte_buffer            sdu;
+    std::list<std::vector<uint8_t>> pdu_list = {};
+    byte_buffer                     sdu;
     ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
 
     // Push only first segment
-    byte_buffer_slice pdu = {std::move(pdu_list.front())};
+    byte_buffer_slice pdu = {pdu_list.front()};
     rlc->handle_pdu(std::move(pdu));
   }
 

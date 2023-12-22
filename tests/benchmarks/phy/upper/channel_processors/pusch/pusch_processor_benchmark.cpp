@@ -122,9 +122,9 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
-static unsigned                                     nof_pusch_decoder_threads = 8;
-static std::unique_ptr<task_worker_pool<>>          worker_pool               = nullptr;
-static std::unique_ptr<task_worker_pool_executor<>> executor                  = nullptr;
+static unsigned                                                                          nof_pusch_decoder_threads = 8;
+static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
+static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -446,9 +446,9 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create
   if (nof_pusch_decoder_threads != 0) {
-    worker_pool = std::make_unique<task_worker_pool<>>(
-        nof_pusch_decoder_threads, 1024, "decoder", os_thread_realtime_priority::max());
-    executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+    worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
+        nof_pusch_decoder_threads, 1024, "decoder", std::chrono::microseconds{0}, os_thread_realtime_priority::max());
+    executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
   }
 
   // Create PUSCH decoder factory.
@@ -567,9 +567,11 @@ static void thread_process(pusch_processor&              proc,
 
     // Process PDU.
     if (executor) {
-      executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
-        proc.process(data, std::move(softbuffer), result_notifier, grid, config);
-      });
+      if (not executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
+            proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+          })) {
+        fmt::print("Failed to enqueue task.\n");
+      }
     } else {
       proc.process(data, std::move(softbuffer), result_notifier, grid, config);
     }
