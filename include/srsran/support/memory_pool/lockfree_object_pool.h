@@ -24,6 +24,63 @@ namespace srsran {
 
 namespace detail {
 
+class lockfree_index_stack
+{
+public:
+  using index_type = uint32_t;
+
+  static constexpr index_type npos() { return std::numeric_limits<index_type>::max(); }
+
+  lockfree_index_stack(uint32_t nof_indexes, bool start_full) :
+    top(node{start_full ? 0 : npos(), 0}), next_idx(nof_indexes, npos())
+  {
+    srsran_assert(nof_indexes > 0 and nof_indexes < npos(), "Invalid stack size={}", nof_indexes);
+
+    // Initialize the stack of next indexes like [1, 2, 3, ..., nof_indexes - 1, npos]
+    for (index_type i = 1; i < nof_indexes; ++i) {
+      next_idx[i - 1] = i;
+    }
+  }
+
+  index_type capacity() const { return next_idx.size(); }
+
+  index_type try_pop()
+  {
+    node old_top{top.load(std::memory_order_relaxed)};
+    if (old_top.index == npos()) {
+      return npos();
+    }
+    node new_top{next_idx[old_top.index], old_top.epoch + 1};
+    while (not top.compare_exchange_weak(old_top, new_top)) {
+      if (old_top.index == npos()) {
+        return npos();
+      }
+      new_top = node{next_idx[old_top.index], old_top.epoch + 1};
+    }
+    return old_top.index;
+  }
+
+  void push(index_type index)
+  {
+    node old_top{top.load(std::memory_order_relaxed)};
+    next_idx[index] = old_top.index;
+    node new_top{index, old_top.epoch + 1};
+    while (not top.compare_exchange_weak(old_top, new_top)) {
+      new_top.epoch   = old_top.epoch + 1;
+      next_idx[index] = old_top.index;
+    }
+  }
+
+private:
+  struct node {
+    index_type index;
+    index_type epoch;
+  };
+
+  std::atomic<node>       top;
+  std::vector<index_type> next_idx;
+};
+
 class lockfree_stack_node
 {
 public:
@@ -87,56 +144,49 @@ private:
 template <typename T>
 class lockfree_bounded_stack
 {
-  struct node : public detail::lockfree_stack_node {
-    T obj;
+  using index_type = detail::lockfree_index_stack::index_type;
 
-    node() = default;
-    node(const T& obj_) : obj(obj_) {}
-  };
+  static constexpr index_type npos() { return detail::lockfree_index_stack::npos(); }
 
 public:
-  lockfree_bounded_stack(size_t capacity) : mem_chunk(capacity), free_list(mem_chunk.data()), stack(mem_chunk.data())
-  {
-    srsran_assert(capacity > 0, "Invalid stack capacity={}", capacity);
-    for (unsigned i = 0; i != capacity; ++i) {
-      free_list.push(&mem_chunk[i]);
-    }
-  }
+  lockfree_bounded_stack(unsigned capacity) : objects(capacity), free_list(capacity, true), stack(capacity, false) {}
 
-  void push(const T& item)
+  bool push(const T& item)
   {
-    detail::lockfree_stack_node* popped_node;
-    bool                         success = free_list.pop(popped_node);
-    if (not success) {
-      return;
+    index_type popped_idx = free_list.try_pop();
+    if (popped_idx == npos()) {
+      // Capacity exceeded.
+      return false;
     }
-    //    srsran_assert(success, "capacity exceeded");
-    static_cast<node*>(popped_node)->obj = item;
-    stack.push(popped_node);
+    objects[popped_idx] = item;
+    stack.push(popped_idx);
     sz_estim.fetch_add(1, std::memory_order_relaxed);
+    return true;
   }
 
-  bool pop(T& item)
+  bool pop(T& popped_item)
   {
-    detail::lockfree_stack_node* popped_node;
-    if (stack.pop(popped_node)) {
-      item = static_cast<node*>(popped_node)->obj;
-      free_list.push(popped_node);
-      sz_estim.fetch_sub(1, std::memory_order_relaxed);
-      return true;
+    index_type popped_idx = stack.try_pop();
+    if (popped_idx == npos()) {
+      return false;
     }
-    return false;
+    popped_item = std::move(objects[popped_idx]);
+    free_list.push(popped_idx);
+    sz_estim.fetch_sub(1, std::memory_order_relaxed);
+    return true;
   }
 
-  size_t size() const { return sz_estim; }
+  size_t size() const { return sz_estim.load(std::memory_order_relaxed); }
+
+  size_t capacity() const { return objects.size(); }
 
 private:
-  std::vector<node> mem_chunk;
+  std::vector<T> objects;
 
-  detail::lockfree_offset_stack free_list;
-  detail::lockfree_offset_stack stack;
+  detail::lockfree_index_stack free_list;
+  detail::lockfree_index_stack stack;
 
-  std::atomic<size_t> sz_estim{0};
+  std::atomic<index_type> sz_estim{0};
 };
 
 template <typename T>

@@ -46,3 +46,37 @@ TEST(lockfree_object_pool_test, pool_allocates_elements_with_initialized_value)
   ASSERT_EQ(*ptr, val);
   ASSERT_EQ(pool.estimated_size(), nof_objs - 1);
 }
+
+TEST(lockfree_bounded_stack_test, test_initialization)
+{
+  lockfree_bounded_stack<int> stack{10};
+  ASSERT_EQ(stack.capacity(), 10);
+  ASSERT_EQ(stack.size(), 0);
+}
+
+TEST(lockfree_bounded_stack_test, test_push_pop_one_element)
+{
+  lockfree_bounded_stack<int> stack{10};
+
+  stack.push(5);
+  ASSERT_EQ(stack.size(), 1);
+  ASSERT_EQ(stack.capacity(), 10);
+
+  int val;
+  ASSERT_TRUE(stack.pop(val));
+  ASSERT_EQ(val, 5);
+  ASSERT_EQ(stack.size(), 0);
+  ASSERT_EQ(stack.capacity(), 10);
+}
+
+TEST(lockfree_bounded_stack_test, test_pop_empty)
+{
+  lockfree_bounded_stack<int> stack{10};
+
+  int val = 3;
+  ASSERT_FALSE(stack.pop(val));
+  stack.push(val);
+  ASSERT_TRUE(stack.pop(val));
+  ASSERT_EQ(val, 3);
+  ASSERT_FALSE(stack.pop(val));
+}

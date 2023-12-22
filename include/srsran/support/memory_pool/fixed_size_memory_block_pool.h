@@ -88,7 +88,7 @@ class fixed_size_memory_block_pool
       for (unsigned j = 0; j != block_batch_size; ++j) {
         batch.push(allocated_memory.data() + (i * block_batch_size + j) * mblock_size);
       }
-      central_mem_cache.push(batch);
+      report_fatal_error_if_not(central_mem_cache.push(batch), "Failed to push batch to central cache");
     }
   }
 
@@ -179,7 +179,8 @@ public:
       // Local cache is full. Rebalance by sending batches of blocks to central cache.
       // We leave one batch in the local cache.
       for (unsigned i = 0; i != max_local_batches - 1; ++i) {
-        central_mem_cache.push(w_ctx->local_cache.back());
+        report_fatal_error_if_not(central_mem_cache.push(w_ctx->local_cache.back()),
+                                  "Failed to push batch to central cache");
         w_ctx->local_cache.pop_back();
       }
     }
@@ -209,6 +210,11 @@ private:
     {
       pool_type& pool = pool_type::get_instance();
       while (not local_cache.empty()) {
+        if (local_cache.back().size() < block_batch_size) {
+          // for now we do not handle this situation.
+          local_cache.pop_back();
+          continue;
+        }
         pool.central_mem_cache.push(local_cache.back());
         local_cache.pop_back();
       }
