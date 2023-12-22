@@ -165,7 +165,9 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   for (unsigned i = 0; i != nof_up_strands; ++i) {
     cu_up_strands.push_back(
         strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                {fmt::format("ue_up_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                {fmt::format("ue_up_ul_exec#{}", i),
+                 concurrent_queue_policy::lockfree_mpmc,
+                 appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
                 {fmt::format("ue_up_dl_exec#{}", i),
                  concurrent_queue_policy::lockfree_spsc,
                  appcfg.cu_up_cfg.gtpu_queue_size}}});
