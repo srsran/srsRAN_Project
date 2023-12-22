@@ -15,7 +15,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
-#include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
@@ -62,7 +62,7 @@ public:
     decoder_pool(std::move(decoder_pool_)),
     crc_set(std::move(crc_set_)),
     executor(executor_),
-    softbits_buffer(pdsch_constants::CODEWORD_MAX_SIZE.value()),
+    softbits_buffer(pusch_constants::CODEWORD_MAX_SIZE.value()),
     cb_stats(MAX_NOF_SEGMENTS)
   {
     srsran_assert(segmenter, "Invalid segmenter.");

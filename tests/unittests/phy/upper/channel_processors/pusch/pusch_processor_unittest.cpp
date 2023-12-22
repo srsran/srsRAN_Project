@@ -109,6 +109,7 @@ protected:
     proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
     proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = MAX_PORTS;
     proc_factory_config.ch_estimate_dimensions.nof_tx_layers = 1;
+    proc_factory_config.max_nof_concurrent_threads           = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(proc_factory_config);
 
@@ -344,7 +345,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Calculate the number of LLR.
   unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
   demodulator_spy->set_codeword_size(nof_codeword_llr);
-  decoder_spy->set_codeword_length(ulsch_info.nof_ul_sch_bits.value());
   demux_spy->set_ulsch_config(nof_codeword_llr,
                               ulsch_info.nof_ul_sch_bits.value(),
                               ulsch_info.nof_harq_ack_bits.value(),

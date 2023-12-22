@@ -21,16 +21,10 @@ public:
 
   pusch_decoder_buffer_spy(unsigned buffer_size) { data.resize(buffer_size); }
 
-  void resize(unsigned buffer_size) { data.resize(buffer_size); }
-
   // See interface for documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override
   {
-    srsran_assert(data.size() >= block_size + count,
-                  "Block size (i.e., {}) plus the current number of bits (i.e., {}) exceeds the data size (i.e., {}).",
-                  block_size,
-                  count,
-                  data.size());
+    data.resize(block_size + count);
     return span<log_likelihood_ratio>(data).subspan(count, block_size);
   }
 

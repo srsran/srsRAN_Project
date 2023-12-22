@@ -55,6 +55,8 @@ public:
     unsigned nof_tx_layers = 0;
   };
 
+  channel_estimate(channel_estimate&& other) = default;
+
   /// Default constructor: reserves internal memory.
   channel_estimate() : max_dims(), nof_subcarriers(0), nof_symbols(0), nof_rx_ports(0), nof_tx_layers(0)
   {

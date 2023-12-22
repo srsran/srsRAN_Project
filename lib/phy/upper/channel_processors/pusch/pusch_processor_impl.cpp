@@ -170,25 +170,15 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
   return true;
 }
 
-pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config) :
-  estimator(std::move(config.estimator)),
-  demodulator(std::move(config.demodulator)),
-  demultiplex(std::move(config.demultiplex)),
+pusch_processor_impl::pusch_processor_impl(configuration& config) :
+  thread_local_dependencies_pool(std::move(config.thread_local_dependencies_pool)),
   decoder(std::move(config.decoder)),
-  uci_dec(std::move(config.uci_dec)),
-  harq_ack_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value()),
-  csi_part1_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value()),
-  csi_part2_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value()),
-  ch_estimate(config.ce_dims),
   dec_nof_iterations(config.dec_nof_iterations),
   dec_enable_early_stop(config.dec_enable_early_stop),
   csi_sinr_calc_method(config.csi_sinr_calc_method)
 {
-  srsran_assert(estimator, "Invalid estimator.");
-  srsran_assert(demodulator, "Invalid demodulator.");
-  srsran_assert(demultiplex, "Invalid demultiplex.");
+  srsran_assert(thread_local_dependencies_pool, "Invalid dependency pool.");
   srsran_assert(decoder, "Invalid decoder.");
-  srsran_assert(uci_dec, "Invalid UCI decoder.");
   srsran_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
 
@@ -200,7 +190,14 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 {
   using namespace units::literals;
 
-  assert_pdu(pdu);
+  // Get thread local dependencies.
+  concurrent_dependencies& depedencies = thread_local_dependencies_pool->get();
+
+  // Get channel estimates.
+  channel_estimate& ch_estimate = depedencies.get_channel_estimate();
+
+  // Assert PDU.
+  assert_pdu(pdu, ch_estimate);
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
@@ -242,7 +239,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.nof_symbols   = pdu.nof_symbols;
   ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
-  estimator->estimate(ch_estimate, grid, ch_est_config);
+  depedencies.get_estimator().estimate(ch_estimate, grid, ch_est_config);
 
   // Handles the direct current if it is present.
   if (pdu.dc_position.has_value()) {
@@ -290,8 +287,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
   // Prepare CSI Part 1 feedback.
-  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(
-      csi_part2_decoder, *demultiplex, pdu.mcs_descr.modulation, pdu.uci.csi_part2_size, ulsch_config);
+  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(depedencies.get_csi_part2_decoder(),
+                                                             depedencies.get_demultiplex(),
+                                                             pdu.mcs_descr.modulation,
+                                                             pdu.uci.csi_part2_size,
+                                                             ulsch_config);
 
   // Prepare notifiers.
   notifier_adaptor.new_transmission(notifier, csi_part1_feedback, csi);
@@ -316,19 +316,19 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Prepares HARQ-ACK notifier and buffer.
   if (pdu.uci.nof_harq_ack != 0) {
-    harq_ack_buffer = harq_ack_decoder.new_transmission(
+    harq_ack_buffer = depedencies.get_harq_ack_decoder().new_transmission(
         pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
   }
 
   // Prepares CSI Part 1 notifier and buffer.
   if (pdu.uci.nof_csi_part1 != 0) {
-    csi_part1_buffer = csi_part1_decoder.new_transmission(
+    csi_part1_buffer = depedencies.get_csi_part1_decoder().new_transmission(
         pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
   }
 
   // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
   pusch_codeword_buffer& demodulator_buffer =
-      demultiplex->demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
+      depedencies.get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -343,11 +343,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
-  demodulator->demodulate(
+  depedencies.get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
 }
 
-void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
+void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu, const channel_estimate& ch_estimate) const
 {
   // Make sure the configuration is supported.
   srsran_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.capacity().nof_prb,

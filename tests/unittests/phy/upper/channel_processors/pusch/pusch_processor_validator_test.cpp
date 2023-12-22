@@ -242,6 +242,7 @@ protected:
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = 1;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = 1;
+    pusch_proc_factory_config.max_nof_concurrent_threads           = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(pusch_proc_factory_config);
     ASSERT_NE(pusch_proc_factory, nullptr);

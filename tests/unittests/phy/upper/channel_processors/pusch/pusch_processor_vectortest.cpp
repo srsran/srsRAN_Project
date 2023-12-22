@@ -139,7 +139,8 @@ protected:
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = context.rg_nof_symb;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = context.config.rx_ports.size();
     pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = context.config.nof_tx_layers;
-    pusch_proc_factory_config.csi_sinr_calc_method = channel_state_information::sinr_type::post_equalization;
+    pusch_proc_factory_config.csi_sinr_calc_method       = channel_state_information::sinr_type::post_equalization;
+    pusch_proc_factory_config.max_nof_concurrent_threads = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(pusch_proc_factory_config);
     ASSERT_NE(pusch_proc_factory, nullptr);

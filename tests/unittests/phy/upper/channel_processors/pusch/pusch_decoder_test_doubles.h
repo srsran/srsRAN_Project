@@ -33,8 +33,6 @@ public:
 
   ~pusch_decoder_spy() { srsran_assert(entries.empty(), "Entries must be cleared."); }
 
-  void set_codeword_length(unsigned codeword_length_) { codeword_length = codeword_length_; }
-
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
                                  unique_rx_softbuffer    softbuffer,
                                  pusch_decoder_notifier& notifier,
@@ -45,9 +43,8 @@ public:
     entry.transport_block = transport_block;
     entry.stats           = {};
     entry.softbuffer      = std::move(softbuffer);
-    entry.input.resize(codeword_length);
-    entry.notifier = &notifier;
-    entry.config   = cfg;
+    entry.notifier        = &notifier;
+    entry.config          = cfg;
 
     entry.stats.tb_crc_ok            = true;
     entry.stats.nof_codeblocks_total = 123;
@@ -62,7 +59,6 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  unsigned             codeword_length;
   std::vector<entry_t> entries;
 };
 
