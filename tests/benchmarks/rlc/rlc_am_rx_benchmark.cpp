@@ -262,7 +262,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params);
 
   // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(524288);
+  init_byte_buffer_segment_pool(524288, 1024);
 
   {
     benchmark_rx_pdu(params, rx_order::in_order);
