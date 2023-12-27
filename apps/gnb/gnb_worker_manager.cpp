@@ -259,6 +259,8 @@ void worker_manager::create_du_low_executors(bool                       is_block
 {
   using namespace execution_config_helper;
 
+  du_low_dl_executors.resize(cells_cfg.size());
+
   if (is_blocking_mode_active) {
     // Create a single worker, shared by the whole PHY.
     create_prio_worker("phy_worker",
