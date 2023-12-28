@@ -325,9 +325,8 @@ void worker_manager::create_du_low_executors(bool                       is_block
                          os_thread_realtime_priority::max() - 10,
                          dl_cpu_masks);
 
-      du_low_dl_executors.emplace_back();
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
-        du_low_dl_executors.back().emplace_back(exec_mng.executors().at(exec_name));
+        du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at(exec_name));
       }
       upper_pdsch_exec.push_back(exec_mng.executors().at(exec_name));
     }
