@@ -827,7 +827,7 @@ struct expert_upper_phy_appconfig {
   /// -\c channel_estimator: SINR is calculated by the channel estimator using the DM-RS.
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
-  std::string pusch_sinr_calc_method = "evm";
+  std::string pusch_sinr_calc_method = "post_equalization";
   /// \brief Request headroom size in slots.
   ///
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
