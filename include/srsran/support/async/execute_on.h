@@ -108,12 +108,13 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
 
     void await_suspend(coro_handle<> suspending_coro)
     {
-      continuation = suspending_coro;
-      dispatch_exec.execute([this]() mutable {
-        result          = task();
-        bool dispatched = resume_exec.execute([this]() { continuation.resume(); });
-        srsran_assert(dispatched, "Failed to dispatch task");
+      continuation     = suspending_coro;
+      bool dispatched1 = dispatch_exec.execute([this]() mutable {
+        result           = task();
+        bool dispatched2 = resume_exec.execute([this]() { continuation.resume(); });
+        srsran_assert(dispatched2, "Failed to dispatch task");
       });
+      srsran_assert(dispatched1, "Failed to dispatch task");
     }
 
     ResultType await_resume() { return result; }

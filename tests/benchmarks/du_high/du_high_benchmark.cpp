@@ -20,6 +20,7 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/event_tracing.h"
+#include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 
@@ -34,10 +35,16 @@ struct bench_params {
   unsigned nof_ues = 1;
   /// \brief Set duplex mode (FDD or TDD) to use for benchmark.
   duplex_mode dplx_mode = duplex_mode::FDD;
-  /// \brief Set size of the DL buffer status to push for DL Tx. Setting this value to 0 will disable DL Tx.
-  unsigned dl_buffer_state_bytes = 1500;
+  /// \brief Set the number of bytes pushed to the DU DL F1-U interface per slot.
+  ///
+  /// Setting this value to 0 will disable DL Tx.
+  /// If the air interface cannot keep up with the DL F1-U PDU rate, the F1-U will be throttled, to avoid depleting
+  /// the buffer pool.
+  unsigned dl_bytes_per_slot = 1500;
   /// \brief Set size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx.
   unsigned ul_bsr_bytes = 0;
+  /// \brief Logical cores used by the "du_cell" thread.
+  std::vector<unsigned> du_cell_cores = {0, 1};
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -48,19 +55,20 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
   fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
-  fmt::print(
-      "\t-d Size of the DL buffer status to push for DL Tx. Setting this value to 0 will disable DL Tx. [Default {}]\n",
-      params.dl_buffer_state_bytes);
+  fmt::print("\t-d Number of bytes pushed to the DU DL F1-U interface every slot. Setting this value to 0 will "
+             "disable DL Tx. [Default {}]\n",
+             params.dl_bytes_per_slot);
   fmt::print("\t-u Size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx. "
              "[Default {}]\n",
              params.ul_bsr_bytes);
+  fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default 0,1]\n");
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:c:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -80,11 +88,24 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       }
       case 'd':
-        params.dl_buffer_state_bytes = std::strtol(optarg, nullptr, 10);
+        params.dl_bytes_per_slot = std::strtol(optarg, nullptr, 10);
         break;
       case 'u':
         params.ul_bsr_bytes = std::strtol(optarg, nullptr, 10);
         break;
+      case 'c': {
+        std::string optstr{optarg};
+        if (optstr.find(",") != std::string::npos) {
+          size_t pos = optstr.find(",");
+          while (pos != std::string::npos) {
+            params.du_cell_cores.push_back(std::strtol(optstr.substr(0, pos).c_str(), nullptr, 10));
+            optstr = optstr.substr(pos + 1);
+            pos    = optstr.find(",");
+          }
+        } else {
+          params.du_cell_cores = {(unsigned)std::strtol(optstr.c_str(), nullptr, 10)};
+        }
+      } break;
       case 'h':
       default:
         usage(argv[0], params);
@@ -92,6 +113,21 @@ static void parse_args(int argc, char** argv, bench_params& params)
     }
   }
 }
+
+class dummy_metrics_handler : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  {
+    unsigned sum_dl_bs = 0;
+    for (const auto& ue : ue_metrics) {
+      sum_dl_bs += ue.dl_bs;
+    }
+    tot_dl_bs.store(sum_dl_bs, std::memory_order_relaxed);
+  }
+
+  std::atomic<unsigned> tot_dl_bs{0};
+};
 
 /// \brief Simulator of the CU-CP from the perspective of the DU. This class should reply to the F1AP messages
 /// that the DU sends in order for the DU normal operation to proceed.
@@ -232,24 +268,70 @@ public:
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.
 struct du_high_single_cell_worker_manager {
-  static const uint32_t task_worker_queue_size = 10000;
+  using ue_worker_type =
+      priority_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc>;
+  static const uint32_t task_worker_queue_size = 100000;
+
+  explicit du_high_single_cell_worker_manager(span<unsigned> du_cell_cores) :
+    ctrl_worker("du_ctrl",
+                task_worker_queue_size,
+                os_thread_realtime_priority::max() - 1,
+                get_other_affinity_mask(du_cell_cores)),
+    cell_worker("du_cell",
+                task_worker_queue_size,
+                os_thread_realtime_priority::max(),
+                get_du_cell_affinity_mask(du_cell_cores)),
+    ue_worker("du_ue",
+              {task_worker_queue_size, task_worker_queue_size},
+              std::chrono::microseconds{500},
+              os_thread_realtime_priority::max() - 2,
+              get_other_affinity_mask(du_cell_cores)),
+    ue_ctrl_exec(make_priority_task_worker_executor<enqueue_priority::max>(ue_worker)),
+    dl_exec(make_priority_task_worker_executor<enqueue_priority::max - 1>(ue_worker)),
+    ul_exec(make_priority_task_worker_executor<enqueue_priority::max>(ue_worker))
+  {
+  }
 
   void stop()
   {
     ctrl_worker.stop();
-    dl_worker.stop();
-    ul_worker.stop();
+    cell_worker.stop();
+    ue_worker.stop();
   }
 
-  task_worker                  ctrl_worker{"CTRL", task_worker_queue_size};
-  task_worker                  dl_worker{"DU-DL#0", task_worker_queue_size};
-  task_worker                  ul_worker{"DU-UL#0", task_worker_queue_size};
-  task_worker_executor         ctrl_exec{ctrl_worker};
-  task_worker_executor         dl_exec{dl_worker};
-  task_worker_executor         ul_exec{ul_worker};
-  du_high_executor_mapper_impl du_high_exec_mapper{
-      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&dl_exec}),
-      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ul_exec}),
+  static os_sched_affinity_bitmask get_du_cell_affinity_mask(span<unsigned> du_cell_cores)
+  {
+    os_sched_affinity_bitmask mask;
+    for (auto core : du_cell_cores) {
+      mask.set(core);
+    }
+    return mask;
+  }
+
+  static os_sched_affinity_bitmask get_other_affinity_mask(span<unsigned> du_cell_cores)
+  {
+    os_sched_affinity_bitmask mask;
+    for (unsigned i = 0; i != mask.size(); ++i) {
+      if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
+        mask.set(i);
+      }
+    }
+    return mask;
+  }
+
+  task_worker                                                           ctrl_worker;
+  task_worker                                                           cell_worker;
+  ue_worker_type                                                        ue_worker;
+  task_worker_executor                                                  ctrl_exec{ctrl_worker};
+  task_worker_executor                                                  cell_exec{cell_worker};
+  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> ue_ctrl_exec;
+  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> dl_exec;
+  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> ul_exec;
+  du_high_executor_mapper_impl                                          du_high_exec_mapper{
+      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_exec}),
+      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_ctrl_exec},
+                                                 std::initializer_list<task_executor*>{&ul_exec},
+                                                 std::initializer_list<task_executor*>{&dl_exec}),
       ctrl_exec,
       ctrl_exec,
       ctrl_exec};
@@ -322,11 +404,18 @@ public:
 /// \brief TestBench for the DU-high.
 class du_high_bench
 {
+  static const unsigned DL_PDU_SIZE = 1500;
+
 public:
   du_high_bench(unsigned                          dl_buffer_state_bytes_,
                 unsigned                          ul_bsr_bytes_,
+                span<unsigned>                    du_cell_cores,
                 const cell_config_builder_params& builder_params = {}) :
-    params(builder_params), dl_buffer_state_bytes(dl_buffer_state_bytes_), ul_bsr_bytes(ul_bsr_bytes_)
+    params(builder_params),
+    dl_buffer_state_bytes(dl_buffer_state_bytes_),
+    nof_dl_pdus_per_slot(divide_ceil(dl_buffer_state_bytes, DL_PDU_SIZE)),
+    workers(du_cell_cores),
+    ul_bsr_bytes(ul_bsr_bytes_)
   {
     // Set slot point based on the SCS.
     next_sl_tx = slot_point{to_numerology_value(params.scs_common), 0};
@@ -342,19 +431,20 @@ public:
     bsr_mac_subpdu.append(lbsr_buff_sz);
 
     // Instantiate a DU-high object.
-    cfg.gnb_du_id    = 1;
-    cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
-    cfg.du_bind_addr = fmt::format("127.0.0.{}", cfg.gnb_du_id);
-    cfg.exec_mapper  = &workers.du_high_exec_mapper;
-    cfg.f1c_client   = &sim_cu_cp;
-    cfg.f1u_gw       = &sim_cu_up;
-    cfg.phy_adapter  = &sim_phy;
-    cfg.timers       = &timers;
-    cfg.cells        = {config_helpers::make_default_du_cell_config(params)};
-    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
-    cfg.mac_p        = &mac_pcap;
-    cfg.rlc_p        = &rlc_pcap;
+    cfg.gnb_du_id                 = 1;
+    cfg.gnb_du_name               = fmt::format("srsgnb{}", cfg.gnb_du_id);
+    cfg.du_bind_addr              = fmt::format("127.0.0.{}", cfg.gnb_du_id);
+    cfg.exec_mapper               = &workers.du_high_exec_mapper;
+    cfg.f1c_client                = &sim_cu_cp;
+    cfg.f1u_gw                    = &sim_cu_up;
+    cfg.phy_adapter               = &sim_phy;
+    cfg.timers                    = &timers;
+    cfg.cells                     = {config_helpers::make_default_du_cell_config(params)};
+    cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
+    cfg.qos                       = config_helpers::make_default_du_qos_config_list(1000);
+    cfg.mac_p                     = &mac_pcap;
+    cfg.rlc_p                     = &rlc_pcap;
+    cfg.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.cells[0].pucch_cfg.nof_sr_resources             = 30;
@@ -368,7 +458,7 @@ public:
     du_hi = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
-    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(dl_buffer_state_bytes));
+    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(DL_PDU_SIZE));
     // Create MAC PDU.
     mac_pdu.append(
         test_rgen::random_vector<uint8_t>(buff_size_field_to_bytes(lbsr_buff_sz, srsran::bsr_format::LONG_BSR)));
@@ -499,14 +589,27 @@ public:
   // \brief Push a DL PDUs to DU-high via F1-U interface.
   void push_pdcp_pdus()
   {
-    // Early return.
+    static uint32_t pdcp_sn = 0;
+
     if (dl_buffer_state_bytes == 0) {
+      // Early return.
       return;
     }
-    for (const auto& du_notif : sim_cu_up.du_notif_list) {
-      for (unsigned i = 0; i != 10; ++i) {
-        du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0});
+    if (metrics_handler.tot_dl_bs > 1e5) {
+      // Saturation of the DU DL detected. We throttle the F1-U interface to avoid depleting the byte buffer pool.
+      return;
+    }
+    while (not workers.dl_exec.defer([this]() {
+      for (const auto& du_notif : sim_cu_up.du_notif_list) {
+        for (unsigned i = 0; i != nof_dl_pdus_per_slot; ++i) {
+          pdcp_sn = (pdcp_sn + 1) % (1U << 18U);
+          du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.deep_copy(), .pdcp_sn = pdcp_sn});
+        }
       }
+    })) {
+      // keep trying to push new PDUs.
+      // This also serves as a way to slow down the slot indication rate, to better capture a RT deployment.
+      std::this_thread::sleep_for(std::chrono::microseconds{500});
     }
   }
 
@@ -715,9 +818,15 @@ public:
     }
   }
 
-  unsigned                           tx_rx_delay = 4;
-  cell_config_builder_params         params;
-  du_high_configuration              cfg{};
+  const unsigned             tx_rx_delay = 4;
+  cell_config_builder_params params;
+  du_high_configuration      cfg{};
+  /// Size of the DL buffer status to push for DL Tx.
+  unsigned       dl_buffer_state_bytes;
+  const unsigned nof_dl_pdus_per_slot;
+
+  srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_metrics_handler              metrics_handler;
   cu_cp_simulator                    sim_cu_cp;
   cu_up_simulator                    sim_cu_up;
   phy_simulator                      sim_phy;
@@ -752,8 +861,6 @@ public:
   // NOTE: LBSR buffer size is populated in the constructor.
   byte_buffer bsr_mac_subpdu{0x3e, 0x02, 0x02};
 
-  /// Size of the DL buffer status to push for DL Tx.
-  unsigned dl_buffer_state_bytes;
   /// Size of the UL Buffer status report to push for UL Tx.
   unsigned ul_bsr_bytes;
 };
@@ -765,7 +872,7 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
   params.scs_common       = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
   params.dl_arfcn         = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
   params.band             = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-  params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
+  params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz100;
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
   static const uint8_t                              ss0_idx = 0;
@@ -797,15 +904,21 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
 }
 
 /// \brief Benchmark DU-high with DL and/or UL only traffic using an RLC UM bearer.
-void benchmark_dl_ul_only_rlc_um(benchmarker& bm,
-                                 unsigned     nof_ues,
-                                 duplex_mode  dplx_mode,
-                                 unsigned     dl_buffer_state_bytes,
-                                 unsigned     ul_bsr_bytes)
+void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
+                                 unsigned       nof_ues,
+                                 duplex_mode    dplx_mode,
+                                 unsigned       dl_buffer_state_bytes,
+                                 unsigned       ul_bsr_bytes,
+                                 span<unsigned> du_cell_cores)
 {
-  auto                benchname = fmt::format("DL and/or UL, {} UE, RLC UM", nof_ues);
+  auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
+                               dl_buffer_state_bytes > 0 ? "DL" : "",
+                               std::min(dl_buffer_state_bytes, ul_bsr_bytes) > 0 ? "+" : "",
+                               ul_bsr_bytes > 0 ? "UL" : "",
+                               nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
-  du_high_bench       bench{dl_buffer_state_bytes, ul_bsr_bytes, generate_custom_cell_config_builder_params(dplx_mode)};
+  du_high_bench       bench{
+      dl_buffer_state_bytes, ul_bsr_bytes, du_cell_cores, generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
   }
@@ -831,7 +944,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker& bm,
   srslog::flush();
 
   const unsigned sim_time_msec = bench.slot_count / get_nof_slots_per_subframe(bench.cfg.cells[0].scs_common);
-  fmt::print("Stats: slots={}, #PDSCHs={}, dl_bitrate={:.2} Mbps, #PUSCHs={}, ul_bitrate={:.2} Mbps\n",
+  fmt::print("\nStats: slots={}, #PDSCHs={}, dl_bitrate={:.3} Mbps, #PUSCHs={}, ul_bitrate={:.3} Mbps\n",
              bench.slot_count,
              bench.sim_phy.nof_dl_grants,
              bench.sim_phy.nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3),
@@ -841,10 +954,11 @@ void benchmark_dl_ul_only_rlc_um(benchmarker& bm,
 
 int main(int argc, char** argv)
 {
-  static const std::size_t byte_buffer_nof_segments = 1048576;
-  static const std::size_t byte_buffer_segment_size = 1024;
+  static const std::size_t byte_buffer_nof_segments = 1U << 18U;
+  static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::warning);
@@ -864,7 +978,8 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_dl_ul_only_rlc_um(bm, params.nof_ues, params.dplx_mode, params.dl_buffer_state_bytes, params.ul_bsr_bytes);
+  benchmark_dl_ul_only_rlc_um(
+      bm, params.nof_ues, params.dplx_mode, params.dl_bytes_per_slot, params.ul_bsr_bytes, params.du_cell_cores);
 
   // Output results.
   bm.print_percentiles_time();

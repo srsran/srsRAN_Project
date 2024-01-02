@@ -129,7 +129,7 @@ public:
 
   general_task_worker_executor(general_task_worker<QueuePolicy, WaitPolicy>& worker_) : worker(&worker_) {}
 
-  bool execute(unique_task task) override
+  SRSRAN_NODISCARD bool execute(unique_task task) override
   {
     if (can_run_task_inline()) {
       // Same thread. Run task right away.
@@ -139,7 +139,7 @@ public:
     return defer(std::move(task));
   }
 
-  bool defer(unique_task task) override { return worker->push_task(std::move(task)); }
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return worker->push_task(std::move(task)); }
 
   /// Determine whether the caller is in the same thread as the worker this executor adapts.
   bool can_run_task_inline() const { return worker->get_id() == std::this_thread::get_id(); }
