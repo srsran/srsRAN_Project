@@ -156,9 +156,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
-                   u.ue_index,
-                   u.crnti);
+    logger.info("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
+                u.ue_index,
+                u.crnti);
     return alloc_outcome::skip_slot;
   }
 

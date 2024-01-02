@@ -126,6 +126,8 @@ public:
     tot_dl_bs.store(sum_dl_bs, std::memory_order_relaxed);
   }
 
+  // This metric is used by benchmark to determine whether to push more traffic to DU F1-U. Therefore, it needs to be
+  // protected.
   std::atomic<unsigned> tot_dl_bs{0};
 };
 
@@ -337,6 +339,31 @@ struct du_high_single_cell_worker_manager {
       ctrl_exec};
 };
 
+/// \brief Metrics collected from the results passed by the MAC to the lower layers.
+struct phy_metrics {
+  unsigned slot_count    = 0;
+  unsigned slot_dl_count = 0;
+  unsigned nof_dl_grants = 0;
+  uint64_t nof_dl_bytes  = 0;
+  unsigned slot_ul_count = 0;
+  unsigned nof_ul_grants = 0;
+  uint64_t nof_ul_bytes  = 0;
+
+  unsigned total_subframes_elapsed(subcarrier_spacing scs) { return slot_count / get_nof_slots_per_subframe(scs); }
+
+  double dl_Mbps(subcarrier_spacing scs)
+  {
+    unsigned sim_time_msec = total_subframes_elapsed(scs);
+    return nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3);
+  }
+
+  double ul_Mbps(subcarrier_spacing scs)
+  {
+    unsigned sim_time_msec = total_subframes_elapsed(scs);
+    return nof_ul_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3);
+  }
+};
+
 /// \brief Emulator of the PHY, FAPI and UE from the perspective of the DU-high. This class should be able to provide
 /// the required UE signalling (e.g. HARQ ACKs) for the DU-high normal operation.
 class phy_simulator : public mac_result_notifier, public mac_cell_result_notifier
@@ -350,14 +377,13 @@ public:
 
   mac_dl_sched_result slot_dl_result;
   mac_ul_sched_result slot_ul_result;
+  mac_dl_data_result  slot_dl_data_result;
 
-  unsigned nof_dl_grants = 0;
-  uint64_t nof_dl_bytes  = 0;
+  phy_metrics metrics;
 
-  unsigned nof_ul_grants = 0;
-  uint64_t nof_ul_bytes  = 0;
+  void reset_metrics() { metrics = {}; }
 
-  void clear_previous_scheduler_results()
+  void new_slot()
   {
     slot_dl_result.dl_res = nullptr;
     slot_ul_result.ul_res = nullptr;
@@ -368,14 +394,7 @@ public:
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { slot_dl_result = dl_res; }
 
   /// Notifies scheduled PDSCH PDUs.
-  void on_new_downlink_data(const mac_dl_data_result& dl_data) override
-  {
-    // Save the number of DL grants and bytes transmitted.
-    nof_dl_grants += dl_data.ue_pdus.size();
-    for (const auto& pdu : dl_data.ue_pdus) {
-      nof_dl_bytes += pdu.pdu.size();
-    }
-  }
+  void on_new_downlink_data(const mac_dl_data_result& dl_data) override { slot_dl_data_result = dl_data; }
 
   /// Notifies slot scheduled PUCCH/PUSCH grants.
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { slot_ul_result = ul_res; }
@@ -399,12 +418,48 @@ public:
     }
     slot_ended = false;
   }
+
+  void process_results()
+  {
+    metrics.slot_count++;
+    process_dl_results();
+    process_ul_results();
+  }
+
+private:
+  void process_dl_results()
+  {
+    if (slot_dl_result.dl_res == nullptr or slot_dl_result.dl_res->nof_dl_symbols == 0) {
+      // Early return.
+      return;
+    }
+
+    metrics.slot_dl_count++;
+    metrics.nof_dl_grants += slot_dl_data_result.ue_pdus.size();
+    for (const auto& pdu : slot_dl_data_result.ue_pdus) {
+      metrics.nof_dl_bytes += pdu.pdu.size();
+    }
+  }
+
+  void process_ul_results()
+  {
+    if (slot_ul_result.ul_res == nullptr or slot_ul_result.ul_res->nof_ul_symbols == 0) {
+      // Early return.
+      return;
+    }
+
+    metrics.slot_ul_count++;
+    metrics.nof_ul_grants += slot_ul_result.ul_res->puschs.size();
+    for (const ul_sched_info& pusch : slot_ul_result.ul_res->puschs) {
+      metrics.nof_ul_bytes += pusch.pusch_cfg.tb_size_bytes;
+    }
+  }
 };
 
 /// \brief TestBench for the DU-high.
 class du_high_bench
 {
-  static const unsigned DL_PDU_SIZE = 1500;
+  static const unsigned MAX_DL_PDU_SIZE = 1500;
 
 public:
   du_high_bench(unsigned                          dl_buffer_state_bytes_,
@@ -413,7 +468,6 @@ public:
                 const cell_config_builder_params& builder_params = {}) :
     params(builder_params),
     dl_buffer_state_bytes(dl_buffer_state_bytes_),
-    nof_dl_pdus_per_slot(divide_ceil(dl_buffer_state_bytes, DL_PDU_SIZE)),
     workers(du_cell_cores),
     ul_bsr_bytes(ul_bsr_bytes_)
   {
@@ -458,7 +512,7 @@ public:
     du_hi = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
-    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(DL_PDU_SIZE));
+    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(MAX_DL_PDU_SIZE));
     // Create MAC PDU.
     mac_pdu.append(
         test_rgen::random_vector<uint8_t>(buff_size_field_to_bytes(lbsr_buff_sz, srsran::bsr_format::LONG_BSR)));
@@ -484,7 +538,7 @@ public:
   void run_slot()
   {
     // Clear results.
-    sim_phy.clear_previous_scheduler_results();
+    sim_phy.new_slot();
 
     // Push slot indication to DU-high.
     du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_sl_tx);
@@ -509,7 +563,6 @@ public:
 
   void process_results()
   {
-    // Process PUCCH grants.
     process_pucch_grants();
 
     // Send any pending UCI indications.
@@ -551,9 +604,11 @@ public:
       ++crc_ind;
     }
 
+    // Process PHY metrics.
+    sim_phy.process_results();
+
     // Advance slot.
     ++next_sl_tx;
-    ++slot_count;
   }
 
   /// \brief Add a UE to the DU-high and wait for the DU-high to finish the setup of the UE.
@@ -589,8 +644,6 @@ public:
   // \brief Push a DL PDUs to DU-high via F1-U interface.
   void push_pdcp_pdus()
   {
-    static uint32_t pdcp_sn = 0;
-
     if (dl_buffer_state_bytes == 0) {
       // Early return.
       return;
@@ -600,15 +653,34 @@ public:
       return;
     }
     while (not workers.dl_exec.defer([this]() {
-      for (const auto& du_notif : sim_cu_up.du_notif_list) {
+      static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
+      const unsigned nof_dl_pdus_per_slot = divide_ceil(dl_buffer_state_bytes, MAX_DL_PDU_SIZE);
+      const unsigned last_dl_pdu_size     = dl_buffer_state_bytes % MAX_DL_PDU_SIZE;
+
+      // Forward DL buffer occupancy updates to all bearers.
+      for (unsigned bearer_idx = 0; bearer_idx != sim_cu_up.du_notif_list.size(); ++bearer_idx) {
+        const auto& du_notif = sim_cu_up.du_notif_list[bearer_idx];
         for (unsigned i = 0; i != nof_dl_pdus_per_slot; ++i) {
-          pdcp_sn = (pdcp_sn + 1) % (1U << 18U);
-          du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.deep_copy(), .pdcp_sn = pdcp_sn});
+          // Update PDCP SN.
+          pdcp_sn_list[bearer_idx] = (pdcp_sn_list[bearer_idx] + 1) % (1U << 18U);
+          // We perform a deep-copy of the byte buffer to better simulate a real deployment, where there is stress over
+          // the byte buffer pool.
+          byte_buffer pdu_copy = pdcp_pdu.deep_copy();
+          if (pdu_copy.empty()) {
+            test_logger.warning("Byte buffer segment pool depleted");
+            return;
+          }
+          if (i == nof_dl_pdus_per_slot - 1 and last_dl_pdu_size != 0) {
+            // If it is last DL PDU.
+            pdu_copy.resize(last_dl_pdu_size);
+          }
+          du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy), .pdcp_sn = pdcp_sn_list[bearer_idx]});
         }
       }
     })) {
       // keep trying to push new PDUs.
-      // This also serves as a way to slow down the slot indication rate, to better capture a RT deployment.
+      // Sleeping in the test main thread will also slow down the rate at which slot indications reach the MAC. This
+      // is ok because in a real RT deployment the slot indication rate is limited by the radio.
       std::this_thread::sleep_for(std::chrono::microseconds{500});
     }
   }
@@ -641,8 +713,9 @@ public:
           // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
           // UL grants is 0 or scheduler stops allocating UL grants.
           if (ul_bsr_bytes != 0 and pucch.format_1.sr_bits != sr_nof_bits::no_sr and
-              (sim_phy.nof_ul_grants == 0 or
-               (sim_phy.nof_ul_grants == sim_phy.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
+              (sim_phy.metrics.nof_ul_grants == 0 or
+               (sim_phy.metrics.nof_ul_grants ==
+                sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f1.sr_info.emplace();
             f1.sr_info->sr_detected = true;
           }
@@ -659,8 +732,9 @@ public:
           // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
           // UL grants is 0 or scheduler stops allocating UL grants.
           if (ul_bsr_bytes != 0 and pucch.format_2.sr_bits != sr_nof_bits::no_sr and
-              (sim_phy.nof_ul_grants == 0 or
-               (sim_phy.nof_ul_grants == sim_phy.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
+              (sim_phy.metrics.nof_ul_grants == 0 or
+               (sim_phy.metrics.nof_ul_grants ==
+                sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f2.sr_info.emplace();
             f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
             f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
@@ -697,9 +771,6 @@ public:
       return;
     }
 
-    // Update nof. PUSCH grants scheduled.
-    sim_phy.nof_ul_grants += sim_phy.slot_ul_result.ul_res->puschs.size();
-
     // Forwards UCI to the DU-High given the scheduled PUSCHs.
     mac_uci_indication_message uci_ind{};
     uci_ind.sl_rx = sim_phy.slot_ul_result.slot;
@@ -709,9 +780,6 @@ public:
     rx_ind.cell_index = to_du_cell_index(0);
     for (const ul_sched_info& pusch : sim_phy.slot_ul_result.ul_res->puschs) {
       unsigned payload_len = std::min(mac_pdu.length(), static_cast<size_t>(pusch.pusch_cfg.tb_size_bytes));
-
-      // Update nof. UL bytes scheduled.
-      sim_phy.nof_ul_bytes += payload_len;
 
       // 1 Byte for LCID and other fields and 1/2 Byte(s) for payload length.
       static const uint8_t mac_header_size = payload_len > 255 ? 3 : 2;
@@ -822,8 +890,7 @@ public:
   cell_config_builder_params params;
   du_high_configuration      cfg{};
   /// Size of the DL buffer status to push for DL Tx.
-  unsigned       dl_buffer_state_bytes;
-  const unsigned nof_dl_pdus_per_slot;
+  unsigned dl_buffer_state_bytes;
 
   srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler              metrics_handler;
@@ -834,7 +901,6 @@ public:
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high_impl>      du_hi;
   slot_point                         next_sl_tx{0, 0};
-  unsigned                           slot_count = 0;
   null_mac_pcap                      mac_pcap;
   null_rlc_pcap                      rlc_pcap;
 
@@ -869,10 +935,11 @@ public:
 static cell_config_builder_params generate_custom_cell_config_builder_params(duplex_mode dplx_mode)
 {
   cell_config_builder_params params{};
-  params.scs_common       = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
-  params.dl_arfcn         = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
-  params.band             = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-  params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz100;
+  params.scs_common = dplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
+  params.dl_arfcn   = dplx_mode == duplex_mode::FDD ? 530000 : 520002;
+  params.band       = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  params.channel_bw_mhz =
+      dplx_mode == duplex_mode::FDD ? srsran::bs_channel_bandwidth_fr1::MHz20 : bs_channel_bandwidth_fr1::MHz100;
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
   static const uint8_t                              ss0_idx = 0;
@@ -923,6 +990,9 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
     bench.add_ue(to_du_ue_index(ue_count));
   }
 
+  // Start of the benchmark. Reset metrics collected so far.
+  bench.sim_phy.reset_metrics();
+
   // Run benchmark.
   bm.new_measure(
       benchname,
@@ -943,13 +1013,15 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
   bench.stop();
   srslog::flush();
 
-  const unsigned sim_time_msec = bench.slot_count / get_nof_slots_per_subframe(bench.cfg.cells[0].scs_common);
-  fmt::print("\nStats: slots={}, #PDSCHs={}, dl_bitrate={:.3} Mbps, #PUSCHs={}, ul_bitrate={:.3} Mbps\n",
-             bench.slot_count,
-             bench.sim_phy.nof_dl_grants,
-             bench.sim_phy.nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3),
-             bench.sim_phy.nof_ul_grants,
-             bench.sim_phy.nof_ul_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3));
+  fmt::print("\nStats: #slots={}, #PDSCHs={}, #PDSCHs-per-slot={:.3}, dl_bitrate={:.3} Mbps, #PUSCHs={}, "
+             "#PUSCHs-per-slot={:.3}, ul_bitrate={:.3} Mbps\n",
+             bench.sim_phy.metrics.slot_count,
+             bench.sim_phy.metrics.nof_dl_grants,
+             bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count,
+             bench.sim_phy.metrics.dl_Mbps(bench.cfg.cells[0].scs_common),
+             bench.sim_phy.metrics.nof_ul_grants,
+             bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count,
+             bench.sim_phy.metrics.ul_Mbps(bench.cfg.cells[0].scs_common));
 }
 
 int main(int argc, char** argv)
