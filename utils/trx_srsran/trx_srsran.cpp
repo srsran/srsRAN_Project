@@ -12,8 +12,13 @@
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
+#include <algorithm>
+#include <cstdlib>
+#include <random>
 #include <vector>
 
 extern "C" {
@@ -132,7 +137,6 @@ struct trx_srsran_session_context {
   std::array<std::string, RADIO_MAX_NOF_PORTS> tx_port_args;
   std::array<std::string, RADIO_MAX_NOF_PORTS> rx_port_args;
   std::string                                  factory_str;
-  std::string                                  radio_args;
   std::string                                  log_level;
   // Radio factory.
   std::unique_ptr<radio_factory> factory;
@@ -148,6 +152,12 @@ struct trx_srsran_session_context {
   std::array<double, TRX_MAX_RF_PORT> tx_port_channel_gain;
   std::array<double, TRX_MAX_RF_PORT> rx_port_channel_gain;
   unsigned                            tx_samples_per_packet;
+  // Transmit noise spectral density in dB/Hz if present. Otherwise, noise generator is disabled.
+  optional<float> noise_spd = nullopt;
+  // Random generator.
+  std::mt19937 rgen;
+  // Random distribution for AWGN.
+  complex_normal_distribution<> dist;
 };
 
 // Keeps persistent trx_srsran sessions.
@@ -236,6 +246,17 @@ static void trx_srsran_write2(TRXState*         s1,
 
   // Prepare buffer.
   baseband_gateway_buffer_trx buffer(psamples, count, context.tx_port_channel_count[tx_port_index]);
+
+  // Add noise if enabled.
+  if (context.noise_spd.has_value()) {
+    for (unsigned i_chan = 0, nof_channels = context.tx_port_channel_count[tx_port_index]; i_chan != nof_channels;
+         ++i_chan) {
+      span<cf_t> chan_buffer = buffer.get_channel_buffer(i_chan);
+      std::transform(chan_buffer.begin(), chan_buffer.end(), chan_buffer.begin(), [&context](cf_t sample) {
+        return sample + context.dist(context.rgen);
+      });
+    }
+  }
 
   // Transmit baseband.
   transmitter.transmit(buffer, metadata);
@@ -351,6 +372,13 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
                 p->sample_rate[0].num,
                 p->sample_rate[0].den);
   double sample_rate_Hz = static_cast<double>(p->sample_rate->num) / static_cast<double>(p->sample_rate[0].den);
+
+  // Prepare noise generator.
+  if (context.noise_spd.has_value()) {
+    // Convert to standard deviation and initialize noise generator.
+    float noise_std = std::sqrt(convert_dB_to_power(context.noise_spd.value()) * sample_rate_Hz);
+    context.dist    = complex_normal_distribution<>(0.0, noise_std);
+  }
 
   // Check that all sampling rates for all channels are the same.
   span<const TRXFraction> sampling_rates_frac =
@@ -542,13 +570,6 @@ int trx_driver_init(TRXState* s1)
     srsran_terminate("Invalid OTW format {}. Supported formats are: default, sc16.", otw_format_str);
   }
 
-  // Parse radio arguments.
-  char* radio_args_char = trx_get_param_string(s1, "args");
-  if (radio_args_char != nullptr) {
-    context.radio_args = std::string(radio_args_char);
-    free(radio_args_char);
-  }
-
   // Parse transmit ports arguments.
   for (unsigned port = 0; port < RADIO_MAX_NOF_PORTS; ++port) {
     // Create port field name.
@@ -588,6 +609,12 @@ int trx_driver_init(TRXState* s1)
     free(log_level_char);
   } else {
     context.log_level = "info";
+  }
+
+  // Parse noise spectral density.
+  double noise_spd_double;
+  if (trx_get_param_double(s1, &noise_spd_double, "noise_spd") == 0) {
+    context.noise_spd.emplace(static_cast<float>(noise_spd_double));
   }
 
   s1->opaque         = &context;
