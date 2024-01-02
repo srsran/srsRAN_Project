@@ -19,7 +19,7 @@ using namespace srsran;
 
 namespace {
 
-using SrsvecBitParams = std::tuple<unsigned>;
+using SrsvecBitParams = unsigned;
 
 class SrsvecBitFixture : public ::testing::TestWithParam<SrsvecBitParams>
 {
@@ -34,7 +34,7 @@ protected:
   {
     // Get test parameters.
     auto params = GetParam();
-    size        = std::get<0>(params);
+    size        = params;
     nbits       = size * 8;
     offset      = size;
   }
@@ -186,10 +186,11 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestCopyOffsetVector)
   for (auto read_offset : read_offsets) {
     // Determine source buffer dimensions.
     unsigned source_nof_bytes = size + divide_ceil(read_offset, 8);
+    unsigned source_nof_bits  = source_nof_bytes * 8;
 
     // Create source and destination buffers.
     std::vector<uint8_t> source(source_nof_bytes);
-    dynamic_bit_buffer   destination(nbits);
+    dynamic_bit_buffer   destination(source_nof_bits - read_offset);
 
     // Fill source buffer with random bits.
     for (auto& byte : source) {
@@ -200,7 +201,7 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestCopyOffsetVector)
     srsvec::copy_offset(destination, source, read_offset);
 
     // Assert each bit.
-    for (unsigned i_bit = 0; i_bit != nbits; ++i_bit) {
+    for (unsigned i_bit = 0; i_bit != (source_nof_bits - read_offset); ++i_bit) {
       // Source byte to extract.
       unsigned i_byte = (i_bit + read_offset) / 8;
 
@@ -304,6 +305,6 @@ TEST_P(SrsvecBitFixture, SrsvecBitTestUnpackVectorOffset)
   ASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
 }
 
-INSTANTIATE_TEST_SUITE_P(SrsvecBitTest, SrsvecBitFixture, ::testing::Combine(::testing::Values(1, 5, 7, 19, 23, 32)));
+INSTANTIATE_TEST_SUITE_P(SrsvecBitTest, SrsvecBitFixture, ::testing::Values(1, 5, 7, 19, 23, 32));
 
 } // namespace
