@@ -23,6 +23,7 @@
 #include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
+#include <pthread.h>
 
 using namespace srsran;
 using namespace srs_du;
@@ -283,16 +284,16 @@ struct du_high_single_cell_worker_manager {
   explicit du_high_single_cell_worker_manager(span<unsigned> du_cell_cores) :
     ctrl_worker("du_ctrl",
                 task_worker_queue_size,
-                os_thread_realtime_priority::max() - 1,
+                os_thread_realtime_priority::max() - 20,
                 get_other_affinity_mask(du_cell_cores)),
     cell_worker("du_cell",
                 task_worker_queue_size,
-                os_thread_realtime_priority::max(),
+                os_thread_realtime_priority::max() - 10,
                 get_du_cell_affinity_mask(du_cell_cores)),
     ue_worker("du_ue",
               {task_worker_queue_size, task_worker_queue_size},
               std::chrono::microseconds{500},
-              os_thread_realtime_priority::max() - 2,
+              os_thread_realtime_priority::max() - 50,
               get_other_affinity_mask(du_cell_cores)),
     ue_ctrl_exec(make_priority_task_worker_executor<enqueue_priority::max>(ue_worker)),
     dl_exec(make_priority_task_worker_executor<enqueue_priority::max - 1>(ue_worker)),
@@ -1036,6 +1037,36 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
              bench.sim_phy.metrics.ul_Mbps(bench.cfg.cells[0].scs_common));
 }
 
+/// \brief Configure main thread priority and affinity to avoid interference from other processes (including stressors).
+static void configure_main_thread(span<const unsigned> du_cell_cores)
+{
+  pthread_t self = pthread_self();
+
+  int prio_level = ::sched_get_priority_max(SCHED_FIFO);
+  if (prio_level == -1) {
+    fmt::print("Warning: Unable to get the max thread priority. Falling back to normal priority.");
+    return;
+  }
+  // set priority to -1 less than RT to avoid interfering with kernel.
+  ::sched_param sch{prio_level - 1};
+  if (::pthread_setschedparam(self, SCHED_FIFO, &sch)) {
+    fmt::print("Warning: Unable to set the test thread priority to max. Falling back to normal priority.");
+    return;
+  }
+
+  // Set main test thread to use same cores as du_cell.
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  for (unsigned i : du_cell_cores) {
+    CPU_SET(i, &cpuset);
+  }
+  int ret;
+  if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
+    fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
+    return;
+  }
+}
+
 int main(int argc, char** argv)
 {
   static const std::size_t byte_buffer_nof_segments = 1U << 18U;
@@ -1057,6 +1088,9 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(byte_buffer_nof_segments, byte_buffer_segment_size);
+
+  // Configure main thread.
+  configure_main_thread(params.du_cell_cores);
 
   // Start benchmarker.
   benchmarker bm("DU-High", params.nof_repetitions);
