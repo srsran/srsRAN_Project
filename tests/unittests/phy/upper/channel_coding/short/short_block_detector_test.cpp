@@ -92,6 +92,22 @@ TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTest)
   }
 }
 
+TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTestZeroLLR)
+{
+  const test_case_t& test_data        = GetParam();
+  unsigned           nof_messages     = test_data.nof_messages;
+  unsigned           message_length   = test_data.message_length;
+  unsigned           codeblock_length = test_data.codeblock_length;
+  modulation_scheme  mod              = test_data.mod;
+
+  for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
+    std::vector<uint8_t>              output(message_length);
+    std::vector<log_likelihood_ratio> input(nof_messages * codeblock_length, log_likelihood_ratio(0));
+
+    ASSERT_FALSE(test_detector->detect(output, input, mod)) << "Invalid detection.";
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(ShortBlockDetectorTest,
                          ShortBlockDetectorFixture,
                          ::testing::ValuesIn(short_block_detector_test_data));
