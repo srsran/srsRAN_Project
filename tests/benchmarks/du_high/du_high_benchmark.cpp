@@ -43,15 +43,17 @@ struct bench_params {
   unsigned dl_bytes_per_slot = 1500;
   /// \brief Set size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx.
   unsigned ul_bsr_bytes = 0;
+  /// \brief Maximum number of RBs per UE DL grant per slot.
+  unsigned max_dl_rb_grant = MAX_NOF_PRBS;
   /// \brief Logical cores used by the "du_cell" thread.
   std::vector<unsigned> du_cell_cores = {0, 1};
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print(
-      "Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL Tx bytes] [-u UL Tx bytes] [-s silent]\n",
-      prog);
+  fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL bytes per slot] [-u UL BSR] [-r Max RBs "
+             "per UE DL grant]\n",
+             prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
   fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
@@ -61,6 +63,7 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-u Size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx. "
              "[Default {}]\n",
              params.ul_bsr_bytes);
+  fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
   fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default 0,1]\n");
   fmt::print("\t-h Show this message\n");
 }
@@ -68,7 +71,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:c:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:c:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -92,6 +95,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'u':
         params.ul_bsr_bytes = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'r':
+        params.max_dl_rb_grant = std::strtol(optarg, nullptr, 10);
         break;
       case 'c': {
         std::string optstr{optarg};
@@ -464,6 +470,7 @@ class du_high_bench
 public:
   du_high_bench(unsigned                          dl_buffer_state_bytes_,
                 unsigned                          ul_bsr_bytes_,
+                unsigned                          max_nof_rbs_per_dl_grant,
                 span<unsigned>                    du_cell_cores,
                 const cell_config_builder_params& builder_params = {}) :
     params(builder_params),
@@ -485,20 +492,21 @@ public:
     bsr_mac_subpdu.append(lbsr_buff_sz);
 
     // Instantiate a DU-high object.
-    cfg.gnb_du_id                 = 1;
-    cfg.gnb_du_name               = fmt::format("srsgnb{}", cfg.gnb_du_id);
-    cfg.du_bind_addr              = fmt::format("127.0.0.{}", cfg.gnb_du_id);
-    cfg.exec_mapper               = &workers.du_high_exec_mapper;
-    cfg.f1c_client                = &sim_cu_cp;
-    cfg.f1u_gw                    = &sim_cu_up;
-    cfg.phy_adapter               = &sim_phy;
-    cfg.timers                    = &timers;
-    cfg.cells                     = {config_helpers::make_default_du_cell_config(params)};
-    cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos                       = config_helpers::make_default_du_qos_config_list(1000);
-    cfg.mac_p                     = &mac_pcap;
-    cfg.rlc_p                     = &rlc_pcap;
-    cfg.sched_ue_metrics_notifier = &metrics_handler;
+    cfg.gnb_du_id                  = 1;
+    cfg.gnb_du_name                = fmt::format("srsgnb{}", cfg.gnb_du_id);
+    cfg.du_bind_addr               = fmt::format("127.0.0.{}", cfg.gnb_du_id);
+    cfg.exec_mapper                = &workers.du_high_exec_mapper;
+    cfg.f1c_client                 = &sim_cu_cp;
+    cfg.f1u_gw                     = &sim_cu_up;
+    cfg.phy_adapter                = &sim_phy;
+    cfg.timers                     = &timers;
+    cfg.cells                      = {config_helpers::make_default_du_cell_config(params)};
+    cfg.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
+    cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
+    cfg.qos                        = config_helpers::make_default_du_qos_config_list(1000);
+    cfg.mac_p                      = &mac_pcap;
+    cfg.rlc_p                      = &rlc_pcap;
+    cfg.sched_ue_metrics_notifier  = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.cells[0].pucch_cfg.nof_sr_resources             = 30;
@@ -976,6 +984,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
                                  duplex_mode    dplx_mode,
                                  unsigned       dl_buffer_state_bytes,
                                  unsigned       ul_bsr_bytes,
+                                 unsigned       max_nof_rbs_per_dl_grant,
                                  span<unsigned> du_cell_cores)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
@@ -984,8 +993,11 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
                                ul_bsr_bytes > 0 ? "UL" : "",
                                nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
-  du_high_bench       bench{
-      dl_buffer_state_bytes, ul_bsr_bytes, du_cell_cores, generate_custom_cell_config_builder_params(dplx_mode)};
+  du_high_bench       bench{dl_buffer_state_bytes,
+                      ul_bsr_bytes,
+                      max_nof_rbs_per_dl_grant,
+                      du_cell_cores,
+                      generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
   }
@@ -1050,8 +1062,13 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_dl_ul_only_rlc_um(
-      bm, params.nof_ues, params.dplx_mode, params.dl_bytes_per_slot, params.ul_bsr_bytes, params.du_cell_cores);
+  benchmark_dl_ul_only_rlc_um(bm,
+                              params.nof_ues,
+                              params.dplx_mode,
+                              params.dl_bytes_per_slot,
+                              params.ul_bsr_bytes,
+                              params.max_dl_rb_grant,
+                              params.du_cell_cores);
 
   // Output results.
   bm.print_percentiles_time();
