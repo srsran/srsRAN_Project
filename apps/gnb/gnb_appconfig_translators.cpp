@@ -613,7 +613,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       // Set manually.
       rach_cfg.rach_cfg_generic.msg1_frequency_start = base_cell.prach_cfg.prach_frequency_start.value();
     }
-    rach_cfg.total_nof_ra_preambles = base_cell.prach_cfg.total_nof_ra_preambles;
+    rach_cfg.total_nof_ra_preambles   = base_cell.prach_cfg.total_nof_ra_preambles;
+    rach_cfg.nof_ssb_per_ro           = base_cell.prach_cfg.nof_ssb_per_ro;
+    rach_cfg.nof_cb_preambles_per_ssb = base_cell.prach_cfg.nof_cb_preambles_per_ssb;
 
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {

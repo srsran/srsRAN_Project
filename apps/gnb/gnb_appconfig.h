@@ -65,6 +65,14 @@ struct prach_appconfig {
   uint8_t power_ramping_step_db = 4;
   /// Ports list for PRACH reception.
   std::vector<uint8_t> ports = {0};
+  /// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
+  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
+  /// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.
+  float nof_ssb_per_ro = 1;
+  /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
+  /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
+  /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
+  uint8_t nof_cb_preambles_per_ssb = 4;
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.

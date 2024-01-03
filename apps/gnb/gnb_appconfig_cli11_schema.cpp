@@ -1095,6 +1095,12 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4, 6}));
   app.add_option("--ports", prach_params.ports, "List of antenna ports")->capture_default_str();
+  app.add_option("--nof_ssb_per_ro", prach_params.nof_ssb_per_ro, "Number of SSBs per RACH occasion")
+      ->check(CLI::IsMember({1}));
+  app.add_option("--nof_cb_preambles_per_ssb",
+                 prach_params.nof_cb_preambles_per_ssb,
+                 "Number of Contention Based preambles per SSB")
+      ->check(CLI::Range(1, 64));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
