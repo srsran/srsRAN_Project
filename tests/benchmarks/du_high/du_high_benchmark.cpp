@@ -365,13 +365,13 @@ struct phy_metrics {
 
   unsigned total_subframes_elapsed(subcarrier_spacing scs) { return slot_count / get_nof_slots_per_subframe(scs); }
 
-  double dl_Mbps(subcarrier_spacing scs)
+  double dl_mbps(subcarrier_spacing scs)
   {
     unsigned sim_time_msec = total_subframes_elapsed(scs);
     return nof_dl_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3);
   }
 
-  double ul_Mbps(subcarrier_spacing scs)
+  double ul_mbps(subcarrier_spacing scs)
   {
     unsigned sim_time_msec = total_subframes_elapsed(scs);
     return nof_ul_bytes * 8 * 1.0e-6 / (sim_time_msec * 1.0e-3);
@@ -660,11 +660,15 @@ public:
   // \brief Push a DL PDUs to DU-high via F1-U interface.
   void push_pdcp_pdus()
   {
+    // Value of DL Buffer Occupancy at which we consider that the DU DL is saturated, and there is no point in pushing
+    // more PDUs.
+    static const size_t SATURATION_DL_BS_BYTES = 1e5;
+
     if (dl_buffer_state_bytes == 0) {
       // Early return.
       return;
     }
-    if (metrics_handler.tot_dl_bs > 1e5) {
+    if (metrics_handler.tot_dl_bs > SATURATION_DL_BS_BYTES) {
       // Saturation of the DU DL detected. We throttle the F1-U interface to avoid depleting the byte buffer pool.
       return;
     }
@@ -1038,10 +1042,10 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
              bench.sim_phy.metrics.slot_count,
              bench.sim_phy.metrics.nof_dl_grants,
              bench.sim_phy.metrics.nof_dl_grants / (double)bench.sim_phy.metrics.slot_dl_count,
-             bench.sim_phy.metrics.dl_Mbps(bench.cfg.cells[0].scs_common),
+             bench.sim_phy.metrics.dl_mbps(bench.cfg.cells[0].scs_common),
              bench.sim_phy.metrics.nof_ul_grants,
              bench.sim_phy.metrics.nof_ul_grants / (double)bench.sim_phy.metrics.slot_ul_count,
-             bench.sim_phy.metrics.ul_Mbps(bench.cfg.cells[0].scs_common));
+             bench.sim_phy.metrics.ul_mbps(bench.cfg.cells[0].scs_common));
 }
 
 /// \brief Configure main thread priority and affinity to avoid interference from other processes (including stressors).
