@@ -99,8 +99,8 @@ private:
   slot_event_list<bearer_key> pending_evs;
 };
 
-// Initial capacity for the common event list, in order to avoid std::vector reallocations. We should the max nof UEs
-// as a conservative estimate of the number of events per slot.
+// Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
+// nof UEs as a conservative estimate of the expected number of events per slot.
 static const size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
 static const size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
 
