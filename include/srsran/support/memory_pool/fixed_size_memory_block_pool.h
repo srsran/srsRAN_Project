@@ -211,7 +211,18 @@ private:
       pool_type& pool = pool_type::get_instance();
       while (not local_cache.empty()) {
         if (local_cache.back().size() < block_batch_size) {
-          // for now we do not handle this situation.
+          // Batch is incomplete. We combine it with any other existing incomplete batch.
+          {
+            std::lock_guard<std::mutex> lock(pool.incomplete_batch_mutex);
+            while (not local_cache.back().empty()) {
+              pool.incomplete_batch.push(local_cache.back().try_pop());
+              if (pool.incomplete_batch.size() >= block_batch_size) {
+                // The incomplete batch is now complete and can be pushed to the central cache.
+                pool.central_mem_cache.push(pool.incomplete_batch);
+                pool.incomplete_batch.clear();
+              }
+            }
+          }
           local_cache.pop_back();
           continue;
         }
@@ -234,6 +245,11 @@ private:
   std::vector<uint8_t> allocated_memory;
 
   lockfree_bounded_stack<free_memory_block_list> central_mem_cache;
+
+  // When workers get deleted, some local batches may be still incomplete. We collect them here to form full batches
+  // when other workers get deleted as well.
+  std::mutex             incomplete_batch_mutex;
+  free_memory_block_list incomplete_batch;
 
   std::mutex debug_mutex;
 };
