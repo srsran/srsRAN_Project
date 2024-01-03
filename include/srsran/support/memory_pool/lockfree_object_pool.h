@@ -49,7 +49,7 @@ public:
       return npos();
     }
     node new_top{next_idx[old_top.index], old_top.epoch + 1};
-    while (not top.compare_exchange_weak(old_top, new_top)) {
+    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_acquire)) {
       if (old_top.index == npos()) {
         return npos();
       }
@@ -63,7 +63,7 @@ public:
     node old_top{top.load(std::memory_order_relaxed)};
     next_idx[index] = old_top.index;
     node new_top{index, old_top.epoch + 1};
-    while (not top.compare_exchange_weak(old_top, new_top)) {
+    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_release, std::memory_order_release)) {
       new_top.epoch   = old_top.epoch + 1;
       next_idx[index] = old_top.index;
     }
