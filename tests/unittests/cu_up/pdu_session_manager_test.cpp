@@ -208,8 +208,8 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   EXPECT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
 
-  // validate the dangling bearer was removed from F1-U gateway
-  EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 1);
+  // validate the dangling bearer was not created and removed from F1-U gateway
+  EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 0);
 }
 
 /// Create a DRB with two QFIs, of which one QFI is already mapped

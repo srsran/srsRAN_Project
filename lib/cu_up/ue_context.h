@@ -24,9 +24,10 @@ namespace srs_cu_up {
 
 /// \brief UE context setup configuration
 struct ue_context_cfg {
-  security::sec_as_config        security_info;
-  activity_notification_level_t  activity_level;
-  optional<std::chrono::seconds> ue_inactivity_timeout;
+  security::sec_as_config                          security_info;
+  activity_notification_level_t                    activity_level;
+  optional<std::chrono::seconds>                   ue_inactivity_timeout;
+  std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
 };
 
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
@@ -49,6 +50,7 @@ public:
     logger("CU-UP", {index_}),
     e1ap(e1ap_),
     pdu_session_manager(index,
+                        cfg.qos,
                         cfg.security_info,
                         net_config_,
                         n3_config_,

@@ -465,7 +465,7 @@ int main(int argc, char** argv)
   cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
   cu_up_cfg.dl_executor                            = workers.cu_up_dl_exec;
   cu_up_cfg.ul_executor                            = workers.cu_up_ul_exec;
-  cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optinally select separate exec for UL IO
+  cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optionally select separate exec for UL IO
   cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
   cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker                           = epoll_broker.get();
