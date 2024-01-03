@@ -297,6 +297,49 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
     return false;
   }
 
+  code = prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(config.nof_ssb_per_ro,
+                                                                            config.nof_cb_preambles_per_ssb);
+  if (code.is_error()) {
+    fmt::print("{}", code.error());
+    return false;
+  }
+
+  // See TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB and totalNumberOfRA-Preambles.
+  // totalNumberOfRA-Preambles should be a multiple of the number of SSBs per RACH occasion.
+  if (config.total_nof_ra_preambles.has_value()) {
+    bool is_total_nof_ra_preambles_valid = true;
+    if (config.nof_ssb_per_ro >= 1) {
+      if (config.total_nof_ra_preambles.value() % static_cast<uint8_t>(config.nof_ssb_per_ro) != 0) {
+        is_total_nof_ra_preambles_valid = false;
+      }
+      // Ensure \c config.total_nof_ra_preambles can accommodate contention based RA preambles.
+      // NOTE: \c config.total_nof_ra_preambles nof. RA preambles are shared among \c config.nof_ssb_per_ro nof. SSB
+      // beams.
+      if ((config.nof_cb_preambles_per_ssb * config.nof_ssb_per_ro) > config.total_nof_ra_preambles.value()) {
+        is_total_nof_ra_preambles_valid = false;
+      }
+    } else {
+      // Number of SSBs per RACH occasion is 1/8 or 1/4 or 1/2.
+      const auto product = config.total_nof_ra_preambles.value() * config.nof_ssb_per_ro;
+      if ((product - static_cast<uint8_t>(product)) > 0) {
+        is_total_nof_ra_preambles_valid = false;
+      }
+      // Ensure \c config.total_nof_ra_preambles can accommodate contention based RA preambles.
+      // NOTE: Each SSB beam has multiple RACH occasions and each occasion has \c config.total_nof_ra_preambles RA
+      // preambles.
+      if (config.nof_cb_preambles_per_ssb > config.total_nof_ra_preambles.value()) {
+        is_total_nof_ra_preambles_valid = false;
+      }
+    }
+
+    if (not is_total_nof_ra_preambles_valid) {
+      fmt::print("Total nof. RA preambles ({}) should be a multiple of the number of SSBs per RACH occasion ({}).\n",
+                 config.total_nof_ra_preambles.value(),
+                 config.nof_ssb_per_ro);
+      return false;
+    }
+  }
+
   if (config.ports.size() > nof_rx_atennas) {
     fmt::print("PRACH number of ports ({}) is bigger than the number of reception antennas ({}).\n",
                config.ports.size(),
