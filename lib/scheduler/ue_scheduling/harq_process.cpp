@@ -432,7 +432,8 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 
 void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
 {
-  // Maximum number of UCI indications that a HARQ process can expect.
+  // Maximum number of UCI indications that a HARQ process can expect. We set this conservative limit to account for
+  // the state when SR, HARQ-ACK+SR, common PUCCH are scheduled.
   static constexpr size_t MAX_ACKS_PER_HARQ = 4;
 
   for (dl_harq_process& h_dl : dl_harqs) {
@@ -443,7 +444,7 @@ void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
         ret = h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
       }
       if (ret == dl_harq_process::status_update::no_update) {
-        dl_h_logger.warning(h_dl.id, "DL HARQ in some invalid state. Resetting it...");
+        dl_h_logger.warning(h_dl.id, "DL HARQ in an invalid state. Resetting it...");
         h_dl.reset();
       }
     }
