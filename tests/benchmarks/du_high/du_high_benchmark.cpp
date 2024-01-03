@@ -9,7 +9,23 @@
  */
 
 /// \file
-/// \brief Benchmarks of the DU-high latency.
+/// \brief Benchmarks for the DU-high latency.
+///
+/// In this benchmark, we emulate the behaviors of the CU-CP, CU-UP and PHY in order to simulate a realistic deployment
+/// of the instantiated DU-high class. However, there are some simplifications:
+/// - the PHY is emulated by a single thread, rather than by separate threads for DL PHY, UL PHY, and slot indications.
+/// In practice, this may lead to less contention faced by the notifications of the PHY that reach the MAC.
+/// - metrics handlers and E2 agents are instantiated separately from the DU-high class. If these entities have blocking
+/// calls, such as mutexes, they may introduce additional latency.
+/// - Complicated CU-CP procedures (e.g. reconfig) and their impact on the MAC latency are left out of this benchmark.
+/// - The UP traffic is continuous rather than bursty.
+/// - The activity of higher priority threads, namely DL PHY and RU threads are not emulated. This will mean that
+/// the DU-high threads will be preempted less often than in a real deployment. To circumvent it, we can run a parallel
+/// stress job in the same machine. For instance, to run stressors that solely interfere with the gnb_ue and gnb_ctrl
+/// threads (and not with the du_cell thread), one can run:
+/// > sudo stress-ng --cpu 6 --taskset 2-7 --sched fifo --sched-prio 97 -l 90
+/// which will instantiate 6 threads running in cores 2-7 (assuming du_cell is pinned to 0-1), with high priority
+/// and a CPU load of 90%.
 
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/du_high/du_high_impl.h"
