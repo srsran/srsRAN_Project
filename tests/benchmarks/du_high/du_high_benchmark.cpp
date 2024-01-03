@@ -1082,6 +1082,13 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::warning);
   srslog::init();
 
+  std::string tracing_filename = "";
+  if (not tracing_filename.empty()) {
+    fmt::print("Opening event tracer...\n");
+    open_trace_file(tracing_filename);
+    fmt::print("Event tracer opened successfully\n");
+  }
+
   // Parses benchmark parameters.
   bench_params params{};
   parse_args(argc, argv, params);
@@ -1103,6 +1110,12 @@ int main(int argc, char** argv)
                               params.ul_bsr_bytes,
                               params.max_dl_rb_grant,
                               params.du_cell_cores);
+
+  if (not tracing_filename.empty()) {
+    fmt::print("Closing event tracer...\n");
+    close_trace_file();
+    fmt::print("Event tracer closed successfully\n");
+  }
 
   // Output results.
   bm.print_percentiles_time();

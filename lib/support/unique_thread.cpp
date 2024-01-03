@@ -16,13 +16,18 @@
 
 using namespace srsran;
 
-size_t srsran::compute_host_nof_hardware_threads()
-{
+// Compute number of host CPUs, statically, before any framework (e.g. DPDK) affects the affinities of the main thread.
+static const size_t nof_host_cpus = []() -> size_t {
   cpu_set_t cpuset;
   if (sched_getaffinity(0, sizeof(cpuset), &cpuset) == 0) {
     return std::max(1, CPU_COUNT(&cpuset));
   }
   return std::max(1U, std::thread::hardware_concurrency());
+}();
+
+size_t srsran::compute_host_nof_hardware_threads()
+{
+  return nof_host_cpus;
 }
 
 /// Sets thread OS scheduling real-time priority.
