@@ -41,6 +41,8 @@ public:
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
     if (metrics_period.count() != 0) {
+      tx->enable_metrics();
+      rx->enable_metrics();
       metrics_timer.set(metrics_period, [this](timer_id_t /*tid*/) { push_metrics(); });
       metrics_timer.run();
     }

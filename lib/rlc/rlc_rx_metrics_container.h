@@ -22,14 +22,22 @@ class rlc_rx_metrics_container
   std::mutex     metrics_mutex;
 
 public:
+  bool enabled = false;
+
   void metrics_set_mode(rlc_mode mode)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.mode = mode;
   }
 
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_sdus += num_sdus_;
     metrics.num_sdu_bytes += num_sdu_bytes_;
@@ -37,6 +45,9 @@ public:
 
   void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_pdus += num_pdus_;
     metrics.num_pdu_bytes += num_pdu_bytes_;
@@ -44,12 +55,18 @@ public:
 
   void metrics_add_lost_pdus(uint32_t num_pdus_)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_lost_pdus += num_pdus_;
   }
 
   void metrics_add_malformed_pdus(uint32_t num_pdus_)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_malformed_pdus += num_pdus_;
   }
@@ -57,6 +74,9 @@ public:
   /// RLC AM specific metrics
   void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
   {
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
@@ -65,12 +85,20 @@ public:
 
   rlc_rx_metrics get_metrics()
   {
+    srsran_assert(enabled, "Trying to get metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     return metrics;
   }
 
   rlc_rx_metrics get_and_reset_metrics()
   {
+    srsran_assert(enabled, "Trying to get and reset metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     rlc_rx_metrics              ret = metrics;
     metrics                         = {};
@@ -80,6 +108,10 @@ public:
 
   void reset_metrics()
   {
+    srsran_assert(enabled, "Trying to reset metrics, but metrics are disabled.");
+    if (not enabled) {
+      return;
+    }
     std::lock_guard<std::mutex> lock(metrics_mutex);
     rlc_mode                    tmp_mode = metrics.mode;
     metrics                              = {};

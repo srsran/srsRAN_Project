@@ -784,7 +784,7 @@ struct pcap_appconfig {
 /// Metrics report configuration.
 struct metrics_appconfig {
   struct {
-    unsigned report_period = 1000; // RLC report period in ms
+    unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds

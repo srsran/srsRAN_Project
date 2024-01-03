@@ -49,6 +49,7 @@ protected:
   rlc_pcap&                            pcap;
 
 public:
+  void           enable_metrics() { metrics.enabled = true; }
   rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }
   void           reset_metrics() { return metrics.reset_metrics(); }
 };
