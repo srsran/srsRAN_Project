@@ -451,6 +451,270 @@ pucch_group_hop_convert_to_asn1(pucch_group_hopping group_hop_value)
   return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
 }
 
+static void ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(const float        nof_ssb_per_ro,
+                                                                   const uint8_t      nof_cb_preambles_per_ssb,
+                                                                   rach_cfg_common_s& out_cfg)
+{
+  out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
+  if (nof_ssb_per_ro == 1 / 8) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_eighth();
+    switch (nof_cb_preambles_per_ssb) {
+      case 4:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n4;
+        return;
+      case 8:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n8;
+        return;
+      case 12:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n12;
+        return;
+      case 16:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n16;
+        return;
+      case 20:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n20;
+        return;
+      case 24:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n24;
+        return;
+      case 28:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n28;
+        return;
+      case 32:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n32;
+        return;
+      case 36:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n36;
+        return;
+      case 40:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n40;
+        return;
+      case 44:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n44;
+        return;
+      case 48:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n48;
+        return;
+      case 52:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n52;
+        return;
+      case 56:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n56;
+        return;
+      case 60:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n60;
+        return;
+      case 64:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n64;
+        return;
+      default:
+        report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
+    }
+  } else if (nof_ssb_per_ro == 1 / 4) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_fourth();
+    switch (nof_cb_preambles_per_ssb) {
+      case 4:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n4;
+        return;
+      case 8:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n8;
+        return;
+      case 12:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n12;
+        return;
+      case 16:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n16;
+        return;
+      case 20:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n20;
+        return;
+      case 24:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n24;
+        return;
+      case 28:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n28;
+        return;
+      case 32:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n32;
+        return;
+      case 36:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n36;
+        return;
+      case 40:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n40;
+        return;
+      case 44:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n44;
+        return;
+      case 48:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n48;
+        return;
+      case 52:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n52;
+        return;
+      case 56:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n56;
+        return;
+      case 60:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n60;
+        return;
+      case 64:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n64;
+        return;
+      default:
+        report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
+    }
+  } else if (nof_ssb_per_ro == 1 / 2) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one_half();
+    switch (nof_cb_preambles_per_ssb) {
+      case 4:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n4;
+        return;
+      case 8:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n8;
+        return;
+      case 12:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n12;
+        return;
+      case 16:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n16;
+        return;
+      case 20:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n20;
+        return;
+      case 24:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n24;
+        return;
+      case 28:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n28;
+        return;
+      case 32:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n32;
+        return;
+      case 36:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n36;
+        return;
+      case 40:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n40;
+        return;
+      case 44:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n44;
+        return;
+      case 48:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n48;
+        return;
+      case 52:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n52;
+        return;
+      case 56:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n56;
+        return;
+      case 60:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n60;
+        return;
+      case 64:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n64;
+        return;
+      default:
+        report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
+    }
+  } else if (nof_ssb_per_ro == 1) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one();
+    switch (nof_cb_preambles_per_ssb) {
+      case 4:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n4;
+        return;
+      case 8:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n8;
+        return;
+      case 12:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n12;
+        return;
+      case 16:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n16;
+        return;
+      case 20:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n20;
+        return;
+      case 24:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n24;
+        return;
+      case 28:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n28;
+        return;
+      case 32:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n32;
+        return;
+      case 36:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n36;
+        return;
+      case 40:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n40;
+        return;
+      case 44:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n44;
+        return;
+      case 48:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n48;
+        return;
+      case 52:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n52;
+        return;
+      case 56:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n56;
+        return;
+      case 60:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n60;
+        return;
+      case 64:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n64;
+        return;
+      default:
+        report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
+    }
+  } else if (nof_ssb_per_ro == 2) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_two();
+    switch (nof_cb_preambles_per_ssb) {
+      case 4:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n4;
+        return;
+      case 8:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n8;
+        return;
+      case 12:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n12;
+        return;
+      case 16:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n16;
+        return;
+      case 20:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n20;
+        return;
+      case 24:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n24;
+        return;
+      case 28:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n28;
+        return;
+      case 32:
+        nof_cb_preambles_per_ssb_opt.value = decltype(nof_cb_preambles_per_ssb_opt.value)::n32;
+        return;
+      default:
+        report_fatal_error("Invalid nof. contention based preambles per SSB value {}", nof_cb_preambles_per_ssb);
+    }
+  } else if (nof_ssb_per_ro == 4) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_four();
+    nof_cb_preambles_per_ssb_opt       = nof_cb_preambles_per_ssb;
+  } else if (nof_ssb_per_ro == 8) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_eight();
+    nof_cb_preambles_per_ssb_opt       = nof_cb_preambles_per_ssb;
+  } else if (nof_ssb_per_ro == 16) {
+    auto& nof_cb_preambles_per_ssb_opt = out_cfg.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_sixteen();
+    nof_cb_preambles_per_ssb_opt       = nof_cb_preambles_per_ssb;
+  }
+  report_fatal_error("Invalid nof. SSB per RACH occasion value {}", nof_ssb_per_ro);
+}
+
 asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const ul_config_common& cfg)
 {
   asn1::rrc_nr::bwp_ul_common_s init_ul_bwp;
@@ -531,9 +795,8 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
     rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles.value();
     rach.total_nof_ra_preambs -= 1; // Account for zero-indexed ASN field.
   }
-  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
-  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
-      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n4;
+  ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(
+      rach_cfg.nof_ssb_per_ro, rach_cfg.nof_cb_preambles_per_ssb, rach);
   rach.ra_contention_resolution_timer.value =
       asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
   if (rach_cfg.is_prach_root_seq_index_l839) {
