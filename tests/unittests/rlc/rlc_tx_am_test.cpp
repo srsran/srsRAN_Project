@@ -104,6 +104,7 @@ protected:
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
                                              ue_worker,
+                                             true,
                                              pcap);
 
     // Bind AM Rx/Tx interconnect

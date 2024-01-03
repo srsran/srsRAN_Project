@@ -139,6 +139,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               timer_factory{timers, pcell_worker},
                                               pcell_worker,
                                               ue_worker,
+                                              false,
                                               pcap);
 
   // Bind AM Rx/Tx interconnect
@@ -225,6 +226,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
                                                                                 *tester,
                                                                                 timer_factory{timers, ue_worker},
                                                                                 ue_worker,
+                                                                                false,
                                                                                 pcap);
 
   // Bind AM Rx/Tx interconnect

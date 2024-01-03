@@ -26,18 +26,18 @@ protected:
                 du_ue_index_t                     ue_index,
                 rb_id_t                           rb_id,
                 rlc_rx_upper_layer_data_notifier& upper_dn_,
+                bool                              metrics_enable,
                 rlc_pcap&                         pcap_) :
-    logger("RLC", {du_index, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), pcap(pcap_)
+    logger("RLC", {du_index, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), metrics(metrics_enable), pcap(pcap_)
   {
   }
 
   rlc_bearer_logger                 logger;
-  rlc_rx_metrics_container          metrics;
   rlc_rx_upper_layer_data_notifier& upper_dn;
+  rlc_rx_metrics_container          metrics;
   rlc_pcap&                         pcap;
 
 public:
-  void           enable_metrics() { metrics.enabled = true; }
   rlc_rx_metrics get_metrics() { return metrics.get_metrics(); }
   void           reset_metrics() { return metrics.reset_metrics(); }
 };

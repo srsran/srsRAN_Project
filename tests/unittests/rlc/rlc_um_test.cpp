@@ -88,7 +88,7 @@ protected:
                                            du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
                                            config,
-                                           std::chrono::milliseconds(0),
+                                           std::chrono::milliseconds(1000),
                                            nullptr,
                                            tester1,
                                            tester1,

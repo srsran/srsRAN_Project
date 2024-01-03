@@ -32,8 +32,10 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
+                bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_) :
     logger("RLC", {du_index, ue_index, rb_id, "DL"}),
+    metrics(metrics_enabled),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
     lower_dn(lower_dn_),
@@ -49,7 +51,6 @@ protected:
   rlc_pcap&                            pcap;
 
 public:
-  void           enable_metrics() { metrics.enabled = true; }
   rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }
   void           reset_metrics() { return metrics.reset_metrics(); }
 };

@@ -326,6 +326,7 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
     fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
     exit(-1);
   }
+  cnfg.metrics_period = std::chrono::milliseconds(1000);
   return cnfg;
 }
 

@@ -41,8 +41,6 @@ public:
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
     if (metrics_period.count() != 0) {
-      tx->enable_metrics();
-      rx->enable_metrics();
       metrics_timer.set(metrics_period, [this](timer_id_t /*tid*/) { push_metrics(); });
       metrics_timer.run();
     }
@@ -79,9 +77,9 @@ protected:
   rb_id_t                        rb_id;
   std::unique_ptr<rlc_tx_entity> tx = {};
   std::unique_ptr<rlc_rx_entity> rx = {};
+  timer_duration                 metrics_period;
 
 private:
-  timer_duration        metrics_period;
   unique_timer          metrics_timer;
   rlc_metrics_notifier* rlc_metrics_notif;
 

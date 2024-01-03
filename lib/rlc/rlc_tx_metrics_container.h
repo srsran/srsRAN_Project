@@ -20,9 +20,10 @@ class rlc_tx_metrics_container
 {
   rlc_tx_metrics metrics = {};
   std::mutex     metrics_mutex;
+  bool           enabled = false;
 
 public:
-  bool enabled = false;
+  rlc_tx_metrics_container(bool enabled_) : enabled(enabled_) {}
 
   void metrics_set_mode(rlc_mode mode)
   {

@@ -118,6 +118,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
                                              ue_worker,
+                                             false,
                                              pcap);
 
     // Bind AM Rx/Tx interconnect
