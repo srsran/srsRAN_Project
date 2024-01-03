@@ -239,6 +239,15 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_all
       continue;
     }
 
+    if (uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.full()) {
+      logger.info(
+          "rnti={}: UCI allocation for slot={} skipped due to UCI cache full. Attempting this allocation for the next "
+          "k1 candidate, if any k1 available",
+          crnti,
+          slot_alloc.slot);
+      continue;
+    }
+
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
       // NOTE: For TX with more than 2 antenna, we avoid multiplexing HARQ-ACK with CSI in the slots for CSI because the
       // CSI report is 11 bit, and the current PUCCH F2 capacity is exactly 11 bits.
