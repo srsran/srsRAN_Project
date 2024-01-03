@@ -25,6 +25,12 @@ template <typename Event>
 class slot_event_list
 {
 public:
+  void reserve(unsigned cap)
+  {
+    pending_events.reserve(cap);
+    current_events.reserve(cap);
+  }
+
   void slot_indication()
   {
     current_events.clear();

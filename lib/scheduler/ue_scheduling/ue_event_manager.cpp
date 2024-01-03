@@ -99,6 +99,11 @@ private:
   slot_event_list<bearer_key> pending_evs;
 };
 
+// Initial capacity for the common event list, in order to avoid std::vector reallocations. We should the max nof UEs
+// as a conservative estimate of the number of events per slot.
+static const size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
+static const size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
+
 ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
                                    scheduler_metrics_handler& metrics_handler_,
                                    scheduler_event_logger&    ev_logger_) :
@@ -108,6 +113,10 @@ ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
+  common_events.reserve(INITIAL_COMMON_EVENT_LIST_SIZE);
+  for (auto& cell : cell_specific_events) {
+    cell.reserve(INITIAL_CELL_EVENT_LIST_SIZE);
+  }
 }
 
 ue_event_manager::~ue_event_manager() {}
