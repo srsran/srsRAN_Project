@@ -15,6 +15,7 @@
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"

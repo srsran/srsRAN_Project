@@ -9,6 +9,7 @@
  */
 
 #include "e1ap_cu_up_test_messages.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_up;

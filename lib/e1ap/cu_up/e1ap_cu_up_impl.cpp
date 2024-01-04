@@ -13,7 +13,7 @@
 #include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
-#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/timers.h"

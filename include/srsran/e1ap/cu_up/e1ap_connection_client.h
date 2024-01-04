@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/e1ap/common/e1ap_common.h"
+#include <memory>
 
 namespace srsran {
 namespace srs_cu_up {

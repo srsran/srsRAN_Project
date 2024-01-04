@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 
 namespace srsran {
