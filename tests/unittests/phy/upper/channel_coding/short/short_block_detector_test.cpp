@@ -17,6 +17,7 @@
 #include "short_block_detector_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "fmt/ostream.h"
+#include <algorithm>
 #include <gtest/gtest.h>
 
 /// \cond
@@ -104,7 +105,10 @@ TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTestZeroLLR)
     std::vector<uint8_t>              output(message_length);
     std::vector<log_likelihood_ratio> input(nof_messages * codeblock_length, log_likelihood_ratio(0));
 
+    // Detection must be invalid and all values to one.
     ASSERT_FALSE(test_detector->detect(output, input, mod)) << "Invalid detection.";
+    ASSERT_TRUE(std::all_of(output.begin(), output.end(), [](uint8_t value) { return value == 1; }))
+        << "All output bits must be one.";
   }
 }
 

@@ -160,6 +160,7 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
 
   // If all input bits are zero, the result is invalid.
   if (std::all_of(input.begin(), input.end(), [](log_likelihood_ratio bit) { return bit == 0; })) {
+    std::fill(output.begin(), output.end(), 1);
     return false;
   }
 

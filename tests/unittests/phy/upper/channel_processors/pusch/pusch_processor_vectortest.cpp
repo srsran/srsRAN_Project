@@ -286,7 +286,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
 
   // Verify HARQ-ACK result is invalid.
   if (config.uci.nof_harq_ack > 0) {
+    uci_payload_type expected_payload = ~uci_payload_type(config.uci.nof_harq_ack);
     ASSERT_EQ(uci_entry.harq_ack.status, uci_status::invalid);
+    ASSERT_EQ(uci_entry.harq_ack.payload, expected_payload);
   } else {
     ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
     ASSERT_EQ(uci_entry.harq_ack.status, uci_status::unknown);
@@ -294,7 +296,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
 
   // Verify CSI Part 1 result is invalid.
   if (config.uci.nof_csi_part1 > 0) {
+    uci_payload_type expected_payload = ~uci_payload_type(config.uci.nof_csi_part1);
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::invalid);
+    ASSERT_EQ(uci_entry.csi_part1.payload, expected_payload);
   } else {
     ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::unknown);
