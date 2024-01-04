@@ -29,6 +29,7 @@ class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_
 public:
   ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
   {
+    pending_evs.reserve(NOF_BEARER_KEYS);
     std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), -1);
   }
 
@@ -61,7 +62,7 @@ public:
       dl_bo.ue_index = get_ue_index(key);
       dl_bo.lcid     = get_lcid(key);
       // > Extract last DL BO value for the respective bearer and reset BO table position.
-      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_acq_rel);
+      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_release);
       if (dl_bo.bs < 0) {
         parent.logger.warning(
             "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);

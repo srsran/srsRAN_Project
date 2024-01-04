@@ -27,6 +27,7 @@ class slot_event_list
 public:
   void reserve(unsigned cap)
   {
+    std::lock_guard<std::mutex> lock(mutex);
     pending_events.reserve(cap);
     current_events.reserve(cap);
   }
