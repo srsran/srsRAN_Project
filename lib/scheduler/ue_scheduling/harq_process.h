@@ -648,7 +648,7 @@ private:
     unsigned get_ntn_koffset() const { return ntn_cs_koffset; }
 
   private:
-    std::vector<unsigned> slot_tbs;
+    std::vector<unsigned>                            slot_tbs;
     std::vector<dl_harq_process::dl_ack_info_result> slot_ack_info;
     unsigned                                         ntn_cs_koffset;
   };

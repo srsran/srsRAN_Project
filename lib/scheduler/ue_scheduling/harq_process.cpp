@@ -95,12 +95,19 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     } else {
       // Max number of reTxs was exceeded. Clear HARQ process.
       tb.state = transport_block::state_t::empty;
-      logger.warning(id,
+      fmt::memory_buffer fmtbuf;
+      fmt::format_to(fmtbuf,
                      "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
                      "missing HARQ-ACKs, none of the received so far are positive and the maximum number of reTxs {} "
                      "was exceeded",
                      slot_ack_timeout - last_slot_ack,
-                     max_nof_harq_retxs(0));
+                     tb.max_nof_harq_retxs);
+
+      if (max_ack_wait_in_slots == 1) {
+        logger.info(id, to_c_str(fmtbuf));
+      } else {
+        logger.warning(id, to_c_str(fmtbuf));
+      }
     }
 
     // Report timeout with NACK.
