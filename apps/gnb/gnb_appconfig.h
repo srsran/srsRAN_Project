@@ -298,6 +298,9 @@ struct pucch_appconfig {
 
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
   unsigned max_consecutive_kos = 100;
+
+  /// Maximum number of PUCCH grants per slot.
+  unsigned max_pucchs_per_slot = 31U;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -438,6 +441,12 @@ struct mac_cell_group_appconfig {
   mac_sr_appconfig sr_cfg;
 };
 
+/// Scheduler expert configuration.
+struct sched_expert_appconfig {
+  /// Maximum number of PUSCH + PUCCH grants per slot.
+  unsigned max_ul_grants_per_slot = 32U;
+};
+
 /// Base cell configuration.
 struct base_cell_appconfig {
   /// Physical cell identifier.
@@ -488,6 +497,8 @@ struct base_cell_appconfig {
   paging_appconfig paging_cfg;
   /// CSI configuration.
   csi_appconfig csi_cfg;
+  /// Scheduler expert configuration.
+  sched_expert_appconfig sched_expert;
 };
 
 /// Cell configuration

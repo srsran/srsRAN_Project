@@ -59,6 +59,10 @@ struct scheduler_ue_expert_config {
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
+  /// Maximum number of PUCCH grants per slot.
+  unsigned max_pucchs_per_slot = MAX_PUCCH_PDUS_PER_SLOT;
+  /// Maximum number of PUSCH + PUCCH grants per slot.
+  unsigned max_ul_grants_per_slot{32U};
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.

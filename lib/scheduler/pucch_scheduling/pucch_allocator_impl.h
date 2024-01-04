@@ -22,7 +22,9 @@ namespace srsran {
 class pucch_allocator_impl final : public pucch_allocator
 {
 public:
-  explicit pucch_allocator_impl(const cell_configuration& cell_cfg_);
+  explicit pucch_allocator_impl(const cell_configuration& cell_cfg_,
+                                unsigned                  max_pucchs_per_slot,
+                                unsigned                  max_ul_grants_per_slot_);
 
   ~pucch_allocator_impl() override;
 
@@ -173,6 +175,8 @@ private:
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
+  const unsigned            max_pucch_grants_per_slot;
+  const unsigned            max_ul_grants_per_slot;
   slot_point                last_sl_ind;
   pucch_resource_manager    resource_manager;
 

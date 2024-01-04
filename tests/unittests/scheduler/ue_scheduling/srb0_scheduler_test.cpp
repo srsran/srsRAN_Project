@@ -84,7 +84,7 @@ struct test_bench {
 
   cell_resource_allocator       res_grid{cell_cfg};
   pdcch_resource_allocator_impl pdcch_sch{cell_cfg};
-  pucch_allocator_impl          pucch_alloc{cell_cfg};
+  pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
   ue_repository                 ue_db;
   ue_cell_grid_allocator        ue_alloc;

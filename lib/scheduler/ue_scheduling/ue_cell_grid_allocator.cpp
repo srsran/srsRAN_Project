@@ -515,6 +515,12 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                 expert_cfg.max_puschs_per_slot);
     return alloc_outcome::skip_slot;
   }
+  if (pusch_alloc.result.ul.puschs.size() >=
+      expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())) {
+    logger.info("Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
+                expert_cfg.max_puschs_per_slot);
+    return alloc_outcome::skip_slot;
+  }
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
