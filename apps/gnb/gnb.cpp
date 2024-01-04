@@ -436,7 +436,8 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
+  ngap_adapter->connect_ngap(&cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
+                             &cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
@@ -451,9 +452,9 @@ int main(int argc, char** argv)
 
   if (gnb_cfg.amf_cfg.no_core) {
     // Signal AMF connection so test UEs do not get rejected
-    cu_cp_obj->handle_amf_connection();
+    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection();
   } else {
-    if (not cu_cp_obj->amf_is_connected()) {
+    if (not cu_cp_obj->get_cu_cp_ngap_connection_interface().amf_is_connected()) {
       report_error("CU-CP failed to connect to AMF");
     }
   }
