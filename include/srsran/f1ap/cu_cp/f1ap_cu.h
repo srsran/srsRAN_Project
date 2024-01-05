@@ -23,11 +23,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct f1ap_ul_rrc_message {
-  ue_index_t                        ue_index = ue_index_t::invalid;
-  asn1::f1ap::ul_rrc_msg_transfer_s msg;
-};
-
 struct f1ap_dl_rrc_message {
   ue_index_t  ue_index = ue_index_t::invalid;
   srb_id_t    srb_id   = srb_id_t::nulltype;
@@ -61,10 +56,6 @@ struct f1ap_ue_context_release_command {
   cause_t            cause;
   byte_buffer        rrc_release_pdu;
   optional<srb_id_t> srb_id;
-};
-
-struct f1ap_ue_context_release_complete {
-  asn1::f1ap::ue_context_release_complete_s msg;
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
