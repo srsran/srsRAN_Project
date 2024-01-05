@@ -80,6 +80,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
       res_grid.slot_indication(skipped_slot);
       pdcch_sch.slot_indication(skipped_slot);
       pucch_alloc.slot_indication(skipped_slot);
+      uci_alloc.slot_indication(skipped_slot);
     }
   }
 
@@ -87,6 +88,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   res_grid.slot_indication(sl_tx);
   pdcch_sch.slot_indication(sl_tx);
   pucch_alloc.slot_indication(sl_tx);
+  uci_alloc.slot_indication(sl_tx);
 
   // > Mark slot start for logging purposes.
   result_logger.on_slot_start();

@@ -27,9 +27,6 @@ uci_scheduler_impl::~uci_scheduler_impl() = default;
 
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
 {
-  // Reset the UCI allocator counter of the allocated PDSCHs to be acknowledged per slot.
-  uci_alloc.slot_indication(sl_tx);
-
   for (auto& user : ues) {
     // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user->get_pcell();
