@@ -81,6 +81,8 @@ private:
     index_type index;
     index_type epoch;
   };
+  static_assert(sizeof(node) == sizeof(uint64_t),
+                "node sizeof should no go beyond 64-bits, otherwise we lose is_lock_free guarantees in most platforms");
 
   std::atomic<node>       top;
   std::vector<index_type> next_idx;
