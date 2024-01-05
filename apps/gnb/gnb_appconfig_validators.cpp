@@ -267,6 +267,17 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, su
   return true;
 }
 
+/// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
+static bool validate_ul_common_app_config(const ul_common_appconfig& config)
+{
+  if (config.max_ul_grants_per_slot <= config.max_pucchs_per_slot) {
+    fmt::print("The max number of UL grants per slot should be greater than the maximum number of PUCCH grants.\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band, unsigned nof_rx_atennas)
 {
@@ -490,6 +501,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_pucch_cell_app_config(config, config.common_scs)) {
+    return false;
+  }
+
+  if (!validate_ul_common_app_config(config.ul_common_cfg)) {
     return false;
   }
 

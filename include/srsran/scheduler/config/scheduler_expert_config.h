@@ -60,7 +60,7 @@ struct scheduler_ue_expert_config {
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
   /// Maximum number of PUCCH grants per slot.
-  unsigned max_pucchs_per_slot = MAX_PUCCH_PDUS_PER_SLOT;
+  unsigned max_pucchs_per_slot{31U};
   /// Maximum number of PUSCH + PUCCH grants per slot.
   unsigned max_ul_grants_per_slot{32U};
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.

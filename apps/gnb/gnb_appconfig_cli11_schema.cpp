@@ -884,11 +884,6 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.max_consecutive_kos,
                  "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
       ->capture_default_str();
-  app.add_option("--max_pucchs_per_slot",
-                 pucch_params.max_pucchs_per_slot,
-                 "Maximum number of PUCCH grants that can be allocated per slot.")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, static_cast<unsigned>(MAX_PUCCH_PDUS_PER_SLOT)));
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
@@ -896,6 +891,16 @@ static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& u
   app.add_option("--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
       ->capture_default_str()
       ->check(CLI::Range(-30, 23));
+  app.add_option("--max_pucchs_per_slot",
+                 ul_common_params.max_pucchs_per_slot,
+                 "Maximum number of PUCCH grants that can be allocated per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, static_cast<unsigned>(MAX_PUCCH_PDUS_PER_SLOT)));
+  app.add_option("--max_ul_grants_per_slot",
+                 ul_common_params.max_ul_grants_per_slot,
+                 "Maximum number of UL grants that can be allocated per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)(MAX_PUSCH_PDUS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT)));
 }
 
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
@@ -1245,14 +1250,6 @@ static void configure_cli11_mac_cell_group_args(CLI::App& app, mac_cell_group_ap
   configure_cli11_mac_sr_args(*sr_subcmd, mcg_params.sr_cfg);
 }
 
-static void configure_cli11_sched_expert_args(CLI::App& app, sched_expert_appconfig& sched_exp_params)
-{
-  app.add_option(
-         "--max_ul_grants_per_slot", sched_exp_params.max_ul_grants_per_slot, "Maximum number of UL grants per slot")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)(MAX_PUSCH_PDUS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT)));
-}
-
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -1383,10 +1380,6 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // CSI configuration.
   CLI::App* csi_subcmd = app.add_subcommand("csi", "CSI-Meas parameters");
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
-
-  // Scheduler expert configuration.
-  CLI::App* sched_expert_subcmd = app.add_subcommand("sched_expert", "Scheduler parameters");
-  configure_cli11_sched_expert_args(*sched_expert_subcmd, cell_params.sched_expert);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

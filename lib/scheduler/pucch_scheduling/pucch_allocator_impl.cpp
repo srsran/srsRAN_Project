@@ -1138,7 +1138,7 @@ bool pucch_allocator_impl::is_pucch_f1_grant_common(rnti_t rnti, slot_point sl_t
                    rnti) != pucch_common_alloc_grid[sl_tx.to_uint()].end();
 }
 
-unsigned pucch_allocator_impl::get_max_pucch_grants(unsigned currently_allocated_pucchs)
+unsigned pucch_allocator_impl::get_max_pucch_grants(unsigned currently_allocated_puschs)
 {
-  return std::min(max_pucch_grants_per_slot, max_ul_grants_per_slot - currently_allocated_pucchs);
+  return std::min(max_pucch_grants_per_slot, max_ul_grants_per_slot - currently_allocated_puschs);
 }

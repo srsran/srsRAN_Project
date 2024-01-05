@@ -168,7 +168,7 @@ private:
   existing_pucch_grants
   get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
 
-  unsigned get_max_pucch_grants(unsigned currently_allocated_pucchs);
+  unsigned get_max_pucch_grants(unsigned currently_allocated_puschs);
 
   using slot_alloc_list = static_vector<rnti_t, MAX_PUCCH_PDUS_PER_SLOT>;
 
