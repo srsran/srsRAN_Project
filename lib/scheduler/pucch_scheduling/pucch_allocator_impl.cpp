@@ -101,11 +101,8 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
   cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset];
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.full() or pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot or
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+          get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size())) or
       pucch_common_alloc_grid[slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset].slot.to_uint()].full()) {
     return nullopt;
   }
@@ -224,19 +221,9 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                                                          const ue_cell_configuration&  ue_cell_cfg)
 {
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
-    logger.warning(
-        "rnti={}: SR occasion allocation for slot={} skipped. Cause: UL grants reached", crnti, pucch_slot_alloc.slot);
-    return;
-  }
-
-  if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available in "
-                   "the scheduler",
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
+    logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: max number of UL grants reached",
                    crnti,
                    pucch_slot_alloc.slot);
     return;
@@ -526,23 +513,11 @@ optional<unsigned> pucch_allocator_impl::allocate_new_format1_harq_grant(cell_sl
                                                                          pucch_info* existing_sr_grant)
 {
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.info("rnti={}: HARQ-ACK allocation on PUCCH Format1 for slot={} skipped. Cause: UL grants reached",
                 crnti,
                 pucch_slot_alloc.slot);
-    return nullopt;
-  }
-
-  // Check if there is space for one more additional PUCCH HARQ grant.
-  if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning("rnti={}: PUCCH HARQ-ACK grant for slot={} not allocated. Cause: no more PUCCH grants available "
-                   "in the scheduler",
-                   crnti,
-                   pucch_slot_alloc.slot);
     return nullopt;
   }
 
@@ -619,11 +594,8 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
       pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.warning("rnti={}: UCI allocation on PUCCH Format2 for slot={} skipped. Cause: UL grants reached",
                    rnti,
                    pucch_slot_alloc.slot);
@@ -711,23 +683,11 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
       pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.info("rnti={}: HARQ-ACK allocation on PUCCH Format2 for slot={} skipped. Cause: UL grants reached",
                 rnti,
                 pucch_slot_alloc.slot);
-    return nullopt;
-  }
-
-  // Allocate PUCCH SR grant only.
-  if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning("rnti={}: UCI could not be allocated on PUCCH Format2 for slot={}. Cause: List still full after "
-                   "removing PUCCH F1 grants",
-                   rnti,
-                   pucch_slot_alloc.slot);
     return nullopt;
   }
 
@@ -819,23 +779,11 @@ optional<unsigned> pucch_allocator_impl::change_format2_resource(cell_slot_resou
   remove_format2_csi_from_grants(pucch_slot_alloc, rnti, ue_cell_cfg);
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.info("rnti={}: HARQ-ACK allocation on PUCCH Format2 for slot={} skipped. Cause: UL grants reached",
                 rnti,
                 pucch_slot_alloc.slot);
-    return nullopt;
-  }
-
-  if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "rnti={}: HARQ-ACK could not be allocated on PUCCH Format2 for slot={}. Cause: List still full after "
-        "removing PUCCH F2 CSI grant",
-        rnti,
-        pucch_slot_alloc.slot);
     return nullopt;
   }
 
@@ -941,23 +889,11 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
   srsran_assert(csi_part1_bits != 0, "This function can only be called to allocate a PUCCH F2 resource for CSI");
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucchs_on_this_slot =
-      std::min(max_pucch_grants_per_slot,
-               max_ul_grants_per_slot - static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucchs_on_this_slot) {
+  if (pucch_slot_alloc.result.ul.pucchs.size() >=
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.warning("rnti={}: CSI allocation on PUCCH Format2 for slot={} skipped. Cause: UL grants reached",
                    crnti,
                    pucch_slot_alloc.slot);
-    return;
-  }
-
-  // Check if there is space for new PUCCH grants in the scheduler.
-  if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "rnti={}: PUCCH Format 2 grant allocation for slot={} skipped. Cause: scheduler PUCCH grant list is full",
-        crnti,
-        pucch_slot_alloc.slot);
     return;
   }
 
@@ -1200,4 +1136,9 @@ bool pucch_allocator_impl::is_pucch_f1_grant_common(rnti_t rnti, slot_point sl_t
   return std::find(pucch_common_alloc_grid[sl_tx.to_uint()].begin(),
                    pucch_common_alloc_grid[sl_tx.to_uint()].end(),
                    rnti) != pucch_common_alloc_grid[sl_tx.to_uint()].end();
+}
+
+unsigned pucch_allocator_impl::get_max_pucch_grants(unsigned currently_allocated_pucchs)
+{
+  return std::min(max_pucch_grants_per_slot, max_ul_grants_per_slot - currently_allocated_pucchs);
 }
