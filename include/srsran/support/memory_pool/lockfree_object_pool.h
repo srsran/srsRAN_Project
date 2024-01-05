@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "memory_block_list.h"
-#include "srsran/adt/unique_function.h"
+#include "srsran/support/srsran_assert.h"
 #include <atomic>
+#include <limits>
 #include <type_traits>
 
 namespace srsran {
@@ -49,7 +49,11 @@ public:
       return npos();
     }
     node new_top{next_idx[old_top.index], old_top.epoch + 1};
-    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_acquire)) {
+    // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release in push().
+    // The "acquire" ordering also ensures that the next_idx[old_top.index] read is not reordered to happen before the
+    // atomic operation.
+    // In case of failure, "top" remains unchanged, so the operation can have "relaxed" ordering.
+    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_relaxed)) {
       if (old_top.index == npos()) {
         return npos();
       }
@@ -63,6 +67,9 @@ public:
     node old_top{top.load(std::memory_order_relaxed)};
     next_idx[index] = old_top.index;
     node new_top{index, old_top.epoch + 1};
+    // We use memory ordering "release" for success path to form a "synchronizes-with" relationship with the acquire in
+    // pop(). The "release" ordering also ensures that the next_idx[index] write is visible to other threads.
+    // In case of failure, "top" remains unchanged, so the operation can have "release" ordering.
     while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_release, std::memory_order_release)) {
       new_top.epoch   = old_top.epoch + 1;
       next_idx[index] = old_top.index;
