@@ -10,6 +10,7 @@
 
 #include "ngap_ue_context_release_procedure.h"
 #include "../ngap/ngap_asn1_helpers.h"
+#include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

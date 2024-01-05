@@ -18,6 +18,9 @@
 #include <cstdio>
 
 namespace srsran {
+namespace srs_cu_cp {
+
+struct ngap_message;
 
 class ngap_asn1_packer : public srs_cu_cp::ngap_message_handler
 {
@@ -35,4 +38,5 @@ private:
   dlt_pcap&                          pcap;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsran

@@ -9,6 +9,7 @@
  */
 
 #include "ngap_handover_preparation_procedure.h"
+#include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran;

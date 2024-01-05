@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/ran/rnti.h"
 
 namespace srsran {

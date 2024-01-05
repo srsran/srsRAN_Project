@@ -12,6 +12,7 @@
 #include "../ngap/ngap_asn1_helpers.h"
 #include "ngap_procedure_helpers.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

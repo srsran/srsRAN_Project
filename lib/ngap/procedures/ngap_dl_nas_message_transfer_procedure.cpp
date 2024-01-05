@@ -9,6 +9,7 @@
  */
 
 #include "ngap_dl_nas_message_transfer_procedure.h"
+#include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
