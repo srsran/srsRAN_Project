@@ -75,8 +75,7 @@ void pseudo_random_generator_impl::generate(bit_buffer& data)
   static constexpr unsigned nof_bits_per_byte = 8;
 
   // Calculate the maximum number of simultaneous words to process.
-  static constexpr unsigned max_nof_bytes_step =
-      pseudo_random_generator_sequence::get_max_step_size() / nof_bits_per_byte;
+  static constexpr unsigned max_nof_bytes_step = 64 / nof_bits_per_byte;
 
   // Calculate the maximum number of simultaneous bits to process.
   static constexpr unsigned max_nof_bits_step = max_nof_bytes_step * nof_bits_per_byte;
@@ -84,49 +83,48 @@ void pseudo_random_generator_impl::generate(bit_buffer& data)
   // Create sequence with the current x1 and x2 states.
   pseudo_random_generator_sequence sequence(x1, x2);
 
-  // Processes batches of 24 bits in parallel.
-  for (unsigned i_byte = 0, i_byte_end = (data.size() / max_nof_bits_step) * max_nof_bytes_step;
-       i_byte != i_byte_end;) {
-    uint32_t c = sequence.step(max_nof_bits_step);
-
-    // Processes each byte of the batch.
-    for (unsigned i_byte_batch = 0; i_byte_batch != max_nof_bytes_step; ++i_byte, ++i_byte_batch) {
-      // Calculate the output byte.
-      uint8_t output_byte = (static_cast<uint8_t>((c >> (max_nof_bits_step - (i_byte_batch * nof_bits_per_byte))) &
-                                                  mask_lsb_ones<uint32_t>(nof_bits_per_byte)));
-
-      // Insert the output byte.
-      data.set_byte(output_byte, i_byte);
-    }
+  // Processes batches of 64 bits in parallel.
+  for (unsigned i_byte = 0, i_byte_end = (data.size() / max_nof_bits_step) * max_nof_bytes_step; i_byte != i_byte_end;
+       i_byte += 8) {
+    uint64_t c                 = sequence.step64();
+    c                          = __builtin_bswap64(c);
+    span<uint8_t> output_chunk = data.get_buffer().subspan(i_byte, max_nof_bytes_step);
+    memcpy(output_chunk.data(), &c, max_nof_bytes_step);
   }
 
   // Process spare bits in a batch of the remainder bits.
   unsigned i_bit     = (data.size() / max_nof_bits_step) * max_nof_bits_step;
   unsigned remainder = data.size() - i_bit;
-  uint32_t c         = sequence.step(remainder);
   unsigned count     = 0;
   while (remainder != 0) {
-    // Process per byte basis, ceiling at the remainder.
-    unsigned word_size = std::min(remainder, nof_bits_per_byte);
+    unsigned batch_size    = std::min(remainder, pseudo_random_generator_sequence::get_max_step_size());
+    unsigned reminder_size = batch_size;
+    uint32_t c             = sequence.step(batch_size);
 
-    // Mask the LSB of the sequence.
-    uint32_t mask = mask_lsb_ones<uint32_t>(nof_bits_per_byte);
+    while (batch_size != 0) {
+      // Process per byte basis, ceiling at the remainder.
+      unsigned word_size = std::min(batch_size, nof_bits_per_byte);
 
-    // Shift to align the reversed sequence LSB with the remainder bits.
-    unsigned right_shift = nof_bits_per_byte - word_size;
+      // Mask the LSB of the sequence.
+      uint32_t mask = mask_lsb_ones<uint32_t>(nof_bits_per_byte);
 
-    // Calculate the output byte.
-    uint8_t output_word = ((c >> (max_nof_bits_step - (count * nof_bits_per_byte))) & mask) >> right_shift;
+      // Shift to align the reversed sequence LSB with the remainder bits.
+      unsigned right_shift = nof_bits_per_byte - word_size;
 
-    // Insert the output byte.
-    data.insert(output_word, i_bit, word_size);
+      // Calculate the output byte.
+      uint8_t output_word = ((c >> (24u - (count * nof_bits_per_byte))) & mask) >> right_shift;
 
-    // Advance bit index.
-    i_bit += word_size;
+      // Insert the output byte.
+      data.insert(output_word, i_bit, word_size);
 
-    // Decrement remainder.
-    remainder -= word_size;
-    ++count;
+      // Advance bit index.
+      i_bit += word_size;
+
+      // Decrement remainder.
+      batch_size -= word_size;
+      ++count;
+    }
+    remainder -= reminder_size;
   }
 
   x1 = sequence.get_x1();
@@ -246,8 +244,7 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   static constexpr unsigned nof_bits_per_byte = 8;
 
   // Calculate the maximum number of simultaneous words to process.
-  static constexpr unsigned max_nof_bytes_step =
-      pseudo_random_generator_sequence::get_max_step_size() / nof_bits_per_byte;
+  static constexpr unsigned max_nof_bytes_step = 64 / nof_bits_per_byte;
 
   // Calculate the maximum number of simultaneous bits to process.
   static constexpr unsigned max_nof_bits_step = max_nof_bytes_step * nof_bits_per_byte;
@@ -256,55 +253,51 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   pseudo_random_generator_sequence sequence(x1, x2);
 
   // Processes batches of words.
-  for (unsigned i_byte = 0, i_byte_end = (in.size() / max_nof_bits_step) * max_nof_bytes_step; i_byte != i_byte_end;) {
-    uint32_t c = sequence.step<max_nof_bits_step>();
-
-    // Processes each byte of the batch.
-    for (unsigned i_byte_batch = 0; i_byte_batch != max_nof_bytes_step; ++i_byte, ++i_byte_batch) {
-      // Extract input byte.
-      uint8_t input_byte = in.get_byte(i_byte);
-
-      // Calculate the output byte.
-      uint8_t output_byte =
-          input_byte ^ (static_cast<uint8_t>((c >> (max_nof_bits_step - (i_byte_batch * nof_bits_per_byte))) & 0xff));
-
-      // Insert the output byte.
-      out.set_byte(output_byte, i_byte);
-    }
+  for (unsigned i_byte = 0, i_byte_end = (in.size() / max_nof_bits_step) * max_nof_bytes_step; i_byte != i_byte_end;
+       i_byte += 8) {
+    uint64_t c = sequence.step64();
+    c          = __builtin_bswap64(c);
+    uint64_t temp;
+    memcpy(&temp, &in.get_buffer()[i_byte], 8);
+    temp ^= c;
+    memcpy(&out.get_buffer()[i_byte], &temp, 8);
   }
 
   // Process spare bits in a batch of the remainder bits.
   unsigned i_bit     = (in.size() / max_nof_bits_step) * max_nof_bits_step;
   unsigned remainder = in.size() - i_bit;
   unsigned count     = 0;
-  uint32_t c         = sequence.step(remainder);
-
-  // Process bits.
   while (remainder != 0) {
-    // Process per byte basis, ceiling at the remainder.
-    unsigned word_size = std::min(remainder, nof_bits_per_byte);
+    unsigned batch_size    = std::min(remainder, pseudo_random_generator_sequence::get_max_step_size());
+    unsigned reminder_size = batch_size;
+    uint32_t c             = sequence.step(batch_size);
 
-    uint8_t input_word = in.extract(i_bit, word_size);
+    // Process bits.
+    while (batch_size != 0) {
+      // Process per byte basis, ceiling at the remainder.
+      unsigned word_size = std::min(batch_size, nof_bits_per_byte);
 
-    // Shift to align the reversed sequence LSB with the remainder bits.
-    unsigned right_shift = nof_bits_per_byte - word_size;
+      uint8_t input_word = in.extract(i_bit, word_size);
 
-    // Calculate the output byte.
-    uint8_t output_word =
-        input_word ^
-        ((static_cast<uint8_t>((c >> (max_nof_bits_step - (count * nof_bits_per_byte))) & 0xff)) >> right_shift);
+      // Shift to align the reversed sequence LSB with the remainder bits.
+      unsigned right_shift = nof_bits_per_byte - word_size;
 
-    // Insert the output byte.
-    out.insert(output_word, i_bit, word_size);
+      // Calculate the output byte.
+      uint8_t output_word =
+          input_word ^ ((static_cast<uint8_t>((c >> (24u - (count * nof_bits_per_byte))) & 0xff)) >> right_shift);
 
-    // Advance bit index.
-    i_bit += word_size;
+      // Insert the output byte.
+      out.insert(output_word, i_bit, word_size);
 
-    // Decrement remainder.
-    remainder -= word_size;
-    ++count;
+      // Advance bit index.
+      i_bit += word_size;
+
+      // Decrement remainder.
+      batch_size -= word_size;
+      ++count;
+    }
+    remainder -= reminder_size;
   }
-
   // Update x1 and x2 states.
   x1 = sequence.get_x1();
   x2 = sequence.get_x2();
