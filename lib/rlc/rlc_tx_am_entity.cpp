@@ -233,7 +233,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   st.tx_next = (st.tx_next + 1) % mod;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_no_segmentation(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -297,7 +297,7 @@ size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_
   sdu_info.next_so += segment_payload_len;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -392,7 +392,7 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);

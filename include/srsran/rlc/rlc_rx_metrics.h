@@ -12,7 +12,6 @@
 
 #include "srsran/rlc/rlc_config.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 

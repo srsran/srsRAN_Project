@@ -90,7 +90,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
   logger.log_info(sdu.buf.begin(), sdu.buf.end(), "TX PDU. pdu_len={} grant_len={}", sdu_len, rlc_pdu_buf.size());
 
   // Update metrics
-  metrics.metrics_add_pdus(1, sdu_len);
+  metrics.metrics_add_pdus_no_segmentation(1, sdu_len);
 
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, sdu.buf);

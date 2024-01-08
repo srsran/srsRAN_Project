@@ -161,7 +161,11 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_size);
+  if (header.si == rlc_si_field::full_sdu) {
+    metrics.metrics_add_pdus_no_segmentation(1, pdu_size);
+  } else {
+    metrics.metrics_add_pdus_with_segmentation_um(1, pdu_size);
+  }
 
   // Log state
   log_state(srslog::basic_levels::debug);
