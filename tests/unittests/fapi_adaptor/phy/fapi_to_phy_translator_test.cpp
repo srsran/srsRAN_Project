@@ -351,36 +351,3 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
-
-TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_the_current_slot_is_bigger_than_the_allowed)
-{
-  ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = false;
-
-  // Send a DL_TTI.request.
-  translator.dl_tti_request(msg);
-
-  // Assert that the downlink processor is configured.
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  // The manager headroom size is the number of headroom in slots plus 3.
-  unsigned manager_headroom_size = headroom_in_slots + 3U;
-  // Increase the slots.
-  for (unsigned i = 1; i != (manager_headroom_size - 1U); ++i) {
-    translator.handle_new_slot(slot + i);
-    ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  }
-
-  translator.handle_new_slot(slot + (manager_headroom_size - 1U));
-
-  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
-}

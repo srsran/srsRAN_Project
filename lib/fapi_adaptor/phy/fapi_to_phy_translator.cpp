@@ -307,7 +307,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   }
 
   // Create controller for the current slot.
-  slot_based_upper_phy_controller& controller = slot_controller_mngr.adquire_controller(slot);
+  slot_based_upper_phy_controller& controller = slot_controller_mngr.acquire_controller(slot);
 
   // Translate the downlink PDUs.
   expected<downlink_pdus> pdus = translate_dl_tti_pdus_to_phy_pdus(
@@ -651,11 +651,7 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   trace_point tp = l1_tracer.now();
 
-  // Update the atomic variable that holds the slot point.
-  current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
-
-  // Release old controllers.
-  slot_controller_mngr.handle_new_slot(slot);
+  update_current_slot(slot);
 
   // Enqueue soft buffer run slot.
   if (!asynchronous_executor.execute([this, slot]() { buffer_pool.run_slot(slot); })) {
@@ -684,20 +680,13 @@ fapi_to_phy_translator::slot_based_upper_phy_controller_manager::get_controller(
   return controller(slot);
 }
 
-void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::handle_new_slot(slot_point slot)
-{
-  // Release the oldest controller.
-  slot_point oldest_slot  = slot - int(controllers.size() - 1);
-  controller(oldest_slot) = slot_based_upper_phy_controller();
-}
-
 void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::release_controller(slot_point slot)
 {
   controller(slot) = slot_based_upper_phy_controller();
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
-fapi_to_phy_translator::slot_based_upper_phy_controller_manager::adquire_controller(slot_point slot)
+fapi_to_phy_translator::slot_based_upper_phy_controller_manager::acquire_controller(slot_point slot)
 {
   controller(slot) = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
 
@@ -712,13 +701,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller_manager::slot_based_uppe
   dl_processor_pool(dl_processor_pool_),
   rg_pool(rg_pool_),
   sector_id(sector_id_),
-  // The manager should be able to manage the current slot plus the requests headroom size. Also, as it should clean the
-  // oldest slot when a new SLOT.indication is received, it should have two extra positions for these oldest slots.
-  // Adding two extra positions makes that if a new SLOT.indication arrives in the middle of a valid processing PDU, the
-  // controller for that slot will not be released in the middle of processing the messages.
-  // NOTE: if we can ensure that no messages will be lost, we can remove this extra positions in the manager, as it
-  // would not be required to release controllers when the slot changes, Also, this would be valid when the time when a
-  // controller is released does not matter for incomplete/lost messages.
-  controllers(nof_slots_request_headroom + 3U)
+  // The manager should be able to manage the current slot plus the requests headroom size.
+  controllers(nof_slots_request_headroom + 1U)
 {
 }
