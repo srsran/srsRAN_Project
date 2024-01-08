@@ -33,7 +33,10 @@ byte_buffer make_tx_byte_buffer(uint32_t length)
 {
   byte_buffer pdu{};
   for (uint32_t i = 0; i < length; ++i) {
-    pdu.append((uint8_t)i);
+    if (not pdu.append((uint8_t)i)) {
+      pdu.clear();
+      break;
+    }
   }
   return pdu;
 }

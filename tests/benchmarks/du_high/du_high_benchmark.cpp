@@ -513,7 +513,7 @@ public:
       }
     }
     // Append the LBSR buffer size to the BSR subPDU.
-    bsr_mac_subpdu.append(lbsr_buff_sz);
+    report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
     cfg.gnb_du_id                  = 1;
@@ -829,15 +829,15 @@ public:
       mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
       // Pack header and payload length.
       if (payload_len > 255) {
-        rx_pdu.pdu.append(0x40 | drb_lcid);
-        rx_pdu.pdu.append((payload_len & 0xff00) >> 8);
-        rx_pdu.pdu.append(payload_len & 0x00ff);
+        report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
+        report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
+        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
       } else {
-        rx_pdu.pdu.append(drb_lcid);
-        rx_pdu.pdu.append(payload_len & 0x00ff);
+        report_fatal_error_if_not(rx_pdu.pdu.append(drb_lcid), "Failed to allocate PDU");
+        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
       }
       static const uint8_t rlc_um_complete_pdu_header = 0x00;
-      rx_pdu.pdu.append(rlc_um_complete_pdu_header);
+      report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
       // Exclude RLC header from payload length.
       rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1));
       // Append Long BSR bytes.

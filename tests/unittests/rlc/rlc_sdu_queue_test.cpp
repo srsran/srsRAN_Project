@@ -53,8 +53,8 @@ void full_capacity_test()
   // Write Capacity + 1 SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < capacity + 1; pdcp_sn++) {
     byte_buffer buf = {};
-    buf.append(pdcp_sn);
-    buf.append(pdcp_sn);
+    TESTASSERT(buf.append(pdcp_sn));
+    TESTASSERT(buf.append(pdcp_sn));
     rlc_sdu write_sdu = {std::move(buf), pdcp_sn};
     if (pdcp_sn != capacity) {
       TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
@@ -68,8 +68,8 @@ void full_capacity_test()
   // Read all SDUs and try to read on SDU over capacity
   for (uint32_t pdcp_sn = 0; pdcp_sn < capacity + 1; pdcp_sn++) {
     byte_buffer expected_msg = {};
-    expected_msg.append(pdcp_sn);
-    expected_msg.append(pdcp_sn);
+    TESTASSERT(expected_msg.append(pdcp_sn));
+    TESTASSERT(expected_msg.append(pdcp_sn));
     rlc_sdu read_sdu = {};
     if (pdcp_sn != capacity) {
       TESTASSERT(tx_queue.read(read_sdu));
@@ -93,8 +93,8 @@ void discard_test()
   // Fill SDU queue with SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
     byte_buffer buf = {};
-    buf.append(pdcp_sn);
-    buf.append(pdcp_sn);
+    TESTASSERT(buf.append(pdcp_sn));
+    TESTASSERT(buf.append(pdcp_sn));
     rlc_sdu write_sdu = {std::move(buf), pdcp_sn};
     TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
   }
@@ -132,8 +132,8 @@ void discard_all_test()
   // Fill SDU queue with SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
     byte_buffer buf = {};
-    buf.append(pdcp_sn);
-    buf.append(pdcp_sn);
+    TESTASSERT(buf.append(pdcp_sn));
+    TESTASSERT(buf.append(pdcp_sn));
     rlc_sdu write_sdu = {std::move(buf), pdcp_sn};
     TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
   }

@@ -197,7 +197,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Add dummy RLC data header.
   byte_buffer mac_rx_sdu(dummy_rlc_header);
   // > Append data buffer.
-  mac_rx_sdu.append(test_payload.copy());
+  ASSERT_TRUE(mac_rx_sdu.append(test_payload.copy()));
   // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_rx_sdu.copy()});
   // > Check arrival of F1-C Tx SDU to F1-C bearer.
@@ -229,7 +229,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Add dummy RLC data header.
   byte_buffer mac_sdu(dummy_rlc_header);
   // > Append data buffer.
-  mac_sdu.append(test_payload.copy());
+  ASSERT_TRUE(mac_sdu.append(test_payload.copy()));
   // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
   // > Check arrival of F1-U Tx SDU to F1-U bearer.

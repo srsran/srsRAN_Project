@@ -81,7 +81,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
-    test_pdu.append(0); // mess up the MAC
+    ASSERT_TRUE(test_pdu.append(0)); // mess up the MAC
 
     // Get expected values
     uint32_t exp_pdu_size = test_pdu.length();

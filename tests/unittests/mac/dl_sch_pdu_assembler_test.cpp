@@ -45,7 +45,7 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected{0b00111110};
-  expected.append(conres);
+  ASSERT_TRUE(expected.append(conres));
   ASSERT_EQ(result, expected);
 }
 
@@ -65,7 +65,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
   unsigned             payload_len = test_rgen::uniform_int<unsigned>(1, 255);
   byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(test_rgen::uniform_int<uint8_t>());
+    ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()});
@@ -98,7 +98,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, bytes.size() - HEADER_LEN);
   byte_buffer               payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(test_rgen::uniform_int<uint8_t>());
+    ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()}), payload.length() + HEADER_LEN);
@@ -146,7 +146,7 @@ public:
     srslog::init();
 
     for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
-      msg3_pdu.append(test_rgen::uniform_int<uint8_t>());
+      report_fatal_error_if_not(msg3_pdu.append(test_rgen::uniform_int<uint8_t>()), "failed to allocate bytes");
     }
 
     // Create UE.

@@ -139,7 +139,7 @@ protected:
   {
     byte_buffer sdu = {};
     for (uint32_t k = 0; k < length; ++k) {
-      sdu.append(first_byte + k);
+      report_error_if_not(sdu.append(first_byte + k), "Failed to allocate byte buffer");
     }
     return sdu;
   }
@@ -157,7 +157,7 @@ protected:
       sdu_bufs[i] = byte_buffer();
       // Write the index into the buffer
       for (uint32_t k = 0; k < sdu_size; ++k) {
-        sdu_bufs[i].append(i + k);
+        ASSERT_TRUE(sdu_bufs[i].append(i + k));
       }
 
       // write SDU into upper end
@@ -287,7 +287,7 @@ TEST_P(rlc_um_test, rx_pdu_with_short_header)
 {
   // Create a short header of a PDU segment
   byte_buffer pdu_buf = {};
-  pdu_buf.append(0b11000000); // SI = 0b11
+  ASSERT_TRUE(pdu_buf.append(0b11000000)); // SI = 0b11
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
@@ -301,10 +301,10 @@ TEST_P(rlc_um_test, rx_pdu_without_payload)
 {
   // Create a complete header of a PDU segment
   byte_buffer pdu_buf = {};
-  pdu_buf.append(0b11000000); // SI = 0b11
+  ASSERT_TRUE(pdu_buf.append(0b11000000)); // SI = 0b11
   pdu_buf.append({0x11, 0x22});
   if (sn_size == rlc_um_sn_size::size12bits) {
-    pdu_buf.append(0x33);
+    ASSERT_TRUE(pdu_buf.append(0x33));
   }
 
   // Push into RLC
@@ -326,7 +326,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = byte_buffer();
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -395,7 +395,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -474,7 +474,7 @@ TEST_P(rlc_um_test, sdu_discard)
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = byte_buffer();
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -578,7 +578,7 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = byte_buffer();
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -679,7 +679,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -759,7 +759,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -1011,7 +1011,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end
@@ -1090,7 +1090,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
+      ASSERT_TRUE(sdu_bufs[i].append(i + k));
     }
 
     // write SDU into upper end

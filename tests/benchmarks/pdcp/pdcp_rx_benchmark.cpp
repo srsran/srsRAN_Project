@@ -130,7 +130,7 @@ std::vector<byte_buffer_chain> gen_pdu_list(security::integrity_enabled   int_en
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {
-      sdu_buf.append(rand());
+      report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     pdcp_tx->handle_sdu(std::move(sdu_buf));
   }
@@ -195,7 +195,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {
-      sdu_buf.append(rand());
+      report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     sdu_list.push_back(std::move(sdu_buf));
   }

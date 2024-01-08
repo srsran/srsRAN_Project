@@ -399,7 +399,7 @@ TEST(byte_buffer_test, prepend_and_trim_tail)
   constexpr uint32_t trim_len   = 4;
   constexpr uint32_t prefix_len = 3;
   for (uint32_t i = 0; i < pdu_len; i++) {
-    pdu.append(i);
+    ASSERT_TRUE(pdu.append(i));
   }
 
   sdu.append(pdu.begin() + prefix_len, pdu.end());
@@ -454,7 +454,7 @@ TEST(byte_buffer_test, is_contiguous)
 
   pdu.append(bytes);
   ASSERT_TRUE(pdu.is_contiguous());
-  pdu.append(byte_buffer(bytes2));
+  ASSERT_TRUE(pdu.append(byte_buffer(bytes2)));
   ASSERT_TRUE(not pdu.is_contiguous());
 
   ASSERT_EQ_BUFFER(pdu, bytes_concat);
@@ -871,7 +871,7 @@ TEST(byte_buffer_slice_test, deep_slice)
   ASSERT_EQ(slice, vec);
 
   // Test slice doesn't get altered by underlying byte_buffer extension.
-  pdu.append(1);
+  ASSERT_TRUE(pdu.append(1));
   ASSERT_NE(slice, pdu);
   byte_buffer_view v{pdu, 0, pdu.length() - 1};
   ASSERT_EQ(slice, v);

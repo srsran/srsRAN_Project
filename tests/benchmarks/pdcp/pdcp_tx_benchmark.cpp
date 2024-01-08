@@ -119,7 +119,7 @@ void benchmark_pdcp_tx(security::integrity_enabled   int_enabled,
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {
-      sdu_buf.append(rand());
+      report_fatal_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU buffer");
     }
     sdu_list.push_back(std::move(sdu_buf));
   }

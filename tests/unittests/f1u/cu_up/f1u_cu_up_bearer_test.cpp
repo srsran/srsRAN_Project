@@ -57,7 +57,10 @@ public:
   {
     byte_buffer sdu_buf;
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_buf.append(first_byte + k);
+      if (not sdu_buf.append(first_byte + k)) {
+        sdu_buf.clear();
+        break;
+      }
     }
     return sdu_buf;
   }

@@ -195,7 +195,7 @@ public:
     }
 
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
-               central_mem_cache.size(),
+               central_mem_cache.size() * block_batch_size,
                nof_memory_blocks(),
                count);
   }

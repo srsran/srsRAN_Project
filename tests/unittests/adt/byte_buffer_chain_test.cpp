@@ -50,7 +50,7 @@ TEST(byte_buffer_chain_test, append_byte_buffer)
   byte_buffer other_buffer{1, 2, 3, 4, 5};
   byte_buffer other_buffer2{6, 7, 8};
   byte_buffer buf_concat = other_buffer.deep_copy();
-  buf_concat.append(other_buffer2.deep_copy());
+  ASSERT_TRUE(buf_concat.append(other_buffer2.deep_copy()));
   buf.append(other_buffer.copy());
   buf.append(other_buffer2.copy());
 

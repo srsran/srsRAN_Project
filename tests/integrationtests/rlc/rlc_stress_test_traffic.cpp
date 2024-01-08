@@ -31,7 +31,7 @@ void stress_traffic_source::send_pdu()
   }
 
   for (uint32_t i = 0; i < sdu_size; i++) {
-    sdu.append(payload);
+    report_fatal_error_if_not(sdu.append(payload), "Failed to allocate SDU");
     payload++;
   }
 

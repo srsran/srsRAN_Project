@@ -210,116 +210,34 @@ public:
 
   /// Append bytes of a iterator range.
   template <typename Iterator>
-  void append(Iterator begin, Iterator end)
+  bool append(Iterator begin, Iterator end)
   {
     static_assert(std::is_same<std::decay_t<decltype(*begin)>, uint8_t>::value or
                       std::is_same<std::decay_t<decltype(*begin)>, const uint8_t>::value,
                   "Iterator value type is not uint8_t");
     // TODO: use segment-wise copy if it is a span.
     for (auto it = begin; it != end; ++it) {
-      append(*it);
-    }
-  }
-
-  /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
-  bool append(span<const uint8_t> bytes)
-  {
-    if (empty() and not bytes.empty()) {
-      if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
+      if (not append(*it)) {
         return false;
       }
     }
-    // segment-wise copy.
-    for (size_t count = 0; count < bytes.size();) {
-      if (ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-        if (not append_segment(0)) {
-          return false;
-        }
-      }
-      size_t              to_write = std::min(ctrl_blk_ptr->segments.tail->tailroom(), bytes.size() - count);
-      span<const uint8_t> subspan  = bytes.subspan(count, to_write);
-      ctrl_blk_ptr->segments.tail->append(subspan);
-      count += to_write;
-      ctrl_blk_ptr->pkt_len += to_write;
-    }
     return true;
   }
+
+  /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
+  bool append(span<const uint8_t> bytes);
 
   /// Appends an initializer list of bytes.
   void append(const std::initializer_list<uint8_t>& bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
-  SRSRAN_NODISCARD bool append(const byte_buffer& other)
-  {
-    srsran_assert(&other != this, "Self-append not supported");
-    if (empty() and not other.empty()) {
-      if (not append_segment(other.ctrl_blk_ptr->segments.head->headroom())) {
-        return false;
-      }
-    }
-    for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
-      auto other_it = seg->begin();
-      while (other_it != seg->end()) {
-        if (ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-          if (not append_segment(0)) {
-            return false;
-          }
-        }
-        auto to_append =
-            std::min(seg->end() - other_it, (iterator::difference_type)ctrl_blk_ptr->segments.tail->tailroom());
-        ctrl_blk_ptr->segments.tail->append(other_it, other_it + to_append);
-        other_it += to_append;
-      }
-      ctrl_blk_ptr->pkt_len += seg->length();
-    }
-    return true;
-  }
+  SRSRAN_NODISCARD bool append(const byte_buffer& other);
 
   /// Appends bytes from another rvalue byte_buffer. This function may allocate new segments.
-  bool append(byte_buffer&& other)
-  {
-    srsran_assert(&other != this, "Self-append not supported");
-    if (other.empty()) {
-      return true;
-    }
-    if (empty()) {
-      *this = std::move(other);
-      return true;
-    }
-    if (not other.ctrl_blk_ptr.unique()) {
-      // Use lvalue append.
-      return append(other);
-    }
-    // This is the last reference to "after". Shallow copy, except control segment.
-    node_t* node = create_segment(0);
-    if (node == nullptr) {
-      return false;
-    }
-    node->append(span<uint8_t>{other.ctrl_blk_ptr->segments.head->data(),
-                               other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
-    ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
-    node_t* last_tail           = ctrl_blk_ptr->segments.tail;
-    last_tail->next             = other.ctrl_blk_ptr->segments.head;
-    ctrl_blk_ptr->segments.tail = other.ctrl_blk_ptr->segments.tail;
-    node->next                  = other.ctrl_blk_ptr->segment_in_cb_memory_block->next;
-    if (other.ctrl_blk_ptr->segment_in_cb_memory_block == other.ctrl_blk_ptr->segments.tail) {
-      ctrl_blk_ptr->segments.tail = node;
-    }
-    for (node_t* seg = last_tail; seg->next != nullptr; seg = seg->next) {
-      if (seg->next == other.ctrl_blk_ptr->segment_in_cb_memory_block) {
-        seg->next = node;
-        break;
-      }
-    }
-    other.ctrl_blk_ptr->segments.head       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-    other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-    other.ctrl_blk_ptr->segments.head->next = nullptr;
-    other.ctrl_blk_ptr.reset();
-    return true;
-  }
+  SRSRAN_NODISCARD bool append(byte_buffer&& other);
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
-  bool append(uint8_t byte)
+  SRSRAN_NODISCARD bool append(uint8_t byte)
   {
     if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
       if (not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
@@ -366,53 +284,12 @@ public:
   void clear() { ctrl_blk_ptr.reset(); }
 
   /// Removes "nof_bytes" from the head of the byte_buffer.
-  void trim_head(size_t nof_bytes)
-  {
-    srsran_assert(length() >= nof_bytes, "Trying to trim more bytes than those available");
-    for (size_t trimmed = 0; trimmed != nof_bytes;) {
-      size_t to_trim = std::min(nof_bytes - trimmed, ctrl_blk_ptr->segments.head->length());
-      ctrl_blk_ptr->segments.head->trim_head(to_trim);
-      ctrl_blk_ptr->pkt_len -= to_trim;
-      trimmed += to_trim;
-      if (ctrl_blk_ptr->segments.head->length() == 0) {
-        // Remove the first segment.
-        ctrl_blk_ptr->segments.head = ctrl_blk_ptr->segments.head->next;
-      }
-    }
-  }
+  void trim_head(size_t nof_bytes);
 
   /// \brief Remove "nof_bytes" bytes at the end of the byte_buffer.
   /// If the length is greater than the length of the last segment, the function will fail and return -1 without
   /// modifying the byte_buffer.
-  void trim_tail(size_t nof_bytes)
-  {
-    srsran_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
-    if (nof_bytes == 0) {
-      return;
-    }
-
-    if (ctrl_blk_ptr->segments.tail->length() >= nof_bytes) {
-      // Simplest scenario where the last segment is larger than the number of bytes to trim.
-      ctrl_blk_ptr->segments.tail->trim_tail(nof_bytes);
-      ctrl_blk_ptr->pkt_len -= nof_bytes;
-      if (ctrl_blk_ptr->segments.tail->length() == 0) {
-        pop_last_segment();
-      }
-      return;
-    }
-    size_t  new_len = length() - nof_bytes;
-    node_t* seg     = ctrl_blk_ptr->segments.head;
-    for (size_t count = 0; seg != nullptr; seg = seg->next) {
-      if (count + seg->length() >= new_len) {
-        seg->next = nullptr;
-        seg->resize(new_len - count);
-        ctrl_blk_ptr->segments.tail = seg;
-        ctrl_blk_ptr->pkt_len       = new_len;
-        break;
-      }
-      count += seg->length();
-    }
-  }
+  void trim_tail(size_t nof_bytes);
 
   /// Checks whether byte_buffer is empty.
   bool empty() const { return length() == 0; }
@@ -443,61 +320,10 @@ public:
   bool is_contiguous() const { return empty() or ctrl_blk_ptr->segments.head == ctrl_blk_ptr->segments.tail; }
 
   /// Moves the bytes stored in different segments of the byte_buffer into first segment.
-  bool linearize()
-  {
-    if (is_contiguous()) {
-      return true;
-    }
-    size_t sz = length();
-    if (sz > ctrl_blk_ptr->segments.head->capacity() - ctrl_blk_ptr->segments.head->headroom()) {
-      return false;
-    }
-    for (node_t* seg = ctrl_blk_ptr->segments.head->next; seg != nullptr;) {
-      node_t* next = seg->next;
-      ctrl_blk_ptr->segments.head->append(seg->begin(), seg->end());
-      ctrl_blk_ptr->destroy_node(seg);
-      seg = next;
-    }
-    ctrl_blk_ptr->segments.head->next = nullptr;
-    ctrl_blk_ptr->segments.tail       = ctrl_blk_ptr->segments.head;
-    return true;
-  }
+  bool linearize();
 
   /// Set byte_buffer length. Note: It doesn't initialize newly created bytes.
-  bool resize(size_t new_sz)
-  {
-    size_t prev_len = length();
-    if (new_sz == prev_len) {
-      return true;
-    }
-    if (new_sz > prev_len) {
-      for (size_t to_add = new_sz - prev_len; to_add > 0;) {
-        if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
-          if (not append_segment(0)) {
-            return false;
-          }
-        }
-        size_t added = std::min(ctrl_blk_ptr->segments.tail->tailroom(), to_add);
-        ctrl_blk_ptr->segments.tail->resize(added);
-        to_add -= added;
-      }
-    } else {
-      size_t count = 0;
-      for (node_t* seg = ctrl_blk_ptr->segments.head; count < new_sz; seg = seg->next) {
-        size_t new_seg_len = std::min(seg->length(), new_sz - count);
-        if (new_seg_len != seg->length()) {
-          seg->resize(new_seg_len);
-        }
-        count += new_seg_len;
-        if (count == new_sz) {
-          seg->next                   = nullptr;
-          ctrl_blk_ptr->segments.tail = seg;
-        }
-      }
-    }
-    ctrl_blk_ptr->pkt_len = new_sz;
-    return true;
-  }
+  bool resize(size_t new_sz);
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
   byte_buffer_segment_span_range segments()
@@ -533,13 +359,15 @@ public:
   }
 
 private:
-  node_t* create_head_segment(size_t headroom);
+  bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  static node_t* create_segment(size_t headroom);
+  SRSRAN_NODISCARD node_t* create_head_segment(size_t headroom);
 
-  bool append_segment(size_t headroom_suggestion);
+  static SRSRAN_NODISCARD node_t* create_segment(size_t headroom);
 
-  bool prepend_segment(size_t headroom_suggestion);
+  SRSRAN_NODISCARD bool append_segment(size_t headroom_suggestion);
+
+  SRSRAN_NODISCARD bool prepend_segment(size_t headroom_suggestion);
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
@@ -738,13 +566,7 @@ public:
   byte_buffer_view view() const { return *buffer; }
 
   /// Appends bytes.
-  void append(byte_buffer_view bytes)
-  {
-    // TODO: do batch append.
-    for (uint8_t byte : bytes) {
-      buffer->append(byte);
-    }
-  }
+  bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
 
   /// Appends initializer list of bytes.
   void append(const std::initializer_list<uint8_t>& bytes)
@@ -758,12 +580,15 @@ public:
   /// Appends single byte.
   SRSRAN_NODISCARD bool append(uint8_t byte) { return buffer->append(byte); }
 
-  void append_zeros(size_t nof_zeros)
+  SRSRAN_NODISCARD bool append_zeros(size_t nof_zeros)
   {
     // TODO: optimize.
     for (size_t i = 0; i < nof_zeros; ++i) {
-      buffer->append(0);
+      if (not buffer->append(0)) {
+        return false;
+      }
     }
+    return true;
   }
 
   /// Checks last appended byte.
@@ -787,7 +612,10 @@ inline byte_buffer make_byte_buffer(const std::string& hex_str)
   for (size_t i = 0; i < hex_str.size(); i += 2) {
     uint8_t val;
     sscanf(hex_str.data() + i, "%02hhX", &val);
-    ret.append(val);
+    if (not ret.append(val)) {
+      ret.clear();
+      break;
+    }
   }
   return ret;
 }

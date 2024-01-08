@@ -293,7 +293,7 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
-    test_pdu1.append(0); // mess up MAC-I
+    ASSERT_TRUE(test_pdu1.append(0)); // mess up MAC-I
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});

@@ -539,7 +539,7 @@ TEST_P(rlc_rx_am_test, rx_data_pdu_with_short_header)
 
   // Create a short header of a data PDU with polling bit set
   byte_buffer pdu_buf = {};
-  pdu_buf.append(0b11000000); // D/C = 1; P = 1
+  ASSERT_TRUE(pdu_buf.append(0b11000000)); // D/C = 1; P = 1
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
@@ -558,10 +558,10 @@ TEST_P(rlc_rx_am_test, rx_data_pdu_without_payload)
 
   // Create a complete header of a data PDU with polling bit set and with SO
   byte_buffer pdu_buf = {};
-  pdu_buf.append(0b11110000); // D/C = 1; P = 1; SI = 0b11
+  ASSERT_TRUE(pdu_buf.append(0b11110000)); // D/C = 1; P = 1; SI = 0b11
   pdu_buf.append({0x00, 0x00, 0x00});
   if (sn_size == rlc_am_sn_size::size18bits) {
-    pdu_buf.append(0x00);
+    ASSERT_TRUE(pdu_buf.append(0x00));
   }
 
   // Push into RLC
