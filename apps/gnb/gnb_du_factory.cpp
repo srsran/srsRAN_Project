@@ -54,6 +54,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   } else {
     srsran_assert(false, "Invalid PDSCH processor type {}.", upper_phy_threads_cfg.pdsch_processor_type);
   }
+  du_lo_cfg.dl_proc_cfg.nof_concurrent_threads = params.expert_execution_cfg.threads.upper_threads.nof_dl_threads;
 
   du_lo_cfg.upper_phy = generate_du_low_config(params);
 

@@ -164,6 +164,8 @@ struct downlink_processor_factory_sw_config {
           pdsch_processor_concurrent_configuration,
           pdsch_processor_lite_configuration>
       pdsch_processor;
+  /// Number of concurrent threads processing downlink transmissions.
+  unsigned nof_concurrent_threads;
 };
 
 /// Creates a full software based downlink processor factory.

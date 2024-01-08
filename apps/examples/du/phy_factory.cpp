@@ -21,8 +21,9 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
                                                     upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
   downlink_processor_factory_sw_config dl_proc_config;
-  dl_proc_config.ldpc_encoder_type   = "auto";
-  dl_proc_config.crc_calculator_type = "auto";
+  dl_proc_config.ldpc_encoder_type      = "auto";
+  dl_proc_config.crc_calculator_type    = "auto";
+  dl_proc_config.nof_concurrent_threads = 1;
 
   // Create downlink processor factory.
   std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);

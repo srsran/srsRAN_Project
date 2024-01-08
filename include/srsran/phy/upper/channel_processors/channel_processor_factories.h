@@ -89,13 +89,17 @@ public:
   virtual ~pdcch_processor_factory()                              = default;
   virtual std::unique_ptr<pdcch_processor>     create()           = 0;
   virtual std::unique_ptr<pdcch_pdu_validator> create_validator() = 0;
-  std::unique_ptr<pdcch_processor>             create(srslog::basic_logger& logger, bool enable_logging_broadcast);
+  virtual std::unique_ptr<pdcch_processor>     create(srslog::basic_logger& logger, bool enable_logging_broadcast);
 };
 
 std::shared_ptr<pdcch_processor_factory>
 create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory,
                                   std::shared_ptr<pdcch_modulator_factory>      modulator_factory,
                                   std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory);
+
+std::shared_ptr<pdcch_processor_factory>
+create_pdcch_processor_pool_factory(std::shared_ptr<pdcch_processor_factory> processor_factory,
+                                    unsigned                                 nof_concurrent_threads);
 
 class pdsch_encoder_factory
 {
@@ -239,7 +243,7 @@ public:
   virtual ~ssb_processor_factory()                              = default;
   virtual std::unique_ptr<ssb_processor>     create()           = 0;
   virtual std::unique_ptr<ssb_pdu_validator> create_validator() = 0;
-  std::unique_ptr<ssb_processor>             create(srslog::basic_logger& logger);
+  virtual std::unique_ptr<ssb_processor>     create(srslog::basic_logger& logger);
 };
 
 struct ssb_processor_factory_sw_configuration {
@@ -251,5 +255,9 @@ struct ssb_processor_factory_sw_configuration {
 };
 
 std::shared_ptr<ssb_processor_factory> create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config);
+
+std::shared_ptr<ssb_processor_factory>
+create_ssb_processor_pool_factory(std::shared_ptr<ssb_processor_factory> processor_factory,
+                                  unsigned                               nof_concurrent_threads);
 
 } // namespace srsran
