@@ -362,10 +362,8 @@ viavi:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      when: manual
-      allow_failure: true
-      # when: delayed
-      # start_in: 7 hours
+      when: delayed
+      start_in: 5 hours
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"
