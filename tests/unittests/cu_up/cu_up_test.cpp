@@ -113,6 +113,7 @@ protected:
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.epoll_broker                 = broker.get();
     cfg.timers                       = app_timers.get();
+    cfg.qos[uint_to_five_qi(9)]      = {};
     cfg.gtpu_pcap                    = &dummy_pcap;
     cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);

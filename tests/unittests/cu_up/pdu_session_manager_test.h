@@ -79,7 +79,7 @@ protected:
 };
 
 inline e1ap_pdu_session_res_to_setup_item
-generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qos_flow_id_t qfi)
+generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qos_flow_id_t qfi, five_qi_t five_qi)
 {
   // prepare request
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
@@ -113,7 +113,7 @@ generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qo
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = qfi;
   non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                                 = uint_to_five_qi(9);
+  non_dyn_5qi.five_qi                                                                 = five_qi;
   qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
@@ -153,7 +153,8 @@ inline e1ap_pdu_session_res_to_modify_item generate_pdu_session_res_to_modify_it
 inline e1ap_pdu_session_res_to_modify_item
 generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           psi,
                                                      drb_id_t                   drb_id,
-                                                     std::vector<qos_flow_id_t> qfi_list)
+                                                     std::vector<qos_flow_id_t> qfi_list,
+                                                     five_qi_t                  five_qi)
 {
   // prepare modification request (to add further bearers)
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
@@ -178,7 +179,7 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
     e1ap_qos_flow_qos_param_item qos_flow_info;
     qos_flow_info.qos_flow_id = qfi;
     non_dyn_5qi_descriptor_t non_dyn_5qi;
-    non_dyn_5qi.five_qi                                                            = uint_to_five_qi(9);
+    non_dyn_5qi.five_qi                                                            = five_qi;
     qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi        = non_dyn_5qi;
     qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level = 1;
     qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =

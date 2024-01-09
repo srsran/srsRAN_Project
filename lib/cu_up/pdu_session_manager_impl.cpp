@@ -69,6 +69,11 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
   five_qi_t five_qi =
       drb_to_setup.qos_flow_info_to_be_setup.begin()->qos_flow_level_qos_params.qos_characteristics.get_five_qi();
+  if (qos_cfg.find(five_qi) == qos_cfg.end()) {
+    drb_result.cause = cause_radio_network_t::not_supported_5qi_value;
+    return drb_result;
+  }
+
   uint32_t nof_flow_success = 0;
   for (const auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
     // prepare QoS flow creation result
@@ -92,7 +97,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     } else {
       // fail if mapping already exists
       flow_result.success = false;
-      flow_result.cause   = cause_radio_network_t::multiple_qos_flow_id_instances;
+      flow_result.cause   = new_session.sdap->is_mapped(qos_flow_info.qos_flow_id)
+                                ? cause_radio_network_t::multiple_qos_flow_id_instances
+                                : cause_radio_network_t::not_supported_5qi_value;
       logger.log_error("Cannot overwrite existing mapping for {}", qos_flow_info.qos_flow_id);
     }
 
@@ -105,7 +112,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     logger.log_error(
         "Failed to create {} for psi={}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
     new_session.drbs.erase(drb_to_setup.drb_id);
-    drb_result.cause   = cause_radio_network_t::multiple_qos_flow_id_instances;
+    drb_result.cause   = cause_radio_network_t::unspecified;
     drb_result.success = false;
     return drb_result;
   }
@@ -192,16 +199,6 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   for (auto& new_qos_flow : new_drb->qos_flows) {
     new_qos_flow.second->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
     new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
-  }
-
-  // If no flow could be created, we remove the rest of the dangling DRB again
-  if (nof_flow_success == 0) {
-    logger.log_error(
-        "Failed to create {} for psi={}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
-    new_session.drbs.erase(drb_to_setup.drb_id);
-    drb_result.cause   = cause_radio_network_t::multiple_qos_flow_id_instances;
-    drb_result.success = false;
-    return drb_result;
   }
 
   // Add result
