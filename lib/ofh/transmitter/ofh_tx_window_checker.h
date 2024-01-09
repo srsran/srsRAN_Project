@@ -52,13 +52,13 @@ public:
       return false;
     }
 
-    logger.warning("A late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current ota_slot='{}_{}', "
-                   "OFH processing time requires a minimum of '{}' symbols",
-                   slot,
-                   0,
-                   ota_symbol_point.get_slot(),
-                   ota_symbol_point.get_symbol_index(),
-                   advance_time_in_symbols);
+    logger.debug("A late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current ota_slot='{}_{}', "
+                 "OFH processing time requires a minimum of '{}' symbols",
+                 slot,
+                 0,
+                 ota_symbol_point.get_slot(),
+                 ota_symbol_point.get_symbol_index(),
+                 advance_time_in_symbols);
 
     return true;
   }
