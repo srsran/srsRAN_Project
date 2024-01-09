@@ -44,7 +44,9 @@ public:
 
   index_type try_pop()
   {
-    node old_top{top.load(std::memory_order_relaxed)};
+    // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release of the last push(),
+    // otherwise the write to next_idx[] during the push() is not visible in this thread.
+    node old_top{top.load(std::memory_order_acquire)};
     if (old_top.index == npos()) {
       return npos();
     }
