@@ -484,6 +484,7 @@ public:
 
   /// Converts to non-owning byte buffer view.
   byte_buffer_view view() const { return sliced_view; }
+
   explicit operator byte_buffer_view() const { return sliced_view; }
 
   /// Returns another owning sub-view with dimensions specified in arguments.
