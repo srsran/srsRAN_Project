@@ -39,7 +39,7 @@ add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
 add_library(srsran_upper_phy_support
         rb_allocation.cpp
-        rx_softbuffer_pool_impl.cpp
+        rx_buffer_pool_impl.cpp
         tx_buffer_pool_impl.cpp
         vrb_to_prb_mapper.cpp
         )

@@ -12,7 +12,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 
 using namespace srsran;
@@ -69,7 +69,7 @@ void uplink_processor_impl::process_prach(upper_phy_rx_results_notifier& notifie
 }
 
 void uplink_processor_impl::process_pusch(span<uint8_t>                      data,
-                                          unique_rx_softbuffer               softbuffer,
+                                          unique_rx_buffer                   rm_buffer,
                                           upper_phy_rx_results_notifier&     notifier,
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
@@ -91,7 +91,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
       notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data);
 
   // Process PUSCH.
-  pusch_proc->process(data, std::move(softbuffer), processor_notifier, grid, pdu.pdu);
+  pusch_proc->process(data, std::move(rm_buffer), processor_notifier, grid, pdu.pdu);
 
   l1_tracer << trace_event("process_pusch", tp);
 }

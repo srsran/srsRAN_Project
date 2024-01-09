@@ -195,7 +195,7 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
   // - The UE won't send the associated PUSCHs, which means that the lower layers will later forward CRC indications
   // with CRC=KO, and the respective UL HARQs will need to be retransmitted. No action needed. We do not cancel
   // the respective PUSCH grant, because it is important that the PUSCH "new_data" flag reaches the lower layers,
-  // telling them whether the UL HARQ softbuffer needs to be reset or not.
+  // telling them whether the UL HARQ buffer needs to be reset or not.
   // - Any UCI in the respective PUSCH will be reported as DTX, and the DL HARQ will be retransmitted. No action
   // needed.
 

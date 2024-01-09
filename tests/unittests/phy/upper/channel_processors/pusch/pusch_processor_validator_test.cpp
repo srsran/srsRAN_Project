@@ -9,7 +9,7 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../rx_softbuffer_test_doubles.h"
+#include "../../rx_buffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
@@ -276,14 +276,14 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
   // Prepare receive data.
   std::vector<uint8_t> data;
 
-  // Prepare softbuffer.
-  rx_softbuffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Prepare buffer.
+  rx_buffer_spy    rm_buffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Process PUSCH PDU.
 #ifdef ASSERTS_ENABLED
   pusch_processor_result_notifier_spy result_notifier_spy;
-  ASSERT_DEATH({ pusch_proc->process(data, std::move(softbuffer), result_notifier_spy, grid, param.get_pdu()); },
+  ASSERT_DEATH({ pusch_proc->process(data, std::move(rm_buffer), result_notifier_spy, grid, param.get_pdu()); },
                param.expr);
 #endif // ASSERTS_ENABLED
 }

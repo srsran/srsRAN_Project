@@ -11,7 +11,7 @@
 #include "pusch_decoder_hw_impl.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
-#include "srsran/phy/upper/rx_softbuffer.h"
+#include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -80,7 +80,7 @@ static std::tuple<unsigned, hal::hw_dec_cb_crc_type> set_crc_type(unsigned nof_c
 }
 
 pusch_decoder_buffer& pusch_decoder_hw_impl::new_data(span<uint8_t>                       transport_block_,
-                                                      unique_rx_softbuffer                softbuffer_,
+                                                      unique_rx_buffer                    softbuffer_,
                                                       pusch_decoder_notifier&             notifier,
                                                       const pusch_decoder::configuration& cfg)
 {

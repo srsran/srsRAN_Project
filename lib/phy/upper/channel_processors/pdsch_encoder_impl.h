@@ -42,7 +42,7 @@ public:
 
   // See interface for the documentation.
   void encode(span<uint8_t>        codeword,
-              tx_buffer&           softbuffer,
+              tx_buffer&           rm_buffer,
               span<const uint8_t>  transport_block,
               const configuration& config) override;
 

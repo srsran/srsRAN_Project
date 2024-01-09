@@ -13,7 +13,7 @@
 #include "pusch_processor_notifier_adaptor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
 #include "srsran/ran/uci/uci_formatters.h"
@@ -183,7 +183,7 @@ pusch_processor_impl::pusch_processor_impl(configuration& config) :
 }
 
 void pusch_processor_impl::process(span<uint8_t>                    data,
-                                   unique_rx_softbuffer             softbuffer,
+                                   unique_rx_buffer                 rm_buffer,
                                    pusch_processor_result_notifier& notifier,
                                    const resource_grid_reader&      grid,
                                    const pusch_processor::pdu_t&    pdu)
@@ -311,7 +311,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
     // Setup decoder.
     decoder_buffer =
-        decoder->new_data(data, std::move(softbuffer), notifier_adaptor.get_sch_data_notifier(), decoder_config);
+        decoder->new_data(data, std::move(rm_buffer), notifier_adaptor.get_sch_data_notifier(), decoder_config);
   }
 
   // Prepares HARQ-ACK notifier and buffer.

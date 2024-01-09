@@ -74,8 +74,6 @@ struct fapi_to_phy_translator_dependencies {
   std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
-  /// Task executor for asynchronous tasks.
-  task_executor* async_executor;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -250,7 +248,7 @@ private:
   srslog::basic_logger& logger;
   /// Downlink PDU validator.
   const downlink_pdu_validator& dl_pdu_validator;
-  /// PDSCH Softbuffer pool.
+  /// PDSCH buffer pool.
   tx_buffer_pool& buffer_pool;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
@@ -260,8 +258,6 @@ private:
   const uplink_pdu_validator& ul_pdu_validator;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository& ul_pdu_repository;
-  /// Asynchronous task executor.
-  task_executor& asynchronous_executor;
   /// Current slot count value.
   std::atomic<uint32_t> current_slot_count_val;
   /// Slot controller manager.

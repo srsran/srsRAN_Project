@@ -75,7 +75,7 @@ public:
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override;
 

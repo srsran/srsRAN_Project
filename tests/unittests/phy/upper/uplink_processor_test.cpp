@@ -14,7 +14,7 @@
 #include "channel_processors/pucch_processor_test_doubles.h"
 #include "channel_processors/pusch/pusch_processor_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

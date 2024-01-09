@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-class rx_softbuffer_pool;
+class rx_buffer_pool;
 
 /// \brief Wrapper class of the upper PHY receive results notifier.
 ///

@@ -11,20 +11,24 @@
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsran/phy/support/prach_buffer_context.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/phy/upper/channel_processors/pusch/formatters.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/support/error_handling.h"
+#include <utility>
 
 using namespace srsran;
 
 upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
                                                                    uplink_slot_pdu_repository&    ul_pdu_repository_,
-                                                                   rx_softbuffer_pool&            softbuffer_pool_,
+                                                                   rx_buffer_pool&                rm_buffer_pool_,
                                                                    upper_phy_rx_results_notifier& rx_results_notifier_,
                                                                    srslog::basic_logger&          logger_) :
   ul_processor_pool(ul_processor_pool_),
   ul_pdu_repository(ul_pdu_repository_),
-  softbuffer_pool(softbuffer_pool_),
+  rm_buffer_pool(rm_buffer_pool_),
   rx_results_notifier(rx_results_notifier_),
   logger(logger_)
 {
@@ -95,6 +99,9 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
       ul_processor.process_pucch(rx_results_notifier, grid, pucch_pdu);
     }
   }
+
+  // Run PUSCH buffer housekeeping.
+  rm_buffer_pool.run_slot(context.slot);
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,
@@ -120,19 +127,24 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   const pusch_processor::pdu_t& proc_pdu = pdu.pdu;
 
   // Temporal sanity check as PUSCH is only supported for data. Remove the check when the UCI is supported for PUSCH.
-  srsran_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported");
+  srsran_assert(proc_pdu.codeword.has_value(),
+                "PUSCH PDU doesn't contain data. Currently, that mode is not supported.");
 
-  rx_softbuffer_identifier id;
-  id.rnti        = static_cast<unsigned>(proc_pdu.rnti);
-  id.harq_ack_id = pdu.harq_id;
+  // Create buffer identifier.
+  trx_buffer_identifier id(proc_pdu.rnti, pdu.harq_id);
 
-  unsigned nof_codeblocks =
-      ldpc::compute_nof_codeblocks(units::bytes(pdu.tb_size).to_bits(), proc_pdu.codeword->ldpc_base_graph);
+  // Determine the number of codeblocks from the TBS and base graph.
+  unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(pdu.tb_size.to_bits(), proc_pdu.codeword->ldpc_base_graph);
 
-  unique_rx_softbuffer buffer = softbuffer_pool.reserve_softbuffer(slot, id, nof_codeblocks);
-  if (buffer.is_valid()) {
-    auto payload = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);
-    ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
+  // Reserve receive buffer.
+  unique_rx_buffer buffer = rm_buffer_pool.reserve(slot, id, nof_codeblocks);
+
+  // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
+  if (!buffer.is_valid()) {
     return;
   }
+
+  // Retrieves transport block data and starts PUSCH processing.
+  auto payload = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);
+  ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
 }

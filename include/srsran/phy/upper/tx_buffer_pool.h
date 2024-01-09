@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/trx_buffer_identifier.h"
 #include "srsran/ran/slot_point.h"
 #include <cstdint>
 
@@ -17,35 +18,18 @@ namespace srsran {
 
 class unique_tx_buffer;
 
-/// Identifies a transmit buffer.
-struct tx_buffer_identifier {
-  /// The UE temporal identifier.
-  uint16_t rnti;
-  /// The HARQ process identifier.
-  uint8_t harq_ack_id;
-
-  /// Equal comparison to other identifier.
-  bool operator==(const tx_buffer_identifier& other) const
-  {
-    return (rnti == other.rnti) && (harq_ack_id == other.harq_ack_id);
-  }
-
-  /// Get unknown buffer identifier.
-  static constexpr tx_buffer_identifier unknown() { return {0, 16}; }
-};
-
 /// \brief Describes a transmitter buffer pool interface.
 ///
 /// The purpose of this interface is to provide the physical layer shared channel encoder with transmitter rate match
 /// buffers.
 ///
-/// Transmitter buffers are selected from a pool of resources using a given tx_buffer_identifier and remain
+/// Transmitter buffers are selected from a pool of resources using a given trx_buffer_identifier and remain
 /// persistent until the identifier is reused or expires.
 ///
 /// Each sector is expected to create its unique pool for the purpose of resource management.
 ///
-/// The implementation of this interface must be thread-safe, as both reserve_buffer() and run_slot() may be called
-/// from different threads.
+/// The implementation of this interface might not thread-safe, reserve() and run_slot() must be called from the same
+/// thread.
 class tx_buffer_pool
 {
 public:
@@ -69,8 +53,7 @@ public:
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
   /// \return A valid unique transmit buffer if the reservation was successful; otherwise, an invalid unique transmit
   ///         buffer.
-  virtual unique_tx_buffer
-  reserve_buffer(const slot_point& slot, const tx_buffer_identifier& id, unsigned nof_codeblocks) = 0;
+  virtual unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) = 0;
 
   /// \brief Reserves and retrieves a transmit buffer without an identifier.
   ///
@@ -83,7 +66,7 @@ public:
   /// \param[in] slot           Slot context.
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
   /// \return A valid unique transmit buffer if the reservation was successful; otherwise, an invalid unique buffer.
-  virtual unique_tx_buffer reserve_buffer(const slot_point& slot, unsigned nof_codeblocks) = 0;
+  virtual unique_tx_buffer reserve(const slot_point& slot, unsigned nof_codeblocks) = 0;
 
   /// \brief Runs internal state machines and releases expired buffers.
   /// \param[in] slot Current slot.

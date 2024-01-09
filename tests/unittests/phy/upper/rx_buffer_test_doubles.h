@@ -11,16 +11,16 @@
 #pragma once
 
 #include "srsran/adt/tensor.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 
 namespace srsran {
 
-class rx_softbuffer_spy : public unique_rx_softbuffer::softbuffer
+class rx_buffer_spy : public unique_rx_buffer::callback
 {
 public:
-  rx_softbuffer_spy() = default;
+  rx_buffer_spy() = default;
 
-  rx_softbuffer_spy(unsigned max_codeblock_size, unsigned nof_codeblocks) :
+  rx_buffer_spy(unsigned max_codeblock_size, unsigned nof_codeblocks) :
     soft_bits({max_codeblock_size, nof_codeblocks}), crc(nof_codeblocks)
   {
     for (unsigned i_cb = 0; i_cb != nof_codeblocks; ++i_cb) {
@@ -71,7 +71,7 @@ public:
   /// Get the total number of times the methods have been called.
   unsigned get_total_count() const { return count + const_count; }
 
-  /// Returns true if the softbuffer is locked.
+  /// Returns true if the buffer is locked.
   bool is_locked() const { return locked; }
 
 private:

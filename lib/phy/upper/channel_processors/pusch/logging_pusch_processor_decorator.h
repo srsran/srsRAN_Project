@@ -12,7 +12,7 @@
 
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 
 namespace fmt {
 
@@ -74,7 +74,7 @@ public:
   }
 
   void process(span<uint8_t>                    data_,
-               unique_rx_softbuffer             softbuffer,
+               unique_rx_buffer                 rm_buffer,
                pusch_processor_result_notifier& notifier_,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu_) override
@@ -90,7 +90,7 @@ public:
     results.sch.reset();
     results.uci.reset();
 
-    processor->process(data, std::move(softbuffer), *this, grid, pdu);
+    processor->process(data, std::move(rm_buffer), *this, grid, pdu);
     time_return = std::chrono::steady_clock::now();
   }
 

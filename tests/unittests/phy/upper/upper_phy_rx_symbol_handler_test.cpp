@@ -24,7 +24,7 @@ namespace {
 class UpperPhyRxSymbolHandlerFixture : public ::testing::Test
 {
 protected:
-  std::unique_ptr<rx_softbuffer_pool>    softbuffer_pool;
+  std::unique_ptr<rx_buffer_pool>        rm_buffer_pool;
   uplink_processor_spy*                  ul_proc_spy;
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   uplink_slot_pdu_repository             pdu_repo;
@@ -93,12 +93,12 @@ protected:
   }
 
   UpperPhyRxSymbolHandlerFixture() :
-    softbuffer_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config{16, 2, 2, 16})),
+    rm_buffer_pool(create_rx_buffer_pool(rx_buffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     pdu_repo(2),
     rx_handler(*ul_processor_pool,
                pdu_repo,
-               *softbuffer_pool,
+               *rm_buffer_pool,
                rx_results_wrapper,
                srslog::fetch_basic_logger("TEST", true))
   {

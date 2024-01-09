@@ -14,7 +14,7 @@
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
@@ -82,7 +82,7 @@ public:
 
   // See interface for the documentation.
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                 unique_rx_softbuffer    softbuffer,
+                                 unique_rx_buffer        rm_buffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
@@ -106,7 +106,7 @@ private:
   /// Current transport block.
   span<uint8_t> transport_block;
   /// Current soft bits buffer.
-  unique_rx_softbuffer softbuffer;
+  unique_rx_buffer unique_rm_buffer;
   /// Current notifier.
   pusch_decoder_notifier* result_notifier = nullptr;
   /// Current PUSCH decoder configuration.

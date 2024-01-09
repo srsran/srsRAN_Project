@@ -16,7 +16,7 @@
 namespace srsran {
 
 /// Implements a lockable transmit buffer spy.
-class tx_buffer_spy : public unique_tx_buffer::lockable_buffer
+class tx_buffer_spy : public unique_tx_buffer::callback
 {
 public:
   /// Default constructor - creates a buffer without any storage.

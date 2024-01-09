@@ -39,7 +39,6 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
   adaptor_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
   adaptor_dependencies.pm_repo              = std::move(dependencies.pm_repo);
   adaptor_dependencies.part2_repo           = std::move(dependencies.part2_repo);
-  adaptor_dependencies.async_executor       = dependencies.async_executor;
 
   return std::make_unique<phy_fapi_adaptor_impl>(adaptor_config, std::move(adaptor_dependencies));
 }

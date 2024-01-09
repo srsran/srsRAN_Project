@@ -543,17 +543,15 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
   // Compute the number of codeblocks.
   unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.ldpc_base_graph);
 
-  tx_buffer_pool_config softbuffer_pool_config;
-  softbuffer_pool_config.max_codeblock_size       = ldpc::MAX_CODEBLOCK_SIZE;
-  softbuffer_pool_config.nof_buffers              = 1;
-  softbuffer_pool_config.nof_codeblocks           = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  softbuffer_pool_config.expire_timeout_slots     = 0;
-  softbuffer_pool_config.external_soft_bits       = false;
-  std::shared_ptr<tx_buffer_pool> softbuffer_pool = create_tx_buffer_pool(softbuffer_pool_config);
+  tx_buffer_pool_config buffer_pool_config;
+  buffer_pool_config.max_codeblock_size       = ldpc::MAX_CODEBLOCK_SIZE;
+  buffer_pool_config.nof_buffers              = 1;
+  buffer_pool_config.nof_codeblocks           = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  buffer_pool_config.expire_timeout_slots     = 0;
+  buffer_pool_config.external_soft_bits       = false;
+  std::shared_ptr<tx_buffer_pool> buffer_pool = create_tx_buffer_pool(buffer_pool_config);
 
-  tx_buffer_identifier softbuffer_id;
-  softbuffer_id.harq_ack_id = 0;
-  softbuffer_id.rnti        = 0;
+  trx_buffer_identifier buffer_id(0, 0);
 
   // Notify finish count.
   {
@@ -582,17 +580,17 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Reset any notification.
     notifier.reset();
 
-    unique_tx_buffer softbuffer = softbuffer_pool->reserve_buffer(config.slot, softbuffer_id, nof_codeblocks);
+    unique_tx_buffer rm_buffer = buffer_pool->reserve(config.slot, buffer_id, nof_codeblocks);
 
     // Process PDU.
     if (worker_pool) {
       bool success =
-          worker_pool->push_task([&proc, &grid, sb = std::move(softbuffer), &notifier, &data, &config]() mutable {
+          worker_pool->push_task([&proc, &grid, sb = std::move(rm_buffer), &notifier, &data, &config]() mutable {
             proc.process(grid->get_mapper(), std::move(sb), notifier, {data}, config);
           });
       (void)success;
     } else {
-      proc.process(grid->get_mapper(), std::move(softbuffer), notifier, {data}, config);
+      proc.process(grid->get_mapper(), std::move(rm_buffer), notifier, {data}, config);
     }
 
     // Wait for the processor to finish.

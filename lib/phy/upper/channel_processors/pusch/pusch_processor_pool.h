@@ -45,7 +45,7 @@ public:
 
   // See pusch_processor interface for documentation.
   void process(span<uint8_t>                    data,
-               unique_rx_softbuffer             softbuffer,
+               unique_rx_buffer                 rm_buffer,
                pusch_processor_result_notifier& notifier_,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override
@@ -54,7 +54,7 @@ public:
     notifier = &notifier_;
 
     // Process.
-    processor->process(data, std::move(softbuffer), *this, grid, pdu);
+    processor->process(data, std::move(rm_buffer), *this, grid, pdu);
   }
 
 private:
@@ -108,7 +108,7 @@ public:
 
   // See interface for documentation.
   void process(span<uint8_t>                    data,
-               unique_rx_softbuffer             softbuffer,
+               unique_rx_buffer                 rm_buffer,
                pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override
@@ -123,7 +123,7 @@ public:
     }
 
     // Process pusch.
-    processors[index.value()].process(data, std::move(softbuffer), notifier, grid, pdu);
+    processors[index.value()].process(data, std::move(rm_buffer), notifier, grid, pdu);
   }
 
 private:

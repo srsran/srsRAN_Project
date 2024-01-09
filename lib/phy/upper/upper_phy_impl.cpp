@@ -46,7 +46,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
                                                                        *rx_buf_pool,
                                                                        rx_results_notifier,
                                                                        logger)),
-  timing_handler(logger, notifier_dummy, *rx_buf_pool, config.timing_handler_executor)
+  timing_handler(notifier_dummy)
 {
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
   srsran_assert(dl_rg_pool, "Invalid downlink resource grid pool");

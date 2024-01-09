@@ -9,7 +9,7 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../rx_softbuffer_test_doubles.h"
+#include "../../rx_buffer_test_doubles.h"
 #include "../../signal_processors/dmrs_pusch_estimator_test_doubles.h"
 #include "../uci/uci_decoder_test_doubles.h"
 #include "pusch_decoder_test_doubles.h"
@@ -351,16 +351,16 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
                               ulsch_info.nof_csi_part1_bits.value(),
                               ulsch_info.nof_csi_part2_bits.value());
 
-  // Create receive softbuffer.
-  rx_softbuffer_spy    softbuffer_spy;
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Create receive buffer.
+  rx_buffer_spy    rm_buffer_spy;
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
+  pusch_proc->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
 
   // Extract results.
   const auto& sch_entries = result_notifier.get_sch_entries();
@@ -369,9 +369,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Make sure PDU is valid.
   ASSERT_TRUE(validator->is_valid(pdu));
 
-  // Calling resource grid and softbuffer methods are not permitted.
+  // Calling resource grid and buffer methods are not permitted.
   ASSERT_EQ(0, rg_spy.get_count());
-  ASSERT_EQ(0, softbuffer_spy.get_total_count());
+  ASSERT_EQ(0, rm_buffer_spy.get_total_count());
 
   // Assert channel estimator inputs.
   ASSERT_EQ(1, estimator_spy->get_entries().size());
@@ -429,7 +429,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
     ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
     ASSERT_EQ(decoder_entry.transport_block.size(), transport_block.size());
-    ASSERT_EQ(&softbuffer_spy, &decoder_entry.softbuffer.get());
+    ASSERT_EQ(&rm_buffer_spy, &decoder_entry.rm_buffer.get());
     ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.sch_data), decoder_entry.input.get_data());
     ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
     ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
@@ -501,16 +501,16 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterInfo)
   std::vector<uint8_t> transport_block(tbs_dist(rgen));
   std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
 
-  // Create receive softbuffer.
-  rx_softbuffer_spy    softbuffer_spy;
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Create receive buffer.
+  rx_buffer_spy    rm_buffer_spy;
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_info->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
+  pusch_proc_info->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
 
   // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
   decoder_spy_info->clear();
@@ -522,16 +522,16 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
   std::vector<uint8_t> transport_block(tbs_dist(rgen));
   std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
 
-  // Create receive softbuffer.
-  rx_softbuffer_spy    softbuffer_spy;
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Create receive buffer.
+  rx_buffer_spy    rm_buffer_spy;
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_debug->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
+  pusch_proc_debug->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
 
   // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
   decoder_spy_debug->clear();

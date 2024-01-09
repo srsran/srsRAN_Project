@@ -54,14 +54,14 @@ public:
 
   // See interface for documentation.
   void process_pusch(span<uint8_t>                      data,
-                     unique_rx_softbuffer               softbuffer,
+                     unique_rx_buffer                   rm_buffer,
                      upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
     bool success =
-        pusch_executor.execute([data, softbuffer2 = std::move(softbuffer), &notifier, &grid, pdu, this]() mutable {
-          processor->process_pusch(data, std::move(softbuffer2), notifier, grid, pdu);
+        pusch_executor.execute([data, rm_buffer2 = std::move(rm_buffer), &notifier, &grid, pdu, this]() mutable {
+          processor->process_pusch(data, std::move(rm_buffer2), notifier, grid, pdu);
         });
 
     if (!success) {

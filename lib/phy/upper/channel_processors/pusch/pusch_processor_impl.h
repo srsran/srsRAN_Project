@@ -19,7 +19,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 #include <memory>
@@ -133,7 +133,7 @@ public:
 
   // See interface for documentation.
   void process(span<uint8_t>                    data,
-               unique_rx_softbuffer             softbuffer,
+               unique_rx_buffer                 rm_buffer,
                pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override;

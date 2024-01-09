@@ -72,8 +72,6 @@ struct phy_fapi_adaptor_factory_dependencies {
   std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
-  /// Task executor for asynchronous tasks.
-  task_executor* async_executor;
 };
 
 /// Factory to create \c phy_fapi_adaptor objects.

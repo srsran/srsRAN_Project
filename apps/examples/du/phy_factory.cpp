@@ -83,7 +83,7 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.tx_buffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
   upper_config.tx_buffer_config.external_soft_bits   = false;
 
-  upper_config.rx_buffer_config.max_softbuffers      = upper_config.nof_dl_rg;
+  upper_config.rx_buffer_config.nof_buffers          = upper_config.nof_dl_rg;
   upper_config.rx_buffer_config.max_nof_codeblocks   = 128;
   upper_config.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
   upper_config.rx_buffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;

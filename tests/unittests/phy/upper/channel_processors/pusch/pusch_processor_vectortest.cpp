@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../rx_softbuffer_test_doubles.h"
+#include "../../rx_buffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "pusch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
@@ -171,18 +171,18 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   // Prepare receive data.
   std::vector<uint8_t> data(expected_data.size());
 
-  // Prepare softbuffer.
-  rx_softbuffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE,
-                                   ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
-                                                                config.codeword.value().ldpc_base_graph));
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Prepare buffer.
+  rx_buffer_spy    rm_buffer_spy(ldpc::MAX_CODEBLOCK_SIZE,
+                              ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
+                                                           config.codeword.value().ldpc_base_graph));
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
   pusch_processor_result_notifier_spy results_notifier;
-  pusch_proc->process(data, std::move(softbuffer), results_notifier, grid, config);
+  pusch_proc->process(data, std::move(rm_buffer), results_notifier, grid, config);
 
   // Verify UL-SCH decode results.
   const auto& sch_entries = results_notifier.get_sch_entries();
@@ -250,18 +250,18 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
   // Prepare receive data.
   std::vector<uint8_t> data(test_case.sch_data.read().size());
 
-  // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer_spy(
+  // Prepare buffer.
+  rx_buffer_spy rm_buffer_spy(
       ldpc::MAX_CODEBLOCK_SIZE,
       ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.codeword.value().ldpc_base_graph));
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
   pusch_processor_result_notifier_spy results_notifier;
-  pusch_proc->process(data, std::move(softbuffer), results_notifier, grid, config);
+  pusch_proc->process(data, std::move(rm_buffer), results_notifier, grid, config);
 
   // Verify UL-SCH decode results are invalid.
   const auto& sch_entries = results_notifier.get_sch_entries();

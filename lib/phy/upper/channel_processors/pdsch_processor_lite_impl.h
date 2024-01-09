@@ -38,11 +38,11 @@ public:
   }
 
   /// \brief Configures a new transmission.
-  /// \param[in,out] softbuffer Rate matcher soft buffer.
+  /// \param[in,out] rm_buffer  Rate matcher buffer.
   /// \param[in]     data       Transport block data.
   /// \param[in]     i_cw       Codeword index.
   /// \param[in]     pdu        PDSCH transmission parameters.
-  void configure_new_transmission(unique_tx_buffer              softbuffer,
+  void configure_new_transmission(unique_tx_buffer              rm_buffer,
                                   span<const uint8_t>           data,
                                   unsigned                      i_cw,
                                   const pdsch_processor::pdu_t& pdu);
@@ -85,7 +85,7 @@ private:
   /// Temporary storage of codeblock symbols.
   std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
   /// Rate matching soft buffer.
-  unique_tx_buffer softbuffer;
+  unique_tx_buffer unique_rm_buffer;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
 
@@ -119,7 +119,7 @@ public:
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             softbuffer,
+               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;

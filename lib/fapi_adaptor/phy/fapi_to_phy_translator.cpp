@@ -37,7 +37,7 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDCCH PDU in the downlink processor");
   }
-  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
@@ -82,7 +82,6 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   ul_rg_pool(*dependencies.ul_rg_pool),
   ul_pdu_validator(*dependencies.ul_pdu_validator),
   ul_pdu_repository(*dependencies.ul_pdu_repository),
-  asynchronous_executor(*dependencies.async_executor),
   slot_controller_mngr(*dependencies.dl_processor_pool,
                        *dependencies.dl_rg_pool,
                        sector_id,
@@ -620,18 +619,16 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     unsigned nof_cb = ldpc::compute_nof_codeblocks(pdu.tlv_custom.length.to_bits(), pdsch_config.ldpc_base_graph);
 
     // Prepare buffer identifier.
-    tx_buffer_identifier id;
-    id.rnti        = pdsch_config.rnti;
-    id.harq_ack_id = (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0;
+    trx_buffer_identifier id(pdsch_config.rnti,
+                             (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0);
 
     // Get transmit buffer.
-    unique_tx_buffer buffer = (pdsch_config.context.has_value())
-                                  ? buffer_pool.reserve_buffer(pdsch_config.slot, id, nof_cb)
-                                  : buffer_pool.reserve_buffer(pdsch_config.slot, nof_cb);
+    unique_tx_buffer buffer = (pdsch_config.context.has_value()) ? buffer_pool.reserve(pdsch_config.slot, id, nof_cb)
+                                                                 : buffer_pool.reserve(pdsch_config.slot, nof_cb);
 
     // Check the soft buffer is valid.
     if (!buffer.is_valid()) {
-      logger.warning("No PDSCH softbuffer available for rnti=0x{:04x}.", id.rnti);
+      logger.warning("No PDSCH buffer available for {}.", id);
       return;
     }
 
@@ -644,6 +641,9 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   // All the PDSCH PDUs have been processed. Clear the repository.
   pdsch_repository.clear();
 
+  // Run PDSCH buffer housekeeping.
+  buffer_pool.run_slot(slot);
+
   l1_tracer << trace_event("tx_data_request", tp);
 }
 
@@ -652,11 +652,6 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
   trace_point tp = l1_tracer.now();
 
   update_current_slot(slot);
-
-  // Enqueue soft buffer run slot.
-  if (!asynchronous_executor.execute([this, slot]() { buffer_pool.run_slot(slot); })) {
-    logger.warning("Failed to execute transmit softbuffer pool slot.");
-  }
 
   // Update the logger context.
   logger.set_context(slot.sfn(), slot.slot_index());

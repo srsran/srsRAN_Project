@@ -127,7 +127,6 @@ du_impl::du_impl(const du_config& du_cfg) :
       generate_carrier_config_tlv(du_cell),
       std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
       std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
-      *upper_phy_cfg.dl_executors.front(),
       du_lo->get_tx_buffer_pool(),
       du_cfg.fapi.prach_ports);
 

@@ -25,7 +25,7 @@ public:
   struct entry_t {
     span<uint8_t>            transport_block;
     pusch_decoder_result     stats;
-    unique_rx_softbuffer     softbuffer;
+    unique_rx_buffer         rm_buffer;
     pusch_decoder_buffer_spy input;
     configuration            config;
     pusch_decoder_notifier*  notifier;
@@ -34,7 +34,7 @@ public:
   ~pusch_decoder_spy() { srsran_assert(entries.empty(), "Entries must be cleared."); }
 
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                 unique_rx_softbuffer    softbuffer,
+                                 unique_rx_buffer        rm_buffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override
   {
@@ -42,7 +42,7 @@ public:
     entry_t& entry        = entries.back();
     entry.transport_block = transport_block;
     entry.stats           = {};
-    entry.softbuffer      = std::move(softbuffer);
+    entry.rm_buffer       = std::move(rm_buffer);
     entry.notifier        = &notifier;
     entry.config          = cfg;
 

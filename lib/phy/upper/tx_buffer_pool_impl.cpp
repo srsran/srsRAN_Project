@@ -9,138 +9,130 @@
  */
 
 #include "tx_buffer_pool_impl.h"
+#include "tx_buffer_impl.h"
+#include "srsran/phy/upper/trx_buffer_identifier.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/ran/slot_point.h"
+#include <algorithm>
+#include <memory>
 
 using namespace srsran;
 
-namespace fmt {
-
-/// Default formatter for tx_buffer_identifier.
-template <>
-struct formatter<srsran::tx_buffer_identifier> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::tx_buffer_identifier& value, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "rnti={} h_id={}", value.rnti, value.harq_ack_id);
-  }
-};
-
-} // namespace fmt
-
-unique_tx_buffer
-tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_identifier& id, unsigned nof_codeblocks)
+unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks)
 {
-  std::unique_lock<std::mutex> lock(mutex);
-  slot_point                   expire_slot = slot + expire_timeout_slots;
+  // Try to find the HARQ identifier.
+  auto id_found = std::find(identifiers.begin(), identifiers.end(), id);
 
-  // Look for the same identifier within the reserved buffers.
-  for (unsigned i_buffer : reserved_buffers) {
-    tx_buffer_impl& buffer = *buffer_pool[i_buffer];
-    if (buffer.match_id(id)) {
-      // Reserve buffer.
-      tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
-      if (status != tx_buffer_status::successful) {
-        logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, {}.", id, to_string(status));
-
-        // If the reservation failed, return an invalid buffer.
-        return unique_tx_buffer();
-      }
-
-      return unique_tx_buffer(buffer);
-    }
+  // Find an available buffer if no buffer was found with the same identifier.
+  if (id_found == identifiers.end()) {
+    id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
   }
 
-  // If no available buffer is available, return an invalid buffer.
-  if (available_buffers.empty()) {
+  // Report warning and return invalid buffer if no available buffer has been found.
+  if (id_found == identifiers.end()) {
     logger.warning(
         slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
     return unique_tx_buffer();
   }
 
-  // Select the first available buffer.
-  unsigned buffer_i = available_buffers.top();
+  // Get buffer index within the pool.
+  unsigned i_buffer = id_found - identifiers.begin();
 
-  // Select an available buffer.
-  tx_buffer_impl& buffer = *buffer_pool[buffer_i];
+  // Get reference to the buffer.
+  tx_buffer_impl& buffer = buffers[i_buffer];
 
-  // Try to reserve codeblocks.
-  tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
+  // Reserve codeblocks.
+  tx_buffer_status status = buffer.reserve(nof_codeblocks);
 
-  // If the reservation failed, return an invalid buffer.
+  // Report warning and return invalid buffer if the reservation is not successful.
   if (status != tx_buffer_status::successful) {
-    logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ {}: failed to reserve, {}.", id, to_string(status));
+    logger.warning(slot.sfn(),
+                   slot.slot_index(),
+                   "DL HARQ {}: failed to reserve, {}.",
+                   id,
+                   (status == tx_buffer_status::already_in_use) ? "HARQ already in use" : "insufficient CBs");
     return unique_tx_buffer();
   }
 
-  // Move the buffer to reserved list and remove from available if the reservation was successful.
-  unique_tx_buffer unique_buffer(buffer);
-  reserved_buffers.push(buffer_i);
-  available_buffers.pop();
-  return unique_buffer;
+  // Update identifier and expiration.
+  identifiers[i_buffer] = id;
+  expirations[i_buffer] = slot + expire_timeout_slots;
+
+  // Create buffer.
+  return unique_tx_buffer(buffer);
 }
 
-unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, unsigned nof_codeblocks)
+unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, unsigned nof_codeblocks)
 {
-  std::unique_lock<std::mutex> lock(mutex);
-  slot_point                   expire_slot = slot + 1;
+  // Find an available buffer if no buffer was found with the same identifier.
+  auto id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
 
-  // If no available buffer is available, return an invalid buffer.
-  if (available_buffers.empty()) {
+  // Report warning and return invalid buffer if no available buffer has been found.
+  if (id_found == identifiers.end()) {
     logger.warning(
-        slot.sfn(), slot.slot_index(), "DL HARQ unknown: failed to reserve, insufficient buffers in the pool.");
+        slot.sfn(), slot.slot_index(), "DL HARQ invalid: failed to reserve, insufficient buffers in the pool.");
     return unique_tx_buffer();
   }
 
-  // Select the first available buffer.
-  unsigned buffer_i = available_buffers.top();
+  // Get buffer index within the pool.
+  unsigned i_buffer = id_found - identifiers.begin();
 
-  // Select an available buffer.
-  tx_buffer_impl& buffer = *buffer_pool[buffer_i];
+  // Get reference to the buffer.
+  tx_buffer_impl& buffer = buffers[i_buffer];
 
-  // Try to reserve codeblocks.
-  tx_buffer_status status = buffer.reserve(unknown_id, expire_slot, nof_codeblocks);
+  // Reserve codeblocks.
+  tx_buffer_status status = buffer.reserve(nof_codeblocks);
 
-  // If the reservation failed, return an invalid buffer.
+  // Report warning and return invalid buffer if the reservation is not successful.
   if (status != tx_buffer_status::successful) {
-    logger.warning(slot.sfn(), slot.slot_index(), "DL HARQ unknown: failed to reserve, {}.", to_string(status));
+    logger.warning(slot.sfn(),
+                   slot.slot_index(),
+                   "DL HARQ invalid: failed to reserve, {}.",
+                   (status == tx_buffer_status::already_in_use) ? "HARQ already in use" : "insufficient CBs");
     return unique_tx_buffer();
   }
 
-  // Move the buffer to reserved list and remove from available if the reservation was successful.
-  unique_tx_buffer unique_buffer(buffer);
-  reserved_buffers.push(buffer_i);
-  available_buffers.pop();
-  return unique_buffer;
+  // Update identifier and expiration.
+  identifiers[i_buffer] = trx_buffer_identifier::unknown();
+  expirations[i_buffer] = slot + expire_timeout_slots;
+
+  // Create buffer.
+  return unique_tx_buffer(buffer);
 }
 
 void tx_buffer_pool_impl::run_slot(const slot_point& slot)
 {
-  std::unique_lock<std::mutex> lock(mutex);
+  // Predicate for finding available buffers.
+  auto pred = [](trx_buffer_identifier id) { return id != trx_buffer_identifier::invalid(); };
 
-  // Run TTI for each reserved buffer.
-  unsigned count = reserved_buffers.size();
-  for (unsigned i = 0; i != count; ++i) {
-    // Pop top reserved buffer identifier.
-    unsigned buffer_i = reserved_buffers.top();
-    reserved_buffers.pop();
+  // Iterate over all the buffers that are currently reserved.
+  for (auto it = std::find_if(identifiers.begin(), identifiers.end(), pred); it != identifiers.end();
+       it      = std::find_if(++it, identifiers.end(), pred)) {
+    // Calculate buffer index.
+    unsigned i_buffer = it - identifiers.begin();
 
-    // Select buffer.
-    tx_buffer_impl& buffer = *buffer_pool[buffer_i];
+    // Get reference to the buffer.
+    tx_buffer_impl& buffer = buffers[i_buffer];
 
-    // Run buffer slot.
-    bool available = buffer.run_slot(slot);
+    // Determines whether the buffer is free.
+    bool is_free = buffer.is_free();
 
-    // Return buffer to queue.
-    if (available) {
-      available_buffers.push(buffer_i);
-    } else {
-      reserved_buffers.push(buffer_i);
+    // A buffer is expired if the expiration slot is lower than or equal to the current slot.
+    if ((expirations[i_buffer] != null_expiration) && (expirations[i_buffer] <= slot)) {
+      // Try to expire the buffer.
+      is_free = buffer.expire();
+
+      // If the buffer is not available, increase the expiration time and continue to the next buffer.
+      if (!is_free) {
+        expirations[i_buffer] = slot + expire_timeout_slots;
+      }
+    }
+
+    // Clear identifier and expiration.
+    if (is_free) {
+      identifiers[i_buffer] = trx_buffer_identifier::invalid();
+      expirations[i_buffer] = null_expiration;
     }
   }
 }

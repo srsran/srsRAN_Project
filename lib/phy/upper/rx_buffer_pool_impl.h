@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "tx_buffer_codeblock_pool.h"
-#include "tx_buffer_impl.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
+#include "rx_buffer_codeblock_pool.h"
+#include "rx_buffer_impl.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/srslog/srslog.h"
@@ -21,17 +21,17 @@
 
 namespace srsran {
 
-/// Implements a PDSCH rate matcher buffer pool.
-class tx_buffer_pool_impl : public tx_buffer_pool
+/// Implements a PUSCH rate matcher buffer pool.
+class rx_buffer_pool_impl : public rx_buffer_pool
 {
 private:
   /// No expiration time value.
   slot_point null_expiration = slot_point();
 
-  /// Code block buffer pool.
-  tx_buffer_codeblock_pool codeblock_pool;
+  /// Codeblock buffer pool.
+  rx_buffer_codeblock_pool codeblock_pool;
   /// Actual buffer pool.
-  std::vector<tx_buffer_impl> buffers;
+  std::vector<rx_buffer_impl> buffers;
   /// \brief List of buffer identifiers.
   ///
   /// Maps buffer identifiers to buffers. Each position indicates the buffer identifier assign to each of the buffers.
@@ -48,9 +48,9 @@ private:
 public:
   /// \brief Creates a generic receiver buffer pool.
   /// \param[in] config Provides the pool required parameters.
-  tx_buffer_pool_impl(const tx_buffer_pool_config& config) :
-    codeblock_pool(config.nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
-    buffers(config.nof_buffers, tx_buffer_impl(codeblock_pool)),
+  rx_buffer_pool_impl(const rx_buffer_pool_config& config) :
+    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
+    buffers(config.nof_buffers, rx_buffer_impl(codeblock_pool)),
     identifiers(config.nof_buffers, trx_buffer_identifier::invalid()),
     expirations(config.nof_buffers, null_expiration),
     expire_timeout_slots(config.expire_timeout_slots),
@@ -59,10 +59,7 @@ public:
   }
 
   // See interface for documentation.
-  unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override;
-
-  // See interface for documentation.
-  unique_tx_buffer reserve(const slot_point& slot, unsigned nof_codeblocks) override;
+  unique_rx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override;
 
   // See interface for documentation.
   void run_slot(const slot_point& slot) override;

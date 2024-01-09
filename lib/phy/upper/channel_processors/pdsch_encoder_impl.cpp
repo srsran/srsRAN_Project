@@ -15,7 +15,7 @@
 using namespace srsran;
 
 void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
-                                tx_buffer&           softbuffer,
+                                tx_buffer&           buffer,
                                 span<const uint8_t>  transport_block,
                                 const configuration& config)
 {
@@ -34,19 +34,18 @@ void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
   segmenter->segment(d_segments, transport_block, segmenter_cfg);
 
   // Make sure the number of codeblocks match the number of segments.
-  srsran_assert(
-      softbuffer.get_nof_codeblocks() == d_segments.size(),
-      "The number of codeblocks in the softbuffer (i.e., {}) are not eqwual to the number of segments (i.e., {}).",
-      softbuffer.get_nof_codeblocks(),
-      d_segments.size());
+  srsran_assert(buffer.get_nof_codeblocks() == d_segments.size(),
+                "The number of codeblocks in the buffer (i.e., {}) are not equal to the number of segments (i.e., {}).",
+                buffer.get_nof_codeblocks(),
+                d_segments.size());
 
   unsigned offset = 0;
   for (unsigned i_cb = 0, i_cb_end = d_segments.size(); i_cb != i_cb_end; ++i_cb) {
     // Select segment description.
     const described_segment& descr_seg = d_segments[i_cb];
 
-    // Get rate matching buffer from the softbuffer.
-    bit_buffer rm_buffer = softbuffer.get_codeblock(i_cb, descr_seg.get_metadata().cb_specific.full_length);
+    // Get rate matching buffer from the buffer.
+    bit_buffer rm_buffer = buffer.get_codeblock(i_cb, descr_seg.get_metadata().cb_specific.full_length);
 
     if (config.new_data) {
       // Encode the segment into a codeblock.

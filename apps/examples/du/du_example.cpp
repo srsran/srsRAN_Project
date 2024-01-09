@@ -718,7 +718,6 @@ int main(int argc, char** argv)
       generate_carrier_config_tlv(),
       std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
       std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
-      *dl_executors.front(),
       upper->get_tx_buffer_pool(),
       {0});
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");

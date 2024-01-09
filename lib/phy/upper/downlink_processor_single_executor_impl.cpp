@@ -85,7 +85,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 }
 
 void downlink_processor_single_executor_impl::process_pdsch(
-    unique_tx_buffer                                                                     softbuffer,
+    unique_tx_buffer                                                                     rm_buffer,
     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
     const pdsch_processor::pdu_t&                                                        pdu)
 {
@@ -104,7 +104,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
   }
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, sb = std::move(softbuffer), data, pdu]() mutable {
+  bool enqueued = executor.execute([this, sb = std::move(rm_buffer), data, pdu]() mutable {
     trace_point process_pdsch_tp = l1_tracer.now();
 
     // Do not execute if the grid is not available.

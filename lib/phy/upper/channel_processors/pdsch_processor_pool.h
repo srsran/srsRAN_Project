@@ -45,7 +45,7 @@ public:
 
   // See pdsch_processor interface for documentation.
   void process(resource_grid_mapper&                                                         mapper,
-               unique_tx_buffer                                                              softbuffer,
+               unique_tx_buffer                                                              rm_buffer,
                pdsch_processor_notifier&                                                     notifier_,
                static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdsch_processor::pdu_t&                                                 pdu) override
@@ -54,7 +54,7 @@ public:
     notifier = &notifier_;
 
     // Process.
-    processor->process(mapper, std::move(softbuffer), *this, data, pdu);
+    processor->process(mapper, std::move(rm_buffer), *this, data, pdu);
   }
 
 private:
@@ -99,7 +99,7 @@ public:
   }
 
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             softbuffer,
+               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
@@ -115,7 +115,7 @@ public:
     }
 
     // Process PDSCH.
-    processors[index.value()].process(mapper, std::move(softbuffer), notifier, data, pdu);
+    processors[index.value()].process(mapper, std::move(rm_buffer), notifier, data, pdu);
   }
 
 private:

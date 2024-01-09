@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "tx_buffer_codeblock_pool.h"
+#include "rx_buffer_codeblock_pool.h"
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/sch/sch_constants.h"
 #include "srsran/support/srsran_assert.h"
 #include <atomic>
@@ -25,10 +25,10 @@
 
 namespace srsran {
 
-enum class tx_buffer_status : uint8_t { successful = 0, already_in_use, insufficient_cb };
+enum class rx_buffer_status : uint8_t { successful = 0, already_in_use, insufficient_cb };
 
-/// Implements a transmiter buffer interface.
-class tx_buffer_impl : public unique_tx_buffer::callback
+/// Implements a receiver buffer interface.
+class rx_buffer_impl : public unique_rx_buffer::callback
 {
 private:
   /// Internal buffer states.
@@ -56,7 +56,7 @@ private:
   /// Current buffer state.
   std::atomic<state> current_state = {state::available};
   /// Reference to the codeblock pool.
-  tx_buffer_codeblock_pool& codeblock_pool;
+  rx_buffer_codeblock_pool& codeblock_pool;
   /// Stores codeblocks CRCs.
   static_vector<bool, MAX_NOF_SEGMENTS> crc;
   /// Stores codeblock identifiers.
@@ -77,25 +77,29 @@ private:
 public:
   /// \brief Creates a receive buffer.
   /// \param pool Codeblock buffer pool.
-  explicit tx_buffer_impl(tx_buffer_codeblock_pool& pool) : codeblock_pool(pool)
+  explicit rx_buffer_impl(rx_buffer_codeblock_pool& pool) : codeblock_pool(pool)
   {
     // Do nothing.
   }
 
   /// Copy constructor - creates another buffer with the same codeblock pool.
-  tx_buffer_impl(const tx_buffer_impl& other) noexcept : codeblock_pool(other.codeblock_pool) {}
+  rx_buffer_impl(const rx_buffer_impl& other) noexcept : codeblock_pool(other.codeblock_pool) {}
 
   /// Move constructor - creates another buffer with the same codeblock pool.
-  tx_buffer_impl(tx_buffer_impl&& other) noexcept : codeblock_pool(other.codeblock_pool) {}
+  rx_buffer_impl(rx_buffer_impl&& other) noexcept : codeblock_pool(other.codeblock_pool) {}
 
   /// \brief Reserves a number of codeblocks from the pool.
+  ///
+  /// It optionally resets the CRCs.
+  ///
   /// \param nof_codeblocks Number of codeblocks to reserve.
+  /// \param reset_crc      Set to true for reset the codeblock CRCs.
   /// \return The reservation status.
-  tx_buffer_status reserve(unsigned nof_codeblocks)
+  rx_buffer_status reserve(unsigned nof_codeblocks, bool reset_crc)
   {
     // It cannot reserve resources if it is locked.
     if (current_state.load() == state::locked) {
-      return tx_buffer_status::already_in_use;
+      return rx_buffer_status::already_in_use;
     }
 
     // If the current number of codeblocks is larger than required, free the excess of codeblocks.
@@ -117,7 +121,7 @@ public:
       if (!cb_id.has_value()) {
         free();
         current_state = state::available;
-        return tx_buffer_status::insufficient_cb;
+        return rx_buffer_status::insufficient_cb;
       }
 
       // Append the codeblock identifier to the list.
@@ -127,13 +131,29 @@ public:
     // Resize CRCs.
     crc.resize(nof_codeblocks);
 
+    // Reset CRCs if necessary.
+    if (reset_crc) {
+      reset_codeblocks_crc();
+    }
     current_state = state::reserved;
 
-    return tx_buffer_status::successful;
+    return rx_buffer_status::successful;
   }
 
   // See interface for documentation.
   unsigned get_nof_codeblocks() const override { return crc.size(); }
+
+  // See interface for documentation.
+  void reset_codeblocks_crc() override
+  {
+    // Set all codeblock CRC to false.
+    for (bool& cb_crc : crc) {
+      cb_crc = false;
+    }
+  }
+
+  // See interface for documentation.
+  span<bool> get_codeblocks_crc() override { return crc; }
 
   // See interface for documentation.
   unsigned get_absolute_codeblock_id(unsigned codeblock_id) const override
@@ -146,17 +166,31 @@ public:
   }
 
   // See interface for documentation.
-  bit_buffer get_codeblock(unsigned codeblock_id, unsigned codeblock_size) override
+  span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
     srsran_assert(codeblock_id < codeblock_ids.size(),
-                  "Codeblock index (i.e., {}) exceeds the number of buffers (i.e., {}).",
+                  "Codeblock index ({}) is out of range ({}).",
                   codeblock_id,
                   codeblock_ids.size());
     unsigned cb_id       = codeblock_ids[codeblock_id];
-    unsigned cb_max_size = codeblock_pool.get_data(cb_id).size();
+    unsigned cb_max_size = codeblock_pool.get_soft_bits(cb_id).size();
     srsran_assert(
         codeblock_size <= cb_max_size, "Codeblock size {} exceeds maximum size {}.", codeblock_size, cb_max_size);
-    return codeblock_pool.get_data(cb_id).first(codeblock_size);
+    return codeblock_pool.get_soft_bits(cb_id).first(codeblock_size);
+  }
+
+  // See interface for documentation.
+  bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
+  {
+    srsran_assert(codeblock_id < codeblock_ids.size(),
+                  "Codeblock index ({}) is out of range ({}).",
+                  codeblock_id,
+                  codeblock_ids.size());
+    unsigned cb_id         = codeblock_ids[codeblock_id];
+    unsigned data_max_size = codeblock_pool.get_data_bits(cb_id).size();
+    srsran_assert(
+        data_size <= data_max_size, "Codeblock data size {} exceeds maximum size {}.", data_size, data_max_size);
+    return codeblock_pool.get_data_bits(cb_id).first(data_size);
   }
 
   // See interface for documentation.
@@ -171,6 +205,17 @@ public:
   {
     state previous_state = current_state.exchange(state::reserved);
     srsran_assert(previous_state == state::locked, "Failed to unlock. Invalid state.");
+  }
+
+  // See interface for documentation.
+  void release() override
+  {
+    // Release all reserved codeblocks.
+    free();
+
+    // The buffer can now be reused again.
+    state previous_state = current_state.exchange(state::available);
+    srsran_assert(previous_state == state::locked, "Failed to release. Invalid state.");
   }
 
   /// Returns true if the buffer is free.

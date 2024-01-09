@@ -20,7 +20,7 @@ class unique_tx_buffer
 {
 public:
   /// Public interface required for locking and unlocking the internal buffer.
-  class lockable_buffer : public tx_buffer
+  class callback : public tx_buffer
   {
   public:
     /// Locks the buffer.
@@ -34,7 +34,7 @@ public:
   unique_tx_buffer() = default;
 
   /// Builds a unique transmit buffer from a reference. It locks the internal buffer.
-  explicit unique_tx_buffer(lockable_buffer& buffer_) : ptr(&buffer_)
+  explicit unique_tx_buffer(callback& buffer_) : ptr(&buffer_)
   {
     if (ptr != nullptr) {
       ptr->lock();
@@ -89,7 +89,7 @@ public:
 
 private:
   /// Underlying pointer to the actual buffer. Set to nullptr for an invalid buffer.
-  lockable_buffer* ptr = nullptr;
+  callback* ptr = nullptr;
 };
 
 } // namespace srsran

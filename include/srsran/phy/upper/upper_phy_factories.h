@@ -15,7 +15,7 @@
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/downlink_processor.h"
-#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include <memory>
@@ -292,7 +292,7 @@ struct upper_phy_config {
   /// Transmit buffer pool configuration.
   tx_buffer_pool_config tx_buffer_config;
   /// Receive buffer pool configuration.
-  rx_softbuffer_pool_config rx_buffer_config;
+  rx_buffer_pool_config rx_buffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.

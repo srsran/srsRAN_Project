@@ -12,7 +12,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
-#include "srsran/phy/upper/rx_softbuffer.h"
+#include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -56,15 +56,15 @@ static std::tuple<unsigned, unsigned, unsigned> get_cblk_bit_breakdown(const cod
 }
 
 pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                       transport_block_,
-                                                   unique_rx_softbuffer                softbuffer_,
+                                                   unique_rx_buffer                    unique_rm_buffer_,
                                                    pusch_decoder_notifier&             notifier,
                                                    const pusch_decoder::configuration& cfg)
 {
-  transport_block = transport_block_;
-  softbuffer      = std::move(softbuffer_);
-  result_notifier = &notifier;
-  current_config  = cfg;
-  softbits_count  = 0;
+  transport_block  = transport_block_;
+  unique_rm_buffer = std::move(unique_rm_buffer_);
+  result_notifier  = &notifier;
+  current_config   = cfg;
+  softbits_count   = 0;
   return *this;
 }
 
@@ -118,16 +118,16 @@ void pusch_decoder_impl::on_end_softbits()
   segmenter->segment(codeblock_llrs, llrs, tb_size, segmentation_config);
 
   unsigned nof_cbs = codeblock_llrs.size();
-  srsran_assert(nof_cbs == softbuffer->get_nof_codeblocks(),
+  srsran_assert(nof_cbs == unique_rm_buffer->get_nof_codeblocks(),
                 "Wrong number of codeblocks {} (expected {}).",
-                softbuffer->get_nof_codeblocks(),
+                unique_rm_buffer->get_nof_codeblocks(),
                 nof_cbs);
 
   // Select CRC calculator for inner codeblock checks.
   crc_calculator* block_crc = select_crc(crc_set, tb_size, nof_cbs);
 
   // Reset CRCs if new data is flagged.
-  span<bool> cb_crcs = softbuffer->get_codeblocks_crc();
+  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
   if (current_config.new_data) {
     srsvec::zero(cb_crcs);
   }
@@ -147,12 +147,12 @@ void pusch_decoder_impl::on_end_softbits()
     std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
 
     // Get data bits from previous transmissions, if any.
-    // Messages are written on a dedicated buffer associated to the softbuffer. By doing this, we keep the decoded
-    // message in memory and we don't need to compute it again if there is a retransmission.
-    bit_buffer message = softbuffer->get_codeblock_data_bits(cb_id, msg_length);
+    // Messages are written on a dedicated buffer associated to the buffer. By doing this, we keep the decoded message
+    // in memory and we don't need to compute it again if there is a retransmission.
+    bit_buffer message = unique_rm_buffer->get_codeblock_data_bits(cb_id, msg_length);
 
     // Get the LLRs from previous transmissions, if any, or a clean buffer.
-    span<log_likelihood_ratio> rm_buffer = softbuffer->get_codeblock_soft_bits(cb_id, cb_length);
+    span<log_likelihood_ratio> rm_buffer = unique_rm_buffer->get_codeblock_soft_bits(cb_id, cb_length);
 
     // Code block processing task.
     auto cb_process_task = [this, cb_meta, rm_buffer, cb_llrs, &cb_crc = cb_crcs[cb_id], block_crc, message]() {
@@ -212,7 +212,7 @@ void pusch_decoder_impl::on_end_softbits()
 void pusch_decoder_impl::join_and_notify()
 {
   unsigned   nof_cbs = codeblock_llrs.size();
-  span<bool> cb_crcs = softbuffer->get_codeblocks_crc();
+  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
 
   // Initialize decoder status.
   pusch_decoder_result stats;
@@ -233,7 +233,7 @@ void pusch_decoder_impl::join_and_notify()
 
     // Copy the code block only nif the CRC is OK.
     if (stats.tb_crc_ok) {
-      const bit_buffer cb_data = softbuffer->get_codeblock_data_bits(0, transport_block.size() * BITS_PER_BYTE);
+      const bit_buffer cb_data = unique_rm_buffer->get_codeblock_data_bits(0, transport_block.size() * BITS_PER_BYTE);
       srsvec::copy(transport_block, cb_data.get_buffer());
     }
   } else if (std::all_of(cb_crcs.begin(), cb_crcs.end(), [](bool a) { return a; })) {
@@ -246,15 +246,15 @@ void pusch_decoder_impl::join_and_notify()
       stats.tb_crc_ok = true;
     } else {
       // If the checksum is wrong, then at least one of the codeblocks is a false negative. Reset all of them.
-      softbuffer->reset_codeblocks_crc();
+      unique_rm_buffer->reset_codeblocks_crc();
     }
   }
 
   // Release soft buffer if the CRC is OK, otherwise unlock.
   if (stats.tb_crc_ok) {
-    softbuffer.release();
+    unique_rm_buffer.release();
   } else {
-    softbuffer.unlock();
+    unique_rm_buffer.unlock();
   }
 
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
@@ -289,7 +289,7 @@ unsigned pusch_decoder_impl::concatenate_codeblocks()
     unsigned nof_new_bits = std::min(free_tb_bits, nof_data_bits);
 
     // Get code block data from the buffer.
-    bit_buffer cb_data = softbuffer->get_codeblock_data_bits(cb_id, nof_data_bits);
+    bit_buffer cb_data = unique_rm_buffer->get_codeblock_data_bits(cb_id, nof_data_bits);
 
     // Copy the decoded code block into the transport block buffer.
     srsvec::copy_offset(tb_data, tb_offset, cb_data, 0, nof_new_bits);

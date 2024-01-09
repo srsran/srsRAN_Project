@@ -15,7 +15,7 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/phy/upper/rx_softbuffer.h"
+#include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/ran/pusch/pusch_context.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
@@ -26,7 +26,7 @@ namespace srsran {
 
 class pusch_processor_result_notifier;
 class resource_grid_reader;
-class unique_rx_softbuffer;
+class unique_rx_buffer;
 
 /// \brief Describes the PUSCH processor interface.
 ///
@@ -146,13 +146,13 @@ public:
   ///
   /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
   ///
-  /// \param[out] data          Received transport block..
-  /// \param[in,out] softbuffer Data reception softbuffer.
-  /// \param[in] notifier       Result notification interface.
-  /// \param[in] grid           Source resource grid.
-  /// \param[in] pdu            Necessary parameters to process the PUSCH transmission.
+  /// \param[out]    data      Received transport block..
+  /// \param[in,out] rm_buffer Rate matcher buffer.
+  /// \param[in]     notifier  Result notification interface.
+  /// \param[in]     grid      Source resource grid.
+  /// \param[in]     pdu       Necessary parameters to process the PUSCH transmission.
   virtual void process(span<uint8_t>                    data,
-                       unique_rx_softbuffer             softbuffer,
+                       unique_rx_buffer                 rm_buffer,
                        pusch_processor_result_notifier& notifier,
                        const resource_grid_reader&      grid,
                        const pdu_t&                     pdu) = 0;

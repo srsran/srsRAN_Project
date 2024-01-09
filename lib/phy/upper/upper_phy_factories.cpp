@@ -21,7 +21,7 @@
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/error_handling.h"
 #include <algorithm>
 
@@ -554,7 +554,7 @@ public:
     phy_config.tx_buf_pool = create_tx_buffer_pool(config.tx_buffer_config);
     report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid transmit buffer processor pool.");
 
-    phy_config.rx_buf_pool = create_rx_softbuffer_pool(config.rx_buffer_config);
+    phy_config.rx_buf_pool = create_rx_buffer_pool(config.rx_buffer_config);
     report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid receive buffer processor pool.");
 
     phy_config.ul_processor_pool = create_ul_processor_pool(*ul_processor_fact, config);
@@ -566,8 +566,6 @@ public:
     // Create the validators.
     phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
     phy_config.ul_pdu_validator = ul_processor_fact->create_pdu_validator();
-
-    phy_config.timing_handler_executor = config.pusch_executor;
 
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }
