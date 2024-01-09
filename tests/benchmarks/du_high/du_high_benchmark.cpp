@@ -544,10 +544,12 @@ public:
     du_hi = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
-    pdcp_pdu.append(test_rgen::random_vector<uint8_t>(MAX_DL_PDU_SIZE));
+    report_fatal_error_if_not(pdcp_pdu.append(test_rgen::random_vector<uint8_t>(MAX_DL_PDU_SIZE)),
+                              "Unable to allocate PDU");
     // Create MAC PDU.
-    mac_pdu.append(
-        test_rgen::random_vector<uint8_t>(buff_size_field_to_bytes(lbsr_buff_sz, srsran::bsr_format::LONG_BSR)));
+    report_fatal_error_if_not(mac_pdu.append(test_rgen::random_vector<uint8_t>(
+                                  buff_size_field_to_bytes(lbsr_buff_sz, srsran::bsr_format::LONG_BSR))),
+                              "Unable to allocate PDU");
 
     // Start DU-high operation.
     du_hi->start();
@@ -839,9 +841,11 @@ public:
       static const uint8_t rlc_um_complete_pdu_header = 0x00;
       report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
       // Exclude RLC header from payload length.
-      rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1));
+      report_fatal_error_if_not(rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1)),
+                                "Failed to allocate PDU");
       // Append Long BSR bytes.
-      rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end());
+      report_fatal_error_if_not(rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end()),
+                                "Failed to allocate PDU");
 
       rx_ind.pdus.push_back(rx_pdu);
 

@@ -164,7 +164,12 @@ public:
   explicit byte_buffer(const byte_buffer&) noexcept = default;
 
   /// Creates a byte_buffer with content provided by a span of bytes.
-  byte_buffer(span<const uint8_t> bytes) { append(bytes); }
+  byte_buffer(span<const uint8_t> bytes)
+  {
+    if (not append(bytes)) {
+      clear();
+    }
+  }
 
   /// Creates a byte_buffer with data intialized via a initializer list.
   byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
@@ -173,7 +178,9 @@ public:
   template <typename It>
   byte_buffer(It other_begin, It other_end)
   {
-    append(other_begin, other_end);
+    if (not append(other_begin, other_end)) {
+      clear();
+    }
   }
 
   /// Move constructor.
@@ -189,7 +196,9 @@ public:
   byte_buffer& operator=(span<const uint8_t> bytes) noexcept
   {
     clear();
-    append(bytes);
+    if (not append(bytes)) {
+      clear();
+    }
     return *this;
   }
 
@@ -199,7 +208,10 @@ public:
     byte_buffer buf;
     if (ctrl_blk_ptr != nullptr) {
       for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
-        buf.append(span<uint8_t>{seg->data(), seg->length()});
+        if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
+          buf.clear();
+          break;
+        }
       }
     }
     return buf;
@@ -210,7 +222,7 @@ public:
 
   /// Append bytes of a iterator range.
   template <typename Iterator>
-  bool append(Iterator begin, Iterator end)
+  SRSRAN_NODISCARD bool append(Iterator begin, Iterator end)
   {
     static_assert(std::is_same<std::decay_t<decltype(*begin)>, uint8_t>::value or
                       std::is_same<std::decay_t<decltype(*begin)>, const uint8_t>::value,
@@ -225,10 +237,13 @@ public:
   }
 
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
-  bool append(span<const uint8_t> bytes);
+  SRSRAN_NODISCARD bool append(span<const uint8_t> bytes);
 
   /// Appends an initializer list of bytes.
-  void append(const std::initializer_list<uint8_t>& bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
+  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes)
+  {
+    return append(span<const uint8_t>{bytes.begin(), bytes.size()});
+  }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
   SRSRAN_NODISCARD bool append(const byte_buffer& other);
@@ -566,16 +581,16 @@ public:
   byte_buffer_view view() const { return *buffer; }
 
   /// Appends bytes.
-  bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
+  SRSRAN_NODISCARD bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
 
   /// Appends initializer list of bytes.
-  void append(const std::initializer_list<uint8_t>& bytes)
+  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes)
   {
-    buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
+    return buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
   }
 
   /// Appends span of bytes.
-  void append(span<const uint8_t> bytes) { buffer->append(bytes); }
+  SRSRAN_NODISCARD bool append(span<const uint8_t> bytes) { return buffer->append(bytes); }
 
   /// Appends single byte.
   SRSRAN_NODISCARD bool append(uint8_t byte) { return buffer->append(byte); }

@@ -47,10 +47,10 @@ public:
 
   /// Append range of bytes into byte_buffer held by bit_encoder.
   /// \param bytes span of bytes.
-  void pack_bytes(srsran::span<const uint8_t> bytes);
+  bool pack_bytes(srsran::span<const uint8_t> bytes);
 
   /// Append bytes of a byte_buffer into byte_buffer held by bit_encoder.
-  void pack_bytes(srsran::byte_buffer_view bytes);
+  bool pack_bytes(srsran::byte_buffer_view bytes);
 
   /// Pads held buffer with zeros until the next byte.
   void align_bytes_zero();

@@ -18,7 +18,7 @@ template <std::size_t N>
 byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
 {
   byte_buffer pdu;
-  pdu.append(tv);
+  report_error_if_not(pdu.append(tv), "Failed to append to byte_buffer");
   // write_pdu_to_pcap(4, tv.data(), tv.size()); TODO
   return pdu;
 }

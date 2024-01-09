@@ -50,7 +50,10 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
         init_msg->nr_cgi.plmn_id.from_number(plmn_string_to_bcd(nr_cgi.plmn));
         init_msg->nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
         init_msg->c_rnti = to_value(ue_ctxt.rnti);
-        init_msg->rrc_container.append(sdu.begin(), sdu.end());
+        if (not init_msg->rrc_container.append(sdu.begin(), sdu.end())) {
+          logger.error("UL {} SRB0 Tx PDU: Discarding Tx PDU. Cause: Failed to append SDU to RRC container.", ue_ctxt);
+          return;
+        }
         init_msg->du_to_cu_rrc_container_present           = true;
         init_msg->du_to_cu_rrc_container                   = std::move(du_cu_rrc_container);
         init_msg->sul_access_ind_present                   = false;
@@ -116,7 +119,12 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
         ul_msg->gnb_du_ue_f1ap_id                 = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
         ul_msg->gnb_cu_ue_f1ap_id                 = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
         ul_msg->srb_id                            = srb_id_to_uint(srb_id);
-        ul_msg->rrc_container.append(sdu.begin(), sdu.end());
+        if (not ul_msg->rrc_container.append(sdu.begin(), sdu.end())) {
+          logger.error("UL {} SRB{} Tx PDU: Discarding Tx PDU. Cause: Failed to append SDU to RRC container.",
+                       ue_ctxt,
+                       srb_id_to_uint(srb_id));
+          return;
+        }
         ul_msg->sel_plmn_id_present           = false;
         ul_msg->new_gnb_du_ue_f1ap_id_present = false;
 

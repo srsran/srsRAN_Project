@@ -559,7 +559,7 @@ TEST_P(rlc_rx_am_test, rx_data_pdu_without_payload)
   // Create a complete header of a data PDU with polling bit set and with SO
   byte_buffer pdu_buf = {};
   ASSERT_TRUE(pdu_buf.append(0b11110000)); // D/C = 1; P = 1; SI = 0b11
-  pdu_buf.append({0x00, 0x00, 0x00});
+  ASSERT_TRUE(pdu_buf.append({0x00, 0x00, 0x00}));
   if (sn_size == rlc_am_sn_size::size18bits) {
     ASSERT_TRUE(pdu_buf.append(0x00));
   }

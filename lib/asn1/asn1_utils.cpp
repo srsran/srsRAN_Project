@@ -150,10 +150,10 @@ SRSASN_CODE bit_ref::pack_bytes(srsran::span<const uint8_t> bytes)
   }
   if (offset == 0) {
     // Aligned case
-    writer.append(bytes);
+    HANDLE_CODE(writer.append(bytes) ? SRSASN_SUCCESS : SRSASN_ERROR_ENCODE_FAIL);
   } else {
     for (uint8_t byte : bytes) {
-      pack(byte, 8U);
+      HANDLE_CODE(pack(byte, 8U));
     }
   }
   return SRSASN_SUCCESS;
@@ -166,10 +166,10 @@ SRSASN_CODE bit_ref::pack_bytes(srsran::byte_buffer_view bytes)
   }
   if (offset == 0) {
     // Aligned case.
-    writer.append(bytes);
+    HANDLE_CODE(writer.append(bytes) ? SRSASN_SUCCESS : SRSASN_ERROR_ENCODE_FAIL);
   } else {
     for (uint8_t byte : bytes) {
-      pack(byte, 8U);
+      HANDLE_CODE(pack(byte, 8U));
     }
   }
   return SRSASN_SUCCESS;

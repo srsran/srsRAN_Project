@@ -302,7 +302,7 @@ TEST_P(rlc_um_test, rx_pdu_without_payload)
   // Create a complete header of a PDU segment
   byte_buffer pdu_buf = {};
   ASSERT_TRUE(pdu_buf.append(0b11000000)); // SI = 0b11
-  pdu_buf.append({0x11, 0x22});
+  ASSERT_TRUE(pdu_buf.append({0x11, 0x22}));
   if (sn_size == rlc_um_sn_size::size12bits) {
     ASSERT_TRUE(pdu_buf.append(0x33));
   }

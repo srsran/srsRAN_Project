@@ -186,8 +186,8 @@ TEST(byte_buffer_chain_test, slice_chain_formatter)
 {
   byte_buffer          pdu, pdu2;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
-  pdu.append(bytes);
-  pdu2.append(bytes);
+  ASSERT_TRUE(pdu.append(bytes));
+  ASSERT_TRUE(pdu2.append(bytes));
 
   byte_buffer_chain chain;
   chain.append(byte_buffer_slice{std::move(pdu), 3, 2});
