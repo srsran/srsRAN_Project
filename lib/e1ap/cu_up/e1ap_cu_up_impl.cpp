@@ -263,6 +263,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     logger.warning("Sending BearerContextModificationFailure. UE context not available");
     connection_handler.on_new_message(e1ap_msg);
+    return;
   }
 
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
