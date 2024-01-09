@@ -18,8 +18,8 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/cu_cp/up_resource_manager.h"
-#include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/rrc/rrc.h"
+#include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
@@ -62,12 +62,6 @@ public:
 
   /// \brief Notify about the need to release a UE.
   virtual void on_ue_release_required(const cause_t& cause) = 0;
-};
-
-/// PDCP configuration for a SRB.
-struct srb_pdcp_config {
-  /// Value in ms of t-Reordering specified in TS 38.323.
-  pdcp_t_reordering t_reordering = pdcp_t_reordering::infinity;
 };
 
 struct srb_creation_message {

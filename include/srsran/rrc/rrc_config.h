@@ -13,6 +13,7 @@
 #include "rrc_ue_config.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/rrc/rrc_ue_config.h"
 #include <map>
 #include <memory>
 
@@ -20,15 +21,9 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-/// RLC and PDCP configuration of a radio bearer.
-struct rb_cfg_t {
-  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
-  asn1::rrc_nr::rlc_cfg_c  rlc_cfg;
-};
-
 struct rrc_cfg_t {
-  /// Optional SRB2 config. SRB1 is configured by DU
-  optional<rb_cfg_t> srb2_cfg;
+  /// PDCP config to use when UE SRB2 are configured.
+  srb_pdcp_config srb2_cfg;
   /// Configuration for available 5QI.
   std::map<five_qi_t, cu_cp_qos_config> drb_config;
   /// Integrity protection algorithms preference list
