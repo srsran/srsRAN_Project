@@ -242,7 +242,7 @@ void rrc_reestablishment_procedure::create_srb1()
   srb1_msg.ue_index     = context.ue_index;
   srb1_msg.old_ue_index = reestablishment_context.ue_index;
   srb1_msg.srb_id       = srb_id_t::srb1;
-  srb1_msg.pdcp_cfg     = srb1_pdcp_cfg;
+  srb1_msg.pdcp_cfg     = {}; // TODO: Get SRB1 PDCP config of the old UE context.
   srb_notifier.create_srb(srb1_msg);
 
   // activate SRB1 PDCP security

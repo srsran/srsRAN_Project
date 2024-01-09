@@ -282,7 +282,7 @@ void inter_cu_handover_target_routine::create_srb1()
   srb_creation_message srb1_msg{};
   srb1_msg.ue_index        = request.ue_index;
   srb1_msg.srb_id          = srb_id_t::srb1;
-  srb1_msg.pdcp_cfg        = asn1::rrc_nr::pdcp_cfg_s{};
+  srb1_msg.pdcp_cfg        = {};
   srb1_msg.enable_security = true;
   ue_manager.find_du_ue(request.ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
 }

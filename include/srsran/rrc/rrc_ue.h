@@ -14,19 +14,27 @@
 #include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
-#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 
-namespace srsran {
+namespace asn1 {
+namespace rrc_nr {
 
+// ASN.1 forward declarations
+struct dl_ccch_msg_s;
+struct dl_dcch_msg_s;
+
+} // namespace rrc_nr
+} // namespace asn1
+
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Interface to notify F1AP about a new SRB PDU.
@@ -56,12 +64,18 @@ public:
   virtual void on_ue_release_required(const cause_t& cause) = 0;
 };
 
+/// PDCP configuration for a SRB.
+struct srb_pdcp_config {
+  /// Value in ms of t-Reordering specified in TS 38.323.
+  pdcp_t_reordering t_reordering = pdcp_t_reordering::infinity;
+};
+
 struct srb_creation_message {
-  ue_index_t               ue_index        = ue_index_t::invalid;
-  ue_index_t               old_ue_index    = ue_index_t::invalid;
-  srb_id_t                 srb_id          = srb_id_t::nulltype;
-  bool                     enable_security = false; // Activate security upon SRB creation.
-  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+  ue_index_t      ue_index        = ue_index_t::invalid;
+  ue_index_t      old_ue_index    = ue_index_t::invalid;
+  srb_id_t        srb_id          = srb_id_t::nulltype;
+  bool            enable_security = false; // Activate security upon SRB creation.
+  srb_pdcp_config pdcp_cfg;
 };
 
 /// Interface to handle the creation of SRBs.

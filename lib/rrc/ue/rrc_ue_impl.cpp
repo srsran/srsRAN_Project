@@ -59,7 +59,7 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&              up_resource_mng_,
       srb_msg.ue_index        = ue_index_;
       srb_msg.srb_id          = srb;
       srb_msg.enable_security = true;
-      srb_msg.pdcp_cfg        = asn1::rrc_nr::pdcp_cfg_s{}; // TODO: add support for non-default config.
+      srb_msg.pdcp_cfg        = {}; // TODO: add support for non-default config.
       create_srb(srb_msg);
     }
   }

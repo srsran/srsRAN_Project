@@ -268,6 +268,6 @@ void inter_du_handover_routine::create_srb(du_ue* ue, srb_id_t srb_id)
   srb_msg.ue_index        = ue->get_ue_index();
   srb_msg.srb_id          = srb_id;
   srb_msg.enable_security = true;
-  srb_msg.pdcp_cfg        = asn1::rrc_nr::pdcp_cfg_s{}; // TODO: add support for non-default config.
+  // TODO: add support for non-default PDCP config.
   ue->get_rrc_ue_srb_notifier().create_srb(srb_msg);
 }
