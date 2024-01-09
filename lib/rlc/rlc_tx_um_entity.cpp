@@ -34,6 +34,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id, config)
 {
+  metrics.metrics_set_mode(rlc_mode::um_bidir);
+
   logger.log_info("RLC UM configured. {}", cfg);
 }
 
