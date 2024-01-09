@@ -44,6 +44,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ul_compression_params              = config.ul_compression_params;
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
+  rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
 
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address  = config.mac_src_address;

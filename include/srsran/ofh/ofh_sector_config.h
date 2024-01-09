@@ -73,6 +73,8 @@ struct sector_configuration {
   bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
+  /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
+  bool ignore_ecpri_seq_id_field = false;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.

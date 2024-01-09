@@ -10,6 +10,7 @@
 
 #include "../../../../lib/ofh/receiver/ofh_message_receiver.h"
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
+#include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
 #include "../compression/ofh_iq_decompressor_test_doubles.h"
 #include "srsran/ofh/ofh_factories.h"
 #include <gtest/gtest.h>
@@ -167,6 +168,8 @@ public:
       ecpri_decoder              = temp.get();
       dependencies.ecpri_decoder = std::move(temp);
     }
+    dependencies.seq_id_checker = std::make_unique<sequence_id_checker_dummy_impl>();
+
     return dependencies;
   }
 };

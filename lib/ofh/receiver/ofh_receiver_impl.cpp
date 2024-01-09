@@ -46,6 +46,8 @@ static message_receiver_dependencies get_message_receiver_dependencies(receiver_
   srsran_assert(dependencies.data_flow_uplink, "Invalid uplink data flow decoder");
   dependencies.data_flow_prach = std::move(rx_dependencies.data_flow_prach);
   srsran_assert(dependencies.data_flow_prach, "Invalid PRACH data flow decoder");
+  dependencies.seq_id_checker = std::move(rx_dependencies.seq_id_checker);
+  srsran_assert(dependencies.seq_id_checker, "Invalid sequence id checker");
 
   return dependencies;
 }

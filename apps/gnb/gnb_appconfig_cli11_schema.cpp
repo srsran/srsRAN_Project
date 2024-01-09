@@ -1726,6 +1726,8 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
       ->capture_default_str();
   app.add_option("--is_dl_broadcast_enabled", config.is_downlink_broadcast_enabled, "Downlink broadcast enabled flag")
       ->capture_default_str();
+  app.add_option("--ignore_ecpri_seq_id", config.ignore_ecpri_seq_id_field, "Ignore eCPRI sequence id field value")
+      ->capture_default_str();
   app.add_option(
          "--ignore_ecpri_payload_size", config.ignore_ecpri_payload_size_field, "Ignore eCPRI payload size field value")
       ->capture_default_str();

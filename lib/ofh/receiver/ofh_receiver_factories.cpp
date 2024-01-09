@@ -12,6 +12,8 @@
 #include "ofh_data_flow_uplane_uplink_data_impl.h"
 #include "ofh_data_flow_uplane_uplink_prach_impl.h"
 #include "ofh_receiver_impl.h"
+#include "ofh_sequence_id_checker_dummy_impl.h"
+#include "ofh_sequence_id_checker_impl.h"
 #include "srsran/ofh/compression/compression_factory.h"
 #include "srsran/ofh/ecpri/ecpri_factories.h"
 #include "srsran/ofh/ethernet/ethernet_factories.h"
@@ -101,10 +103,7 @@ resolve_receiver_dependencies(const receiver_config&                            
 {
   receiver_impl_dependencies dependencies;
 
-  dependencies.logger                 = &logger;
-  dependencies.prach_context_repo_ptr = prach_context_repo;
-  dependencies.ul_context_repo_ptr    = ul_slot_context_repo;
-
+  dependencies.logger         = &logger;
   dependencies.uplane_decoder = create_uplane_decoder(receiver_cfg, logger);
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
@@ -118,6 +117,11 @@ resolve_receiver_dependencies(const receiver_config&                            
       create_uplink_data_flow(receiver_cfg, logger, notifier, ul_slot_context_repo, ul_cp_context_repo);
   dependencies.data_flow_prach =
       create_uplink_prach_data_flow(receiver_cfg, logger, notifier, prach_context_repo, ul_cp_context_repo);
+
+  dependencies.seq_id_checker =
+      (receiver_cfg.ignore_ecpri_seq_id_field)
+          ? static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_dummy_impl>())
+          : static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_impl>());
 
   return dependencies;
 }

@@ -21,6 +21,7 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   ul_prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_eaxc),
   window_checker(*dependencies.window_checker),
+  seq_id_checker(std::move(dependencies.seq_id_checker)),
   vlan_decoder(std::move(dependencies.eth_frame_decoder)),
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
@@ -32,6 +33,7 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
   srsran_assert(data_flow_uplink, "Invalid uplink IQ data flow");
   srsran_assert(data_flow_prach, "Invalid uplink PRACH IQ data flow");
+  srsran_assert(seq_id_checker, "Invalid sequence id checker");
 }
 
 void message_receiver::on_new_frame(span<const uint8_t> payload)
@@ -51,7 +53,7 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   // Verify the sequence identifier.
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   int                              nof_skipped_seq_id =
-      seq_id_checker.update_and_compare_seq_id(ecpri_iq_params.pc_id, (ecpri_iq_params.seq_id >> 8));
+      seq_id_checker->update_and_compare_seq_id(ecpri_iq_params.pc_id, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (nof_skipped_seq_id < 0) {
     logger.info("Dropped received Open Fronthaul User-Plane packet as sequence identifier field is from the past");

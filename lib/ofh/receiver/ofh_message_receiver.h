@@ -12,7 +12,7 @@
 
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_data_flow_uplane_uplink_prach.h"
-#include "ofh_sequence_id_checker.h"
+#include "ofh_sequence_id_checker_impl.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
@@ -54,6 +54,8 @@ struct message_receiver_dependencies {
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
   std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
+  /// Sequence id checker.
+  std::unique_ptr<sequence_id_checker> seq_id_checker;
 };
 
 /// Open Fronthaul message receiver.
@@ -95,8 +97,8 @@ private:
   const ether::vlan_frame_params                        vlan_params;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  sequence_id_checker                                   seq_id_checker;
   rx_window_checker&                                    window_checker;
+  std::unique_ptr<sequence_id_checker>                  seq_id_checker;
   std::unique_ptr<ether::vlan_frame_decoder>            vlan_decoder;
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;
   std::unique_ptr<uplane_message_decoder>               uplane_decoder;

@@ -36,10 +36,8 @@ struct receiver_impl_dependencies {
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
   std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
-  /// PRACH context repository.
-  std::shared_ptr<prach_context_repository> prach_context_repo_ptr;
-  /// Uplink context repository.
-  std::shared_ptr<uplink_context_repository> ul_context_repo_ptr;
+  /// Sequence id checker.
+  std::unique_ptr<sequence_id_checker> seq_id_checker;
 };
 
 /// \brief Open Fronthaul receiver.

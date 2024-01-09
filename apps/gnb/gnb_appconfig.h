@@ -964,6 +964,8 @@ struct ru_ofh_base_cell_appconfig {
   bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
+  /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
+  bool ignore_ecpri_seq_id_field = false;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
   /// Uplink compression bitwidth.
