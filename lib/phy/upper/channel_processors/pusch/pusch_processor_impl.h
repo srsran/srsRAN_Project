@@ -92,13 +92,13 @@ public:
     channel_estimate&          get_channel_estimate() { return ch_estimate; }
 
   private:
-    /// Channel estimator instance. Ownership is transferred to the processor.
+    /// Channel estimator instance.
     std::unique_ptr<dmrs_pusch_estimator> estimator;
-    /// Demodulator instance. Ownership is transferred to the processor.
+    /// Demodulator instance.
     std::unique_ptr<pusch_demodulator> demodulator;
-    /// Channel demultiplex. Ownership is transferred to the processor.
+    /// Channel demultiplex.
     std::unique_ptr<ulsch_demultiplex> demultiplex;
-    /// UCI Decoder instance. Ownership is transferred to the processor.
+    /// UCI Decoder instance.
     std::unique_ptr<uci_decoder> uci_dec;
     /// Temporal channel estimate.
     channel_estimate ch_estimate;
@@ -119,10 +119,6 @@ public:
     std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
     /// Decoder instance. Ownership is transferred to the processor.
     std::unique_ptr<pusch_decoder> decoder;
-    /// UCI decoder. Ownership is transferred to the processor.
-    std::unique_ptr<uci_decoder> uci_dec;
-    /// Channel estimate dimensions.
-    channel_estimate::channel_estimate_dimensions ce_dims;
     /// Selects the number of LDPC decoder iterations.
     unsigned dec_nof_iterations;
     /// Enables LDPC decoder early stop if the CRC matches before completing \c ldpc_nof_iterations iterations.

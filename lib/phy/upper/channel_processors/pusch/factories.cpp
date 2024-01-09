@@ -182,8 +182,6 @@ public:
     pusch_processor_impl::configuration config;
     config.thread_local_dependencies_pool = dependencies_pool;
     config.decoder                        = decoder_factory->create();
-    config.uci_dec                        = uci_dec_factory->create();
-    config.ce_dims                        = ch_estimate_dimensions;
     config.dec_nof_iterations             = dec_nof_iterations;
     config.dec_enable_early_stop          = dec_enable_early_stop;
     config.csi_sinr_calc_method           = csi_sinr_calc_method;
