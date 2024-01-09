@@ -12,7 +12,6 @@
 
 #include "rrc_config.h"
 #include "rrc_ue_config.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"

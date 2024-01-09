@@ -12,7 +12,6 @@
 
 #include "rrc_ue_config.h"
 #include "srsran/adt/optional.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include <map>
 #include <memory>
