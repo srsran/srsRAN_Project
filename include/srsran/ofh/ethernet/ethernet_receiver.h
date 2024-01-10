@@ -23,9 +23,11 @@ public:
   virtual ~receiver() = default;
 
   /// \brief Starts the Ethernet receiver operation.
+  /// \note Caller will be blocked until the receiver is fully started.
   virtual void start() = 0;
 
-  /// Stops the Ethernet receiver operation.
+  /// \brief Stops the Ethernet receiver operation.
+  /// \note Caller will be blocked until the receiver is fully stopped.
   virtual void stop() = 0;
 };
 

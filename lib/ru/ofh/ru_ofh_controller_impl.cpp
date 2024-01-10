@@ -25,10 +25,11 @@ ru_ofh_controller_impl::ru_ofh_controller_impl(srslog::basic_logger&         log
 
 void ru_ofh_controller_impl::start()
 {
-  logger.info("Starting operation of the Open FrontHaul interface");
+  logger.info("Starting the operation of the Open FrontHaul interface");
   for (auto* sector : sector_controllers) {
     sector->start();
   }
+  logger.info("Started the operation of the Open FrontHaul interface");
 }
 
 void ru_ofh_controller_impl::stop()
@@ -37,4 +38,5 @@ void ru_ofh_controller_impl::stop()
   for (auto* sector : sector_controllers) {
     sector->stop();
   }
+  logger.info("Stopped the operation of the Open FrontHaul interface");
 }
