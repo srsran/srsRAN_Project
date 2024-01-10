@@ -64,7 +64,7 @@ void inter_cu_handover_target_routine::operator()(
 
   // Perform initial sanity checks on incoming message.
   if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
-    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", request.ue_index, name());
+    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup during Handover", request.ue_index, name());
     CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
   }
 
