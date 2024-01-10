@@ -24,6 +24,8 @@ class frame_notifier;
 /// Implementation for the Ethernet receiver.
 class receiver_impl : public receiver
 {
+  enum class receiver_status { idle, running, stop_requested, stopped };
+
 public:
   receiver_impl(const std::string&    interface,
                 bool                  is_promiscuous_mode_enabled,
@@ -48,11 +50,11 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger& logger;
-  task_executor&        executor;
-  frame_notifier&       notifier;
-  int                   socket_fd = -1;
-  std::atomic<bool>     is_stop_requested{false};
+  srslog::basic_logger&        logger;
+  task_executor&               executor;
+  frame_notifier&              notifier;
+  int                          socket_fd = -1;
+  std::atomic<receiver_status> rx_status{receiver_status::idle};
 };
 
 } // namespace ether

@@ -15,6 +15,7 @@
 #include "srsran/support/executors/task_executor.h"
 #include <arpa/inet.h>
 #include <cstring>
+#include <future>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <thread>
@@ -64,22 +65,44 @@ receiver_impl::~receiver_impl()
 void receiver_impl::start()
 {
   logger.info("Starting the ethernet frame receiver");
-  if (!executor.defer([this]() { receive_loop(); })) {
+
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (!executor.defer([this, &p]() {
+        rx_status.store(receiver_status::running, std::memory_order_relaxed);
+        // Signal start() caller thread that the operation is complete.
+        p.set_value();
+        receive_loop();
+      })) {
     report_error("Unable to start the ethernet frame receiver");
   }
+
+  // Block waiting for timing executor to start.
+  fut.wait();
+
+  logger.info("Started the ethernet frame receiver");
 }
 
 void receiver_impl::stop()
 {
   logger.info("Requesting stop of the ethernet frame receiver");
-  is_stop_requested.store(true, std::memory_order::memory_order_relaxed);
+  rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
+
+  // Wait for the receiver thread to stop.
+  while (rx_status.load(std::memory_order_acquire) != receiver_status::stopped) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  logger.info("Stopped the ethernet frame receiver");
 }
 
 void receiver_impl::receive_loop()
 {
   receive();
 
-  if (is_stop_requested.load(std::memory_order_relaxed)) {
+  if (rx_status.load(std::memory_order_relaxed) == receiver_status::stop_requested) {
+    rx_status.store(receiver_status::stopped, std::memory_order_release);
     return;
   }
 

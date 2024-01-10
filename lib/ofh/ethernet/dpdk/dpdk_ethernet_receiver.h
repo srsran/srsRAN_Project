@@ -24,6 +24,8 @@ class frame_notifier;
 /// DPDK Ethernet receiver implementation.
 class dpdk_receiver_impl : public receiver
 {
+  enum class receiver_status { idle, running, stop_requested, stopped };
+
 public:
   dpdk_receiver_impl(task_executor& executor_, frame_notifier& notifier_, srslog::basic_logger& logger_) :
     logger(logger_), executor(executor_), notifier(notifier_)
@@ -48,11 +50,11 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger& logger;
-  task_executor&        executor;
-  frame_notifier&       notifier;
-  const unsigned        port_id = 0;
-  std::atomic<bool>     is_stop_requested{false};
+  srslog::basic_logger&        logger;
+  task_executor&               executor;
+  frame_notifier&              notifier;
+  const unsigned               port_id = 0;
+  std::atomic<receiver_status> rx_status{receiver_status::idle};
 };
 
 } // namespace ether
