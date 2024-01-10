@@ -10,6 +10,7 @@
 Validate Configuration Examples
 """
 import logging
+import tempfile
 from pathlib import Path
 from pprint import pformat
 
@@ -79,11 +80,19 @@ def run_config(
     Run gnb with B200 example config and validate it doesn't crash.
     """
 
-    retina_data.test_config = {
-        "gnb": {"templates": {"main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve())}}
-    }
-    retina_manager.parse_configuration(retina_data.test_config)
-    retina_manager.push_all_config()
+    with tempfile.NamedTemporaryFile() as tmp_file:
+        retina_data.test_config = {
+            "gnb": {
+                "templates": {
+                    "main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve()),
+                    "cell": tmp_file.name,
+                    "ru": tmp_file.name,
+                }
+            }
+        }
+        retina_manager.parse_configuration(retina_data.test_config)
+        retina_manager.push_all_config()
+
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
 
     configure_artifacts(
