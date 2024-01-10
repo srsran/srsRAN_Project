@@ -45,14 +45,13 @@ namespace {
 struct memory_arena_linear_allocator {
   /// Pointer to the memory block obtained from byte_buffer_segment_pool.
   void* mem_block = nullptr;
+  /// Size of the memory block in bytes.
+  size_t mem_block_size;
   /// Offset in bytes from the beginning of the memory block, determining where the next allocation will be made.
   size_t offset = 0;
 
-  memory_arena_linear_allocator() noexcept :
-    mem_block([]() {
-      static auto& pool = detail::get_default_byte_buffer_segment_pool();
-      return pool.allocate_node(pool.memory_block_size());
-    }())
+  memory_arena_linear_allocator(void* mem_block_, size_t mem_block_size_) noexcept :
+    mem_block(mem_block_), mem_block_size(mem_block_size_)
   {
   }
 
@@ -65,7 +64,7 @@ struct memory_arena_linear_allocator {
 
   bool empty() const { return mem_block == nullptr; }
 
-  size_t space_left() const { return detail::get_default_byte_buffer_segment_pool().memory_block_size() - offset; }
+  size_t space_left() const { return mem_block_size - offset; }
 };
 
 /// Allocator for byte_buffer control_block that will leverage the \c memory_arena_linear_allocator.
@@ -235,14 +234,20 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
   static const size_t block_size = pool.memory_block_size();
 
-  // Create control block using allocator.
-  memory_arena_linear_allocator arena;
-  if (arena.empty()) {
+  // Allocate new node.
+  void* mem_block = pool.allocate_node(block_size);
+  if (mem_block == nullptr) {
+    // Pool is depleted.
     byte_buffer::warn_alloc_failure();
     return nullptr;
   }
+
+  // Create control block using allocator.
+  memory_arena_linear_allocator arena{mem_block, block_size};
   ctrl_blk_ptr = std::allocate_shared<control_block>(control_block_allocator<control_block>{arena});
   if (ctrl_blk_ptr == nullptr) {
+    byte_buffer::warn_alloc_failure();
+    pool.deallocate_node(mem_block);
     return nullptr;
   }
 
@@ -266,12 +271,14 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
   static const size_t block_size = pool.memory_block_size();
 
   // Allocate memory block.
-  memory_arena_linear_allocator arena;
-  if (arena.empty()) {
+  void* mem_block = pool.allocate_node(block_size);
+  if (mem_block == nullptr) {
     byte_buffer::warn_alloc_failure();
     return nullptr;
   }
-  void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+
+  memory_arena_linear_allocator arena{mem_block, block_size};
+  void*                         segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
   srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
   size_t segment_size  = block_size - arena.offset;
   void*  payload_start = arena.allocate(segment_size, 1);

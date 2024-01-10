@@ -54,8 +54,9 @@ public:
     // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release in push().
     // The "acquire" ordering also ensures that the next_idx[old_top.index] read is not reordered to happen before the
     // atomic operation.
-    // In case of failure, "top" remains unchanged, so the operation can have "relaxed" ordering.
-    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_relaxed)) {
+    // In case of failure, "top" remains unchanged, but we need to re-read the next_idx[] which could have changed due
+    // to a concurrent push(). So, the operation can have "acquired" ordering.
+    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_acquire)) {
       if (old_top.index == npos()) {
         return npos();
       }
