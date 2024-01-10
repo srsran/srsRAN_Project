@@ -386,7 +386,7 @@ public:
   /// Generates UL packets with random IQ data for the specified slot and sends to loopback ethernet interface.
   void send_uplink_data(slot_point slot)
   {
-    if (not executor.execute([this, slot]() { send_uplink(slot); })) {
+    if (!executor.execute([this, slot]() { send_uplink(slot); })) {
       logger.warning("Failed to dispatch uplink task");
     }
   }
@@ -611,7 +611,7 @@ public:
   {
     slot_point slot(0, to_numerology_value(test_params.scs));
     slot_duration_us = std::chrono::microseconds(1000 * SUBFRAME_DURATION_MSEC / slot.nof_slots_per_subframe());
-    if (not executor.execute([this]() { run_test(); })) {
+    if (!executor.execute([this]() { run_test(); })) {
       report_fatal_error("Failed to start DU emulator");
     }
   }
@@ -797,25 +797,27 @@ struct worker_manager {
                                     {{exec_name}},
                                     std::chrono::microseconds{0},
                                     os_thread_realtime_priority::max() - 0};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+      if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
       ru_timing_exec = exec_mng.executors().at(exec_name);
     }
 
     // Executor for the Open Fronthaul User and Control messages codification.
-    unsigned dl_end = (test_params.is_downlink_parallelized) ? std::max(nof_antennas_dl / 2U, 1U) : 1U;
-    for (unsigned dl_id = 0; dl_id != dl_end; ++dl_id) {
-      const std::string name      = "ru_dl_#" + std::to_string(dl_id);
-      const std::string exec_name = "ru_dl_exec_#" + std::to_string(dl_id);
+    {
+      unsigned          nof_workers = (test_params.is_downlink_parallelized) ? std::max(nof_antennas_dl / 2U, 1U) : 1U;
+      const std::string name        = "ru_dl";
+      const std::string exec_name   = "ru_dl_exec";
 
-      const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-                                    {{exec_name}},
-                                    nullopt,
-                                    os_thread_realtime_priority::max() - 55};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      const worker_pool ru_pool{name,
+                                nof_workers,
+                                {{concurrent_queue_policy::locking_mpmc, 2048}},
+                                {{exec_name}},
+                                std::chrono::microseconds(0),
+                                os_thread_realtime_priority::max() - 5,
+                                {}};
+      if (!exec_mng.add_execution_context(create_execution_context(ru_pool))) {
+        report_fatal_error("Failed to instantiate {} execution context", ru_pool.name);
       }
       ru_dl_exec = exec_mng.executors().at(exec_name);
     }
@@ -829,8 +831,8 @@ struct worker_manager {
                                     {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                                     {{exec_name}},
                                     std::chrono::microseconds{5},
-                                    os_thread_realtime_priority::max() - 51};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+                                    os_thread_realtime_priority::max() - 1};
+      if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
       ru_tx_exec = exec_mng.executors().at(exec_name);
@@ -845,8 +847,8 @@ struct worker_manager {
                                     {concurrent_queue_policy::lockfree_spsc, 2},
                                     {{exec_name}},
                                     std::chrono::microseconds{1},
-                                    os_thread_realtime_priority::max() - 51};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+                                    os_thread_realtime_priority::max() - 1};
+      if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
       ru_rx_exec = exec_mng.executors().at(exec_name);
@@ -862,7 +864,7 @@ struct worker_manager {
                                         {{exec_name}},
                                         std::chrono::microseconds{1},
                                         os_thread_realtime_priority::max() - 57};
-      if (not exec_mng.add_execution_context(create_execution_context(du_sim_worker))) {
+      if (!exec_mng.add_execution_context(create_execution_context(du_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", du_sim_worker.name);
       }
       test_du_sim_exec = exec_mng.executors().at(exec_name);
@@ -878,7 +880,7 @@ struct worker_manager {
                                         {{exec_name}},
                                         std::chrono::microseconds{1},
                                         os_thread_realtime_priority::max() - 55};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_sim_worker))) {
+      if (!exec_mng.add_execution_context(create_execution_context(ru_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_sim_worker.name);
       }
       test_ru_sim_exec = exec_mng.executors().at(exec_name);
