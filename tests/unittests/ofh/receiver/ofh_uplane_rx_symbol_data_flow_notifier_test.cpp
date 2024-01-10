@@ -19,8 +19,8 @@ using namespace ofh::testing;
 
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, empty_context_does_not_notify)
 {
-  auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                                repo     = std::make_shared<uplink_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_rx_symbol_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                          slot(0, 0, 1);
   unsigned                            symbol = 0;
@@ -34,8 +34,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, empty_context_does_not_notify)
 
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, unwritten_grid_does_not_notify)
 {
-  auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                                repo     = std::make_shared<uplink_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_rx_symbol_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                          slot(0, 0, 1);
   unsigned                            symbol = 0;
@@ -52,8 +52,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, unwritten_grid_does_not_notify)
 
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, completed_resource_grid_triggers_notification)
 {
-  auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                                repo     = std::make_shared<uplink_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_rx_symbol_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                          slot(0, 0, 1);
   unsigned                            symbol = 0;
@@ -81,8 +81,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, completed_resource_grid_triggers_n
 
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_port_does_not_notify)
 {
-  auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                                repo     = std::make_shared<uplink_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_rx_symbol_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                          slot(0, 0, 1);
   unsigned                            symbol = 0;
@@ -104,8 +104,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_port_does_not_notify)
 
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_prbs_does_not_notify)
 {
-  auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                                repo     = std::make_shared<uplink_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_rx_symbol_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                          slot(0, 0, 1);
   unsigned                            symbol = 0;
