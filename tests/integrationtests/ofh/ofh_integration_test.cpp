@@ -47,7 +47,7 @@ static tdd_ul_dl_pattern       tdd_pattern = tdd_pattern_7d2u;
 
 static const unsigned vlan_tag               = 9;
 static const unsigned processing_delay_slots = 6;
-static unsigned       nof_antennas_dl        = 2;
+static unsigned       nof_antennas_dl        = 4;
 static unsigned       nof_antennas_ul        = 2;
 
 static std::atomic<bool>     slot_synchronized{false};
@@ -74,7 +74,7 @@ struct test_parameters {
   bool                     is_downlink_parallelized            = true;
   units::bytes             mtu                                 = units::bytes(9000);
   std::vector<unsigned>    prach_port_id                       = {4, 5};
-  std::vector<unsigned>    dl_port_id                          = {0, 1};
+  std::vector<unsigned>    dl_port_id                          = {0, 1, 2, 3};
   std::vector<unsigned>    ul_port_id                          = {0, 1};
   bs_channel_bandwidth_fr1 bw                                  = srsran::bs_channel_bandwidth_fr1::MHz20;
   subcarrier_spacing       scs                                 = subcarrier_spacing::kHz30;
