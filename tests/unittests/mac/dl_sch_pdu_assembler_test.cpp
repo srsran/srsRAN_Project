@@ -253,8 +253,8 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   byte_buffer expected_result;
   bit_encoder enc(expected_result);
   for (unsigned i = 0; i != nof_sdus; ++i) {
-    enc.pack(0b0, 1); // R
     unsigned mac_expected_sdu_size = get_mac_sdu_payload_size(tb_size - expected_result.length());
+    enc.pack(0b0, 1);                                                                            // R
     enc.pack(mac_expected_sdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
     enc.pack(LCID_SRB1, 6);                                                                      // LCID
     enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(mac_expected_sdu_size) - 1)); // L
