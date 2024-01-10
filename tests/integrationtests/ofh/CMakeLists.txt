@@ -10,3 +10,5 @@ set_directory_properties(PROPERTIES LABELS "ofh")
 
 add_executable(ofh_integration_test ofh_integration_test.cpp)
 target_link_libraries(ofh_integration_test srslog srsran_ru_ofh srsran_phy_support srsran_support)
+add_test(ofh_integration_test ofh_integration_test)
+set_tests_properties(ofh_integration_test PROPERTIES LABELS "tsan")
