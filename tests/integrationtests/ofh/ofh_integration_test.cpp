@@ -555,11 +555,11 @@ private:
   }
 
 private:
-  srslog::basic_logger& logger;
-  task_executor&        executor;
-  ru_compression_params compr_params;
-  unsigned              nof_prb;
-  units::bytes          prb_size;
+  srslog::basic_logger&       logger;
+  task_executor&              executor;
+  const ru_compression_params compr_params;
+  const unsigned              nof_prb;
+  units::bytes                prb_size;
   /// Stores byte arrays for each antenna.
   std::vector<std::vector<std::vector<uint8_t>>>               test_data;
   circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
@@ -663,9 +663,9 @@ private:
   ru_downlink_plane_handler&                       dl_handler;
   ru_uplink_plane_handler&                         ul_handler;
 
-  unsigned                  nof_prb;
+  const unsigned            nof_prb;
   std::chrono::microseconds slot_duration_us;
-  bool                      test_finished = false;
+  std::atomic<bool>         test_finished{false};
 };
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
