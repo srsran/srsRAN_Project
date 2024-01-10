@@ -34,28 +34,29 @@ using namespace srsran;
 using namespace ofh;
 using namespace std::chrono_literals;
 
-// Random generator.
+/// Random generator.
 static std::mt19937 rgen(0);
 
-// Static test parameters.
-static du_tx_window_timing_parameters tx_window_timing_params{470us, 258us, 300us, 285us, 350us, 50us};
-static du_rx_window_timing_parameters rx_window_timing_params{150us, 25us};
+/// Static test parameters.
+static const du_tx_window_timing_parameters tx_window_timing_params{470us, 258us, 300us, 285us, 350us, 50us};
+static const du_rx_window_timing_parameters rx_window_timing_params{150us, 25us};
 
-static tdd_ul_dl_pattern tdd_pattern_7d2u{10, 7, 0, 2, 0};
-static tdd_ul_dl_pattern tdd_pattern_6d3u{10, 6, 0, 3, 0};
-static tdd_ul_dl_pattern tdd_pattern = tdd_pattern_7d2u;
+static const tdd_ul_dl_pattern tdd_pattern_7d2u{10, 7, 0, 2, 0};
+static const tdd_ul_dl_pattern tdd_pattern_6d3u{10, 6, 0, 3, 0};
+static tdd_ul_dl_pattern       tdd_pattern = tdd_pattern_7d2u;
 
 static const unsigned vlan_tag               = 9;
-static unsigned       processing_delay_slots = 6;
+static const unsigned processing_delay_slots = 6;
+static unsigned       nof_antennas_dl        = 2;
+static unsigned       nof_antennas_ul        = 2;
 
-static unsigned   nof_antennas_dl        = 2;
-static unsigned   nof_antennas_ul        = 2;
-static bool       slot_synchronized      = false;
-static slot_point slot                   = {};
-static unsigned   nof_malformed_packets  = 0;
-static unsigned   nof_missing_dl_packets = 0;
+static std::atomic<bool>     slot_synchronized{false};
+static std::atomic<unsigned> slot_val{0};
+static std::atomic<unsigned> nof_malformed_packets{0};
+static std::atomic<unsigned> nof_missing_dl_packets{0};
 
 namespace {
+
 /// User-defined test parameters.
 struct test_parameters {
   bool                     silent                              = false;
@@ -79,16 +80,17 @@ struct test_parameters {
   subcarrier_spacing       scs                                 = subcarrier_spacing::kHz30;
   std::string              tdd_pattern_str                     = "7d2u";
 };
+
 } // namespace
 
 static test_parameters test_params;
 
 /// Helper function to convert array of port indexes to string.
-static std::string port_ids_to_str(std::vector<unsigned> ports)
+static std::string port_ids_to_str(span<unsigned> ports)
 {
   std::stringstream ss;
   ss << "{";
-  for (unsigned i = 0; i != ports.size() - 1; ++i) {
+  for (unsigned i = 0, e = ports.size() - 1; i != e; ++i) {
     ss << ports[i] << ", ";
   }
   ss << ports[ports.size() - 1] << "}";
@@ -96,11 +98,11 @@ static std::string port_ids_to_str(std::vector<unsigned> ports)
 }
 
 /// Helper function to parse list of ports provided as a string.
-static std::vector<unsigned> parse_port_id(std::string port_id_str)
+static std::vector<unsigned> parse_port_id(const std::string& port_id_str)
 {
   std::vector<unsigned> port_ids;
-  size_t                start_pos = port_id_str.find("{");
-  size_t                end_pos   = port_id_str.find("}");
+  size_t                start_pos = port_id_str.find('{');
+  size_t                end_pos   = port_id_str.find('}');
   if (start_pos == std::string::npos || end_pos == std::string::npos) {
     return port_ids;
   }
@@ -201,7 +203,8 @@ static void parse_args(int argc, char** argv)
 {
   int  opt         = 0;
   bool invalid_arg = false;
-  while ((opt = getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:Aaerish")) != -1) {
+
+  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:Aaerish")) != -1) {
     switch (opt) {
       case 'T':
         test_params.data_compr_method = std::string(optarg);
@@ -297,11 +300,11 @@ static void parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        exit(0);
+        ::exit(0);
     }
     if (invalid_arg) {
       usage(argv[0]);
-      exit(0);
+      ::exit(0);
     }
     nof_antennas_dl = test_params.dl_port_id.size();
     nof_antennas_ul = test_params.ul_port_id.size();
@@ -333,9 +336,9 @@ public:
   void on_tti_boundary(slot_point slot_) override
   {
     if (!slot_synchronized) {
-      slot              = (slot_ + processing_delay_slots);
+      slot_val          = (slot_ + processing_delay_slots).to_uint();
       slot_synchronized = true;
-      fmt::print("Initial slot set to {}\n", slot);
+      fmt::print("Initial slot set to {}\n", slot_);
     }
   }
 
@@ -410,7 +413,7 @@ private:
   /// Sends byte arrays to the loopback ethernet interface.
   void send(const std::vector<std::vector<uint8_t>>& frames)
   {
-    for (auto frame : frames) {
+    for (const auto& frame : frames) {
       if (::sendto(socket_fd,
                    frame.data(),
                    frame.size(),
@@ -463,11 +466,11 @@ private:
     socket_address.sll_halen   = ETH_ALEN;
   }
 
-  void initialize_header(span<uint8_t> frame, header_parameters params)
+  void initialize_header(span<uint8_t> frame, header_parameters params) const
   {
-    const uint8_t hdr_template[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                    0x81, 0x00, 0x00, 0x02, 0xae, 0xfe, 0x10, 0x00, 0x1d, 0xea, 0x00, 0x00,
-                                    0x00, 0x80, 0x10, 0xee, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x91, 0x00};
+    static const uint8_t hdr_template[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x81, 0x00, 0x00, 0x02, 0xae, 0xfe, 0x10, 0x00, 0x1d, 0xea, 0x00, 0x00,
+                                           0x00, 0x80, 0x10, 0xee, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x91, 0x00};
     // Copy default header.
     std::memcpy(frame.data(), hdr_template, sizeof(hdr_template));
 
@@ -551,16 +554,17 @@ private:
     }
   }
 
+private:
   srslog::basic_logger& logger;
   task_executor&        executor;
   ru_compression_params compr_params;
   unsigned              nof_prb;
   units::bytes          prb_size;
-  // Stores byte arrays for each antenna.
+  /// Stores byte arrays for each antenna.
   std::vector<std::vector<std::vector<uint8_t>>>               test_data;
   circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>         ul_eaxc;
-  // Ethernet structures.
+  /// Ethernet structures.
   int         socket_fd = -1;
   sockaddr_ll socket_address;
 };
@@ -605,30 +609,32 @@ public:
   /// Starts the DU emulator.
   void start()
   {
+    slot_point slot(0, to_numerology_value(test_params.scs));
     slot_duration_us = std::chrono::microseconds(1000 * SUBFRAME_DURATION_MSEC / slot.nof_slots_per_subframe());
     if (not executor.execute([this]() { run_test(); })) {
       report_fatal_error("Failed to start DU emulator");
     }
   }
 
-  bool finished() { return test_finished; }
+  bool is_test_finished() const { return test_finished; }
 
 private:
   void run_test()
   {
-    const unsigned NOF_TEST_SLOTS = 1000;
+    constexpr unsigned NOF_TEST_SLOTS = 1000;
 
     for (unsigned test_slot_id = 0; test_slot_id != NOF_TEST_SLOTS; ++test_slot_id) {
       auto t0 = std::chrono::high_resolution_clock::now();
 
-      unsigned slot_id    = slot.slot_index() % tdd_pattern.dl_ul_tx_period_nof_slots;
-      bool     is_dl_slot = (slot_id < tdd_pattern.nof_dl_slots);
-      bool     is_ul_slot = (slot_id >= tdd_pattern.dl_ul_tx_period_nof_slots - tdd_pattern.nof_ul_slots);
+      slot_point slot(to_numerology_value(test_params.scs), slot_val);
+      unsigned   slot_id    = slot.slot_index() % tdd_pattern.dl_ul_tx_period_nof_slots;
+      bool       is_dl_slot = (slot_id < tdd_pattern.nof_dl_slots);
+      bool       is_ul_slot = (slot_id >= tdd_pattern.dl_ul_tx_period_nof_slots - tdd_pattern.nof_ul_slots);
 
       // Push downlink data.
       if (is_dl_slot) {
         resource_grid_impl&   grid = *dl_resource_grids[slot_id];
-        resource_grid_context context{.slot = slot, .sector = 0};
+        resource_grid_context context{slot, 0};
         dl_handler.handle_dl_data(context, grid.get_reader());
         logger.info("DU emulator pushed DL data in slot {}", slot);
       }
@@ -636,7 +642,7 @@ private:
       // Request uplink data.
       if (is_ul_slot) {
         slot_id = tdd_pattern.dl_ul_tx_period_nof_slots - slot_id - 1;
-        resource_grid_context context{.slot = slot, .sector = 0};
+        resource_grid_context context{slot, 0};
         ul_handler.handle_new_uplink_slot(context, *ul_resource_grids[slot_id]);
       }
 
@@ -705,7 +711,7 @@ private:
   void check_and_update_sequence_id(span<const uint8_t> message)
   {
     // Retrieve eAxC and SeqID from codified message.
-    unsigned seq_id = unsigned(message[24]);
+    unsigned seq_id = message[24];
     unsigned eaxc   = (unsigned(message[22]) << 8u | message[23]);
 
     srsran_assert(eaxc < MAX_SUPPORTED_EAXC_ID_VALUE, "Invalid eAxC={} detected", eaxc);
@@ -758,7 +764,7 @@ private:
     uint8_t slot_and_symbol = message[29];
     slot_id |= slot_and_symbol >> 6;
 
-    return slot_point(to_numerology_value(scs), frame, subframe, slot_id);
+    return {to_numerology_value(scs), frame, subframe, slot_id};
   }
 
 private:
@@ -1027,8 +1033,8 @@ int main(int argc, char** argv)
   fmt::print("Running the test\n");
 
   // Wait until test is finished.
-  while (!du_emulator.finished()) {
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+  while (!du_emulator.is_test_finished()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   fmt::print("Stopping the RU...\n");

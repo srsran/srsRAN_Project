@@ -10,6 +10,7 @@
 
 #include "realtime_timing_worker.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include <future>
 #include <thread>
 
 using namespace srsran;
@@ -82,33 +83,49 @@ static unsigned get_symbol_index(std::chrono::nanoseconds                 fracti
 void realtime_timing_worker::start()
 {
   logger.info("Starting the realtime timing worker");
-  if (!executor.defer([this]() {
+
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (!executor.defer([this, &p]() {
+        status.store(worker_status::running, std::memory_order_relaxed);
+        // Signal start() caller thread that the operation is complete.
+        p.set_value();
+
         auto ns_fraction    = calculate_ns_fraction_from(gps_clock::now());
         previous_symb_index = get_symbol_index(ns_fraction, symbol_duration);
         timing_loop();
       })) {
     report_fatal_error("Unable to start the realtime timing worker");
   }
+
+  // Block waiting for timing executor to start.
+  fut.wait();
+
+  logger.info("Started the realtime timing worker");
 }
 
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  if (!executor.defer([this]() {
-        // Clear first the subscribed notifiers.
-        ota_notifiers.clear();
-        // Stop the thread.
-        is_stop_requested.store(true, std::memory_order::memory_order_relaxed);
-      })) {
-    logger.error("Unable to stop the realtime timing worker");
+  status.store(worker_status::stop_requested, std::memory_order_relaxed);
+
+  // Wait for the timing thread to stop.
+  while (status.load(std::memory_order_acquire) != worker_status::stopped) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+
+  logger.info("Stopped the realtime timing worker");
 }
 
 void realtime_timing_worker::timing_loop()
 {
   poll();
 
-  if (is_stop_requested.load(std::memory_order_relaxed)) {
+  if (status.load(std::memory_order_relaxed) == worker_status::stop_requested) {
+    // Clear the subscribed notifiers.
+    ota_notifiers.clear();
+    status.store(worker_status::stopped, std::memory_order_release);
     return;
   }
 
@@ -186,8 +203,8 @@ void realtime_timing_worker::notify_slot_symbol_point(slot_symbol_point slot)
 
 void realtime_timing_worker::subscribe(span<ota_symbol_boundary_notifier*> notifiers)
 {
-  std::vector<ota_symbol_boundary_notifier*> notif(notifiers.begin(), notifiers.end());
-  if (!executor.defer([this, notif]() { ota_notifiers = std::move(notif); })) {
+  std::vector<ota_symbol_boundary_notifier*> notifier_list(notifiers.begin(), notifiers.end());
+  if (!executor.defer([this, n = std::move(notifier_list)]() mutable { ota_notifiers = std::move(n); })) {
     logger.error("Could not subscribe the given OTA symbol boundary notifiers");
   }
 }
