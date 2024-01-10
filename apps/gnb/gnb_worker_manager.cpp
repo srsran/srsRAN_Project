@@ -404,7 +404,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
         cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
       }
       create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
-      ru_dl_exec[i].push_back(exec_mng.executors().at(exec_name));
+      ru_dl_exec[i] = exec_mng.executors().at(exec_name);
     }
 
     // Executor for Open Fronthaul messages transmission.

@@ -110,8 +110,8 @@ struct ru_ofh_configuration {
 struct ru_ofh_sector_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
-  /// Downlink task executors.
-  std::vector<task_executor*> downlink_executors;
+  /// Downlink task executor.
+  task_executor* downlink_executor;
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// Transmitter task executor.

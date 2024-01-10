@@ -106,8 +106,8 @@ struct sector_configuration {
 struct sector_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
-  /// Downlink task executors.
-  std::vector<task_executor*> downlink_executors;
+  /// Downlink task executor.
+  task_executor* downlink_executor;
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
   /// Receiver task executor.

@@ -38,29 +38,29 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*                           cu_cp_exec      = nullptr;
-  task_executor*                           cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
-  task_executor*                           cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
-  task_executor*                           cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
-  std::vector<task_executor*>              lower_phy_tx_exec;
-  std::vector<task_executor*>              lower_phy_rx_exec;
-  std::vector<task_executor*>              lower_phy_dl_exec;
-  std::vector<task_executor*>              lower_phy_ul_exec;
-  std::vector<task_executor*>              lower_prach_exec;
-  std::vector<task_executor*>              upper_pusch_exec;
-  std::vector<task_executor*>              upper_pusch_decoder_exec;
-  std::vector<task_executor*>              upper_pucch_exec;
-  std::vector<task_executor*>              upper_prach_exec;
-  std::vector<task_executor*>              upper_pdsch_exec;
-  task_executor*                           radio_exec      = nullptr;
-  task_executor*                           ru_printer_exec = nullptr;
-  task_executor*                           ru_timing_exec  = nullptr;
-  std::vector<std::vector<task_executor*>> ru_dl_exec;
-  std::vector<task_executor*>              ru_tx_exec;
-  std::vector<task_executor*>              ru_rx_exec;
-  task_executor*                           cu_cp_e2_exec    = nullptr;
-  task_executor*                           cu_up_e2_exec    = nullptr;
-  task_executor*                           metrics_hub_exec = nullptr;
+  task_executor*              cu_cp_exec      = nullptr;
+  task_executor*              cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
+  task_executor*              cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
+  task_executor*              cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
+  std::vector<task_executor*> lower_phy_tx_exec;
+  std::vector<task_executor*> lower_phy_rx_exec;
+  std::vector<task_executor*> lower_phy_dl_exec;
+  std::vector<task_executor*> lower_phy_ul_exec;
+  std::vector<task_executor*> lower_prach_exec;
+  std::vector<task_executor*> upper_pusch_exec;
+  std::vector<task_executor*> upper_pusch_decoder_exec;
+  std::vector<task_executor*> upper_pucch_exec;
+  std::vector<task_executor*> upper_prach_exec;
+  std::vector<task_executor*> upper_pdsch_exec;
+  task_executor*              radio_exec      = nullptr;
+  task_executor*              ru_printer_exec = nullptr;
+  task_executor*              ru_timing_exec  = nullptr;
+  std::vector<task_executor*> ru_dl_exec;
+  std::vector<task_executor*> ru_tx_exec;
+  std::vector<task_executor*> ru_rx_exec;
+  task_executor*              cu_cp_e2_exec    = nullptr;
+  task_executor*              cu_up_e2_exec    = nullptr;
+  task_executor*              metrics_hub_exec = nullptr;
 
   std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
 

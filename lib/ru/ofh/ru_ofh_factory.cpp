@@ -66,7 +66,7 @@ static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_depen
   ofh_sector_dependencies.logger               = dependencies.logger;
   ofh_sector_dependencies.receiver_executor    = dependencies.receiver_executor;
   ofh_sector_dependencies.transmitter_executor = dependencies.transmitter_executor;
-  ofh_sector_dependencies.downlink_executors   = dependencies.downlink_executors;
+  ofh_sector_dependencies.downlink_executor    = dependencies.downlink_executor;
   ofh_sector_dependencies.notifier             = notifier;
   ofh_sector_dependencies.eth_gateway          = std::move(dependencies.eth_gateway);
 

@@ -143,7 +143,7 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
     sector_deps.logger                      = dependencies.logger;
     sector_deps.receiver_executor           = workers.ru_rx_exec[i];
     sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
-    sector_deps.downlink_executors          = workers.ru_dl_exec[i];
+    sector_deps.downlink_executor           = workers.ru_dl_exec[i];
   }
 }
 

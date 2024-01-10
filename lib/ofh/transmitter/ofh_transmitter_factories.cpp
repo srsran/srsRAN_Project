@@ -103,20 +103,12 @@ create_downlink_manager(const transmitter_config&                         tx_con
                         srslog::basic_logger&                             logger,
                         std::shared_ptr<ether::eth_frame_pool>            frame_pool,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                        const std::vector<task_executor*>&                executors)
+                        task_executor&                                    executor)
 {
-  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_uplane_task_dispatcher_cfg;
-  std::vector<data_flow_cplane_downlink_task_dispatcher_entry> df_cplane_task_dispatcher_cfg;
-  for (auto* executor : executors) {
-    df_cplane_task_dispatcher_cfg.emplace_back(
-        create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo), *executor);
-    df_uplane_task_dispatcher_cfg.emplace_back(create_data_flow_uplane_data(tx_config, logger, frame_pool), *executor);
-  }
-
-  auto data_flow_cplane =
-      std::make_unique<data_flow_cplane_downlink_task_dispatcher>(std::move(df_cplane_task_dispatcher_cfg));
-  auto data_flow_uplane =
-      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
+  auto data_flow_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo), executor);
+  auto data_flow_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
+      create_data_flow_uplane_data(tx_config, logger, frame_pool), executor);
 
   if (tx_config.downlink_broadcast) {
     downlink_handler_broadcast_impl_config dl_config;
@@ -210,7 +202,7 @@ static transmitter_impl_dependencies
 resolve_transmitter_dependencies(const transmitter_config&                         tx_config,
                                  srslog::basic_logger&                             logger,
                                  task_executor&                                    tx_executor,
-                                 const std::vector<task_executor*>&                downlink_executors,
+                                 task_executor&                                    downlink_executor,
                                  std::unique_ptr<ether::gateway>                   eth_gateway,
                                  std::shared_ptr<prach_context_repository>         prach_context_repo,
                                  std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
@@ -224,12 +216,12 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   auto frame_pool = create_eth_frame_pool(tx_config, logger);
 
   dependencies.dl_manager =
-      create_downlink_manager(tx_config, logger, frame_pool, ul_cp_context_repo, downlink_executors);
+      create_downlink_manager(tx_config, logger, frame_pool, ul_cp_context_repo, downlink_executor);
 
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(
           tx_config, logger, frame_pool, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
-      *downlink_executors.front());
+      downlink_executor);
 
   ether::gw_config eth_cfg;
   eth_cfg.interface                   = tx_config.interface;
@@ -259,7 +251,7 @@ std::unique_ptr<transmitter>
 srsran::ofh::create_transmitter(const transmitter_config&                         transmitter_cfg,
                                 srslog::basic_logger&                             logger,
                                 task_executor&                                    tx_executor,
-                                const std::vector<task_executor*>&                downlink_executors,
+                                task_executor&                                    downlink_executor,
                                 std::unique_ptr<ether::gateway>                   eth_gateway,
                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
@@ -269,7 +261,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                             resolve_transmitter_dependencies(transmitter_cfg,
                                                                              logger,
                                                                              tx_executor,
-                                                                             downlink_executors,
+                                                                             downlink_executor,
                                                                              std::move(eth_gateway),
                                                                              prach_context_repo,
                                                                              ul_slot_context_repo,

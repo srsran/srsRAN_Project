@@ -106,7 +106,7 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
   auto transmitter = create_transmitter(tx_config,
                                         *sector_deps.logger,
                                         *sector_deps.transmitter_executor,
-                                        sector_deps.downlink_executors,
+                                        *sector_deps.downlink_executor,
                                         std::move(sector_deps.eth_gateway),
                                         prach_repo,
                                         slot_repo,
