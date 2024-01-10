@@ -9,6 +9,8 @@
  */
 
 #include "srsran/support/memory_pool/lockfree_object_pool.h"
+#include "srsran/support/test_utils.h"
+#include "srsran/support/unique_thread.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -79,4 +81,68 @@ TEST(lockfree_bounded_stack_test, test_pop_empty)
   ASSERT_TRUE(stack.pop(val));
   ASSERT_EQ(val, 3);
   ASSERT_FALSE(stack.pop(val));
+}
+
+TEST(lockfree_bounded_stack_test, concurrent_push_pop)
+{
+  std::vector<std::unique_ptr<unique_thread>> workers;
+  unsigned                                    nof_workers = 10;
+  unsigned                                    nof_oper    = 100;
+
+  unsigned                       stack_cap = 10;
+  lockfree_bounded_stack<int8_t> stack{stack_cap};
+  for (unsigned i = 0; i != stack_cap; ++i) {
+    stack.push(i);
+  }
+
+  std::atomic<bool> start{false};
+
+  for (unsigned i = 0; i != nof_workers; ++i) {
+    workers.emplace_back(std::make_unique<unique_thread>(fmt::format("worker{}", i), [&]() {
+      std::vector<int> vals;
+      vals.reserve(stack_cap);
+
+      while (not start) {
+      }
+      for (unsigned j = 0; j != nof_oper; ++j) {
+        if (test_rgen::uniform_int(0, 1) == 0) {
+          if (not vals.empty()) {
+            EXPECT_TRUE(stack.push(vals.back()));
+            fmt::print("pushed {}\n", vals.back());
+            vals.pop_back();
+          }
+        } else {
+          int8_t val;
+          if (stack.pop(val)) {
+            fmt::print("popped {}\n", val);
+            EXPECT_TRUE(vals.size() <= stack_cap);
+            vals.push_back(val);
+          }
+        }
+      }
+
+      while (not vals.empty()) {
+        EXPECT_TRUE(stack.push(vals.back()));
+        fmt::print("pushed {}\n", vals.back());
+        vals.pop_back();
+      }
+    }));
+  }
+
+  start = true;
+
+  for (auto& w : workers) {
+    w->join();
+  }
+
+  std::vector<int8_t> vals;
+  std::vector<int8_t> expected;
+  for (unsigned i = 0; i != stack_cap; ++i) {
+    int8_t val;
+    EXPECT_TRUE(stack.pop(val));
+    vals.push_back(val);
+    expected.push_back(i);
+  }
+  std::sort(vals.begin(), vals.end());
+  ASSERT_EQ(vals, expected);
 }
