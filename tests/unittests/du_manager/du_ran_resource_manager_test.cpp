@@ -20,13 +20,13 @@ struct params {
   duplex_mode duplx_mode;
 };
 
-class du_ran_resource_manager_tester : public ::testing::TestWithParam<params>
+class du_ran_resource_manager_tester_base
 {
 protected:
-  explicit du_ran_resource_manager_tester(
-      const cell_config_builder_params& params = {.dl_arfcn = GetParam().duplx_mode == duplex_mode::FDD ? 365000U
-                                                                                                        : 520002U}) :
-    cell_cfg_list({config_helpers::make_default_du_cell_config(params)}),
+  explicit du_ran_resource_manager_tester_base(cell_config_builder_params params_, du_cell_config du_cfg_param_) :
+    params(params_),
+    du_cfg_param(du_cfg_param_),
+    cell_cfg_list({du_cfg_param_}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config(params)),
     res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list,
@@ -107,12 +107,27 @@ protected:
     return pucch_checker;
   }
 
+  cell_config_builder_params                                  params;
+  du_cell_config                                              du_cfg_param;
   std::vector<du_cell_config>                                 cell_cfg_list;
   std::map<srb_id_t, du_srb_config>                           srb_cfg_list;
   std::map<five_qi_t, du_qos_config>                          qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
   std::unique_ptr<du_ran_resource_manager>                    res_mng;
   slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES> ues;
+};
+
+class du_ran_resource_manager_tester : public du_ran_resource_manager_tester_base,
+                                       public ::testing::TestWithParam<params>
+{
+protected:
+  explicit du_ran_resource_manager_tester(cell_config_builder_params params_ = {.dl_arfcn = GetParam().duplx_mode ==
+                                                                                                    duplex_mode::FDD
+                                                                                                ? 365000U
+                                                                                                : 520002U}) :
+    du_ran_resource_manager_tester_base(params_, config_helpers::make_default_du_cell_config(params_))
+  {
+  }
 };
 
 TEST_P(du_ran_resource_manager_tester, when_ue_resource_config_is_created_then_pcell_is_configured)
@@ -253,17 +268,12 @@ static const auto* get_pucch_resource_with_id(const pucch_config& pucch_cfg, uns
                       [res_id](const pucch_resource& res) { return res.res_id.cell_res_id == res_id; });
 };
 
-class du_ran_res_mng_multiple_cfg_tester : public ::testing::TestWithParam<pucch_cfg_builder_params>
+class du_ran_res_mng_multiple_cfg_tester : public du_ran_resource_manager_tester_base,
+                                           public ::testing::TestWithParam<pucch_cfg_builder_params>
 {
 protected:
-  du_ran_res_mng_multiple_cfg_tester() :
-    cell_cfg_list({make_custom_du_cell_config(GetParam())}),
-    qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
-    default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list,
-                                                           scheduler_expert_config{},
-                                                           srb_cfg_list,
-                                                           qos_cfg_list))
+  explicit du_ran_res_mng_multiple_cfg_tester() :
+    du_ran_resource_manager_tester_base(cell_config_builder_params{}, make_custom_du_cell_config(GetParam()))
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
@@ -272,12 +282,6 @@ protected:
                   "CSI report configuration is required for this unittest;");
     default_csi_pucch_res_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  }
-
-  ue_ran_resource_configurator& create_ue(du_ue_index_t ue_index)
-  {
-    ues.emplace(ue_index, res_mng->create_ue_resource_configurator(ue_index, to_du_cell_index(0)));
-    return ues[ue_index];
   }
 
   bool has_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
@@ -295,11 +299,6 @@ protected:
 
     return srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  }
-
-  unsigned get_config_sr_period() const
-  {
-    return sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
   }
 
   unsigned get_config_csi_period() const
@@ -400,13 +399,7 @@ protected:
             nof_avail_csi_res <= nof_avail_sr_res};
   }
 
-  std::vector<du_cell_config>                                            cell_cfg_list;
-  std::map<srb_id_t, du_srb_config>                                      srb_cfg_list;
-  std::map<five_qi_t, du_qos_config>                                     qos_cfg_list;
-  const serving_cell_config                                              default_ue_cell_cfg;
   srsran::csi_report_config::periodic_or_semi_persistent_report_on_pucch default_csi_pucch_res_cfg;
-  std::unique_ptr<du_ran_resource_manager>                               res_mng;
-  slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES>            ues;
 };
 
 TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexing)
