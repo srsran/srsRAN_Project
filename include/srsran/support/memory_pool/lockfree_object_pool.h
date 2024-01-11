@@ -55,9 +55,8 @@ public:
     // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release in push().
     // The "acquire" ordering also ensures that the next_idx[old_top.index] read is not reordered to happen before the
     // atomic operation.
-    // In case of failure, "top" remains unchanged, but we need to re-read the next_idx[] which could have changed due
-    // to a concurrent push(). So, the operation can have "acquired" ordering.
-    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_acquire)) {
+    // In case of failure, "top" remains unchanged, so we can use memory_order_relaxed.
+    while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_relaxed)) {
       if (get_index(old_top) == npos()) {
         return npos();
       }
@@ -84,14 +83,18 @@ private:
   using node = uint64_t;
 
   node     make_node(index_type index, index_type aba) { return (static_cast<uint64_t>(aba) << 32U) | index; }
-  uint32_t get_index(node n) const { return n & 0xFFFFFFFF; }
-  void     set_index(node& n, index_type index) { n = (n & 0xFFFFFFFF00000000) | index; }
-  void     set_aba(node& n, index_type aba) { n = (n & 0xFFFFFFFF) | (static_cast<uint64_t>(aba) << 32U); }
-  uint32_t get_aba(node n) const { return static_cast<uint32_t>((n & 0xFFFFFFFF00000000) >> 32U); }
-  uint32_t get_next_aba(node n) const { return static_cast<uint32_t>((n & 0xFFFFFFFF00000000) >> 32U) + 1; }
+  uint32_t get_index(node n) const { return n & 0xffffffff; }
+  void     set_index(node& n, index_type index) { n = (n & 0xffffffff00000000) | index; }
+  void     set_aba(node& n, index_type aba) { n = (n & 0xffffffff) | (static_cast<uint64_t>(aba) << 32U); }
+  uint32_t get_aba(node n) const { return static_cast<uint32_t>((n & 0xffffffff00000000) >> 32U); }
+  uint32_t get_next_aba(node n) const { return static_cast<uint32_t>((n & 0xffffffff00000000) >> 32U) + 1; }
 
   std::atomic<node> top;
 
+  // List of unique indexes stored in the stack. Elements need to be atomic. Consider the scenario, where one thread
+  // starts a pop by reading next_idx[i], where "i" corresponds to the top node, and then another thread comes along,
+  // pops "i" and pushes it again, reading and modifying next_idx[i]. The first thread will fail the CAS; however,
+  // this is still considered a data race if next_idx[i] is not atomic (e.g. TSAN detects it for instance).
   std::unique_ptr<std::atomic<index_type>[]> next_idx;
 
   const size_t sz;

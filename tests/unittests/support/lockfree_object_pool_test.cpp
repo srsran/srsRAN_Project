@@ -38,13 +38,11 @@ TEST(lockfree_index_stack_test, concurrent_push_pop)
         if (test_rgen::uniform_int(0, 1) == 0) {
           if (not vals.empty()) {
             stack.push(vals.back());
-            fmt::print("pushed {}\n", vals.back());
             vals.pop_back();
           }
         } else {
           uint32_t val = stack.try_pop();
           if (val != detail::lockfree_index_stack::npos()) {
-            fmt::print("popped {}\n", val);
             EXPECT_TRUE(vals.size() < stack_cap);
             vals.push_back(val);
           }
@@ -53,7 +51,6 @@ TEST(lockfree_index_stack_test, concurrent_push_pop)
 
       while (not vals.empty()) {
         stack.push(vals.back());
-        fmt::print("pushed {}\n", vals.back());
         vals.pop_back();
       }
     }));
@@ -149,9 +146,9 @@ TEST(lockfree_bounded_stack_test, concurrent_push_pop)
 {
   std::vector<std::unique_ptr<unique_thread>> workers;
   unsigned                                    nof_workers = 10;
-  unsigned                                    nof_oper    = 100;
+  unsigned                                    nof_oper    = 1000;
 
-  unsigned                       stack_cap = 10;
+  unsigned                       stack_cap = 100;
   lockfree_bounded_stack<int8_t> stack{stack_cap};
   for (unsigned i = 0; i != stack_cap; ++i) {
     stack.push(i);
@@ -170,13 +167,11 @@ TEST(lockfree_bounded_stack_test, concurrent_push_pop)
         if (test_rgen::uniform_int(0, 1) == 0) {
           if (not vals.empty()) {
             EXPECT_TRUE(stack.push(vals.back()));
-            fmt::print("pushed {}\n", vals.back());
             vals.pop_back();
           }
         } else {
           int8_t val;
           if (stack.pop(val)) {
-            fmt::print("popped {}\n", val);
             EXPECT_TRUE(vals.size() <= stack_cap);
             vals.push_back(val);
           }
@@ -185,7 +180,6 @@ TEST(lockfree_bounded_stack_test, concurrent_push_pop)
 
       while (not vals.empty()) {
         EXPECT_TRUE(stack.push(vals.back()));
-        fmt::print("pushed {}\n", vals.back());
         vals.pop_back();
       }
     }));
