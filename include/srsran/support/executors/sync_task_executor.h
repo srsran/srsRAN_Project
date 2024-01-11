@@ -16,37 +16,34 @@
 
 namespace srsran {
 
-template <typename Exec>
+/// \brief Blocks the thread calling execute() or defer() until the execution of the pushed task has been completed.
+/// \note This class is intended to be used by tests and not by production code.
+template <typename Executor>
 class sync_task_executor final : public task_executor
 {
-  struct setter_deleter {
-    sync_task_executor* parent;
-
-    setter_deleter(sync_task_executor* parent_) : parent(parent_) {}
-    void operator()(bool* p)
-    {
-      if (p != nullptr) {
-        std::unique_lock<std::mutex> lock(parent->mutex);
-        parent->done = true;
-        parent->cvar.notify_one();
-      }
-    }
-  };
+  Executor                executor;
+  std::mutex              mutex;
+  std::condition_variable cvar;
 
 public:
-  explicit sync_task_executor(Exec exec_) : exec(std::move(exec_)) {}
+  template <typename E>
+  explicit sync_task_executor(E&& executor_) : executor(std::forward<E>(executor_))
+  {
+  }
+
   bool execute(unique_task task) override
   {
-    done = false;
-    std::unique_ptr<bool, setter_deleter> unique_setter(&done, setter_deleter{this});
-    bool ret = get(exec).execute([task = std::move(task), token = std::move(unique_setter)]() mutable {
+    bool done = false;
+    bool ret  = get(executor).execute([this, &done, task = std::move(task)]() {
       task();
-      // We manually reset the token here, as the unique_task being popped may be deleted in an undetermined time (it
-      // is up to the caller).
-      token.reset();
+
+      mutex.lock();
+      done = true;
+      mutex.unlock();
+      cvar.notify_one();
     });
 
-    // wait for condition variable to be set.
+    // Wait for the condition variable to be set.
     std::unique_lock<std::mutex> lock(mutex);
     while (not done) {
       cvar.wait(lock);
@@ -54,38 +51,33 @@ public:
 
     return ret;
   }
+
   bool defer(unique_task task) override { return execute(std::move(task)); }
 
 private:
   template <typename U>
-  U& get(U* u)
+  static U& get(U* u)
   {
     return *u;
   }
 
   template <typename U>
-  U& get(std::unique_ptr<U>& u)
+  static U& get(std::unique_ptr<U>& u)
   {
     return *u;
   }
 
   template <typename U>
-  U& get(U& u)
+  static U& get(U& u)
   {
     return u;
   }
-
-  Exec exec;
-
-  std::mutex              mutex;
-  std::condition_variable cvar;
-  bool                    done = false;
 };
 
-template <typename Exec>
-std::unique_ptr<task_executor> make_sync_executor(Exec&& exec)
+template <typename Executor>
+std::unique_ptr<task_executor> make_sync_executor(Executor&& executor)
 {
-  return std::make_unique<sync_task_executor<Exec>>(std::forward<Exec>(exec));
+  return std::make_unique<sync_task_executor<Executor>>(std::forward<Executor>(executor));
 }
 
 } // namespace srsran
