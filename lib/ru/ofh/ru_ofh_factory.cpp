@@ -16,7 +16,7 @@
 
 using namespace srsran;
 
-/// Generates the OFH sector configuration from the common Open FrontHaul configuration.
+/// Generates the OFH sector configuration from the common Open Fronthaul configuration.
 static ofh::sector_configuration generate_sector_configuration(const ru_ofh_configuration&        config,
                                                                const ru_ofh_sector_configuration& sector_cfg)
 {
@@ -58,7 +58,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   return ofh_sector_config;
 }
 
-/// Generates the OFH sector dependencies from the common Open FrontHaul dependencies.
+/// Generates the OFH sector dependencies from the common Open Fronthaul dependencies.
 static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_dependencies&& dependencies,
                                                              std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier)
 {
@@ -110,7 +110,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_dependencies.sectors.emplace_back(std::move(sector));
 
-    fmt::print("Initializing the Open FrontHaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
+    fmt::print("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
                "prach_compr=[{},{}] prach_cp_enabled={}, downlink_broadcast={}.{}\n",
                i,
                to_string(sector_cfg.ul_compression_params.type),

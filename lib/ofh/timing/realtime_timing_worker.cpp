@@ -120,14 +120,14 @@ void realtime_timing_worker::stop()
 
 void realtime_timing_worker::timing_loop()
 {
-  poll();
-
   if (status.load(std::memory_order_relaxed) == worker_status::stop_requested) {
     // Clear the subscribed notifiers.
     ota_notifiers.clear();
     status.store(worker_status::stopped, std::memory_order_release);
     return;
   }
+
+  poll();
 
   // Retry the task deferring when it fails.
   while (!executor.defer([this]() { timing_loop(); })) {
@@ -196,8 +196,8 @@ void realtime_timing_worker::poll()
 
 void realtime_timing_worker::notify_slot_symbol_point(slot_symbol_point slot)
 {
-  for (auto* notif : ota_notifiers) {
-    notif->on_new_symbol(slot);
+  for (auto* notifier : ota_notifiers) {
+    notifier->on_new_symbol(slot);
   }
 }
 

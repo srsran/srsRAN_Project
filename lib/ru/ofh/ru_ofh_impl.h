@@ -27,13 +27,13 @@
 
 namespace srsran {
 
-/// Open FrontHaul implementation configuration.
+/// Open Fronthaul implementation configuration.
 struct ru_ofh_impl_config {
   unsigned nof_slot_offset_du_ru;
   unsigned nof_symbols_per_slot;
 };
 
-/// Open FrontHaul implementation dependencies.
+/// Open Fronthaul implementation dependencies.
 struct ru_ofh_impl_dependencies {
   srslog::basic_logger*                     logger;
   std::unique_ptr<ofh::timing_manager>      timing_mngr;
@@ -41,7 +41,7 @@ struct ru_ofh_impl_dependencies {
   std::vector<std::unique_ptr<ofh::sector>> sectors;
 };
 
-/// Open FrontHaul Radio Unit implementation.
+/// Open Fronthaul Radio Unit implementation.
 class ru_ofh_impl : public radio_unit
 {
 public:

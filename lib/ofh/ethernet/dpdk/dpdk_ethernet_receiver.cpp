@@ -56,12 +56,12 @@ void dpdk_receiver_impl::stop()
 
 void dpdk_receiver_impl::receive_loop()
 {
-  receive();
-
   if (rx_status.load(std::memory_order_relaxed) == receiver_status::stop_requested) {
     rx_status.store(receiver_status::stopped, std::memory_order_release);
     return;
   }
+
+  receive();
 
   // Retry the task deferring when it fails.
   while (!executor.defer([this]() { receive_loop(); })) {

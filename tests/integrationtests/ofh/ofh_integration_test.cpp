@@ -338,7 +338,7 @@ public:
     if (!slot_synchronized) {
       slot_val          = (slot_ + processing_delay_slots).to_uint();
       slot_synchronized = true;
-      fmt::print("Initial slot set to {}\n", slot_);
+      fmt::print("Initial slot set to {}\n", slot_point(slot_.numerology(), slot_val));
     }
   }
 
@@ -616,7 +616,7 @@ public:
     }
   }
 
-  bool is_test_finished() const { return test_finished; }
+  bool is_test_finished() const { return test_finished.load(std::memory_order_relaxed); }
 
 private:
   void run_test()
@@ -650,10 +650,10 @@ private:
       auto t1                 = std::chrono::high_resolution_clock::now();
       auto slot_sim_exec_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
       std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - 5us);
-      ++slot;
+      slot_val = (++slot).to_uint();
     }
 
-    test_finished = true;
+    test_finished.store(true, std::memory_order_relaxed);
   }
 
   srslog::basic_logger&                            logger;
@@ -777,7 +777,7 @@ private:
 
 /// Manages the workers of the test application and OFH RU.
 struct worker_manager {
-  static const uint32_t task_worker_queue_size = 2048;
+  static constexpr uint32_t task_worker_queue_size = 2048;
 
   worker_manager() { create_ofh_executors(); }
 
@@ -811,7 +811,7 @@ struct worker_manager {
 
       const worker_pool ru_pool{name,
                                 nof_workers,
-                                {{concurrent_queue_policy::locking_mpmc, 2048}},
+                                {{concurrent_queue_policy::locking_mpmc, task_worker_queue_size}},
                                 {{exec_name}},
                                 std::chrono::microseconds(0),
                                 os_thread_realtime_priority::max() - 5,
@@ -863,7 +863,7 @@ struct worker_manager {
                                         {concurrent_queue_policy::lockfree_spsc, 2},
                                         {{exec_name}},
                                         std::chrono::microseconds{1},
-                                        os_thread_realtime_priority::max() - 57};
+                                        os_thread_realtime_priority::max() - 10};
       if (!exec_mng.add_execution_context(create_execution_context(du_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", du_sim_worker.name);
       }
@@ -879,7 +879,7 @@ struct worker_manager {
                                         {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                                         {{exec_name}},
                                         std::chrono::microseconds{1},
-                                        os_thread_realtime_priority::max() - 55};
+                                        os_thread_realtime_priority::max() - 8};
       if (!exec_mng.add_execution_context(create_execution_context(ru_sim_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_sim_worker.name);
       }
