@@ -5,6 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+
 set_directory_properties(PROPERTIES LABELS "cu_up")
 
 add_executable(cu_up_test cu_up_test.cpp)
