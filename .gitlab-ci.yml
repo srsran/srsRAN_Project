@@ -84,6 +84,21 @@ trigger docker:
 ################################################################################
 ## Static
 ################################################################################
+headers:
+  image: ubuntu
+  stage: static
+  rules:
+    - if: $ON_MR
+      exists:
+        - "**/CMakeLists.txt"
+        - "**/Dockerfile"
+        - "**/*.cmake"
+        - "**/*.yml"
+        - "**/*.sh"
+  script:
+    - .gitlab/ci/release/update_headers.sh
+  needs: []
+
 include-guards:
   extends: .include-guards
   parallel:
