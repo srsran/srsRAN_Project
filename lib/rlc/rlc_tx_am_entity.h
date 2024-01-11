@@ -14,7 +14,7 @@
 #include "rlc_am_pdu.h"
 #include "rlc_pdu_recycler.h"
 #include "rlc_retx_queue.h"
-#include "rlc_sdu_queue.h"
+#include "rlc_sdu_queue_lockfree.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
@@ -75,8 +75,8 @@ private:
   rlc_tx_am_state st;
 
   // TX SDU buffers
-  rlc_sdu_queue sdu_queue;
-  uint32_t      sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
+  rlc_sdu_queue_lockfree sdu_queue;
+  uint32_t               sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
 
   // RETX buffers
   rlc_retx_queue retx_queue;

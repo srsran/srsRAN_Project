@@ -26,7 +26,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
                                    rlc_pcap&                            pcap_) :
   rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled, pcap_),
   cfg(config),
-  sdu_queue(cfg.queue_size),
+  sdu_queue(cfg.queue_size, logger),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),

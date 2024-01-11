@@ -33,7 +33,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
                                    rlc_pcap&                            pcap_) :
   rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
-  sdu_queue(cfg.queue_size),
+  sdu_queue(cfg.queue_size, logger),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
