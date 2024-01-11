@@ -58,11 +58,16 @@ private:
                                       unsigned                                          candidate_sr_offset,
                                       const csi_meas_config&                            csi_meas_cfg);
 
+  /// Computes the CSI resource ID and offset, under the following constraints: (i) the PUCCH grants counter doesn't
+  /// exceed the max_pucch_grants_per_slot; (ii) the SR and CSI offsets will result in the PUCCH resource not exceeding
+  /// the maximum PUCCH F2 payload.
   std::vector<std::pair<unsigned, unsigned>>::const_iterator
   get_csi_resource_offset(const csi_meas_config&                            csi_meas_cfg,
                           unsigned                                          candidate_sr_offset,
                           const std::vector<std::pair<unsigned, unsigned>>& free_csi_list);
 
+  /// Computes the SR and CSI PUCCH offsets and their repetitions within a given period, which is the Least Common
+  /// Multiple of SR and CSI periods. If SR and CSI results in having common offsets, this will be counted only once.
   std::set<unsigned> compute_sr_csi_pucch_offsets(unsigned sr_offset, unsigned csi_offset = 0);
 
   // Parameters for PUCCH configuration passed by the user.
@@ -71,7 +76,7 @@ private:
   const pucch_config                default_pucch_cfg;
   const optional<csi_report_config> default_csi_report_cfg;
   const unsigned                    max_pucch_grants_per_slot;
-  unsigned                          max_csi_sr_period;
+  unsigned                          lcm_csi_sr_period;
   unsigned                          sr_period_slots  = 0;
   unsigned                          csi_period_slots = 0;
 

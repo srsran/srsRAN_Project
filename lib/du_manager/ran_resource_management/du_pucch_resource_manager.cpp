@@ -13,6 +13,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/scheduler_pucch_format.h"
+#include "srsran/support/math/gcd.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -49,7 +50,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
     }
     return nullopt;
   }()),
-  max_pucch_grants_per_slot(max_pucch_grants_per_slot_),
+  // Leave 1 PUCCH grants for HARQ ACKs.
+  max_pucch_grants_per_slot(max_pucch_grants_per_slot_ - 1U),
   cells(cell_cfg_list_.size())
 {
   srsran_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
@@ -65,11 +67,14 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
         default_csi_report_cfg->report_cfg_type);
     csi_period_slots = csi_report_periodicity_to_uint(rep.report_slot_period);
   }
-  max_csi_sr_period = std::max(sr_period_slots, csi_period_slots);
+  // As the SR and CSI period might not be one a multiple of each other, we compute the Least Common Multiple (LCM) of
+  // the two periods.
+  lcm_csi_sr_period = lcm(sr_period_slots, csi_period_slots);
 
   // Setup RAN resources per cell.
   for (auto& cell : cells) {
-    cell.pucch_grants_per_slot_cnt.resize(max_csi_sr_period, 0);
+    // Initialize the PUCCH grants-per-slot counter.
+    cell.pucch_grants_per_slot_cnt.resize(lcm_csi_sr_period, 0);
 
     // Set up the pucch_res_id for the resource used for SR.
     for (unsigned sr_res_idx = 0; sr_res_idx < user_defined_pucch_cfg.nof_sr_resources; ++sr_res_idx) {
@@ -130,13 +135,25 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
 
   const auto csi_offset_exceeds_grant_cnt = [&](unsigned offset_candidate) -> bool {
     std::vector<unsigned> csi_offsets_within_max_period;
-    for (unsigned csi_off = offset_candidate; csi_off < max_csi_sr_period; csi_off += csi_period_slots) {
+    for (unsigned csi_off = offset_candidate; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
       csi_offsets_within_max_period.emplace_back(csi_off);
     }
 
     for (auto csi_off : csi_offsets_within_max_period) {
       if (cells[0].pucch_grants_per_slot_cnt[csi_off] >= max_pucch_grants_per_slot) {
         return true;
+      }
+    }
+
+    return false;
+  };
+
+  const auto csi_offset_colliding_with_sr = [&](unsigned offset_candidate) -> bool {
+    for (unsigned csi_off = offset_candidate; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
+      for (unsigned sr_off = candidate_sr_offset; sr_off < lcm_csi_sr_period; sr_off += csi_period_slots) {
+        if (csi_off == sr_off) {
+          return true;
+        }
       }
     }
 
@@ -150,14 +167,15 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    const unsigned lowest_period = std::min(sr_period_slots, csi_rs_period);
-    if (candidate_sr_offset % lowest_period == offset_candidate % lowest_period) {
+    if (csi_offset_colliding_with_sr(offset_candidate)) {
       weight += csi_rs_period;
     }
 
-    // If set
+    // If the CSI offset exceeds the maximum number of PUCCH grants, we increase by 2 * csi_rs_period, to ensure this
+    // gets picked as the last resort (the highest possible weight for a CSI colliding with SR
+    // is = 2 * csi_rs_period - 1).
     if (csi_offset_exceeds_grant_cnt(offset_candidate)) {
-      weight += csi_rs_period + 1;
+      weight += 2 * csi_rs_period;
     }
 
     return weight;
@@ -188,19 +206,22 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   optional<std::pair<unsigned, unsigned>> sr_res_offset;
   optional<std::pair<unsigned, unsigned>> csi_res_offset;
   auto                                    sr_res_offset_it = free_sr_list.begin();
+  // Iterate over the list of SR resource/offsets and find the first one that doesn't exceed the maximum number of PUCCH
+  // grants.
   while ((not sr_res_offset.has_value()) and sr_res_offset_it != free_sr_list.end()) {
-    std::vector<unsigned> sr_offsets_within_max_period;
-    for (unsigned sr_off = sr_res_offset_it->second; sr_off < max_csi_sr_period; sr_off += sr_period_slots) {
-      sr_offsets_within_max_period.emplace_back(sr_off);
+    std::vector<unsigned> sr_offsets_within_lcm_period;
+    for (unsigned sr_off = sr_res_offset_it->second; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
+      sr_offsets_within_lcm_period.emplace_back(sr_off);
     }
 
     const bool pucch_cnt_exceeded =
-        std::any_of(sr_offsets_within_max_period.begin(), sr_offsets_within_max_period.end(), [&](unsigned sr_off) {
+        std::any_of(sr_offsets_within_lcm_period.begin(), sr_offsets_within_lcm_period.end(), [&](unsigned sr_off) {
           srsran_assert(sr_off < static_cast<unsigned>(cells[0].pucch_grants_per_slot_cnt.size()),
                         "Index exceeds the size of the PUCCH grants vector");
           return cells[0].pucch_grants_per_slot_cnt[sr_off] >= max_pucch_grants_per_slot;
         });
 
+    // If the PUCCH is exceeded, proceed with the next SR resource/offset pair.
     if (not pucch_cnt_exceeded) {
       if (not default_csi_report_cfg.has_value()) {
         sr_res_offset = *sr_res_offset_it;
@@ -279,6 +300,7 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
         csi_offset);
   }
 
+  // Remove the SR and CSI offsets from the PUCCH grants-per-slot counter.
   std::set<unsigned> csi_sr_offset_for_pucch_cnt = compute_sr_csi_pucch_offsets(sr_to_deallocate.offset, csi_offset);
   for (auto offset : csi_sr_offset_for_pucch_cnt) {
     srsran_assert(offset < cells[0].pucch_grants_per_slot_cnt.size(),
@@ -297,8 +319,6 @@ du_pucch_resource_manager::get_csi_resource_offset(const csi_meas_config& csi_me
   auto optimal_res_it = find_optimal_csi_report_slot_offset(free_csi_list, candidate_sr_offset, csi_meas_cfg);
 
   if (optimal_res_it != free_csi_list.end()) {
-    printf("Res %d offset %d \n", optimal_res_it->first, optimal_res_it->second);
-
     // Set temporarily CSI report with a default PUCCH_res_id.
     const unsigned lowest_period       = std::min(sr_period_slots, csi_period_slots);
     const bool sr_csi_on_the_same_slot = candidate_sr_offset % lowest_period == optimal_res_it->second % lowest_period;
@@ -327,18 +347,18 @@ du_pucch_resource_manager::get_csi_resource_offset(const csi_meas_config& csi_me
 }
 
 std::set<unsigned> du_pucch_resource_manager::compute_sr_csi_pucch_offsets(unsigned sr_offset, unsigned csi_offset)
-{ // Update the PUCCH grants-per-slot counter.
-  std::set<unsigned> csi_sr_offset_for_pucch_cnt;
-  for (unsigned sr_off = sr_offset; sr_off < max_csi_sr_period; sr_off += sr_period_slots) {
-    csi_sr_offset_for_pucch_cnt.emplace(sr_off);
+{
+  std::set<unsigned> sr_csi_offsets;
+  for (unsigned sr_off = sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
+    sr_csi_offsets.emplace(sr_off);
   }
 
   if (default_csi_report_cfg.has_value()) {
-    for (unsigned csi_off = csi_offset; csi_off < max_csi_sr_period; csi_off += csi_period_slots) {
-      csi_sr_offset_for_pucch_cnt.emplace(csi_off);
+    for (unsigned csi_off = csi_offset; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
+      sr_csi_offsets.emplace(csi_off);
     }
   }
-  return csi_sr_offset_for_pucch_cnt;
+  return sr_csi_offsets;
 }
 
 unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx) const

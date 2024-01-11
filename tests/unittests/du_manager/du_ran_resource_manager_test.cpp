@@ -10,30 +10,37 @@
 
 #include "lib/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/math/gcd.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_du;
 
-struct params {
-  duplex_mode duplx_mode;
-};
-
 class du_ran_resource_manager_tester_base
 {
 protected:
-  explicit du_ran_resource_manager_tester_base(cell_config_builder_params params_, du_cell_config du_cfg_param_) :
+  explicit du_ran_resource_manager_tester_base(cell_config_builder_params params_,
+                                               du_cell_config             du_cfg_param_,
+                                               unsigned                   max_pucch_grants = 31) :
     params(params_),
     du_cfg_param(du_cfg_param_),
     cell_cfg_list({du_cfg_param_}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
-    default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config(params)),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list,
-                                                           scheduler_expert_config{},
-                                                           srb_cfg_list,
-                                                           qos_cfg_list))
+    default_ue_cell_cfg(du_cfg_param.ue_ded_serv_cell_cfg),
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(
+        cell_cfg_list,
+        scheduler_expert_config{.ue = {.max_pucchs_per_slot = max_pucch_grants}},
+        srb_cfg_list,
+        qos_cfg_list))
   {
+    srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
+                      not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+                      srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                          default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
+                  "CSI report configuration is required for this unittest;");
+    default_csi_pucch_res_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+        default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   }
 
   ue_ran_resource_configurator& create_ue(du_ue_index_t ue_index)
@@ -54,6 +61,28 @@ protected:
   unsigned get_config_sr_period() const
   {
     return sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
+  }
+
+  unsigned get_config_csi_period() const
+  {
+    return csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
+  }
+
+  bool has_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
+  {
+    return serv_cell_cfg.csi_meas_cfg.has_value() and
+           not serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+           srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+               serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+  }
+
+  const csi_report_config::periodic_or_semi_persistent_report_on_pucch&
+  get_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
+  {
+    srsran_assert(has_ue_csi_cfg(serv_cell_cfg), "CSI configuration not found");
+
+    return srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+        serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   }
 
   unsigned get_nof_sr_slot_offsets() const
@@ -107,14 +136,19 @@ protected:
     return pucch_checker;
   }
 
-  cell_config_builder_params                                  params;
-  du_cell_config                                              du_cfg_param;
-  std::vector<du_cell_config>                                 cell_cfg_list;
-  std::map<srb_id_t, du_srb_config>                           srb_cfg_list;
-  std::map<five_qi_t, du_qos_config>                          qos_cfg_list;
-  const serving_cell_config                                   default_ue_cell_cfg;
-  std::unique_ptr<du_ran_resource_manager>                    res_mng;
-  slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES> ues;
+  cell_config_builder_params                                             params;
+  du_cell_config                                                         du_cfg_param;
+  std::vector<du_cell_config>                                            cell_cfg_list;
+  std::map<srb_id_t, du_srb_config>                                      srb_cfg_list;
+  std::map<five_qi_t, du_qos_config>                                     qos_cfg_list;
+  const serving_cell_config                                              default_ue_cell_cfg;
+  srsran::csi_report_config::periodic_or_semi_persistent_report_on_pucch default_csi_pucch_res_cfg;
+  std::unique_ptr<du_ran_resource_manager>                               res_mng;
+  slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES>            ues;
+};
+
+struct params {
+  duplex_mode duplx_mode;
 };
 
 class du_ran_resource_manager_tester : public du_ran_resource_manager_tester_base,
@@ -242,6 +276,26 @@ struct pucch_cfg_builder_params {
   unsigned nof_res_csi     = 1;
 };
 
+struct pucch_cnt_builder_params {
+  unsigned nof_res_sr               = 2;
+  unsigned nof_res_csi              = 1;
+  unsigned max_allowed_pucch_grants = 4;
+
+  sr_periodicity         sr_period  = srsran::sr_periodicity::sl_40;
+  csi_report_periodicity csi_period = srsran::csi_report_periodicity::slots80;
+};
+
+std::ostream& operator<<(std::ostream& out, const pucch_cnt_builder_params& params)
+{
+  out << fmt::format("nof_res_sr={}kHz, nof_res_csi={}, max_pucch_grants={}, sr_period_slots={}, csi_period_slots={}",
+                     params.nof_res_sr,
+                     params.nof_res_csi,
+                     params.max_allowed_pucch_grants,
+                     sr_periodicity_to_slot(params.sr_period),
+                     csi_report_periodicity_to_uint(params.csi_period));
+  return out;
+}
+
 } // namespace du_test_multiple_pucch_cfg
 
 using namespace du_test_multiple_pucch_cfg;
@@ -275,35 +329,6 @@ protected:
   explicit du_ran_res_mng_multiple_cfg_tester() :
     du_ran_resource_manager_tester_base(cell_config_builder_params{}, make_custom_du_cell_config(GetParam()))
   {
-    srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
-                      not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-                      srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                          default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
-                  "CSI report configuration is required for this unittest;");
-    default_csi_pucch_res_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-        default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  }
-
-  bool has_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
-  {
-    return serv_cell_cfg.csi_meas_cfg.has_value() and
-           not serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-           srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-               serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  }
-
-  const csi_report_config::periodic_or_semi_persistent_report_on_pucch&
-  get_ue_csi_cfg(const serving_cell_config& serv_cell_cfg) const
-  {
-    srsran_assert(has_ue_csi_cfg(serv_cell_cfg), "CSI configuration not found");
-
-    return srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-        serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  }
-
-  unsigned get_config_csi_period() const
-  {
-    return csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
   }
 
   // Retrieve the interval [ ID_start, ID_stop] with the initial and final IDs of the UE's PUCCH resources used for
@@ -398,8 +423,6 @@ protected:
             nof_avail_sr_res <= nof_avail_csi_res,
             nof_avail_csi_res <= nof_avail_sr_res};
   }
-
-  srsran::csi_report_config::periodic_or_semi_persistent_report_on_pucch default_csi_pucch_res_cfg;
 };
 
 TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexing)
@@ -517,4 +540,120 @@ INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources,
                                            pucch_cfg_builder_params{ 5,     7,     7,    4,   9 },
                                            pucch_cfg_builder_params{ 8,     8,     8,    4,   10 })
                          // clang-format on
+);
+
+static du_cell_config
+make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params& pucch_params_,
+                                         const srsran::config_helpers::cell_config_builder_params_extended& params = {})
+{
+  du_cell_config du_cfg                 = config_helpers::make_default_du_cell_config(params);
+  auto&          pucch_params           = du_cfg.pucch_cfg;
+  pucch_params.nof_sr_resources         = pucch_params_.nof_res_sr;
+  pucch_params.nof_csi_resources        = pucch_params_.nof_res_csi;
+  pucch_params.f1_params.nof_cyc_shifts = srsran::nof_cyclic_shifts::six;
+  pucch_params.f1_params.occ_supported  = true;
+
+  du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = pucch_params_.sr_period;
+  variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+      du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type)
+      .report_slot_period = pucch_params_.csi_period;
+
+  return du_cfg;
+}
+
+class du_ran_res_mng_pucch_cnt_tester : public du_ran_resource_manager_tester_base,
+                                        public ::testing::TestWithParam<pucch_cnt_builder_params>
+{
+protected:
+  explicit du_ran_res_mng_pucch_cnt_tester(cell_config_builder_params params_ = {.dl_arfcn = 520002U}) :
+    du_ran_resource_manager_tester_base(params_,
+                                        make_custom_du_cell_config_for_pucch_cnt(GetParam(), params_),
+                                        GetParam().max_allowed_pucch_grants)
+  {
+    lcm_csi_sr_period =
+        lcm(sr_periodicity_to_slot(GetParam().sr_period), csi_report_periodicity_to_uint(GetParam().csi_period));
+    pucch_cnts.resize(lcm_csi_sr_period, 0);
+  }
+
+  unsigned              lcm_csi_sr_period;
+  std::vector<unsigned> pucch_cnts;
+};
+
+TEST_P(du_ran_res_mng_pucch_cnt_tester, test_du_pucch_cnt)
+{
+  du_ue_index_t next_ue_index = to_du_ue_index(0);
+
+  // > Created UEs have unique (PUCCH resource, SR offset) pairs.
+  std::set<std::pair<unsigned, unsigned>> sr_offsets;
+  std::set<std::pair<unsigned, unsigned>> csi_offsets;
+  for (unsigned i = 0; i != 1000; ++i) {
+    const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
+    if (ue_res.empty()) {
+      ues.erase(next_ue_index);
+      break;
+    }
+    ASSERT_FALSE(ue_res.empty());
+
+    // Check if the SR has been assigned to the UE.
+    const auto& sr_res_list = ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    ASSERT_FALSE(sr_res_list.empty());
+    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset)), 0);
+    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.cell_res_id, sr_res_list[0].offset));
+    unsigned sr_offset = sr_res_list[0].offset;
+
+    // Check if the CSI has been assigned to the UE.
+    ASSERT_TRUE(has_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg));
+    const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg);
+    ASSERT_FALSE(ue_csi_cfg.pucch_csi_res_list.empty());
+    const unsigned csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id;
+    const unsigned csi_offset       = ue_csi_cfg.report_slot_offset;
+    ASSERT_EQ(csi_offsets.count(std::make_pair(csi_pucch_res_id, csi_offset)), 0);
+    csi_offsets.insert(std::make_pair(csi_pucch_res_id, csi_offset));
+
+    // Check the offsets results in the SR and CSI not exceeding the max PUCCH grants.
+    std::set<unsigned> csi_sr_offset_for_pucch_cnt;
+    for (unsigned sr_off = sr_offset; sr_off < lcm_csi_sr_period; sr_off += get_config_sr_period()) {
+      csi_sr_offset_for_pucch_cnt.emplace(sr_off);
+    }
+
+    for (unsigned csi_off = csi_offset; csi_off < lcm_csi_sr_period; csi_off += get_config_csi_period()) {
+      csi_sr_offset_for_pucch_cnt.emplace(csi_off);
+    }
+
+    for (auto offset : csi_sr_offset_for_pucch_cnt) {
+      srsran_assert(offset < static_cast<unsigned>(pucch_cnts.size()),
+                    "Index exceeds the size of the PUCCH grants vector");
+      ++pucch_cnts[offset];
+    }
+
+    for (auto pucch_slot_cnt : pucch_cnts) {
+      ASSERT_TRUE(pucch_slot_cnt <= GetParam().max_allowed_pucch_grants);
+    }
+
+    next_ue_index = to_du_ue_index((unsigned)next_ue_index + 1);
+  }
+
+  // Erase a random UE and attempt.
+  const du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
+  ues.erase(ue_idx_to_rem);
+
+  // Attempt a new allocation and verify it is successful.
+  next_ue_index                              = to_du_ue_index((unsigned)next_ue_index + 1);
+  const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
+  ASSERT_FALSE(ue_res.empty());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    parametrized_test_for_du_pucch_cnt,
+    du_ran_res_mng_pucch_cnt_tester,
+    // clang-format off
+       ::testing::Values(
+       pucch_cnt_builder_params{ 2, 2, 5, srsran::sr_periodicity::sl_10, srsran::csi_report_periodicity::slots10 },
+       pucch_cnt_builder_params{ 2, 2, 5, srsran::sr_periodicity::sl_20, srsran::csi_report_periodicity::slots20 },
+       pucch_cnt_builder_params{ 2, 2, 5, srsran::sr_periodicity::sl_20, srsran::csi_report_periodicity::slots20 },
+       pucch_cnt_builder_params{ 7, 4, 11, srsran::sr_periodicity::sl_20, srsran::csi_report_periodicity::slots40 },
+       pucch_cnt_builder_params{ 10, 5, 15, srsran::sr_periodicity::sl_40, srsran::csi_report_periodicity::slots80 },
+       pucch_cnt_builder_params{ 19, 20, 29, srsran::sr_periodicity::sl_40, srsran::csi_report_periodicity::slots80 }
+       )
+    // clang-format on
 );
