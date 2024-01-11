@@ -53,6 +53,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
+  demux_msg.cfg.warn_on_drop            = cfg.n3_cfg.warn_on_drop;
   demux_msg.cu_up_exec                  = cfg.dl_executor;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);

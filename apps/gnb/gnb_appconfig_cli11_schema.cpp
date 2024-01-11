@@ -430,6 +430,10 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_par
                  cu_up_params.gtpu_reordering_timer_ms,
                  "GTP-U RX reordering timer (in milliseconds)")
       ->capture_default_str();
+  app.add_option("--warn_on_drop",
+                 cu_up_params.warn_on_drop,
+                 "Log a warning for dropped packets in GTP-U and PDCP due to full queues")
+      ->capture_default_str();
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)

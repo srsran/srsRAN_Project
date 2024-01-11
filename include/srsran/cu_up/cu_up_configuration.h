@@ -48,6 +48,7 @@ struct network_interface_config {
 
 struct n3_interface_config {
   std::chrono::milliseconds gtpu_reordering_timer; // N3 reordering timer
+  bool                      warn_on_drop;
 };
 
 struct e1ap_config_params {

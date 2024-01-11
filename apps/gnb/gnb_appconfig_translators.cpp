@@ -261,6 +261,7 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   srs_cu_up::cu_up_configuration out_cfg;
   out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
+  out_cfg.n3_cfg.warn_on_drop          = config.cu_up_cfg.warn_on_drop;
 
   if (config.amf_cfg.n3_bind_addr == "auto") {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;

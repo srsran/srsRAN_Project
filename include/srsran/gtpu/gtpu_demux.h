@@ -16,6 +16,10 @@
 
 namespace srsran {
 
+struct gtpu_demux_cfg_t {
+  bool warn_on_drop;
+};
+
 /// The GTP-U demux component will only be relevant for the reception and de-multiplexing
 /// of GTP-U packets. It does not require Tx capabilities as the corresponding GTP-U entities
 /// will already be calling the corresponding UDP network gateway.
