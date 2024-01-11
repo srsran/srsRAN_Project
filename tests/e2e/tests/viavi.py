@@ -56,7 +56,7 @@ def test_viavi(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = False,
+    warning_as_errors: bool = True,
 ):
     """
     Runs a test using Viavi
