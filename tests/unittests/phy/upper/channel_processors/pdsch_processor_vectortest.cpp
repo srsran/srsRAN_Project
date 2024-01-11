@@ -133,7 +133,7 @@ protected:
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
   // PDSCH rate matcher buffer pool.
-  std::unique_ptr<tx_buffer_pool> rm_buffer_pool;
+  std::unique_ptr<tx_buffer_pool_controller> rm_buffer_pool;
   // Worker pool.
   std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool;
   std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
@@ -207,7 +207,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   unsigned nof_codeblocks =
       ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), config.ldpc_base_graph);
 
-  unique_tx_buffer rm_buffer = rm_buffer_pool->reserve(slot_point(), buffer_id, nof_codeblocks);
+  unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks);
 
   // Process PDSCH.
   pdsch_proc->process(*mapper, std::move(rm_buffer), notifier_spy, transport_blocks, config);

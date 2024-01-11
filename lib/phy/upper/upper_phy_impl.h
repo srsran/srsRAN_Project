@@ -25,6 +25,7 @@
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/support/executors/task_executor.h"
+#include <functional>
 
 namespace srsran {
 
@@ -38,18 +39,18 @@ struct upper_phy_impl_config {
   unsigned nof_rx_ports;
   /// Downlink processor pool.
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
+  /// Uplink processor pool.
+  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// Downlink resource grid pool.
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
   /// Uplink resource grid pool.
   std::unique_ptr<resource_grid_pool> ul_rg_pool;
-  /// Uplink processor pool.
-  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool> tx_buf_pool;
+  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
   /// Receive buffer pool.
-  std::unique_ptr<rx_buffer_pool> rx_buf_pool;
+  std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
@@ -137,33 +138,35 @@ public:
   // See interface for documentation.
   void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) override;
 
+  void stop() override;
+
 private:
   /// Upper PHY logger.
   srslog::basic_logger& logger;
   /// Base station sector identifier.
   const unsigned sector_id;
-  /// Downlink processor pool.
-  std::unique_ptr<downlink_processor_pool> dl_processor_pool;
+  /// Transmit buffer pool.
+  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
+  /// Receive buffer pool.
+  std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
   /// Uplink resource grid pool.
   std::unique_ptr<resource_grid_pool> ul_rg_pool;
-  /// Uplink processor pool.
-  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
+  /// Uplink slot PDU registry.
+  uplink_slot_pdu_repository pdu_repository;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool> tx_buf_pool;
-  /// Receive buffer pool.
-  std::unique_ptr<rx_buffer_pool> rx_buf_pool;
+  /// Downlink processor pool.
+  std::unique_ptr<downlink_processor_pool> dl_processor_pool;
+  /// Uplink processor pool.
+  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// Downlink processor PDUs validator.
   std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
   /// Uplink processor PDUs validator.
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
   /// Uplink request processor.
   uplink_request_processor_impl ul_request_processor;
-  /// Uplink slot PDU registry.
-  uplink_slot_pdu_repository pdu_repository;
   /// Upper PHY results notifier.
   upper_phy_rx_results_notifier_wrapper rx_results_notifier;
   /// Received symbols handler.

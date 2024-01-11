@@ -284,7 +284,7 @@ int main(int argc, char** argv)
     // extra margin.
     pool_config.max_codeblock_size   = static_cast<unsigned>(std::round(cws * 5 / nof_codeblocks));
     pool_config.nof_buffers          = 1;
-    pool_config.max_nof_codeblocks   = nof_codeblocks;
+    pool_config.nof_codeblocks       = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = false;
 #ifdef HWACC_PUSCH_ENABLED
@@ -294,7 +294,7 @@ int main(int argc, char** argv)
 #endif // HWACC_PUSCH_ENABLED
 
     // Create Rx buffer pool.
-    std::unique_ptr<rx_buffer_pool> pool = create_rx_buffer_pool(pool_config);
+    std::unique_ptr<rx_buffer_pool_controller> pool = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool);
 
     pusch_decoder::configuration dec_cfg = {};
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
       dec_cfg.nof_layers = cfg.nof_layers;
 
       // Reserve buffer.
-      unique_rx_buffer buffer = pool->reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+      unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
       TESTASSERT(buffer.is_valid());
 
       // Reset code blocks CRCs.

@@ -388,7 +388,7 @@ int main(int argc, char** argv)
     // extra margin.
     pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
     pool_config.nof_buffers          = 1;
-    pool_config.max_nof_codeblocks   = nof_codeblocks;
+    pool_config.nof_codeblocks       = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = true;
 
@@ -396,7 +396,7 @@ int main(int argc, char** argv)
     uint64_t total_acc100_time = 0;
 
     // Create Rx buffer pool.
-    std::unique_ptr<rx_buffer_pool> pool_acc100 = create_rx_buffer_pool(pool_config);
+    std::unique_ptr<rx_buffer_pool_controller> pool_acc100 = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool_acc100);
 
     pusch_decoder::configuration dec_cfg = {};
@@ -436,8 +436,8 @@ int main(int argc, char** argv)
     uint64_t total_gen_time = 0;
 
     // Create Rx buffer pool.
-    pool_config.external_soft_bits           = false;
-    std::unique_ptr<rx_buffer_pool> pool_cpu = create_rx_buffer_pool(pool_config);
+    pool_config.external_soft_bits                      = false;
+    std::unique_ptr<rx_buffer_pool_controller> pool_cpu = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool_cpu);
 
     // Prepare decoder configuration.

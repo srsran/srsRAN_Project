@@ -1620,7 +1620,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.tx_buffer_config.external_soft_bits   = false;
 
     cfg.rx_buffer_config.nof_buffers          = nof_buffers;
-    cfg.rx_buffer_config.max_nof_codeblocks   = max_rx_nof_codeblocks;
+    cfg.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;
     cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
     cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
     cfg.rx_buffer_config.external_soft_bits   = false;

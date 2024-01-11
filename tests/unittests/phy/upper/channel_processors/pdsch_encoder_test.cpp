@@ -43,12 +43,12 @@ int main()
   TESTASSERT(pdsch_encoder);
 
   tx_buffer_pool_config buffer_pool_config;
-  buffer_pool_config.max_codeblock_size          = ldpc::MAX_CODEBLOCK_SIZE;
-  buffer_pool_config.nof_buffers                 = 1;
-  buffer_pool_config.nof_codeblocks              = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  buffer_pool_config.expire_timeout_slots        = 0;
-  buffer_pool_config.external_soft_bits          = false;
-  std::shared_ptr<tx_buffer_pool> rm_buffer_pool = create_tx_buffer_pool(buffer_pool_config);
+  buffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+  buffer_pool_config.nof_buffers          = 1;
+  buffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  buffer_pool_config.expire_timeout_slots = 0;
+  buffer_pool_config.external_soft_bits   = false;
+  std::shared_ptr<tx_buffer_pool_controller> rm_buffer_pool = create_tx_buffer_pool(buffer_pool_config);
 
   trx_buffer_identifier buffer_id(0, 0);
 
@@ -69,7 +69,7 @@ int main()
     unsigned nof_codeblocks =
         ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), test_case.config.base_graph);
 
-    unique_tx_buffer rm_buffer = rm_buffer_pool->reserve(slot_point(), buffer_id, nof_codeblocks);
+    unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks);
 
     pdsch_encoder::configuration config;
     config.new_data       = true;

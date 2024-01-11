@@ -11,15 +11,23 @@
 #include "rx_buffer_pool_impl.h"
 #include "rx_buffer_impl.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/trx_buffer_identifier.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/slot_point.h"
 #include <algorithm>
+#include <chrono>
 #include <memory>
+#include <thread>
 
 using namespace srsran;
 
 unique_rx_buffer rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks)
 {
+  // No more reservations are allowed if the pool is stopped.
+  if (stopped) {
+    return unique_rx_buffer();
+  }
+
   // Try to find the HARQ identifier.
   auto id_found = std::find(identifiers.begin(), identifiers.end(), id);
 
@@ -108,7 +116,25 @@ void rx_buffer_pool_impl::run_slot(const slot_point& slot)
   }
 }
 
-std::unique_ptr<rx_buffer_pool> srsran::create_rx_buffer_pool(const rx_buffer_pool_config& config)
+rx_buffer_pool& rx_buffer_pool_impl::get_pool()
+{
+  return *this;
+}
+
+void rx_buffer_pool_impl::stop()
+{
+  // Signals the stop of the pool. No more reservation are allowed after this point.
+  stopped = true;
+
+  // Makes sure all buffers are unlocked.
+  for (const auto& buffer : buffers) {
+    while (buffer.is_locked()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+}
+
+std::unique_ptr<rx_buffer_pool_controller> srsran::create_rx_buffer_pool(const rx_buffer_pool_config& config)
 {
   return std::make_unique<rx_buffer_pool_impl>(config);
 }

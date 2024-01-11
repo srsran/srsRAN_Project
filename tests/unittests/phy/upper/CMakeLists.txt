@@ -38,6 +38,10 @@ add_executable(rx_buffer_pool_test rx_buffer_pool_test.cpp)
 target_link_libraries(rx_buffer_pool_test srsran_upper_phy_support srslog gtest srsran_support)
 gtest_discover_tests(rx_buffer_pool_test)
 
+add_executable(tx_buffer_pool_test tx_buffer_pool_test.cpp)
+target_link_libraries(tx_buffer_pool_test srsran_upper_phy_support srslog gtest srsran_support)
+gtest_discover_tests(tx_buffer_pool_test)
+
 add_executable(uplink_processor_test uplink_processor_test.cpp)
 target_link_libraries(uplink_processor_test srsran_uplink_processor srslog gtest gtest_main)
 gtest_discover_tests(uplink_processor_test)

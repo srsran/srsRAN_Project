@@ -30,20 +30,20 @@ static upper_phy_timing_notifier_dummy notifier_dummy;
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   logger(srslog::fetch_basic_logger("Upper PHY", true)),
   sector_id(config.sector_id),
-  dl_processor_pool(std::move(config.dl_processor_pool)),
-  dl_rg_pool(std::move(config.dl_rg_pool)),
-  ul_rg_pool(std::move(config.ul_rg_pool)),
-  ul_processor_pool(std::move(config.ul_processor_pool)),
-  prach_pool(std::move(config.prach_pool)),
   tx_buf_pool(std::move(config.tx_buf_pool)),
   rx_buf_pool(std::move(config.rx_buf_pool)),
+  dl_rg_pool(std::move(config.dl_rg_pool)),
+  ul_rg_pool(std::move(config.ul_rg_pool)),
+  pdu_repository(config.nof_slots_ul_pdu_repository),
+  prach_pool(std::move(config.prach_pool)),
+  dl_processor_pool(std::move(config.dl_processor_pool)),
+  ul_processor_pool(std::move(config.ul_processor_pool)),
   dl_pdu_validator(std::move(config.dl_pdu_validator)),
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
-  pdu_repository(config.nof_slots_ul_pdu_repository),
   rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
                                                                        pdu_repository,
-                                                                       *rx_buf_pool,
+                                                                       rx_buf_pool->get_pool(),
                                                                        rx_results_notifier,
                                                                        logger)),
   timing_handler(notifier_dummy)
@@ -136,5 +136,10 @@ const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
 
 tx_buffer_pool& upper_phy_impl::get_tx_buffer_pool()
 {
-  return *tx_buf_pool;
+  return tx_buf_pool->get_pool();
+}
+void upper_phy_impl::stop()
+{
+  tx_buf_pool->stop();
+  rx_buf_pool->stop();
 }

@@ -52,7 +52,14 @@ public:
   /// The pool does not initialize or modify the codeblock contents of the buffers. The modules that use the buffers are
   /// responsible for initializing and modifying their contents upon new transmissions.
   ///
-  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation.
+  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation. Possible
+  /// reservation failures are:
+  /// - Insufficient number of buffers, \ref rx_buffer_pool_config::nof_buffers buffers are reserved with different
+  ///   identifiers;
+  /// - Insufficient number of codeblocks, \ref rx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
+  ///   assigned to buffers;
+  /// - A buffer with the same identifier is locked; or
+  /// - The pool operation has stopped.
   ///
   /// \param[in] slot Indicates the slot context in which the reservation occurs.
   /// \param[in] id Identifies the buffer.
@@ -74,13 +81,33 @@ struct rx_buffer_pool_config {
   /// Number of buffers available in the pool.
   unsigned nof_buffers;
   /// Number of codeblocks available in the pool for all the buffers.
-  unsigned max_nof_codeblocks;
+  unsigned nof_codeblocks;
   /// buffer lifetime as a number of slots.
   unsigned expire_timeout_slots;
   /// Set to true to indicate that soft bits are not stored in the buffer.
   bool external_soft_bits;
 };
 
-std::unique_ptr<rx_buffer_pool> create_rx_buffer_pool(const rx_buffer_pool_config& config);
+/// Receive buffer pool controller interface.
+class rx_buffer_pool_controller
+{
+public:
+  /// \brief Default destructor.
+  ///
+  /// An assertion is triggered if any buffer is still locked. This prevents that unique buffers lose the reference to
+  /// the actual buffers.
+  virtual ~rx_buffer_pool_controller() = default;
+
+  /// Gets the actual buffer pool.
+  virtual rx_buffer_pool& get_pool() = 0;
+
+  /// \brief Stops the buffer pool.
+  ///
+  /// It waits for all buffers to be unlocked.
+  virtual void stop() = 0;
+};
+
+/// Creates a receive buffer pool.
+std::unique_ptr<rx_buffer_pool_controller> create_rx_buffer_pool(const rx_buffer_pool_config& config);
 
 } // namespace srsran

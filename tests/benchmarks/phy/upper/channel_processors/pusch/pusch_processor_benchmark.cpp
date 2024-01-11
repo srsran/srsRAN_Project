@@ -511,7 +511,7 @@ static void thread_process(pusch_processor&              proc,
   // Buffer pool configuration.
   rx_buffer_pool_config buffer_pool_config = {};
   buffer_pool_config.nof_buffers           = 1;
-  buffer_pool_config.max_nof_codeblocks    = nof_codeblocks;
+  buffer_pool_config.nof_codeblocks        = nof_codeblocks;
   buffer_pool_config.max_codeblock_size    = ldpc::MAX_CODEBLOCK_SIZE;
   buffer_pool_config.expire_timeout_slots =
       100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
@@ -520,7 +520,7 @@ static void thread_process(pusch_processor&              proc,
   trx_buffer_identifier buffer_id = trx_buffer_identifier(config.rnti, 0);
 
   // Create buffer pool.
-  std::unique_ptr<rx_buffer_pool> buffer_pool = create_rx_buffer_pool(buffer_pool_config);
+  std::unique_ptr<rx_buffer_pool_controller> buffer_pool = create_rx_buffer_pool(buffer_pool_config);
 
   // Prepare receive data buffer.
   std::vector<uint8_t> data(tbs / 8);
@@ -548,7 +548,7 @@ static void thread_process(pusch_processor&              proc,
     }
 
     // Reserve buffer.
-    unique_rx_buffer rm_buffer = buffer_pool->reserve(config.slot, buffer_id, nof_codeblocks);
+    unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks);
 
     // Reset notifier.
     result_notifier.reset();
