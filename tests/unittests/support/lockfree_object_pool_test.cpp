@@ -18,7 +18,7 @@ using namespace srsran;
 TEST(lockfree_index_stack_test, concurrent_push_pop)
 {
   std::vector<std::unique_ptr<std::thread>> workers;
-  unsigned                                  nof_workers = 2;
+  unsigned                                  nof_workers = 8;
   unsigned                                  nof_oper    = 1000;
 
   unsigned                     stack_cap = 10;

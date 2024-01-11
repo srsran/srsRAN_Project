@@ -30,17 +30,18 @@ public:
   static constexpr index_type npos() { return std::numeric_limits<index_type>::max(); }
 
   lockfree_index_stack(uint32_t nof_indexes, bool start_full) :
-    top(node{start_full ? 0 : npos(), 0}), next_idx(nof_indexes, npos())
+    top(node{start_full ? 0 : npos(), 0}), next_idx(new std::atomic<index_type>[nof_indexes]), sz(nof_indexes)
   {
     srsran_assert(nof_indexes > 0 and nof_indexes < npos(), "Invalid stack size={}", nof_indexes);
 
     // Initialize the stack of next indexes like [1, 2, 3, ..., nof_indexes - 1, npos]
     for (index_type i = 1; i < nof_indexes; ++i) {
-      next_idx[i - 1] = i;
+      next_idx[i - 1].store(i, std::memory_order_relaxed);
     }
+    next_idx[nof_indexes - 1].store(npos(), std::memory_order_relaxed);
   }
 
-  index_type capacity() const { return next_idx.size(); }
+  index_type capacity() const { return sz; }
 
   index_type try_pop()
   {
@@ -50,7 +51,7 @@ public:
     if (old_top.index == npos()) {
       return npos();
     }
-    node new_top{next_idx[old_top.index], old_top.epoch + 1};
+    node new_top{next_idx[old_top.index].load(std::memory_order_relaxed), old_top.epoch + 1};
     // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release in push().
     // The "acquire" ordering also ensures that the next_idx[old_top.index] read is not reordered to happen before the
     // atomic operation.
@@ -60,7 +61,7 @@ public:
       if (old_top.index == npos()) {
         return npos();
       }
-      new_top = node{next_idx[old_top.index], old_top.epoch + 1};
+      new_top = node{next_idx[old_top.index].load(std::memory_order_relaxed), old_top.epoch + 1};
     }
     return old_top.index;
   }
@@ -68,14 +69,14 @@ public:
   void push(index_type index)
   {
     node old_top{top.load(std::memory_order_relaxed)};
-    next_idx[index] = old_top.index;
-    node new_top{index, old_top.epoch + 1};
+    next_idx[index].store(old_top.index, std::memory_order_relaxed);
+    node new_top{index, old_top.epoch};
     // We use memory ordering "release" for success path to form a "synchronizes-with" relationship with the acquire in
     // pop(). The "release" ordering also ensures that the next_idx[index] write is visible to other threads.
     // In case of failure, "top" remains unchanged, so the operation can have "relaxed" ordering.
     while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_release, std::memory_order_relaxed)) {
-      new_top.epoch   = old_top.epoch + 1;
-      next_idx[index] = old_top.index;
+      new_top.epoch = old_top.epoch;
+      next_idx[index].store(old_top.index, std::memory_order_relaxed);
     }
   }
 
@@ -87,8 +88,11 @@ private:
   static_assert(sizeof(node) <= sizeof(uint64_t),
                 "node sizeof should not go above 64-bits, otherwise we lose is_lock_free guarantees in most platforms");
 
-  std::atomic<node>       top;
-  std::vector<index_type> next_idx;
+  std::atomic<node> top;
+
+  std::unique_ptr<std::atomic<index_type>[]> next_idx;
+
+  const size_t sz;
 };
 
 } // namespace detail
