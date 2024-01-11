@@ -117,6 +117,7 @@ protected:
     cfg.gtpu_pcap                    = &dummy_pcap;
     cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
+    cfg.n3_cfg.warn_on_drop          = false;
     cfg.statistics_report_period     = std::chrono::seconds(1);
 
     return cfg;

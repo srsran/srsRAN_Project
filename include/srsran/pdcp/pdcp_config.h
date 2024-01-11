@@ -142,6 +142,7 @@ struct pdcp_custom_config_base {
 
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
   uint16_t rlc_sdu_queue = 4096;
+  bool     warn_on_drop  = false;
 };
 
 struct pdcp_custom_config_rx : public pdcp_custom_config_base {
@@ -376,10 +377,11 @@ struct formatter<srsran::pdcp_custom_config_tx> {
   auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "count_notify={} count_max={} rlc_sdu_queue={}",
+                     "count_notify={} count_max={} rlc_sdu_queue={} warn_on_drop={}",
                      cfg.max_count.notify,
                      cfg.max_count.hard,
-                     cfg.rlc_sdu_queue);
+                     cfg.rlc_sdu_queue,
+                     cfg.warn_on_drop);
   }
 };
 

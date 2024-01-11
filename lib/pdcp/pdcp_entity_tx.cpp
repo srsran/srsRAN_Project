@@ -33,7 +33,12 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
   if ((st.tx_next - st.tx_trans) >= cfg.custom.rlc_sdu_queue) {
-    logger.log_info("Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
+    if (not cfg.custom.warn_on_drop) {
+      logger.log_info("Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
+    } else {
+      logger.log_warning(
+          "Dropping SDU to avoid overloading RLC queue. rlc_sdu_queue={} {}", cfg.custom.rlc_sdu_queue, st);
+    }
     return;
   }
   if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
