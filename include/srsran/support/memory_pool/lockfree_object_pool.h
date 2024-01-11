@@ -30,7 +30,7 @@ public:
   static constexpr index_type npos() { return std::numeric_limits<index_type>::max(); }
 
   lockfree_index_stack(uint32_t nof_indexes, bool start_full) :
-    top(node{start_full ? 0 : npos(), 0}), next_idx(new std::atomic<index_type>[nof_indexes]), sz(nof_indexes)
+    top(make_node(start_full ? 0 : npos(), 0)), next_idx(new std::atomic<index_type>[nof_indexes]), sz(nof_indexes)
   {
     srsran_assert(nof_indexes > 0 and nof_indexes < npos(), "Invalid stack size={}", nof_indexes);
 
@@ -48,45 +48,47 @@ public:
     // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release of the last push(),
     // otherwise the write to next_idx[] during the push() is not visible in this thread.
     node old_top{top.load(std::memory_order_acquire)};
-    if (old_top.index == npos()) {
+    if (get_index(old_top) == npos()) {
       return npos();
     }
-    node new_top{next_idx[old_top.index].load(std::memory_order_relaxed), old_top.epoch + 1};
+    node new_top = make_node(next_idx[get_index(old_top)].load(std::memory_order_relaxed), get_next_aba(old_top));
     // We use memory ordering "acquire" to form a "synchronizes-with" relationship with the release in push().
     // The "acquire" ordering also ensures that the next_idx[old_top.index] read is not reordered to happen before the
     // atomic operation.
     // In case of failure, "top" remains unchanged, but we need to re-read the next_idx[] which could have changed due
     // to a concurrent push(). So, the operation can have "acquired" ordering.
     while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_acquire, std::memory_order_acquire)) {
-      if (old_top.index == npos()) {
+      if (get_index(old_top) == npos()) {
         return npos();
       }
-      new_top = node{next_idx[old_top.index].load(std::memory_order_relaxed), old_top.epoch + 1};
+      new_top = make_node(next_idx[get_index(old_top)].load(std::memory_order_relaxed), get_next_aba(old_top));
     }
-    return old_top.index;
+    return get_index(old_top);
   }
 
   void push(index_type index)
   {
     node old_top{top.load(std::memory_order_relaxed)};
-    next_idx[index].store(old_top.index, std::memory_order_relaxed);
-    node new_top{index, old_top.epoch};
+    next_idx[index].store(get_index(old_top), std::memory_order_relaxed);
+    node new_top = make_node(index, get_aba(old_top));
     // We use memory ordering "release" for success path to form a "synchronizes-with" relationship with the acquire in
     // pop(). The "release" ordering also ensures that the next_idx[index] write is visible to other threads.
     // In case of failure, "top" remains unchanged, so the operation can have "relaxed" ordering.
     while (not top.compare_exchange_weak(old_top, new_top, std::memory_order_release, std::memory_order_relaxed)) {
-      new_top.epoch = old_top.epoch;
-      next_idx[index].store(old_top.index, std::memory_order_relaxed);
+      set_aba(new_top, get_aba(old_top));
+      next_idx[index].store(get_index(old_top), std::memory_order_relaxed);
     }
   }
 
 private:
-  struct node {
-    index_type index;
-    index_type epoch;
-  };
-  static_assert(sizeof(node) <= sizeof(uint64_t),
-                "node sizeof should not go above 64-bits, otherwise we lose is_lock_free guarantees in most platforms");
+  using node = uint64_t;
+
+  node     make_node(index_type index, index_type aba) { return (static_cast<uint64_t>(aba) << 32U) | index; }
+  uint32_t get_index(node n) const { return n & 0xFFFFFFFF; }
+  void     set_index(node& n, index_type index) { n = (n & 0xFFFFFFFF00000000) | index; }
+  void     set_aba(node& n, index_type aba) { n = (n & 0xFFFFFFFF) | (static_cast<uint64_t>(aba) << 32U); }
+  uint32_t get_aba(node n) const { return static_cast<uint32_t>((n & 0xFFFFFFFF00000000) >> 32U); }
+  uint32_t get_next_aba(node n) const { return static_cast<uint32_t>((n & 0xFFFFFFFF00000000) >> 32U) + 1; }
 
   std::atomic<node> top;
 
