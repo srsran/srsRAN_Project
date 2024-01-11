@@ -161,7 +161,7 @@ protected:
       }
 
       // write SDU into upper end
-      rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
       rlc1_tx_upper->handle_sdu(std::move(sdu));
     }
     buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -763,7 +763,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   pcell_worker.run_pending_tasks();
@@ -1015,7 +1015,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   pcell_worker.run_pending_tasks();
@@ -1094,7 +1094,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   pcell_worker.run_pending_tasks();
