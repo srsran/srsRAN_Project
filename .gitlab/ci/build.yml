@@ -183,9 +183,11 @@ variables:
 
         if [ -n "${DPDK_VERSION}" ]; then
           BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
+          LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
         fi
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
+          LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
         fi
         if [ -n "${CLEAN_BUILD}" ]; then
           BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
