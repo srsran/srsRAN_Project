@@ -15,6 +15,68 @@
 
 using namespace srsran;
 
+TEST(lockfree_index_stack_test, concurrent_push_pop)
+{
+  std::vector<std::unique_ptr<std::thread>> workers;
+  unsigned                                  nof_workers = 2;
+  unsigned                                  nof_oper    = 1000;
+
+  unsigned                     stack_cap = 10;
+  detail::lockfree_index_stack stack{stack_cap, true};
+
+  std::atomic<bool> start{false};
+
+  for (unsigned i = 0; i != nof_workers; ++i) {
+    workers.emplace_back(std::make_unique<std::thread>([&]() {
+      std::vector<int> vals;
+      vals.reserve(stack_cap);
+
+      while (not start) {
+      }
+
+      for (unsigned j = 0; j != nof_oper; ++j) {
+        if (test_rgen::uniform_int(0, 1) == 0) {
+          if (not vals.empty()) {
+            stack.push(vals.back());
+            fmt::print("pushed {}\n", vals.back());
+            vals.pop_back();
+          }
+        } else {
+          uint32_t val = stack.try_pop();
+          if (val != detail::lockfree_index_stack::npos()) {
+            fmt::print("popped {}\n", val);
+            EXPECT_TRUE(vals.size() < stack_cap);
+            vals.push_back(val);
+          }
+        }
+      }
+
+      while (not vals.empty()) {
+        stack.push(vals.back());
+        fmt::print("pushed {}\n", vals.back());
+        vals.pop_back();
+      }
+    }));
+  }
+
+  start = true;
+
+  for (auto& w : workers) {
+    w->join();
+  }
+
+  std::vector<int8_t> vals;
+  std::vector<int8_t> expected;
+  for (unsigned i = 0; i != stack_cap; ++i) {
+    uint32_t val = stack.try_pop();
+    EXPECT_NE(val, detail::lockfree_index_stack::npos());
+    vals.push_back(val);
+    expected.push_back(i);
+  }
+  std::sort(vals.begin(), vals.end());
+  ASSERT_EQ(vals, expected);
+}
+
 TEST(lockfree_object_pool_test, pool_created_with_requested_capacity)
 {
   unsigned                  nof_objs = 10;
