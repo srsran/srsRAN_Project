@@ -82,8 +82,8 @@ public:
   {
     uint32_t expected_state = pdcp_sn;
     uint32_t desired_state  = STATE_DISCARDED;
-    bool     discarded =
-        sdu_states[pdcp_sn % capacity].compare_exchange_weak(expected_state, desired_state, std::memory_order_relaxed);
+    bool     discarded      = sdu_states[pdcp_sn % capacity].compare_exchange_strong(
+        expected_state, desired_state, std::memory_order_relaxed);
     if (not discarded) {
       switch (expected_state) {
         case STATE_DISCARDED:
