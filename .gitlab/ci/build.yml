@@ -21,6 +21,9 @@ variables:
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
+      - amd64
+      - amd64-avx2
+      - amd64-avx2-avx512
       - "on-prem-amd64"
       - "on-prem-arm64"
       - "aws-spot-amd64"
@@ -1728,6 +1731,7 @@ custom-build:
   extends: .build_and_unit
   rules:
     - if: $ON_WEB
+    - if: $ON_API
   interruptible: false # Web jobs are standalone
   variables:
     ENABLE_ZEROMQ: ""

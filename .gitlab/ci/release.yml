@@ -8,10 +8,10 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "15"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "15"
     file: .gitlab/ci-shared/features/all.yml
 
 stages:

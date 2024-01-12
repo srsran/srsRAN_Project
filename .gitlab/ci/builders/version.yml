@@ -4,6 +4,7 @@ builder version:
   rules:
     - if: $ON_MR
     - if: $ON_WEB
+    - if: $ON_API
     - if: $CI_DESCRIPTION =~ /Nightly/
     - if: $CI_DESCRIPTION =~ /Weekly/
     - if: $CI_DESCRIPTION =~ /Alternative OSs/

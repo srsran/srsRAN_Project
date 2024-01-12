@@ -12,6 +12,7 @@ Launch tests in Viavi
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from pytest import mark, param
@@ -27,6 +28,76 @@ from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
 from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
+
+
+@pytest.fixture
+def viavi_manual_campaign_filename(request):
+    """
+    Campaign filename
+    """
+    return request.config.getoption("viavi_manual_campaign_filename")
+
+
+@pytest.fixture
+def viavi_manual_test_name(request):
+    """
+    Test name
+    """
+    return request.config.getoption("viavi_manual_test_name")
+
+
+@pytest.fixture
+def viavi_manual_test_timeout(request):
+    """
+    Test timeout
+    """
+    return request.config.getoption("viavi_manual_test_timeout")
+
+
+@mark.viavi_manual
+# pylint: disable=too-many-arguments, too-many-locals
+def test_viavi_manual(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    test_log_folder: str,
+    # Clients
+    gnb: GNBStub,
+    viavi: Viavi,
+    # Test info
+    viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
+    viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
+    viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
+):
+    """
+    Runs a test using Viavi
+    """
+    _test_viavi(
+        # Retina
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        test_log_folder=test_log_folder,
+        # Clients
+        gnb=gnb,
+        viavi=viavi,
+        metrics_server=None,
+        # Test info
+        campaign_filename=viavi_manual_campaign_filename,
+        test_name=viavi_manual_test_name,
+        test_timeout=viavi_manual_test_timeout,
+        # Test extra params
+        always_download_artifacts=always_download_artifacts,
+        gnb_startup_timeout=gnb_startup_timeout,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        warning_as_errors=warning_as_errors,
+    )
 
 
 @mark.parametrize(
@@ -68,7 +139,54 @@ def test_viavi(
     """
     Runs a test using Viavi
     """
+    _test_viavi(
+        # Retina
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        test_log_folder=test_log_folder,
+        # Clients
+        gnb=gnb,
+        viavi=viavi,
+        metrics_server=metrics_server,
+        # Test info
+        campaign_filename=campaign_filename,
+        test_name=test_name,
+        test_timeout=test_timeout,
+        # Test extra params
+        always_download_artifacts=always_download_artifacts,
+        gnb_startup_timeout=gnb_startup_timeout,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        warning_as_errors=warning_as_errors,
+        post_commands=post_commands,
+    )
 
+
+# pylint: disable=too-many-arguments, too-many-locals
+def _test_viavi(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    test_log_folder: str,
+    # Clients
+    gnb: GNBStub,
+    viavi: Viavi,
+    metrics_server: Optional[MetricServerInfo],
+    # Test info
+    campaign_filename: str,
+    test_name: str,
+    test_timeout: int,
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
+    post_commands: str = "",
+):
+    """
+    Runs a test using Viavi
+    """
     retina_data.test_config = {
         "gnb": {
             "parameters": {
@@ -79,9 +197,11 @@ def test_viavi(
             "templates": {"cell": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
-    configure_metric_server_for_gnb(
-        retina_manager=retina_manager, retina_data=retina_data, metrics_server=metrics_server
-    )
+    if metrics_server is not None:
+        configure_metric_server_for_gnb(
+            retina_manager=retina_manager, retina_data=retina_data, metrics_server=metrics_server
+        )
+
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
 
