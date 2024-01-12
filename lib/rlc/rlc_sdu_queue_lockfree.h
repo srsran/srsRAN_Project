@@ -27,18 +27,13 @@ public:
   explicit rlc_sdu_queue_lockfree(uint16_t capacity_, rlc_bearer_logger& logger_) :
     logger(logger_), capacity(capacity_), queue(capacity_)
   {
-    sdu_states = new std::atomic<uint32_t>[capacity];
-    sdu_sizes  = new std::atomic<size_t>[capacity];
+    sdu_states = std::make_unique<std::atomic<uint32_t>[]>(capacity);
+    sdu_sizes  = std::make_unique<std::atomic<size_t>[]>(capacity);
 
     for (uint16_t i = 0; i < capacity; i++) {
       sdu_states[i].store(STATE_FREE, std::memory_order_relaxed);
     }
-  }
 
-  ~rlc_sdu_queue_lockfree()
-  {
-    delete[] sdu_sizes;
-    delete[] sdu_states;
   }
 
   bool write(rlc_sdu sdu)
@@ -157,8 +152,8 @@ private:
 
   concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking> queue;
 
-  std::atomic<uint32_t>* sdu_states;
-  std::atomic<size_t>*   sdu_sizes;
+  std::unique_ptr<std::atomic<uint32_t>[]> sdu_states;
+  std::unique_ptr<std::atomic<size_t>[]>   sdu_sizes;
 };
 
 } // namespace srsran
