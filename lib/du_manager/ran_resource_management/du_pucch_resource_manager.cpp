@@ -150,7 +150,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
 
   const auto csi_offset_colliding_with_sr = [&](unsigned offset_candidate) -> bool {
     for (unsigned csi_off = offset_candidate; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
-      for (unsigned sr_off = candidate_sr_offset; sr_off < lcm_csi_sr_period; sr_off += csi_period_slots) {
+      for (unsigned sr_off = candidate_sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
         if (csi_off == sr_off) {
           return true;
         }
@@ -235,7 +235,6 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         if (optimal_res_it != free_csi_list.end()) {
           // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
           // lists of free resources.
-          // Remove CSI report slot offset from the free list and add it in the target CSI report config.
           csi_res_offset = *optimal_res_it;
           free_csi_list.erase(optimal_res_it);
           sr_res_offset = *sr_res_offset_it;

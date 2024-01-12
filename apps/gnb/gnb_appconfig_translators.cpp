@@ -819,6 +819,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
                                                         base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
+    config_helpers::compute_nof_sr_csi_pucch_res(
+        du_pucch_cfg,
+        base_cell.ul_common_cfg.max_pucchs_per_slot,
+        base_cell.pucch_cfg.sr_period_msec,
+        base_cell.csi_cfg.csi_rs_enabled ? optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec} : nullopt);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
