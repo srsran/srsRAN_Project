@@ -225,8 +225,8 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
   srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
-  srsran_assert(codeword_llrs.size() <= cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
-                "The number of LLRs, i.e., {} exceeds the expected number, i.e., {}.",
+  srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
+                "Wrong number of LLRs {} (expected {}).",
                 codeword_llrs.size(),
                 cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod));
 
@@ -275,39 +275,22 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
   // rounded up.
   nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
-  units::bits cw_length = units::bits(cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod));
+  // Codeword length (after concatenation of codeblocks).
+  units::bits cw_length(codeword_llrs.size());
 
   unsigned cw_offset = 0;
-
-  // If there are previously processed codeblocks in the buffer, bring the CW offset to the last segmented CB.
-  for (auto& proc_codeblock : described_codeblocks) {
-    cw_offset += proc_codeblock.second.cb_specific.rm_length;
-  }
-
-  for (unsigned i_segment = described_codeblocks.size(); i_segment != nof_segments; ++i_segment) {
-    if (cw_offset == codeword_llrs.size()) {
-      // Skip segmentation, since there are no new LLRs to process.
-      return;
-    }
-
+  for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     units::bits nof_filler_bits = segment_length - (max_info_bits + nof_crc_bits);
 
     codeblock_metadata tmp_description =
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
     unsigned rm_length = tmp_description.cb_specific.rm_length;
-
-    if ((cw_offset + rm_length) > codeword_llrs.size()) {
-      // Skip segmentation, since there are currently not enough softbits in the CW buffer.
-      return;
-    }
-
-    // Add the codeblock to the list.
     described_codeblocks.push_back({codeword_llrs.subspan(cw_offset, rm_length), tmp_description});
     cw_offset += rm_length;
   }
-  // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as the codeword length.
-  assert(codeword_llrs.size() == cw_offset);
+  // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
+  assert(cw_length.value() == cw_offset);
 }
 
 codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,

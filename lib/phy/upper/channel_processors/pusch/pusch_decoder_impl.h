@@ -118,8 +118,10 @@ private:
   segmenter_config segmentation_config;
   /// Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs;
-  /// Counts code blocks.
-  std::atomic<unsigned> cb_counter;
+  /// Counts the number of remaining CB decoding tasks.
+  std::atomic<unsigned> cb_task_counter;
+  /// Counts the number of CB available for decoding.
+  unsigned available_cb_counter;
   /// Enqueues code block decoder statistics.
   concurrent_queue<unsigned, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep> cb_stats;
   /// Number of UL-SCH codeword softbits. If set, the decoder will start decoding codeblocks as they become available.
