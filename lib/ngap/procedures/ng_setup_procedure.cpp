@@ -79,12 +79,12 @@ bool ng_setup_procedure::retry_required()
   const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
-    logger.error("AMF did not set any retry waiting time");
+    logger.warning("AMF did not set any retry waiting time");
     return false;
   }
   if (ng_setup_retry_no++ >= max_setup_retries) {
     // Number of retries exceeded, or there is no time to wait.
-    logger.error("Reached maximum number of NG Setup connection retries ({})", max_setup_retries);
+    logger.warning("Reached maximum number of NG Setup connection retries ({})", max_setup_retries);
     return false;
   }
 

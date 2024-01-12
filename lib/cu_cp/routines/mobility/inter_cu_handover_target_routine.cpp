@@ -58,13 +58,13 @@ void inter_cu_handover_target_routine::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", request.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
   ue = ue_manager.find_ue(request.ue_index);
 
   // Perform initial sanity checks on incoming message.
   if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
-    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup during Handover", request.ue_index, name());
+    logger.warning("ue={}: \"{}\" Invalid PduSessionResourceSetupRequest during Handover", request.ue_index, name());
     CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
   }
 
@@ -78,7 +78,7 @@ void inter_cu_handover_target_routine::operator()(
     // Generate security keys for Bearer Context Setup Request (RRC UE is not created yet)
     security_cfg = generate_security_keys(rrc_context.sec_context);
     if (!security_cfg.has_value()) {
-      logger.error("ue={}: \"{}\" failed to generate security keys.", request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to generate security keys", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
 
@@ -95,7 +95,7 @@ void inter_cu_handover_target_routine::operator()(
                                    next_config,
                                    ue->get_up_resource_manager(),
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to setup bearer at CU-UP", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
@@ -116,7 +116,7 @@ void inter_cu_handover_target_routine::operator()(
     // Handle UE Context Setup Response
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
-      logger.error("ue={}: \"{}\" failed to setup UE context at DU.", request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to setup UE context at DU", request.ue_index, name());
       cu_cp_notifier.on_ue_removal_required(ue_context_setup_response.ue_index);
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
@@ -140,7 +140,7 @@ void inter_cu_handover_target_routine::operator()(
 
     // Handle BearerContextModificationResponse
     if (!bearer_context_modification_response.success) {
-      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
@@ -158,7 +158,7 @@ void inter_cu_handover_target_routine::operator()(
                                 false,
                                 false,
                                 logger)) {
-      logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration", request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to fill RRC Reconfiguration", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
 
@@ -204,7 +204,7 @@ bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_setup_resp.drbs_failed_to_be_setup_list.empty()) {
-    logger.error("Couldn't setup {} DRBs at DU.", ue_context_setup_resp.drbs_failed_to_be_setup_list.size());
+    logger.warning("Couldn't setup {} DRBs at DU", ue_context_setup_resp.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
@@ -232,10 +232,10 @@ inter_cu_handover_target_routine::generate_security_keys(security::security_cont
                                                                   security::ciphering_algorithm::nea1,
                                                                   security::ciphering_algorithm::nea3};
   if (not sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
-    logger.error("ue={} could not select security algorithm.", request.ue_index);
+    logger.warning("ue={}: Could not select security algorithm", request.ue_index);
     return cfg;
   }
-  logger.debug("ue={} selected security algorithms NIA=NIA{} NEA=NEA{}.",
+  logger.debug("ue={}: Selected security algorithms NIA=NIA{} NEA=NEA{}",
                request.ue_index,
                sec_context.sel_algos.integ_algo,
                sec_context.sel_algos.cipher_algo);

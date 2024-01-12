@@ -29,8 +29,7 @@ ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_ue_context_set
   logger(logger_),
   rrc_context(rrc_context_)
 {
-  srsran_assert(request.ue_index != ue_index_t::invalid,
-                "UE index of F1AP UE Context Setup Request must not be invalid");
+  srsran_assert(request.ue_index != ue_index_t::invalid, "UE index of F1AP UeContextSetupRequest must not be invalid");
 }
 
 void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx)
@@ -41,7 +40,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   // Create UE context in CU-CP.
   if (not allocate_cu_ue_id()) {
-    logger.error("Failed to create UE context");
+    logger.warning("Failed to create UE context");
     create_ue_context_setup_result();
     CORO_EARLY_RETURN(response);
   }
@@ -64,7 +63,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   if (response.success) {
     logger.debug("ue={}: \"{}\" finalized", request.ue_index, name());
   } else {
-    logger.error("ue={}: \"{}\" failed", request.ue_index, name());
+    logger.warning("ue={}: \"{}\" failed", request.ue_index, name());
 
     // Remove F1AP context.
     ue_ctxt_list.remove_ue(request.ue_index);
@@ -77,19 +76,19 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
 {
   // Request allocation of UE index in target cell
   if (request.ue_index == ue_index_t::invalid) {
-    logger.error("Couldn't create UE in target cell");
+    logger.warning("Couldn't create UE in target cell");
     return false;
   }
 
   gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("No CU UE F1AP ID available");
+    logger.warning("No CU UE F1AP ID available");
     return false;
   }
 
   // Create UE context and store it.
   f1ap_ue_context& ue_ctxt = ue_ctxt_list.add_ue(request.ue_index, tmp_cu_ue_f1ap_id);
-  logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_ids.ue_index, tmp_cu_ue_f1ap_id);
+  logger.debug("ue={}: Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_ids.ue_index, tmp_cu_ue_f1ap_id);
 
   // Store identifiers.
   new_cu_ue_f1ap_id = tmp_cu_ue_f1ap_id;
@@ -111,7 +110,7 @@ bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_r
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
-    logger.error("Couldn't create UE in target cell");
+    logger.warning("Couldn't create UE in target cell");
     return false;
   }
 
@@ -150,7 +149,7 @@ void ue_context_setup_procedure::create_ue_context_setup_result()
 {
   if (new_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid || new_ue_index == ue_index_t::invalid) {
     response.success = false;
-    logger.error("\"{}\" failed", name());
+    logger.warning("\"{}\" failed", name());
     return;
   }
 

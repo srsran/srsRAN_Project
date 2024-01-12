@@ -319,7 +319,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   ngap_init_context_setup_request init_ctxt_setup_req;
   init_ctxt_setup_req.ue_index = ue_ctxt.ue_ids.ue_index;
   if (!fill_ngap_initial_context_setup_request(init_ctxt_setup_req, request)) {
-    ue_ctxt.logger.log_error("Conversion of PDU Session Resource Setup Request failed");
+    ue_ctxt.logger.log_warning("Conversion of PduSessionResourceSetupRequest failed");
     send_error_indication(ue_ctxt.ue_ids.ue_index, {}, ue_ctxt.ue_ids.amf_ue_id);
     return;
   }
@@ -394,7 +394,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   msg.ue_index     = ue_ctxt.ue_ids.ue_index;
   msg.serving_plmn = context.plmn;
   if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
-    ue_ctxt.logger.log_error("Conversion of PDU Session Resource Setup Request failed");
+    ue_ctxt.logger.log_warning("Conversion of PduSessionResourceSetupRequest failed");
     send_error_indication(ue_ctxt.ue_ids.ue_index);
     return;
   }
@@ -574,7 +574,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   logger.info("Received Paging");
 
   if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
-    logger.error("Dropping PDU. Unsupportet UE Paging ID");
+    logger.warning("Dropping PDU. Unsupportet UE Paging ID");
     send_error_indication();
     return;
   }
@@ -606,7 +606,7 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   // Convert Handover Request to common type
   ngap_handover_request ho_request;
   if (!fill_ngap_handover_request(ho_request, msg)) {
-    logger.error("Sending HandoverFailure. Received invalid HandoverRequest");
+    logger.warning("Sending HandoverFailure. Received invalid HandoverRequest");
     ngap_notifier.on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }
@@ -619,7 +619,7 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
       ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
-    logger.error("Sending HandoverFailure. Couldn't allocate UE index");
+    logger.warning("Sending HandoverFailure. Couldn't allocate UE index");
     ngap_notifier.on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }
