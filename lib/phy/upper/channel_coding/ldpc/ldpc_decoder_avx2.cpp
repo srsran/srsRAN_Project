@@ -93,27 +93,18 @@ void ldpc_decoder_avx2::compute_var_to_check_msgs(span<log_likelihood_ratio>    
   }
 }
 
-span<log_likelihood_ratio> ldpc_decoder_avx2::get_rotated_node(unsigned var_node)
-{
-  return span<log_likelihood_ratio>(rotated_var_to_check).subspan(var_node * node_size_byte, node_size_byte);
-}
-
 void ldpc_decoder_avx2::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
                                                   span<log_likelihood_ratio>       second_min_var_to_check,
                                                   span<uint8_t>                    min_var_to_check_index,
                                                   span<uint8_t>                    sign_prod_var_to_check,
-                                                  span<log_likelihood_ratio>       rotated_node,
-                                                  span<const log_likelihood_ratio> this_var_to_check,
-                                                  unsigned                         shift,
+                                                  span<const log_likelihood_ratio> rotated_node,
                                                   unsigned                         var_node)
 {
-  srsvec::circ_shift_backward(rotated_node.first(lifting_size), this_var_to_check.first(lifting_size), shift);
-
-  mm256::avx2_span min_var_to_check_avx2(min_var_to_check, node_size_avx2);
-  mm256::avx2_span second_min_var_to_check_avx2(second_min_var_to_check, node_size_avx2);
-  mm256::avx2_span min_var_to_check_index_avx2(min_var_to_check_index, node_size_avx2);
-  mm256::avx2_span sign_prod_var_to_check_avx2(sign_prod_var_to_check, node_size_avx2);
-  mm256::avx2_span rotated_node_avx2(rotated_node, node_size_avx2);
+  mm256::avx2_span       min_var_to_check_avx2(min_var_to_check, node_size_avx2);
+  mm256::avx2_span       second_min_var_to_check_avx2(second_min_var_to_check, node_size_avx2);
+  mm256::avx2_span       min_var_to_check_index_avx2(min_var_to_check_index, node_size_avx2);
+  mm256::avx2_span       sign_prod_var_to_check_avx2(sign_prod_var_to_check, node_size_avx2);
+  mm256::avx2_const_span rotated_node_avx2(rotated_node, node_size_avx2);
 
   __m256i this_var_index_epi8 = _mm256_set1_epi8(static_cast<int8_t>(var_node));
   // For all AVX2 registers inside a node...

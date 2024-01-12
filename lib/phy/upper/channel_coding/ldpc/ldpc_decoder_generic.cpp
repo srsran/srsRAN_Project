@@ -31,37 +31,27 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio> 
                  [](log_likelihood_ratio a, log_likelihood_ratio b) { return a - b; });
 }
 
-span<log_likelihood_ratio> ldpc_decoder_generic::get_rotated_node(unsigned /*i_loop*/)
-{
-  // In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
-  // a simple shift. We return an empty span.
-  return {};
-}
-
-void ldpc_decoder_generic::analyze_var_to_check_msgs(span<log_likelihood_ratio> min_var_to_check,
-                                                     span<log_likelihood_ratio> second_min_var_to_check,
-                                                     span<uint8_t>              min_var_to_check_index,
-                                                     span<uint8_t>              sign_prod_var_to_check,
-                                                     span<log_likelihood_ratio> /*rotated_node*/,
-                                                     span<const log_likelihood_ratio> this_var_to_check,
-                                                     unsigned                         shift,
+void ldpc_decoder_generic::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
+                                                     span<log_likelihood_ratio>       second_min_var_to_check,
+                                                     span<uint8_t>                    min_var_to_check_index,
+                                                     span<uint8_t>                    sign_prod_var_to_check,
+                                                     span<const log_likelihood_ratio> rotated_node,
                                                      unsigned                         var_node)
 {
   // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
   // var_to_check messages.
   for (unsigned j = 0; j != lifting_size; ++j) {
-    log_likelihood_ratio var_to_check_abs = log_likelihood_ratio::abs(this_var_to_check[j]);
-    unsigned             tmp_index        = (j + lifting_size - shift) % lifting_size;
-    bool                 is_min           = (var_to_check_abs < min_var_to_check[tmp_index]);
-    log_likelihood_ratio new_second_min   = is_min ? min_var_to_check[tmp_index] : var_to_check_abs;
-    bool                 is_best_two      = (var_to_check_abs < second_min_var_to_check[tmp_index]);
-    second_min_var_to_check[tmp_index]    = is_best_two ? new_second_min : second_min_var_to_check[tmp_index];
-    min_var_to_check[tmp_index]           = is_min ? var_to_check_abs : min_var_to_check[tmp_index];
-    min_var_to_check_index[tmp_index]     = is_min ? var_node : min_var_to_check_index[tmp_index];
+    log_likelihood_ratio var_to_check_abs = log_likelihood_ratio::abs(rotated_node[j]);
+    bool                 is_min           = (var_to_check_abs < min_var_to_check[j]);
+    log_likelihood_ratio new_second_min   = is_min ? min_var_to_check[j] : var_to_check_abs;
+    bool                 is_best_two      = (var_to_check_abs < second_min_var_to_check[j]);
+    second_min_var_to_check[j]            = is_best_two ? new_second_min : second_min_var_to_check[j];
+    min_var_to_check[j]                   = is_min ? var_to_check_abs : min_var_to_check[j];
+    min_var_to_check_index[j]             = is_min ? var_node : min_var_to_check_index[j];
 
     // For consistency with the optimized implementations, we store 0 if the sign is positive and 1 if the sign is
     // negative.
-    sign_prod_var_to_check[tmp_index] ^= (this_var_to_check[j] >= 0) ? 0U : 1U;
+    sign_prod_var_to_check[j] ^= (rotated_node[j] >= 0) ? 0U : 1U;
   }
 }
 
