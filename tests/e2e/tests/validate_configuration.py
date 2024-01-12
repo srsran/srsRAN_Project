@@ -80,7 +80,9 @@ def run_config(
     Run gnb with B200 example config and validate it doesn't crash.
     """
 
-    with tempfile.NamedTemporaryFile() as tmp_file:
+    with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
+        tmp_file.write(" ")  # Make it not empty to overwrite default one
+        tmp_file.flush()
         retina_data.test_config = {
             "gnb": {
                 "templates": {
