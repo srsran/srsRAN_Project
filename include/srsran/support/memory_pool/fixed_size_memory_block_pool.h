@@ -180,8 +180,8 @@ public:
       // Local cache is full. Rebalance by sending batches of blocks to central cache.
       // We leave one batch in the local cache.
       for (unsigned i = 0; i != max_local_batches - 1; ++i) {
-        report_fatal_error_if_not(central_mem_cache.try_enqueue(w_ctx->local_cache.back()),
-                                  "Failed to push batch to central cache");
+        report_fatal_error_if_not(central_mem_cache.enqueue(w_ctx->local_cache.back()),
+                                  "Failed to push allocated batch back to central cache");
         w_ctx->local_cache.pop_back();
       }
     }
