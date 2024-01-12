@@ -219,7 +219,7 @@ private:
               pool.incomplete_batch.push(local_cache.back().try_pop());
               if (pool.incomplete_batch.size() >= block_batch_size) {
                 // The incomplete batch is now complete and can be pushed to the central cache.
-                report_error_if_not(pool.central_mem_cache.try_enqueue(pool.incomplete_batch),
+                report_error_if_not(pool.central_mem_cache.enqueue(pool.incomplete_batch),
                                     "Failed to push blocks to central cache");
                 pool.incomplete_batch.clear();
               }
@@ -228,7 +228,7 @@ private:
           local_cache.pop_back();
           continue;
         }
-        report_error_if_not(pool.central_mem_cache.try_enqueue(local_cache.back()),
+        report_error_if_not(pool.central_mem_cache.enqueue(local_cache.back()),
                             "Failed to push blocks back to central cache");
         local_cache.pop_back();
       }
