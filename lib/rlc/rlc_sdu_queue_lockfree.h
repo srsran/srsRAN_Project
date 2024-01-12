@@ -24,8 +24,7 @@ namespace srsran {
 class rlc_sdu_queue_lockfree
 {
 public:
-  explicit rlc_sdu_queue_lockfree(uint16_t capacity_, rlc_bearer_logger& logger_) :
-    logger(logger_), capacity(capacity_), queue(capacity_)
+  explicit rlc_sdu_queue_lockfree(uint16_t capacity_, rlc_bearer_logger& logger_) : logger(logger_), capacity(capacity_)
   {
     sdu_states = std::make_unique<std::atomic<uint32_t>[]>(capacity);
     sdu_sizes  = std::make_unique<std::atomic<size_t>[]>(capacity);
@@ -34,6 +33,9 @@ public:
       sdu_states[i].store(STATE_FREE, std::memory_order_relaxed);
     }
 
+    queue = std::make_unique<
+        concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>>(
+        capacity);
   }
 
   bool write(rlc_sdu sdu)
@@ -57,7 +59,7 @@ public:
     }
 
     // push to queue
-    bool pushed = queue.try_push(std::move(sdu));
+    bool pushed = queue->try_push(std::move(sdu));
     if (not pushed) {
       logger.log_warning("Could not write to queue - queue is full. pdcp_sn={}", pdcp_sn);
       // if we have a PDCP SN, release the slot that we just reserved
@@ -105,7 +107,7 @@ public:
     bool discard_successful = true;
     do {
       // first try to pop front (SDU can still get discarded from upper layers)
-      bool popped = queue.try_pop(sdu);
+      bool popped = queue->try_pop(sdu);
       if (not popped) {
         // queue is empty
         return false;
@@ -136,9 +138,9 @@ public:
 
   // bool front_size_bytes(uint32_t& size) { return 0; }
 
-  bool is_empty() { return queue.empty(); }
+  bool is_empty() { return queue->empty(); }
 
-  bool is_full() { return queue.size() >= capacity; }
+  bool is_full() { return queue->size() >= capacity; }
 
 private:
   static constexpr uint32_t STATE_FREE      = 0xffffffff;
@@ -150,7 +152,9 @@ private:
   std::atomic<uint32_t> n_bytes  = {0};
   std::atomic<uint32_t> n_sdus   = {0};
 
-  concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking> queue;
+  std::unique_ptr<
+      concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>>
+      queue;
 
   std::unique_ptr<std::atomic<uint32_t>[]> sdu_states;
   std::unique_ptr<std::atomic<size_t>[]>   sdu_sizes;
