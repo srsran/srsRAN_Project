@@ -134,6 +134,7 @@ struct test_profile {
                                                   {modulation_scheme::QAM16, 658.0F},
                                                   {modulation_scheme::QAM64, 873.0F},
                                                   {modulation_scheme::QAM256, 948.0F}};
+  std::vector<unsigned>            rv_set      = {0, 2};
 };
 
 // Profile selected during test execution.
@@ -151,7 +152,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {25},
-     {{modulation_scheme::QPSK, 120.0F}}},
+     {{modulation_scheme::QPSK, 120.0F}},
+     {0}},
 
     {"pusch_scs15_5MHz_256qam_max",
      "Decodes PUSCH with 5 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
@@ -159,7 +161,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {25},
-     {{modulation_scheme::QAM256, 948.0F}}},
+     {{modulation_scheme::QAM256, 948.0F}},
+     {0}},
 
     {"pusch_scs15_20MHz_qpsk_min",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
@@ -167,7 +170,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QPSK, 120.0F}}},
+     {{modulation_scheme::QPSK, 120.0F}},
+     {0}},
 
     {"pusch_scs15_20MHz_16qam_med",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 16-QAM modulation at a medium code rate.",
@@ -175,7 +179,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QAM16, 658.0F}}},
+     {{modulation_scheme::QAM16, 658.0F}},
+     {0}},
 
     {"pusch_scs15_50MHz_64qam_max",
      "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
@@ -183,7 +188,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
-     {{modulation_scheme::QAM64, 873.0F}}},
+     {{modulation_scheme::QAM64, 873.0F}},
+     {0}},
 
     {"pusch_scs15_20MHz_256qam_max",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate",
@@ -191,7 +197,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QAM256, 948.0F}}},
+     {{modulation_scheme::QAM256, 948.0F}},
+     {0}},
 
     {"pusch_scs15_50MHz_qpsk_min",
      "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
@@ -199,7 +206,8 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
-     {{modulation_scheme::QPSK, 120.0F}}},
+     {{modulation_scheme::QPSK, 120.0F}},
+     {0}},
 
     {"pusch_scs15_50MHz_256qam_max",
      "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
@@ -207,15 +215,17 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
-     {{modulation_scheme::QAM256, 948.0F}}},
+     {{modulation_scheme::QAM256, 948.0F}},
+     {0}},
 
     {"pusch_scs30_100MHz_256qam_max",
-     "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
+     "Decodes PUSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {273},
-     {{modulation_scheme::QAM256, 948.0F}}},
+     {{modulation_scheme::QAM256, 948.0F}},
+     {0, 2}},
 };
 
 static void usage(const char* prog)
@@ -322,46 +332,48 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 
   for (sch_mcs_description mcs : profile.mcs_set) {
     for (unsigned nof_prb : profile.nof_prb_set) {
-      // Determine the Transport Block Size.
-      tbs_calculator_configuration tbs_config = {};
-      tbs_config.mcs_descr                    = mcs;
-      tbs_config.n_prb                        = nof_prb;
-      tbs_config.nof_layers                   = nof_tx_layers;
-      tbs_config.nof_symb_sh                  = profile.nof_symbols;
-      tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
-      unsigned tbs            = tbs_calculator_calculate(tbs_config);
+      for (unsigned rv : profile.rv_set) {
+        // Determine the Transport Block Size.
+        tbs_calculator_configuration tbs_config = {};
+        tbs_config.mcs_descr                    = mcs;
+        tbs_config.n_prb                        = nof_prb;
+        tbs_config.nof_layers                   = nof_tx_layers;
+        tbs_config.nof_symb_sh                  = profile.nof_symbols;
+        tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+        unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
-      // Build the PUSCH PDU configuration.
-      pusch_processor::pdu_t config = {};
-      config.slot                   = slot_point(to_numerology_value(profile.scs), 0);
-      config.rnti                   = 1;
-      config.bwp_size_rb            = nof_prb;
-      config.bwp_start_rb           = 0;
-      config.cp                     = profile.cp;
-      config.mcs_descr              = mcs;
-      config.codeword.emplace(pusch_processor::codeword_description{
-          0, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
-      config.uci.alpha_scaling         = 1.0;
-      config.uci.beta_offset_harq_ack  = 5.0;
-      config.uci.beta_offset_csi_part1 = 5.0;
-      config.uci.beta_offset_csi_part2 = 5.0;
-      config.uci.nof_harq_ack          = nof_harq_ack;
-      config.uci.nof_csi_part1         = nof_csi_part1;
-      config.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
-      config.n_id                      = 0;
-      config.nof_tx_layers             = nof_tx_layers;
-      config.rx_ports.resize(nof_rx_ports);
-      std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
-      config.dmrs_symbol_mask            = dmrs_symbol_mask;
-      config.dmrs                        = dmrs;
-      config.scrambling_id               = 0;
-      config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-      config.freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
-      config.start_symbol_index          = 0;
-      config.nof_symbols                 = profile.nof_symbols;
-      config.tbs_lbrm_bytes              = ldpc::MAX_CODEBLOCK_SIZE / 8;
+        // Build the PUSCH PDU configuration.
+        pusch_processor::pdu_t config = {};
+        config.slot                   = slot_point(to_numerology_value(profile.scs), 0);
+        config.rnti                   = 1;
+        config.bwp_size_rb            = nof_prb;
+        config.bwp_start_rb           = 0;
+        config.cp                     = profile.cp;
+        config.mcs_descr              = mcs;
+        config.codeword.emplace(pusch_processor::codeword_description{
+            rv, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
+        config.uci.alpha_scaling         = 1.0;
+        config.uci.beta_offset_harq_ack  = 5.0;
+        config.uci.beta_offset_csi_part1 = 5.0;
+        config.uci.beta_offset_csi_part2 = 5.0;
+        config.uci.nof_harq_ack          = nof_harq_ack;
+        config.uci.nof_csi_part1         = nof_csi_part1;
+        config.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
+        config.n_id                      = 0;
+        config.nof_tx_layers             = nof_tx_layers;
+        config.rx_ports.resize(nof_rx_ports);
+        std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
+        config.dmrs_symbol_mask            = dmrs_symbol_mask;
+        config.dmrs                        = dmrs;
+        config.scrambling_id               = 0;
+        config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
+        config.freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
+        config.start_symbol_index          = 0;
+        config.nof_symbols                 = profile.nof_symbols;
+        config.tbs_lbrm_bytes              = ldpc::MAX_CODEBLOCK_SIZE / 8;
 
-      test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
+        test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
+      }
     }
   }
   return test_case_set;
@@ -554,15 +566,7 @@ static void thread_process(pusch_processor&              proc,
     result_notifier.reset();
 
     // Process PDU.
-    if (executor) {
-      if (not executor->execute([&proc, &data, &rm_buffer, &result_notifier, &grid, config]() {
-            proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
-          })) {
-        fmt::print("Failed to enqueue task.\n");
-      }
-    } else {
-      proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
-    }
+    proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
 
     // Wait for finish the task.
     result_notifier.wait_for_completion();
@@ -697,10 +701,11 @@ int main(int argc, char** argv)
     // Measurement description.
     fmt::memory_buffer meas_description;
     fmt::format_to(meas_description,
-                   "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} - {:>5.1f} Mbps",
+                   "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} rv={} - {:>5.1f} Mbps",
                    config.freq_alloc.get_nof_rb(),
                    to_string(config.mcs_descr.modulation),
                    config.mcs_descr.get_normalised_target_code_rate(),
+                   config.codeword.value().rv,
                    peak_throughput_Mbps);
 
     // Run the benchmark.
