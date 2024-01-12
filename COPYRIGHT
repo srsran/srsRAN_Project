@@ -55,6 +55,11 @@ Copyright: 2018 Erik Rigtorp
 License:   MIT
 
 
+Files:     external/cameron314/concurrentqueue.hpp
+Copyright: 2013-2020, Cameron Desrochers
+License:   Simplified BSD
+
+
 License: MIT
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the "Software"),

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cameron314/concurrentqueue.h"
 #include "lockfree_object_pool.h"
 #include "memory_block_list.h"
 #include "srsran/adt/static_vector.h"
@@ -88,7 +89,7 @@ class fixed_size_memory_block_pool
       for (unsigned j = 0; j != block_batch_size; ++j) {
         batch.push(allocated_memory.data() + (i * block_batch_size + j) * mblock_size);
       }
-      report_fatal_error_if_not(central_mem_cache.push(batch), "Failed to push batch to central cache");
+      report_fatal_error_if_not(central_mem_cache.enqueue(batch), "Failed to push batch to central cache");
     }
   }
 
@@ -138,7 +139,7 @@ public:
 
     // Local cache is empty. Attempt memory block pop from central cache.
     free_memory_block_list batch;
-    if (central_mem_cache.pop(batch)) {
+    if (central_mem_cache.try_dequeue(batch)) {
       w_ctx->local_cache.push_back(batch);
       node = w_ctx->local_cache.back().try_pop();
     }
@@ -179,7 +180,7 @@ public:
       // Local cache is full. Rebalance by sending batches of blocks to central cache.
       // We leave one batch in the local cache.
       for (unsigned i = 0; i != max_local_batches - 1; ++i) {
-        report_fatal_error_if_not(central_mem_cache.push(w_ctx->local_cache.back()),
+        report_fatal_error_if_not(central_mem_cache.try_enqueue(w_ctx->local_cache.back()),
                                   "Failed to push batch to central cache");
         w_ctx->local_cache.pop_back();
       }
@@ -195,7 +196,7 @@ public:
     }
 
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
-               central_mem_cache.size() * block_batch_size,
+               central_mem_cache.size_approx() * block_batch_size,
                nof_memory_blocks(),
                count);
   }
@@ -218,7 +219,8 @@ private:
               pool.incomplete_batch.push(local_cache.back().try_pop());
               if (pool.incomplete_batch.size() >= block_batch_size) {
                 // The incomplete batch is now complete and can be pushed to the central cache.
-                pool.central_mem_cache.push(pool.incomplete_batch);
+                report_error_if_not(pool.central_mem_cache.try_enqueue(pool.incomplete_batch),
+                                    "Failed to push blocks to central cache");
                 pool.incomplete_batch.clear();
               }
             }
@@ -226,7 +228,8 @@ private:
           local_cache.pop_back();
           continue;
         }
-        pool.central_mem_cache.push(local_cache.back());
+        report_error_if_not(pool.central_mem_cache.try_enqueue(local_cache.back()),
+                            "Failed to push blocks back to central cache");
         local_cache.pop_back();
       }
     }
@@ -244,7 +247,7 @@ private:
 
   std::vector<uint8_t> allocated_memory;
 
-  lockfree_bounded_stack<free_memory_block_list> central_mem_cache;
+  moodycamel::ConcurrentQueue<free_memory_block_list> central_mem_cache;
 
   // When workers get deleted, some local batches may be still incomplete. We collect them here to form full batches
   // when other workers get deleted as well.
