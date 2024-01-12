@@ -36,6 +36,10 @@ receiver_impl::receiver_impl(const std::string&    interface,
     report_error("Unable to open socket for Ethernet receiver");
   }
 
+  if (interface.size() > (IFNAMSIZ - 1)) {
+    report_error("The Ethernet receiver interface name '{}' exceeds the maximum allowed length");
+  }
+
   if (is_promiscuous_mode_enabled) {
     // Set interface to promiscuous mode.
     ::ifreq if_opts;
@@ -50,7 +54,7 @@ receiver_impl::receiver_impl(const std::string&    interface,
   }
 
   // Bind to device.
-  if (::setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.c_str(), IFNAMSIZ - 1) == -1) {
+  if (::setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.c_str(), interface.size()) == -1) {
     report_error("Unable to bind socket in Ethernet receiver");
   }
 

@@ -941,8 +941,10 @@ static ru_ofh_configuration generate_ru_config()
   const std::chrono::microseconds dl_processing_time = 400us;
 
   ru_ofh_configuration ru_cfg;
-  ru_cfg.dl_processing_time         = dl_processing_time;
   ru_cfg.max_processing_delay_slots = processing_delay_slots;
+  ru_cfg.gps_Alpha                  = 0;
+  ru_cfg.gps_Beta                   = 0;
+  ru_cfg.dl_processing_time         = dl_processing_time;
   ru_cfg.uses_dpdk                  = false;
 
   ru_cfg.sector_configs.emplace_back();
@@ -960,21 +962,21 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
 {
   ru_ofh_dependencies dependencies;
   dependencies.logger             = &logger;
-  dependencies.rt_timing_executor = workers.ru_timing_exec;
-  dependencies.rx_symbol_notifier = rx_symbol_notifier;
   dependencies.timing_notifier    = timing_notifier;
+  dependencies.rx_symbol_notifier = rx_symbol_notifier;
+  dependencies.rt_timing_executor = workers.ru_timing_exec;
 
   dependencies.sector_dependencies.emplace_back();
-  auto& sector_deps  = dependencies.sector_dependencies.back();
-  sector_deps.logger = &logger;
+  auto& sector_deps                = dependencies.sector_dependencies.back();
+  sector_deps.logger               = &logger;
+  sector_deps.downlink_executor    = workers.ru_dl_exec;
+  sector_deps.receiver_executor    = workers.ru_rx_exec;
+  sector_deps.transmitter_executor = workers.ru_tx_exec;
+
   // Configure Ethernet gateway.
   auto gateway            = std::make_unique<test_gateway>();
   tx_gateway              = gateway.get();
   sector_deps.eth_gateway = std::move(gateway);
-  // Configure executors.
-  sector_deps.downlink_executor    = workers.ru_dl_exec;
-  sector_deps.transmitter_executor = workers.ru_tx_exec;
-  sector_deps.receiver_executor    = workers.ru_rx_exec;
 
   return dependencies;
 }
