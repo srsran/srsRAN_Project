@@ -199,9 +199,18 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                  gnb_cfg.test_mode_cfg.test_ue.i_2};
     }
     // FAPI configuration.
-    du_cfg.fapi.log_level   = gnb_cfg.log_cfg.fapi_level;
-    du_cfg.fapi.sector      = i;
-    du_cfg.fapi.prach_ports = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
+    du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
+    du_cfg.fapi.sector    = i;
+    if (tmp_cfg.fapi_cfg.l2_nof_slots_ahead != 0) {
+      du_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
+    } else {
+      report_error_if_not(workers.fapi_exec[i] == nullptr,
+                          "FAPI buffered worker created for a cell with no MAC delay configured");
+    }
+
+    // As the temporal configuration contains only once cell, pick the data from that cell.
+    du_cfg.fapi.prach_ports        = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
+    du_cfg.fapi.l2_nof_slots_ahead = tmp_cfg.fapi_cfg.l2_nof_slots_ahead;
 
     du_insts.push_back(make_du(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");

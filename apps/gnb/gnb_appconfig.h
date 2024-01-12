@@ -1202,6 +1202,12 @@ struct hal_appconfig {
   std::string eal_args;
 };
 
+/// FAPI configuration of the gNB app.
+struct fapi_appconfig {
+  /// Number of slots the L2 is running ahead of the L1.
+  unsigned l2_nof_slots_ahead = 0;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -1226,18 +1232,20 @@ struct gnb_appconfig {
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
   variant<ru_sdr_appconfig, ru_ofh_appconfig, ru_dummy_appconfig> ru_cfg = {ru_sdr_appconfig{}};
+  /// FAPI configuration.
+  fapi_appconfig fapi_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
   std::vector<cell_appconfig> cells_cfg = {{}};
 
-  /// \brief QoS configuration.
+  /// QoS configuration.
   std::vector<qos_appconfig> qos_cfg;
 
-  /// \brief QoS configuration.
+  /// SRB configuration.
   std::map<srb_id_t, srb_appconfig> srb_cfg;
 
-  /// \brief Network slice configuration.
+  /// Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
 
   /// Expert physical layer configuration.
@@ -1246,16 +1254,16 @@ struct gnb_appconfig {
   /// Configuration for testing purposes.
   test_mode_appconfig test_mode_cfg = {};
 
-  /// \brief NTN configuration.
+  /// NTN configuration.
   optional<ntn_config> ntn_cfg;
 
-  /// \brief Buffer pool configuration.
+  /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
 
-  /// \brief Expert configuration.
+  /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
 
-  /// \brief HAL configuration.
+  /// HAL configuration.
   optional<hal_appconfig> hal_config;
 };
 

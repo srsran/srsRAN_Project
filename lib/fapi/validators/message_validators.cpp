@@ -9,15 +9,15 @@
  */
 
 #include "srsran/fapi/message_validators.h"
-#include "pdu_validators/dl_csi_pdu.h"
-#include "pdu_validators/dl_pdcch_pdu.h"
-#include "pdu_validators/dl_pdsch_pdu.h"
-#include "pdu_validators/dl_ssb_pdu.h"
-#include "pdu_validators/field_checkers.h"
-#include "pdu_validators/uci_pdus.h"
-#include "pdu_validators/ul_prach_pdu.h"
-#include "pdu_validators/ul_pucch_pdu.h"
-#include "pdu_validators/ul_pusch_pdu.h"
+#include "dl_csi_pdu.h"
+#include "dl_pdcch_pdu.h"
+#include "dl_pdsch_pdu.h"
+#include "dl_ssb_pdu.h"
+#include "field_checkers.h"
+#include "uci_pdus.h"
+#include "ul_prach_pdu.h"
+#include "ul_pucch_pdu.h"
+#include "ul_pusch_pdu.h"
 #include "srsran/support/format_utils.h"
 
 using namespace srsran;

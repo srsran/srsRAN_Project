@@ -8,6 +8,7 @@
  *
  */
 
+#include "../message_builder_helpers.h"
 #include "helpers.h"
 #include "srsran/fapi/message_validators.h"
 

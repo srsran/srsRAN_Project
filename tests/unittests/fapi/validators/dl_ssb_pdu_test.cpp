@@ -8,10 +8,10 @@
  *
  */
 
-#include "../../../lib/fapi/pdu_validators/dl_ssb_pdu.h"
+#include "../../../lib/fapi/validators/dl_ssb_pdu.h"
+#include "../message_builder_helpers.h"
 #include "helpers.h"
 #include "srsran/fapi/message_validators.h"
-#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace fapi;
