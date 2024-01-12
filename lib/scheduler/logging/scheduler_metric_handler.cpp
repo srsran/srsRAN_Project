@@ -168,7 +168,7 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
           convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(), {0, u.nof_prbs}, get_nominal_rbg_size(u.nof_prbs, true))
               .count();
     } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
-      u.data.dl_prbs_used += (dl_grant.pdsch_cfg.rbs.type1().stop() - dl_grant.pdsch_cfg.rbs.type1().start());
+      u.data.dl_prbs_used += (dl_grant.pdsch_cfg.rbs.type1().length());
     }
   }
 
@@ -181,11 +181,10 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     if (ul_grant.pusch_cfg.rbs.is_type0()) {
       ues[it->second].data.ul_prbs_used += convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
                                                                 {0, ues[it->second].nof_prbs},
-                                                                get_nominal_rbg_size(ues[it->second].nof_prbs, false))
+                                                                get_nominal_rbg_size(ues[it->second].nof_prbs, true))
                                                .count();
     } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
-      ues[it->second].data.ul_prbs_used +=
-          (ul_grant.pusch_cfg.rbs.type1().stop() - ul_grant.pusch_cfg.rbs.type1().start());
+      ues[it->second].data.ul_prbs_used += (ul_grant.pusch_cfg.rbs.type1().length());
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
