@@ -69,11 +69,6 @@ target_link_libraries(fixed_size_memory_pool_test srsran_support gtest gtest_mai
 add_test(fixed_size_memory_pool_test fixed_size_memory_pool_test)
 set_tests_properties(fixed_size_memory_pool_test PROPERTIES LABELS "tsan")
 
-add_executable(lockfree_object_pool_test lockfree_object_pool_test.cpp)
-target_link_libraries(lockfree_object_pool_test srsran_support gtest gtest_main)
-add_test(lockfree_object_pool_test lockfree_object_pool_test)
-set_tests_properties(lockfree_object_pool_test PROPERTIES LABELS "tsan")
-
 add_executable(units_test units_test.cpp)
 target_link_libraries(units_test srslog srsran_support gtest gtest_main)
 add_test(units_test units_test)

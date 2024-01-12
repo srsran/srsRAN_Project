@@ -11,7 +11,6 @@
 #pragma once
 
 #include "cameron314/concurrentqueue.h"
-#include "lockfree_object_pool.h"
 #include "memory_block_list.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/support/error_handling.h"
@@ -66,6 +65,12 @@ class fixed_size_memory_block_pool
   /// Thread-local cache that stores a list of batches of memory blocks.
   using local_cache_type = static_vector<memory_block_batch, MAX_LOCAL_BATCH_CAPACITY>;
 
+  // Given that we use the MPMC queue in https://github.com/cameron314/concurrentqueue, we have to over-dimension it
+  // to account the potential number of producers. The way to exactly over-dimension this queue is inconvenient, so
+  // we just try to conservatively ensure it can accommodate up to 32 producers for a block size of 32. If this is
+  // not enough, the queue will resize itself and malloc in the process.
+  const static size_t OVER_DIM_CENTRAL_CACHE = 2 * 32 * 32;
+
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
     // Make sure that there are no gaps between blocks when they are allocated as paret of a single array.
@@ -79,11 +84,7 @@ class fixed_size_memory_block_pool
     // Allocate the required memory for the given number of segments and segment size.
     allocated_memory(mblock_size * nof_blocks),
     // Pre-reserve space in the central cache to hold all batches and avoid reallocations.
-    // Given that we use the MPMC queue in https://github.com/cameron314/concurrentqueue, we have to over-dimension it
-    // to account the potential number of producers. The way to exactly over-dimension this queue is inconvenient, so
-    // we just try to conservatively ensure it can accommodate up to 32 producers for a block size of 32. If this is
-    // not enough, the queue will resize itself and malloc in the process.
-    central_mem_cache(nof_total_batches() + 2 * 32 * 32)
+    central_mem_cache(nof_total_batches() + OVER_DIM_CENTRAL_CACHE)
   {
     srsran_assert(nof_blocks > max_local_cache_size(),
                   "The number of segments in the pool must be much larger than the thread cache size ({} <= {})",
