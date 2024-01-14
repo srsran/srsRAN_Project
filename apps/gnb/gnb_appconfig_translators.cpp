@@ -420,12 +420,19 @@ static sib19_info create_sib19_info(const gnb_appconfig& config)
   sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
 
-  // These values are provided to the config in ECEF coordinates, but the scheduler expects them in WGS84 with a step
-  // level of 1.3m.
-  sib19.ephemeris_info.value().position_x /= 1.3;
-  sib19.ephemeris_info.value().position_y /= 1.3;
-  sib19.ephemeris_info.value().position_z /= 1.3;
-
+  // These ephemeris parameters are all scaled in accordance with NIMA TR 8350.2.
+  if (variant_holds_alternative<ecef_coordinates_t>(sib19.ephemeris_info.value())) {
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
+  } else if (variant_holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).longitude /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).inclination /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).mean_anomaly /= 0.00000002341;
+  }
   if (config.ntn_cfg.value().distance_threshold.has_value()) {
     sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
   }

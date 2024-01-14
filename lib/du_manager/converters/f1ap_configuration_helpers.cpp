@@ -327,6 +327,9 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
         sib1.non_crit_ext.non_crit_ext_present                                  = true;
         sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
         sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present = true;
+        sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17_present = true;
+        sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
+            sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
         auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
         si_sched_info_r17.sched_info_list2_r17.resize(du_cfg.si_config->si_sched_info.size());
         for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
@@ -415,20 +418,27 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
   }
 
   if (sib19_params.ephemeris_info.has_value()) {
-    sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17 =
-        sib19_params.ephemeris_info.value().position_x;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17 =
-        sib19_params.ephemeris_info.value().position_y;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17 =
-        sib19_params.ephemeris_info.value().position_z;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 =
-        sib19_params.ephemeris_info.value().velocity_vx;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 =
-        sib19_params.ephemeris_info.value().velocity_vy;
-    sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 =
-        sib19_params.ephemeris_info.value().velocity_vz;
+    if (variant_holds_alternative<ecef_coordinates_t>(sib19_params.ephemeris_info.value())) {
+      auto& pos_vel = variant_get<ecef_coordinates_t>(sib19_params.ephemeris_info.value());
+      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = pos_vel.position_x;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = pos_vel.position_y;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = pos_vel.position_z;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = pos_vel.velocity_vx;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = pos_vel.velocity_vy;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = pos_vel.velocity_vz;
+    } else {
+      auto& orbital_elem = variant_get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
+      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().semi_major_axis_r17 = (uint64_t)orbital_elem.semi_major_axis;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().eccentricity_r17    = (uint32_t)orbital_elem.eccentricity;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().periapsis_r17       = (uint32_t)orbital_elem.periapsis;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().longitude_r17       = (uint32_t)orbital_elem.longitude;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().inclination_r17     = (int32_t)orbital_elem.inclination;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().mean_anomaly_r17    = (uint32_t)orbital_elem.mean_anomaly;
+    }
   }
   if (sib19_params.epoch_time.has_value()) {
     sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
@@ -451,7 +461,6 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17                 = sib19_params.ta_info.value().ta_common_drift;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17 = sib19_params.ta_info.value().ta_common_drift_variant;
   }
-  sib19.ntn_cfg_r17.ta_report_r17_present = false;
 
   return sib19;
 }
