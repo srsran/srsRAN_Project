@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Software Radio Systems Limited
+# Copyright 2013-2024 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -73,8 +73,10 @@ trigger docker:
       changes:
         paths:
           - .gitlab/ci/docker.yml
-          - docker/**/*.{yml,env,json,toml,py,sh,csv}
+          - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
+          - scripts/srsran_performance
+          - .gdbinit
   trigger:
     include: .gitlab/ci/docker.yml
     strategy: depend

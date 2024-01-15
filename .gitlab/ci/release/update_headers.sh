@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
 
 set -e
 
@@ -7,7 +14,7 @@ echo "= Update headers ="
 echo "=================="
 
 # for CMake/YML files
-find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" \) \
+find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" -o -name "*.py" -o -name "*.toml" -o -name "Dockerfile" -o -name "srsran_performance" -o -name ".gdbinit" \) \
     ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -path "*/docker/open5gs/*" ! -name "FindBackward.cmake" \
     -print0 | while IFS= read -r -d '' file; do
 
