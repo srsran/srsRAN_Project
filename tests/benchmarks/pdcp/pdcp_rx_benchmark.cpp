@@ -58,12 +58,15 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions = 1000;
+  unsigned nof_repetitions   = 1000;
+  int      algo              = 2;
+  bool     print_timing_info = false;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
+  fmt::print("\t-a Security algorithm to use [Default {2}, valid {1,2,3}]\n", params.algo);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-h Show this message\n");
 }
@@ -71,10 +74,16 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:h")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'a':
+        params.algo = std::strtol(optarg, nullptr, 10);
+        break;
+      case 't':
+        params.print_timing_info = true;
         break;
       case 'h':
       default:
@@ -84,7 +93,8 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-std::vector<byte_buffer_chain> gen_pdu_list(security::integrity_enabled   int_enabled,
+std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params,
+                                            security::integrity_enabled   int_enabled,
                                             security::ciphering_enabled   ciph_enabled,
                                             security::integrity_algorithm int_algo,
                                             security::ciphering_algorithm ciph_algo)
@@ -125,7 +135,7 @@ std::vector<byte_buffer_chain> gen_pdu_list(security::integrity_enabled   int_en
   pdcp_tx->set_ciphering(ciph_enabled);
 
   // Prepare SDU list for benchmark
-  int num_sdus  = 1000;
+  int num_sdus  = params.nof_repetitions;
   int num_bytes = 1500;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
@@ -150,7 +160,7 @@ void benchmark_pdcp_rx(bench_params                  params,
     fmt::format_to(buffer, "Benchmark PDCP RX. NIA0 NEA0");
   }
 
-  std::vector<byte_buffer_chain> pdu_list = gen_pdu_list(int_enabled, ciph_enabled, int_algo, ciph_algo);
+  std::vector<byte_buffer_chain> pdu_list = gen_pdu_list(params, int_enabled, ciph_enabled, int_algo, ciph_algo);
 
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
@@ -190,7 +200,7 @@ void benchmark_pdcp_rx(bench_params                  params,
 
   // Prepare SDU list for benchmark
   std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = 1000;
+  int                      num_sdus  = params.nof_repetitions;
   int                      num_bytes = 1500;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
@@ -209,8 +219,9 @@ void benchmark_pdcp_rx(bench_params                  params,
   bm->new_measure("RX PDU", 1500 * 8, measure);
 
   // Output results.
-  bm->print_percentiles_time();
-
+  if (params.print_timing_info) {
+    bm->print_percentiles_time();
+  }
   bm->print_percentiles_throughput(" bps");
 }
 
@@ -223,33 +234,25 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
+  if (params.algo != 1 && params.algo != 2 && params.algo != 3) {
+    fmt::print("Unsupported algortithm. Use NIA/NEA 1, 2 or 3.\n");
+    return -1;
+  }
+
+  security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(params.algo);
+  security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(params.algo);
+
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::off,
-                      security::ciphering_enabled::off,
-                      security::integrity_algorithm::nia2,
-                      security::ciphering_algorithm::nea0);
+    benchmark_pdcp_rx(params, security::integrity_enabled::off, security::ciphering_enabled::off, int_algo, ciph_algo);
   }
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::on,
-                      security::ciphering_enabled::on,
-                      security::integrity_algorithm::nia1,
-                      security::ciphering_algorithm::nea1);
+    benchmark_pdcp_rx(params, security::integrity_enabled::on, security::ciphering_enabled::on, int_algo, ciph_algo);
   }
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::on,
-                      security::ciphering_enabled::on,
-                      security::integrity_algorithm::nia2,
-                      security::ciphering_algorithm::nea2);
+    benchmark_pdcp_rx(params, security::integrity_enabled::on, security::ciphering_enabled::off, int_algo, ciph_algo);
   }
   {
-    benchmark_pdcp_rx(params,
-                      security::integrity_enabled::on,
-                      security::ciphering_enabled::on,
-                      security::integrity_algorithm::nia3,
-                      security::ciphering_algorithm::nea3);
+    benchmark_pdcp_rx(params, security::integrity_enabled::off, security::ciphering_enabled::on, int_algo, ciph_algo);
   }
   srslog::flush();
 }
