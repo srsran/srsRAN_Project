@@ -24,6 +24,23 @@ variables:
 ################################################################################
 # Static
 ################################################################################
+no docker changes:
+  stage: static
+  image: alpine:3.16.0
+  rules:
+    - if: $ON_MR
+      changes:
+        - docker/docker-compose.yml
+        - docker/.env
+        - docker/Dockerfile
+        - docker/metrics_server/**/*
+        - docker/open5gs/**/*
+        - docker/grafana/**/*
+      when: never
+    - if: $ON_MR
+  script:
+    - echo "Nothing to check"
+
 metrics tox:
   extends: .tox
   stage: static
