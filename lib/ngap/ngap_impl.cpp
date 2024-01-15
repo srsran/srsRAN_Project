@@ -670,7 +670,12 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause{}", msg_cause);
 
   // Request UE release
-  handle_ue_context_release_request(cu_cp_ue_context_release_request{ue_index, {}, cause_nas_t::unspecified});
+  task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+                                   CORO_BEGIN(ctx);
+                                   CORO_AWAIT(handle_ue_context_release_request(
+                                       cu_cp_ue_context_release_request{ue_index, {}, cause_nas_t::unspecified}));
+                                   CORO_RETURN();
+                                 }));
 
   // TODO: handle error indication
 }
@@ -703,23 +708,32 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
   }
 }
 
-bool ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
+async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping UeContextReleaseRequest. UE context does not exist", msg.ue_index);
-    return false;
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. UE does not have an AMF UE ID");
-    return false;
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
   }
 
   if (ue_ctxt.release_requested) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Request already pending");
-    return true;
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
   ngap_message ngap_msg;
@@ -738,21 +752,18 @@ bool ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   ue_ctxt.release_requested = true; // Mark UE so retx of request are avoided.
 
   // Schedule transmission of UE Context Release Request
-  task_sched.schedule_async_task(
-      msg.ue_index, launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
+  return launch_async([this, msg, ngap_msg](coro_context<async_task<bool>>& ctx) {
+    CORO_BEGIN(ctx);
 
-        if (!ue_ctxt_list.contains(msg.ue_index)) {
-          logger.warning("ue={}: Dropping scheduled UeContextReleaseRequest. UE context does not exist anymore",
-                         msg.ue_index);
-        } else {
-          ue_ctxt_list[msg.ue_index].logger.log_info("Sending UeContextReleaseRequest");
-          ngap_notifier.on_new_message(ngap_msg);
-        }
-        CORO_RETURN();
-      }));
-
-  return true;
+    if (!ue_ctxt_list.contains(msg.ue_index)) {
+      logger.warning("ue={}: Dropping scheduled UeContextReleaseRequest. UE context does not exist anymore",
+                     msg.ue_index);
+    } else {
+      ue_ctxt_list[msg.ue_index].logger.log_info("Sending UeContextReleaseRequest");
+      ngap_notifier.on_new_message(ngap_msg);
+    }
+    CORO_RETURN(true);
+  });
 }
 
 // TODO make preparation result an async task

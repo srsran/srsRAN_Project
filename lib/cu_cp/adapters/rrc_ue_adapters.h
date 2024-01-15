@@ -130,11 +130,11 @@ public:
     ngap_nas_msg_handler->handle_ul_nas_transport_message(msg);
   }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
-    ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
+    return ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
   }
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,

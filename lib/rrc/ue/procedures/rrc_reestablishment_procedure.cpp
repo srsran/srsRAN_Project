@@ -98,7 +98,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       logger.log_debug(
           "\"{}\" for old_ue={} failed. Requesting UE context release", name(), reestablishment_context.ue_index);
       // Release the old UE
-      send_ue_context_release_request(context.ue_index);
+      ue_context_release_request.ue_index = context.ue_index;
+      ue_context_release_request.cause    = cause_radio_network_t::unspecified;
+      CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
     } else {
       logger.log_debug("\"{}\" for old_ue={} finalized", name(), reestablishment_context.ue_index);
     }
@@ -139,7 +141,9 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.
       logger.log_debug("old_ue={} was not fully attached yet. Requesting UE context release",
                        reestablishment_context.ue_index);
-      send_ue_context_release_request(reestablishment_context.ue_index);
+      ue_context_release_request.ue_index = reestablishment_context.ue_index;
+      ue_context_release_request.cause    = cause_radio_network_t::unspecified;
+      CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
     }
 
     CORO_RETURN();
@@ -258,11 +262,4 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
   rrc_reest.crit_exts.set_rrc_reest();
 
   rrc_ue_reest_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
-}
-
-void rrc_reestablishment_procedure::send_ue_context_release_request(ue_index_t ue_index)
-{
-  ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
-  ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }

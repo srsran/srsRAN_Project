@@ -36,7 +36,6 @@ public:
 private:
   // results senders
   void send_pdu_session_resource_modify_response();
-  void send_ue_context_release_request();
 
   cu_cp_pdu_session_resource_modify_request  request;
   const ngap_ue_ids                          ue_ids;
@@ -45,6 +44,8 @@ private:
   ngap_message_notifier&                     amf_notifier;
   ngap_control_message_handler&              ngap_ctrl_handler;
   ngap_ue_logger&                            logger;
+
+  cu_cp_ue_context_release_request ue_context_release_request;
 };
 
 } // namespace srs_cu_cp

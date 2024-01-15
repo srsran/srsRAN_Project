@@ -80,9 +80,13 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
-    logger.info("Received UE Context Release Request");
+    logger.info("Received a UE Context Release Request");
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,

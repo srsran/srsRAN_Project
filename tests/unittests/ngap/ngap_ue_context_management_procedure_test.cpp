@@ -307,8 +307,15 @@ TEST_F(ngap_ue_context_management_procedure_test,
   // Trigger UE context release request.
   cu_cp_ue_context_release_request release_request;
   release_request.ue_index = ue_index;
-  ngap->handle_ue_context_release_request(release_request);
 
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  // Status: should have failed already, as there is no UE.
+  ASSERT_TRUE(t.ready());
+
+  // Procedure should have failed.
+  ASSERT_FALSE(t.get());
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
 
@@ -331,13 +338,27 @@ TEST_F(ngap_ue_context_management_procedure_test,
   // Trigger UE context release request.
   cu_cp_ue_context_release_request release_request;
   release_request.ue_index = ue_index;
-  ngap->handle_ue_context_release_request(release_request);
 
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  // Status: should have succeeded already
+  ASSERT_TRUE(t.ready());
+
+  // Procedure should have succeeded.
+  ASSERT_TRUE(t.get());
   ASSERT_TRUE(was_ue_context_release_request_sent());
 
   // Trigger 2nd UE context release request.
   clear_last_received_msg();
-  ngap->handle_ue_context_release_request(release_request);
+  async_task<bool>         t2 = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher2(t2);
+
+  // Status: should have succeeded already, as a release request is already pending.
+  ASSERT_TRUE(t2.ready());
+
+  // Procedure should have succeeded.
+  ASSERT_TRUE(t2.get());
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
 

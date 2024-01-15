@@ -37,7 +37,6 @@ public:
 private:
   // results senders
   void send_pdu_session_resource_setup_response();
-  void send_ue_context_release_request();
 
   cu_cp_pdu_session_resource_setup_request  request;
   byte_buffer                               nas_pdu;
@@ -48,6 +47,8 @@ private:
   ngap_message_notifier&                    amf_notifier;
   ngap_control_message_handler&             ngap_ctrl_handler;
   ngap_ue_logger&                           logger;
+
+  cu_cp_ue_context_release_request ue_context_release_request;
 };
 
 } // namespace srs_cu_cp

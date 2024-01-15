@@ -19,6 +19,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/support/async/async_task.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/test_utils.h"
@@ -337,16 +338,19 @@ struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_contr
 public:
   dummy_du_processor_ngap_control_notifier() = default;
 
-  virtual bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
-    return release_request_outcome;
+    return launch_async([this](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(release_request_outcome);
+    });
   }
 
   async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
-    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) mutable {
+    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ngap_handover_preparation_response{false});
     });

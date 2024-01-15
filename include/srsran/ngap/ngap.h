@@ -128,7 +128,7 @@ public:
   /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
   /// \param[in] msg The ue context release request to transmit.
   /// \returns True if successful, false otherwise.
-  virtual bool handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+  virtual async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
   virtual async_task<ngap_handover_preparation_response>

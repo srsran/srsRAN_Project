@@ -60,9 +60,6 @@ private:
   /// \remark Send RRC Reestablishment, see section 5.3.7 in TS 36.331.
   void send_rrc_reestablishment();
 
-  /// \brief Send UE Context Release Request.
-  void send_ue_context_release_request(ue_index_t ue_index);
-
   async_task<void> handle_rrc_reestablishment_fallback();
 
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;

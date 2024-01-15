@@ -44,8 +44,6 @@ private:
   /// \remark Send RRC Reconfiguration, see section 5.3.5 in TS 38.331
   void send_rrc_reconfiguration();
 
-  void send_ue_context_release_request();
-
   rrc_ue_context_t&                           context;
   const rrc_reconfiguration_procedure_request args;
 
