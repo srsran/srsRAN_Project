@@ -38,8 +38,7 @@ TEST_F(rrc_ue_setup, when_amf_disconnected_then_rrc_reject_sent)
 {
   receive_setup_request();
 
-  // check if the RRC reject message was generated
-  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
+  check_ue_release_requested();
 }
 
 /// Test the RRC setup with connected AMF

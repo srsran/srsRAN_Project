@@ -260,6 +260,8 @@ protected:
     }
   }
 
+  void set_ue_context_release_outcome(bool outcome) { rrc_ue_ngap_notifier.set_ue_context_release_outcome(outcome); }
+
   void check_ue_release_not_requested()
   {
     ASSERT_NE(rrc_ue_ev_notifier.last_cu_cp_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);

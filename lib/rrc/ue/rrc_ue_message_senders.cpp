@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../ran/gnb_format.h"
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 
@@ -48,7 +47,7 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }
 
-void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
+byte_buffer rrc_ue_impl::create_rrc_reject_container(uint8_t reject_wait_time_secs)
 {
   dl_ccch_msg_s     dl_ccch_msg;
   rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
@@ -59,5 +58,14 @@ void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
     reject.wait_time         = reject_wait_time_secs;
   }
 
-  send_dl_ccch(dl_ccch_msg);
+  // pack DL CCCH msg
+  byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
+
+  // Log Tx message
+  log_rrc_message(logger, Tx, pdu, dl_ccch_msg, "CCCH DL");
+
+  // send down the stack
+  logger.log_debug(pdu.begin(), pdu.end(), "TX {} PDU", srb_id_t::srb0);
+
+  return pdu;
 }

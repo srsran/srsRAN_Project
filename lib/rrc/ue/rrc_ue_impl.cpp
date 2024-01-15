@@ -160,18 +160,19 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   return pack_into_pdu(ho_prep, "handover preparation info");
 }
 
-void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
+void rrc_ue_impl::on_ue_release_required(const cause_t& cause, byte_buffer rrc_container, srb_id_t srb_id)
 {
   bool ngap_release_result = false;
-  task_sched.schedule_async_task(
-      launch_async([this, ngap_release_result, cause](coro_context<async_task<void>>& ctx) mutable {
+  task_sched.schedule_async_task(launch_async(
+      [this, ngap_release_result, cause, rrc_container, srb_id](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         CORO_AWAIT_VALUE(ngap_release_result,
                          ngap_ctrl_notifier.on_ue_context_release_request({context.ue_index, {}, cause}));
         if (!ngap_release_result) {
           // If NGAP release failed, release UE from DU processor, RRC and F1AP
-          CORO_AWAIT(du_processor_notifier.on_ue_context_release_command({context.ue_index, cause}));
+          CORO_AWAIT(du_processor_notifier.on_ue_context_release_command(
+              {context.ue_index, cause, rrc_container.copy(), srb_id}));
         }
 
         CORO_RETURN();
