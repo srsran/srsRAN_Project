@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -95,7 +95,6 @@ private:
   rrc_ue_context_t&                         context;
   const asn1::rrc_nr::establishment_cause_e cause;
   const byte_buffer&                        du_to_cu_container;
-  const asn1::rrc_nr::pdcp_cfg_s            srb1_pdcp_cfg;
 
   rrc_ue_setup_proc_notifier& rrc_ue;       // handler to the parent RRC UE object
   rrc_ue_srb_handler&         srb_notifier; // for creation of SRBs

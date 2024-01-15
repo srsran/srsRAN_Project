@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,7 +38,7 @@ public:
   psup_packing(srslog::basic_logger& logger_) : logger(logger_) {}
 
   bool unpack(psup_dl_pdu_session_information& dl_pdu_session_information, byte_buffer_view container) const;
-  void pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const;
+  bool pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const;
 
 private:
   srslog::basic_logger& logger;

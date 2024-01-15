@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -31,7 +31,7 @@ using namespace srsran;
 
 TEST_F(e2_test_setup, ric_control_procedure_setup)
 {
-  e2_message request_msg = generate_ric_control_request(test_logger);
+  e2_message request_msg = generate_ric_control_request_style2_action6(test_logger);
   e2->handle_message(request_msg);
   asn1::cbit_ref bref(gw->last_pdu);
   e2_message     msg = {};
@@ -42,5 +42,37 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
   ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
             asn1::e2ap::e2_ap_elem_procs_o::successful_outcome_c::types_opts::ri_cctrl_ack);
   auto ack = msg.pdu.successful_outcome().value.ri_cctrl_ack();
+  ASSERT_EQ(ack->ra_nfunction_id.value.value, 1);
+}
+
+TEST_F(e2_test_setup, ric_control_procedure_setup2)
+{
+  e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 12, 12);
+  e2->handle_message(request_msg);
+  asn1::cbit_ref bref(gw->last_pdu);
+  e2_message     msg = {};
+  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
+            asn1::e2ap::e2_ap_elem_procs_o::successful_outcome_c::types_opts::ri_cctrl_ack);
+  auto ack = msg.pdu.successful_outcome().value.ri_cctrl_ack();
+  ASSERT_EQ(ack->ra_nfunction_id.value.value, 1);
+}
+
+TEST_F(e2_test_setup, ric_control_procedure_fail)
+{
+  e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 1, 12);
+  e2->handle_message(request_msg);
+  asn1::cbit_ref bref(gw->last_pdu);
+  e2_message     msg = {};
+  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(msg.pdu.unsuccessful_outcome().value.type(),
+            asn1::e2ap::e2_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ri_cctrl_fail);
+  auto ack = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
   ASSERT_EQ(ack->ra_nfunction_id.value.value, 1);
 }

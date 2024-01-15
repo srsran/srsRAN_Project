@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -59,25 +59,47 @@ static void update_uci_on_pusch_harq_offsets(uci_info::harq_info& uci_harq, cons
 
 static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_configuration& ue_cell_cfg)
 {
-  uci_csi.csi_rep_cfg            = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
-  csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
-  uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
+  uci_csi.csi_rep_cfg = create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
 
-  const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+  // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+  // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+  // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+  if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+    csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
+    uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
 
-  // We assume the configuration contains the values for beta_offsets.
-  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+    const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
-  if (uci_csi.csi_part1_nof_bits <= 11) {
-    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    // We assume the configuration contains the values for beta_offsets.
+    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci_csi.csi_part1_nof_bits <= 11) {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    } else {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+    }
+
+    if (csi_size.part2_min_size.value() > 0U) {
+      srsran_assert(csi_size.part2_max_size.value() <= 11U, "CSI Part 2 on UCI-PUSCH is only supported up to 11 bits");
+      uci_csi.beta_offset_csi_2.emplace(beta_offsets.beta_offset_csi_p2_idx_1.value());
+    }
+
   } else {
-    uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
-  }
+    uci_csi.csi_part1_nof_bits = get_csi_report_pucch_size(uci_csi.csi_rep_cfg).value();
+    // NOTE: with PUCCH-configured CSI report, CSI patrt 2 is not supported.
 
-  if (csi_size.part2_min_size.value() > 0U) {
-    srsran_assert(csi_size.part2_max_size.value() <= 11U, "CSI Part 2 on UCI-PUSCH is only supported up to 11 bits");
-    uci_csi.beta_offset_csi_2.emplace(beta_offsets.beta_offset_csi_p2_idx_1.value());
+    const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+
+    // We assume the configuration contains the values for beta_offsets.
+    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci_csi.csi_part1_nof_bits <= 11) {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    } else {
+      uci_csi.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+    }
   }
 }
 
@@ -121,88 +143,38 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
 
   const bool has_pusch_grants = existing_pusch != slot_alloc.result.ul.puschs.end();
 
-  // [Implementation-defined] Skip allocation of UCI if the existing PUSCH grants was scheduled by non-fallback DCI
-  // format.
-  // Reason: Allocating UCI on PUSCH would require change in DAI sent in DCI 0_1 which scheduled the PUSCH,
-  // which is not possible.
-  if (has_pusch_grants and ue_cell_cfg.find_search_space(existing_pusch->context.ss_id) != nullptr and
-      ue_cell_cfg.find_search_space(existing_pusch->context.ss_id)->get_ul_dci_format() == dci_ul_format::f0_1) {
+  // [Implementation-defined] Skip allocation of UCI if any existing PUSCH grants.
+  if (has_pusch_grants) {
     return {};
   }
 
   const bool fallback_mode = fallback_dci_info != nullptr;
 
-  // Allocate UCI on PUSCH if any PUSCH grants that was scheduled by fallback DCI format already exist for the UE;
-  // else, allocate UCI on PUCCH.
-  // NOTE: Considering the note above, the allocation of UCI on PUSCH is only possible when the PUSCH was scheduled by
-  // fallback DCI during non-fallback mode.
-  if (has_pusch_grants) {
-    // TS 38.213, Section 9.3, is vague about this case.
-    // "If DCI format 0_0, or DCI format 0_1 that does not include a beta_offset indicator field, schedules the PUSCH
-    // transmission from the UE and the UE is provided betaOffsets = 'semiStatic', the UE applies the
-    // beta_offset^HARQ-ACK [...] values that are provided by betaOffsets = 'semiStatic' for the corresponding
-    // HARQ-ACK information [...]". Note that the \c betaOffsets are only present in the PUSCH-Config, not in the
-    // PUSCH-ConfigCommon, which raises the doubt of whether the UCI multiplexing on PUSCH can only be done with UE
-    // dedicated configuration.
-    // TS 38.213, Section 9.3 does NOT specify what to do when UE is not provided \c betaOffsets.
-    // On the other hand, \c BetaOffsets description in TS 38.331 states that the value 11 should be used for
-    // betaOffsetACK-Index1, betaOffsetACK-Index2 and betaOffsetACK-Index3 when these files are absent (inside
-    // BetaOffsets).
-    // Due to the lack of clarity, in the following, we avoid scheduling a UCI on PUSCH during fallback mode.
-    if (fallback_mode) {
-      logger.debug("UCI for HARQ-ACK allocation on PUSCH skipped for ue={}. Cause: we don't multiplex UCI on "
-                   "PUSCH during fallback mode",
-                   crnti);
-      return {};
-    }
-    // If we reach this point, we expect no allocated PUCCH grants.
-    if (not existing_pusch->uci.has_value()) {
-      existing_pusch->uci.emplace();
-      existing_pusch->uci.value().alpha =
-          ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
-    }
-    if (not existing_pusch->uci.value().harq.has_value()) {
-      existing_pusch->uci.value().harq.emplace();
-    }
-    // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
-    ++existing_pusch->uci.value().harq->harq_ack_nof_bits;
+  optional<unsigned> pucch_res_indicator;
+  if (fallback_mode) {
+    const auto* pucch_harq_grant_it = std::find_if(
+        slot_alloc.result.ul.pucchs.begin(), slot_alloc.result.ul.pucchs.end(), [crnti](const pucch_info& pucch_grant) {
+          srsran_assert(pucch_grant.format == pucch_format::FORMAT_1 or pucch_grant.format == pucch_format::FORMAT_2,
+                        "Only PUCCH Format 1 and Format 2 are supported");
+          const bool has_harq_ack_bits = pucch_grant.format == pucch_format::FORMAT_1
+                                             ? pucch_grant.format_1.harq_ack_nof_bits != 0U
+                                             : pucch_grant.format_2.harq_ack_nof_bits != 0U;
+          return pucch_grant.crnti == crnti and has_harq_ack_bits;
+        });
 
-    update_uci_on_pusch_harq_offsets(
-        existing_pusch->uci.value().harq.value(),
-        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
-    logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={}", crnti);
-    return {uci_allocation{}};
+    // Do not allocate PUCCH on common resources if there is any pre-allocated grant using PUCCH dedicated resource
+    // with HARQ-ACK bits, as we don't support multiplexing of bits across common and dedicated resources.
+    if (pucch_harq_grant_it == slot_alloc.result.ul.pucchs.end()) {
+      pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1, *fallback_dci_info);
+    }
   }
-  // No PUSCH grants; allocate on PUCCH.
+  // PUCCH, Non-fallback mode.
   else {
-    optional<unsigned> pucch_res_indicator;
-    if (fallback_mode) {
-      const auto* pucch_harq_grant_it = std::find_if(
-          slot_alloc.result.ul.pucchs.begin(),
-          slot_alloc.result.ul.pucchs.end(),
-          [crnti](const pucch_info& pucch_grant) {
-            srsran_assert(pucch_grant.format == pucch_format::FORMAT_1 or pucch_grant.format == pucch_format::FORMAT_2,
-                          "Only PUCCH Format 1 and Format 2 are supported");
-            const bool has_harq_ack_bits = pucch_grant.format == pucch_format::FORMAT_1
-                                               ? pucch_grant.format_1.harq_ack_nof_bits != 0U
-                                               : pucch_grant.format_2.harq_ack_nof_bits != 0U;
-            return pucch_grant.crnti == crnti and has_harq_ack_bits;
-          });
-
-      // Do not allocate PUCCH on common resources if there is any pre-allocated grant using PUCCH dedicated resource
-      // with HARQ-ACK bits, as we don't support multiplexing of bits across common and dedicated resources.
-      if (pucch_harq_grant_it == slot_alloc.result.ul.pucchs.end()) {
-        pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1, *fallback_dci_info);
-      }
-    }
-    // PUCCH, Non-fallback mode.
-    else {
-      pucch_res_indicator = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
-    }
-    return pucch_res_indicator.has_value()
-               ? optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
-               : nullopt;
+    pucch_res_indicator = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
   }
+  return pucch_res_indicator.has_value()
+             ? optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
+             : nullopt;
 }
 
 ////////////    Public functions    ////////////
@@ -251,12 +223,16 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_all
       continue;
     }
 
+    if (uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.full()) {
+      logger.info(
+          "rnti={}: UCI allocation for slot={} skipped due to UCI cache full. Attempting this allocation for the next "
+          "k1 candidate, if any k1 available",
+          crnti,
+          slot_alloc.slot);
+      continue;
+    }
+
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
-      // NOTE: For TX with more than 2 antenna, we avoid multiplexing HARQ-ACK with CSI in the slots for CSI because the
-      // CSI report is 11 bit, and the current PUCCH F2 capacity is exactly 11 bits.
-      if (cell_cfg.dl_carrier.nof_ant > 2U) {
-        continue;
-      }
       // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
       // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
       if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc, crnti) >= max_harq_bits_per_uci) {
@@ -350,7 +326,9 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
-  // If there is a PUSCH allocated for this UE, allocate the CSI on the UCI on PUSCH.
+  // TODO: check if this case is possible. The first PUSCH that is allocated outside the RAR grant is will be allocated
+  //       after the UE objected gets created with the UE dedicated configuration; this means the CSI scheduler should
+  //       start allocating CSI grants before any PUSCH grants (except the PUSCH scheduled in the RAR).
   if (has_pusch_grants) {
     // If there is UCI grant allocated, allocate it.
     srsran_assert(not existing_pusch->uci.has_value(), "UCI on PUSCH grant for CSI cannot be already allocated");

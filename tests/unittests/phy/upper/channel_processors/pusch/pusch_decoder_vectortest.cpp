@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -33,8 +33,8 @@
 #include "pusch_decoder_test_data.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
-#include "srsran/phy/upper/rx_softbuffer_pool.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/test_utils.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -271,7 +271,7 @@ int main(int argc, char** argv)
   std::unique_ptr<pusch_decoder> decoder = pusch_dec_factory->create();
   TESTASSERT(decoder);
 
-  rx_softbuffer_pool_config pool_config = {};
+  rx_buffer_pool_config pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
     segmenter_config                  cfg         = test_data.config;
@@ -295,7 +295,7 @@ int main(int argc, char** argv)
     // The codeword is the concatenation of codeblocks. However, since codeblock sizes can vary slightly, we add some
     // extra margin.
     pool_config.max_codeblock_size   = static_cast<unsigned>(std::round(cws * 5 / nof_codeblocks));
-    pool_config.max_softbuffers      = 1;
+    pool_config.nof_buffers          = 1;
     pool_config.max_nof_codeblocks   = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = false;
@@ -305,8 +305,8 @@ int main(int argc, char** argv)
     }
 #endif // HWACC_PUSCH_ENABLED
 
-    // Create Rx softbuffer pool.
-    std::unique_ptr<rx_softbuffer_pool> pool = create_rx_softbuffer_pool(pool_config);
+    // Create Rx buffer pool.
+    std::unique_ptr<rx_buffer_pool> pool = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool);
 
     pusch_decoder::configuration dec_cfg = {};
@@ -326,17 +326,16 @@ int main(int argc, char** argv)
       dec_cfg.Nref       = cfg.Nref;
       dec_cfg.nof_layers = cfg.nof_layers;
 
-      // Reserve softbuffer.
-      unique_rx_softbuffer softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
-      TESTASSERT(softbuffer.is_valid());
+      // Reserve buffer.
+      unique_rx_buffer buffer = pool->reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+      TESTASSERT(buffer.is_valid());
 
       // Reset code blocks CRCs.
-      softbuffer.get().reset_codeblocks_crc();
+      buffer.get().reset_codeblocks_crc();
 
       // Setup decoder for new data.
       pusch_decoder_notifier_spy decoder_notifier_spy;
-      pusch_decoder_buffer&      decoder_buffer =
-          decoder->new_data(rx_tb, std::move(softbuffer), decoder_notifier_spy, dec_cfg);
+      pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, std::move(buffer), decoder_notifier_spy, dec_cfg);
 
       // Feed codeword.
       decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));

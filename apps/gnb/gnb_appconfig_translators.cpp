@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -273,6 +273,7 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   srs_cu_up::cu_up_configuration out_cfg;
   out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
+  out_cfg.n3_cfg.warn_on_drop          = config.cu_up_cfg.warn_on_drop;
 
   if (config.amf_cfg.n3_bind_addr == "auto") {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
@@ -430,6 +431,12 @@ static sib19_info create_sib19_info(const gnb_appconfig& config)
   sib19_info sib19;
   sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
+
+  // These values are provided to the config in ECEF coordinates, but the scheduler expects them in WGS84 with a step
+  // level of 1.3m.
+  sib19.ephemeris_info.value().position_x /= 1.3;
+  sib19.ephemeris_info.value().position_y /= 1.3;
+  sib19.ephemeris_info.value().position_z /= 1.3;
 
   if (config.ntn_cfg.value().distance_threshold.has_value()) {
     sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
@@ -998,7 +1005,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list();
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop);
     return out_cfg;
   }
 
@@ -1014,6 +1021,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
     }
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
+    out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
 
     // Obtain RLC config parameters from the respective RLC mode
     const auto& du_five_qi = du_qos[qos.five_qi];
@@ -1456,6 +1464,7 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
     sector_cfg.is_prach_control_plane_enabled      = cell_cfg.cell.is_prach_control_plane_enabled;
     sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
+    sector_cfg.ignore_ecpri_seq_id_field           = cell_cfg.cell.ignore_ecpri_seq_id_field;
     sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                       cell_cfg.cell.compression_bitwidth_ul};
     sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
@@ -1594,9 +1603,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_rx_ports               = cell.nof_antennas_ul;
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
-    cfg.nof_slots_dl_rg            = dl_pipeline_depth;
+    cfg.nof_dl_rg                  = dl_pipeline_depth;
+    cfg.dl_rg_expire_timeout_slots = dl_pipeline_depth - 2;
     cfg.nof_dl_processors          = dl_pipeline_depth;
-    cfg.nof_slots_ul_rg            = ul_pipeline_depth;
+    cfg.nof_ul_rg                  = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
     cfg.max_pusch_concurrency      = max_pusch_concurrency;
     cfg.nof_pusch_decoder_threads  = config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads +
@@ -1620,7 +1630,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.tx_buffer_config.expire_timeout_slots = expire_pdsch_harq_timeout_slots;
     cfg.tx_buffer_config.external_soft_bits   = false;
 
-    cfg.rx_buffer_config.max_softbuffers      = nof_buffers;
+    cfg.rx_buffer_config.nof_buffers          = nof_buffers;
     cfg.rx_buffer_config.max_nof_codeblocks   = max_rx_nof_codeblocks;
     cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
     cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
@@ -1667,15 +1677,21 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.olla_dl_target_bler               = pdsch.olla_target_bler;
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
-
-  const pusch_appconfig& pusch = cell.pusch_cfg;
-  out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
+  const pusch_appconfig& pusch                 = cell.pusch_cfg;
+  if (config.ntn_cfg.has_value()) {
+    out_cfg.ue.auto_ack_harq = true;
+  }
+  out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
   out_cfg.ue.max_puschs_per_slot    = pusch.max_puschs_per_slot;
   out_cfg.ue.olla_ul_target_bler    = pusch.olla_target_bler;
   out_cfg.ue.olla_ul_snr_inc        = pusch.olla_snr_inc;
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
+
+  // PUCCH and scheduler expert parameters.
+  out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;
+  out_cfg.ue.max_pucchs_per_slot    = cell.ul_common_cfg.max_pucchs_per_slot;
 
   // RA parameters.
   const prach_appconfig& prach = cell.prach_cfg;

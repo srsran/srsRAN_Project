@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -56,7 +56,7 @@ public:
   void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
 
   /// \brief Handle the configuration of an existing UE context by RIC request.
-  async_task<ric_control_config_response> handle_ue_config_request(const ric_control_config& msg);
+  async_task<du_mac_sched_control_config_response> handle_ue_config_request(const du_mac_sched_control_config& msg);
 
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();

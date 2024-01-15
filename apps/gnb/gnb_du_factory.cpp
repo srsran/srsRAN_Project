@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -51,14 +51,12 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   const upper_phy_threads_appconfig& upper_phy_threads_cfg = params.expert_execution_cfg.threads.upper_threads;
 
   if ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
-      ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_pdsch_threads == 1))) {
+      ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads == 1))) {
     du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
   } else if ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
-             ((upper_phy_threads_cfg.pdsch_processor_type == "auto") &&
-              (upper_phy_threads_cfg.nof_pdsch_threads > 1))) {
+             ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads > 1))) {
     pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_execution_cfg.threads.upper_threads.nof_dl_threads +
-                                                    params.expert_execution_cfg.threads.upper_threads.nof_pdsch_threads;
+    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_execution_cfg.threads.upper_threads.nof_dl_threads;
     pdsch_proc_config.max_nof_simultaneous_pdsch =
         (MAX_UE_PDUS_PER_SLOT + 1) * params.expert_phy_cfg.max_processing_delay_slots;
     pdsch_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
@@ -68,6 +66,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   } else {
     srsran_assert(false, "Invalid PDSCH processor type {}.", upper_phy_threads_cfg.pdsch_processor_type);
   }
+  du_lo_cfg.dl_proc_cfg.nof_concurrent_threads = params.expert_execution_cfg.threads.upper_threads.nof_dl_threads;
 
   du_lo_cfg.upper_phy = generate_du_low_config(params);
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -65,6 +65,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
+  demux_msg.cfg.warn_on_drop            = cfg.n3_cfg.warn_on_drop;
   demux_msg.cu_up_exec                  = cfg.dl_executor;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
@@ -316,6 +317,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   fill_sec_as_config(ue_cfg.security_info, msg.security_info);
   ue_cfg.activity_level        = msg.activity_notif_level;
   ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
+  ue_cfg.qos                   = cfg.qos;
   ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");

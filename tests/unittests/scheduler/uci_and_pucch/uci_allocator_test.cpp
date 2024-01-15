@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -311,11 +311,8 @@ TEST_F(test_uci_allocator, uci_harq_alloc_on_existing_pusch)
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   //  1 grant expected on PUSCH.
   ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
-  ASSERT_EQ(1, slot_grid.result.ul.puschs.back().uci.value().harq.value().harq_ack_nof_bits);
-  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
+  // ... but without any UCI.
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.has_value());
 }
 
 ///////   UCI multiplexing on PUSCH    ///////
@@ -503,83 +500,6 @@ TEST_F(test_tdd_uci_allocator, when_tdd_cfg_then_harq_bit_index_increases_with_n
   }
 }
 
-// Allocate multiple HARQ-ACK grants over the same target slot.
-TEST_F(test_tdd_uci_allocator, test_tdd_harq_ack_multiplexing)
-{
-  const unsigned pusch_slot_number = 7;
-  // Add a PUSCH at slot 7.
-  add_pusch_alloc(pusch_slot_number);
-
-  // All the allocation allocate a HARQ-ACK grant at slot 7.
-  // t_bench.sl_tx = 0; k0 = 0; k1 = 7  =>  t_bench.sl_tx + k0 + k1 = 7.
-  std::vector<uint8_t> k1_candidates = {7};
-  auto&                slot_grid_1   = t_bench.res_grid[t_bench.k0 + k1_candidates.back()];
-
-  // Allocate 1 HARQ at k1 = 4.
-  t_bench.uci_alloc.uci_allocate_csi_opportunity(
-      slot_grid_1, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
-  ASSERT_EQ(0, slot_grid_1.result.ul.pucchs.size());
-  ASSERT_EQ(1, slot_grid_1.result.ul.puschs.size());
-  ASSERT_TRUE(slot_grid_1.result.ul.puschs.back().uci.has_value());
-  ASSERT_FALSE(slot_grid_1.result.ul.puschs.back().uci.value().harq.has_value());
-  ASSERT_TRUE(slot_grid_1.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(4, slot_grid_1.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-
-  // Allocate 1 HARQ at k1 = 7.
-  t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                      t_bench.get_main_ue().crnti,
-                                      t_bench.get_main_ue().get_pcell().cfg(),
-                                      t_bench.k0,
-                                      k1_candidates);
-  ASSERT_EQ(0, slot_grid_1.result.ul.pucchs.size());
-  ASSERT_EQ(1, slot_grid_1.result.ul.puschs.size());
-  ASSERT_TRUE(slot_grid_1.result.ul.puschs.back().uci.has_value());
-  ASSERT_TRUE(slot_grid_1.result.ul.puschs.back().uci.value().harq.has_value());
-  ASSERT_EQ(1, slot_grid_1.result.ul.puschs.back().uci.value().harq.value().harq_ack_nof_bits);
-  ASSERT_TRUE(slot_grid_1.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(4, slot_grid_1.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-
-  // Advance by 1 slot.
-  t_bench.slot_indication(++t_bench.sl_tx);
-  // t_bench.sl_tx = 1; k0 = 0; k1 = 6  =>  t_bench.sl_tx + k0 + k1 = 6.
-  k1_candidates     = {6};
-  auto& slot_grid_2 = t_bench.res_grid[t_bench.k0 + k1_candidates.back()];
-
-  // Allocate 1 HARQ at k1 = 6.
-  t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                      t_bench.get_main_ue().crnti,
-                                      t_bench.get_main_ue().get_pcell().cfg(),
-                                      t_bench.k0,
-                                      k1_candidates);
-  ASSERT_EQ(0, slot_grid_2.result.ul.pucchs.size());
-  ASSERT_EQ(1, slot_grid_2.result.ul.puschs.size());
-  ASSERT_TRUE(slot_grid_2.result.ul.puschs.back().uci.has_value());
-  ASSERT_TRUE(slot_grid_2.result.ul.puschs.back().uci.value().harq.has_value());
-  ASSERT_EQ(2, slot_grid_2.result.ul.puschs.back().uci.value().harq.value().harq_ack_nof_bits);
-  ASSERT_TRUE(slot_grid_2.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(4, slot_grid_2.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-
-  // Advance by 1 slot.
-  t_bench.slot_indication(++t_bench.sl_tx);
-  // t_bench.sl_tx = 2; k0 = 0; k1 = 5  =>  t_bench.sl_tx + k0 + k1 = 5.
-  k1_candidates     = {5};
-  auto& slot_grid_3 = t_bench.res_grid[t_bench.k0 + k1_candidates.back()];
-
-  // Allocate 1 HARQ at k1 = 5. This will convert the PUCCH grant to Format 2.
-  t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                      t_bench.get_main_ue().crnti,
-                                      t_bench.get_main_ue().get_pcell().cfg(),
-                                      t_bench.k0,
-                                      k1_candidates);
-  ASSERT_EQ(0, slot_grid_3.result.ul.pucchs.size());
-  ASSERT_EQ(1, slot_grid_3.result.ul.puschs.size());
-  ASSERT_TRUE(slot_grid_3.result.ul.puschs.back().uci.has_value());
-  ASSERT_TRUE(slot_grid_3.result.ul.puschs.back().uci.value().harq.has_value());
-  ASSERT_EQ(3, slot_grid_3.result.ul.puschs.back().uci.value().harq.value().harq_ack_nof_bits);
-  ASSERT_TRUE(slot_grid_2.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(4, slot_grid_2.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-}
-
 class test_uci_allocator_mimo_4x4 : public ::testing::Test
 {
 public:
@@ -633,8 +553,8 @@ TEST_F(test_uci_allocator_mimo_4x4, uci_alloc_csi_part2_over_existing_pusch)
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
   ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+  ASSERT_EQ(11, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
 }
 
 TEST_F(test_uci_allocator_mimo_4x4, uci_mplex_csi_part2_over_existing_pusch)
@@ -665,7 +585,7 @@ TEST_F(test_uci_allocator_mimo_4x4, uci_mplex_csi_part2_over_existing_pusch)
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.has_value());
   ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().harq.has_value());
   ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.has_value());
-  ASSERT_EQ(6, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
-  ASSERT_TRUE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
+  ASSERT_EQ(11, slot_grid.result.ul.puschs.back().uci.value().csi.value().csi_part1_nof_bits);
+  ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.value().csi.value().beta_offset_csi_2.has_value());
   ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
 }

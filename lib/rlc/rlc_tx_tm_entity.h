@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -51,6 +51,7 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    task_executor&                       pcell_executor_,
+                   bool                                 metrics_enabled_,
                    rlc_pcap&                            pcap_);
 
   // Interfaces for higher layers

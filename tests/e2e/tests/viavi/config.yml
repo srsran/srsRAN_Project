@@ -1,0 +1,66 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+cu_cp:
+  ue_context_setup_timeout_s: 5
+  inactivity_timer: 5
+  rrc:
+    force_reestablishment_fallback: true
+
+cell_cfg:
+  dl_arfcn: 625000
+  band: 78
+  channel_bandwidth_MHz: 100
+  common_scs: 30
+  plmn: "{{mcc}}{{mnc}}"
+  tac: 7
+  pci: 1
+  sib:
+    t301: 2000
+    t311: 3000
+  prach:
+    prach_config_index: 159
+    prach_root_sequence_index: 1
+    zero_correlation_zone: 0
+    prach_frequency_start: 12
+  pucch:
+    sr_period_ms: 10
+    f1_nof_cell_res_sr: 30
+    min_k1: 2
+  csi:
+    csi_rs_period: 40
+  pdsch:
+    mcs_table: qam256
+    max_alloc_attempts: 8
+    max_pdschs_per_slot: 8
+  #   max_rb_size: 45   # <-- enable this only for 32UE
+  ul_common:
+    max_ul_grants_per_slot: 16
+    max_pucchs_per_slot: 14
+  pusch:
+    mcs_table: qam256
+    min_k2: 2
+    max_puschs_per_slot: 8
+  nof_antennas_dl: 4
+  nof_antennas_ul: 1
+  tdd_ul_dl_cfg:
+    nof_dl_symbols: 7
+    nof_dl_slots: 7
+    nof_ul_slots: 2

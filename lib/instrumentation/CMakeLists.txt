@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -18,5 +18,11 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_instrumentation traces/du_traces.cpp traces/up_traces.cpp)
+add_library(srsran_instrumentation
+        traces/du_traces.cpp
+        traces/ru_traces.cpp
+        traces/up_traces.cpp)
 target_link_libraries(srsran_instrumentation srsran_support)
+
+install(TARGETS srsran_instrumentation
+        EXPORT srsran_export)

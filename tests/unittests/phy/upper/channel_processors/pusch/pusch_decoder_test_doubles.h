@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,7 +37,7 @@ public:
   struct entry_t {
     span<uint8_t>            transport_block;
     pusch_decoder_result     stats;
-    unique_rx_softbuffer     softbuffer;
+    unique_rx_buffer         rm_buffer;
     pusch_decoder_buffer_spy input;
     configuration            config;
     pusch_decoder_notifier*  notifier;
@@ -45,10 +45,8 @@ public:
 
   ~pusch_decoder_spy() { srsran_assert(entries.empty(), "Entries must be cleared."); }
 
-  void set_codeword_length(unsigned codeword_length_) { codeword_length = codeword_length_; }
-
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                 unique_rx_softbuffer    softbuffer,
+                                 unique_rx_buffer        rm_buffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override
   {
@@ -56,10 +54,9 @@ public:
     entry_t& entry        = entries.back();
     entry.transport_block = transport_block;
     entry.stats           = {};
-    entry.softbuffer      = std::move(softbuffer);
-    entry.input.resize(codeword_length);
-    entry.notifier = &notifier;
-    entry.config   = cfg;
+    entry.rm_buffer       = std::move(rm_buffer);
+    entry.notifier        = &notifier;
+    entry.config          = cfg;
 
     entry.stats.tb_crc_ok            = true;
     entry.stats.nof_codeblocks_total = 123;
@@ -74,7 +71,6 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  unsigned             codeword_length;
   std::vector<entry_t> entries;
 };
 

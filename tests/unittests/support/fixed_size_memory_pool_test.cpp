@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -44,6 +44,7 @@ TEST(fixed_memory_block_pool_test, allocated_block_is_valid)
   void* block = pool.allocate_node(256);
   ASSERT_NE(block, nullptr);
   pool.deallocate_node(block);
+  pool.print_all_buffers();
 }
 
 TEST(fixed_memory_block_pool_test, number_of_alloc_blocks_matches_pool_size)

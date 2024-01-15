@@ -25,10 +25,24 @@ ln -s <path to srsran build directory>/utils/trx_srsran/libtrx_srsran.so trx_srs
 And finally, the UE's RF configuration shall be:
 ```
   rf_driver: {
-    name:      "srsran",
-    args:      "",
+    // Select srsran TRX driver.
+    name: "srsran",
+
+    // TCP transmit and receive ports.
     tx_port0:  "tcp://*:6000",
     rx_port0:  "tcp://localhost:5000",
-    log_level: "info"
+    tx_port1:  "tcp://*:6001",
+    rx_port1:  "tcp://localhost:5001",
+    tx_port2:  "tcp://*:6002",
+    rx_port2:  "tcp://localhost:5002",
+    tx_port3:  "tcp://*:6003",
+    rx_port3:  "tcp://localhost:5003",
+
+    // srsran logging level.
+    log_level: "info",
+
+    // Enables a noise generator in the uplink path. Determines the noise power spectral density in dBm/Hz for each gNb 
+    // receive channel.
+    noise_spd: -174,
   },
 ```

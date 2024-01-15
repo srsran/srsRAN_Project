@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -27,6 +27,7 @@
 #include "e2ap_configuration.h"
 #include "e2sm/e2sm_manager.h"
 #include "subscription/e2_subscription.h"
+#include "srsran/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
@@ -55,7 +56,7 @@ std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&            e2
                                                e2_connection_client*          e2_client_,
                                                e2_du_metrics_interface&       e2_du_metrics_,
                                                srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
-                                               e2sm_param_configurator&       e2_param_config_,
+                                               du_configurator&               du_configurator_,
                                                timer_factory                  timers_,
                                                task_executor&                 e2_exec_);
 

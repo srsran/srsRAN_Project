@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -49,7 +49,7 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDCCH PDU in the downlink processor");
   }
-  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
@@ -94,7 +94,6 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   ul_rg_pool(*dependencies.ul_rg_pool),
   ul_pdu_validator(*dependencies.ul_pdu_validator),
   ul_pdu_repository(*dependencies.ul_pdu_repository),
-  asynchronous_executor(*dependencies.async_executor),
   slot_controller_mngr(*dependencies.dl_processor_pool,
                        *dependencies.dl_rg_pool,
                        sector_id,
@@ -292,8 +291,9 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 {
   // :TODO: check the current slot matches the DL_TTI.request slot. Do this in a different class.
   // :TODO: check the messages order. Do this in a different class.
-  slot_point slot(scs, msg.sfn, msg.slot);
-  slot_point current_slot = get_current_slot();
+  slot_point  slot(scs, msg.sfn, msg.slot);
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   if (!pdsch_repository.empty()) {
     logger.warning(
@@ -318,7 +318,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   }
 
   // Create controller for the current slot.
-  slot_based_upper_phy_controller& controller = slot_controller_mngr.adquire_controller(slot);
+  slot_based_upper_phy_controller& controller = slot_controller_mngr.acquire_controller(slot);
 
   // Translate the downlink PDUs.
   expected<downlink_pdus> pdus = translate_dl_tti_pdus_to_phy_pdus(
@@ -352,6 +352,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
                   slot);
     slot_controller_mngr.release_controller(slot);
   }
+  l1_tracer << trace_event("dl_tti_request", tp);
 }
 
 /// Returns true if the given PUCCH PDU is valid, otherwise false.
@@ -454,8 +455,9 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
 void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& msg)
 {
   // :TODO: check the messages order. Do this in a different class.
-  slot_point slot(scs, msg.sfn, msg.slot);
-  slot_point current_slot = get_current_slot();
+  slot_point  slot(scs, msg.sfn, msg.slot);
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Clear the repository for the message slot.
   ul_pdu_repository.clear_slot(slot);
@@ -512,11 +514,13 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   resource_grid& ul_rg               = ul_rg_pool.get_resource_grid(pool_context);
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
+  l1_tracer << trace_event("ul_tti_request", tp);
 }
 
 void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& msg)
 {
-  slot_point current_slot = get_current_slot();
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
@@ -559,11 +563,13 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
                   slot);
     slot_controller_mngr.release_controller(slot);
   }
+  l1_tracer << trace_event("ul_dci_request", tp);
 }
 
 void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message& msg)
 {
-  slot_point current_slot = get_current_slot();
+  slot_point  current_slot = get_current_slot();
+  trace_point tp           = l1_tracer.now();
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
@@ -625,18 +631,16 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     unsigned nof_cb = ldpc::compute_nof_codeblocks(pdu.tlv_custom.length.to_bits(), pdsch_config.ldpc_base_graph);
 
     // Prepare buffer identifier.
-    tx_buffer_identifier id;
-    id.rnti        = pdsch_config.rnti;
-    id.harq_ack_id = (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0;
+    trx_buffer_identifier id(pdsch_config.rnti,
+                             (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0);
 
     // Get transmit buffer.
-    unique_tx_buffer buffer = (pdsch_config.context.has_value())
-                                  ? buffer_pool.reserve_buffer(pdsch_config.slot, id, nof_cb)
-                                  : buffer_pool.reserve_buffer(pdsch_config.slot, nof_cb);
+    unique_tx_buffer buffer = (pdsch_config.context.has_value()) ? buffer_pool.reserve(pdsch_config.slot, id, nof_cb)
+                                                                 : buffer_pool.reserve(pdsch_config.slot, nof_cb);
 
     // Check the soft buffer is valid.
     if (!buffer.is_valid()) {
-      logger.warning("No PDSCH softbuffer available for rnti=0x{:04x}.", id.rnti);
+      logger.warning("No PDSCH buffer available for {}.", id);
       return;
     }
 
@@ -648,23 +652,23 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 
   // All the PDSCH PDUs have been processed. Clear the repository.
   pdsch_repository.clear();
+
+  // Run PDSCH buffer housekeeping.
+  buffer_pool.run_slot(slot);
+
+  l1_tracer << trace_event("tx_data_request", tp);
 }
 
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
-  // Update the atomic variable that holds the slot point.
-  current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
+  trace_point tp = l1_tracer.now();
 
-  // Release old controllers.
-  slot_controller_mngr.handle_new_slot(slot);
-
-  // Enqueue soft buffer run slot.
-  if (!asynchronous_executor.execute([this, slot]() { buffer_pool.run_slot(slot); })) {
-    logger.warning("Failed to execute transmit softbuffer pool slot.");
-  }
+  update_current_slot(slot);
 
   // Update the logger context.
   logger.set_context(slot.sfn(), slot.slot_index());
+
+  l1_tracer << trace_event("handle_new_slot", tp);
 }
 
 template <typename T>
@@ -683,20 +687,13 @@ fapi_to_phy_translator::slot_based_upper_phy_controller_manager::get_controller(
   return controller(slot);
 }
 
-void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::handle_new_slot(slot_point slot)
-{
-  // Release the oldest controller.
-  slot_point oldest_slot  = slot - int(controllers.size() - 1);
-  controller(oldest_slot) = slot_based_upper_phy_controller();
-}
-
 void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::release_controller(slot_point slot)
 {
   controller(slot) = slot_based_upper_phy_controller();
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
-fapi_to_phy_translator::slot_based_upper_phy_controller_manager::adquire_controller(slot_point slot)
+fapi_to_phy_translator::slot_based_upper_phy_controller_manager::acquire_controller(slot_point slot)
 {
   controller(slot) = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
 
@@ -711,13 +708,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller_manager::slot_based_uppe
   dl_processor_pool(dl_processor_pool_),
   rg_pool(rg_pool_),
   sector_id(sector_id_),
-  // The manager should be able to manage the current slot plus the requests headroom size. Also, as it should clean the
-  // oldest slot when a new SLOT.indication is received, it should have two extra positions for these oldest slots.
-  // Adding two extra positions makes that if a new SLOT.indication arrives in the middle of a valid processing PDU, the
-  // controller for that slot will not be released in the middle of processing the messages.
-  // NOTE: if we can ensure that no messages will be lost, we can remove this extra positions in the manager, as it
-  // would not be required to release controllers when the slot changes, Also, this would be valid when the time when a
-  // controller is released does not matter for incomplete/lost messages.
-  controllers(nof_slots_request_headroom + 3U)
+  // The manager should be able to manage the current slot plus the requests headroom size.
+  controllers(nof_slots_request_headroom + 1U)
 {
 }

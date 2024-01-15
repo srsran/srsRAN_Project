@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,20 +22,22 @@
 
 #include "pdsch_processor_concurrent_impl.h"
 #include "pdsch_processor_validator_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/tx_buffer.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/support/event_tracing.h"
 
 using namespace srsran;
 
 void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper_,
-                                              unique_tx_buffer                                             softbuffer_,
+                                              unique_tx_buffer                                             rm_buffer_,
                                               pdsch_processor_notifier&                                    notifier_,
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                               const pdsch_processor::pdu_t&                                pdu_)
 {
   // Saves inputs.
-  save_inputs(mapper_, std::move(softbuffer_), notifier_, data_, pdu_);
+  save_inputs(mapper_, std::move(rm_buffer_), notifier_, data_, pdu_);
 
   // Makes sure the PDU is valid.
   pdsch_processor_validator_impl::assert_pdu(config);
@@ -54,7 +56,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 }
 
 void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapper_,
-                                                  unique_tx_buffer          softbuffer_,
+                                                  unique_tx_buffer          rm_buffer_,
                                                   pdsch_processor_notifier& notifier_,
                                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                                   const pdsch_processor::pdu_t&                                pdu)
@@ -62,14 +64,14 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   using namespace units::literals;
 
   // Save process parameter inputs.
-  mapper     = &mapper_;
-  notifier   = &notifier_;
-  data       = data_.front();
-  config     = pdu;
-  softbuffer = std::move(softbuffer_);
+  mapper           = &mapper_;
+  notifier         = &notifier_;
+  data             = data_.front();
+  config           = pdu;
+  unique_rm_buffer = std::move(rm_buffer_);
 
-  // verify softbuffer is valid.
-  srsran_assert(softbuffer.is_valid(), "Invalid softbuffer.");
+  // verify buffer is valid.
+  srsran_assert(unique_rm_buffer.is_valid(), "Invalid buffer.");
 
   // Codeword index is fix.
   static constexpr unsigned i_cw = 0;
@@ -265,6 +267,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     pseudo_random_generator::state_s c_init = scrambler->get_state();
 
     auto async_task = [this, cb_batch_size, c_init, i_cb]() {
+      trace_point process_pdsch_tp = l1_tracer.now();
+
       // Select codeblock processor.
       pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
@@ -296,7 +300,7 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
         // Get rate matching buffer.
         bit_buffer rm_buffer =
-            softbuffer.get().get_codeblock(absolute_i_cb, cb_config.metadata.cb_specific.full_length);
+            unique_rm_buffer.get().get_codeblock(absolute_i_cb, cb_config.metadata.cb_specific.full_length);
 
         // Process codeblock.
         pdsch_codeblock_processor::result result = cb_processor.process(rm_buffer, data, cb_config);
@@ -313,8 +317,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
       // Decrement code block batch counter.
       if (cb_batch_counter.fetch_sub(1) == 1) {
-        // Unlock softbuffer.
-        softbuffer = unique_tx_buffer();
+        // Unlock buffer.
+        unique_rm_buffer = unique_tx_buffer();
 
         // Decrement asynchronous task counter.
         if (async_task_counter.fetch_sub(1) == 1) {
@@ -322,6 +326,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
           notifier->on_finish_processing();
         }
       }
+
+      l1_tracer << trace_event("CB batch", process_pdsch_tp);
     };
 
     // Try to execute task asynchronously.
@@ -346,6 +352,8 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
 void pdsch_processor_concurrent_impl::process_dmrs()
 {
+  trace_point process_dmrs_tp = l1_tracer.now();
+
   bounded_bitset<MAX_RB> rb_mask_bitset = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // Select the DM-RS reference point.
@@ -368,6 +376,8 @@ void pdsch_processor_concurrent_impl::process_dmrs()
 
   // Put DM-RS.
   dmrs_generator_pool->get().map(*mapper, dmrs_config);
+
+  l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
 
   // Decrement asynchronous task counter.
   if (async_task_counter.fetch_sub(1) == 1) {

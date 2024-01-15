@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -122,7 +122,9 @@ bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 // Test bench with all that is needed for the PUCCH.
 
-test_bench::test_bench(const test_bench_params& params) :
+test_bench::test_bench(const test_bench_params& params,
+                       unsigned                 max_pucchs_per_slot_,
+                       unsigned                 max_ul_grants_per_slot_) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
   cell_cfg{[this, &params]() -> const cell_configuration& {
     cell_cfg_list.emplace(
@@ -133,8 +135,10 @@ test_bench::test_bench(const test_bench_params& params) :
   }()},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
+  max_pucchs_per_slot{max_pucchs_per_slot_},
+  max_ul_grants_per_slot{max_ul_grants_per_slot_},
   pucch_f2_more_prbs{params.pucch_f2_more_prbs},
-  pucch_alloc{cell_cfg},
+  pucch_alloc{cell_cfg, max_pucchs_per_slot, max_ul_grants_per_slot},
   uci_alloc(pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}

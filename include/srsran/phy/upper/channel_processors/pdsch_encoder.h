@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -70,11 +70,11 @@ public:
   /// block segmentation (see TS38.212 Section 7.2.3), codeblock encoding (see TS38.212 Section 7.2.4) and rate matching
   /// (see TS38.212 Section 7.2.5), and codeblock concatenation (see TS38.212 Section 7.2.6) into the PDSCH codeword.
   /// \param[out]    codeword         Final PDSCH codeword.
-  /// \param[in,out] softbuffer       Rate matching softbuffer.
+  /// \param[in,out] rm_buffer        Rate matching buffer.
   /// \param[in]     transport_block  Transport block to be transmitted.
   /// \param[in]     cfg              PDSCH configuration parameters.
   virtual void encode(span<uint8_t>        codeword,
-                      tx_buffer&           softbuffer,
+                      tx_buffer&           rm_buffer,
                       span<const uint8_t>  transport_block,
                       const configuration& cfg) = 0;
 };

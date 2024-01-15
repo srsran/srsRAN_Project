@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -253,18 +253,10 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                                                                                  *exec_map.at("ctrl_exec"));
   }
 
-  // Select the PDSCH concurrent thread only if the PDSCH processor type is set to concurrent or auto.
-  unsigned                           nof_pdsch_workers     = 1;
   const upper_phy_threads_appconfig& upper_phy_threads_cfg = appcfg.expert_execution_cfg.threads.upper_threads;
-  if ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
-      (upper_phy_threads_cfg.pdsch_processor_type == "auto")) {
-    nof_pdsch_workers = upper_phy_threads_cfg.nof_pdsch_threads;
-  }
-
   create_du_low_executors(is_blocking_mode_active,
                           upper_phy_threads_cfg.nof_ul_threads,
                           upper_phy_threads_cfg.nof_dl_threads,
-                          nof_pdsch_workers,
                           upper_phy_threads_cfg.nof_pusch_decoder_threads,
                           cells_cfg,
                           appcfg.expert_phy_cfg.max_processing_delay_slots);
@@ -273,7 +265,6 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
 void worker_manager::create_du_low_executors(bool                       is_blocking_mode_active,
                                              unsigned                   nof_ul_workers,
                                              unsigned                   nof_dl_workers,
-                                             unsigned                   nof_pdsch_workers,
                                              unsigned                   nof_pusch_decoder_workers,
                                              span<const cell_appconfig> cells_cfg,
                                              unsigned                   pipeline_depth)
@@ -281,7 +272,6 @@ void worker_manager::create_du_low_executors(bool                       is_block
   using namespace execution_config_helper;
 
   du_low_dl_executors.resize(cells_cfg.size());
-  upper_pdsch_exec.resize(cells_cfg.size());
 
   if (is_blocking_mode_active) {
     // Create a single worker, shared by the whole PHY.
@@ -295,18 +285,26 @@ void worker_manager::create_du_low_executors(bool                       is_block
       upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_pucch_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_prach_exec.push_back(exec_mng.executors().at("phy_exec"));
+      upper_pdsch_exec.push_back(exec_mng.executors().at("phy_exec"));
       du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("phy_exec"));
     }
 
   } else {
     // RF case.
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
-      const std::string                      cell_id_str = std::to_string(cell_id);
-      const std::string                      name_ul     = "up_phy_ul#" + cell_id_str;
-      const auto                             prio        = os_thread_realtime_priority::max() - 15;
-      std::vector<os_sched_affinity_bitmask> cpu_masks;
+      const std::string cell_id_str = std::to_string(cell_id);
+      const std::string name_ul     = "up_phy_ul#" + cell_id_str;
+      const std::string name_dl     = "up_phy_dl#" + cell_id_str;
+      const auto        prio        = os_thread_realtime_priority::max() - 15;
+
+      std::vector<os_sched_affinity_bitmask> ul_cpu_masks;
       for (unsigned w = 0; w != nof_ul_workers; ++w) {
-        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul));
+        ul_cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul));
+      }
+
+      std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
+      for (unsigned w = 0; w != nof_dl_workers; ++w) {
+        dl_cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl));
       }
 
       // Instantiate PHY UL workers.
@@ -315,7 +313,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
                          task_worker_queue_size,
                          {{"upper_pusch_exec#" + cell_id_str}, {"upper_pucch_exec#" + cell_id_str}},
                          prio,
-                         cpu_masks);
+                         ul_cpu_masks);
       upper_pusch_exec.push_back(exec_mng.executors().at("upper_pusch_exec#" + cell_id_str));
       upper_pucch_exec.push_back(exec_mng.executors().at("upper_pucch_exec#" + cell_id_str));
 
@@ -329,19 +327,20 @@ void worker_manager::create_du_low_executors(bool                       is_block
                          os_thread_realtime_priority::max() - 2);
       upper_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + cell_id_str));
 
+      const std::string exec_name = "du_low_dl_exec#" + cell_id_str;
+
       // Instantiate dedicated PHY DL workers.
-      for (unsigned i_dl_worker = 0; i_dl_worker != nof_dl_workers; ++i_dl_worker) {
-        // Create upper PHY DL executors.
-        const std::string suffix      = std::to_string(cell_id) + "#" + std::to_string(i_dl_worker);
-        const std::string worker_name = "up_phy_dl#" + suffix;
-        const std::string exec_name   = "du_low_dl_exec#" + suffix;
-        create_prio_worker(worker_name,
-                           task_worker_queue_size,
-                           {{exec_name}},
-                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl),
-                           os_thread_realtime_priority::max() - 10);
-        du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("du_low_dl_exec#" + suffix));
+      create_worker_pool(name_dl,
+                         nof_dl_workers,
+                         task_worker_queue_size,
+                         {{exec_name}},
+                         os_thread_realtime_priority::max() - 10,
+                         dl_cpu_masks);
+
+      for (unsigned w = 0; w != nof_dl_workers; ++w) {
+        du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at(exec_name));
       }
+      upper_pdsch_exec.push_back(exec_mng.executors().at(exec_name));
     }
   }
 
@@ -365,31 +364,6 @@ void worker_manager::create_du_low_executors(bool                       is_block
       upper_pusch_decoder_exec.push_back(exec_mng.executors().at(name_pusch_decoder));
     } else {
       upper_pusch_decoder_exec.push_back(nullptr);
-    }
-  }
-
-  for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
-    if (nof_pdsch_workers > 1) {
-      const std::string name_pdsch = "pdsch#" + std::to_string(cell_id);
-      unsigned          max_nof_pdsch_cb_slot =
-          ((pdsch_constants::MAX_NRE_PER_RB * MAX_RB * get_bits_per_symbol(modulation_scheme::QAM256) *
-            cells_cfg[cell_id].cell.nof_antennas_dl) /
-           ldpc::MAX_MESSAGE_SIZE) *
-          pipeline_depth;
-
-      const auto                             prio = os_thread_realtime_priority::max() - 10;
-      std::vector<os_sched_affinity_bitmask> cpu_masks;
-      for (unsigned w = 0; w != nof_pdsch_workers; ++w) {
-        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl));
-      }
-
-      create_worker_pool(name_pdsch,
-                         nof_pdsch_workers,
-                         max_nof_pdsch_cb_slot,
-                         {{"upper_pdsch_exec#" + std::to_string(cell_id)}},
-                         prio,
-                         cpu_masks);
-      upper_pdsch_exec[cell_id] = exec_mng.executors().at("upper_pdsch_exec#" + std::to_string(cell_id));
     }
   }
 }
@@ -442,7 +416,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
         cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
       }
       create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
-      ru_dl_exec[i].push_back(exec_mng.executors().at(exec_name));
+      ru_dl_exec[i] = exec_mng.executors().at(exec_name);
     }
 
     // Executor for Open Fronthaul messages transmission.

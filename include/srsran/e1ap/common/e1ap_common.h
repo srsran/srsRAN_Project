@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "e1ap_message.h"
-#include "srsran/asn1/e1ap/e1ap.h"
-
 namespace srsran {
 
-/// This interface is used to push E1AP messages to the E1AP interface.
+struct e1ap_message;
+
+/// This interface is used to push the received E1AP PDUs to the CU-CP or CU-UP.
 class e1ap_message_handler
 {
 public:

@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -17,6 +17,8 @@
 # the LICENSE file in the top-level directory of this distribution
 # and at http://www.gnu.org/licenses/.
 #
+
+set_directory_properties(PROPERTIES LABELS "cu_up")
 
 add_executable(cu_up_test cu_up_test.cpp)
 target_link_libraries(cu_up_test srsran_cu_up srsran_support srslog e1ap_asn1 gtest gtest_main)

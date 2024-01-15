@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -279,6 +279,17 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, su
   return true;
 }
 
+/// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
+static bool validate_ul_common_app_config(const ul_common_appconfig& config)
+{
+  if (config.max_ul_grants_per_slot <= config.max_pucchs_per_slot) {
+    fmt::print("The max number of UL grants per slot should be greater than the maximum number of PUCCH grants.\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band, unsigned nof_rx_atennas)
 {
@@ -502,6 +513,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_pucch_cell_app_config(config, config.common_scs)) {
+    return false;
+  }
+
+  if (!validate_ul_common_app_config(config.ul_common_cfg)) {
     return false;
   }
 
@@ -1125,32 +1140,16 @@ static bool validate_upper_phy_threads_appconfig(const upper_phy_threads_appconf
     valid = false;
   }
 
-  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
+  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_dl_threads)) {
+    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {}.\n",
+               config.nof_dl_threads,
                nof_pdsch_threads_range);
     valid = false;
-  } else if ((config.pdsch_processor_type == "auto") && !nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For auto PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
-               nof_ul_dl_threads_range);
-    valid = false;
-  } else if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
-             (config.nof_pdsch_threads > 1)) {
-    fmt::print("Number of PHY PDSCH threads (i.e., {}) is ignored.\n", config.nof_pdsch_threads);
   }
 
   if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
     fmt::print(
         "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
-    valid = false;
-  }
-
-  if (config.nof_dl_threads > max_processing_delay_slots) {
-    fmt::print("Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots "
-               "(i.e., {}).\n",
-               config.nof_dl_threads,
-               max_processing_delay_slots);
     valid = false;
   }
 

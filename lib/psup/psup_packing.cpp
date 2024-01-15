@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -99,7 +99,7 @@ bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_inform
   return true;
 }
 
-void psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const
+bool psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const
 {
   size_t      start_len = out_buf.length();
   bit_encoder encoder{out_buf};
@@ -144,8 +144,11 @@ void psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_informat
 
   // Add padding such that length is (n*4-2) octets, where n is a positive integer.
   while (((out_buf.length() - start_len) + 2) % 4) {
-    out_buf.append(0x0);
+    if (not out_buf.append(0x0)) {
+      return false;
+    }
   }
+  return true;
 }
 
 } // namespace srsran

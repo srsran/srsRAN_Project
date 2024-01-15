@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -115,14 +115,16 @@ private:
   std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();
   std::chrono::microseconds                      t_max  = std::chrono::microseconds::min();
   std::chrono::microseconds                      t_sum  = std::chrono::microseconds::zero();
-  ;
 };
 
 byte_buffer make_tx_byte_buffer(uint32_t length)
 {
   byte_buffer pdu{};
   for (uint32_t i = 0; i < length; ++i) {
-    pdu.append((uint8_t)i);
+    if (not pdu.append((uint8_t)i)) {
+      pdu.clear();
+      break;
+    }
   }
   return pdu;
 }

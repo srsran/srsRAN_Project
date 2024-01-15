@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -46,9 +46,9 @@ add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
 target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog)
 add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
 
-add_executable(rx_softbuffer_pool_test rx_softbuffer_pool_test.cpp)
-target_link_libraries(rx_softbuffer_pool_test srsran_upper_phy_support srslog)
-add_test(rx_softbuffer_pool_test rx_softbuffer_pool_test)
+add_executable(rx_buffer_pool_test rx_buffer_pool_test.cpp)
+target_link_libraries(rx_buffer_pool_test srsran_upper_phy_support srslog gtest srsran_support)
+gtest_discover_tests(rx_buffer_pool_test)
 
 add_executable(uplink_processor_test uplink_processor_test.cpp)
 target_link_libraries(uplink_processor_test srsran_uplink_processor srslog gtest gtest_main)

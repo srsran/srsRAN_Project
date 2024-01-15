@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -27,6 +27,7 @@
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
+#include "srsran/support/executors/task_executor.h"
 #include <memory>
 #include <vector>
 
@@ -55,13 +56,31 @@ std::unique_ptr<resource_grid_mapper>
 create_resource_grid_mapper(unsigned nof_ports, unsigned nof_subc, resource_grid_writer& writer);
 
 /// \brief Creates a generic resource grid pool.
-/// \param[in] nof_sectors Number of radio sectors.
-/// \param[in] nof_slots umber of slots to be buffered, per sector.
+///
+/// It selects a different resource grid every time a resource grid is requested. The resource grid is repeated every
+/// \c grids.size() requests.
+///
 /// \param[in] grids Resource grids, ownerships are transferred to the pool.
 /// \return A generic resource grid pool.
-std::unique_ptr<resource_grid_pool> create_resource_grid_pool(unsigned                                      nof_sectors,
-                                                              unsigned                                      nof_slots,
-                                                              std::vector<std::unique_ptr<resource_grid>>&& grids);
+std::unique_ptr<resource_grid_pool>
+create_generic_resource_grid_pool(std::vector<std::unique_ptr<resource_grid>> grids);
+
+/// \brief Creates an asynchronous resource grid pool.
+///
+/// It selects a different resource grid every time a resource grid is requested. The resource grid expires
+/// \c expire_timeout_slots after it is requested. When a resource grid expires, it is asynchronously set to zero.
+///
+/// The resource grid repetition is not deterministic but it is guaranteed that it is repeated after
+/// \c expire_timeout_slots.
+///
+/// \param[in] expire_timeout_slots Number of slots after which resource grids are expired.
+/// \param[in] async_executor       Asynchronous task executor for setting the grid to zero.
+/// \param[in] grids                Resource grids, ownerships are transferred to the pool.
+/// \return An asynchronous resource grid pool.
+std::unique_ptr<resource_grid_pool>
+create_asynchronous_resource_grid_pool(unsigned                                    expire_timeout_slots,
+                                       task_executor&                              async_executor,
+                                       std::vector<std::unique_ptr<resource_grid>> grids);
 
 /// \brief Creates a long PRACH sequence buffer.
 ///

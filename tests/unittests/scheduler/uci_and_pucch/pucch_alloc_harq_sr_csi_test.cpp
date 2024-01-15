@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -33,7 +33,8 @@ const unsigned NOF_RBS = 52;
 class test_pucch_allocator_ded_resources : public ::testing::Test
 {
 public:
-  test_pucch_allocator_ded_resources()
+  test_pucch_allocator_ded_resources(unsigned max_pucchs_per_slot_ = 32U, unsigned max_ul_grants_per_slot_ = 32U) :
+    t_bench(test_bench_params{}, max_pucchs_per_slot_, max_ul_grants_per_slot_)
   {
     // Set expected grant for PUCCH Format 1 SR.
     pucch_expected_f1_sr.format  = pucch_format::FORMAT_1;
@@ -1136,6 +1137,76 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
   ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
   ASSERT_EQ(2, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
   ASSERT_EQ(3, slot_grid.result.ul.pucchs[2].format_1.harq_ack_nof_bits);
+}
+
+///////   Test UL grants reached and PUCCH fails.    ///////
+
+class test_pucch_allocator_ded_resources_reached_ul_grants : public test_pucch_allocator_ded_resources
+{
+public:
+  test_pucch_allocator_ded_resources_reached_ul_grants() : test_pucch_allocator_ded_resources(3U, 6U) {}
+};
+
+TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_max_pucch_allocation_reached)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_csi_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+}
+
+TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_max_ul_allocations_reached)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  slot_grid.result.ul.puschs.emplace_back();
+  slot_grid.result.ul.puschs.emplace_back();
+  slot_grid.result.ul.puschs.emplace_back();
+
+  add_csi_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+
+  add_ue_with_harq_grant();
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+}
+
+TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_sr_max_ul_allocations_reached)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  for (unsigned n = 0; n != 6U; ++n) {
+    slot_grid.result.ul.puschs.emplace_back();
+  }
+
+  add_sr_grant();
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+}
+
+TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_csi_max_ul_allocations_reached)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  for (unsigned n = 0; n != 6U; ++n) {
+    slot_grid.result.ul.puschs.emplace_back();
+  }
+
+  add_csi_grant();
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
 }
 
 int main(int argc, char** argv)

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -31,7 +31,7 @@
 
 namespace srsran {
 
-class e2sm_param_configurator;
+class du_configurator;
 
 /// \brief Interface to DU-high class, which owns and manages the interaction between MAC, RLC and F1 layers.
 class du_high
@@ -60,7 +60,7 @@ public:
   virtual mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) = 0;
 
   /// Returns handler to configure and control the UEs attached to this DU.
-  virtual e2sm_param_configurator& get_e2sm_configurator() = 0;
+  virtual du_configurator& get_du_configurator() = 0;
 };
 
 } // namespace srsran

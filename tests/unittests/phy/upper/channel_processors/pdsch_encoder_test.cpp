@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,17 +54,15 @@ int main()
   std::shared_ptr<pdsch_encoder> pdsch_encoder = encoder_factory->create();
   TESTASSERT(pdsch_encoder);
 
-  tx_buffer_pool_config softbuffer_pool_config;
-  softbuffer_pool_config.max_codeblock_size       = ldpc::MAX_CODEBLOCK_SIZE;
-  softbuffer_pool_config.nof_buffers              = 1;
-  softbuffer_pool_config.nof_codeblocks           = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  softbuffer_pool_config.expire_timeout_slots     = 0;
-  softbuffer_pool_config.external_soft_bits       = false;
-  std::shared_ptr<tx_buffer_pool> softbuffer_pool = create_tx_buffer_pool(softbuffer_pool_config);
+  tx_buffer_pool_config buffer_pool_config;
+  buffer_pool_config.max_codeblock_size          = ldpc::MAX_CODEBLOCK_SIZE;
+  buffer_pool_config.nof_buffers                 = 1;
+  buffer_pool_config.nof_codeblocks              = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  buffer_pool_config.expire_timeout_slots        = 0;
+  buffer_pool_config.external_soft_bits          = false;
+  std::shared_ptr<tx_buffer_pool> rm_buffer_pool = create_tx_buffer_pool(buffer_pool_config);
 
-  tx_buffer_identifier softbuffer_id;
-  softbuffer_id.harq_ack_id = 0;
-  softbuffer_id.rnti        = 0;
+  trx_buffer_identifier buffer_id(0, 0);
 
   for (const test_case_t& test_case : pdsch_encoder_test_data) {
     // Load the TB.
@@ -83,7 +81,7 @@ int main()
     unsigned nof_codeblocks =
         ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), test_case.config.base_graph);
 
-    unique_tx_buffer softbuffer = softbuffer_pool->reserve_buffer(slot_point(), softbuffer_id, nof_codeblocks);
+    unique_tx_buffer rm_buffer = rm_buffer_pool->reserve(slot_point(), buffer_id, nof_codeblocks);
 
     pdsch_encoder::configuration config;
     config.new_data       = true;
@@ -95,14 +93,14 @@ int main()
     config.nof_ch_symbols = test_case.config.nof_ch_symbols;
 
     // Encode the TB.
-    pdsch_encoder->encode(codeword, softbuffer.get(), transport_block, config);
+    pdsch_encoder->encode(codeword, rm_buffer.get(), transport_block, config);
 
     // Assert encoded data.
     TESTASSERT_EQ(span<const uint8_t>(codeword), span<const uint8_t>(expected_codeword));
 
-    // Repeat test reusing the softbuffer.
+    // Repeat test reusing the buffer.
     config.new_data = false;
-    pdsch_encoder->encode(codeword, softbuffer.get(), transport_block, config);
+    pdsch_encoder->encode(codeword, rm_buffer.get(), transport_block, config);
     TESTASSERT_EQ(span<const uint8_t>(codeword), span<const uint8_t>(expected_codeword));
   }
 }

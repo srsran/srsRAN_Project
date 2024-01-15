@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -146,6 +146,7 @@ public:
                    timer_factory                        timers,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
+                   bool                                 metrics_enabled_,
                    rlc_pcap&                            pcap_);
 
   // TX/RX interconnect

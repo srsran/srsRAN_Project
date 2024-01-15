@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -44,7 +44,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   csi_sch(cell_cfg),
   ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger),
   prach_sch(cell_cfg),
-  pucch_alloc(cell_cfg),
+  pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(pucch_alloc),
   sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
@@ -92,6 +92,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
       res_grid.slot_indication(skipped_slot);
       pdcch_sch.slot_indication(skipped_slot);
       pucch_alloc.slot_indication(skipped_slot);
+      uci_alloc.slot_indication(skipped_slot);
     }
   }
 
@@ -99,6 +100,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   res_grid.slot_indication(sl_tx);
   pdcch_sch.slot_indication(sl_tx);
   pucch_alloc.slot_indication(sl_tx);
+  uci_alloc.slot_indication(sl_tx);
 
   // > Mark slot start for logging purposes.
   result_logger.on_slot_start();

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/instrumentation/traces/ru_traces.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "fmt/format.h"
 
@@ -38,6 +39,8 @@ public:
 
   void on_radio_rt_event(const event_description& description) override
   {
+    ru_tracer << instant_trace_event(description.type.to_string(), instant_trace_event::cpu_scope::global);
+
     // Forward event.
     if (handler) {
       handler->on_radio_rt_event(description);

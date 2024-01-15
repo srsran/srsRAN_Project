@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -107,12 +107,19 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     } else {
       // Max number of reTxs was exceeded. Clear HARQ process.
       tb.state = transport_block::state_t::empty;
-      logger.warning(id,
+      fmt::memory_buffer fmtbuf;
+      fmt::format_to(fmtbuf,
                      "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
                      "missing HARQ-ACKs, none of the received so far are positive and the maximum number of reTxs {} "
                      "was exceeded",
                      slot_ack_timeout - last_slot_ack,
-                     max_nof_harq_retxs(0));
+                     tb.max_nof_harq_retxs);
+
+      if (max_ack_wait_in_slots == 1) {
+        logger.info(id, to_c_str(fmtbuf));
+      } else {
+        logger.warning(id, to_c_str(fmtbuf));
+      }
     }
 
     // Report timeout with NACK.
@@ -380,20 +387,32 @@ harq_entity::harq_entity(rnti_t                   rnti_,
                          unsigned                 nof_dl_harq_procs,
                          unsigned                 nof_ul_harq_procs,
                          ue_harq_timeout_notifier timeout_notif,
+                         unsigned                 ntn_cs_koffset,
                          unsigned                 max_ack_wait_in_slots) :
   rnti(rnti_),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_h_logger(logger, rnti_, to_du_cell_index(0), true),
-  ul_h_logger(logger, rnti_, to_du_cell_index(0), false)
+  ul_h_logger(logger, rnti_, to_du_cell_index(0), false),
+  nop_timeout_notifier(),
+  ntn_harq(ntn_cs_koffset)
 {
   // Create HARQ processes
   dl_harqs.reserve(nof_dl_harq_procs);
   ul_harqs.reserve(nof_ul_harq_procs);
   for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
-    dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
+    if (ntn_harq.active()) {
+      dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, nop_timeout_notifier, ntn_harq.ntn_harq_timeout);
+    } else {
+      dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
+    }
   }
+
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
-    ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
+    if (ntn_harq.active()) {
+      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, nop_timeout_notifier, ntn_harq.ntn_harq_timeout);
+    } else {
+      ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
+    }
   }
 }
 
@@ -401,9 +420,15 @@ void harq_entity::slot_indication(slot_point slot_tx_)
 {
   slot_tx = slot_tx_;
   for (dl_harq_process& dl_h : dl_harqs) {
+    if (ntn_harq.active()) {
+      ntn_harq.save_dl_harq_info(dl_h, slot_tx_);
+    }
     dl_h.slot_indication(slot_tx);
   }
   for (ul_harq_process& ul_h : ul_harqs) {
+    if (ntn_harq.active()) {
+      ntn_harq.save_ul_harq_info(ul_h, slot_tx_);
+    }
     ul_h.slot_indication(slot_tx);
   }
 }
@@ -426,6 +451,8 @@ dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point         
               h_dl.last_alloc_params().tb[0]->mcs,
               h_dl.last_alloc_params().tb[0]->tbs_bytes,
               status_upd};
+    } else if (ntn_harq.active()) {
+      return ntn_harq.pop_ack_info(uci_slot, ack);
     }
   }
   logger.warning("DL HARQ for rnti={}, uci slot={} not found.", rnti, uci_slot);
@@ -436,6 +463,13 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 {
   ul_harq_process& h_ul = ul_harq(h_id);
   if (h_ul.empty() or h_ul.slot_ack() != pusch_slot) {
+    if (ntn_harq.active()) {
+      if (ack == true) {
+        return ntn_harq.pop_tbs(pusch_slot);
+      } else {
+        ntn_harq.clear_tbs(pusch_slot);
+      }
+    }
     ul_h_logger.warning(h_id, "Discarding CRC. Cause: No active UL HARQ expecting a CRC at slot={}", pusch_slot);
     return -1;
   }
@@ -444,9 +478,29 @@ int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
 
 void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
 {
+  // Maximum number of UCI indications that a HARQ process can expect. We set this conservative limit to account for
+  // the state when SR, HARQ-ACK+SR, common PUCCH are scheduled.
+  static constexpr size_t MAX_ACKS_PER_HARQ = 4;
+
   for (dl_harq_process& h_dl : dl_harqs) {
     if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
-      h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
+      dl_harq_process::status_update ret = dl_harq_process::status_update::no_update;
+      for (unsigned count = 0; count != MAX_ACKS_PER_HARQ and ret == dl_harq_process::status_update::no_update;
+           ++count) {
+        ret = h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
+      }
+      if (ret == dl_harq_process::status_update::no_update) {
+        dl_h_logger.warning(h_dl.id, "DL HARQ in an invalid state. Resetting it...");
+        h_dl.reset();
+      }
     }
+  }
+}
+
+harq_entity::ntn_tbs_history::ntn_tbs_history(unsigned ntn_cs_koffset_) : ntn_cs_koffset(ntn_cs_koffset_)
+{
+  if (ntn_cs_koffset > 0) {
+    slot_tbs.resize(NTN_CELL_SPECIFIC_KOFFSET_MAX);
+    slot_ack_info.resize(NTN_CELL_SPECIFIC_KOFFSET_MAX);
   }
 }

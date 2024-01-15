@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -117,6 +117,15 @@ public:
     x2 = (x2 << step_size) ^ f2;
 
     return c;
+  }
+
+  /// Returns and steps the sequence 64 bits.
+  uint64_t step64()
+  {
+    uint64_t result = static_cast<uint64_t>(step<max_step_size>()) << 32;
+    result |= static_cast<uint64_t>(step<max_step_size>()) << 4;
+    result |= static_cast<uint64_t>(step<8>()) >> 24;
+    return result;
   }
 
   /// Gets the current \f$x_1(n)\f$ state.

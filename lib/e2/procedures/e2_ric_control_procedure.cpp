@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,75 +30,87 @@ e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request&
                                                    e2_message_notifier&          notif_,
                                                    e2sm_manager&                 e2sm_mng_,
                                                    srslog::basic_logger&         logger_) :
-  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), request(request_)
+  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), e2_request(request_)
 {
 }
 
 void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
-  ri_cctrl_request_s ctrl_req   = request.request;
-  e2sm_interface*    e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
   CORO_BEGIN(ctx);
-  ctrl_config_request = process_request();
-  CORO_AWAIT_VALUE(ctrl_config_response,
-                   e2sm_iface->get_param_configurator()->configure_ue_mac_scheduler(ctrl_config_request));
-  if (ctrl_config_response.harq_processes_result and ctrl_config_response.max_prb_alloc_result and
-      ctrl_config_response.min_prb_alloc_result) {
-    send_e2_ric_control_acknowledge(ctrl_config_request, ctrl_config_response);
-  } else {
-    send_e2_ric_control_failure(ctrl_config_request, ctrl_config_response);
+  e2sm_iface = e2sm_mng.get_e2sm_interface(e2_request.request->ra_nfunction_id.value);
+
+  if (!e2sm_iface) {
+    logger.error("RAN function ID not supported");
+    CORO_EARLY_RETURN();
+  }
+
+  ric_ctrl_req    = e2sm_iface->get_e2sm_packer().handle_packed_ric_control_request(e2_request.request);
+  control_service = e2sm_iface->get_e2sm_control_service(ric_ctrl_req);
+
+  if (!control_service) {
+    logger.error("RIC Control Service not supported");
+    CORO_EARLY_RETURN();
+  }
+
+  if (!control_service->control_request_supported(ric_ctrl_req)) {
+    logger.error("RIC Control Request not supported");
+    CORO_EARLY_RETURN();
+  }
+
+  CORO_AWAIT_VALUE(e2sm_response, control_service->execute_control_request(ric_ctrl_req));
+  if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
+    e2_response = e2sm_iface->get_e2sm_packer().pack_ric_control_response(e2sm_response);
+    if (e2_response.success) {
+      send_e2_ric_control_acknowledge(e2_request, e2_response);
+    } else {
+      send_e2_ric_control_failure(e2_request, e2_response);
+    }
   }
   CORO_RETURN();
 }
 
-ric_control_config e2_ric_control_procedure::process_request()
-{
-  ri_cctrl_request_s      ctrl_req = request.request;
-  e2_sm_rc_ctrl_outcome_s outcome;
-  e2sm_interface*         e2sm_iface = e2sm_mng.get_e2sm_interface(ctrl_req->ra_nfunction_id.value);
-  if (!e2sm_iface) {
-    logger.error("RAN function ID not supported");
-    return {};
-  }
-
-  ric_control_config ctrl_config;
-
-  if (!(ctrl_req->ri_cctrl_hdr.value.to_number() == 0)) {
-    e2sm_iface->process_control_header(ctrl_req->ri_cctrl_hdr.value, ctrl_config);
-  } else {
-    logger.warning("Control header not present");
-    ctrl_config.ue_id = 1;
-  }
-  e2sm_iface->process_control_message(ctrl_req->ri_cctrl_msg.value, ctrl_config);
-  return ctrl_config;
-}
-
-void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_config          ctrl_request,
-                                                               ric_control_config_response ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
+                                                               const e2_ric_control_response& ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_successful_outcome();
   logger.info("Sending E2 RIC Control Acknowledge");
   msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ri_cctrl_ack();
-  ack->ra_nfunction_id             = request.request->ra_nfunction_id;
-  ack->ri_crequest_id              = request.request->ri_crequest_id;
+  ack->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
+  ack->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
   ack->ri_ccall_process_id_present = false;
-  ack->ri_cctrl_outcome_present    = false;
+  if (ctrl_request.request->ri_ccall_process_id_present) {
+    ack->ri_ccall_process_id_present = true;
+    ack->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  }
+  ack->ri_cctrl_outcome_present = false;
+  if (ctrl_response.ack->ri_cctrl_outcome_present) {
+    ack->ri_cctrl_outcome_present = true;
+    ack->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  }
   ric_notif.on_new_message(msg);
 }
 
-void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config          ctrl_request,
-                                                           ric_control_config_response ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_control_request&  ctrl_request,
+                                                           const e2_ric_control_response& ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_unsuccessful_outcome();
   logger.info("Sending E2 RIC Control Failure");
   msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
-  ri_cctrl_fail_s& fail             = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
-  fail->ra_nfunction_id             = request.request->ra_nfunction_id;
-  fail->ri_crequest_id              = request.request->ri_crequest_id;
-  fail->ri_ccall_process_id_present = false;
-  fail->ri_cctrl_outcome_present    = false;
+  ri_cctrl_fail_s& fail = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
+  fail->ri_crequest_id  = ctrl_request.request->ri_crequest_id;
+  fail->ra_nfunction_id = ctrl_request.request->ra_nfunction_id;
+  if (ctrl_request.request->ri_ccall_process_id_present) {
+    fail->ri_ccall_process_id_present = true;
+    fail->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  }
+  fail->cause                    = ctrl_response.failure->cause;
+  fail->ri_cctrl_outcome_present = false;
+  if (ctrl_response.ack->ri_cctrl_outcome_present) {
+    fail->ri_cctrl_outcome_present = true;
+    fail->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  }
   ric_notif.on_new_message(msg);
 }

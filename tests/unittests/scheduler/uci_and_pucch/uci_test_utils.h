@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -108,7 +108,9 @@ struct test_bench_params {
 class test_bench
 {
 public:
-  explicit test_bench(const test_bench_params& params = {});
+  explicit test_bench(const test_bench_params& params                  = {},
+                      unsigned                 max_pucchs_per_slot_    = 32U,
+                      unsigned                 max_ul_grants_per_slot_ = 32U);
 
   // Return the main UE, which has RNTI 0x4601.
   const ue& get_main_ue() const;
@@ -132,6 +134,8 @@ public:
   pdcch_dl_information    dci_info;
   const unsigned          k0;
   const unsigned          k1{4};
+  const unsigned          max_pucchs_per_slot;
+  const unsigned          max_ul_grants_per_slot;
   du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
   ue_repository           ues;
   bool                    pucch_f2_more_prbs;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,6 +21,7 @@
  */
 
 #include "ngap_dl_nas_message_transfer_procedure.h"
+#include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

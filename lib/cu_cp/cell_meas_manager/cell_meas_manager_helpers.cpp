@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,9 +30,11 @@ using namespace srs_cu_cp;
 
 void srsran::srs_cu_cp::log_cells(const srslog::basic_logger& logger, const cell_meas_manager_cfg& cfg)
 {
-  logger.debug("Configured cells:");
-  for (const auto& cell : cfg.cells) {
-    logger.debug(" - {}", cell.second);
+  if (!cfg.cells.empty()) {
+    logger.debug("Configured cells:");
+    for (const auto& cell : cfg.cells) {
+      logger.debug(" - {}", cell.second);
+    }
   }
 }
 

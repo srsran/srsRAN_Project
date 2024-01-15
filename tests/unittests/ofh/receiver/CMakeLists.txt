@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -52,7 +52,7 @@ add_executable(ofh_uplane_rx_symbol_data_flow_writer_test ofh_uplane_rx_symbol_d
 target_link_libraries(ofh_uplane_rx_symbol_data_flow_writer_test srsran_ofh_receiver srsran_support gtest gtest_main)
 gtest_discover_tests(ofh_uplane_rx_symbol_data_flow_writer_test)
 
-add_executable(ofh_sequence_id_checker_test ofh_sequence_id_checker_test.cpp)
+add_executable(ofh_sequence_id_checker_test ofh_sequence_id_checker_impl_test.cpp)
 target_link_libraries(ofh_sequence_id_checker_test srsran_support gtest gtest_main)
 gtest_discover_tests(ofh_sequence_id_checker_test)
 

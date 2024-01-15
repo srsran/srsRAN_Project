@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -56,10 +56,10 @@ public:
 
   /// \brief Process the given PDSCH PDU and its related data, which it is given in data parameter.
   ///
-  /// \param[in,out] softbuffer Transmit buffer.
-  /// \param[in]     data       Contains the PDSCH transport blocks.
-  /// \param[in]     pdu        PDSCH PDU to process.
-  virtual void process_pdsch(unique_tx_buffer buffer,
+  /// \param[in,out] rm_buffer Rate matcher buffer.
+  /// \param[in]     data      Contains the PDSCH transport blocks.
+  /// \param[in]     pdu       PDSCH PDU to process.
+  virtual void process_pdsch(unique_tx_buffer rm_buffer,
                              const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                              const pdsch_processor::pdu_t& pdu) = 0;
 

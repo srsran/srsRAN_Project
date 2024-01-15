@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -81,7 +81,7 @@ void rrc_setup_procedure::create_srb1()
   srb_creation_message srb1_msg{};
   srb1_msg.ue_index = context.ue_index;
   srb1_msg.srb_id   = srb_id_t::srb1;
-  srb1_msg.pdcp_cfg = srb1_pdcp_cfg;
+  srb1_msg.pdcp_cfg = {};
   srb_notifier.create_srb(srb1_msg);
 }
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -79,8 +79,6 @@ struct phy_fapi_adaptor_impl_dependencies {
   std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
-  /// Asynchronous task executor.
-  task_executor* async_executor;
 };
 
 /// \brief PHY&ndash;FAPI bidirectional adaptor implementation.

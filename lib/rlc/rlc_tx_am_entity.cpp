@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,8 +41,9 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
                                    timer_factory                        timers,
                                    task_executor&                       pcell_executor_,
                                    task_executor&                       ue_executor_,
+                                   bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
@@ -244,7 +245,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   st.tx_next = (st.tx_next + 1) % mod;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_no_segmentation(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -308,7 +309,7 @@ size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_
   sdu_info.next_so += segment_payload_len;
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -403,7 +404,7 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_len);
+  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);

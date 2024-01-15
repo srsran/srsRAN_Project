@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,14 +21,13 @@
  */
 
 #pragma once
-#include "tx_buffer_impl.h"
+
+#include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/static_vector.h"
-#include "srsran/phy/upper/codeblock_metadata.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
-#include "srsran/support/error_handling.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/adt/optional.h"
+#include "srsran/support/srsran_assert.h"
+#include <cstdint>
+#include <vector>
 
 namespace srsran {
 
@@ -36,6 +35,7 @@ namespace srsran {
 class tx_buffer_codeblock_pool
 {
 private:
+  /// Codeblock identifier list type.
   using codeblock_identifier_list =
       concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
 

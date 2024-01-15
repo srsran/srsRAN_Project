@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,6 +26,7 @@
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
+#include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -53,7 +54,7 @@ protected:
     gw   = std::make_unique<dummy_network_gateway_data_handler>();
     ngap = std::make_unique<dummy_ngap_message_handler>();
 
-    packer = std::make_unique<srsran::ngap_asn1_packer>(*gw, *ngap, pcap);
+    packer = std::make_unique<srsran::srs_cu_cp::ngap_asn1_packer>(*gw, *ngap, pcap);
   }
 
   void TearDown() override
@@ -62,11 +63,11 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<dummy_ngap_message_handler>         ngap;
-  std::unique_ptr<srsran::ngap_asn1_packer>           packer;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
-  null_dlt_pcap                                       pcap;
+  std::unique_ptr<dummy_network_gateway_data_handler>  gw;
+  std::unique_ptr<dummy_ngap_message_handler>          ngap;
+  std::unique_ptr<srsran::srs_cu_cp::ngap_asn1_packer> packer;
+  srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST");
+  null_dlt_pcap                                        pcap;
 };
 
 /// Test successful packing and compare with captured test vector

@@ -2,13 +2,12 @@
 ntn:
   cell_specific_koffset: 260 # sets the maximum possible channel delay
   ephemeris_info: # ephemeris information for the satellite
-    pos_x: 23508375
-    pos_y: 2211019
-    pos_z: 22224489
+    pos_x: 4819456 #23508375
+    pos_y: 453281 #2211019
+    pos_z: 7183667 #22224489
     vel_x: 0
     vel_y: 0
     vel_z: 0
-
 cell_cfg:
   sib: # system information block 19 scheduling, SIB19 is the NTN information block
     si_window_length: 5

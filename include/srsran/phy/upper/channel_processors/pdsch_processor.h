@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -161,14 +161,14 @@ public:
 
   /// \brief Processes a PDSCH transmission.
   /// \param[out] mapper     Resource grid mapper interface.
-  /// \param[in]  softbuffer Data transmission rate match buffer.
+  /// \param[in]  rm_buffer  Rate match buffer.
   /// \param[out] notifier   PDSCH processor notifier.
   /// \param[in]  data       The codewords to transmit.
   /// \param[in]  pdu        Necessary parameters to process the PDSCH transmission.
   /// \remark The number of transport blocks must be equal to the number of codewords in \c pdu.
   /// \remark The size of each transport block is determined by <tt> data[TB index].size() </tt>
   virtual void process(resource_grid_mapper&                                        mapper,
-                       unique_tx_buffer                                             softbuffer,
+                       unique_tx_buffer                                             rm_buffer,
                        pdsch_processor_notifier&                                    notifier,
                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                        const pdu_t&                                                 pdu) = 0;

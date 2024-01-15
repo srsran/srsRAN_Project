@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -51,9 +51,17 @@ public:
                     rlc_metrics_notifier_,
                     timer_factory{timers, ue_executor})
   {
-    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(
-        du_index_, ue_index_, rb_id_, tx_upper_dn, tx_upper_cn, tx_lower_dn, pcell_executor, pcap));
-    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_tm_entity(du_index_, ue_index_, rb_id_, rx_upper_dn, pcap));
+    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(du_index_,
+                                                             ue_index_,
+                                                             rb_id_,
+                                                             tx_upper_dn,
+                                                             tx_upper_cn,
+                                                             tx_lower_dn,
+                                                             pcell_executor,
+                                                             metrics_period.count() != 0,
+                                                             pcap));
+    rx = std::unique_ptr<rlc_rx_entity>(
+        new rlc_rx_tm_entity(du_index_, ue_index_, rb_id_, rx_upper_dn, metrics_period.count() != 0, pcap));
   }
 };
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -85,6 +85,8 @@ struct sector_configuration {
   bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
+  /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
+  bool ignore_ecpri_seq_id_field = false;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
@@ -116,8 +118,8 @@ struct sector_configuration {
 struct sector_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
-  /// Downlink task executors.
-  std::vector<task_executor*> downlink_executors;
+  /// Downlink task executor.
+  task_executor* downlink_executor;
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
   /// Receiver task executor.

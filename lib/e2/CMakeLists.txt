@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -33,6 +33,8 @@ set(SOURCES
     e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.cpp
     e2sm/e2sm_rc/e2sm_rc_asn1_packer.cpp
     e2sm/e2sm_rc/e2sm_rc_impl.cpp
+    e2sm/e2sm_rc/e2sm_rc_control_service_impl.cpp
+    e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.cpp
     e2sm/e2sm_factory.cpp
     e2sm/e2sm_manager.cpp
     e2sm/e2sm_kpm/e2sm_kpm_utils.cpp

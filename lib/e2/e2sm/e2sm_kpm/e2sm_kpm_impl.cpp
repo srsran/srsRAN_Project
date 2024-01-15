@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,7 +38,7 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&   logger_,
 
 bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
 {
-  e2_sm_action_definition_s action_def =
+  e2sm_action_definition action_def =
       e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
 
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
@@ -225,7 +225,7 @@ bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_def
 std::unique_ptr<e2sm_report_service>
 e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_action_definition_s      action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  e2sm_action_definition         action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
       variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;
@@ -246,22 +246,19 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
   }
 }
 
-e2sm_handler& e2sm_kpm_impl::get_e2sm_packer()
+bool e2sm_kpm_impl::add_e2sm_control_service(std::unique_ptr<e2sm_control_service> control_service)
 {
-  return e2sm_packer;
+  logger.warning("Control Service not supported");
+  return false;
 }
 
-e2sm_param_configurator* e2sm_kpm_impl::get_param_configurator()
+e2sm_control_service* e2sm_kpm_impl::get_e2sm_control_service(const e2sm_ric_control_request& req)
 {
+  logger.warning("Control Service not supported");
   return nullptr;
 }
 
-void e2sm_kpm_impl::process_control_header(const srsran::byte_buffer& ctrl_header_buff, ric_control_config& ctrl_config)
+e2sm_handler& e2sm_kpm_impl::get_e2sm_packer()
 {
-  logger.warning("Control Service not supported");
-}
-
-void e2sm_kpm_impl::process_control_message(const srsran::byte_buffer& ctrl_msg_buff, ric_control_config& ctrl_config)
-{
-  logger.warning("Control Service not supported");
+  return e2sm_packer;
 }

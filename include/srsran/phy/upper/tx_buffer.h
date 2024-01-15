@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -27,7 +27,7 @@
 
 namespace srsran {
 
-/// \brief Describes a transmitter buffer.
+/// \brief Describes a PDSCH rate matcher buffer.
 ///
 /// The aim is to provide the physical layer shared channel FEC with a persistent storage of the rate matcher buffer
 /// among transmissions for a given user and HARQ process.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -194,7 +194,7 @@ private:
   void discard_all_sdus();
 
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
-  byte_buffer cipher_decrypt(byte_buffer& msg, uint32_t count);
+  byte_buffer cipher_decrypt(byte_buffer_view& msg, uint32_t count);
 
   /*
    * Notifiers and handlers

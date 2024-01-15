@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,6 +21,7 @@
  */
 
 #include "e1ap_cu_up_test_messages.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_up;

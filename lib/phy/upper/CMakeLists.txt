@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -25,8 +25,12 @@ add_subdirectory(equalization)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
-add_library(srsran_downlink_processor downlink_processor_single_executor_impl.cpp downlink_processor_pool_impl.cpp)
-target_link_libraries(srsran_downlink_processor srsran_channel_processors)
+add_library(srsran_downlink_processor
+        downlink_processor_single_executor_impl.cpp
+        downlink_processor_pool_impl.cpp)
+target_link_libraries(srsran_downlink_processor
+        srsran_instrumentation
+        srsran_channel_processors)
 
 add_library(srsran_uplink_processor
         uplink_processor_impl.cpp
@@ -35,13 +39,19 @@ add_library(srsran_uplink_processor
 target_link_libraries(srsran_uplink_processor srsran_channel_processors)
 
 add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp)
-target_link_libraries(srsran_upper_phy srsran_downlink_processor srsran_uplink_processor srsran_phy_support srsran_generic_funcs srsran_channel_equalizer)
+target_link_libraries(srsran_upper_phy
+        srsran_instrumentation
+        srsran_downlink_processor
+        srsran_uplink_processor
+        srsran_phy_support
+        srsran_generic_funcs
+        srsran_channel_equalizer)
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
 add_library(srsran_upper_phy_support
         rb_allocation.cpp
-        rx_softbuffer_pool_impl.cpp
+        rx_buffer_pool_impl.cpp
         tx_buffer_pool_impl.cpp
         vrb_to_prb_mapper.cpp
         )

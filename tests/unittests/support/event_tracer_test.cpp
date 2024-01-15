@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -45,14 +45,28 @@ TEST(event_tracing_test, event_trace_formatting)
   trace_point tp = tracer.now();
 
   tracer << trace_event("test_event", tp);
+  tracer << trace_thres_event("test_event2", tp, trace_duration{1000000000});
+  tracer << trace_thres_event("test_event3", tp, trace_duration{0});
 
-  std::string event_out = tracer.pop_last_events()[0];
+  std::vector<std::string> events = tracer.pop_last_events();
+  ASSERT_EQ(events.size(), 2);
 
+  // First event.
+  std::string event_out = events[0];
   fmt::print("event: {}\n", event_out);
 
   ASSERT_EQ(event_out[0], '{');
   ASSERT_EQ(event_out.back(), '}');
   ASSERT_TRUE(event_out.find("\"name\": \"test_event\"") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"ph\": \"X\"") != std::string::npos);
+  ASSERT_TRUE(event_out.find("\"cat\": \"process\"") != std::string::npos);
+
+  // Third event.
+  event_out = events[1];
+  fmt::print("event2: {}\n", event_out);
+  ASSERT_EQ(event_out[0], '{');
+  ASSERT_EQ(event_out.back(), '}');
+  ASSERT_TRUE(event_out.find("\"name\": \"test_event3\"") != std::string::npos);
   ASSERT_TRUE(event_out.find("\"ph\": \"X\"") != std::string::npos);
   ASSERT_TRUE(event_out.find("\"cat\": \"process\"") != std::string::npos);
 }
@@ -87,6 +101,8 @@ TEST(event_tracing_test, file_event_tracer)
   tracer << instant_trace_event("test_event2", instant_trace_event::cpu_scope::global);
   tracer << instant_trace_event("test_event3", instant_trace_event::cpu_scope::thread);
   tracer << instant_trace_event("test_event4", instant_trace_event::cpu_scope::process);
+  tracer << trace_thres_event("test_event5", tp, trace_duration{1000000000});
+  tracer << trace_thres_event("test_event6", tp, trace_duration{0});
 
   close_trace_file();
 
@@ -113,6 +129,11 @@ TEST(event_tracing_test, file_event_tracer)
   ASSERT_TRUE(std::getline(fptr, line));
   ASSERT_NE(line.find("\"name\": \"test_event4\""), std::string::npos);
   ASSERT_NE(line.find("\"s\": \"p\""), std::string::npos);
+  ASSERT_TRUE(std::getline(fptr, line));
+  ASSERT_NE(line.find("\"name\": \"test_event6\""), std::string::npos);
+  ASSERT_NE(line.find("\"ph\": \"X\""), std::string::npos);
+  ASSERT_TRUE(std::getline(fptr, line));
+  ASSERT_EQ(line, "]");
 }
 
 TEST(event_tracing_test, deactivated_file_event_tracer)

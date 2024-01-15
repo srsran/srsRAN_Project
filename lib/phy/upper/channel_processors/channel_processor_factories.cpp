@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,6 +26,7 @@
 #include "pdcch_encoder_impl.h"
 #include "pdcch_modulator_impl.h"
 #include "pdcch_processor_impl.h"
+#include "pdcch_processor_pool.h"
 #include "pdsch_encoder_impl.h"
 #include "pdsch_modulator_impl.h"
 #include "pdsch_processor_concurrent_impl.h"
@@ -41,6 +42,7 @@
 #include "pucch_processor_impl.h"
 #include "pucch_processor_pool.h"
 #include "ssb_processor_impl.h"
+#include "ssb_processor_pool.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
@@ -182,6 +184,54 @@ public:
   {
     return std::make_unique<pdcch_processor_validator_impl>();
   }
+};
+
+class pdcch_processor_pool_factory : public pdcch_processor_factory
+{
+public:
+  pdcch_processor_pool_factory(std::shared_ptr<pdcch_processor_factory> factory_, unsigned nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid PDCCH processor factory.");
+    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
+  }
+
+  std::unique_ptr<pdcch_processor> create() override
+  {
+    if (!processors) {
+      std::vector<std::unique_ptr<pdcch_processor>> procs(nof_concurrent_threads);
+
+      for (auto& processor : procs) {
+        processor = factory->create();
+      }
+
+      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(std::move(procs));
+    }
+
+    return std::make_unique<pdcch_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<pdcch_processor> create(srslog::basic_logger& logger, bool enable_logging_broadcast) override
+  {
+    if (!processors) {
+      std::vector<std::unique_ptr<pdcch_processor>> procs(nof_concurrent_threads);
+
+      for (auto& processor : procs) {
+        processor = factory->create(logger, enable_logging_broadcast);
+      }
+
+      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(std::move(procs));
+    }
+
+    return std::make_unique<pdcch_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<pdcch_pdu_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<pdcch_processor_factory>                         factory;
+  unsigned                                                         nof_concurrent_threads;
+  std::shared_ptr<pdcch_processor_pool::pdcch_processor_pool_type> processors;
 };
 
 class pdsch_encoder_factory_sw : public pdsch_encoder_factory
@@ -680,6 +730,54 @@ private:
   std::shared_ptr<sss_processor_factory>       sss_factory;
 };
 
+class ssb_processor_pool_factory : public ssb_processor_factory
+{
+public:
+  ssb_processor_pool_factory(std::shared_ptr<ssb_processor_factory> factory_, unsigned nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid SSB processor factory.");
+    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
+  }
+
+  std::unique_ptr<ssb_processor> create() override
+  {
+    if (!processors) {
+      std::vector<std::unique_ptr<ssb_processor>> instances(nof_concurrent_threads);
+
+      for (auto& processor : instances) {
+        processor = factory->create();
+      }
+
+      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(std::move(instances));
+    }
+
+    return std::make_unique<ssb_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<ssb_processor> create(srslog::basic_logger& logger) override
+  {
+    if (!processors) {
+      std::vector<std::unique_ptr<ssb_processor>> instances(nof_concurrent_threads);
+
+      for (auto& processor : instances) {
+        processor = factory->create(logger);
+      }
+
+      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(std::move(instances));
+    }
+
+    return std::make_unique<ssb_processor_pool>(std::move(processors));
+  }
+
+  std::unique_ptr<ssb_pdu_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<ssb_processor_factory>                       factory;
+  unsigned                                                     nof_concurrent_threads;
+  std::shared_ptr<ssb_processor_pool::ssb_processor_pool_type> processors;
+};
+
 class pucch_demodulator_factory_sw : public pucch_demodulator_factory
 {
 public:
@@ -746,6 +844,13 @@ srsran::create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>
 {
   return std::make_shared<pdcch_processor_factory_sw>(
       std::move(encoder_factory), std::move(modulator_factory), std::move(dmrs_factory));
+}
+
+std::shared_ptr<pdcch_processor_factory>
+srsran::create_pdcch_processor_pool_factory(std::shared_ptr<pdcch_processor_factory> processor_factory,
+                                            unsigned                                 nof_concurrent_threads)
+{
+  return std::make_shared<pdcch_processor_pool_factory>(processor_factory, nof_concurrent_threads);
 }
 
 std::shared_ptr<pdsch_encoder_factory>
@@ -874,6 +979,13 @@ srsran::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& 
   return std::make_shared<ssb_processor_factory_sw>(config);
 }
 
+std::shared_ptr<ssb_processor_factory>
+srsran::create_ssb_processor_pool_factory(std::shared_ptr<ssb_processor_factory> processor_factory,
+                                          unsigned                               nof_concurrent_threads)
+{
+  return std::make_shared<ssb_processor_pool_factory>(processor_factory, nof_concurrent_threads);
+}
+
 template <typename Func>
 static std::chrono::nanoseconds time_execution(Func&& func)
 {
@@ -958,7 +1070,7 @@ public:
   }
 
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             softbuffer,
+               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier_,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                const pdu_t&                                                 pdu_) override
@@ -968,7 +1080,7 @@ public:
     pdu      = pdu_;
 
     start = std::chrono::steady_clock::now();
-    processor->process(mapper, std::move(softbuffer), *this, data_, pdu);
+    processor->process(mapper, std::move(rm_buffer), *this, data_, pdu);
   }
 
 private:

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,8 +26,6 @@
 #include "pusch_demodulator_impl.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"
-#include "srsran/ran/sch_dmrs_power.h"
-#include "srsran/srsvec/mean.h"
 
 #if defined(__SSE3__)
 #include <immintrin.h>
@@ -69,7 +67,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x0102040810204080, 0x0102040810204080));
 
     // Load input.
-    __m128i v = _mm_loadu_si128((const __m128i*)(&in[i]));
+    __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&in[i]));
 
     // Negate.
     v = _mm_xor_si128(mask, v);
@@ -78,7 +76,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     mask = _mm_and_si128(mask, _mm_set1_epi8(1));
     v    = _mm_add_epi8(v, mask);
 
-    _mm_storeu_si128((__m128i*)(&out[i]), v);
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(&out[i]), v);
   }
 #endif // __SSE3__
 
@@ -194,6 +192,10 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       }
 
       // Limit block size if the codeword block is smaller.
+      srsran_assert(codeword_block.size() % nof_bits_per_re == 0,
+                    "The codeword block size (i.e., {}) must be multiple of the number of bits per RE (i.e., {}).",
+                    codeword_block.size(),
+                    nof_bits_per_re);
       nof_block_subc = std::min(nof_block_subc, static_cast<unsigned>(codeword_block.size()) / nof_bits_per_re);
 
       // Extract mask for the block.
@@ -271,11 +273,11 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
 
       // Update and notify statistics.
       if (i_subc == i_subc_end) {
-        if (sinr_softbit_count != 0) {
-          if (noise_var_accumulate > 0.0) {
-            float mean_noise_var = noise_var_accumulate / static_cast<float>(sinr_softbit_count);
-            stats.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
-          }
+        if ((sinr_softbit_count != 0) && (noise_var_accumulate > 0.0)) {
+          float mean_noise_var = noise_var_accumulate / static_cast<float>(sinr_softbit_count);
+          stats.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
+        } else {
+          stats.sinr_dB.emplace(std::numeric_limits<float>::infinity());
         }
         if (evm_symbol_count != 0) {
           stats.evm.emplace(evm_accumulate / static_cast<float>(evm_symbol_count));
@@ -284,8 +286,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       }
 
       // Generate scrambling sequence.
-      static_bit_buffer<MAX_BLOCK_SIZE> temp_scrambling_seq(nof_block_softbits);
-      bit_buffer                        scrambling_seq = temp_scrambling_seq;
+      static_bit_buffer<MAX_BLOCK_SIZE> scrambling_seq(nof_block_softbits);
       descrambler->generate(scrambling_seq);
 
       // Revert scrambling.

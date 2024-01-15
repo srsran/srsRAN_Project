@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -151,6 +151,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               timer_factory{timers, pcell_worker},
                                               pcell_worker,
                                               ue_worker,
+                                              false,
                                               pcap);
 
   // Bind AM Rx/Tx interconnect
@@ -163,7 +164,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {
-      sdu_buf.append(rand());
+      report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     sdu_list.push_back(std::move(sdu_buf));
   }
@@ -174,7 +175,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
     byte_buffer sdu_buf      = std::move(sdu_list[i]);
     sdu.pdcp_sn              = i;
     sdu.buf                  = std::move(pdcp_hdr_buf);
-    sdu.buf.append(std::move(sdu_buf));
+    report_error_if_not(sdu.buf.append(std::move(sdu_buf)), "Failed to allocate SDU");
     rlc_tx->handle_sdu(std::move(sdu));
     std::vector<uint8_t> pdu_buf;
     pdu_buf.resize(1550);
@@ -237,6 +238,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
                                                                                 *tester,
                                                                                 timer_factory{timers, ue_worker},
                                                                                 ue_worker,
+                                                                                false,
                                                                                 pcap);
 
   // Bind AM Rx/Tx interconnect
@@ -274,7 +276,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params);
 
   // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(524288, 1024);
+  init_byte_buffer_segment_pool(524288);
 
   {
     benchmark_rx_pdu(params, rx_order::in_order);

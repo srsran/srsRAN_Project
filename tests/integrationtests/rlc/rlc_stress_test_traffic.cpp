@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,7 +41,7 @@ void stress_traffic_source::send_pdu()
   }
 
   for (uint32_t i = 0; i < sdu_size; i++) {
-    sdu.append(payload);
+    report_fatal_error_if_not(sdu.append(payload), "Failed to allocate SDU");
     payload++;
   }
 

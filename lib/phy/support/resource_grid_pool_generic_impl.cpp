@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -20,33 +20,23 @@
  *
  */
 
-#pragma once
+#include "resource_grid_pool_generic_impl.h"
+#include "srsran/support/srsran_assert.h"
 
-#include "srsran/adt/optional.h"
-#include "srsran/support/async/async_task.h"
+using namespace srsran;
 
-namespace srsran {
-
-struct ric_control_config {
-  uint64_t           ue_id;
-  optional<unsigned> num_harq_processes;
-  optional<unsigned> num_harq_retransmissions;
-  optional<unsigned> min_prb_alloc;
-  optional<unsigned> max_prb_alloc;
-};
-
-struct ric_control_config_response {
-  bool harq_processes_result;
-  bool min_prb_alloc_result;
-  bool max_prb_alloc_result;
-};
-
-class e2sm_param_configurator
+resource_grid_pool_generic_impl::resource_grid_pool_generic_impl(std::vector<resource_grid_ptr> grids_) :
+  grids(std::move(grids_))
 {
-public:
-  virtual ~e2sm_param_configurator() = default;
+  srsran_assert(std::all_of(grids.begin(), grids.end(), [](const auto& ptr) { return ptr != nullptr; }),
+                "Detected invalid grid pointer.");
+}
 
-  virtual async_task<ric_control_config_response> configure_ue_mac_scheduler(ric_control_config reconf) = 0;
-};
+resource_grid& resource_grid_pool_generic_impl::get_resource_grid(const resource_grid_context& context)
+{
+  unsigned index = count;
 
-} // namespace srsran
+  count = (count + 1) % grids.size();
+
+  return *grids[index];
+}

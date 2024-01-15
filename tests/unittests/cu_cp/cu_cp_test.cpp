@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,6 @@
 
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
-#include "lib/e1ap/common/e1ap_asn1_utils.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
@@ -476,6 +475,37 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
   // check that the UE Context Release Request was not sent to the AMF
   ASSERT_NE(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* AMF initiated PDU Session Release                                                */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_release_command_is_sent_to_cu_up_first)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 1;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
+  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+
+  test_preamble_ue_full_attach(
+      du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+
+  // Inject PduSessionResourceReleaseCommand
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_pdu_session_resource_release_command(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
+
+  // Check that the Bearer Context Release Command was sent to the CU-UP first
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_release_cmd);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

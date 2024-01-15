@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -68,6 +68,9 @@ public:
     return (grid.grid) ? (grid.grid->get_writer().get_nof_subc() / NOF_SUBCARRIERS_PER_RB) : 0U;
   }
 
+  /// Returns the resource grid context.
+  const resource_grid_context& get_grid_context() const { return grid.context; }
+
   /// Returns a span of bitmaps that indicate the REs that have been written for the given symbol. Each element of the
   /// span corresponds to a port.
   span<const bounded_bitset<MAX_NOF_PRBS * NRE>> get_re_written_mask() const { return re_written; }
@@ -121,6 +124,7 @@ class uplink_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
+  srslog::basic_logger&                                       logger;
   std::vector<std::array<uplink_context, MAX_NSYMB_PER_SLOT>> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -146,7 +150,7 @@ class uplink_context_repository
   }
 
 public:
-  explicit uplink_context_repository(unsigned size_) : buffer(size_) {}
+  uplink_context_repository(unsigned size_, srslog::basic_logger& logger_) : logger(logger_), buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
   void add(const resource_grid_context& context, resource_grid& grid)
@@ -154,6 +158,14 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     for (unsigned symbol_id = 0, symbol_end = grid.get_reader().get_nof_symbols(); symbol_id != symbol_end;
          ++symbol_id) {
+      if (!entry(context.slot, symbol_id).empty()) {
+        const resource_grid_context& previous_context = entry(context.slot, symbol_id).get_grid_context();
+        logger.warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
+                       previous_context.slot,
+                       symbol_id,
+                       previous_context.sector);
+      }
+
       entry(context.slot, symbol_id) = uplink_context(symbol_id, context, grid);
     }
   }

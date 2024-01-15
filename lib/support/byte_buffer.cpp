@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -27,7 +27,7 @@ using namespace srsran;
 
 size_t srsran::byte_buffer_segment_pool_default_segment_size()
 {
-  return 1024;
+  return 2048;
 }
 
 /// Get default byte buffer segment pool. Initialize pool if not initialized before.
@@ -57,14 +57,13 @@ namespace {
 struct memory_arena_linear_allocator {
   /// Pointer to the memory block obtained from byte_buffer_segment_pool.
   void* mem_block = nullptr;
+  /// Size of the memory block in bytes.
+  size_t mem_block_size;
   /// Offset in bytes from the beginning of the memory block, determining where the next allocation will be made.
   size_t offset = 0;
 
-  memory_arena_linear_allocator() noexcept :
-    mem_block([]() {
-      static auto& pool = detail::get_default_byte_buffer_segment_pool();
-      return pool.allocate_node(pool.memory_block_size());
-    }())
+  memory_arena_linear_allocator(void* mem_block_, size_t mem_block_size_) noexcept :
+    mem_block(mem_block_), mem_block_size(mem_block_size_)
   {
   }
 
@@ -77,7 +76,7 @@ struct memory_arena_linear_allocator {
 
   bool empty() const { return mem_block == nullptr; }
 
-  size_t space_left() const { return detail::get_default_byte_buffer_segment_pool().memory_block_size() - offset; }
+  size_t space_left() const { return mem_block_size - offset; }
 };
 
 /// Allocator for byte_buffer control_block that will leverage the \c memory_arena_linear_allocator.
@@ -150,19 +149,117 @@ byte_buffer::control_block::~control_block()
   }
 }
 
+bool byte_buffer::append(span<const uint8_t> bytes)
+{
+  if (bytes.empty()) {
+    // no bytes to append.
+    return true;
+  }
+  if (not has_ctrl_block() and not append_segment(DEFAULT_FIRST_SEGMENT_HEADROOM)) {
+    // failed to allocate head segment.
+    return false;
+  }
+
+  // segment-wise copy.
+  for (size_t count = 0; count < bytes.size();) {
+    if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0)) {
+      return false;
+    }
+    size_t              to_write = std::min(ctrl_blk_ptr->segments.tail->tailroom(), bytes.size() - count);
+    span<const uint8_t> subspan  = bytes.subspan(count, to_write);
+    ctrl_blk_ptr->segments.tail->append(subspan);
+    count += to_write;
+    ctrl_blk_ptr->pkt_len += to_write;
+  }
+  return true;
+}
+
+bool byte_buffer::append(const byte_buffer& other)
+{
+  srsran_assert(&other != this, "Self-append not supported");
+  if (other.empty()) {
+    return true;
+  }
+  if (not has_ctrl_block() and not append_segment(other.ctrl_blk_ptr->segments.head->headroom())) {
+    return false;
+  }
+  for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
+    auto other_it = seg->begin();
+    while (other_it != seg->end()) {
+      if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0)) {
+        return false;
+      }
+      auto to_append =
+          std::min(seg->end() - other_it, (iterator::difference_type)ctrl_blk_ptr->segments.tail->tailroom());
+      ctrl_blk_ptr->segments.tail->append(other_it, other_it + to_append);
+      other_it += to_append;
+    }
+    ctrl_blk_ptr->pkt_len += seg->length();
+  }
+  return true;
+}
+
+bool byte_buffer::append(byte_buffer&& other)
+{
+  srsran_assert(&other != this, "Self-append not supported");
+  if (other.empty()) {
+    return true;
+  }
+  if (empty()) {
+    *this = std::move(other);
+    return true;
+  }
+  if (not other.ctrl_blk_ptr.unique()) {
+    // Use lvalue append.
+    return append(other);
+  }
+  // This is the last reference to "after". Shallow copy, except control segment.
+  node_t* node = create_segment(0);
+  if (node == nullptr) {
+    return false;
+  }
+  node->append(span<uint8_t>{other.ctrl_blk_ptr->segments.head->data(),
+                             other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
+  ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
+  node_t* last_tail           = ctrl_blk_ptr->segments.tail;
+  last_tail->next             = other.ctrl_blk_ptr->segments.head;
+  ctrl_blk_ptr->segments.tail = other.ctrl_blk_ptr->segments.tail;
+  node->next                  = other.ctrl_blk_ptr->segment_in_cb_memory_block->next;
+  if (other.ctrl_blk_ptr->segment_in_cb_memory_block == other.ctrl_blk_ptr->segments.tail) {
+    ctrl_blk_ptr->segments.tail = node;
+  }
+  for (node_t* seg = last_tail; seg->next != nullptr; seg = seg->next) {
+    if (seg->next == other.ctrl_blk_ptr->segment_in_cb_memory_block) {
+      seg->next = node;
+      break;
+    }
+  }
+  other.ctrl_blk_ptr->segments.head       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
+  other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
+  other.ctrl_blk_ptr->segments.head->next = nullptr;
+  other.ctrl_blk_ptr.reset();
+  return true;
+}
+
 byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
 {
   static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
   static const size_t block_size = pool.memory_block_size();
 
-  // Create control block using allocator.
-  memory_arena_linear_allocator arena;
-  if (arena.empty()) {
+  // Allocate new node.
+  void* mem_block = pool.allocate_node(block_size);
+  if (mem_block == nullptr) {
+    // Pool is depleted.
     byte_buffer::warn_alloc_failure();
     return nullptr;
   }
+
+  // Create control block using allocator.
+  memory_arena_linear_allocator arena{mem_block, block_size};
   ctrl_blk_ptr = std::allocate_shared<control_block>(control_block_allocator<control_block>{arena});
   if (ctrl_blk_ptr == nullptr) {
+    byte_buffer::warn_alloc_failure();
+    pool.deallocate_node(mem_block);
     return nullptr;
   }
 
@@ -186,12 +283,14 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
   static const size_t block_size = pool.memory_block_size();
 
   // Allocate memory block.
-  memory_arena_linear_allocator arena;
-  if (arena.empty()) {
+  void* mem_block = pool.allocate_node(block_size);
+  if (mem_block == nullptr) {
     byte_buffer::warn_alloc_failure();
     return nullptr;
   }
-  void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+
+  memory_arena_linear_allocator arena{mem_block, block_size};
+  void*                         segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
   srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
   size_t segment_size  = block_size - arena.offset;
   void*  payload_start = arena.allocate(segment_size, 1);
@@ -201,7 +300,8 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
 
 bool byte_buffer::append_segment(size_t headroom_suggestion)
 {
-  node_t* segment = empty() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
+  node_t* segment =
+      not has_ctrl_block() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
   if (segment == nullptr) {
     return false;
   }
@@ -214,7 +314,8 @@ bool byte_buffer::append_segment(size_t headroom_suggestion)
 bool byte_buffer::prepend_segment(size_t headroom_suggestion)
 {
   // Note: Add HEADROOM for first segment.
-  node_t* segment = empty() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
+  node_t* segment =
+      not has_ctrl_block() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
   if (segment == nullptr) {
     return false;
   }
@@ -276,8 +377,7 @@ bool byte_buffer::prepend(byte_buffer&& other)
   }
   if (empty()) {
     // the byte buffer is empty. Prepending is the same as appending.
-    append(std::move(other));
-    return true;
+    return append(std::move(other));
   }
   if (not other.ctrl_blk_ptr.unique()) {
     // Deep copy of segments.
@@ -327,6 +427,106 @@ byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
   }
   ctrl_blk_ptr->pkt_len += nof_bytes;
   return byte_buffer_view{begin(), begin() + nof_bytes};
+}
+
+void byte_buffer::trim_head(size_t nof_bytes)
+{
+  srsran_assert(length() >= nof_bytes, "Trying to trim more bytes than those available");
+  for (size_t trimmed = 0; trimmed != nof_bytes;) {
+    size_t to_trim = std::min(nof_bytes - trimmed, ctrl_blk_ptr->segments.head->length());
+    ctrl_blk_ptr->segments.head->trim_head(to_trim);
+    ctrl_blk_ptr->pkt_len -= to_trim;
+    trimmed += to_trim;
+    if (ctrl_blk_ptr->segments.head->length() == 0) {
+      // Remove the first segment.
+      ctrl_blk_ptr->segments.head = ctrl_blk_ptr->segments.head->next;
+    }
+  }
+}
+
+void byte_buffer::trim_tail(size_t nof_bytes)
+{
+  srsran_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
+  if (nof_bytes == 0) {
+    return;
+  }
+
+  if (ctrl_blk_ptr->segments.tail->length() >= nof_bytes) {
+    // Simplest scenario where the last segment is larger than the number of bytes to trim.
+    ctrl_blk_ptr->segments.tail->trim_tail(nof_bytes);
+    ctrl_blk_ptr->pkt_len -= nof_bytes;
+    if (ctrl_blk_ptr->segments.tail->length() == 0) {
+      pop_last_segment();
+    }
+    return;
+  }
+  size_t  new_len = length() - nof_bytes;
+  node_t* seg     = ctrl_blk_ptr->segments.head;
+  for (size_t count = 0; seg != nullptr; seg = seg->next) {
+    if (count + seg->length() >= new_len) {
+      seg->next = nullptr;
+      seg->resize(new_len - count);
+      ctrl_blk_ptr->segments.tail = seg;
+      ctrl_blk_ptr->pkt_len       = new_len;
+      break;
+    }
+    count += seg->length();
+  }
+}
+
+bool byte_buffer::linearize()
+{
+  if (is_contiguous()) {
+    return true;
+  }
+  size_t sz = length();
+  if (sz > ctrl_blk_ptr->segments.head->capacity() - ctrl_blk_ptr->segments.head->headroom()) {
+    return false;
+  }
+  for (node_t* seg = ctrl_blk_ptr->segments.head->next; seg != nullptr;) {
+    node_t* next = seg->next;
+    ctrl_blk_ptr->segments.head->append(seg->begin(), seg->end());
+    ctrl_blk_ptr->destroy_node(seg);
+    seg = next;
+  }
+  ctrl_blk_ptr->segments.head->next = nullptr;
+  ctrl_blk_ptr->segments.tail       = ctrl_blk_ptr->segments.head;
+  return true;
+}
+
+bool byte_buffer::resize(size_t new_sz)
+{
+  size_t prev_len = length();
+  if (new_sz == prev_len) {
+    return true;
+  }
+  if (new_sz > prev_len) {
+    for (size_t to_add = new_sz - prev_len; to_add > 0;) {
+      if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
+        if (not append_segment(0)) {
+          return false;
+        }
+      }
+      size_t added = std::min(ctrl_blk_ptr->segments.tail->tailroom(), to_add);
+      ctrl_blk_ptr->segments.tail->resize(added);
+      to_add -= added;
+    }
+  } else {
+    size_t count = 0;
+    for (node_t* seg = ctrl_blk_ptr->segments.head; count < new_sz; seg = seg->next) {
+      size_t new_seg_len = std::min(seg->length(), new_sz - count);
+      if (new_seg_len != seg->length()) {
+        seg->resize(new_seg_len);
+      }
+      count += new_seg_len;
+      if (count == new_sz) {
+        seg->next                   = nullptr;
+        ctrl_blk_ptr->segments.tail = seg;
+      }
+    }
+  }
+  ctrl_blk_ptr->pkt_len = new_sz;
+  return true;
 }
 
 void byte_buffer::warn_alloc_failure()

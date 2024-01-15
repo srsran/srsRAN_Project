@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,9 +26,10 @@
 
 using namespace srsran;
 
-gtpu_demux_impl::gtpu_demux_impl(task_executor& cu_up_exec_, dlt_pcap& gtpu_pcap_) :
-  cu_up_exec(cu_up_exec_), gtpu_pcap(gtpu_pcap_), logger(srslog::fetch_basic_logger("GTPU"))
+gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, task_executor& cu_up_exec_, dlt_pcap& gtpu_pcap_) :
+  cfg(cfg_), cu_up_exec(cu_up_exec_), gtpu_pcap(gtpu_pcap_), logger(srslog::fetch_basic_logger("GTPU"))
 {
+  logger.info("GTP-U demux. {}", cfg);
 }
 
 bool gtpu_demux_impl::add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel)
@@ -65,7 +66,11 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
     handle_pdu_impl(gtpu_teid_t{teid}, std::move(p), src_addr);
   };
   if (not cu_up_exec.execute(std::move(fn))) {
-    logger.info("Dropped GTP-U PDU, queue is full. teid={}", teid);
+    if (not cfg.warn_on_drop) {
+      logger.info("Dropped GTP-U PDU, queue is full. teid={}", teid);
+    } else {
+      logger.warning("Dropped GTP-U PDU, queue is full. teid={}", teid);
+    }
   }
 }
 

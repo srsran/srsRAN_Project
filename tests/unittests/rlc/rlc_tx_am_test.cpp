@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -116,6 +116,7 @@ protected:
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
                                              ue_worker,
+                                             true,
                                              pcap);
 
     // Bind AM Rx/Tx interconnect

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,7 +24,6 @@
 
 #include "srsran/rlc/rlc_config.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 
@@ -33,17 +32,17 @@ struct rlc_tm_tx_metrics {
 };
 
 struct rlc_um_tx_metrics {
-  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
-  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
+  uint32_t num_pdus_with_segmentation;      ///< Number of transmitted PDUs with segmentation
+  uint32_t num_pdu_bytes_with_segmentation; ///< Number of transmitted PDU bytes with segmentation
 };
 
 struct rlc_am_tx_metrics {
-  uint32_t num_retx_pdus;         ///< Number of RETX'ed PDUs
-  uint32_t num_retx_pdu_bytes;    ///< Number of RETX'ed PDUs bytes
-  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
-  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
-  uint32_t num_ctrl_pdus;         ///< Number of control PDUs
-  uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
+  uint32_t num_pdus_with_segmentation;      ///< Number of transmitted PDUs with segmentation
+  uint32_t num_pdu_bytes_with_segmentation; ///< Number of transmitted PDU bytes with segmentation
+  uint32_t num_retx_pdus;                   ///< Number of RETX'ed PDUs
+  uint32_t num_retx_pdu_bytes;              ///< Number of RETX'ed PDUs bytes
+  uint32_t num_ctrl_pdus;                   ///< Number of control PDUs
+  uint32_t num_ctrl_pdu_bytes;              ///< Number of control PDUs bytes
 };
 
 struct rlc_tx_metrics {
@@ -55,8 +54,8 @@ struct rlc_tx_metrics {
   uint32_t num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
 
   // PDU metrics
-  uint32_t num_pdus;      ///< Number of PDUs
-  size_t   num_pdu_bytes; ///< Number of PDU bytes
+  uint32_t num_pdus_no_segmentation;      ///< Number of transmitted PDUs without segmentation
+  size_t   num_pdu_bytes_no_segmentation; ///< Number of transmitted PDU bytes without segmentation
 
   /// RLC mode of the entity
   rlc_mode mode;
@@ -105,14 +104,14 @@ struct formatter<srsran::rlc_tx_metrics> {
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_discarded_sdus={} "
-                     "num_discard_failures={} num_pdus={} num_pdu_bytes={}",
+                     "num_discard_failures={} num_pdus_no_segm={} num_pdu_bytes_no_segm={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_sdus,
                      m.num_discarded_sdus,
                      m.num_discard_failures,
-                     m.num_pdus,
-                     m.num_pdu_bytes);
+                     m.num_pdus_no_segmentation,
+                     m.num_pdu_bytes_no_segmentation);
   }
 };
 } // namespace fmt

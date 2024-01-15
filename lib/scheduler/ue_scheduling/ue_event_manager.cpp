@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,6 +41,7 @@ class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_
 public:
   ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_)
   {
+    pending_evs.reserve(NOF_BEARER_KEYS);
     std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), -1);
   }
 
@@ -73,7 +74,7 @@ public:
       dl_bo.ue_index = get_ue_index(key);
       dl_bo.lcid     = get_lcid(key);
       // > Extract last DL BO value for the respective bearer and reset BO table position.
-      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_acq_rel);
+      dl_bo.bs = ue_dl_bo_table[key].exchange(-1, std::memory_order_release);
       if (dl_bo.bs < 0) {
         parent.logger.warning(
             "ue={} lcid={}: Invalid DL buffer occupancy value: {}", dl_bo.ue_index, dl_bo.lcid, dl_bo.bs);
@@ -111,6 +112,11 @@ private:
   slot_event_list<bearer_key> pending_evs;
 };
 
+// Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
+// nof UEs as a conservative estimate of the expected number of events per slot.
+static const size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
+static const size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
+
 ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
                                    scheduler_metrics_handler& metrics_handler_,
                                    scheduler_event_logger&    ev_logger_) :
@@ -120,6 +126,10 @@ ue_event_manager::ue_event_manager(ue_repository&             ue_db_,
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
+  common_events.reserve(INITIAL_COMMON_EVENT_LIST_SIZE);
+  for (auto& cell : cell_specific_events) {
+    cell.reserve(INITIAL_CELL_EVENT_LIST_SIZE);
+  }
 }
 
 ue_event_manager::~ue_event_manager() {}
@@ -285,7 +295,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
     // Update UE HARQ state with received HARQ-ACK.
     dl_harq_process::dl_ack_info_result result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
-
     if (result.h_id != INVALID_HARQ_ID) {
       // Respective HARQ was found.
       const units::bytes tbs{result.tbs_bytes};
@@ -293,7 +302,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result.h_id, harq_bits[harq_idx], tbs});
-
       if (result.update == dl_harq_process::status_update::acked or
           result.update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.

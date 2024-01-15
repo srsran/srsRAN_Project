@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
@@ -99,6 +100,8 @@ private:
     }
 
     notifier->on_new_pusch_results_control(result);
+
+    l1_tracer << instant_trace_event("on_uci", instant_trace_event::cpu_scope::thread);
   }
 
   // See interface for documentation.
@@ -121,6 +124,8 @@ private:
 
     // Return the adaptor identifier to the queue.
     queue.push_blocking(queue_identifier);
+
+    l1_tracer << instant_trace_event("on_sch", instant_trace_event::cpu_scope::thread);
   }
 
   free_adaptor_queue&            queue;
@@ -154,7 +159,7 @@ public:
 
   // See interface for documentation.
   void process_pusch(span<uint8_t>                      data,
-                     unique_rx_softbuffer               softbuffer,
+                     unique_rx_buffer                   rm_buffer,
                      upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override;

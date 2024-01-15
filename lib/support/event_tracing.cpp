@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -96,11 +96,8 @@ struct trace_event_extended : public trace_event {
   const char*    thread_name;
   trace_duration duration;
 
-  trace_event_extended(const trace_event& event) :
-    trace_event(event),
-    cpu(sched_getcpu()),
-    thread_name(this_thread_name()),
-    duration(duration_cast<microseconds>(trace_point::clock::now() - event.start_tp))
+  trace_event_extended(const trace_event& event, trace_duration duration_) :
+    trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name()), duration(duration_)
   {
   }
 };
@@ -219,7 +216,20 @@ void file_event_tracer<true>::operator<<(const trace_event& event) const
   if (not is_trace_file_open()) {
     return;
   }
-  trace_file_writer->write_trace(trace_event_extended{event});
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  trace_file_writer->write_trace(trace_event_extended{event, dur});
+}
+
+template <>
+void file_event_tracer<true>::operator<<(const trace_thres_event& event) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    trace_file_writer->write_trace(trace_event_extended{trace_event{event.name, event.start_tp}, dur});
+  }
 }
 
 template <>
@@ -234,7 +244,16 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
 template <>
 void logger_event_tracer<true>::operator<<(const trace_event& event) const
 {
-  log_ch("{}", trace_event_extended{event});
+  log_ch("{}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(now() - event.start_tp)});
+}
+
+template <>
+void logger_event_tracer<true>::operator<<(const trace_thres_event& event) const
+{
+  const trace_duration dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    log_ch("{}", trace_event_extended{trace_event{event.name, event.start_tp}, dur});
+  }
 }
 
 template <>
@@ -245,7 +264,17 @@ void logger_event_tracer<true>::operator<<(const instant_trace_event& event) con
 
 void test_event_tracer::operator<<(const trace_event& event)
 {
-  last_events.push_back(fmt::format("{}", trace_event_extended{event}));
+  const auto end_tp = now();
+  last_events.push_back(fmt::format(
+      "{}", trace_event_extended{event, std::chrono::duration_cast<trace_duration>(end_tp - event.start_tp)}));
+}
+
+void test_event_tracer::operator<<(const trace_thres_event& event)
+{
+  const trace_duration dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
+  if (dur >= event.thres) {
+    last_events.push_back(fmt::format("{}", trace_event_extended{trace_event{event.name, event.start_tp}, dur}));
+  }
 }
 
 void test_event_tracer::operator<<(const instant_trace_event& event)

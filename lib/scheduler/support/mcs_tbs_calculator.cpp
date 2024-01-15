@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,6 @@
 
 #include "mcs_tbs_calculator.h"
 #include "dmrs_helpers.h"
-#include "prbs_calculator.h"
 #include "sch_pdu_builder.h"
 #include "tbs_calculator.h"
 #include "srsran/adt/variant.h"
@@ -46,7 +45,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                  .mcs_descr          = mcs_info,
                                  .nof_harq_ack_bits  = static_cast<units::bits>(pusch_cfg.nof_harq_ack_bits),
                                  .nof_csi_part1_bits = static_cast<units::bits>(pusch_cfg.nof_csi_part1_bits),
-                                 .nof_csi_part2_bits = static_cast<units::bits>(pusch_cfg.nof_csi_part2_bits),
+                                 .nof_csi_part2_bits = static_cast<units::bits>(pusch_cfg.max_nof_csi_part2_bits),
                                  .nof_rb             = nof_prbs,
                                  .start_symbol_index = pusch_cfg.symbols.start(),
                                  .nof_symbols        = static_cast<unsigned>(pusch_cfg.symbols.length()),
@@ -126,11 +125,11 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // CSI Part 2 beta offset. The beta_offset to be used among the indices 1, 2 is determined as per TS38.213, Section
   // 9.3 and TS38.331, \c BetaOffsets.
   // If no CSI Part 2 reporting, this value won't be used.
-  if (pusch_cfg.nof_csi_part2_bits == 0) {
+  if (pusch_cfg.max_nof_csi_part2_bits == 0) {
     ulsch_info.beta_offset_csi_part2 = 0;
   }
   // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI Part 2 reporting.
-  else if (pusch_cfg.nof_csi_part2_bits < 12) {
+  else if (pusch_cfg.max_nof_csi_part2_bits < 12) {
     ulsch_info.beta_offset_csi_part2 =
         beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
                                                                                   .ul_config.value()

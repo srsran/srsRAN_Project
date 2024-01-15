@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -21,4 +21,6 @@
 add_library(srsran_lower_phy_pdxch_processor STATIC
         pdxch_processor_factories.cpp
         pdxch_processor_impl.cpp)
-target_link_libraries(srsran_lower_phy_pdxch_processor srsran_lower_phy_modulation)
+target_link_libraries(srsran_lower_phy_pdxch_processor
+        srsran_instrumentation
+        srsran_lower_phy_modulation)

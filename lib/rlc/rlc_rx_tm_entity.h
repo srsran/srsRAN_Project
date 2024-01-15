@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -36,6 +36,7 @@ public:
                    du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
+                   bool                              metrics_enabled,
                    rlc_pcap&                         pcap_);
 
   // Interfaces for higher layers

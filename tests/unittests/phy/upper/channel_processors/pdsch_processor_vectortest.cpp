@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -144,8 +144,8 @@ protected:
   std::unique_ptr<pdsch_processor> pdsch_proc;
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
-  // Softbuffer pool.
-  std::unique_ptr<tx_buffer_pool> softbuffer_pool;
+  // PDSCH rate matcher buffer pool.
+  std::unique_ptr<tx_buffer_pool> rm_buffer_pool;
   // Worker pool.
   std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool;
   std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
@@ -167,15 +167,15 @@ protected:
     pdu_validator = pdsch_proc_factory->create_validator();
     ASSERT_NE(pdu_validator, nullptr) << "Cannot create PDSCH validator";
 
-    // Create softbuffer pool.
-    tx_buffer_pool_config softbuffer_pool_config;
-    softbuffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    softbuffer_pool_config.nof_buffers          = 1;
-    softbuffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-    softbuffer_pool_config.expire_timeout_slots = 0;
-    softbuffer_pool_config.external_soft_bits   = false;
-    softbuffer_pool                             = create_tx_buffer_pool(softbuffer_pool_config);
-    ASSERT_NE(softbuffer_pool, nullptr) << "Cannot create softbuffer pool";
+    // Create buffer pool.
+    tx_buffer_pool_config buffer_pool_config;
+    buffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    buffer_pool_config.nof_buffers          = 1;
+    buffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+    buffer_pool_config.expire_timeout_slots = 0;
+    buffer_pool_config.external_soft_bits   = false;
+    rm_buffer_pool                          = create_tx_buffer_pool(buffer_pool_config);
+    ASSERT_NE(rm_buffer_pool, nullptr) << "Cannot create buffer pool";
   }
 
   void TearDown() override
@@ -214,17 +214,15 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
-  tx_buffer_identifier softbuffer_id;
-  softbuffer_id.harq_ack_id = 0;
-  softbuffer_id.rnti        = 0;
+  trx_buffer_identifier buffer_id(0, 0);
 
   unsigned nof_codeblocks =
       ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), config.ldpc_base_graph);
 
-  unique_tx_buffer softbuffer = softbuffer_pool->reserve_buffer(slot_point(), softbuffer_id, nof_codeblocks);
+  unique_tx_buffer rm_buffer = rm_buffer_pool->reserve(slot_point(), buffer_id, nof_codeblocks);
 
   // Process PDSCH.
-  pdsch_proc->process(*mapper, std::move(softbuffer), notifier_spy, transport_blocks, config);
+  pdsch_proc->process(*mapper, std::move(rm_buffer), notifier_spy, transport_blocks, config);
 
   // Waits for the processor to finish.
   notifier_spy.wait_for_finished();

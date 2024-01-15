@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
+#include "lib/scheduler/ue_scheduling/ue.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

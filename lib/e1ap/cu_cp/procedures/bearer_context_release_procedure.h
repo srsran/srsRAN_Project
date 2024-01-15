@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,7 +25,7 @@
 #include "../e1ap_cu_cp_impl.h"
 #include "../ue_context/e1ap_cu_cp_ue_context.h"
 #include "common/e1ap_asn1_utils.h"
-#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/support/async/async_task.h"
 

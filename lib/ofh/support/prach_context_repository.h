@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -94,6 +94,9 @@ public:
   /// Returns true if this context is empty, otherwise false.
   bool empty() const { return context_info.buffer == nullptr; }
 
+  /// Returns the PRACH buffer context.
+  const prach_buffer_context& get_context() const { return context_info.context; }
+
   /// Returns the number of REs of one PRACH repetition or zero if no PRACH buffer is associated with this context.
   unsigned get_prach_nof_re() const { return empty() ? 0U : preamble_info.sequence_length; }
 
@@ -173,6 +176,7 @@ class prach_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
+  srslog::basic_logger&      logger;
   std::vector<prach_context> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -194,7 +198,7 @@ class prach_context_repository
   }
 
 public:
-  explicit prach_context_repository(unsigned size_) : buffer(size_) {}
+  prach_context_repository(unsigned size_, srslog::basic_logger& logger_) : logger(logger_), buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
   void add(const prach_buffer_context& context,
@@ -203,7 +207,17 @@ public:
            slot_point                  slot      = slot_point())
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(slot.valid() ? slot : context.slot) = prach_context(context, buffer_, nof_ports);
+
+    slot_point current_slot = slot.valid() ? slot : context.slot;
+
+    if (!entry(current_slot).empty()) {
+      const prach_buffer_context& previous_context = entry(current_slot).get_context();
+      logger.warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
+                     previous_context.slot,
+                     previous_context.sector);
+    }
+
+    entry(current_slot) = prach_context(context, buffer_, nof_ports);
   }
 
   /// Function to write the uplink PRACH buffer.

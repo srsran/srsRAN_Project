@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -40,7 +40,7 @@ get_biggest_min_tx_parameter_in_symbols(const du_tx_window_timing_parameters&   
   return std::floor(max_value / symbol_duration_ns);
 }
 
-/// Returns duration of the OFH downkink processing plus the transmission window in symbol units.
+/// Returns duration of the OFH downlink processing plus the transmission window in symbol units.
 inline unsigned calculate_nof_symbols_before_ota(cyclic_prefix                        cp,
                                                  subcarrier_spacing                   scs,
                                                  std::chrono::microseconds            dl_processing_time,

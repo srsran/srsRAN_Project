@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -17,6 +17,14 @@
 # the LICENSE file in the top-level directory of this distribution
 # and at http://www.gnu.org/licenses/.
 #
+
+set(SOURCES 
+  bbdev_acc.cpp
+  bbdev_acc_factory.cpp
+  bbdev.cpp
+  bbdev_op_pool_factory.cpp
+  ldpc/bbdev_ldpc_decoder.cpp
+)
 
 add_library(hal_bbdev STATIC ${SOURCES})
 target_compile_options(hal_bbdev PRIVATE ${DPDK_CFLAGS})

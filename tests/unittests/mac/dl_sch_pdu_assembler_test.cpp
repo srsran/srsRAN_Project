@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -57,7 +57,7 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected{0b00111110};
-  expected.append(conres);
+  ASSERT_TRUE(expected.append(conres));
   ASSERT_EQ(result, expected);
 }
 
@@ -77,7 +77,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
   unsigned             payload_len = test_rgen::uniform_int<unsigned>(1, 255);
   byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(test_rgen::uniform_int<uint8_t>());
+    ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()});
@@ -110,7 +110,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, bytes.size() - HEADER_LEN);
   byte_buffer               payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(test_rgen::uniform_int<uint8_t>());
+    ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()}), payload.length() + HEADER_LEN);
@@ -158,7 +158,7 @@ public:
     srslog::init();
 
     for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
-      msg3_pdu.append(test_rgen::uniform_int<uint8_t>());
+      report_fatal_error_if_not(msg3_pdu.append(test_rgen::uniform_int<uint8_t>()), "failed to allocate bytes");
     }
 
     // Create UE.
@@ -265,8 +265,8 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   byte_buffer expected_result;
   bit_encoder enc(expected_result);
   for (unsigned i = 0; i != nof_sdus; ++i) {
-    enc.pack(0b0, 1); // R
     unsigned mac_expected_sdu_size = get_mac_sdu_payload_size(tb_size - expected_result.length());
+    enc.pack(0b0, 1);                                                                            // R
     enc.pack(mac_expected_sdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
     enc.pack(LCID_SRB1, 6);                                                                      // LCID
     enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(mac_expected_sdu_size) - 1)); // L

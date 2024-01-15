@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -155,7 +155,7 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
     sector_deps.logger                      = dependencies.logger;
     sector_deps.receiver_executor           = workers.ru_rx_exec[i];
     sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
-    sector_deps.downlink_executors          = workers.ru_dl_exec[i];
+    sector_deps.downlink_executor           = workers.ru_dl_exec[i];
   }
 }
 
@@ -448,7 +448,8 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
+  ngap_adapter->connect_ngap(&cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
+                             &cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
@@ -456,18 +457,18 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
 
+  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
+  if (gnb_cfg.amf_cfg.no_core) {
+    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection();
+  }
+
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (gnb_cfg.amf_cfg.no_core) {
-    // Signal AMF connection so test UEs do not get rejected
-    cu_cp_obj->handle_amf_connection();
-  } else {
-    if (not cu_cp_obj->amf_is_connected()) {
-      report_error("CU-CP failed to connect to AMF");
-    }
+  if (not cu_cp_obj->get_cu_cp_ngap_connection_interface().amf_is_connected()) {
+    report_error("CU-CP failed to connect to AMF");
   }
 
   // Create CU-UP config.
@@ -476,7 +477,7 @@ int main(int argc, char** argv)
   cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
   cu_up_cfg.dl_executor                            = workers.cu_up_dl_exec;
   cu_up_cfg.ul_executor                            = workers.cu_up_ul_exec;
-  cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optinally select separate exec for UL IO
+  cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optionally select separate exec for UL IO
   cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
   cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker                           = epoll_broker.get();

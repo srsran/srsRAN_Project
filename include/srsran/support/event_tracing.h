@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -58,6 +58,17 @@ struct trace_event {
   SRSRAN_FORCE_INLINE trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
 };
 
+struct trace_thres_event {
+  const char*    name;
+  trace_point    start_tp;
+  trace_duration thres;
+
+  SRSRAN_FORCE_INLINE trace_thres_event(const char* name_, trace_point start_tp_, trace_duration thres_) :
+    name(name_), start_tp(start_tp_), thres(thres_)
+  {
+  }
+};
+
 /// \brief Trace event type with defined name, starting point but no duration.
 /// \remark The creation of this type should be trivial so that compiler optimizes it out for null tracers.
 struct instant_trace_event {
@@ -80,6 +91,8 @@ public:
 
   void operator<<(const trace_event& event) const {}
 
+  void operator<<(const trace_thres_event& event) const {}
+
   void operator<<(const instant_trace_event& event) const {}
 };
 
@@ -93,6 +106,8 @@ public:
   static trace_point now() { return trace_clock::now(); }
 
   void operator<<(const trace_event& event) const;
+
+  void operator<<(const trace_thres_event& event) const;
 
   void operator<<(const instant_trace_event& event) const;
 };
@@ -114,6 +129,8 @@ public:
 
   void operator<<(const trace_event& event) const;
 
+  void operator<<(const trace_thres_event& event) const;
+
   void operator<<(const instant_trace_event& event) const;
 
 private:
@@ -132,6 +149,8 @@ public:
   static trace_point now() { return trace_clock::now(); }
 
   void operator<<(const trace_event& event);
+
+  void operator<<(const trace_thres_event& event);
 
   void operator<<(const instant_trace_event& event);
 

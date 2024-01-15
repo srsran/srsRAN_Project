@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,8 +30,8 @@
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
-#include "srsran/phy/upper/rx_softbuffer_pool.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/test_utils.h"
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -366,7 +366,7 @@ int main(int argc, char** argv)
   std::unique_ptr<pusch_decoder> hwacc_decoder = hwacc_pusch_dec_factory->create();
   TESTASSERT(hwacc_decoder);
 
-  rx_softbuffer_pool_config pool_config = {};
+  rx_buffer_pool_config pool_config = {};
 
   // Create a vector to hold the randomly generated LLRs.
   unsigned                          max_nof_ch_symbols = 14 * 270 * NRE;
@@ -399,7 +399,7 @@ int main(int argc, char** argv)
     // The codeword is the concatenation of codeblocks. However, since codeblock sizes can vary slightly, we add some
     // extra margin.
     pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    pool_config.max_softbuffers      = 1;
+    pool_config.nof_buffers          = 1;
     pool_config.max_nof_codeblocks   = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = true;
@@ -407,8 +407,8 @@ int main(int argc, char** argv)
     // Call the ACC100 hardware-accelerator PUSCH decoder function.
     uint64_t total_acc100_time = 0;
 
-    // Create Rx softbuffer pool.
-    std::unique_ptr<rx_softbuffer_pool> pool_acc100 = create_rx_softbuffer_pool(pool_config);
+    // Create Rx buffer pool.
+    std::unique_ptr<rx_buffer_pool> pool_acc100 = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool_acc100);
 
     pusch_decoder::configuration dec_cfg = {};
@@ -423,8 +423,8 @@ int main(int argc, char** argv)
     dec_cfg.Nref                = cfg.Nref;
     dec_cfg.nof_layers          = cfg.nof_layers;
 
-    // Reserve softbuffer.
-    unique_rx_softbuffer softbuffer_acc100 = pool_acc100->reserve_softbuffer({}, {}, nof_codeblocks);
+    // Reserve tbuffer.
+    unique_rx_buffer softbuffer_acc100 = pool_acc100->reserve({}, {}, nof_codeblocks);
     TESTASSERT(softbuffer_acc100.is_valid());
 
     // Force all CRCs to false to test LLR combining.
@@ -447,9 +447,9 @@ int main(int argc, char** argv)
     // Call the software PUSCH decoder function.
     uint64_t total_gen_time = 0;
 
-    // Create Rx softbuffer pool.
-    pool_config.external_soft_bits               = false;
-    std::unique_ptr<rx_softbuffer_pool> pool_cpu = create_rx_softbuffer_pool(pool_config);
+    // Create Rx buffer pool.
+    pool_config.external_soft_bits           = false;
+    std::unique_ptr<rx_buffer_pool> pool_cpu = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool_cpu);
 
     // Prepare decoder configuration.
@@ -464,7 +464,7 @@ int main(int argc, char** argv)
     dec_cfg.nof_layers          = cfg.nof_layers;
 
     // Reserve softbuffer.
-    unique_rx_softbuffer softbuffer_cpu = pool_cpu->reserve_softbuffer({}, {}, nof_codeblocks);
+    unique_rx_buffer softbuffer_cpu = pool_cpu->reserve({}, {}, nof_codeblocks);
     TESTASSERT(softbuffer_cpu.is_valid());
 
     // Force all CRCs to false to test LLR combining.

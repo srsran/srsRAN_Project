@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -172,7 +172,8 @@ size_t du_manager_impl::nof_ues()
   return fut.get();
 }
 
-async_task<ric_control_config_response> du_manager_impl::configure_ue_mac_scheduler(ric_control_config reconf)
+async_task<du_mac_sched_control_config_response>
+du_manager_impl::configure_ue_mac_scheduler(du_mac_sched_control_config reconf)
 {
   return launch_async<srs_du::du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
 }

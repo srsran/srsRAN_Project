@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -46,13 +46,13 @@ void bearer_context_modification_procedure::operator()(
   // Subscribe to respective publisher to receive BEARER CONTEXT MODIFICATION RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ev_mng.context_modification_outcome);
 
-  // Send command to DU.
+  // Send command to CU-UP.
   send_bearer_context_modification_request();
 
-  // Await CU response.
+  // Await response.
   CORO_AWAIT(transaction_sink);
 
-  // Handle response from DU and return UE index
+  // Handle response from CU-UP and return UE index
   CORO_RETURN(create_bearer_context_modification_result());
 }
 

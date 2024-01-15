@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -53,12 +53,12 @@ std::unique_ptr<e2_interface> srsran::create_e2_entity(e2ap_configuration&      
                                                        e2_connection_client*          e2_client_,
                                                        e2_du_metrics_interface&       e2_du_metrics_,
                                                        srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
-                                                       e2sm_param_configurator&       e2_param_config_,
+                                                       du_configurator&               du_configurator_,
                                                        timer_factory                  timers_,
                                                        task_executor&                 e2_exec_)
 {
   auto e2_ext = std::make_unique<e2_entity>(
-      e2ap_cfg_, e2_client_, e2_du_metrics_, f1ap_ue_id_translator_, e2_param_config_, timers_, e2_exec_);
+      e2ap_cfg_, e2_client_, e2_du_metrics_, f1ap_ue_id_translator_, du_configurator_, timers_, e2_exec_);
   return e2_ext;
 }
 

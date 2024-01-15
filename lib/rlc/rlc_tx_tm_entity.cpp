@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,8 +32,9 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(uint32_t                             du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    task_executor&                       pcell_executor_,
+                                   bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id, /* is_uplink */ false)
 {
@@ -101,7 +102,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
   logger.log_info(sdu.buf.begin(), sdu.buf.end(), "TX PDU. pdu_len={} grant_len={}", sdu_len, rlc_pdu_buf.size());
 
   // Update metrics
-  metrics.metrics_add_pdus(1, sdu_len);
+  metrics.metrics_add_pdus_no_segmentation(1, sdu_len);
 
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, sdu.buf);

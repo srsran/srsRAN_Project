@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -418,7 +418,7 @@ TEST(mac_ul_pdu, decode_crnti_ce_and_sbsr)
 
   // subPDU_2 = [ R/LCID MAC subheader (1 byte) | MAC CE Short BSR ]
   // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=63
-  msg.append({0x3d, 0x59});
+  ASSERT_TRUE(msg.append({0x3d, 0x59}));
 
   mac_ul_sch_pdu pdu;
   ASSERT_TRUE(pdu.unpack(msg));

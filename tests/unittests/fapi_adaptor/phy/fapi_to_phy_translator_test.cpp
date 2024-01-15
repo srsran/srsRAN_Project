@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,7 +24,7 @@
 #include "../../fapi/validators/helpers.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
-#include "../../phy/upper/tx_softbuffer_pool_test_doubles.h"
+#include "../../phy/upper/tx_buffer_pool_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
@@ -38,8 +38,6 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
-
-static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
 
 namespace {
 
@@ -116,36 +114,35 @@ public:
 class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
-  resource_grid_spy               grid;
-  downlink_processor_pool_dummy   dl_processor_pool;
-  resource_grid_pool_dummy        rg_pool;
-  uplink_request_processor_dummy  ul_request_processor;
-  uplink_slot_pdu_repository      pdu_repo;
-  const unsigned                  sector_id         = 0;
-  const unsigned                  headroom_in_slots = 2;
-  const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
-  const slot_point                slot              = {scs, 1, 0};
-  fapi::prach_config              prach_cfg;
-  fapi::carrier_config            carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
-  downlink_pdu_validator_dummy    dl_pdu_validator;
-  uplink_pdu_validator_dummy      ul_pdu_validator;
-  slot_error_message_notifier_spy error_notifier_spy;
-  manual_task_worker              worker;
-  tx_softbuffer_pool_spy          softbuffer_pool_spy;
-  fapi_to_phy_translator_config config = {sector_id, headroom_in_slots, scs, scs_common, &prach_cfg, &carrier_cfg, {0}};
+  resource_grid_spy                   grid;
+  downlink_processor_pool_dummy       dl_processor_pool;
+  resource_grid_pool_dummy            rg_pool;
+  uplink_request_processor_dummy      ul_request_processor;
+  uplink_slot_pdu_repository          pdu_repo;
+  const unsigned                      sector_id         = 0;
+  const unsigned                      headroom_in_slots = 2;
+  const subcarrier_spacing            scs               = subcarrier_spacing::kHz15;
+  const slot_point                    slot              = {scs, 1, 0};
+  fapi::prach_config                  prach_cfg;
+  fapi::carrier_config                carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
+  downlink_pdu_validator_dummy        dl_pdu_validator;
+  uplink_pdu_validator_dummy          ul_pdu_validator;
+  slot_error_message_notifier_spy     error_notifier_spy;
+  manual_task_worker                  worker;
+  tx_buffer_pool_spy                  buffer_pool_spy;
+  fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, &prach_cfg, &carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
       &rg_pool,
       &dl_pdu_validator,
-      &softbuffer_pool_spy,
+      &buffer_pool_spy,
       &ul_request_processor,
       &rg_pool,
       &pdu_repo,
       &ul_pdu_validator,
       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1))),
-      std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1))),
-      &worker};
+      std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))};
   fapi_to_phy_translator translator;
 
 public:
@@ -162,14 +159,13 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_not_configured_on_n
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
-  // Assert that the softbuffer pool ran the slot.
-  auto& run_slot_entries = softbuffer_pool_spy.get_run_slot_entries();
-  ASSERT_EQ(run_slot_entries.size(), 1);
-  ASSERT_EQ(run_slot_entries.front(), slot);
+  // Assert that the transmit buffer pool did not run the slot.
+  auto& run_slot_entries = buffer_pool_spy.get_run_slot_entries();
+  ASSERT_TRUE(run_slot_entries.empty());
 
-  // Assert that no softbuffer reservation was done.
-  auto& reserve_softbuffer_entries = softbuffer_pool_spy.get_reserve_softbuffer_entries();
-  ASSERT_TRUE(reserve_softbuffer_entries.empty());
+  // Assert that no buffer reservation was done.
+  auto& reserve_buffer_entries = buffer_pool_spy.get_reserve_entries();
+  ASSERT_TRUE(reserve_buffer_entries.empty());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 
@@ -187,6 +183,10 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
 
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+
+  // Assert that the transmit buffer pool did not run the slot.
+  auto& run_slot_entries = buffer_pool_spy.get_run_slot_entries();
+  ASSERT_TRUE(run_slot_entries.empty());
 
   // Assert that the resource grid has not been set to zero.
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
@@ -358,39 +358,6 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
 
   ++msg.slot;
   translator.dl_tti_request(msg);
-
-  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
-}
-
-TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_the_current_slot_is_bigger_than_the_allowed)
-{
-  ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = false;
-
-  // Send a DL_TTI.request.
-  translator.dl_tti_request(msg);
-
-  // Assert that the downlink processor is configured.
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  // Assert that the resource grid has NOT been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  // The manager headroom size is the number of headroom in slots plus 3.
-  unsigned manager_headroom_size = headroom_in_slots + 3U;
-  // Increase the slots.
-  for (unsigned i = 1; i != (manager_headroom_size - 1U); ++i) {
-    translator.handle_new_slot(slot + i);
-    ASSERT_FALSE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  }
-
-  translator.handle_new_slot(slot + (manager_headroom_size - 1U));
 
   // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());

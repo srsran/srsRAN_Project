@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -97,56 +97,6 @@ remove_lfs_files() {
     done < <(git lfs ls-files | sed -r 's/^.{13}//')
 }
 
-update_headers() {
-    echo "=================="
-    echo "= Update headers ="
-    echo "=================="
-
-    # for actual source and header files
-    find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.h.in" \) ! -path "*/external/*" ! -name "rfnoc_test.cc" -exec perl -0777 -pi -e "s{/\*.*?\*/}{/*
- *
- * Copyright 2021-$(date +%Y) Software Radio Systems Limited
- *
- * This file is part of srsRAN.
- *
- * srsRAN is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * srsRAN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * A copy of the GNU Affero General Public License can be found in
- * the LICENSE file in the top-level directory of this distribution
- * and at http://www.gnu.org/licenses/.
- *
- */}s" {} \;
-
-    # for CMake/YML files
-    find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" \) ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -path "*/docker/open5gs/*" ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e "s/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
-# Copyright 2021-$(date +%Y) Software Radio Systems Limited
-#
-# This file is part of srsRAN
-#
-# srsRAN is free software: you can redistribute it and\/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of
-# the License, or (at your option) any later version.
-#
-# srsRAN is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# A copy of the GNU Affero General Public License can be found in
-# the LICENSE file in the top-level directory of this distribution
-# and at http:\/\/www.gnu.org\/licenses\/.
-#/" {} \;
-}
-
 main() {
     # Check number of args
     if [ $# != 2 ] && [ $# != 3 ]; then
@@ -181,7 +131,7 @@ main() {
         git commit --no-edit
     fi
     remove_lfs_files
-    update_headers
+    "$(dirname "$0")/update_headers.sh"
     git commit -a --amend --no-edit
 
     # Push

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -77,22 +77,28 @@ public:
   virtual e1ap_message_handler& get_e1ap_message_handler(const cu_up_index_t cu_up_index) = 0;
 };
 
-class cu_cp_interface : public cu_cp_ngap_connection_interface,
-                        public cu_cp_ngap_handler,
-                        public cu_cp_cu_up_connection_interface
-
+class cu_cp_interface
 {
 public:
   virtual ~cu_cp_interface() = default;
 
-  virtual du_repository&                    get_connected_dus()                    = 0;
-  virtual cu_up_repository&                 get_connected_cu_ups()                 = 0;
-  virtual cu_cp_ngap_handler&               get_cu_cp_ngap_handler()               = 0;
-  virtual cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface()  = 0;
+  /// \brief Get repository of handlers for the DUs currently connected to the CU-CP.
+  virtual du_repository& get_connected_dus() = 0;
+
+  /// \brief Get repository of handlers for the CU-UPs currently connected to the CU-CP.
+  virtual cu_up_repository& get_connected_cu_ups() = 0;
+
+  /// \brief Get handler of the NG interface of the CU-CP.
+  virtual cu_cp_ngap_handler&              get_cu_cp_ngap_handler()              = 0;
+  virtual cu_cp_ngap_connection_interface& get_cu_cp_ngap_connection_interface() = 0;
+
+  /// \brief Get handler of the E1 interface of the CU-CP.
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
   virtual void start() = 0;
-  virtual void stop()  = 0;
+
+  /// \brief Stop the CU-CP operation.
+  virtual void stop() = 0;
 };
 
 } // namespace srs_cu_cp

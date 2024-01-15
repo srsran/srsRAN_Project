@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,6 +21,7 @@
  */
 
 #include "pdxch_processor_impl.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_reader_empty.h"
 #include "srsran/srsvec/zero.h"
 
@@ -106,5 +107,6 @@ void pdxch_processor_impl::handle_request(const resource_grid_reader& grid, cons
     late_context.slot   = request.slot;
     late_context.sector = context.sector;
     notifier->on_pdxch_request_late(late_context);
+    l1_tracer << instant_trace_event{"on_pdxch_request_late", instant_trace_event::cpu_scope::thread};
   }
 }

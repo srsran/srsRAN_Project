@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -31,8 +31,8 @@ using namespace ofh::testing;
 
 TEST(ofh_uplane_prach_data_flow_notifier, empty_context_does_not_notify)
 {
-  auto                            notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                            repo     = std::make_shared<prach_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<prach_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
 
@@ -45,8 +45,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, empty_context_does_not_notify)
 
 TEST(ofh_uplane_prach_data_flow_notifier, unwritten_buffer_does_not_notify)
 {
-  auto                            notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                            repo     = std::make_shared<prach_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<prach_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
   prach_buffer_dummy              buffer(1);
@@ -68,8 +68,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, unwritten_buffer_does_not_notify)
 
 TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_notification)
 {
-  auto                            notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                            repo     = std::make_shared<prach_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<prach_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
   unsigned                        symbol = 0;
@@ -102,8 +102,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
 
 TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_notification)
 {
-  auto                            notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
-  auto                            repo     = std::make_shared<prach_context_repository>(1);
+  auto notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
+  auto repo     = std::make_shared<prach_context_repository>(1, srslog::fetch_basic_logger("TEST"));
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
   unsigned                        port = 0;

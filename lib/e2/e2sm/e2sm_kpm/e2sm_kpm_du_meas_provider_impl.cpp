@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -127,8 +127,34 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_dropped_sdus += metrics.tx.num_dropped_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discarded_sdus += metrics.tx.num_discarded_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discard_failures += metrics.tx.num_discard_failures;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus += metrics.tx.num_pdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes += metrics.tx.num_pdu_bytes;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus_no_segmentation += metrics.tx.num_pdus_no_segmentation;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes_no_segmentation += metrics.tx.num_pdu_bytes_no_segmentation;
+    switch (ue_aggr_rlc_metrics[metrics.ue_index].tx.mode) {
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.um.num_pdus_with_segmentation +=
+            metrics.tx.mode_specific.um.num_pdus_with_segmentation;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.um.num_pdu_bytes_with_segmentation +=
+            metrics.tx.mode_specific.um.num_pdu_bytes_with_segmentation;
+        break;
+      case rlc_mode::am:
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_pdus_with_segmentation +=
+            metrics.tx.mode_specific.am.num_pdus_with_segmentation;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_pdu_bytes_with_segmentation +=
+            metrics.tx.mode_specific.am.num_pdu_bytes_with_segmentation;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_retx_pdus +=
+            metrics.tx.mode_specific.am.num_retx_pdus;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_retx_pdu_bytes +=
+            metrics.tx.mode_specific.am.num_retx_pdu_bytes;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_ctrl_pdus +=
+            metrics.tx.mode_specific.am.num_ctrl_pdus;
+        ue_aggr_rlc_metrics[metrics.ue_index].tx.mode_specific.am.num_ctrl_pdu_bytes +=
+            metrics.tx.mode_specific.am.num_ctrl_pdu_bytes;
+        break;
+      default:
+        // nothing to do here
+        break;
+    }
     ue_aggr_rlc_metrics[metrics.ue_index].counter++;
   }
 }
@@ -287,7 +313,22 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(
     return meas_collected;
   }
   for (auto& ue : ue_aggr_rlc_metrics) {
-    ue_throughput[ue.first] = bytes_to_kbits(ue.second.tx.num_pdu_bytes / ue.second.counter) / seconds; // unit is kbps
+    size_t num_pdu_bytes_with_segmentation;
+    switch (ue.second.tx.mode) {
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        num_pdu_bytes_with_segmentation = ue.second.tx.mode_specific.um.num_pdu_bytes_with_segmentation;
+        break;
+      case rlc_mode::am:
+        num_pdu_bytes_with_segmentation = ue.second.tx.mode_specific.am.num_pdu_bytes_with_segmentation;
+        break;
+      default:
+        num_pdu_bytes_with_segmentation = 0;
+    }
+    ue_throughput[ue.first] =
+        bytes_to_kbits((ue.second.tx.num_pdu_bytes_no_segmentation + num_pdu_bytes_with_segmentation) /
+                       ue.second.counter) /
+        seconds; // unit is kbps
   }
   if (ues.size() == 0) {
     meas_record_item_c meas_record_item;

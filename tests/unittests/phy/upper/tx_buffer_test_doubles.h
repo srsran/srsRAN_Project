@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -28,7 +28,7 @@
 namespace srsran {
 
 /// Implements a lockable transmit buffer spy.
-class tx_buffer_spy : public unique_tx_buffer::lockable_buffer
+class tx_buffer_spy : public unique_tx_buffer::callback
 {
 public:
   /// Default constructor - creates a buffer without any storage.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,20 +21,17 @@
  */
 
 #include "e2sm_rc_impl.h"
+#include "e2sm_rc_control_service_impl.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
-#include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
 using namespace srsran;
 
-e2sm_rc_impl::e2sm_rc_impl(srslog::basic_logger&    logger_,
-                           e2sm_handler&            e2sm_packer_,
-                           e2sm_param_configurator& param_configurator_,
-                           e2sm_param_provider&     param_interface_) :
-  logger(logger_), e2sm_packer(e2sm_packer_), param_configurator(param_configurator_), param_interface(param_interface_)
+e2sm_rc_impl::e2sm_rc_impl(srslog::basic_logger& logger_, e2sm_handler& e2sm_packer_) :
+  logger(logger_), e2sm_packer(e2sm_packer_)
 {
 }
 
@@ -56,113 +53,35 @@ std::unique_ptr<e2sm_report_service> e2sm_rc_impl::get_e2sm_report_service(const
   return nullptr;
 }
 
-e2sm_param_configurator* e2sm_rc_impl::get_param_configurator()
+bool e2sm_rc_impl::add_e2sm_control_service(std::unique_ptr<e2sm_control_service> control_service)
 {
-  return &param_configurator;
+  control_services.emplace(control_service->get_style_type(), std::move(control_service));
+  return true;
 }
 
-void e2sm_rc_impl::process_control_header(const srsran::byte_buffer& ctrl_header_buff, ric_control_config& ctrl_config)
+e2sm_control_service* e2sm_rc_impl::get_e2sm_control_service(const e2sm_ric_control_request& request)
 {
-  e2_sm_rc_ctrl_hdr_s ctrl_hdr;
-  asn1::cbit_ref      bref_ctrl(ctrl_header_buff);
-  if (ctrl_hdr.unpack(bref_ctrl) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to unpack E2SM RC Action Definition\n");
-  }
+  const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(request.request_ctrl_hdr);
 
+  int64_t ric_style_type = 0;
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value ==
       e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format1) {
-    // TODO
+    e2_sm_rc_ctrl_hdr_format1_s ctrl_hdr_format1 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1();
+    ric_style_type                               = ctrl_hdr_format1.ric_style_type;
   } else if (ctrl_hdr.ric_ctrl_hdr_formats.type().value ==
              e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format2) {
-    e2_sm_rc_ctrl_hdr_format2_s ctrl_hdr_format2 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2();
-    process_control_header_format2(ctrl_hdr_format2, ctrl_config);
+    ric_style_type = 255;
   } else if (ctrl_hdr.ric_ctrl_hdr_formats.type().value ==
              e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format3) {
-    // TODO
+    e2_sm_rc_ctrl_hdr_format3_s ctrl_hdr_format3 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format3();
+    ric_style_type                               = ctrl_hdr_format3.ric_style_type;
   } else {
     logger.error("RIC control header format not supported");
-    return;
-  }
-}
-
-void e2sm_rc_impl::process_control_message(const srsran::byte_buffer& ctrl_msg_buff, ric_control_config& ctrl_config)
-{
-  e2_sm_rc_ctrl_msg_s ctrl_msg;
-  asn1::cbit_ref      bref_msg(ctrl_msg_buff);
-  if (ctrl_msg.unpack(bref_msg) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to unpack E2SM RC Action Definition\n");
+    return nullptr;
   }
 
-  if (ctrl_msg.ric_ctrl_msg_formats.type().value ==
-      e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format1) {
-    e2sm_service_provider& rc_provider = param_interface.service_providers.find(1)->second;
-    process_control_message_format1(ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1(),
-                                    ctrl_config,
-                                    rc_provider.style_providers.at(1).action_providers.at(1));
-  } else if (ctrl_msg.ric_ctrl_msg_formats.type().value ==
-             e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format2) {
-    process_control_message_format2(ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2(), ctrl_config);
-  } else if (ctrl_msg.ric_ctrl_msg_formats.type().value ==
-             e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format3) {
-    process_control_message_format3(ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format3(), ctrl_config);
-  } else {
-    logger.error("RIC control message format not supported");
+  if (control_services.find(ric_style_type) != control_services.end()) {
+    return control_services.at(ric_style_type).get();
   }
-}
-
-void e2sm_rc_impl::process_control_header_format2(e2_sm_rc_ctrl_hdr_format2_s ctrl_hdr, ric_control_config& ctrl_config)
-{
-  if (ctrl_hdr.ue_id_present) {
-    if (ctrl_hdr.ue_id.type().value == ue_id_c::types_opts::gnb_du_ue_id) {
-      ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
-    } else {
-      logger.error("UE ID not supported");
-    }
-  }
-}
-
-void e2sm_rc_impl::process_control_message_format1(e2_sm_rc_ctrl_msg_format1_s ctrl_msg,
-                                                   ric_control_config&         ctrl_config,
-                                                   e2sm_action_provider        action_provider)
-{
-  for (auto& ran_p : ctrl_msg.ran_p_list) {
-    if (action_provider.action_params.count(ran_p.ran_param_id)) {
-      if (ran_p.ran_param_id == 12) {
-        ctrl_config.max_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
-      } else if (ran_p.ran_param_id == 13) {
-        ctrl_config.min_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
-      }
-    } else {
-      logger.error("Parameter not supported");
-    }
-  }
-}
-
-void e2sm_rc_impl::process_control_message_format2(e2_sm_rc_ctrl_msg_format2_s ctrl_msg,
-                                                   ric_control_config&         ctrl_config)
-{
-  e2sm_service_provider& rc_provider = param_interface.service_providers.find(1)->second;
-  for (auto& style : ctrl_msg.ric_ctrl_style_list) {
-    if (rc_provider.style_providers.count(style.indicated_ctrl_style_type)) {
-      for (auto& action : style.ric_ctrl_action_list) {
-        if (rc_provider.style_providers.at(style.indicated_ctrl_style_type)
-                .action_providers.count(action.ric_ctrl_action_id)) {
-          process_control_message_format1(action.ran_p_list,
-                                          ctrl_config,
-                                          rc_provider.style_providers.at(style.indicated_ctrl_style_type)
-                                              .action_providers.at(action.ric_ctrl_action_id));
-        } else {
-          logger.error("Action not supported");
-        }
-      }
-    } else {
-      logger.error("Style not supported");
-    }
-  }
-}
-
-void e2sm_rc_impl::process_control_message_format3(e2_sm_rc_ctrl_msg_format3_s ctrl_msg,
-                                                   ric_control_config&         ctrl_config)
-{
-  // TODO
+  return nullptr;
 }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,7 +26,7 @@
 
 namespace srsran {
 
-class rx_softbuffer_pool;
+class rx_buffer_pool;
 
 /// \brief Wrapper class of the upper PHY receive results notifier.
 ///
