@@ -9,10 +9,7 @@
  */
 
 #include "rrc_ue_impl.h"
-#include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
-#include "procedures/rrc_setup_procedure.h"
-#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_ue_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -165,17 +162,18 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
 
 void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
 {
-  // FIXME: this enqueues a new CORO on top of an existing one.
-  cu_cp_ue_context_release_command msg = {};
-  msg.ue_index                         = context.ue_index;
-  msg.cause                            = cause;
+  bool ngap_release_result = false;
+  task_sched.schedule_async_task(
+      launch_async([this, ngap_release_result, cause](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-  task_sched.schedule_async_task(launch_async([this, msg](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(ngap_release_result,
+                         ngap_ctrl_notifier.on_ue_context_release_request({context.ue_index, {}, cause}));
+        if (!ngap_release_result) {
+          // If NGAP release failed, release UE from DU processor, RRC and F1AP
+          CORO_AWAIT(du_processor_notifier.on_ue_context_release_command({context.ue_index, cause}));
+        }
 
-    CORO_AWAIT_VALUE(cu_cp_ue_context_release_complete ignore,
-                     du_processor_notifier.on_ue_context_release_command(msg));
-
-    CORO_RETURN();
-  }));
+        CORO_RETURN();
+      }));
 }

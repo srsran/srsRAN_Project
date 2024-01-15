@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../ran/gnb_format.h"
 #include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_reestablishment_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
@@ -33,6 +32,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
       logger.log_error(pdu.begin(), pdu.end(), "Failed to unpack CCCH UL PDU");
+      on_ue_release_required(cause_radio_network_t::unspecified);
       return;
     }
   }
@@ -50,7 +50,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
       break;
     default:
       logger.log_error("Unsupported CCCH UL message type");
-      // TODO Remove user
+      on_ue_release_required(cause_radio_network_t::unspecified);
   }
 }
 
