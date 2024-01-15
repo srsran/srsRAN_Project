@@ -1735,6 +1735,9 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option(
          "--ignore_ecpri_payload_size", config.ignore_ecpri_payload_size_field, "Ignore eCPRI payload size field value")
       ->capture_default_str();
+  app.add_option(
+         "--warn_unreceived_ru_frames", config.warn_unreceived_ru_frames, "Warn of unreceived Radio Unit frames")
+      ->capture_default_str();
 
   auto compression_method_check = [](const std::string& value) -> std::string {
     if (value == "none" || value == "bfp" || value == "bfp selective" || value == "block scaling" ||

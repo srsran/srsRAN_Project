@@ -43,6 +43,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.is_downlink_broadcast_enabled        = sector_cfg.is_downlink_broadcast_enabled;
   ofh_sector_config.ignore_ecpri_payload_size_field      = sector_cfg.ignore_ecpri_payload_size_field;
   ofh_sector_config.ignore_ecpri_seq_id_field            = sector_cfg.ignore_ecpri_seq_id_field;
+  ofh_sector_config.warn_unreceived_ru_frames            = sector_cfg.warn_unreceived_ru_frames;
   ofh_sector_config.ul_compression_params                = sector_cfg.ul_compression_params;
   ofh_sector_config.dl_compression_params                = sector_cfg.dl_compression_params;
   ofh_sector_config.prach_compression_params             = sector_cfg.prach_compression_params;

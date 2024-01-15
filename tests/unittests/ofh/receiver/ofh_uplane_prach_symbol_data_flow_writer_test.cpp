@@ -29,9 +29,8 @@ protected:
   unsigned                                              preamble_length;
   unsigned                                              nof_symbols;
   uplane_message_decoder_results                        results;
-  std::shared_ptr<prach_context_repository>             repo =
-      std::make_shared<prach_context_repository>(1, srslog::fetch_basic_logger("TEST"));
-  uplane_prach_symbol_data_flow_writer writer;
+  std::shared_ptr<prach_context_repository>             repo = std::make_shared<prach_context_repository>(1);
+  uplane_prach_symbol_data_flow_writer                  writer;
 
 public:
   ofh_uplane_prach_symbol_data_flow_writer_fixture() :

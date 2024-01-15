@@ -93,9 +93,10 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 {
   unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
 
-  auto cp_repo    = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_repo = std::make_shared<prach_context_repository>(repository_size, *sector_deps.logger);
-  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size, *sector_deps.logger);
+  srslog::basic_logger* repo_logger = sector_cfg.warn_unreceived_ru_frames ? sector_deps.logger : nullptr;
+  auto                  cp_repo     = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto                  prach_repo  = std::make_shared<prach_context_repository>(repository_size, repo_logger);
+  auto                  slot_repo   = std::make_shared<uplink_context_repository>(repository_size, repo_logger);
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);

@@ -164,7 +164,7 @@ class prach_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  srslog::basic_logger&      logger;
+  srslog::basic_logger*      logger;
   std::vector<prach_context> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -186,7 +186,10 @@ class prach_context_repository
   }
 
 public:
-  prach_context_repository(unsigned size_, srslog::basic_logger& logger_) : logger(logger_), buffer(size_) {}
+  explicit prach_context_repository(unsigned size_, srslog::basic_logger* logger_ = nullptr) :
+    logger(logger_), buffer(size_)
+  {
+  }
 
   /// Adds the given entry to the repository at slot.
   void add(const prach_buffer_context& context,
@@ -198,11 +201,13 @@ public:
 
     slot_point current_slot = slot.valid() ? slot : context.slot;
 
-    if (!entry(current_slot).empty()) {
-      const prach_buffer_context& previous_context = entry(current_slot).get_context();
-      logger.warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
-                     previous_context.slot,
-                     previous_context.sector);
+    if (logger) {
+      if (!entry(current_slot).empty()) {
+        const prach_buffer_context& previous_context = entry(current_slot).get_context();
+        logger->warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
+                        previous_context.slot,
+                        previous_context.sector);
+      }
     }
 
     entry(current_slot) = prach_context(context, buffer_, nof_ports);
