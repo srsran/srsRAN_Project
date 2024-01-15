@@ -653,6 +653,21 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  "HARQ retransmission is cancelled. Set this value to 0 to disable this feature")
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
+  app.add_option_function<std::string>(
+         "--dmrs_additional_position",
+         [&pdsch_params](const std::string& value) {
+           if (value == "pos0") {
+             pdsch_params.dmrs_add_pos = dmrs_additional_positions::pos0;
+           } else if (value == "pos1") {
+             pdsch_params.dmrs_add_pos = dmrs_additional_positions::pos1;
+           } else if (value == "pos2") {
+             pdsch_params.dmrs_add_pos = dmrs_additional_positions::pos2;
+           } else if (value == "pos3") {
+             pdsch_params.dmrs_add_pos = dmrs_additional_positions::pos3;
+           }
+         },
+         "PDSCH DMRS additional position {pos0, pos1, pos2, pos3}. Default: pos1")
+      ->check(CLI::IsMember({"pos0", "pos1", "pos2", "pos3"}, CLI::ignore_case));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -781,6 +796,21 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
                  "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to the estimated UL SINR")
       ->capture_default_str()
       ->check(CLI::PositiveNumber);
+  app.add_option_function<std::string>(
+         "--dmrs_additional_position",
+         [&pusch_params](const std::string& value) {
+           if (value == "pos0") {
+             pusch_params.dmrs_add_pos = dmrs_additional_positions::pos0;
+           } else if (value == "pos1") {
+             pusch_params.dmrs_add_pos = dmrs_additional_positions::pos1;
+           } else if (value == "pos2") {
+             pusch_params.dmrs_add_pos = dmrs_additional_positions::pos2;
+           } else if (value == "pos3") {
+             pusch_params.dmrs_add_pos = dmrs_additional_positions::pos3;
+           }
+         },
+         "PUSCH DMRS additional position {pos0, pos1, pos2, pos3}. Default: pos2")
+      ->check(CLI::IsMember({"pos0", "pos1", "pos2", "pos3"}, CLI::ignore_case));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
