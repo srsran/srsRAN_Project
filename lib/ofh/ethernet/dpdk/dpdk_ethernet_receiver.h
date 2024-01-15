@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "dpdk_ethernet_port_context.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
@@ -27,12 +29,18 @@ class dpdk_receiver_impl : public receiver
   enum class receiver_status { idle, running, stop_requested, stopped };
 
 public:
-  dpdk_receiver_impl(task_executor& executor_, frame_notifier& notifier_, srslog::basic_logger& logger_) :
-    logger(logger_), executor(executor_), notifier(notifier_)
+  dpdk_receiver_impl(task_executor&                     executor_,
+                     frame_notifier&                    notifier_,
+                     std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                     srslog::basic_logger&              logger_) :
+    logger(logger_),
+    executor(executor_),
+    notifier(notifier_),
+    port_ctx_ptr(std::move(port_ctx_ptr_)),
+    port_ctx(*port_ctx_ptr)
   {
+    srsran_assert(port_ctx_ptr, "Invalid port context");
   }
-
-  ~dpdk_receiver_impl() override;
 
   // See interface for documentation.
   void start() override;
@@ -45,16 +53,15 @@ private:
   void receive_loop();
 
   /// Receives new Ethernet frames from the socket.
-  ///
-  /// \note This function will block until new frames become available.
   void receive();
 
 private:
-  srslog::basic_logger&        logger;
-  task_executor&               executor;
-  frame_notifier&              notifier;
-  const unsigned               port_id = 0;
-  std::atomic<receiver_status> rx_status{receiver_status::idle};
+  srslog::basic_logger&              logger;
+  task_executor&                     executor;
+  frame_notifier&                    notifier;
+  std::shared_ptr<dpdk_port_context> port_ctx_ptr;
+  dpdk_port_context&                 port_ctx;
+  std::atomic<receiver_status>       rx_status{receiver_status::idle};
 };
 
 } // namespace ether

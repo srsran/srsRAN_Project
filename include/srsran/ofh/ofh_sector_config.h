@@ -29,7 +29,7 @@ namespace ofh {
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
-  /// Ethernet interface name.
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;

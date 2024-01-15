@@ -74,7 +74,7 @@ struct transmitter_config {
   ether::mac_address mac_src_address;
   /// Tag control information field.
   uint16_t tci;
-  /// Ethernet interface name;
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;

@@ -1308,11 +1308,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (config.hal_config && config.cells_cfg.size() > 1) {
-    fmt::print("As a temporary limitation, DPDK can only be used with a single cell\n");
-    return false;
-  }
-
   if (!validate_expert_execution_appconfig(config)) {
     return false;
   }

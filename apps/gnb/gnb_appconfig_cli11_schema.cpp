@@ -1809,7 +1809,9 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
 static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
 {
   configure_cli11_ru_ofh_base_cell_args(app, config.cell);
-  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option(
+         "--network_interface", config.network_interface, "Network interface name or PCIe identifier when using DPDK")
+      ->capture_default_str();
   app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
       ->capture_default_str();
   app.add_option("--mtu", config.mtu_size, "NIC interface MTU size")

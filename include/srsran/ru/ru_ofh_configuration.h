@@ -63,7 +63,7 @@ struct ru_ofh_sector_configuration {
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
 
-  /// Ethernet interface name.
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;

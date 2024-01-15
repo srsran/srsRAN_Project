@@ -21,10 +21,6 @@
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 #include "srsran/ofh/serdes/ofh_serdes_factories.h"
 
-#ifdef DPDK_FOUND
-#include "../ethernet/dpdk/dpdk_ethernet_factories.h"
-#endif
-
 using namespace srsran;
 using namespace ofh;
 
@@ -223,24 +219,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
           tx_config, logger, frame_pool, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
       downlink_executor);
 
-  ether::gw_config eth_cfg;
-  eth_cfg.interface                   = tx_config.interface;
-  eth_cfg.is_promiscuous_mode_enabled = tx_config.is_promiscuous_mode_enabled;
-  eth_cfg.mac_dst_address             = tx_config.mac_dst_address;
-  eth_cfg.mtu_size                    = tx_config.mtu_size;
-  if (eth_gateway != nullptr) {
-    dependencies.eth_gateway = std::move(eth_gateway);
-  } else {
-#ifdef DPDK_FOUND
-    if (tx_config.uses_dpdk) {
-      dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, logger);
-    } else {
-      dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
-    }
-#else
-    dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
-#endif
-  }
+  dependencies.eth_gateway = std::move(eth_gateway);
 
   dependencies.frame_pool = frame_pool;
 

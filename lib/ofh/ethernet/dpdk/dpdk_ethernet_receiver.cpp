@@ -18,9 +18,6 @@
 using namespace srsran;
 using namespace ether;
 
-static constexpr unsigned MAX_BURST_SIZE  = 32;
-static constexpr unsigned MAX_BUFFER_SIZE = 9600;
-
 void dpdk_receiver_impl::start()
 {
   std::promise<void> p;
@@ -72,7 +69,7 @@ void dpdk_receiver_impl::receive_loop()
 void dpdk_receiver_impl::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-  unsigned                                num_frames = ::rte_eth_rx_burst(port_id, 0, mbufs.data(), MAX_BURST_SIZE);
+  unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
@@ -90,25 +87,4 @@ void dpdk_receiver_impl::receive()
 
     notifier.on_new_frame(span<const uint8_t>(buffer.data(), length));
   }
-}
-
-/// Closes an Ethernet port using DPDK.
-static void dpdk_eth_close()
-{
-  unsigned portid;
-  RTE_ETH_FOREACH_DEV(portid)
-  {
-    fmt::print("Closing port {}...", portid);
-    int ret = ::rte_eth_dev_stop(portid);
-    if (ret != 0) {
-      fmt::print("rte_eth_dev_stop: err={}, port={}\n", ret, portid);
-    }
-    ::rte_eth_dev_close(portid);
-    fmt::print(" Done\n");
-  }
-}
-
-dpdk_receiver_impl::~dpdk_receiver_impl()
-{
-  dpdk_eth_close();
 }

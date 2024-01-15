@@ -1001,7 +1001,7 @@ struct ru_ofh_base_cell_appconfig {
 struct ru_ofh_cell_appconfig {
   /// Base cell configuration.
   ru_ofh_base_cell_appconfig cell;
-  /// Ethernet network interface name.
+  /// Ethernet network interface name or identifier.
   std::string network_interface = "enp1s0f0";
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = true;
