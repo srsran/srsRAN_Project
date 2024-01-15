@@ -54,6 +54,7 @@ static std::atomic<bool>     slot_synchronized{false};
 static std::atomic<unsigned> slot_val{0};
 static std::atomic<unsigned> nof_malformed_packets{0};
 static std::atomic<unsigned> nof_missing_dl_packets{0};
+static unsigned              nof_test_slots{100};
 
 namespace {
 
@@ -143,6 +144,7 @@ static void usage(const char* prog)
              test_params.ignore_ecpri_payload_size_field);
   fmt::print("\t-P TDD pattern ['7d2u', '6d3u', default is {}]\n", test_params.tdd_pattern_str);
   fmt::print("\t-m Ethernet frame size [1500-9600, default is {}]\n", test_params.mtu.value());
+  fmt::print("\t-N Number of slots processed in the test [Default {}]]\n", nof_test_slots);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", test_params.silent);
   fmt::print("\t-v Logging level. [Default {}]\n", test_params.log_level);
   fmt::print("\t-f Log file name. [Default {}]\n", test_params.log_filename);
@@ -204,7 +206,7 @@ static void parse_args(int argc, char** argv)
   int  opt         = 0;
   bool invalid_arg = false;
 
-  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:Aaerish")) != -1) {
+  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:N:Aaerish")) != -1) {
     switch (opt) {
       case 'T':
         test_params.data_compr_method = std::string(optarg);
@@ -287,6 +289,9 @@ static void parse_args(int argc, char** argv)
           fmt::print("MTU size is out of valid range of [1500; 9600]\n");
           invalid_arg = true;
         }
+        break;
+      case 'N':
+        nof_test_slots = std::strtol(optarg, nullptr, 10);
         break;
       case 's':
         test_params.silent = (!test_params.silent);
@@ -621,9 +626,7 @@ public:
 private:
   void run_test()
   {
-    constexpr unsigned NOF_TEST_SLOTS = 1000;
-
-    for (unsigned test_slot_id = 0; test_slot_id != NOF_TEST_SLOTS; ++test_slot_id) {
+    for (unsigned test_slot_id = 0; test_slot_id != nof_test_slots; ++test_slot_id) {
       auto t0 = std::chrono::high_resolution_clock::now();
 
       slot_point slot(to_numerology_value(test_params.scs), slot_val);

@@ -162,7 +162,15 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
                context.eaxc);
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);
+  scoped_frame_buffer scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);
+  if (scoped_buffer.empty()) {
+    logger.warning(
+        "Not enough space in the buffer pool to create a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
+        (direction == data_direction::downlink) ? "downlink" : "uplink",
+        slot,
+        context.eaxc);
+    return;
+  }
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 
@@ -212,6 +220,13 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   // Get an ethernet frame buffer.
   scoped_frame_buffer scoped_buffer(
       frame_pool, slot, context.start_symbol, message_type::control_plane, data_direction::uplink);
+  if (scoped_buffer.empty()) {
+    logger.warning("Not enough space in the buffer pool to create a type 3 PRACH Control-Plane message for slot '{}' "
+                   "and eAxC '{}'",
+                   slot,
+                   context.eaxc);
+    return;
+  }
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 

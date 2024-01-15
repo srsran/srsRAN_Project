@@ -47,8 +47,15 @@ public:
     srsran_terminate("No empty Ethernet frame available in slot={}\n", context.slot);
   }
 
+  bool empty() const { return frames.empty(); }
+
   /// Destructor marks the acquired buffers as ready to be sent.
-  ~scoped_frame_buffer() { frame_pool.eth_frames_ready(context, frames); }
+  ~scoped_frame_buffer()
+  {
+    if (!frames.empty()) {
+      frame_pool.eth_frames_ready(context, frames);
+    }
+  }
 };
 
 } // namespace ofh

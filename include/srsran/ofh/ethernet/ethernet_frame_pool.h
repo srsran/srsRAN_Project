@@ -23,11 +23,18 @@
 namespace srsran {
 namespace ether {
 
+class frame_buffer_array;
+
 /// Storage for one Ethernet frame buffer.
 class frame_buffer
 {
-  size_t               sz = 0;
+  enum class frame_buffer_status { free, locked };
+
+  size_t               sz     = 0;
+  frame_buffer_status  status = frame_buffer_status::free;
   std::vector<uint8_t> buffer;
+
+  friend class frame_buffer_array;
 
 public:
   /// Constructors.
@@ -73,7 +80,7 @@ class frame_buffer_array
 {
   /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
   using storage_array_type = std::vector<frame_buffer>;
-  using ready_frames_type  = std::vector<const frame_buffer*>;
+  using ready_frames_type  = std::vector<frame_buffer*>;
 
   /// Number of entries in the internal storage. Each entry comprises multiple frame buffers, the number of
   /// buffers in one entry is received at construction time.
@@ -106,6 +113,12 @@ public:
   span<frame_buffer> get_wr_buffers()
   {
     span<frame_buffer> wr_buffers(&buf_array[write_position.value()], increment_quant);
+    bool               locked = std::any_of(wr_buffers.begin(), wr_buffers.end(), [](const frame_buffer& buffer) {
+      return buffer.status == frame_buffer::frame_buffer_status::locked;
+    });
+    if (locked) {
+      return {};
+    }
     write_position.increment(increment_quant);
     return wr_buffers;
   }
@@ -113,6 +126,13 @@ public:
   void push_buffers(span<frame_buffer> prepared_buffers)
   {
     // Overwrite old data.
+    bool locked = std::any_of(ready_frames.begin(), ready_frames.end(), [](const frame_buffer* buffer) {
+      return buffer->status == frame_buffer::frame_buffer_status::locked;
+    });
+    if (locked) {
+      // Drop new buffers if the queue of prepared buffers is being read.
+      return;
+    }
     if (ready_frames.size() == max_nof_prepared_buffers) {
       clear_buffers();
     }
@@ -124,7 +144,13 @@ public:
     }
   }
 
-  void clear_buffers() { ready_frames.clear(); }
+  void clear_buffers()
+  {
+    std::for_each(ready_frames.begin(), ready_frames.end(), [](frame_buffer* buffer) {
+      buffer->status = frame_buffer::frame_buffer_status::free;
+    });
+    ready_frames.clear();
+  }
 
   // Returns a view over the written buffers for reading; returns an empty span if no buffers were written.
   span<const frame_buffer* const> get_rd_buffers() const
@@ -132,6 +158,9 @@ public:
     if (ready_frames.empty()) {
       return {};
     }
+    std::for_each(ready_frames.begin(), ready_frames.end(), [](frame_buffer* buffer) {
+      buffer->status = frame_buffer::frame_buffer_status::locked;
+    });
     return ready_frames;
   }
 

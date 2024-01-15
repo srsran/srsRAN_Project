@@ -119,6 +119,14 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
        ++symbol_id) {
     scoped_frame_buffer scoped_buffer(
         frame_pool, context.slot, symbol_id, message_type::user_plane, data_direction::downlink);
+    if (scoped_buffer.empty()) {
+      logger.warning("Not enough space in the buffer pool to create a downlink User-Plane message for slot '{}' and "
+                     "eAxC '{}', symbol_id '{}'",
+                     context.slot,
+                     context.eaxc,
+                     symbol_id);
+      return;
+    }
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
     span<const cf_t>                    iq_data = read_grid(symbol_id, context.port, grid);
     // Split the data into multiple messages when it does not fit into a single one.
