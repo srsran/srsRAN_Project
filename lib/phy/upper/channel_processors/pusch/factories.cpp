@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -172,20 +172,31 @@ public:
     srsran_assert(demux_factory, "Invalid demux factory.");
     srsran_assert(decoder_factory, "Invalid decoder factory.");
     srsran_assert(uci_dec_factory, "Invalid UCI decoder factory.");
+
+    // Create common dependencies.
+    std::vector<std::unique_ptr<pusch_processor_impl::concurrent_dependencies>> dependencies(
+        config.max_nof_concurrent_threads);
+    std::generate(dependencies.begin(), dependencies.end(), [this]() {
+      return std::make_unique<pusch_processor_impl::concurrent_dependencies>(estimator_factory->create(),
+                                                                             demodulator_factory->create(),
+                                                                             demux_factory->create(),
+                                                                             uci_dec_factory->create(),
+                                                                             ch_estimate_dimensions);
+    });
+
+    // Create common dependencies pool.
+    dependencies_pool =
+        std::make_shared<pusch_processor_impl::concurrent_dependencies_pool_type>(std::move(dependencies));
   }
 
   std::unique_ptr<pusch_processor> create() override
   {
-    pusch_processor_configuration config;
-    config.estimator             = estimator_factory->create();
-    config.demodulator           = demodulator_factory->create();
-    config.demultiplex           = demux_factory->create();
-    config.decoder               = decoder_factory->create();
-    config.uci_dec               = uci_dec_factory->create();
-    config.ce_dims               = ch_estimate_dimensions;
-    config.dec_nof_iterations    = dec_nof_iterations;
-    config.dec_enable_early_stop = dec_enable_early_stop;
-    config.csi_sinr_calc_method  = csi_sinr_calc_method;
+    pusch_processor_impl::configuration config;
+    config.thread_local_dependencies_pool = dependencies_pool;
+    config.decoder                        = decoder_factory->create();
+    config.dec_nof_iterations             = dec_nof_iterations;
+    config.dec_enable_early_stop          = dec_enable_early_stop;
+    config.csi_sinr_calc_method           = csi_sinr_calc_method;
     return std::make_unique<pusch_processor_impl>(config);
   }
 
@@ -195,15 +206,16 @@ public:
   }
 
 private:
-  std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory;
-  std::shared_ptr<pusch_demodulator_factory>    demodulator_factory;
-  std::shared_ptr<ulsch_demultiplex_factory>    demux_factory;
-  std::shared_ptr<pusch_decoder_factory>        decoder_factory;
-  std::shared_ptr<uci_decoder_factory>          uci_dec_factory;
-  channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
-  unsigned                                      dec_nof_iterations;
-  bool                                          dec_enable_early_stop;
-  channel_state_information::sinr_type          csi_sinr_calc_method;
+  std::shared_ptr<pusch_processor_impl::concurrent_dependencies_pool_type> dependencies_pool;
+  std::shared_ptr<dmrs_pusch_estimator_factory>                            estimator_factory;
+  std::shared_ptr<pusch_demodulator_factory>                               demodulator_factory;
+  std::shared_ptr<ulsch_demultiplex_factory>                               demux_factory;
+  std::shared_ptr<pusch_decoder_factory>                                   decoder_factory;
+  std::shared_ptr<uci_decoder_factory>                                     uci_dec_factory;
+  channel_estimate::channel_estimate_dimensions                            ch_estimate_dimensions;
+  unsigned                                                                 dec_nof_iterations;
+  bool                                                                     dec_enable_early_stop;
+  channel_state_information::sinr_type                                     csi_sinr_calc_method;
 };
 
 class pusch_processor_pool_factory : public pusch_processor_factory

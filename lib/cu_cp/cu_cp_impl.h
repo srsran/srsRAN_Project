@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -45,7 +45,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface
+class cu_cp_impl final : public cu_cp_interface,
+                         public cu_cp_impl_interface,
+                         public cu_cp_ngap_connection_interface,
+                         public cu_cp_ngap_handler,
+                         public cu_cp_cu_up_connection_interface
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);

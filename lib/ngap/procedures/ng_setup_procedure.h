@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,6 +25,7 @@
 #include "../ngap_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_message.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

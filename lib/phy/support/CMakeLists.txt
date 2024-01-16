@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -22,13 +22,14 @@ add_library(srsran_phy_support STATIC
         interpolator/interpolator_linear_impl.cpp
         prach_buffer_pool_impl.cpp
         re_pattern.cpp
-        resource_grid_pool_impl.cpp
         resource_grid_impl.cpp
+        resource_grid_mapper_impl.cpp
+        resource_grid_pool_asynchronous_impl.cpp
+        resource_grid_pool_generic_impl.cpp
         resource_grid_reader_impl.cpp
         resource_grid_writer_impl.cpp
-        resource_grid_mapper_impl.cpp
         support_factories.cpp)
-target_link_libraries(srsran_phy_support srsvec)
+target_link_libraries(srsran_phy_support srsvec srsran_instrumentation)
 
 install(TARGETS srsran_phy_support
         EXPORT srsran_export)

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -101,7 +101,7 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_rar_pdu_should_pass)
   unsigned                    nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
-  auto               pm_tools = generate_precoding_matrix_tables(1);
+  auto               pm_tools = generate_precoding_matrix_tables(2);
   convert_pdsch_mac_to_fapi(fapi_pdu, pdu, nof_csi_pdus, *std::get<0>(pm_tools), nof_prbs);
 
   validate_pdsch_information(pdu.pdsch_cfg, fapi_pdu);
@@ -112,6 +112,12 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_rar_pdu_should_pass)
   for (unsigned i = 0; i != nof_csi_pdus; ++i) {
     ASSERT_EQ(i, csi_rm[i]);
   }
+
+  const auto& mac_prec  = *pdu.pdsch_cfg.precoding;
+  const auto& fapi_prec = fapi_pdu.precoding_and_beamforming;
+  ASSERT_EQ(nof_prbs, fapi_prec.prg_size);
+  ASSERT_EQ(mac_prec.prg_infos.size(), fapi_prec.prgs.size());
+  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding_matrix(fapi_prec.prgs.front().pm_index).get_nof_layers() == 0);
 }
 
 TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_paging_pdu_should_pass)
@@ -143,7 +149,7 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_msg_alloc_pdu_should_pass)
   unsigned                      nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
-  auto               pm_tools = generate_precoding_matrix_tables(1);
+  auto               pm_tools = generate_precoding_matrix_tables(4);
   convert_pdsch_mac_to_fapi(fapi_pdu, pdu, nof_csi_pdus, *std::get<0>(pm_tools), nof_prbs);
 
   validate_pdsch_information(pdu.pdsch_cfg, fapi_pdu);
@@ -154,4 +160,14 @@ TEST(mac_fapi_pdsch_pdu_conversor_test, valid_dl_msg_alloc_pdu_should_pass)
   for (unsigned i = 0; i != nof_csi_pdus; ++i) {
     ASSERT_EQ(i, csi_rm[i]);
   }
+
+  // Context.
+  ASSERT_EQ(pdu.pdsch_cfg.harq_id, fapi_pdu.context->get_h_id());
+  ASSERT_EQ(bool(pdu.context.nof_retxs), !fapi_pdu.context->is_new_data());
+
+  const auto& mac_prec  = *pdu.pdsch_cfg.precoding;
+  const auto& fapi_prec = fapi_pdu.precoding_and_beamforming;
+  ASSERT_EQ(mac_prec.nof_rbs_per_prg, fapi_prec.prg_size);
+  ASSERT_EQ(mac_prec.prg_infos.size(), fapi_prec.prgs.size());
+  ASSERT_FALSE(std::get<1>(pm_tools)->get_precoding_matrix(fapi_prec.prgs.front().pm_index).get_nof_layers() == 0);
 }

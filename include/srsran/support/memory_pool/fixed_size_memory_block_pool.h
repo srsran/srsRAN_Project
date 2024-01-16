@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cameron314/concurrentqueue.h"
 #include "memory_block_list.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/support/error_handling.h"
@@ -70,15 +71,32 @@ class fixed_size_memory_block_pool
   /// The number of batches of blocks that a worker can store in its own thread for non-contended access.
   constexpr static size_t MAX_LOCAL_BATCH_CAPACITY = 64U;
 
-  using local_cache_type = static_vector<free_memory_block_list, MAX_LOCAL_BATCH_CAPACITY>;
+  /// A batch of memory blocks that is exchanged in bulk between the central and local caches.
+  using memory_block_batch = free_memory_block_list;
+
+  /// Thread-local cache that stores a list of batches of memory blocks.
+  using local_cache_type = static_vector<memory_block_batch, MAX_LOCAL_BATCH_CAPACITY>;
+
+  // Given that we use the MPMC queue in https://github.com/cameron314/concurrentqueue, we have to over-dimension it
+  // to account the potential number of producers. The way to exactly over-dimension this queue is inconvenient, so
+  // we just try to conservatively ensure it can accommodate up to 32 producers for a block size of 32. If this is
+  // not enough, the queue will resize itself and malloc in the process.
+  const static size_t OVER_DIM_CENTRAL_CACHE = 2 * 32 * 32;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
+    // Make sure that there are no gaps between blocks when they are allocated as paret of a single array.
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))),
-    nof_blocks(nof_blocks_),
+    // Make sure all batches are filled with block_batch_size blocks.
+    nof_blocks(ceil(nof_blocks_ / (double)block_batch_size) * block_batch_size),
+    // Calculate the maximum number of batches that can be stored in the local cache.
     max_local_batches(
         std::max(std::min((size_t)MAX_LOCAL_BATCH_CAPACITY, static_cast<size_t>(nof_blocks / block_batch_size / 32U)),
-                 static_cast<size_t>(2U)))
+                 static_cast<size_t>(2U))),
+    // Allocate the required memory for the given number of segments and segment size.
+    allocated_memory(mblock_size * nof_blocks),
+    // Pre-reserve space in the central cache to hold all batches and avoid reallocations.
+    central_mem_cache(nof_total_batches() + OVER_DIM_CENTRAL_CACHE)
   {
     srsran_assert(nof_blocks > max_local_cache_size(),
                   "The number of segments in the pool must be much larger than the thread cache size ({} <= {})",
@@ -89,17 +107,14 @@ class fixed_size_memory_block_pool
                   mblock_size,
                   free_memory_block_list::min_memory_block_align());
 
-    // Allocate the required memory for the given number of segments and segment size.
-    const size_t total_mem = mblock_size * nof_blocks;
-    allocated_memory.resize(total_mem);
-
-    // Push all segments to the central cache.
-    const size_t nof_batches = ceil(nof_blocks / (double)block_batch_size);
-    central_mem_cache.resize(nof_batches);
-    for (unsigned i = 0; i != nof_blocks; ++i) {
-      const unsigned batch_idx = i / block_batch_size;
-      const unsigned offset    = i * mblock_size;
-      central_mem_cache[batch_idx].push(allocated_memory.data() + offset);
+    // Push all memory blocks to the central cache in batches.
+    const unsigned nof_batches = nof_total_batches();
+    for (unsigned i = 0; i != nof_batches; ++i) {
+      free_memory_block_list batch;
+      for (unsigned j = 0; j != block_batch_size; ++j) {
+        batch.push(allocated_memory.data() + (i * block_batch_size + j) * mblock_size);
+      }
+      report_fatal_error_if_not(central_mem_cache.enqueue(batch), "Failed to push batch to central cache");
     }
   }
 
@@ -109,11 +124,7 @@ public:
   fixed_size_memory_block_pool& operator=(const fixed_size_memory_block_pool&) = delete;
   fixed_size_memory_block_pool& operator=(fixed_size_memory_block_pool&&)      = delete;
 
-  ~fixed_size_memory_block_pool()
-  {
-    std::lock_guard<std::mutex> lock(central_cache_mutex);
-    allocated_memory.clear();
-  }
+  ~fixed_size_memory_block_pool() {}
 
   /// \brief Get instance of a memory pool singleton.
   static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>& get_instance(size_t nof_blocks     = 0,
@@ -152,10 +163,9 @@ public:
     }
 
     // Local cache is empty. Attempt memory block pop from central cache.
-    std::lock_guard<std::mutex> lock(central_cache_mutex);
-    if (not central_mem_cache.empty()) {
-      w_ctx->local_cache.push_back(central_mem_cache.back());
-      central_mem_cache.pop_back();
+    free_memory_block_list batch;
+    if (central_mem_cache.try_dequeue(w_ctx->consumer_token, batch)) {
+      w_ctx->local_cache.push_back(batch);
       node = w_ctx->local_cache.back().try_pop();
     }
 
@@ -194,9 +204,9 @@ public:
     if (w_ctx->local_cache.size() >= max_local_batches and w_ctx->local_cache.back().size() >= block_batch_size) {
       // Local cache is full. Rebalance by sending batches of blocks to central cache.
       // We leave one batch in the local cache.
-      std::lock_guard<std::mutex> lock(central_cache_mutex);
       for (unsigned i = 0; i != max_local_batches - 1; ++i) {
-        central_mem_cache.push_back(w_ctx->local_cache.back());
+        report_fatal_error_if_not(central_mem_cache.enqueue(w_ctx->producer_token, w_ctx->local_cache.back()),
+                                  "Failed to push allocated batch back to central cache");
         w_ctx->local_cache.pop_back();
       }
     }
@@ -211,23 +221,49 @@ public:
     }
 
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
-               central_mem_cache.size(),
+               central_mem_cache.size_approx() * block_batch_size,
                nof_memory_blocks(),
                count);
   }
 
 private:
   struct worker_ctxt {
-    std::thread::id  id;
+    /// Thread ID of the worker.
+    std::thread::id id;
+    /// Thread-local cache of memory blocks.
     local_cache_type local_cache;
+    /// Producer Token for fast enqueueing to the central cache.
+    moodycamel::ProducerToken producer_token;
+    /// Consumer Token for fast dequeueing to the central cache.
+    moodycamel::ConsumerToken consumer_token;
 
-    worker_ctxt() : id(std::this_thread::get_id()) {}
+    worker_ctxt(fixed_size_memory_block_pool& parent) :
+      id(std::this_thread::get_id()), producer_token(parent.central_mem_cache), consumer_token(parent.central_mem_cache)
+    {
+    }
     ~worker_ctxt()
     {
-      pool_type&                  pool = pool_type::get_instance();
-      std::lock_guard<std::mutex> lock(pool.central_cache_mutex);
+      pool_type& pool = pool_type::get_instance();
       while (not local_cache.empty()) {
-        pool.central_mem_cache.push_back(local_cache.back());
+        if (local_cache.back().size() < block_batch_size) {
+          // Batch is incomplete. We combine it with any other existing incomplete batch.
+          {
+            std::lock_guard<std::mutex> lock(pool.incomplete_batch_mutex);
+            while (not local_cache.back().empty()) {
+              pool.incomplete_batch.push(local_cache.back().try_pop());
+              if (pool.incomplete_batch.size() >= block_batch_size) {
+                // The incomplete batch is now complete and can be pushed to the central cache.
+                report_error_if_not(pool.central_mem_cache.enqueue(producer_token, pool.incomplete_batch),
+                                    "Failed to push blocks to central cache");
+                pool.incomplete_batch.clear();
+              }
+            }
+          }
+          local_cache.pop_back();
+          continue;
+        }
+        report_error_if_not(pool.central_mem_cache.enqueue(producer_token, local_cache.back()),
+                            "Failed to push blocks back to central cache");
         local_cache.pop_back();
       }
     }
@@ -235,19 +271,27 @@ private:
 
   worker_ctxt* get_worker_cache()
   {
-    thread_local worker_ctxt worker_cache;
+    thread_local worker_ctxt worker_cache{*this};
     return &worker_cache;
   }
+
+  /// Number of batches of memory blocks stored in the pool.
+  size_t nof_total_batches() const { return (nof_blocks + block_batch_size - 1) / block_batch_size; }
 
   const size_t mblock_size;
   const size_t nof_blocks;
   const size_t max_local_batches;
 
-  std::mutex                          central_cache_mutex;
-  std::vector<free_memory_block_list> central_mem_cache;
-
-  std::mutex           debug_mutex;
   std::vector<uint8_t> allocated_memory;
+
+  moodycamel::ConcurrentQueue<free_memory_block_list> central_mem_cache;
+
+  // When workers get deleted, some local batches may be still incomplete. We collect them here to form full batches
+  // when other workers get deleted as well.
+  std::mutex             incomplete_batch_mutex;
+  free_memory_block_list incomplete_batch;
+
+  std::mutex debug_mutex;
 };
 
 } // namespace srsran

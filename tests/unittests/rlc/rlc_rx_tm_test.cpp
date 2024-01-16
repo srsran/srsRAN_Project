@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -62,7 +62,7 @@ protected:
     tester = std::make_unique<rlc_rx_tm_test_frame>();
 
     // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_rx_tm_entity>(0, du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, pcap);
+    rlc = std::make_unique<rlc_rx_tm_entity>(0, du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, true, pcap);
   }
 
   void TearDown() override

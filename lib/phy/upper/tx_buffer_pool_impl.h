@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,65 +22,62 @@
 
 #pragma once
 
+#include "tx_buffer_codeblock_pool.h"
 #include "tx_buffer_impl.h"
-#include "srsran/adt/ring_buffer.h"
-#include "srsran/adt/static_vector.h"
-#include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
-#include "srsran/support/error_handling.h"
-#include "srsran/support/math_utils.h"
-#include <mutex>
+#include "srsran/ran/slot_point.h"
+#include "srsran/srslog/logger.h"
+#include "srsran/srslog/srslog.h"
+#include <vector>
 
 namespace srsran {
 
-/// Describes a receiver buffer pool.
+/// Implements a PDSCH rate matcher buffer pool.
 class tx_buffer_pool_impl : public tx_buffer_pool
 {
+private:
+  /// No expiration time value.
+  slot_point null_expiration = slot_point();
+
+  /// Code block buffer pool.
+  tx_buffer_codeblock_pool codeblock_pool;
+  /// Actual buffer pool.
+  std::vector<tx_buffer_impl> buffers;
+  /// \brief List of buffer identifiers.
+  ///
+  /// Maps buffer identifiers to buffers. Each position indicates the buffer identifier assign to each of the buffers.
+  /// Buffers with \c trx_buffer_identifier::invalid() identifier are not reserved.
+  std::vector<trx_buffer_identifier> identifiers;
+  /// Tracks expiration times.
+  std::vector<slot_point> expirations;
+
+  /// Indicates the lifetime of a buffer reservation as a number of slots.
+  unsigned expire_timeout_slots;
+  /// Logger.
+  srslog::basic_logger& logger;
+
 public:
   /// \brief Creates a generic receiver buffer pool.
   /// \param[in] config Provides the pool required parameters.
   tx_buffer_pool_impl(const tx_buffer_pool_config& config) :
-    logger(srslog::fetch_basic_logger("PHY", true)),
     codeblock_pool(config.nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
-    available_buffers(config.nof_buffers),
-    reserved_buffers(config.nof_buffers),
-    expire_timeout_slots(config.expire_timeout_slots)
+    buffers(config.nof_buffers, tx_buffer_impl(codeblock_pool)),
+    identifiers(config.nof_buffers, trx_buffer_identifier::invalid()),
+    expirations(config.nof_buffers, null_expiration),
+    expire_timeout_slots(config.expire_timeout_slots),
+    logger(srslog::fetch_basic_logger("PHY", true))
   {
-    for (unsigned i = 0, i_end = config.nof_buffers; i != i_end; ++i) {
-      buffer_pool.emplace_back(std::make_unique<tx_buffer_impl>(codeblock_pool));
-      available_buffers.push(i);
-    }
   }
 
   // See interface for documentation.
-  unique_tx_buffer
-  reserve_buffer(const slot_point& slot, const tx_buffer_identifier& id, unsigned nof_codeblocks) override;
+  unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override;
 
   // See interface for documentation.
-  unique_tx_buffer reserve_buffer(const slot_point& slot, unsigned nof_codeblocks) override;
+  unique_tx_buffer reserve(const slot_point& slot, unsigned nof_codeblocks) override;
 
   // See interface for documentation.
   void run_slot(const slot_point& slot) override;
-
-private:
-  /// Buffer identifier for non specified RNTI and HARQ.
-  const tx_buffer_identifier unknown_id = {0, 16};
-
-  /// Protects methods from concurrent calls.
-  std::mutex mutex;
-  /// General physical layer logger.
-  srslog::basic_logger& logger;
-  /// Codeblock buffer pool.
-  tx_buffer_codeblock_pool codeblock_pool;
-  /// Actual buffer pool.
-  std::vector<std::unique_ptr<tx_buffer_impl>> buffer_pool;
-  /// Storage of available buffer identifier.
-  ring_buffer<unsigned> available_buffers;
-  /// Storage of reserved buffer identifier.
-  ring_buffer<unsigned> reserved_buffers;
-  /// Indicates the lifetime of a buffer reservation as a number of slots.
-  unsigned expire_timeout_slots;
 };
 
 } // namespace srsran

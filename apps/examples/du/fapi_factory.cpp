@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,7 +41,6 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
                                const fapi::carrier_config&                                        carrier_cfg,
                                std::unique_ptr<precoding_matrix_repository>                       pm_repo,
                                std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository> part2_repo,
-                               task_executor&                                                     async_executor,
                                tx_buffer_pool&                                                    buffer_pool,
                                std::vector<uint8_t>                                               prach_ports)
 {
@@ -70,7 +69,6 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   phy_fapi_dependencies.ul_pdu_validator     = &ul_pdu_validator;
   phy_fapi_dependencies.pm_repo              = std::move(pm_repo);
   phy_fapi_dependencies.part2_repo           = std::move(part2_repo);
-  phy_fapi_dependencies.async_executor       = &async_executor;
 
   return adaptor_factory->create(phy_fapi_config, std::move(phy_fapi_dependencies));
 }

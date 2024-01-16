@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,6 +26,10 @@
 #include "pdsch/pdsch_default_time_allocation.h"
 #include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_pusch_size.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 
@@ -149,11 +153,9 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   constexpr unsigned tb_scaling_field = 0;
   // Parameter \c tp-pi2BPSK enabled is not supported yet.
   constexpr bool tp_pi2bpsk_present = false;
-  // TODO verify if this is the correct value.
+  // As with 1 or 2 bits the corresponding beta-offset won't change, we can over-allocate the number of HARQ-ACK bits
+  // to 2.
   constexpr unsigned nof_harq_ack_bits = 2;
-  // There is no need for CSI reporting for TC-RNTI.
-  constexpr unsigned nof_csi_part1_bits = 0;
-  constexpr unsigned nof_csi_part2_bits = 0;
 
   pusch_config_params pusch;
 
@@ -166,19 +168,17 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   pusch.tp_pi2bpsk_present = tp_pi2bpsk_present;
   pusch.tb_scaling_field   = tb_scaling_field;
 
-  pusch.nof_oh_prb = nof_oh_prb;
-
-  // TODO: verify if this needs to be set depending on some configuration.
-  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
-  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
-  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+  pusch.nof_oh_prb        = nof_oh_prb;
+  pusch.nof_harq_ack_bits = nof_harq_ack_bits;
 
   return pusch;
 }
 
 pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                          const bwp_uplink_common&                     ul_bwp,
-                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg)
+                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                         const unsigned                               nof_harq_ack_bits,
+                                                         bool is_csi_report_slot)
 {
   const pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
   constexpr unsigned    nof_layers = 1;
@@ -187,13 +187,6 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
   constexpr unsigned tb_scaling_field = 0;
   // Parameter \c tp-pi2BPSK enabled is not supported yet.
   constexpr bool tp_pi2bpsk_present = false;
-  // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
-  // DL slots in TDD, currently 6.
-  // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 7;
-  // We assume only 4 bits for CSI Part 1.
-  constexpr unsigned nof_csi_part1_bits = 4;
-  constexpr unsigned nof_csi_part2_bits = 0;
 
   pusch_config_params pusch;
 
@@ -214,16 +207,30 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
                          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
-  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
-  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
-  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+  pusch.nof_harq_ack_bits = nof_harq_ack_bits;
+  if (is_csi_report_slot) {
+    csi_report_configuration csi_rep_cfg =
+        create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+    // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+    // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+    // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    } else {
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+    }
+  }
 
   return pusch;
 }
 
 pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                         unsigned                                     nof_layers)
+                                                         unsigned                                     nof_layers,
+                                                         const unsigned                               nof_harq_ack_bits,
+                                                         bool is_csi_report_slot)
 {
   const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
@@ -231,13 +238,6 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   constexpr unsigned tb_scaling_field = 0;
   // Parameter \c tp-pi2BPSK enabled is not supported yet.
   constexpr bool tp_pi2bpsk_present = false;
-  // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
-  // DL slots in TDD, currently 6.
-  // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 7;
-  // We assume only 4 bits for CSI Part 1.
-  constexpr unsigned nof_csi_part1_bits = 4;
-  constexpr unsigned nof_csi_part2_bits = 0;
   // TODO: Update the value based on nof. CWs enabled.
   static const bool are_both_cws_enabled = false;
 
@@ -269,9 +269,21 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
                          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
-  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
-  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
-  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+  pusch.nof_harq_ack_bits = nof_harq_ack_bits;
+  if (is_csi_report_slot) {
+    csi_report_configuration csi_rep_cfg =
+        create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+    // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
+    // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
+    // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
+    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+    } else {
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+    }
+  }
 
   return pusch;
 }

@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -79,6 +79,7 @@ add_test(ring_buffer_pool_test ring_buffer_pool_test)
 add_executable(fixed_size_memory_pool_test fixed_size_memory_pool_test.cpp)
 target_link_libraries(fixed_size_memory_pool_test srsran_support gtest gtest_main)
 add_test(fixed_size_memory_pool_test fixed_size_memory_pool_test)
+set_tests_properties(fixed_size_memory_pool_test PROPERTIES LABELS "tsan")
 
 add_executable(units_test units_test.cpp)
 target_link_libraries(units_test srslog srsran_support gtest gtest_main)

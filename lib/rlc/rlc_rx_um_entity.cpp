@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,8 +32,9 @@ rlc_rx_um_entity::rlc_rx_um_entity(uint32_t                          du_index,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
                                    task_executor&                    ue_executor,
+                                   bool                              metrics_enable,
                                    rlc_pcap&                         pcap_) :
-  rlc_rx_entity(du_index, ue_index, rb_id, upper_dn_, pcap_),
+  rlc_rx_entity(du_index, ue_index, rb_id, upper_dn_, metrics_enable, pcap_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),

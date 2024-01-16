@@ -18,7 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 Rebaser:
-  cron: "*/10 6-23 * * 1-5"
+  cron: "*/10 6-22 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   active: true

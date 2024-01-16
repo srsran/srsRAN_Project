@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -333,6 +333,10 @@ struct amplitude_control_appconfig {
 struct ul_common_appconfig {
   /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm.
   optional<int> p_max;
+  /// Maximum number of PUCCH grants per slot.
+  unsigned max_pucchs_per_slot = 31U;
+  /// Maximum number of PUSCH + PUCCH grants per slot.
+  unsigned max_ul_grants_per_slot = 32U;
 };
 
 struct ssb_appconfig {
@@ -719,6 +723,7 @@ struct cu_cp_appconfig {
 struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;
   unsigned gtpu_reordering_timer_ms = 0;
+  bool     warn_on_drop             = false;
 };
 
 /// Configuration of logging functionalities.
@@ -796,7 +801,7 @@ struct pcap_appconfig {
 /// Metrics report configuration.
 struct metrics_appconfig {
   struct {
-    unsigned report_period = 1000; // RLC report period in ms
+    unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
@@ -839,7 +844,7 @@ struct expert_upper_phy_appconfig {
   /// -\c channel_estimator: SINR is calculated by the channel estimator using the DM-RS.
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
-  std::string pusch_sinr_calc_method = "evm";
+  std::string pusch_sinr_calc_method = "post_equalization";
   /// \brief Request headroom size in slots.
   ///
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
@@ -972,6 +977,8 @@ struct ru_ofh_base_cell_appconfig {
   bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
+  /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
+  bool ignore_ecpri_seq_id_field = false;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
   /// Uplink compression bitwidth.
@@ -1069,8 +1076,6 @@ struct upper_phy_threads_appconfig {
   /// - \c concurrent: for using a processor that processes code blocks in parallel, or
   /// - \c lite: for using a memory optimized processor.
   std::string pdsch_processor_type = "auto";
-  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
-  unsigned nof_pdsch_threads = 1;
   /// \brief Number of threads for concurrent PUSCH decoding.
   ///
   /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and
@@ -1107,29 +1112,25 @@ struct expert_threads_appconfig {
     if (nof_threads < 4) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 0;
-      upper_threads.nof_pdsch_threads         = 1;
-      upper_threads.nof_dl_threads            = 1;
+      upper_threads.nof_dl_threads            = 2;
       lower_threads.execution_profile         = lower_phy_thread_profile::single;
       ofh_threads.is_downlink_parallelized    = false;
     } else if (nof_threads < 8) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 1;
-      upper_threads.nof_pdsch_threads         = 2;
-      upper_threads.nof_dl_threads            = 2;
+      upper_threads.nof_dl_threads            = 4;
       lower_threads.execution_profile         = lower_phy_thread_profile::dual;
       ofh_threads.is_downlink_parallelized    = true;
     } else if (nof_threads < 16) {
       upper_threads.nof_ul_threads            = 1;
       upper_threads.nof_pusch_decoder_threads = 1;
-      upper_threads.nof_pdsch_threads         = 4;
-      upper_threads.nof_dl_threads            = 2;
+      upper_threads.nof_dl_threads            = 4;
       lower_threads.execution_profile         = lower_phy_thread_profile::quad;
       ofh_threads.is_downlink_parallelized    = true;
     } else {
       upper_threads.nof_ul_threads            = 2;
       upper_threads.nof_pusch_decoder_threads = 2;
-      upper_threads.nof_pdsch_threads         = 8;
-      upper_threads.nof_dl_threads            = 4;
+      upper_threads.nof_dl_threads            = 6;
       lower_threads.execution_profile         = lower_phy_thread_profile::quad;
       ofh_threads.is_downlink_parallelized    = true;
     }

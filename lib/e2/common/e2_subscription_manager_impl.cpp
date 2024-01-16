@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,7 +41,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
   subscription.subscription_info.ran_function_id             = msg->ra_nfunction_id->value;
   subscription.subscription_info.request_id.ric_instance_id  = msg->ri_crequest_id.value.ric_instance_id;
-  e2_sm_event_trigger_definition_s event_trigger_def;
+  e2sm_event_trigger_definition event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
     e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(msg->ra_nfunction_id.value);

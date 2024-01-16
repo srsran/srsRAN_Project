@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,26 +37,26 @@ protected:
     test_ue = &create_ue(to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX)));
   }
 
-  void start_procedure(const ric_control_config& request)
+  void start_procedure(const du_mac_sched_control_config& request)
   {
     proc = launch_async<du_ue_ric_configuration_procedure>(request, ue_mng, params);
     proc_launcher.emplace(proc);
   }
 
-  optional<ric_control_config_response> proc_result()
+  optional<du_mac_sched_control_config_response> proc_result()
   {
-    return proc_launcher->ready() ? optional<ric_control_config_response>{proc_launcher->get()} : nullopt;
+    return proc_launcher->ready() ? optional<du_mac_sched_control_config_response>{proc_launcher->get()} : nullopt;
   }
 
-  du_ue*                                                    test_ue = nullptr;
-  async_task<ric_control_config_response>                   proc;
-  optional<lazy_task_launcher<ric_control_config_response>> proc_launcher;
+  du_ue*                                                             test_ue = nullptr;
+  async_task<du_mac_sched_control_config_response>                   proc;
+  optional<lazy_task_launcher<du_mac_sched_control_config_response>> proc_launcher;
 };
 
 TEST_F(du_ue_ric_config_tester,
        when_new_ric_config_is_started_then_du_manager_starts_mac_config_and_waits_for_mac_response)
 {
-  start_procedure(ric_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
+  start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
 
   ASSERT_TRUE(mac.last_ue_reconf_msg.has_value()) << "MAC should have received new configuration";
   ASSERT_EQ(mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
@@ -71,7 +71,7 @@ TEST_F(du_ue_ric_config_tester,
 
 TEST_F(du_ue_ric_config_tester, when_mac_finished_configuration_then_procedure_finishes)
 {
-  start_procedure(ric_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
+  start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
 
   ASSERT_FALSE(proc_result().has_value()) << "The procedure should wait for MAC response";
   mac.wait_ue_reconf.result = mac_ue_reconfiguration_response{test_ue->ue_index, true};
@@ -94,7 +94,7 @@ TEST_F(du_ue_ric_config_tester,
                              }));
 
   // Start RIC UE config.
-  start_procedure(ric_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
+  start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, nullopt, nullopt, 5, 10});
 
   // Status: RIC config procedure is waiting for previous procedure.
   ASSERT_FALSE(mac.last_ue_reconf_msg.has_value())

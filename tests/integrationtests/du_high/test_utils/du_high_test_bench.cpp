@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -175,7 +175,7 @@ du_high_test_bench::du_high_test_bench() :
     cfg.gnb_du_name  = "srsdu";
     cfg.du_bind_addr = {"127.0.0.1"};
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
-    cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
+    cfg.qos          = config_helpers::make_default_du_qos_config_list(0);
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.mac_p        = &mac_pcap;
     cfg.rlc_p        = &rlc_pcap;

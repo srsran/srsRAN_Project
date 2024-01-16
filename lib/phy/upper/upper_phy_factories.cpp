@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -33,8 +33,9 @@
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/error_handling.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -296,41 +297,33 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
 {
   // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-  unsigned                                    nof_sectors = 1;
-  unsigned                                    nof_slots   = config.nof_slots_dl_rg;
-  std::vector<std::unique_ptr<resource_grid>> grids;
-  grids.reserve(nof_sectors * nof_slots);
-  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid =
-          rg_factory->create(config.nof_tx_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE);
-      report_fatal_error_if_not(grid, "Invalid resource grid.");
-      grids.push_back(std::move(grid));
-    }
-  }
 
-  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
+  // Generate resource grid instances.
+  std::vector<std::unique_ptr<resource_grid>> grids(config.nof_dl_rg);
+  std::generate(
+      grids.begin(), grids.end(), [&rg_factory, nof_tx_ports = config.nof_tx_ports, dl_bw_rb = config.dl_bw_rb]() {
+        return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
+      });
+
+  return create_asynchronous_resource_grid_pool(
+      config.dl_rg_expire_timeout_slots, *config.dl_executors.front(), std::move(grids));
 }
 
 static std::unique_ptr<resource_grid_pool>
 create_ul_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<resource_grid_factory> rg_factory)
 {
+  // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-  unsigned                                    nof_sectors = 1;
-  unsigned                                    nof_slots   = config.nof_slots_ul_rg;
-  std::vector<std::unique_ptr<resource_grid>> grids;
-  grids.reserve(nof_sectors * nof_slots);
-  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid =
-          rg_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.ul_bw_rb * NRE);
-      report_fatal_error_if_not(grid, "Invalid resource grid.");
-      grids.push_back(std::move(grid));
-    }
-  }
+
+  // Generate resource grid instances.
+  std::vector<std::unique_ptr<resource_grid>> grids(config.nof_ul_rg);
+  std::generate(
+      grids.begin(), grids.end(), [&rg_factory, nof_rx_ports = config.nof_rx_ports, ul_bw_rb = config.ul_bw_rb]() {
+        return rg_factory->create(nof_rx_ports, MAX_NSYMB_PER_SLOT, ul_bw_rb * NRE);
+      });
 
   // Create UL resource grid pool.
-  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
+  return create_generic_resource_grid_pool(std::move(grids));
 }
 
 static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
@@ -401,12 +394,13 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.estimator_factory   = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
   pusch_config.demodulator_factory = create_pusch_demodulator_factory_sw(
       equalizer_factory, demodulation_factory, prg_factory, enable_evm, enable_eq_sinr);
-  pusch_config.demux_factory         = create_ulsch_demultiplex_factory_sw();
-  pusch_config.decoder_factory       = create_pusch_decoder_factory_sw(decoder_config);
-  pusch_config.uci_dec_factory       = uci_dec_factory;
-  pusch_config.dec_nof_iterations    = config.ldpc_decoder_iterations;
-  pusch_config.dec_enable_early_stop = config.ldpc_decoder_early_stop;
-  pusch_config.csi_sinr_calc_method  = config.pusch_sinr_calc_method;
+  pusch_config.demux_factory              = create_ulsch_demultiplex_factory_sw();
+  pusch_config.decoder_factory            = create_pusch_decoder_factory_sw(decoder_config);
+  pusch_config.uci_dec_factory            = uci_dec_factory;
+  pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
+  pusch_config.dec_enable_early_stop      = config.ldpc_decoder_early_stop;
+  pusch_config.csi_sinr_calc_method       = config.pusch_sinr_calc_method;
+  pusch_config.max_nof_concurrent_threads = config.max_ul_thread_concurrency;
 
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
@@ -556,7 +550,7 @@ public:
     phy_config.rx_symbol_printer_port      = config.rx_symbol_printer_port;
     phy_config.rx_symbol_printer_prach     = config.rx_symbol_printer_prach;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
-    phy_config.nof_slots_ul_pdu_repository = config.nof_slots_ul_rg;
+    phy_config.nof_slots_ul_pdu_repository = config.nof_ul_rg;
 
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
@@ -572,7 +566,7 @@ public:
     phy_config.tx_buf_pool = create_tx_buffer_pool(config.tx_buffer_config);
     report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid transmit buffer processor pool.");
 
-    phy_config.rx_buf_pool = create_rx_softbuffer_pool(config.rx_buffer_config);
+    phy_config.rx_buf_pool = create_rx_buffer_pool(config.rx_buffer_config);
     report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid receive buffer processor pool.");
 
     phy_config.ul_processor_pool = create_ul_processor_pool(*ul_processor_fact, config);
@@ -584,8 +578,6 @@ public:
     // Create the validators.
     phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
     phy_config.ul_pdu_validator = ul_processor_fact->create_pdu_validator();
-
-    phy_config.timing_handler_executor = config.pusch_executor;
 
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }
@@ -711,10 +703,6 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
-
-    // Wrap PDSCH processor factory with a pool to allow concurrent execution.
-    pdsch_proc_factory =
-        create_pdsch_processor_pool(std::move(pdsch_proc_factory), pdsch_processor_config.max_nof_simultaneous_pdsch);
   } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);
@@ -735,6 +723,30 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory =
       create_nzp_csi_rs_generator_factory_sw(prg_factory);
   report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator factory.");
+
+  // Wrap the downlink processor dependencies with pools to allow concurrent execution.
+  if (config.nof_concurrent_threads > 1) {
+    // If the PDSCH instance is concurrent, the number of instances is given by the PDSCH processor configuration.
+    unsigned max_nof_simultaneous_pdsch = config.nof_concurrent_threads;
+    if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+      max_nof_simultaneous_pdsch =
+          variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
+    }
+
+    pdcch_proc_factory =
+        create_pdcch_processor_pool_factory(std::move(pdcch_proc_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor pool factory.");
+
+    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), max_nof_simultaneous_pdsch);
+    report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDSCH processor pool factory.");
+
+    ssb_proc_factory = create_ssb_processor_pool_factory(std::move(ssb_proc_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(pdcch_proc_factory, "Invalid SSB processor pool factory.");
+
+    nzp_csi_rs_factory =
+        create_nzp_csi_rs_generator_pool_factory(std::move(nzp_csi_rs_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(pdcch_proc_factory, "Invalid NZP-CSI-RS generator pool factory.");
+  }
 
   return std::make_shared<downlink_processor_single_executor_factory>(
       pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory);

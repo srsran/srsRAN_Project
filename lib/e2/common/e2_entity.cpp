@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,6 +24,8 @@
 #include "../e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "../e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "../e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.h"
+#include "../e2sm/e2sm_rc/e2sm_rc_control_service_impl.h"
 #include "../e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "e2_impl.h"
 #include "e2_subscription_manager_impl.h"
@@ -47,7 +49,7 @@ e2_entity::e2_entity(e2ap_configuration&            cfg_,
                      e2_connection_client*          e2_client_,
                      e2_du_metrics_interface&       e2_du_metrics_iface_,
                      srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
-                     e2sm_param_configurator&       e2_param_config_,
+                     du_configurator&               du_configurator_,
                      timer_factory                  timers_,
                      task_executor&                 task_exec_) :
   logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
@@ -66,9 +68,16 @@ e2_entity::e2_entity(e2ap_configuration&            cfg_,
     e2_du_metrics_iface_.connect_e2_du_meas_provider(std::move(e2sm_kpm_meas_provider));
   }
   if (cfg.e2sm_rc_enabled) {
-    rc_provider         = std::make_unique<e2sm_param_provider>();
-    auto e2sm_rc_packer = std::make_unique<e2sm_rc_asn1_packer>(*rc_provider);
-    auto e2sm_rc_iface  = std::make_unique<e2sm_rc_impl>(logger, *e2sm_rc_packer, e2_param_config_, *rc_provider);
+    auto e2sm_rc_packer = std::make_unique<e2sm_rc_asn1_packer>();
+    auto e2sm_rc_iface  = std::make_unique<e2sm_rc_impl>(logger, *e2sm_rc_packer);
+    // Create e2sm_rc Control Service Style 2.
+    std::unique_ptr<e2sm_control_service> rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
+    std::unique_ptr<e2sm_control_action_executor> rc_control_action_2_6_executor =
+        std::make_unique<e2sm_rc_control_action_2_6_du_executor>(du_configurator_);
+    rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
+
+    e2sm_rc_packer->add_e2sm_control_service(rc_control_service_style2.get());
+    e2sm_rc_iface->add_e2sm_control_service(std::move(rc_control_service_style2));
     e2sm_handlers.push_back(std::move(e2sm_rc_packer));
     e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,7 +34,9 @@ namespace srsran {
 class pucch_allocator_impl final : public pucch_allocator
 {
 public:
-  explicit pucch_allocator_impl(const cell_configuration& cell_cfg_);
+  explicit pucch_allocator_impl(const cell_configuration& cell_cfg_,
+                                unsigned                  max_pucchs_per_slot,
+                                unsigned                  max_ul_grants_per_slot_);
 
   ~pucch_allocator_impl() override;
 
@@ -178,6 +180,8 @@ private:
   existing_pucch_grants
   get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
 
+  unsigned get_max_pucch_grants(unsigned currently_allocated_puschs);
+
   using slot_alloc_list = static_vector<rnti_t, MAX_PUCCH_PDUS_PER_SLOT>;
 
   // \brief Ring of PUCCH allocations indexed by slot.
@@ -185,6 +189,8 @@ private:
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
+  const unsigned            max_pucch_grants_per_slot;
+  const unsigned            max_ul_grants_per_slot;
   slot_point                last_sl_ind;
   pucch_resource_manager    resource_manager;
 

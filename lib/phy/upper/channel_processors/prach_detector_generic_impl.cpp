@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -39,6 +39,8 @@
 
 using namespace srsran;
 
+static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
+
 bool prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
 {
   detail::threshold_params th_params;
@@ -48,8 +50,7 @@ bool prach_detector_validator_impl::is_valid(const prach_detector::configuration
   th_params.zero_correlation_zone = config.zero_correlation_zone;
   th_params.combine_symbols       = true;
 
-  static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
-  auto                                             flag = threshold_and_margin_table.check_flag(th_params);
+  auto flag = threshold_and_margin_table.check_flag(th_params);
 
   return (flag != detail::threshold_and_margin_finder::threshold_flag::red);
 }
@@ -150,10 +151,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   th_params.zero_correlation_zone = config.zero_correlation_zone;
   th_params.combine_symbols       = combine_symbols;
 
-  static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
-  auto                                             th_and_margin = threshold_and_margin_table.get(th_params);
-  float                                            threshold     = std::get<0>(th_and_margin);
-  unsigned                                         win_margin    = std::get<1>(th_and_margin);
+  auto     th_and_margin = threshold_and_margin_table.get(th_params);
+  float    threshold     = std::get<0>(th_and_margin);
+  unsigned win_margin    = std::get<1>(th_and_margin);
   srsran_assert((win_margin > 0) && (threshold > 0.0),
                 "Window margin and threshold are not selected for the number of ports (i.e., {}) and the preamble "
                 "format (i.e., {}).",

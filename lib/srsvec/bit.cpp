@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -184,6 +184,13 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
 
 void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed, unsigned offset)
 {
+  srsran_assert(unpacked.size() <= packed.size() - offset,
+                "The unpacked number of bits (i.e.{}) must be equal or lower to the number of packed bits - offset "
+                "(i.e., {}-{}).",
+                unpacked.size(),
+                packed.size(),
+                offset);
+
   // Calculate the number of bits to align the packed data to byte boundary.
   unsigned nof_head_bits = std::min((8 - (offset % 8)) % 8, static_cast<unsigned>(unpacked.size()));
   if (nof_head_bits != 0) {
@@ -194,9 +201,11 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
     unpacked = bit_unpack(unpacked, head_bits, nof_head_bits);
   }
 
-  unsigned         aligned_offset = divide_ceil(offset, 8) * 8;
-  const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
-  bit_unpack(unpacked, aligned_packed);
+  unsigned aligned_offset = divide_ceil(offset, 8) * 8;
+  if (packed.size() != aligned_offset) {
+    const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
+    bit_unpack(unpacked, aligned_packed);
+  }
 }
 
 unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
@@ -284,6 +293,12 @@ void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 
 void srsran::srsvec::bit_pack(srsran::bit_buffer& packed, unsigned offset, span<const uint8_t> unpacked)
 {
+  srsran_assert(
+      packed.size() >= unpacked.size() + offset,
+      "The packed number of bits (i.e.{}) must be equal or higher to the number of packed bits + offset (i.e., {}+{}).",
+      packed.size(),
+      unpacked.size(),
+      offset);
   // Calculate the number of bits to align the packed data to byte boundary.
   unsigned nof_head_bits = std::min((8 - (offset % 8)) % 8, static_cast<unsigned>(unpacked.size()));
   if (nof_head_bits != 0) {
@@ -294,9 +309,11 @@ void srsran::srsvec::bit_pack(srsran::bit_buffer& packed, unsigned offset, span<
     packed.insert(head_bits, offset, nof_head_bits);
   }
 
-  unsigned   aligned_offset = divide_ceil(offset, 8) * 8;
-  bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
-  bit_pack(aligned_packed, unpacked);
+  unsigned aligned_offset = divide_ceil(offset, 8) * 8;
+  if (packed.size() != aligned_offset) {
+    bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
+    bit_pack(aligned_packed, unpacked);
+  }
 }
 
 void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t> input, unsigned startpos)

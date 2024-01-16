@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -44,7 +44,7 @@ public:
   {
     byte_buffer sdu_buf;
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_buf.append(first_byte + k);
+      report_error_if_not(sdu_buf.append(first_byte + k), "Failed to allocate byte buffer");
     }
     return sdu_buf;
   }

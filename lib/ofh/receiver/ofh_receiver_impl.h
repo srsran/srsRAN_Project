@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -48,6 +48,8 @@ struct receiver_impl_dependencies {
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
   std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
+  /// Sequence id checker.
+  std::unique_ptr<sequence_id_checker> seq_id_checker;
 };
 
 /// \brief Open Fronthaul receiver.

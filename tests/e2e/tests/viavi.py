@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -30,10 +30,16 @@ from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 
 @mark.parametrize(
-    "campaign_filename, test_name, test_timeout",
+    "campaign_filename, test_name, test_timeout, post_commands",
     (
-        param("C:\\ci\\CI 4x4 ORAN-FH.xml", "32UE static DL + UL UDP - Dell", 45 * 60, id="32UE Bidirectional UDP"),
-        param("C:\\ci\\CI 4x4 ORAN-FH.xml", "1UE static DL + UL UDP - Dell", 45 * 60, id="1UE Bidirectional UDP"),
+        param("C:\\ci\\CI 4x4 ORAN-FH.xml", "1UE static DL + UL UDP - Dell", 45 * 60, "", id="1UE Bidirectional UDP"),
+        param(
+            "C:\\ci\\CI 4x4 ORAN-FH.xml",
+            "32UE static DL + UL UDP - Dell",
+            45 * 60,
+            "cell_cfg pdsch --max_rb_size 45",
+            id="32UE Bidirectional UDP",
+        ),
     ),
 )
 @mark.viavi
@@ -51,12 +57,13 @@ def test_viavi(
     campaign_filename: str,
     test_name: str,
     test_timeout: int,
+    post_commands: str,
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = False,
+    warning_as_errors: bool = True,
 ):
     """
     Runs a test using Viavi
@@ -66,14 +73,10 @@ def test_viavi(
         "gnb": {
             "parameters": {
                 "gnb_id": 1,
-                "band": 78,
-                "dl_arfcn": 625000,
-                "common_scs": 30,
-                "bandwidth": 100,
-                "prach_config_index": 159,
                 "log_level": "warning",
                 "pcap": False,
             },
+            "templates": {"cell": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
     configure_metric_server_for_gnb(
@@ -95,7 +98,7 @@ def test_viavi(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
                 fivegc_definition=FiveGCDefinition(amf_ip=amf_ip, amf_port=amf_port),
-                start_info=StartInfo(timeout=gnb_startup_timeout),
+                start_info=StartInfo(timeout=gnb_startup_timeout, post_commands=post_commands),
             )
         )
 

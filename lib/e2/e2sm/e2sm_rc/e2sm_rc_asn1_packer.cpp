@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,6 +21,7 @@
  */
 
 #include "e2sm_rc_asn1_packer.h"
+#include "e2sm_rc_control_service_impl.h"
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_rc;
@@ -32,13 +33,19 @@ const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
 const uint32_t    e2sm_rc_asn1_packer::ran_func_id      = 3;
 const uint32_t    e2sm_rc_asn1_packer::revision         = 0;
 
-e2sm_rc_asn1_packer::e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider_) : rc_provider(rc_provider_) {}
+e2sm_rc_asn1_packer::e2sm_rc_asn1_packer() {}
 
-e2_sm_action_definition_s
+bool e2sm_rc_asn1_packer::add_e2sm_control_service(e2sm_control_service* control_service)
+{
+  control_services.emplace(control_service->get_style_type(), control_service);
+  return true;
+}
+
+e2sm_action_definition
 e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_action_definition_s action_def;
-  asn1::cbit_ref            bref(action_definition);
+  e2sm_action_definition action_def;
+  asn1::cbit_ref         bref(action_definition);
   if (variant_get<asn1::e2sm_rc::e2_sm_rc_action_definition_s>(action_def.action_definition).unpack(bref) !=
       asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM RC Action Definition\n");
@@ -46,38 +53,78 @@ e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buf
   return action_def;
 }
 
-e2_sm_event_trigger_definition_s
+e2sm_ric_control_request
+e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req)
+{
+  e2sm_ric_control_request ric_control_request     = {};
+  ric_control_request.service_model                = e2sm_service_model_t::RC;
+  ric_control_request.ric_call_process_id_present  = req->ri_ccall_process_id_present;
+  ric_control_request.ric_ctrl_ack_request_present = req->ri_cctrl_ack_request_present;
+
+  if (ric_control_request.ric_call_process_id_present) {
+    ric_control_request.ric_call_process_id = req->ri_ccall_process_id->to_number();
+  }
+
+  asn1::cbit_ref bref_hdr(req->ri_cctrl_hdr.value);
+  asn1::cbit_ref bref_msg(req->ri_cctrl_msg.value);
+  if (variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s>(ric_control_request.request_ctrl_hdr).unpack(bref_hdr) !=
+      asn1::SRSASN_SUCCESS) {
+    printf("Failed to unpack E2SM RC Control Request Header\n");
+  }
+
+  if (variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s>(ric_control_request.request_ctrl_msg).unpack(bref_msg) !=
+      asn1::SRSASN_SUCCESS) {
+    printf("Failed to unpack E2SM RC Control Request Message\n");
+  }
+
+  if (ric_control_request.ric_ctrl_ack_request_present) {
+    ric_control_request.ric_ctrl_ack_request =
+        req->ri_cctrl_ack_request->value == asn1::e2ap::ri_cctrl_ack_request_e::ack;
+  }
+  return ric_control_request;
+};
+
+e2_ric_control_response e2sm_rc_asn1_packer::pack_ric_control_response(const e2sm_ric_control_response& e2sm_response)
+{
+  e2_ric_control_response e2_control_response = {};
+
+  e2_control_response.success = e2sm_response.success;
+
+  if (e2_control_response.success) {
+    if (e2sm_response.ric_ctrl_outcome_present) {
+      e2_control_response.ack->ri_cctrl_outcome_present = true;
+      srsran::byte_buffer buf;
+      asn1::bit_ref       bref(buf);
+      if (variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
+        printf("Failed to pack E2SM RC RIC Control Outcome (Ack)\n");
+      }
+      e2_control_response.ack->ri_cctrl_outcome->resize(buf.length());
+      std::copy(buf.begin(), buf.end(), e2_control_response.ack->ri_cctrl_outcome->begin());
+    }
+  } else {
+    if (e2sm_response.ric_ctrl_outcome_present) {
+      e2_control_response.failure->ri_cctrl_outcome_present = true;
+      srsran::byte_buffer buf;
+      asn1::bit_ref       bref(buf);
+      if (variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
+        printf("Failed to pack E2SM RC RIC Control Outcome (Failure)\n");
+      }
+      e2_control_response.failure->ri_cctrl_outcome->resize(buf.length());
+      std::copy(buf.begin(), buf.end(), e2_control_response.failure->ri_cctrl_outcome->begin());
+    }
+    e2_control_response.failure->cause.value = e2sm_response.cause;
+  }
+
+  return e2_control_response;
+}
+
+e2sm_event_trigger_definition
 e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
   // TODO
-  return e2_sm_event_trigger_definition_s();
+  return e2sm_event_trigger_definition();
 }
 
-void e2sm_rc_asn1_packer::populate_control_ran_function_description(
-    e2sm_service_provider&              provider,
-    e2_sm_rc_ran_function_definition_s& ran_function_description)
-{
-  ran_function_description.ran_function_definition_ctrl_present = true;
-  for (auto& style_provider : provider.style_providers) {
-    ran_function_definition_ctrl_item_s ran_function_definition_ctrl_item;
-    ran_function_definition_ctrl_item.ric_ctrl_style_type = style_provider.first;
-    ran_function_definition_ctrl_item.ric_ctrl_style_name.from_string(style_provider.second.name);
-    for (auto& action_provider : style_provider.second.action_providers) {
-      ran_function_definition_ctrl_action_item_s ran_function_definition_ctrl_action_item;
-      ran_function_definition_ctrl_action_item.ric_ctrl_action_id = action_provider.first;
-      ran_function_definition_ctrl_action_item.ric_ctrl_action_name.from_string(action_provider.second.name);
-      for (auto& param : action_provider.second.action_params) {
-        ctrl_action_ran_param_item_s ran_param_item;
-        ran_param_item.ran_param_id = param.second.id;
-        ran_param_item.ran_param_name.from_string(param.second.name);
-        ran_function_definition_ctrl_action_item.ran_ctrl_action_params_list.push_back(ran_param_item);
-      }
-      ran_function_definition_ctrl_item.ric_ctrl_action_list.push_back(ran_function_definition_ctrl_action_item);
-    }
-    ran_function_description.ran_function_definition_ctrl.ric_ctrl_style_list.push_back(
-        ran_function_definition_ctrl_item);
-  }
-}
 asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_description()
 {
   e2_sm_rc_ran_function_definition_s ran_function_desc;
@@ -95,10 +142,18 @@ asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_descripti
   ran_function_desc.ran_function_name.ran_function_e2_sm_o_id.from_string(oid.c_str());
   ran_function_desc.ran_function_name.ran_function_description.from_string(func_description.c_str());
   ran_function_desc.ext = false;
-  for (auto& provider : rc_provider.service_providers) {
-    if (provider.second.name == "Control Service") {
-      ran_function_desc.ran_function_definition_ctrl_present = true;
-      populate_control_ran_function_description(provider.second, ran_function_desc);
+
+  for (auto const& x : control_services) {
+    ran_function_desc.ran_function_definition_ctrl_present = true;
+    e2sm_rc_control_service_base* control_service          = dynamic_cast<e2sm_rc_control_service_base*>(x.second);
+
+    if (!control_service) {
+      continue;
+    }
+
+    ran_function_definition_ctrl_item_s ran_function_definition_ctrl_item;
+    if (control_service->fill_ran_function_description(ran_function_definition_ctrl_item)) {
+      ran_function_desc.ran_function_definition_ctrl.ric_ctrl_style_list.push_back(ran_function_definition_ctrl_item);
     }
   }
   asn1::unbounded_octstring<true> ran_function_description;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -207,7 +207,7 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
   // - The UE won't send the associated PUSCHs, which means that the lower layers will later forward CRC indications
   // with CRC=KO, and the respective UL HARQs will need to be retransmitted. No action needed. We do not cancel
   // the respective PUSCH grant, because it is important that the PUSCH "new_data" flag reaches the lower layers,
-  // telling them whether the UL HARQ softbuffer needs to be reset or not.
+  // telling them whether the UL HARQ buffer needs to be reset or not.
   // - Any UCI in the respective PUSCH will be reported as DTX, and the DL HARQ will be retransmitted. No action
   // needed.
 
@@ -226,15 +226,17 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
 
       // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
       ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
-      if (h_ul.tb().nof_retxs == 0) {
-        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
-        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
-        // reset the UL HARQ process.
-        h_ul.reset();
-      } else {
-        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK in
-        // the UL HARQ process.
-        h_ul.crc_info(false);
+      if (not h_ul.empty()) {
+        if (h_ul.tb().nof_retxs == 0) {
+          // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+          // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
+          // reset the UL HARQ process.
+          h_ul.reset();
+        } else {
+          // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK in
+          // the UL HARQ process.
+          h_ul.crc_info(false);
+        }
       }
 
       // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.

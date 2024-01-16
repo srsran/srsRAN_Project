@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,115 +23,286 @@
 #pragma once
 
 #include "srsran/rlc/rlc_tx_metrics.h"
-#include "srsran/srslog/srslog.h"
-#include <mutex>
 
 namespace srsran {
 
+struct rlc_tx_metrics_atomic_higher {
+  std::atomic<uint32_t> num_sdus;             ///< Number of SDUs
+  std::atomic<size_t>   num_sdu_bytes;        ///< Number of SDU bytes
+  std::atomic<uint32_t> num_dropped_sdus;     ///< Number of dropped SDUs (due to full queue)
+  std::atomic<uint32_t> num_discarded_sdus;   ///< Number of discarded SDUs (instructed from higher layer)
+  std::atomic<uint32_t> num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
+
+  void reset()
+  {
+    num_sdus.store(0, std::memory_order_relaxed);
+    num_sdu_bytes.store(0, std::memory_order_relaxed);
+    num_dropped_sdus.store(0, std::memory_order_relaxed);
+    num_discarded_sdus.store(0, std::memory_order_relaxed);
+    num_discard_failures.store(0, std::memory_order_relaxed);
+  }
+};
+
+struct rlc_tm_tx_metrics_atomic_lower {
+  std::atomic<uint32_t> num_small_allocs; ///< Number of allocations that are too small to TX PDU
+
+  void reset() { num_small_allocs.store(0, std::memory_order_relaxed); }
+};
+
+struct rlc_um_tx_metrics_atomic_lower {
+  std::atomic<uint32_t> num_pdus_with_segmentation;      ///< Number of transmitted PDUs with segmentation
+  std::atomic<uint32_t> num_pdu_bytes_with_segmentation; ///< Number of transmitted PDU bytes with segmentation
+
+  void reset()
+  {
+    num_pdus_with_segmentation.store(0, std::memory_order_relaxed);
+    num_pdu_bytes_with_segmentation.store(0, std::memory_order_relaxed);
+  }
+};
+
+struct rlc_am_tx_metrics_atomic_lower {
+  std::atomic<uint32_t> num_pdus_with_segmentation;      ///< Number of transmitted PDUs with segmentation
+  std::atomic<uint32_t> num_pdu_bytes_with_segmentation; ///< Number of transmitted PDU bytes with segmentation
+  std::atomic<uint32_t> num_retx_pdus;                   ///< Number of retransmitted PDUs
+  std::atomic<uint32_t> num_retx_pdu_bytes;              ///< Number of retransmitted PDU bytes
+  std::atomic<uint32_t> num_ctrl_pdus;                   ///< Number of control PDUs
+  std::atomic<uint32_t> num_ctrl_pdu_bytes;              ///< Number of control PDUs bytes
+
+  void reset()
+  {
+    num_pdus_with_segmentation.store(0, std::memory_order_relaxed);
+    num_pdu_bytes_with_segmentation.store(0, std::memory_order_relaxed);
+    num_retx_pdus.store(0, std::memory_order_relaxed);
+    num_retx_pdu_bytes.store(0, std::memory_order_relaxed);
+    num_ctrl_pdus.store(0, std::memory_order_relaxed);
+    num_ctrl_pdu_bytes.store(0, std::memory_order_relaxed);
+  }
+};
+
+struct rlc_tx_metrics_atomic_lower {
+  std::atomic<uint32_t> num_pdus_no_segmentation;      ///< Number of transmitted PDUs without segmentation
+  std::atomic<size_t>   num_pdu_bytes_no_segmentation; ///< Number of transmitted PDU bytes without segmentation
+
+  /// RLC mode of the entity
+  std::atomic<rlc_mode> mode;
+
+  /// Mode-specific metrics
+  ///
+  /// The associated union member is indicated by \c mode.
+  /// Contents of the other fields are undefined.
+  union {
+    rlc_tm_tx_metrics_atomic_lower tm;
+    rlc_um_tx_metrics_atomic_lower um;
+    rlc_am_tx_metrics_atomic_lower am;
+  } mode_specific;
+
+  void reset()
+  {
+    num_pdus_no_segmentation.store(0, std::memory_order_relaxed);
+    num_pdu_bytes_no_segmentation.store(0, std::memory_order_relaxed);
+
+    // reset mode-specific values
+    switch (mode.load(std::memory_order_relaxed)) {
+      case rlc_mode::tm:
+        mode_specific.tm.reset();
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        mode_specific.um.reset();
+        break;
+      case rlc_mode::am:
+        mode_specific.am.reset();
+        break;
+      default:
+        // nothing to do here
+        break;
+    }
+  }
+};
+
 class rlc_tx_metrics_container
 {
-  rlc_tx_metrics metrics = {};
-  std::mutex     metrics_mutex;
+  rlc_tx_metrics_atomic_higher metrics_hi = {};
+  rlc_tx_metrics_atomic_lower  metrics_lo = {};
+  bool                         enabled    = false;
 
 public:
+  rlc_tx_metrics_container(bool enabled_) : enabled(enabled_) {}
+
   void metrics_set_mode(rlc_mode mode)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.mode = mode;
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.mode.store(mode, std::memory_order_relaxed);
   }
 
-  void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
+  void metrics_add_sdus(uint32_t num_sdus, size_t num_sdu_bytes)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_sdus += num_sdus_;
-    metrics.num_sdu_bytes += num_sdu_bytes_;
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.num_sdus.fetch_add(num_sdus, std::memory_order_relaxed);
+    metrics_hi.num_sdu_bytes.fetch_add(num_sdu_bytes, std::memory_order_relaxed);
   }
 
-  void metrics_add_lost_sdus(uint32_t num_sdus_)
+  void metrics_add_lost_sdus(uint32_t num_sdus)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_dropped_sdus += num_sdus_;
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.num_dropped_sdus.fetch_add(num_sdus, std::memory_order_relaxed);
   }
 
-  void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
+  void metrics_add_discard(uint32_t num_discarded_sdus)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_pdus += num_pdus_;
-    metrics.num_pdu_bytes += num_pdu_bytes_;
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.num_discarded_sdus.fetch_add(num_discarded_sdus, std::memory_order_relaxed);
   }
 
-  void metrics_add_discard(uint32_t num_discarded_sdus_)
+  void metrics_add_discard_failure(uint32_t num_discard_failures)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_discarded_sdus += num_discarded_sdus_;
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.num_discard_failures.fetch_add(num_discard_failures, std::memory_order_relaxed);
   }
 
-  void metrics_add_discard_failure(uint32_t num_discard_failures_)
+  void metrics_add_pdus_no_segmentation(uint32_t num_pdus, size_t num_pdu_bytes)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_discard_failures += num_discard_failures_;
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.num_pdus_no_segmentation.fetch_add(num_pdus, std::memory_order_relaxed);
+    metrics_lo.num_pdu_bytes_no_segmentation.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
   }
 
   // TM specific metrics
-  void metrics_add_small_alloc(uint32_t num_allocs_)
+  void metrics_add_small_alloc(uint32_t num_allocs)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    srsran_assert(metrics.mode == rlc_mode::tm, "Wrong mode for TM metrics.");
-    metrics.mode_specific.tm.num_small_allocs += num_allocs_;
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(metrics_lo.mode.load(std::memory_order_relaxed) == rlc_mode::tm, "Wrong mode for TM metrics.");
+    metrics_lo.mode_specific.tm.num_small_allocs.fetch_add(num_allocs, std::memory_order_relaxed);
   }
 
   // UM specific metrics
-  void metrics_add_segment(uint32_t num_segments_)
+  void metrics_add_pdus_with_segmentation_um(uint32_t num_pdus, size_t num_pdu_bytes)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    srsran_assert(metrics.mode == rlc_mode::um_bidir || metrics.mode == rlc_mode::um_unidir_dl,
-                  "Wrong mode for UM metrics.");
-    metrics.mode_specific.um.num_sdu_segments += num_segments_;
+    if (not enabled) {
+      return;
+    }
+    rlc_mode mode = metrics_lo.mode.load(std::memory_order_relaxed);
+    srsran_assert(mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_dl, "Wrong mode for UM metrics.");
+    metrics_lo.mode_specific.um.num_pdus_with_segmentation.fetch_add(num_pdus, std::memory_order_relaxed);
+    metrics_lo.mode_specific.um.num_pdu_bytes_with_segmentation.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
   }
 
   // AM specific metrics
-  void metrics_add_retx_pdus(uint32_t num_retx_, uint32_t num_retx_pdu_bytes_)
+  void metrics_add_pdus_with_segmentation_am(uint32_t num_pdus, size_t num_pdu_bytes)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics.mode_specific.am.num_retx_pdus += num_retx_;
-    metrics.mode_specific.am.num_retx_pdu_bytes += num_retx_pdu_bytes_;
-    metrics.num_pdus += num_retx_;
-    metrics.num_pdu_bytes += num_retx_pdu_bytes_;
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(metrics_lo.mode.load(std::memory_order_relaxed) == rlc_mode::am, "Wrong mode for AM metrics.");
+    metrics_lo.mode_specific.am.num_pdus_with_segmentation.fetch_add(num_pdus, std::memory_order_relaxed);
+    metrics_lo.mode_specific.am.num_pdu_bytes_with_segmentation.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
   }
 
-  void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
+  void metrics_add_retx_pdus(uint32_t num_pdus, size_t num_pdu_bytes)
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
-    metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
-    metrics.num_pdus += num_ctrl_;
-    metrics.num_pdu_bytes += num_ctrl_pdu_bytes_;
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(metrics_lo.mode.load(std::memory_order_relaxed) == rlc_mode::am, "Wrong mode for AM metrics.");
+    metrics_lo.mode_specific.am.num_retx_pdus.fetch_add(num_pdus, std::memory_order_relaxed);
+    metrics_lo.mode_specific.am.num_retx_pdu_bytes.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
+  }
+
+  void metrics_add_ctrl_pdus(uint32_t num_pdus, size_t num_pdu_bytes)
+  {
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(metrics_lo.mode.load(std::memory_order_relaxed) == rlc_mode::am, "Wrong mode for AM metrics.");
+    metrics_lo.mode_specific.am.num_ctrl_pdus.fetch_add(num_pdus, std::memory_order_relaxed);
+    metrics_lo.mode_specific.am.num_ctrl_pdu_bytes.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
   }
 
   // Metrics getters and setters
   rlc_tx_metrics get_metrics()
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    return metrics;
-  }
+    srsran_assert(enabled, "Trying to get metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
+    rlc_tx_metrics ret;
 
-  rlc_tx_metrics get_and_reset_metrics()
-  {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    rlc_tx_metrics              ret = metrics;
-    metrics                         = {};
-    metrics.mode                    = ret.mode;
+    // Metrics accessed from higher layer
+    ret.num_sdus             = metrics_hi.num_sdus.load(std::memory_order_relaxed);
+    ret.num_sdu_bytes        = metrics_hi.num_sdu_bytes.load(std::memory_order_relaxed);
+    ret.num_dropped_sdus     = metrics_hi.num_dropped_sdus.load(std::memory_order_relaxed);
+    ret.num_discarded_sdus   = metrics_hi.num_discarded_sdus.load(std::memory_order_relaxed);
+    ret.num_discard_failures = metrics_hi.num_discard_failures.load(std::memory_order_relaxed);
+
+    // Metrics accessed from lower layer
+    ret.num_pdus_no_segmentation      = metrics_lo.num_pdus_no_segmentation.load(std::memory_order_relaxed);
+    ret.num_pdu_bytes_no_segmentation = metrics_lo.num_pdu_bytes_no_segmentation.load(std::memory_order_relaxed);
+    ret.mode                          = metrics_lo.mode.load(std::memory_order_relaxed);
+    switch (ret.mode) {
+      case rlc_mode::tm:
+        ret.mode_specific.tm.num_small_allocs =
+            metrics_lo.mode_specific.tm.num_small_allocs.load(std::memory_order_relaxed);
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        ret.mode_specific.um.num_pdus_with_segmentation =
+            metrics_lo.mode_specific.um.num_pdus_with_segmentation.load(std::memory_order_relaxed);
+        ret.mode_specific.um.num_pdu_bytes_with_segmentation =
+            metrics_lo.mode_specific.um.num_pdu_bytes_with_segmentation.load(std::memory_order_relaxed);
+        break;
+      case rlc_mode::am:
+        ret.mode_specific.am.num_pdus_with_segmentation =
+            metrics_lo.mode_specific.am.num_pdus_with_segmentation.load(std::memory_order_relaxed);
+        ret.mode_specific.am.num_pdu_bytes_with_segmentation =
+            metrics_lo.mode_specific.am.num_pdu_bytes_with_segmentation.load(std::memory_order_relaxed);
+        ret.mode_specific.am.num_retx_pdus = metrics_lo.mode_specific.am.num_retx_pdus.load(std::memory_order_relaxed);
+        ret.mode_specific.am.num_retx_pdu_bytes =
+            metrics_lo.mode_specific.am.num_retx_pdu_bytes.load(std::memory_order_relaxed);
+        ret.mode_specific.am.num_ctrl_pdus = metrics_lo.mode_specific.am.num_ctrl_pdus.load(std::memory_order_relaxed);
+        ret.mode_specific.am.num_ctrl_pdu_bytes =
+            metrics_lo.mode_specific.am.num_ctrl_pdu_bytes.load(std::memory_order_relaxed);
+        break;
+      default:
+        // nothing to do here
+        break;
+    }
+
     return ret;
   }
 
   void reset_metrics()
   {
-    std::lock_guard<std::mutex> lock(metrics_mutex);
-    rlc_mode                    tmp_mode = metrics.mode;
-    metrics                              = {};
-    metrics.mode                         = tmp_mode;
+    srsran_assert(enabled, "Trying to reset metrics, but metrics are disabled.");
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.reset();
+    metrics_lo.reset();
+  }
+
+  rlc_tx_metrics get_and_reset_metrics()
+  {
+    srsran_assert(enabled, "Trying to get metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
+    rlc_tx_metrics ret = get_metrics();
+    reset_metrics();
+    return ret;
   }
 };
 } // namespace srsran

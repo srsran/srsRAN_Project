@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/slotted_array.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/nr_cgi.h"
@@ -34,16 +33,8 @@ namespace srs_cu_cp {
 
 /// Basic cell system information provided by DU
 struct du_sys_info {
-  asn1::rrc_nr::mib_s mib;
-  byte_buffer         packed_mib;
-
-  asn1::rrc_nr::sib1_s sib1;
-  byte_buffer          packed_sib1;
-
-  const asn1::rrc_nr::serving_cell_cfg_common_sib_s& serv_cell_cfg_common() const
-  {
-    return sib1.serving_cell_cfg_common;
-  }
+  byte_buffer packed_mib;
+  byte_buffer packed_sib1;
 };
 
 struct du_cell_context {

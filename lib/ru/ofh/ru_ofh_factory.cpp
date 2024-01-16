@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,6 +54,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.is_prach_control_plane_enabled       = sector_cfg.is_prach_control_plane_enabled;
   ofh_sector_config.is_downlink_broadcast_enabled        = sector_cfg.is_downlink_broadcast_enabled;
   ofh_sector_config.ignore_ecpri_payload_size_field      = sector_cfg.ignore_ecpri_payload_size_field;
+  ofh_sector_config.ignore_ecpri_seq_id_field            = sector_cfg.ignore_ecpri_seq_id_field;
   ofh_sector_config.ul_compression_params                = sector_cfg.ul_compression_params;
   ofh_sector_config.dl_compression_params                = sector_cfg.dl_compression_params;
   ofh_sector_config.prach_compression_params             = sector_cfg.prach_compression_params;
@@ -77,7 +78,7 @@ static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_depen
   ofh_sector_dependencies.logger               = dependencies.logger;
   ofh_sector_dependencies.receiver_executor    = dependencies.receiver_executor;
   ofh_sector_dependencies.transmitter_executor = dependencies.transmitter_executor;
-  ofh_sector_dependencies.downlink_executors   = dependencies.downlink_executors;
+  ofh_sector_dependencies.downlink_executor    = dependencies.downlink_executor;
   ofh_sector_dependencies.notifier             = notifier;
   ofh_sector_dependencies.eth_gateway          = std::move(dependencies.eth_gateway);
 

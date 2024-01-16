@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -50,29 +50,29 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*                           cu_cp_exec      = nullptr;
-  task_executor*                           cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
-  task_executor*                           cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
-  task_executor*                           cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
-  std::vector<task_executor*>              lower_phy_tx_exec;
-  std::vector<task_executor*>              lower_phy_rx_exec;
-  std::vector<task_executor*>              lower_phy_dl_exec;
-  std::vector<task_executor*>              lower_phy_ul_exec;
-  std::vector<task_executor*>              lower_prach_exec;
-  std::vector<task_executor*>              upper_pusch_exec;
-  std::vector<task_executor*>              upper_pusch_decoder_exec;
-  std::vector<task_executor*>              upper_pucch_exec;
-  std::vector<task_executor*>              upper_prach_exec;
-  std::vector<task_executor*>              upper_pdsch_exec;
-  task_executor*                           radio_exec      = nullptr;
-  task_executor*                           ru_printer_exec = nullptr;
-  task_executor*                           ru_timing_exec  = nullptr;
-  std::vector<std::vector<task_executor*>> ru_dl_exec;
-  std::vector<task_executor*>              ru_tx_exec;
-  std::vector<task_executor*>              ru_rx_exec;
-  task_executor*                           cu_cp_e2_exec    = nullptr;
-  task_executor*                           cu_up_e2_exec    = nullptr;
-  task_executor*                           metrics_hub_exec = nullptr;
+  task_executor*              cu_cp_exec      = nullptr;
+  task_executor*              cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
+  task_executor*              cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
+  task_executor*              cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
+  std::vector<task_executor*> lower_phy_tx_exec;
+  std::vector<task_executor*> lower_phy_rx_exec;
+  std::vector<task_executor*> lower_phy_dl_exec;
+  std::vector<task_executor*> lower_phy_ul_exec;
+  std::vector<task_executor*> lower_prach_exec;
+  std::vector<task_executor*> upper_pusch_exec;
+  std::vector<task_executor*> upper_pusch_decoder_exec;
+  std::vector<task_executor*> upper_pucch_exec;
+  std::vector<task_executor*> upper_prach_exec;
+  std::vector<task_executor*> upper_pdsch_exec;
+  task_executor*              radio_exec      = nullptr;
+  task_executor*              ru_printer_exec = nullptr;
+  task_executor*              ru_timing_exec  = nullptr;
+  std::vector<task_executor*> ru_dl_exec;
+  std::vector<task_executor*> ru_tx_exec;
+  std::vector<task_executor*> ru_rx_exec;
+  task_executor*              cu_cp_e2_exec    = nullptr;
+  task_executor*              cu_up_e2_exec    = nullptr;
+  task_executor*              metrics_hub_exec = nullptr;
 
   std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
 
@@ -124,7 +124,6 @@ private:
   void create_du_low_executors(bool                       is_blocking_mode_active,
                                unsigned                   nof_ul_workers,
                                unsigned                   nof_dl_workers,
-                               unsigned                   nof_pdsch_workers,
                                unsigned                   nof_pusch_decoder_workers,
                                span<const cell_appconfig> cells_cfg,
                                unsigned                   pipeline_depth);

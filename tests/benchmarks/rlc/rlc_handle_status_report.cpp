@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -130,6 +130,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
                                              ue_worker,
+                                             false,
                                              pcap);
 
     // Bind AM Rx/Tx interconnect
@@ -141,7 +142,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
       byte_buffer sdu_buf      = {0x00, 0x01, 0x02, 0x04};
       sdu.pdcp_sn              = i;
       sdu.buf                  = std::move(pdcp_hdr_buf);
-      sdu.buf.append(std::move(sdu_buf));
+      report_error_if_not(sdu.buf.append(std::move(sdu_buf)), "Failed to allocate SDU");
       rlc->handle_sdu(std::move(sdu));
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);

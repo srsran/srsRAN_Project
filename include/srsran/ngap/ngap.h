@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_setup.h"
@@ -30,12 +29,9 @@
 #include "srsran/support/timers.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
-struct ngap_message {
-  asn1::ngap::ngap_pdu_c pdu;
-};
+struct ngap_message;
 
 /// This interface is used to push NGAP messages to the NGAP interface.
 class ngap_message_handler

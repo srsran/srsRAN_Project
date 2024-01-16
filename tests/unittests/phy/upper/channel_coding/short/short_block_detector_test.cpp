@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -29,6 +29,7 @@
 #include "short_block_detector_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "fmt/ostream.h"
+#include <algorithm>
 #include <gtest/gtest.h>
 
 /// \cond
@@ -101,6 +102,25 @@ TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTest)
       ASSERT_TRUE(test_detector->detect(output, input, mod)) << "Meaningless detection.";
     }
     ASSERT_EQ(span<const uint8_t>(messages_test), span<const uint8_t>(messages)) << "Detection went wrong.";
+  }
+}
+
+TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTestZeroLLR)
+{
+  const test_case_t& test_data        = GetParam();
+  unsigned           nof_messages     = test_data.nof_messages;
+  unsigned           message_length   = test_data.message_length;
+  unsigned           codeblock_length = test_data.codeblock_length;
+  modulation_scheme  mod              = test_data.mod;
+
+  for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
+    std::vector<uint8_t>              output(message_length);
+    std::vector<log_likelihood_ratio> input(nof_messages * codeblock_length, log_likelihood_ratio(0));
+
+    // Detection must be invalid and all values to one.
+    ASSERT_FALSE(test_detector->detect(output, input, mod)) << "Invalid detection.";
+    ASSERT_TRUE(std::all_of(output.begin(), output.end(), [](uint8_t value) { return value == 1; }))
+        << "All output bits must be one.";
   }
 }
 

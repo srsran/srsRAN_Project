@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,7 +38,8 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -72,7 +73,8 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -116,7 +118,8 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -177,7 +180,8 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   drb_id_t         drb_id2 = uint_to_drb_id(2);
   qos_flow_id_t    qfi     = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -201,7 +205,7 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
 
   // prepare modification request adding a new DRB and map it to a QFI that is already mapped
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
-      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi});
+      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi}, uint_to_five_qi(9));
 
   // attempt to perform the modification
   pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
@@ -210,7 +214,7 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   EXPECT_TRUE(mod_result.success);
   ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
   EXPECT_FALSE(mod_result.drb_setup_results[0].success);
-  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::unspecified});
   ASSERT_EQ(mod_result.drb_setup_results[0].qos_flow_results.size(), 1);
   EXPECT_FALSE(mod_result.drb_setup_results[0].qos_flow_results[0].success);
   EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[0].cause,
@@ -220,8 +224,35 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   EXPECT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
 
-  // validate the dangling bearer was removed from F1-U gateway
-  EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 1);
+  // validate the dangling bearer was not created and removed from F1-U gateway
+  EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 0);
+}
+
+/// Create a DRB with only one QFI, but the QFI is already mapped
+TEST_F(pdu_session_manager_test, drb_create_with_unknown_five_qi)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // prepare request
+  pdu_session_id_t psi     = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id1 = uint_to_drb_id(1);
+  qos_flow_id_t    qfi     = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi, uint_to_five_qi(8));
+
+  // attempt to add session adding a new DRB and map it to a 5QI that is unknown
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.pdu_session_id, psi);
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+
+  EXPECT_FALSE(setup_result.drb_setup_results[0].success);
+  EXPECT_EQ(setup_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::not_supported_5qi_value});
+  ASSERT_EQ(setup_result.drb_setup_results[0].qos_flow_results.size(), 0);
 }
 
 /// Create a DRB with two QFIs, of which one QFI is already mapped
@@ -238,7 +269,7 @@ TEST_F(pdu_session_manager_test, drb_create_with_two_qfi_of_which_one_is_already
   qos_flow_id_t    qfi2    = uint_to_qos_flow_id(9);
 
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
-      generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi1);
+      generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi1, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -262,7 +293,7 @@ TEST_F(pdu_session_manager_test, drb_create_with_two_qfi_of_which_one_is_already
 
   // prepare modification request adding a new DRB and map it to a QFI that is already mapped
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
-      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi1, qfi2});
+      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id2, {qfi1, qfi2}, uint_to_five_qi(9));
 
   // attempt to perform the modification
   pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
@@ -297,7 +328,8 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -347,7 +379,8 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
-  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item = generate_pdu_session_res_to_setup_item(psi, drb_id, qfi);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   pdu_session_setup_result set_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);

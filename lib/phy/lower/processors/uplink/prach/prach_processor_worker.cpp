@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #include "prach_processor_worker.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
+#include "srsran/instrumentation/traces/ru_traces.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/copy.h"
 
@@ -107,6 +108,8 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
   state = states::processing;
 
   if (!async_task_executor.execute([this, nof_ports]() {
+        trace_point tp = ru_tracer.now();
+
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
           // Prepare PRACH demodulator configuration.
           ofdm_prach_demodulator::configuration config;
@@ -125,6 +128,8 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
           // Demodulate all candidates.
           demodulator->demodulate(*buffer, buffered_samples.get_channel_buffer(i_port), config);
         }
+
+        ru_tracer << trace_event("prach_demodulate", tp);
 
         // Notify PRACH window reception.
         notifier->on_rx_prach_window(*buffer, prach_context);

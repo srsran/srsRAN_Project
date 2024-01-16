@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -57,7 +57,11 @@ class test_ue_mac_sdu_tx_builder_adapter : public mac_sdu_tx_builder
   static constexpr unsigned TX_SDU_MAX_SIZE = 5000;
 
 public:
-  test_ue_mac_sdu_tx_builder_adapter() { tx_sdu.append(std::vector<uint8_t>(TX_SDU_MAX_SIZE, 0)); }
+  test_ue_mac_sdu_tx_builder_adapter()
+  {
+    report_fatal_error_if_not(tx_sdu.append(std::vector<uint8_t>(TX_SDU_MAX_SIZE, 0)),
+                              "Unable to allocate byte buffer");
+  }
 
   size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {

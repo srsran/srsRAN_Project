@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,7 +25,6 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/dot_prod.h"
-#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 
@@ -170,6 +169,12 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
 {
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
   validate_spans(output, input, bits_per_symbol);
+
+  // If all input bits are zero, the result is invalid.
+  if (std::all_of(input.begin(), input.end(), [](log_likelihood_ratio bit) { return bit == 0; })) {
+    std::fill(output.begin(), output.end(), 1);
+    return false;
+  }
 
   static_vector<log_likelihood_ratio, MAX_BLOCK_LENGTH> tmp;
 

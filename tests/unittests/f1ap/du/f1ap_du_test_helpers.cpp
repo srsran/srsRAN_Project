@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -103,7 +103,8 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100)));
+  EXPECT_TRUE(
+      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100))));
 
   return msg;
 }
@@ -156,7 +157,8 @@ srsran::srs_du::generate_ue_context_modification_request(const std::initializer_
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
+  EXPECT_TRUE(
+      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))));
   return msg;
 }
 
@@ -249,7 +251,7 @@ f1ap_du_test::ue_test_context* f1ap_du_test::run_f1ap_ue_create(du_ue_index_t ue
   msg.ue_index    = ue_index;
   msg.pcell_index = to_du_cell_index(0);
   msg.c_rnti      = test_ues[ue_index].crnti;
-  msg.du_cu_rrc_container.append({0x1, 0x2, 0x3});
+  EXPECT_TRUE(msg.du_cu_rrc_container.append({0x1, 0x2, 0x3}));
   for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
     f1c_bearer_to_addmod b;
     b.srb_id          = f1c_bearer.srb_id;

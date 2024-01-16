@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -56,6 +56,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ul_compression_params              = config.ul_compression_params;
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
+  rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
 
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address  = config.mac_src_address;
@@ -105,8 +106,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
   unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
 
   auto cp_repo    = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_repo = std::make_shared<prach_context_repository>(repository_size);
-  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size);
+  auto prach_repo = std::make_shared<prach_context_repository>(repository_size, *sector_deps.logger);
+  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size, *sector_deps.logger);
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
@@ -117,7 +118,7 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
   auto transmitter = create_transmitter(tx_config,
                                         *sector_deps.logger,
                                         *sector_deps.transmitter_executor,
-                                        sector_deps.downlink_executors,
+                                        *sector_deps.downlink_executor,
                                         std::move(sector_deps.eth_gateway),
                                         prach_repo,
                                         slot_repo,

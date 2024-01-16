@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -89,9 +89,9 @@ protected:
   rb_id_t                        rb_id;
   std::unique_ptr<rlc_tx_entity> tx = {};
   std::unique_ptr<rlc_rx_entity> rx = {};
+  timer_duration                 metrics_period;
 
 private:
-  timer_duration        metrics_period;
   unique_timer          metrics_timer;
   rlc_metrics_notifier* rlc_metrics_notif;
 
@@ -102,20 +102,23 @@ private:
       rlc_metrics_notif->report_metrics(m);
     }
     if (m.tx.mode == rlc_mode::am) {
-      logger.log_info("TX metrics period={}ms num_sdus={} sdu_rate={}kbps, dropped_sdus={} discarded_sdus={} "
-                      "num_pdus={} pdu_rate={}kbps num_retx={} "
-                      "retx_rate={}kbps ctrl_pdus={} ctrl_rate={}kbps",
-                      metrics_period.count(),
-                      m.tx.num_sdus,
-                      (double)m.tx.num_sdu_bytes * 8 / (double)metrics_period.count(),
-                      m.tx.num_dropped_sdus,
-                      m.tx.num_discarded_sdus,
-                      m.tx.num_pdus,
-                      (double)m.tx.num_pdu_bytes * 8 / (double)metrics_period.count(),
-                      m.tx.mode_specific.am.num_retx_pdus,
-                      (double)m.tx.mode_specific.am.num_retx_pdu_bytes * 8 / (double)metrics_period.count(),
-                      m.tx.mode_specific.am.num_ctrl_pdus,
-                      (double)m.tx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+      logger.log_info(
+          "TX metrics period={}ms num_sdus={} sdu_rate={}kbps, dropped_sdus={} discarded_sdus={} "
+          "num_pdus_no_segm={} pdu_rate_no_segm={}kbps num_pdus_with_segm={} pdu_rate_with_segm={}kbps num_retx={} "
+          "retx_rate={}kbps ctrl_pdus={} ctrl_rate={}kbps",
+          metrics_period.count(),
+          m.tx.num_sdus,
+          (double)m.tx.num_sdu_bytes * 8 / (double)metrics_period.count(),
+          m.tx.num_dropped_sdus,
+          m.tx.num_discarded_sdus,
+          m.tx.num_pdus_no_segmentation,
+          (double)m.tx.num_pdu_bytes_no_segmentation * 8 / (double)metrics_period.count(),
+          m.tx.mode_specific.am.num_pdus_with_segmentation,
+          (double)m.tx.mode_specific.am.num_pdu_bytes_with_segmentation * 8 / (double)metrics_period.count(),
+          m.tx.mode_specific.am.num_retx_pdus,
+          (double)m.tx.mode_specific.am.num_retx_pdu_bytes * 8 / (double)metrics_period.count(),
+          m.tx.mode_specific.am.num_ctrl_pdus,
+          (double)m.tx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
       logger.log_info("RX metrics period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps "
                       "ctrl_pdus={}, ctrl_rate={}kbps",
                       metrics_period.count(),

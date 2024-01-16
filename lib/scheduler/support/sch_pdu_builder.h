@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,7 +54,7 @@ struct pusch_config_params {
   dmrs_information  dmrs;
   unsigned          nof_harq_ack_bits{0};
   unsigned          nof_csi_part1_bits{0};
-  unsigned          nof_csi_part2_bits{0};
+  unsigned          max_nof_csi_part2_bits{0};
 };
 
 /// \brief Fetches the PDSCH parameters needed for PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
@@ -87,14 +87,18 @@ pusch_config_params get_pusch_config_f0_0_tc_rnti(const cell_configuration&     
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
 pusch_config_params get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                  const bwp_uplink_common&                     ul_bwp,
-                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg);
+                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                 const unsigned                               nof_harq_ack_bits,
+                                                 bool                                         is_csi_report_slot);
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_1, scrambled by C-RNTI.
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
 pusch_config_params get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                  const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                 unsigned                                     nof_layers);
+                                                 unsigned                                     nof_layers,
+                                                 const unsigned                               nof_harq_ack_bits,
+                                                 bool                                         is_csi_report_slot);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by SI-RNTI.
 void build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,

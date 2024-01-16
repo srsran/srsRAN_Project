@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -271,7 +271,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     srb_creation_message srb1_msg{};
     srb1_msg.ue_index = ue_index;
     srb1_msg.srb_id   = srb_id_t::srb1;
-    srb1_msg.pdcp_cfg = asn1::rrc_nr::pdcp_cfg_s{};
+    srb1_msg.pdcp_cfg = {};
     ue_mng.find_du_ue(ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
   }
 

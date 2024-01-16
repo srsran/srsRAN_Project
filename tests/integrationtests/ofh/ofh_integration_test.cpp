@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -823,7 +823,7 @@ struct worker_manager {
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
-      ru_dl_exec.push_back(exec_mng.executors().at(exec_name));
+      ru_dl_exec = exec_mng.executors().at(exec_name);
     }
 
     // Executor for Open Fronthaul messages transmission.
@@ -891,13 +891,13 @@ struct worker_manager {
     }
   }
 
-  task_execution_manager      exec_mng;
-  task_executor*              ru_timing_exec = nullptr;
-  std::vector<task_executor*> ru_dl_exec;
-  task_executor*              ru_tx_exec;
-  task_executor*              ru_rx_exec;
-  task_executor*              test_du_sim_exec;
-  task_executor*              test_ru_sim_exec;
+  task_execution_manager exec_mng;
+  task_executor*         ru_timing_exec = nullptr;
+  task_executor*         ru_dl_exec;
+  task_executor*         ru_tx_exec;
+  task_executor*         ru_rx_exec;
+  task_executor*         test_du_sim_exec;
+  task_executor*         test_ru_sim_exec;
 };
 } // namespace
 
@@ -976,7 +976,7 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   tx_gateway              = gateway.get();
   sector_deps.eth_gateway = std::move(gateway);
   // Configure executors.
-  sector_deps.downlink_executors   = workers.ru_dl_exec;
+  sector_deps.downlink_executor    = workers.ru_dl_exec;
   sector_deps.transmitter_executor = workers.ru_tx_exec;
   sector_deps.receiver_executor    = workers.ru_rx_exec;
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -408,8 +408,8 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
 
   /* Test Pack/Unpack 2 */
   buf.clear();
-  buf.append(0);
-  buf.append(7);
+  ASSERT_TRUE(buf.append(0));
+  ASSERT_TRUE(buf.append(7));
   bref2 = cbit_ref(buf);
   fixed_bitstring<16> bstr3;
   bstr3.unpack(bref2);
@@ -617,7 +617,7 @@ TEST(asn1_enumerated, pack_unpack)
   e    = EnumTest::nulltype;
   TESTASSERT(pack_enum(bref, e) == SRSASN_ERROR_ENCODE_FAIL);
   ASSERT_EQ(0, bref.distance());
-  buffer.append(255);
+  ASSERT_TRUE(buffer.append(255));
   bref2 = cbit_ref(buffer);
   TESTASSERT(unpack_enum(e, bref2) == SRSASN_ERROR_DECODE_FAIL);
 

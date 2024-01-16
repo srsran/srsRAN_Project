@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -228,8 +228,12 @@ static dci_context_information generate_dci_context(const bwp_configuration& bwp
   info.n_id_pdcch_data   = 2;
   info.n_rnti_pdcch_data = 4;
   info.cces.ncce         = 2;
+  info.starting_symbol   = 2;
   info.n_id_pdcch_dmrs   = 8;
   info.cces.aggr_lvl     = static_cast<aggregation_level>(generate_case_pattern());
+
+  // NOTE: decision context is not filled as all the members are private in FAPI.
+  // NOTE: add the precoding information when the struct is defined, now is empty.
 
   return info;
 }
@@ -252,8 +256,10 @@ static void add_dl_pdcch_pdus_to_result(mac_dl_sched_result_test_helper& helper)
   }
 }
 
-static pdsch_information
-fill_valid_pdsch_information(coreset_configuration& coreset_cfg, bwp_configuration& bwp_config, pdsch_information& info)
+static pdsch_information fill_valid_pdsch_information(coreset_configuration& coreset_cfg,
+                                                      bwp_configuration&     bwp_config,
+                                                      pdsch_information&     info,
+                                                      unsigned               nof_ports)
 {
   bwp_config  = generate_bwp_configuration();
   coreset_cfg = generate_coreset_configuration();
@@ -267,9 +273,27 @@ fill_valid_pdsch_information(coreset_configuration& coreset_cfg, bwp_configurati
   info.n_id           = generate_nid_pdsch();
   info.nof_layers     = 1U;
   info.is_interleaved = false;
+  info.harq_id        = to_harq_id(4);
   info.ss_set_type    = search_space_set_type::type0;
   info.dci_fmt        = dci_dl_format::f1_0;
   info.codewords.push_back(pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
+
+  if (nof_ports == 2) {
+    pdsch_precoding_info& pm   = info.precoding.emplace();
+    pm.nof_rbs_per_prg         = 273U;
+    csi_report_pmi& csi_report = pm.prg_infos.emplace_back();
+    auto&           pmi        = csi_report.type.emplace<csi_report_pmi::two_antenna_port>();
+    pmi.pmi                    = 1;
+  } else if (nof_ports == 4) {
+    pdsch_precoding_info& pm   = info.precoding.emplace();
+    pm.nof_rbs_per_prg         = 273U;
+    csi_report_pmi& csi_report = pm.prg_infos.emplace_back();
+    auto&           pmi        = csi_report.type.emplace<csi_report_pmi::typeI_single_panel_4ports_mode1>();
+    pmi.i_2                    = 1;
+    pmi.i_1_1                  = 1;
+  }
+
+  // By default fill 1 port precofing matrix, which means not configuring the precoding in the 'pdsch_information'
 
   return info;
 }
@@ -299,7 +323,7 @@ sib_information_test_helper unittests::build_valid_sib1_information_pdu()
   info.si_indicator                = sib_information::si_indicator_type::sib1;
   info.nof_txs                     = 0;
 
-  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, info.pdsch_cfg);
+  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, info.pdsch_cfg, 1);
 
   return helper;
 }
@@ -309,7 +333,7 @@ rar_information_test_helper unittests::build_valid_rar_information_pdu()
   rar_information_test_helper helper;
   rar_information&            result = helper.pdu;
 
-  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg);
+  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg, 2);
 
   rar_ul_grant grant;
   grant.rapid                    = 2;
@@ -332,7 +356,7 @@ dl_paging_allocation_test_helper unittests::build_valid_dl_paging_pdu()
   dl_paging_allocation_test_helper helper;
 
   dl_paging_allocation& result = helper.pdu;
-  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg);
+  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg, 1);
 
   return helper;
 }
@@ -342,7 +366,13 @@ dl_msg_allocation_test_helper unittests::build_valid_dl_msg_alloc_pdu()
   dl_msg_allocation_test_helper helper;
   dl_msg_alloc&                 result = helper.pdu;
 
-  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg);
+  fill_valid_pdsch_information(helper.coreset_cfg, helper.bwp_cfg, result.pdsch_cfg, 4);
+
+  result.context.ss_id       = to_search_space_id(1);
+  result.context.nof_retxs   = 2;
+  result.context.k1          = 3;
+  result.context.olla_offset = 4;
+  result.context.ue_index    = to_du_ue_index(5);
 
   return helper;
 }
@@ -484,7 +514,7 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_2_pdu()
   pucch.format                     = pucch_format::FORMAT_2;
   pucch.resources.prbs             = {1, 4};
   pucch.resources.symbols          = {0, 1};
-  pucch.resources.second_hop_prbs  = {};
+  pucch.resources.second_hop_prbs  = {1, 11};
   pucch.format_2.max_code_rate     = max_pucch_code_rate::dot_08;
   pucch.format_2.csi_part1_bits    = 102;
   pucch.format_2.harq_ack_nof_bits = 100;

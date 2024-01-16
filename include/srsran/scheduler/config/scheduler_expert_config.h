@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -71,6 +71,10 @@ struct scheduler_ue_expert_config {
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
+  /// Maximum number of PUCCH grants per slot.
+  unsigned max_pucchs_per_slot{31U};
+  /// Maximum number of PUSCH + PUCCH grants per slot.
+  unsigned max_ul_grants_per_slot{32U};
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
@@ -89,6 +93,8 @@ struct scheduler_ue_expert_config {
   uint8_t dl_harq_la_cqi_drop_threshold{2};
   /// Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is cancelled.
   uint8_t dl_harq_la_ri_drop_threshold{1};
+  // Automatic HARQ acknowledgement (used for NTN cases with no HARQ feedback)
+  bool auto_ack_harq{false};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

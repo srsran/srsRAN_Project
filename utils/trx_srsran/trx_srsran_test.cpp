@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -47,6 +47,13 @@ static char*                 trx_get_param_string(void* app_opaque, const char* 
   return nullptr;
 }
 
+static int trx_get_param_double(void* app_opaque, double* param, const char* prop_name)
+{
+  TESTASSERT(&trx_app_opaque == app_opaque);
+  trx_param_names.insert(prop_name);
+  return -1;
+}
+
 int main(int argc, char** argv)
 {
   void* handle;
@@ -82,16 +89,17 @@ int main(int argc, char** argv)
   state.trx_api_version      = TRX_API_VERSION;
   state.app_opaque           = static_cast<void*>(&trx_app_opaque);
   state.trx_get_param_string = &trx_get_param_string;
+  state.trx_get_param_double = &trx_get_param_double;
   driver_init(&state);
   std::cout << "Driver initialised successfully." << std::endl;
 
   // Make sure parameters are parsed.
-  TESTASSERT(trx_param_names.count("args"));
   TESTASSERT(trx_param_names.count("factory"));
   TESTASSERT(trx_param_names.count("log_level"));
   TESTASSERT(trx_param_names.count("otw_format"));
   TESTASSERT(trx_param_names.count("rx_port0"));
   TESTASSERT(trx_param_names.count("tx_port0"));
+  TESTASSERT(trx_param_names.count("noise_spd"));
   std::cout << "Driver parsed parameters." << std::endl;
 
   // Make sure the init function set the methods.

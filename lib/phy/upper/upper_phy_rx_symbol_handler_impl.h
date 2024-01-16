@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/circular_array.h"
-#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsran/srslog/srslog.h"
@@ -70,7 +70,7 @@ class upper_phy_rx_symbol_handler_impl : public upper_phy_rx_symbol_handler
 public:
   upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
                                    uplink_slot_pdu_repository&    ul_pdu_repository_,
-                                   rx_softbuffer_pool&            softbuffer_pool_,
+                                   rx_buffer_pool&                buffer_pool_,
                                    upper_phy_rx_results_notifier& rx_results_notifier_,
                                    srslog::basic_logger&          logger_);
 
@@ -95,8 +95,8 @@ private:
   uplink_processor_pool& ul_processor_pool;
   /// Uplink slot PDU registry.
   uplink_slot_pdu_repository& ul_pdu_repository;
-  /// Softbuffer pool.
-  rx_softbuffer_pool& softbuffer_pool;
+  /// buffer pool.
+  rx_buffer_pool& rm_buffer_pool;
   /// Upper PHY results notifier.
   upper_phy_rx_results_notifier& rx_results_notifier;
   /// Upper PHY logger.

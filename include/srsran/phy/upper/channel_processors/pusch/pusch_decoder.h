@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,8 +34,8 @@ namespace srsran {
 
 class pusch_decoder_buffer;
 class pusch_decoder_notifier;
-class rx_softbuffer;
-class unique_rx_softbuffer;
+class rx_buffer;
+class unique_rx_buffer;
 struct pusch_decoder_result;
 
 /// \brief PUSCH decoder interface.
@@ -80,12 +80,12 @@ public:
 
   /// \brief Decodes a PUSCH codeword.
   /// \param[out]    transport_block The decoded transport block, with packed (8 bits per entry) representation.
-  /// \param[in,out] soft_codeword   A soft-buffer for combining log-likelihood ratios from different retransmissions.
+  /// \param[in,out] rm_buffer       A buffer for combining log-likelihood ratios from different retransmissions.
   /// \param[in]     notifier        Interface for notifying the completion of the TB processing.
   /// \param[in]     cfg             Decoder configuration parameters.
   /// \return  A \ref pusch_decoder_buffer, used to write softbits into the decoder.
   virtual pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                         unique_rx_softbuffer    softbuffer,
+                                         unique_rx_buffer        rm_buffer,
                                          pusch_decoder_notifier& notifier,
                                          const configuration&    cfg) = 0;
 };

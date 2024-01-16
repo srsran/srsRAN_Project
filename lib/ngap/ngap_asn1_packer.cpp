@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,8 +21,10 @@
  */
 
 #include "ngap_asn1_packer.h"
+#include "srsran/ngap/ngap_message.h"
 
-namespace srsran {
+using namespace srsran;
+using namespace srs_cu_cp;
 
 ngap_asn1_packer::ngap_asn1_packer(sctp_network_gateway_data_handler& gw_,
                                    ngap_message_handler&              ngap_handler,
@@ -70,5 +72,3 @@ void ngap_asn1_packer::handle_message(const srs_cu_cp::ngap_message& msg)
   }
   gw.handle_pdu(tx_pdu);
 }
-
-} // namespace srsran

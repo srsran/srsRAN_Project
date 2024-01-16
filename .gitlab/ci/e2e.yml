@@ -313,13 +313,11 @@ rf-asan:
     - job: "basic asan"
       artifacts: true
     - *retina-needs
-  allow_failure: true
 
 rf-b200-config:
   extends: .rf
   variables:
     MARKERS: "rf_b200"
-  allow_failure: true
 
 rf-n300-config:
   extends: .rf
@@ -374,10 +372,8 @@ viavi:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      when: manual
-      allow_failure: true
-      # when: delayed
-      # start_in: 7 hours
+      when: delayed
+      start_in: 5 hours
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"

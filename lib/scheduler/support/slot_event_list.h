@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,6 +37,13 @@ template <typename Event>
 class slot_event_list
 {
 public:
+  void reserve(unsigned cap)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    pending_events.reserve(cap);
+    current_events.reserve(cap);
+  }
+
   void slot_indication()
   {
     current_events.clear();

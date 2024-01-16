@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -29,7 +29,7 @@ namespace srsran {
 
 class bit_buffer;
 
-/// \brief Describes a receiver softbuffer.
+/// \brief Describes a PUSCH rate matcher buffer.
 ///
 /// The aim is to provide the physical layer shared channel FEC with a persistent storage of CRC and soft bits buffer
 /// among transmissions for a given user and HARQ process.
@@ -39,11 +39,11 @@ class bit_buffer;
 ///
 /// It is the responsibility of the shared channel receiver to reset CRCs and set to zero the soft bits when new data is
 /// indicated.
-class rx_softbuffer
+class rx_buffer
 {
 public:
   /// Default destructor.
-  virtual ~rx_softbuffer() = default;
+  virtual ~rx_buffer() = default;
 
   /// Gets the number of codeblocks.
   virtual unsigned get_nof_codeblocks() const = 0;

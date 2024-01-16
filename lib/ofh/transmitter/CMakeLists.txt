@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -32,7 +32,10 @@ set(SOURCES
         ofh_transmitter_impl.cpp)
 
 add_library(srsran_ofh_transmitter STATIC ${SOURCES})
-target_link_libraries(srsran_ofh_transmitter srsran_ran srslog)
+target_link_libraries(srsran_ofh_transmitter
+        srsran_ran
+        srsran_instrumentation
+        srslog)
 
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)

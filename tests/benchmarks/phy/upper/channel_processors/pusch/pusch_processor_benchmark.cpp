@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
+#include "../../../lib/phy/upper/rx_buffer_pool_impl.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
@@ -484,6 +484,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = nof_tx_layers;
   pusch_proc_factory_config.dec_nof_iterations                   = 2;
   pusch_proc_factory_config.dec_enable_early_stop                = true;
+  pusch_proc_factory_config.max_nof_concurrent_threads           = nof_threads;
   pusch_proc_factory = create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
@@ -519,20 +520,19 @@ static void thread_process(pusch_processor&              proc,
   // Compute the number of codeblocks.
   unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
 
-  // Softbuffer pool configuration.
-  rx_softbuffer_pool_config softbuffer_config = {};
-  softbuffer_config.max_softbuffers           = 1;
-  softbuffer_config.max_nof_codeblocks        = nof_codeblocks;
-  softbuffer_config.max_codeblock_size        = ldpc::MAX_CODEBLOCK_SIZE;
-  softbuffer_config.expire_timeout_slots =
+  // Buffer pool configuration.
+  rx_buffer_pool_config buffer_pool_config = {};
+  buffer_pool_config.nof_buffers           = 1;
+  buffer_pool_config.max_nof_codeblocks    = nof_codeblocks;
+  buffer_pool_config.max_codeblock_size    = ldpc::MAX_CODEBLOCK_SIZE;
+  buffer_pool_config.expire_timeout_slots =
       100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
-  softbuffer_config.external_soft_bits = false;
+  buffer_pool_config.external_soft_bits = false;
 
-  rx_softbuffer_identifier softbuffer_id = {};
-  softbuffer_id.rnti                     = config.rnti;
+  trx_buffer_identifier buffer_id = trx_buffer_identifier(config.rnti, 0);
 
-  // Create softbuffer pool.
-  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool = create_rx_softbuffer_pool(softbuffer_config);
+  // Create buffer pool.
+  std::unique_ptr<rx_buffer_pool> buffer_pool = create_rx_buffer_pool(buffer_pool_config);
 
   // Prepare receive data buffer.
   std::vector<uint8_t> data(tbs / 8);
@@ -559,21 +559,21 @@ static void thread_process(pusch_processor&              proc,
       pending_count--;
     }
 
-    // Reserve softbuffer.
-    unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
+    // Reserve buffer.
+    unique_rx_buffer rm_buffer = buffer_pool->reserve(config.slot, buffer_id, nof_codeblocks);
 
     // Reset notifier.
     result_notifier.reset();
 
     // Process PDU.
     if (executor) {
-      if (not executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
-            proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+      if (not executor->execute([&proc, &data, &rm_buffer, &result_notifier, &grid, config]() {
+            proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
           })) {
         fmt::print("Failed to enqueue task.\n");
       }
     } else {
-      proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+      proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
     }
 
     // Wait for finish the task.

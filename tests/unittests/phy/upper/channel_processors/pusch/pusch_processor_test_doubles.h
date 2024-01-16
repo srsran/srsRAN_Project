@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,7 +30,7 @@ class pusch_processor_dummy : public pusch_processor
 {
 public:
   void process(span<uint8_t>                    data,
-               unique_rx_softbuffer             softbuffer,
+               unique_rx_buffer                 buffer,
                pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override

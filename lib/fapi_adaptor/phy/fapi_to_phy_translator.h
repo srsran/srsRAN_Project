@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,7 +30,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/support/executors/task_executor.h"
-#include <mutex>
+#include <atomic>
 
 namespace srsran {
 
@@ -86,8 +86,6 @@ struct fapi_to_phy_translator_dependencies {
   std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
-  /// Task executor for asynchronous tasks.
-  task_executor* async_executor;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -166,15 +164,12 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
                                             unsigned                 nof_slots_request_headroom);
 
     /// Acquires and returns the controller for the given slot.
-    slot_based_upper_phy_controller& adquire_controller(slot_point slot);
+    slot_based_upper_phy_controller& acquire_controller(slot_point slot);
 
     /// \brief Releases the controller for the given slot.
     ///
     /// If the controller has already been released, this function does nothing.
     void release_controller(slot_point slot);
-
-    /// Handles a new slot.
-    void handle_new_slot(slot_point slot);
 
     /// Returns the controller for the given slot.
     slot_based_upper_phy_controller& get_controller(slot_point slot);
@@ -249,6 +244,13 @@ private:
     return slot_point(scs, current_slot_count_val.load(std::memory_order_acquire));
   }
 
+  /// Updates this adaptor current slot to the given value.
+  void update_current_slot(slot_point slot)
+  {
+    // Update the atomic variable that holds the slot point.
+    current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
+  }
+
 private:
   /// Sector identifier.
   const unsigned sector_id;
@@ -258,7 +260,7 @@ private:
   srslog::basic_logger& logger;
   /// Downlink PDU validator.
   const downlink_pdu_validator& dl_pdu_validator;
-  /// PDSCH Softbuffer pool.
+  /// PDSCH buffer pool.
   tx_buffer_pool& buffer_pool;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
@@ -268,8 +270,6 @@ private:
   const uplink_pdu_validator& ul_pdu_validator;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository& ul_pdu_repository;
-  /// Asynchronous task executor.
-  task_executor& asynchronous_executor;
   /// Current slot count value.
   std::atomic<uint32_t> current_slot_count_val;
   /// Slot controller manager.

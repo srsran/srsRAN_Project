@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -125,9 +125,11 @@ protected:
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.epoll_broker                 = broker.get();
     cfg.timers                       = app_timers.get();
+    cfg.qos[uint_to_five_qi(9)]      = {};
     cfg.gtpu_pcap                    = &dummy_pcap;
     cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
+    cfg.n3_cfg.warn_on_drop          = false;
     cfg.statistics_report_period     = std::chrono::seconds(1);
 
     return cfg;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,7 +54,7 @@ public:
 
   mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override;
 
-  e2sm_param_configurator& get_e2sm_configurator() override;
+  du_configurator& get_du_configurator() override;
 
 private:
   class layer_connector;

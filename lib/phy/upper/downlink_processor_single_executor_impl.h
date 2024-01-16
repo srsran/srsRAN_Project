@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,6 +23,7 @@
 #pragma once
 
 #include "downlink_processor_single_executor_state.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include <mutex>
@@ -86,7 +87,7 @@ public:
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_pdsch(unique_tx_buffer                                                                     softbuffer,
+  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
                      const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override;
 
@@ -111,7 +112,12 @@ private:
       // Do nothing.
     }
 
-    void on_finish_processing() override { callback.on_task_completion(); }
+    void on_finish_processing() override
+    {
+      l1_tracer << instant_trace_event("pdsch_on_finish_processing", instant_trace_event::cpu_scope::thread);
+
+      callback.on_task_completion();
+    }
 
   private:
     detail::downlink_processor_callback& callback;

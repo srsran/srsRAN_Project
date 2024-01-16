@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -116,7 +116,8 @@ void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, d
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
 }
 
-async_task<ric_control_config_response> du_ue_manager::handle_ue_config_request(const ric_control_config& msg)
+async_task<du_mac_sched_control_config_response>
+du_ue_manager::handle_ue_config_request(const du_mac_sched_control_config& msg)
 {
   return launch_async<du_ue_ric_configuration_procedure>(msg, *this, cfg);
 }

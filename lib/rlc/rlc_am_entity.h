@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -63,9 +63,17 @@ public:
                                                                                  timer_factory{timers, pcell_executor},
                                                                                  pcell_executor,
                                                                                  ue_executor,
+                                                                                 metrics_period.count() != 0,
                                                                                  pcap);
-    std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(
-        du_index_, ue_index_, rb_id_, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor, pcap);
+    std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(du_index_,
+                                                                                 ue_index_,
+                                                                                 rb_id_,
+                                                                                 config.rx,
+                                                                                 rx_upper_dn,
+                                                                                 timer_factory{timers, ue_executor},
+                                                                                 ue_executor,
+                                                                                 metrics_period.count() != 0,
+                                                                                 pcap);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

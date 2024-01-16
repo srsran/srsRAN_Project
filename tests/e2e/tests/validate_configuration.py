@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -10,6 +10,7 @@
 Validate Configuration Examples
 """
 import logging
+import tempfile
 from pathlib import Path
 from pprint import pformat
 
@@ -79,11 +80,21 @@ def run_config(
     Run gnb with B200 example config and validate it doesn't crash.
     """
 
-    retina_data.test_config = {
-        "gnb": {"templates": {"main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve())}}
-    }
-    retina_manager.parse_configuration(retina_data.test_config)
-    retina_manager.push_all_config()
+    with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
+        tmp_file.write(" ")  # Make it not empty to overwrite default one
+        tmp_file.flush()
+        retina_data.test_config = {
+            "gnb": {
+                "templates": {
+                    "main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve()),
+                    "cell": tmp_file.name,
+                    "ru": tmp_file.name,
+                }
+            }
+        }
+        retina_manager.parse_configuration(retina_data.test_config)
+        retina_manager.push_all_config()
+
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
 
     configure_artifacts(

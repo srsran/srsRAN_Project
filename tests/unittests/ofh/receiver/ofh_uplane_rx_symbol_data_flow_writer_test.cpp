@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,15 +32,16 @@ using namespace ofh::testing;
 class ofh_uplane_rx_symbol_data_flow_writer_fixture : public ::testing::Test
 {
 protected:
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc   = {0, 1, 2, 3};
-  std::shared_ptr<uplink_context_repository>      repo   = std::make_shared<uplink_context_repository>(1);
-  unsigned                                        sector = 0;
-  slot_point                                      slot;
-  unsigned                                        symbol_id = 0;
-  resource_grid_writer_bool_spy                   rg_writer;
-  resource_grid_dummy_with_spy_writer             grid;
-  uplane_message_decoder_results                  results;
-  uplane_rx_symbol_data_flow_writer               writer;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc = {0, 1, 2, 3};
+  std::shared_ptr<uplink_context_repository>      repo =
+      std::make_shared<uplink_context_repository>(1, srslog::fetch_basic_logger("TEST"));
+  unsigned                            sector = 0;
+  slot_point                          slot;
+  unsigned                            symbol_id = 0;
+  resource_grid_writer_bool_spy       rg_writer;
+  resource_grid_dummy_with_spy_writer grid;
+  uplane_message_decoder_results      results;
+  uplane_rx_symbol_data_flow_writer   writer;
 
 public:
   ofh_uplane_rx_symbol_data_flow_writer_fixture() :

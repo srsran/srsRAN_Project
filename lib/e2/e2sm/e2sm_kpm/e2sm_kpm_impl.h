@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -39,14 +39,12 @@ public:
 
   e2sm_handler& get_e2sm_packer() override;
 
-  e2sm_param_configurator* get_param_configurator() override;
-
   bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) override;
 
   std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
+  e2sm_control_service*                get_e2sm_control_service(const e2sm_ric_control_request& request) override;
 
-  void process_control_header(const srsran::byte_buffer& ctrl_header_buff, ric_control_config& ctrl_config) override;
-  void process_control_message(const srsran::byte_buffer& ctrl_msg_buff, ric_control_config& ctrl_config) override;
+  bool add_e2sm_control_service(std::unique_ptr<e2sm_control_service> control_service) override;
 
 private:
   /// Helper functions to check whether subscription actions are supported.

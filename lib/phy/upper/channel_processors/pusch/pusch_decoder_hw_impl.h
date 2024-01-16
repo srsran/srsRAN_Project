@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,7 +32,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {
@@ -89,7 +89,7 @@ public:
 
   // See interface for the documentation.
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                 unique_rx_softbuffer    softbuffer,
+                                 unique_rx_buffer        softbuffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
@@ -110,7 +110,7 @@ private:
   /// Current transport block.
   span<uint8_t> transport_block;
   /// Current soft bits buffer.
-  unique_rx_softbuffer softbuffer;
+  unique_rx_buffer softbuffer;
   /// Current notifier.
   pusch_decoder_notifier* result_notifier = nullptr;
   /// Current PUSCH decoder configuration.

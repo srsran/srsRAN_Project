@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,25 +22,14 @@
 
 #pragma once
 
-#include "srsran/adt/complex.h"
-#include "srsran/phy/support/resource_grid_pool.h"
-#include "srsran/srsvec/aligned_vec.h"
-#include <vector>
+#include "srsran/support/event_tracing.h"
 
 namespace srsran {
 
-class resource_grid_pool_impl : public resource_grid_pool
-{
-private:
-  unsigned nof_slots;
-  unsigned nof_sectors;
+/// Set to true for enabling radio unit trace.
+constexpr bool RU_TRACE_ENABLED = false;
 
-  std::vector<std::unique_ptr<resource_grid>> grids;
+/// RU event tracing. This tracer is used to analyze latencies in the RU processing.
+extern file_event_tracer<RU_TRACE_ENABLED> ru_tracer;
 
-public:
-  resource_grid_pool_impl(unsigned                                      nof_sectors_,
-                          unsigned                                      nof_slots_,
-                          std::vector<std::unique_ptr<resource_grid>>&& grids_);
-  resource_grid& get_resource_grid(const resource_grid_context& context) override;
-};
 } // namespace srsran

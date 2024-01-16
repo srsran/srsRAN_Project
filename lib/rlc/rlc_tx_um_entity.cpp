@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,8 +34,9 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    task_executor&                       pcell_executor_,
+                                   bool                                 metrics_enabled,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_),
+  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size),
   mod(cardinality(to_number(cfg.sn_field_length))),
@@ -45,6 +46,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id, config)
 {
+  metrics.metrics_set_mode(rlc_mode::um_bidir);
+
   logger.log_info("RLC UM configured. {}", cfg);
 }
 
@@ -172,7 +175,11 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   }
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_size);
+  if (header.si == rlc_si_field::full_sdu) {
+    metrics.metrics_add_pdus_no_segmentation(1, pdu_size);
+  } else {
+    metrics.metrics_add_pdus_with_segmentation_um(1, pdu_size);
+  }
 
   // Log state
   log_state(srslog::basic_levels::debug);

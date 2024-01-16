@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -127,7 +127,7 @@ private:
   void print_percentile_header(unsigned descr_width, unsigned percentile_width, const std::string& units) const
   {
     fmt::print("\"{}\" performance for {} repetitions. All values are in {}.\n"
-               " {:<{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|\n",
+               " {:<{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|\n",
                title,
                nof_repetitions,
                units,
@@ -142,6 +142,8 @@ private:
                "99th",
                percentile_width,
                "99.9th",
+               percentile_width,
+               "99.99th",
                percentile_width,
                "Worst",
                percentile_width);
@@ -193,7 +195,7 @@ public:
 
     print_percentile_header(descr_width, percentile_width, units);
     for (const benchmark_result& result : benchmark_results) {
-      fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
+      fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
                  result.description,
                  descr_width,
                  result.measurements[static_cast<size_t>(nof_repetitions * 0.5)] * scaling,
@@ -205,6 +207,8 @@ public:
                  result.measurements[static_cast<size_t>(nof_repetitions * 0.99)] * scaling,
                  percentile_width,
                  result.measurements[static_cast<size_t>(nof_repetitions * 0.999)] * scaling,
+                 percentile_width,
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.9999)] * scaling,
                  percentile_width,
                  result.measurements.back() * scaling,
                  percentile_width);
@@ -226,7 +230,7 @@ public:
     print_percentile_header(descr_width, percentile_width, "mega" + units + " per second");
     for (const benchmark_result& result : benchmark_results) {
       fmt::print(
-          " {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
+          " {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
           result.description,
           descr_width,
           convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.5)], result.size) * scaling,
@@ -240,6 +244,9 @@ public:
               scaling,
           percentile_width,
           convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.999)], result.size) *
+              scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.9999)], result.size) *
               scaling,
           percentile_width,
           convert_to_throughput(result.measurements.back(), result.size) * scaling,

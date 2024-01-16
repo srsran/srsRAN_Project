@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,14 +38,15 @@ protected:
                 du_ue_index_t                     ue_index,
                 rb_id_t                           rb_id,
                 rlc_rx_upper_layer_data_notifier& upper_dn_,
+                bool                              metrics_enable,
                 rlc_pcap&                         pcap_) :
-    logger("RLC", {du_index, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), pcap(pcap_)
+    logger("RLC", {du_index, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), metrics(metrics_enable), pcap(pcap_)
   {
   }
 
   rlc_bearer_logger                 logger;
-  rlc_rx_metrics_container          metrics;
   rlc_rx_upper_layer_data_notifier& upper_dn;
+  rlc_rx_metrics_container          metrics;
   rlc_pcap&                         pcap;
 
 public:

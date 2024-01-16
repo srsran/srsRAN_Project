@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,13 +22,11 @@
 #pragma once
 
 #include "../common/e2ap_asn1_utils.h"
-#include "../e2sm/e2sm_param_provider.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_event_manager.h"
 #include "srsran/e2/e2_messages.h"
-#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/e2/e2sm/e2sm_rc.h"
 #include "srsran/support/async/async_task.h"
@@ -45,16 +43,19 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
-  ric_control_config process_request();
-  void send_e2_ric_control_acknowledge(ric_control_config ctrl_request, ric_control_config_response ctrl_response);
-  void send_e2_ric_control_failure(ric_control_config ctrl_request, ric_control_config_response ctrl_response);
+  void send_e2_ric_control_acknowledge(const e2_ric_control_request&  ctrl_request,
+                                       const e2_ric_control_response& ctrl_response);
+  void send_e2_ric_control_failure(const e2_ric_control_request&, const e2_ric_control_response& ctrl_response);
 
 private:
   srslog::basic_logger&        logger;
   e2_message_notifier&         ric_notif;
   e2sm_manager&                e2sm_mng;
-  const e2_ric_control_request request;
-  ric_control_config           ctrl_config_request;
-  ric_control_config_response  ctrl_config_response;
+  const e2_ric_control_request e2_request;
+  e2sm_ric_control_response    e2sm_response;
+  e2_ric_control_response      e2_response;
+  e2sm_interface*              e2sm_iface;
+  e2sm_ric_control_request     ric_ctrl_req;
+  e2sm_control_service*        control_service;
 };
 } // namespace srsran

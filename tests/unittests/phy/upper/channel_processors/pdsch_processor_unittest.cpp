@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
-#include "../tx_softbuffer_test_doubles.h"
+#include "../tx_buffer_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
@@ -214,11 +214,11 @@ TEST_P(PdschProcessorFixture, UnitTest)
   dmrs_spy->reset();
   notifier.reset();
 
-  tx_buffer_spy    softbuffer_spy(0, 0);
-  unique_tx_buffer softbuffer(softbuffer_spy);
+  tx_buffer_spy    rm_buffer_spy(0, 0);
+  unique_tx_buffer rm_buffer(rm_buffer_spy);
 
   // Process PDU.
-  pdsch->process(mapper_dummy, std::move(softbuffer), notifier, data, pdu);
+  pdsch->process(mapper_dummy, std::move(rm_buffer), notifier, data, pdu);
 
   // Wait for the processor to finish.
   notifier.wait_for_finished();

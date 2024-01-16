@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -96,6 +96,21 @@ trigger docker:
 ################################################################################
 ## Static
 ################################################################################
+headers:
+  image: ubuntu
+  stage: static
+  rules:
+    - if: $ON_MR
+      exists:
+        - "**/CMakeLists.txt"
+        - "**/Dockerfile"
+        - "**/*.cmake"
+        - "**/*.yml"
+        - "**/*.sh"
+  script:
+    - .gitlab/ci/release/update_headers.sh
+  needs: []
+
 include-guards:
   extends: .include-guards
   parallel:

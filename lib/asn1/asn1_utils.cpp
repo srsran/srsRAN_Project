@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -162,10 +162,10 @@ SRSASN_CODE bit_ref::pack_bytes(srsran::span<const uint8_t> bytes)
   }
   if (offset == 0) {
     // Aligned case
-    writer.append(bytes);
+    HANDLE_CODE(writer.append(bytes) ? SRSASN_SUCCESS : SRSASN_ERROR_ENCODE_FAIL);
   } else {
     for (uint8_t byte : bytes) {
-      pack(byte, 8U);
+      HANDLE_CODE(pack(byte, 8U));
     }
   }
   return SRSASN_SUCCESS;
@@ -178,10 +178,10 @@ SRSASN_CODE bit_ref::pack_bytes(srsran::byte_buffer_view bytes)
   }
   if (offset == 0) {
     // Aligned case.
-    writer.append(bytes);
+    HANDLE_CODE(writer.append(bytes) ? SRSASN_SUCCESS : SRSASN_ERROR_ENCODE_FAIL);
   } else {
     for (uint8_t byte : bytes) {
-      pack(byte, 8U);
+      HANDLE_CODE(pack(byte, 8U));
     }
   }
   return SRSASN_SUCCESS;
@@ -953,7 +953,10 @@ void octet_string_helper::to_octet_string(srsran::byte_buffer& buf, uint64_t num
   buf.clear();
   size_t nbytes = sizeof(number);
   for (uint32_t i = 0; i < nbytes; ++i) {
-    buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xffu);
+    if (not buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xffu)) {
+      log_error("Failed to append octet string byte to buffer");
+      return;
+    }
   }
 }
 
@@ -1010,7 +1013,9 @@ void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string&
   char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
     memcpy(&cstr[0], &str[i], 2);
-    buf.append(strtoul(cstr, nullptr, 16));
+    if (not buf.append(strtoul(cstr, nullptr, 16))) {
+      log_error("Failed to append octet string byte to buffer");
+    }
   }
 }
 
@@ -1053,7 +1058,7 @@ SRSASN_CODE unbounded_octstring<Al>::unpack(cbit_ref& bref)
   for (unsigned i = 0; i != len; ++i) {
     uint8_t b;
     HANDLE_CODE(bref.unpack(b, 8));
-    append(b);
+    HANDLE_CODE(append(b) ? SRSASN_SUCCESS : SRSASN_ERROR_DECODE_FAIL);
   }
   return SRSASN_SUCCESS;
 }

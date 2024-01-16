@@ -1,5 +1,5 @@
 Files: *
-Copyright: 2021-2023, Software Radio Systems Limited.
+Copyright: 2021-2024, Software Radio Systems Limited.
 License:   See LICENSE file
 
 
@@ -7,7 +7,7 @@ The following files are used within srsRAN:
 
 Files:     docs/doxygen-awesome-sidebar-only.css
            docs/doxygen-awesome.css
-Copyright: 2021-2022 jothepro
+Copyright: 2021-2024 jothepro
 License:   MIT
 
 
@@ -53,6 +53,11 @@ License:   MIT
 Files:     external/rigtorp/SPSCQueue.hpp
 Copyright: 2018 Erik Rigtorp
 License:   MIT
+
+
+Files:     external/cameron314/concurrentqueue.hpp
+Copyright: 2013-2020, Cameron Desrochers
+License:   Simplified BSD
 
 
 License: MIT

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../rx_softbuffer_test_doubles.h"
+#include "../../rx_buffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "pusch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
@@ -151,7 +151,8 @@ protected:
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = context.rg_nof_symb;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = context.config.rx_ports.size();
     pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = context.config.nof_tx_layers;
-    pusch_proc_factory_config.csi_sinr_calc_method = channel_state_information::sinr_type::post_equalization;
+    pusch_proc_factory_config.csi_sinr_calc_method       = channel_state_information::sinr_type::post_equalization;
+    pusch_proc_factory_config.max_nof_concurrent_threads = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(pusch_proc_factory_config);
     ASSERT_NE(pusch_proc_factory, nullptr);
@@ -182,18 +183,18 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   // Prepare receive data.
   std::vector<uint8_t> data(expected_data.size());
 
-  // Prepare softbuffer.
-  rx_softbuffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE,
-                                   ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
-                                                                config.codeword.value().ldpc_base_graph));
-  unique_rx_softbuffer softbuffer(softbuffer_spy);
+  // Prepare buffer.
+  rx_buffer_spy    rm_buffer_spy(ldpc::MAX_CODEBLOCK_SIZE,
+                              ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
+                                                           config.codeword.value().ldpc_base_graph));
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
   pusch_processor_result_notifier_spy results_notifier;
-  pusch_proc->process(data, std::move(softbuffer), results_notifier, grid, config);
+  pusch_proc->process(data, std::move(rm_buffer), results_notifier, grid, config);
 
   // Verify UL-SCH decode results.
   const auto& sch_entries = results_notifier.get_sch_entries();
@@ -215,6 +216,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   ASSERT_FALSE(uci_entries.empty());
   const auto& uci_entry = uci_entries.front();
 
+  // Make sure SINR reported in UCI is normal.
+  ASSERT_TRUE(std::isnormal(uci_entry.csi.get_sinr_dB()));
+
   // Verify HARQ-ACK result.
   if (config.uci.nof_harq_ack > 0) {
     std::vector<uint8_t> expected_harq_ack_unpacked = test_case.harq_ack.read();
@@ -234,6 +238,80 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 
     ASSERT_EQ(uci_entry.csi_part1.payload, expected_csi_part1);
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::valid);
+  } else {
+    ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
+    ASSERT_EQ(uci_entry.csi_part1.status, uci_status::unknown);
+  }
+}
+
+TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
+{
+  // Reuses the configurations from the vector test.
+  const test_case_t&            test_case = GetParam();
+  const test_case_context&      context   = test_case.context;
+  const pusch_processor::pdu_t& config    = context.config;
+
+  // Read resource grid data and overwrite the RE with zeros.
+  std::vector<resource_grid_reader_spy::expected_entry_t> grid_data = test_case.grid.read();
+  std::for_each(grid_data.begin(), grid_data.end(), [](auto& e) { e.value = 0; });
+
+  // Prepare resource grid.
+  resource_grid_reader_spy grid;
+  grid.write(grid_data);
+
+  // Prepare receive data.
+  std::vector<uint8_t> data(test_case.sch_data.read().size());
+
+  // Prepare buffer.
+  rx_buffer_spy rm_buffer_spy(
+      ldpc::MAX_CODEBLOCK_SIZE,
+      ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.codeword.value().ldpc_base_graph));
+  unique_rx_buffer rm_buffer(rm_buffer_spy);
+
+  // Make sure the configuration is valid.
+  ASSERT_TRUE(pdu_validator->is_valid(config));
+
+  // Process PUSCH PDU.
+  pusch_processor_result_notifier_spy results_notifier;
+  pusch_proc->process(data, std::move(rm_buffer), results_notifier, grid, config);
+
+  // Verify UL-SCH decode results are invalid.
+  const auto& sch_entries = results_notifier.get_sch_entries();
+  ASSERT_FALSE(sch_entries.empty());
+  const auto& sch_entry = sch_entries.front();
+  ASSERT_FALSE(sch_entry.data.tb_crc_ok);
+
+  // Make sure SINR is infinity.
+  ASSERT_TRUE(std::isinf(results_notifier.get_sch_entries().front().csi.get_sinr_dB()));
+
+  // Skip the rest of the assertions if UCI is not present.
+  if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && config.uci.csi_part2_size.entries.empty()) {
+    return;
+  }
+
+  // Extract UCI result.
+  const auto& uci_entries = results_notifier.get_uci_entries();
+  ASSERT_FALSE(uci_entries.empty());
+  const auto& uci_entry = uci_entries.front();
+
+  // Make sure SINR reported in UCI is normal.
+  ASSERT_TRUE(std::isinf(uci_entry.csi.get_sinr_dB()));
+
+  // Verify HARQ-ACK result is invalid.
+  if (config.uci.nof_harq_ack > 0) {
+    uci_payload_type expected_payload = ~uci_payload_type(config.uci.nof_harq_ack);
+    ASSERT_EQ(uci_entry.harq_ack.status, uci_status::invalid);
+    ASSERT_EQ(uci_entry.harq_ack.payload, expected_payload);
+  } else {
+    ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
+    ASSERT_EQ(uci_entry.harq_ack.status, uci_status::unknown);
+  }
+
+  // Verify CSI Part 1 result is invalid.
+  if (config.uci.nof_csi_part1 > 0) {
+    uci_payload_type expected_payload = ~uci_payload_type(config.uci.nof_csi_part1);
+    ASSERT_EQ(uci_entry.csi_part1.status, uci_status::invalid);
+    ASSERT_EQ(uci_entry.csi_part1.payload, expected_payload);
   } else {
     ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
     ASSERT_EQ(uci_entry.csi_part1.status, uci_status::unknown);

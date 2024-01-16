@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -28,7 +28,7 @@
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
-#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/uplink_processor_context.h"
 
 namespace srsran {
@@ -97,12 +97,12 @@ public:
   /// upper_phy_rx_results_notifier::on_new_pusch_results "on_new_pusch_results".
   ///
   /// \param[out]    data       Received transport block.
-  /// \param[in,out] softbuffer Data reception softbuffer.
+  /// \param[in,out] rm_buffer  Rate matcher buffer.
   /// \param[in]     notifier   Event notification interface.
   /// \param[in]     grid       Grid the capture data is stored in.
   /// \param[in]     pdu        PUSCH transmission parameters.
   virtual void process_pusch(span<uint8_t>                      data,
-                             unique_rx_softbuffer               softbuffer,
+                             unique_rx_buffer                   rm_buffer,
                              upper_phy_rx_results_notifier&     notifier,
                              const resource_grid_reader&        grid,
                              const uplink_processor::pusch_pdu& pdu) = 0;

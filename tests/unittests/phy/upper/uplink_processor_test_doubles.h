@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,7 +41,7 @@ public:
   }
 
   void process_pusch(span<uint8_t>                      data,
-                     unique_rx_softbuffer               softbuffer,
+                     unique_rx_buffer                   rm_buffer,
                      upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override

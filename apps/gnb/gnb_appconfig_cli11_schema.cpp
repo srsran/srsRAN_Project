@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -441,6 +441,10 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_par
   app.add_option("--gtpu_reordering_timer",
                  cu_up_params.gtpu_reordering_timer_ms,
                  "GTP-U RX reordering timer (in milliseconds)")
+      ->capture_default_str();
+  app.add_option("--warn_on_drop",
+                 cu_up_params.warn_on_drop,
+                 "Log a warning for dropped packets in GTP-U and PDCP due to full queues")
       ->capture_default_str();
 }
 
@@ -903,6 +907,16 @@ static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& u
   app.add_option("--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
       ->capture_default_str()
       ->check(CLI::Range(-30, 23));
+  app.add_option("--max_pucchs_per_slot",
+                 ul_common_params.max_pucchs_per_slot,
+                 "Maximum number of PUCCH grants that can be allocated per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, static_cast<unsigned>(MAX_PUCCH_PDUS_PER_SLOT)));
+  app.add_option("--max_ul_grants_per_slot",
+                 ul_common_params.max_ul_grants_per_slot,
+                 "Maximum number of UL grants that can be allocated per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)(MAX_PUSCH_PDUS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT)));
 }
 
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
@@ -1379,7 +1393,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
   configure_cli11_paging_args(*paging_subcmd, cell_params.paging_cfg);
 
-  // CSI configuration;
+  // CSI configuration.
   CLI::App* csi_subcmd = app.add_subcommand("csi", "CSI-Meas parameters");
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
 }
@@ -1727,6 +1741,8 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option("--is_prach_cp_enabled", config.is_prach_control_plane_enabled, "PRACH Control-Plane enabled flag")
       ->capture_default_str();
   app.add_option("--is_dl_broadcast_enabled", config.is_downlink_broadcast_enabled, "Downlink broadcast enabled flag")
+      ->capture_default_str();
+  app.add_option("--ignore_ecpri_seq_id", config.ignore_ecpri_seq_id_field, "Ignore eCPRI sequence id field value")
       ->capture_default_str();
   app.add_option(
          "--ignore_ecpri_payload_size", config.ignore_ecpri_payload_size_field, "Ignore eCPRI payload size field value")
@@ -2095,9 +2111,6 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_thre
                  "PDSCH processor type: auto, generic, concurrent and lite.")
       ->capture_default_str()
       ->check(pdsch_processor_check);
-  app.add_option("--nof_pdsch_threads", config.nof_pdsch_threads, "Number of threads to encode PDSCH.")
-      ->capture_default_str()
-      ->check(CLI::Number);
   app.add_option("--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
@@ -2205,26 +2218,16 @@ static void manage_ntn_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
 
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
-  // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
-  // max_proc_delay.
-  upper_phy_threads_appconfig& upper      = gnb_cfg.expert_execution_cfg.threads.upper_threads;
-  CLI::App*                    expert_cmd = app.get_subcommand("expert_execution");
-  if (expert_cmd->count_all() < 1 || expert_cmd->get_subcommand("threads")->count_all() < 1 ||
-      expert_cmd->get_subcommand("threads")->get_subcommand("upper_phy")->count_all() < 1 ||
-      expert_cmd->get_subcommand("threads")->get_subcommand("upper_phy")->count("--nof_dl_threads") == 0) {
-    upper.nof_dl_threads = std::min(upper.nof_dl_threads, gnb_cfg.expert_phy_cfg.max_processing_delay_slots);
-  }
-
   if (!variant_holds_alternative<ru_sdr_appconfig>(gnb_cfg.ru_cfg)) {
     return;
   }
 
   // Ignore the default settings based in the number of CPU cores for ZMQ.
   if (variant_get<ru_sdr_appconfig>(gnb_cfg.ru_cfg).device_driver == "zmq") {
-    upper.nof_pdsch_threads                                              = 1;
-    upper.nof_pusch_decoder_threads                                      = 0;
-    upper.nof_ul_threads                                                 = 1;
-    upper.nof_dl_threads                                                 = 1;
+    upper_phy_threads_appconfig& upper = gnb_cfg.expert_execution_cfg.threads.upper_threads;
+    upper.nof_pusch_decoder_threads    = 0;
+    upper.nof_ul_threads               = 1;
+    upper.nof_dl_threads               = 1;
     gnb_cfg.expert_execution_cfg.threads.lower_threads.execution_profile = lower_phy_thread_profile::blocking;
   }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,6 +26,7 @@
 #include "dmrs_pdsch_processor_impl.h"
 #include "dmrs_pusch_estimator_impl.h"
 #include "nzp_csi_rs_generator_impl.h"
+#include "nzp_csi_rs_generator_pool.h"
 #include "port_channel_estimator_average_impl.h"
 #include "pss_processor_impl.h"
 #include "pucch/dmrs_pucch_processor_format1_impl.h"
@@ -179,6 +180,58 @@ private:
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
 };
 
+class nzp_csi_rs_generator_pool_factory : public nzp_csi_rs_generator_factory
+{
+public:
+  nzp_csi_rs_generator_pool_factory(std::shared_ptr<nzp_csi_rs_generator_factory> factory_,
+                                    unsigned                                      nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid NZP-CSI-RS generator factory.");
+    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
+  }
+
+  std::unique_ptr<nzp_csi_rs_generator> create() override
+  {
+    if (!generators) {
+      std::vector<std::unique_ptr<nzp_csi_rs_generator>> instances(nof_concurrent_threads);
+
+      for (auto& processor : instances) {
+        processor = factory->create();
+      }
+
+      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(std::move(instances));
+    }
+
+    return std::make_unique<nzp_csi_rs_generator_pool>(generators);
+  }
+
+  std::unique_ptr<nzp_csi_rs_generator> create(srslog::basic_logger& logger) override
+  {
+    if (!generators) {
+      std::vector<std::unique_ptr<nzp_csi_rs_generator>> instances(nof_concurrent_threads);
+
+      for (auto& processor : instances) {
+        processor = factory->create(logger);
+      }
+
+      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(std::move(instances));
+    }
+
+    return std::make_unique<nzp_csi_rs_generator_pool>(generators);
+  }
+
+  std::unique_ptr<nzp_csi_rs_configuration_validator> create_validator() override
+  {
+    return factory->create_validator();
+  }
+
+private:
+  std::shared_ptr<nzp_csi_rs_generator_factory>                   factory;
+  unsigned                                                        nof_concurrent_threads;
+  std::shared_ptr<nzp_csi_rs_generator_pool::generator_pool_type> generators;
+};
+
 class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 {
 public:
@@ -257,6 +310,13 @@ std::shared_ptr<nzp_csi_rs_generator_factory>
 srsran::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory));
+}
+
+std::shared_ptr<nzp_csi_rs_generator_factory>
+srsran::create_nzp_csi_rs_generator_pool_factory(std::shared_ptr<nzp_csi_rs_generator_factory> generator_factory,
+                                                 unsigned                                      nof_concurrent_threads)
+{
+  return std::make_shared<nzp_csi_rs_generator_pool_factory>(std::move(generator_factory), nof_concurrent_threads);
 }
 
 std::shared_ptr<port_channel_estimator_factory>
