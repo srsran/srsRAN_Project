@@ -127,7 +127,8 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
                                                      const log_appconfig&                log_cfg,
                                                      worker_manager&                     workers,
                                                      ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                     ru_timing_notifier&                 timing_notifier)
+                                                     ru_timing_notifier&                 timing_notifier,
+                                                     ru_error_notifier&                  error_notifier)
 {
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
@@ -136,6 +137,7 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   dependencies.rt_timing_executor = workers.ru_timing_exec;
   dependencies.timing_notifier    = &timing_notifier;
   dependencies.rx_symbol_notifier = &symbol_notifier;
+  dependencies.error_notifier     = &error_notifier;
 
   // Configure sector.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
@@ -486,6 +488,7 @@ int main(int argc, char** argv)
 
   upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
   upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
+  upper_ru_error_adapter  ru_error_adapt(gnb_cfg.cells_cfg.size());
 
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
@@ -495,7 +498,8 @@ int main(int argc, char** argv)
                                              gnb_cfg.log_cfg,
                                              workers,
                                              ru_ul_adapt,
-                                             ru_timing_adapt);
+                                             ru_timing_adapt,
+                                             ru_error_adapt);
 
     ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
   } else if (variant_holds_alternative<ru_generic_configuration>(ru_cfg.config)) {
@@ -545,6 +549,7 @@ int main(int argc, char** argv)
     // Make connections between DU and RU.
     ru_ul_adapt.map_handler(sector_id, du->get_rx_symbol_handler());
     ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
+    ru_error_adapt.map_handler(sector_id, du->get_error_handler());
 
     // Start DU execution.
     du->start();

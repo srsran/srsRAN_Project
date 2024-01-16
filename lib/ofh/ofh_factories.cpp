@@ -61,6 +61,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
 {
   transmitter_config tx_config;
 
+  tx_config.sector                      = sector_cfg.sector_id;
   tx_config.bw                          = sector_cfg.bw;
   tx_config.scs                         = sector_cfg.scs;
   tx_config.cp                          = sector_cfg.cp;

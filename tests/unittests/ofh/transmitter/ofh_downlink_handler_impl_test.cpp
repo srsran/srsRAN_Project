@@ -56,6 +56,7 @@ static downlink_handler_impl_config generate_default_config()
 {
   downlink_handler_impl_config config;
   config.dl_eaxc            = {24};
+  config.sector             = 0;
   config.cp                 = cyclic_prefix::NORMAL;
   config.scs                = subcarrier_spacing::kHz30;
   config.dl_processing_time = std::chrono::milliseconds(400);

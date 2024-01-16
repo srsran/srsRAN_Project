@@ -71,6 +71,7 @@ void phy_fapi_adaptor_impl::set_slot_time_message_notifier(fapi::slot_time_messa
 void phy_fapi_adaptor_impl::set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
 {
   fapi_translator.set_slot_error_message_notifier(fapi_error_notifier);
+  error_translator.set_slot_error_message_notifier(fapi_error_notifier);
 }
 
 void phy_fapi_adaptor_impl::set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier)
@@ -86,4 +87,9 @@ fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()
 upper_phy_rx_results_notifier& phy_fapi_adaptor_impl::get_rx_results_notifier()
 {
   return results_translator;
+}
+
+upper_phy_error_notifier& phy_fapi_adaptor_impl::get_error_notifier()
+{
+  return error_translator;
 }

@@ -132,6 +132,7 @@ du_impl::du_impl(const du_config& du_cfg) :
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());
+  du_lo->set_error_notifier(du_low_adaptor->get_error_notifier());
 
   if (du_cfg.fapi.log_level == "debug") {
     // Create gateway loggers and intercept MAC adaptor calls.

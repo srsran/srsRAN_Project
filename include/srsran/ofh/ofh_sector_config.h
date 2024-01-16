@@ -30,6 +30,8 @@ namespace ofh {
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
+  /// Radio sector identifier.
+  unsigned sector_id;
   /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.

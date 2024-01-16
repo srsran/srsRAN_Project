@@ -17,6 +17,8 @@ class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_pdu_validator;
 class uplink_request_processor;
+class upper_phy_error_handler;
+class upper_phy_error_notifier;
 class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
@@ -38,31 +40,34 @@ public:
   /// Default destructor.
   virtual ~upper_phy() = default;
 
-  /// \brief Returns a reference to the receive symbol handler of this upper PHY.
+  /// Returns a reference to the receive symbol handler of this upper PHY.
   virtual upper_phy_rx_symbol_handler& get_rx_symbol_handler() = 0;
 
-  /// \brief Returns a reference to the timing handler of this upper PHY.
+  /// Returns a reference to the timing handler of this upper PHY.
   virtual upper_phy_timing_handler& get_timing_handler() = 0;
 
-  /// \brief Returns the downlink processor pool of this upper PHY.
+  /// Returns a reference to the error handler of this upper PHY.
+  virtual upper_phy_error_handler& get_error_handler() = 0;
+
+  /// Returns the downlink processor pool of this upper PHY.
   virtual downlink_processor_pool& get_downlink_processor_pool() = 0;
 
-  /// \brief Returns the downlink resource grid pool of this upper PHY.
+  /// Returns the downlink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_downlink_resource_grid_pool() = 0;
 
-  /// \brief Returns the uplink resource grid pool of this upper PHY.
+  /// Returns the uplink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_uplink_resource_grid_pool() = 0;
 
-  /// \brief Returns the uplink request processor of this upper PHY.
+  /// Returns the uplink request processor of this upper PHY.
   virtual uplink_request_processor& get_uplink_request_processor() = 0;
 
-  /// \brief Returns the uplink slot PDU repository of this upper PHY.
+  /// Returns the uplink slot PDU repository of this upper PHY.
   virtual uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() = 0;
 
-  /// \brief Returns the downlink PDU validator of this upper PHY.
+  /// Returns the downlink PDU validator of this upper PHY.
   virtual const downlink_pdu_validator& get_downlink_pdu_validator() const = 0;
 
-  /// \brief Returns the uplink PDU validator of this upper PHY.
+  /// Returns the uplink PDU validator of this upper PHY.
   virtual const uplink_pdu_validator& get_uplink_pdu_validator() const = 0;
 
   /// \brief Sets the upper PHY timing notifier for this upper PHY.
@@ -70,10 +75,15 @@ public:
   /// \param[in] notifier Notifier assigned to this upper PHY.
   virtual void set_timing_notifier(upper_phy_timing_notifier& notifier) = 0;
 
-  /// \brief \brief Sets the receive result notifier for this upper PHY.
+  /// \brief Sets the receive result notifier for this upper PHY.
   ///
   /// \param[in] notifier Notifier assigned to this upper PHY.
   virtual void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
+
+  /// \brief Sets the error notifier for this upper PHY.
+  ///
+  /// \param[in] notifier Notifier assigned to this upper PHY.
+  virtual void set_error_notifier(upper_phy_error_notifier& notifier) = 0;
 
   /// \brief Stops the upper PHY.
   ///

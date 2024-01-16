@@ -26,7 +26,9 @@ add_library(srsran_uplink_processor
         uplink_request_processor_impl.cpp)
 target_link_libraries(srsran_uplink_processor srsran_channel_processors)
 
-add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp)
+add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp
+                             upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp
+                             upper_phy_error_handler_impl.cpp)
 target_link_libraries(srsran_upper_phy
         srsran_instrumentation
         srsran_downlink_processor

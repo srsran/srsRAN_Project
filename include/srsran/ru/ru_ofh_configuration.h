@@ -16,6 +16,7 @@
 
 namespace srsran {
 
+class ru_error_notifier;
 class ru_timing_notifier;
 class ru_uplink_plane_rx_symbol_notifier;
 class task_executor;
@@ -130,6 +131,8 @@ struct ru_ofh_dependencies {
   srslog::basic_logger* logger = nullptr;
   /// Radio Unit timing notifier.
   ru_timing_notifier* timing_notifier = nullptr;
+  /// Radio Unit error notifier.
+  ru_error_notifier* error_notifier = nullptr;
   /// Radio Unit received symbol notifier.
   ru_uplink_plane_rx_symbol_notifier* rx_symbol_notifier = nullptr;
   /// Realtime timing task executor.

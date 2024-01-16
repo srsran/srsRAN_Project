@@ -18,7 +18,8 @@ using namespace srsran;
 
 /// Generates the OFH sector configuration from the common Open Fronthaul configuration.
 static ofh::sector_configuration generate_sector_configuration(const ru_ofh_configuration&        config,
-                                                               const ru_ofh_sector_configuration& sector_cfg)
+                                                               const ru_ofh_sector_configuration& sector_cfg,
+                                                               unsigned                           sector_id)
 {
   // Prepare sector configuration.
   ofh::sector_configuration ofh_sector_config;
@@ -32,6 +33,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.tx_window_timing_params     = sector_cfg.tx_window_timing_params;
   ofh_sector_config.rx_window_timing_params     = sector_cfg.rx_window_timing_params;
   ofh_sector_config.cp                          = sector_cfg.cp;
+  ofh_sector_config.sector_id                   = sector_id;
   ofh_sector_config.scs                         = sector_cfg.scs;
   ofh_sector_config.bw                          = sector_cfg.bw;
   ofh_sector_config.nof_antennas_ul             = sector_cfg.nof_antennas_ul;
@@ -85,6 +87,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   ru_ofh_impl_dependencies ofh_dependencies;
   ofh_dependencies.logger          = dependencies.logger;
   ofh_dependencies.timing_notifier = dependencies.timing_notifier;
+  ofh_dependencies.error_notifier  = dependencies.error_notifier;
 
   // Create UL Rx symbol notifier.
   auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*dependencies.rx_symbol_notifier);
@@ -106,7 +109,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
     // Create OFH sector.
     auto sector = ofh::create_ofh_sector(
-        generate_sector_configuration(config, sector_cfg),
+        generate_sector_configuration(config, sector_cfg, i),
         generate_sector_dependencies(std::move(dependencies.sector_dependencies[i]), ul_data_notifier));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_dependencies.sectors.emplace_back(std::move(sector));

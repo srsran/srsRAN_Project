@@ -18,6 +18,7 @@
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
+#include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_ofh_factory.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
@@ -84,6 +85,12 @@ struct test_parameters {
   bool                     use_loopback_receiver               = false;
 };
 
+/// Dummy Radio Unit error notifier.
+class dummy_ru_error_notifier : public ru_error_notifier
+{
+public:
+  void on_late_downlink_message(const ru_error_context& context) override {}
+};
 } // namespace
 
 static test_parameters test_params;
@@ -1083,13 +1090,15 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
                                                     ru_timing_notifier*                 timing_notifier,
                                                     ru_uplink_plane_rx_symbol_notifier* rx_symbol_notifier,
                                                     test_gateway*&                      tx_gateway,
-                                                    test_ether_receiver*&               eth_receiver)
+                                                    test_ether_receiver*&               eth_receiver,
+                                                    ru_error_notifier&                  error_notifier)
 {
   ru_ofh_dependencies dependencies;
   dependencies.logger             = &logger;
   dependencies.timing_notifier    = timing_notifier;
   dependencies.rx_symbol_notifier = rx_symbol_notifier;
   dependencies.rt_timing_executor = workers.ru_timing_exec;
+  dependencies.error_notifier     = &error_notifier;
 
   dependencies.sector_dependencies.emplace_back();
   auto& sector_deps                = dependencies.sector_dependencies.back();
@@ -1135,10 +1144,11 @@ int main(int argc, char** argv)
   dummy_timing_notifier    timing_notifier;
   test_gateway*            tx_gateway;
   test_ether_receiver*     eth_receiver;
+  dummy_ru_error_notifier  error_notifier;
 
-  ru_ofh_configuration ru_cfg = generate_ru_config();
-  ru_ofh_dependencies  ru_deps =
-      generate_ru_dependencies(logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver);
+  ru_ofh_configuration ru_cfg  = generate_ru_config();
+  ru_ofh_dependencies  ru_deps = generate_ru_dependencies(
+      logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver, error_notifier);
 
   if (test_params.use_loopback_receiver) {
     ru_deps.sector_dependencies[0].eth_receiver.reset();

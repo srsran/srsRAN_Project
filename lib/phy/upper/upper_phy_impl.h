@@ -11,6 +11,7 @@
 #pragma once
 
 #include "uplink_request_processor_impl.h"
+#include "upper_phy_error_handler_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
@@ -100,6 +101,9 @@ public:
   explicit upper_phy_impl(upper_phy_impl_config&& config);
 
   // See interface for documentation.
+  upper_phy_error_handler& get_error_handler() override;
+
+  // See interface for documentation.
   upper_phy_rx_symbol_handler& get_rx_symbol_handler() override;
 
   // See interface for documentation.
@@ -125,6 +129,9 @@ public:
 
   // See interface for documentation.
   const uplink_pdu_validator& get_uplink_pdu_validator() const override;
+
+  // See interface for documentation.
+  void set_error_notifier(upper_phy_error_notifier& notifier) override;
 
   // See interface for documentation.
   void set_timing_notifier(upper_phy_timing_notifier& notifier) override;
@@ -165,6 +172,8 @@ private:
   std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
   /// Timing events handler.
   upper_phy_timing_handler_impl timing_handler;
+  /// Error events handler.
+  upper_phy_error_handler_impl error_handler;
 };
 
 } // namespace srsran

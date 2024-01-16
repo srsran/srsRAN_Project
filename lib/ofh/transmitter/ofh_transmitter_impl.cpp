@@ -41,3 +41,8 @@ ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier
 {
   return ota_dispatcher;
 }
+
+void transmitter_impl::set_error_notifier(error_notifier& notifier)
+{
+  dl_manager->set_error_notifier(notifier);
+}

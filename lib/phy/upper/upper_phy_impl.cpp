@@ -77,6 +77,11 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   (void)sector_id;
 }
 
+upper_phy_error_handler& upper_phy_impl::get_error_handler()
+{
+  return error_handler;
+}
+
 upper_phy_rx_symbol_handler& upper_phy_impl::get_rx_symbol_handler()
 {
   return *rx_symbol_handler;
@@ -110,6 +115,11 @@ uplink_request_processor& upper_phy_impl::get_uplink_request_processor()
 uplink_slot_pdu_repository& upper_phy_impl::get_uplink_slot_pdu_repository()
 {
   return pdu_repository;
+}
+
+void upper_phy_impl::set_error_notifier(upper_phy_error_notifier& notifier)
+{
+  error_handler.set_error_notifier(notifier);
 }
 
 void upper_phy_impl::set_timing_notifier(srsran::upper_phy_timing_notifier& notifier)
