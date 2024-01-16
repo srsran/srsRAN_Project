@@ -105,16 +105,17 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
 bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
-    logger.debug("Dropped received Ethernet frame as source MAC addresses do not match (detected={:x}, expected={:x})",
-                 span<const uint8_t>(eth_params.mac_src_address),
-                 span<const uint8_t>(vlan_params.mac_src_address));
+    logger.debug(
+        "Dropped received Ethernet frame as source MAC addresses do not match (detected={:02X}, expected={:02X})",
+        span<const uint8_t>(eth_params.mac_src_address),
+        span<const uint8_t>(vlan_params.mac_src_address));
 
     return true;
   }
 
   if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
-    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:x}, "
-                 "expected={:x})",
+    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:02X}, "
+                 "expected={:02X})",
                  span<const uint8_t>(eth_params.mac_dst_address),
                  span<const uint8_t>(vlan_params.mac_dst_address));
 

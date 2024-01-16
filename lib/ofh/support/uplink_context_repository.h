@@ -120,7 +120,7 @@ class uplink_context_repository
   /// Returns the entry of the repository for the given slot and symbol.
   uplink_context& entry(slot_point slot, unsigned symbol)
   {
-    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index={}", symbol);
+    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % buffer.size();
@@ -130,7 +130,7 @@ class uplink_context_repository
   /// Returns the entry of the repository for the given slot and symbol.
   const uplink_context& entry(slot_point slot, unsigned symbol) const
   {
-    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index={}", symbol);
+    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % buffer.size();

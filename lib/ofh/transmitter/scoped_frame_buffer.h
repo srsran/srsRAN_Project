@@ -44,7 +44,7 @@ public:
       }
     }
 
-    srsran_terminate("No empty Ethernet frame available in slot={}\n", context.slot);
+    srsran_terminate("No empty Ethernet frame available in slot '{}'\n", context.slot);
   }
 
   bool empty() const { return frames.empty(); }
