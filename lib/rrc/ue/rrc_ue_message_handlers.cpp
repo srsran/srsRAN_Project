@@ -58,7 +58,16 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 {
   // Perform various checks to make sure we can serve the RRC Setup Request
   if (reject_users) {
-    logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
+    logger.log_error("Sending rrcReject. Cause: RRC connections not allowed");
+    on_ue_release_required(
+        cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
+    return;
+  }
+
+  if (du_to_cu_container.empty()) {
+    // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
+    // TS 38.473 section 8.4.1.2.
+    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
     on_ue_release_required(
         cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
     return;
@@ -82,7 +91,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       // TODO: communicate with NGAP
       break;
     default:
-      logger.log_error("Unsupported RRCSetupRequest");
+      logger.log_error("Unsupported RrcSetupRequest");
       on_ue_release_required(
           cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
       return;
@@ -299,13 +308,14 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
   release_context.user_location_info.tai.tac     = context.cell.tac;
 
-  dl_dcch_msg_s dl_dcch_msg;
-  dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
-
-  // pack DL CCCH msg
+  // prepare SRB1 RRC Release PDU to return, if SRB1 was created
   if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
-    logger.log_error("Can't create RRC Release PDU. RX {} is not set up", srb_id_t::srb1);
+    logger.log_debug("RRC Container with RRC Release not required, as no SRB1 was setup");
   } else {
+    dl_dcch_msg_s dl_dcch_msg;
+    dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+    // pack DL CCCH msg
     release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
     release_context.srb_id          = srb_id_t::srb1;
   }

@@ -321,20 +321,16 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Set parameters from creation message
   ue->set_pcell_index(pcell_index);
 
-  // Create RRC UE only if all RRC-related values are available already.
-  if (!msg.du_to_cu_rrc_container.empty()) {
-    if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), std::move(msg.rrc_context)) ==
-        false) {
-      logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
-      return ue_creation_complete_msg;
-    }
-
-    rrc_ue_interface* rrc_ue           = rrc->find_ue(msg.ue_index);
-    f1ap_rrc_ue_adapters[msg.ue_index] = {};
-    f1ap_rrc_ue_adapters.at(msg.ue_index)
-        .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
-    ue_creation_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
+  // Create RRC UE. If the DU-to-CU-RRC-Container is empty, the UE will be rejected.
+  if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), std::move(msg.rrc_context)) == false) {
+    logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
+    return ue_creation_complete_msg;
   }
+  rrc_ue_interface* rrc_ue           = rrc->find_ue(msg.ue_index);
+  f1ap_rrc_ue_adapters[msg.ue_index] = {};
+  f1ap_rrc_ue_adapters.at(msg.ue_index)
+      .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
+  ue_creation_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
 
   logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), msg.c_rnti);
 

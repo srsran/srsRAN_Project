@@ -267,14 +267,6 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
 {
-  // Reject request without served cells
-  if (not msg->du_to_cu_rrc_container_present) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Missing DU to CU container",
-                   msg->gnb_du_ue_f1ap_id);
-    /// Assume the DU can't serve the UE. Ignoring the message.
-    return;
-  }
-
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
   if (not srsran::config_helpers::is_valid(cgi)) {
     logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
@@ -319,6 +311,13 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   ue_creation_msg.cgi                       = cgi_from_asn1(msg->nr_cgi);
   if (msg->du_to_cu_rrc_container_present) {
     ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
+  } else {
+    // Assume the DU can't serve the UE, so the CU-CP should reject the UE, see TS 38.473 section 8.4.1.2.
+    // We will forward an empty container to the RRC UE, that will trigger an RRC Reject
+    logger.debug("du_ue_f1ap_id={}: Forwarding InitialUlRrcMessageTransfer to RRC to reject the UE. Cause: Missing DU "
+                 "to CU container",
+                 msg->gnb_du_ue_f1ap_id);
+    ue_creation_msg.du_to_cu_rrc_container = byte_buffer{};
   }
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
