@@ -61,8 +61,7 @@ public:
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
   /// \brief Notify about the need to release a UE.
-  virtual void
-  on_ue_release_required(const cause_t& cause, byte_buffer rrc_container = {}, srb_id_t srb_id = srb_id_t::srb0) = 0;
+  virtual void on_ue_release_required(const cause_t& cause) = 0;
 };
 
 struct srb_creation_message {
@@ -101,8 +100,7 @@ public:
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to release a UE.
-  virtual void
-  on_ue_release_required(const cause_t& cause, byte_buffer rrc_container = {}, srb_id_t srb_id = srb_id_t::srb0) = 0;
+  virtual void on_ue_release_required(const cause_t& cause) = 0;
 };
 
 /// Interface used by the RRC security mode procedure
@@ -234,7 +232,9 @@ public:
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
-  /// \returns The release context of the UE.
+  /// \returns The release context of the UE.  If SRB1 is not created yet, a RrcReject message is contained in the
+  /// release context, see section 5.3.15 in TS 38.331. Otherwise, a RrcRelease message is contained in the release
+  /// context.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 
   /// \brief Retrieve RRC context of a UE to perform mobility (handover, reestablishment).

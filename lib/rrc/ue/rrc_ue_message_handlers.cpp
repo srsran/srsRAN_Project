@@ -59,8 +59,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   // Perform various checks to make sure we can serve the RRC Setup Request
   if (reject_users) {
     logger.log_error("Sending rrcReject. Cause: RRC connections not allowed");
-    on_ue_release_required(
-        cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
+    on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -68,8 +67,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
     // TS 38.473 section 8.4.1.2.
     logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
-    on_ue_release_required(
-        cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
+    on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -92,8 +90,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       break;
     default:
       logger.log_error("Unsupported RrcSetupRequest");
-      on_ue_release_required(
-          cause_radio_network_t::unspecified, create_rrc_reject_container(rrc_reject_max_wait_time_s), srb_id_t::srb0);
+      on_ue_release_required(cause_radio_network_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
@@ -308,17 +305,46 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
   release_context.user_location_info.tai.tac     = context.cell.tac;
 
-  // prepare SRB1 RRC Release PDU to return, if SRB1 was created
-  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
-    logger.log_debug("RRC Container with RRC Release not required, as no SRB1 was setup");
-  } else {
-    dl_dcch_msg_s dl_dcch_msg;
-    dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+  if (context.srbs.empty()) {
+    // SRB1 was not created, so we need to reject the UE
+    // Create and RrcReject container, see section 5.3.15 in TS 38.331
+    dl_ccch_msg_s dl_ccch_msg;
+    // SRB1 was not created, so we create a RRC Container with RrcReject
+    rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+
+    // See TS 38.331, RejectWaitTime
+    reject.wait_time_present = true;
+    reject.wait_time         = rrc_reject_max_wait_time_s;
 
     // pack DL CCCH msg
-    release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
-    release_context.srb_id          = srb_id_t::srb1;
+    release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg);
+    release_context.srb_id          = srb_id_t::srb0;
+
+    // Log Tx message
+    log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_ccch_msg, "CCCH DL");
+  } else {
+    // prepare SRB1 RRC Release PDU to return
+    if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+      logger.log_error("Can't create RrcRelease PDU. RX {} is not set up", srb_id_t::srb1);
+      return release_context;
+    } else {
+      dl_dcch_msg_s dl_dcch_msg;
+      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+      // pack DL CCCH msg
+      release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
+      release_context.srb_id          = srb_id_t::srb1;
+
+      // Log Tx message
+      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
+    }
   }
+
+  // Log Tx message
+  logger.log_debug(release_context.rrc_release_pdu.begin(),
+                   release_context.rrc_release_pdu.end(),
+                   "TX {} PDU",
+                   release_context.srb_id);
 
   return release_context;
 }

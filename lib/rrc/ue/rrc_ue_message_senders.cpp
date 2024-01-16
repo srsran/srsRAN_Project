@@ -46,26 +46,3 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "TX {} PDU", context.ue_index, context.c_rnti, srb_id);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }
-
-byte_buffer rrc_ue_impl::create_rrc_reject_container(uint8_t reject_wait_time_secs)
-{
-  dl_ccch_msg_s     dl_ccch_msg;
-  rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
-
-  // See TS 38.331, RejectWaitTime
-  if (reject_wait_time_secs > 0) {
-    reject.wait_time_present = true;
-    reject.wait_time         = reject_wait_time_secs;
-  }
-
-  // pack DL CCCH msg
-  byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
-
-  // Log Tx message
-  log_rrc_message(logger, Tx, pdu, dl_ccch_msg, "CCCH DL");
-
-  // send down the stack
-  logger.log_debug(pdu.begin(), pdu.end(), "TX {} PDU", srb_id_t::srb0);
-
-  return pdu;
-}

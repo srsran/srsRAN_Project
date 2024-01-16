@@ -44,6 +44,7 @@ private:
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
+  rrc_ue_release_context              release_context;
   f1ap_ue_context_release_command     f1ap_ue_context_release_cmd;
   e1ap_bearer_context_release_command bearer_context_release_command;
 

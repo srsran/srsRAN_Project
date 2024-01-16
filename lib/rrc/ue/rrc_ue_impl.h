@@ -93,18 +93,13 @@ private:
   void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
 
   // message senders
-  /// \remark Create and return RRC Reject container, see section 5.3.15 in TS 38.331
-  byte_buffer create_rrc_reject_container(uint8_t reject_wait_time_secs);
-
   /// Packs a DL-CCCH message and logs the message
   void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
   void send_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg);
 
   // rrc_ue_setup_proc_notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
-  void on_ue_release_required(const cause_t& cause,
-                              byte_buffer    rrc_container = {},
-                              srb_id_t       srb_id        = srb_id_t::nulltype) override;
+  void on_ue_release_required(const cause_t& cause) override;
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
