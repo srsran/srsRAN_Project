@@ -726,10 +726,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
     // Set DMRS additional position.
-    if (out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
-          base_cell.pdsch_cfg.dmrs_add_pos;
-    }
+    out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
+        base_cell.pdsch_cfg.dmrs_add_pos;
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
@@ -762,11 +760,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
     }
     // Set DMRS additional position.
-    if (out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value() and
-        out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-          .init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions = base_cell.pusch_cfg.dmrs_add_pos;
-    }
+    out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+        .init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions = base_cell.pusch_cfg.dmrs_add_pos;
     // Set UL MCS table.
     out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
