@@ -56,6 +56,15 @@ TEST_F(rrc_ue_setup, when_amf_connected_then_rrc_setup_sent)
   receive_setup_complete();
 }
 
+/// Test the RRC setup with disconnected AMF
+TEST_F(rrc_ue_setup, when_rrc_setup_invalid_then_rrc_reject_sent)
+{
+  connect_amf();
+  receive_invalid_setup_request();
+
+  check_ue_release_requested();
+}
+
 /// Test the correct handling of missing RRC setup complete message
 TEST_F(rrc_ue_setup, when_setup_complete_timeout_then_ue_deleted)
 {

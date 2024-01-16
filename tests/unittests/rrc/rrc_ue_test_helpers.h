@@ -203,6 +203,12 @@ protected:
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
+  void receive_invalid_setup_request()
+  {
+    // inject corrupted RRC setup into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{{0x9d, 0xec, 0x89, 0xde, 0x57, 0x66}});
+  }
+
   void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
   {
     // inject RRC Reestablishment Request into UE object
