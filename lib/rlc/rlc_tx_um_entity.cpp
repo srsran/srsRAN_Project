@@ -42,7 +42,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
 {
-  size_t sdu_length = sdu_.buf.length();
+  size_t sdu_length    = sdu_.buf.length();
+  sdu_.time_of_arrival = std::chrono::high_resolution_clock::now();
   if (sdu_queue.write(sdu_)) {
     logger.log_info(sdu_.buf.begin(),
                     sdu_.buf.end(),
@@ -151,7 +152,10 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
     sdu.buf.clear();
-    next_so = 0;
+    next_so      = 0;
+    auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                        sdu.time_of_arrival);
+    metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
   } else {
     // advance SO offset
     next_so += payload_len;

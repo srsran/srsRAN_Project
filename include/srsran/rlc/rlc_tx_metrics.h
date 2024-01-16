@@ -40,6 +40,7 @@ struct rlc_tx_metrics {
   uint32_t num_dropped_sdus;     ///< Number of dropped SDUs (due to full queue)
   uint32_t num_discarded_sdus;   ///< Number of discarded SDUs (instructed from higher layer)
   uint32_t num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
+  uint32_t sdu_latency_us;       ///< total SDU latency (in us)>
 
   // PDU metrics
   uint32_t num_pdus_no_segmentation;      ///< Number of transmitted PDUs without segmentation
