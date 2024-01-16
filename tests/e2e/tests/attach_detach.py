@@ -10,7 +10,7 @@
 Attach / Detach Tests
 """
 import logging
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -55,10 +55,7 @@ BITRATE_THRESHOLD: float = 0.1
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -75,7 +72,7 @@ def test_zmq(
     _attach_and_detach_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -112,10 +109,7 @@ def test_zmq(
 def test_rf_udp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -131,7 +125,7 @@ def test_rf_udp(
     _attach_and_detach_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,

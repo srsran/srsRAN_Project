@@ -23,7 +23,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import iperf, start_and_attach, stop
+from .steps.stub import iperf_parallel, start_and_attach, stop
 
 
 @mark.parametrize(
@@ -43,7 +43,7 @@ from .steps.stub import iperf, start_and_attach, stop
 def test_multiple_configs_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     config: str,
@@ -79,9 +79,9 @@ def test_multiple_configs_zmq(
         always_download_artifacts=True,
     )
 
-    ue_attach_info_dict = start_and_attach((ue_1,), gnb, fivegc, gnb_post_cmd=config)
+    ue_attach_info_dict = start_and_attach((ue,), gnb, fivegc, gnb_post_cmd=config)
 
-    iperf(
+    iperf_parallel(
         ue_attach_info_dict,
         fivegc,
         protocol,
@@ -91,4 +91,4 @@ def test_multiple_configs_zmq(
         bitrate_threshold_ratio=0,  # bitrate != 0
     )
     sleep(wait_before_power_off)
-    stop((ue_1,), gnb, fivegc, retina_data, warning_as_errors=True, fail_if_kos=True)
+    stop((ue,), gnb, fivegc, retina_data, warning_as_errors=True, fail_if_kos=True)

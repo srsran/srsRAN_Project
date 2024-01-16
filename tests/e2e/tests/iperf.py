@@ -13,7 +13,7 @@ Test Iperf
 import logging
 from collections import defaultdict
 from time import sleep
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -26,7 +26,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
-from .steps.stub import iperf, start_and_attach, stop
+from .steps.stub import iperf_parallel, start_and_attach, stop
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
@@ -170,7 +170,7 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
 def test_srsue(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -186,7 +186,7 @@ def test_srsue(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -232,7 +232,7 @@ def test_srsue(
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -248,7 +248,7 @@ def test_android(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -294,7 +294,7 @@ def test_android(
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -310,7 +310,7 @@ def test_android_hp(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -352,7 +352,7 @@ def test_android_hp(
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -368,7 +368,7 @@ def test_zmq_4x4_mimo(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -410,10 +410,7 @@ def test_zmq_4x4_mimo(
 def test_zmq_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -431,7 +428,7 @@ def test_zmq_smoke(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -482,10 +479,7 @@ def test_zmq_smoke(
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -503,7 +497,7 @@ def test_zmq(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_32,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -549,10 +543,7 @@ def test_zmq(
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -568,7 +559,7 @@ def test_rf(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -635,7 +626,7 @@ def _iperf(
 
     ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
 
-    iperf(
+    iperf_parallel(
         ue_attach_info_dict,
         fivegc,
         protocol,

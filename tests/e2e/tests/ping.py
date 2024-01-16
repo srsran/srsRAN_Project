@@ -11,7 +11,7 @@ Test ping
 """
 import logging
 from contextlib import suppress
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import grpc
 from _pytest.outcomes import Failed
@@ -47,7 +47,7 @@ from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -62,7 +62,7 @@ def test_android(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -97,7 +97,7 @@ def test_android(
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -112,7 +112,7 @@ def test_android_hp(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -144,10 +144,7 @@ def test_android_hp(
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -161,7 +158,7 @@ def test_zmq(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_32,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -182,10 +179,7 @@ def test_zmq(
 def test_zmq_valgrind(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -202,7 +196,7 @@ def test_zmq_valgrind(
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
-            ue_array=(ue_1, ue_2, ue_3, ue_4),
+            ue_array=ue_4,
             gnb=gnb,
             fivegc=fivegc,
             band=band,
@@ -217,7 +211,7 @@ def test_zmq_valgrind(
             gnb_stop_timeout=gnb_stop_timeout,
         )
     stop(
-        (ue_1, ue_2, ue_3, ue_4),
+        ue_4,
         gnb,
         fivegc,
         retina_data,
@@ -238,10 +232,7 @@ def test_zmq_valgrind(
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -255,7 +246,7 @@ def test_rf(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -278,10 +269,7 @@ def test_rf(
 def test_rf_does_not_crash(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -298,7 +286,7 @@ def test_rf_does_not_crash(
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
-            ue_array=(ue_1, ue_2, ue_3, ue_4),
+            ue_array=ue_4,
             gnb=gnb,
             fivegc=fivegc,
             band=band,
@@ -310,7 +298,7 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
-    stop((ue_1, ue_2, ue_3, ue_4), gnb, fivegc, retina_data, log_search=False)
+    stop(ue_4, gnb, fivegc, retina_data, log_search=False)
 
 
 # pylint: disable=too-many-arguments, too-many-locals
