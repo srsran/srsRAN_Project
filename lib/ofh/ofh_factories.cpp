@@ -37,14 +37,16 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ru_operating_bw                    = config.ru_operating_bw;
   rx_config.scs                                = config.scs;
   rx_config.cp                                 = config.cp;
-  rx_config.prach_eaxc                         = config.prach_eaxc;
-  rx_config.ul_eaxc                            = config.ul_eaxc;
   rx_config.is_uplink_static_compr_hdr_enabled = config.is_uplink_static_compr_hdr_enabled;
   rx_config.prach_compression_params           = config.prach_compression_params;
   rx_config.ul_compression_params              = config.ul_compression_params;
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
+
+  // For the rx eAxCs, configure only those that will be used, so the other eAxCs can be discarded as soon as possible.
+  rx_config.prach_eaxc.assign(config.prach_eaxc.begin(), config.prach_eaxc.begin() + config.nof_antennas_ul);
+  rx_config.ul_eaxc.assign(config.ul_eaxc.begin(), config.ul_eaxc.begin() + config.nof_antennas_ul);
 
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address  = config.mac_src_address;

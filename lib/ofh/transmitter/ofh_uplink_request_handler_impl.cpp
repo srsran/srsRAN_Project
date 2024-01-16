@@ -70,11 +70,9 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
           ? get_prach_preamble_long_info(context.format)
           : get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), true);
 
-  unsigned nof_prach_ports = std::min(size_t(buffer.get_max_nof_ports()), prach_eaxc.size());
-
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
   if (is_short_preamble(context.format)) {
-    ul_prach_repo.add(context, buffer, nof_prach_ports);
+    ul_prach_repo.add(context, buffer);
   } else {
     static constexpr unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
@@ -90,7 +88,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
     // Subtract one to account for the current slot.
     slot_point slot = context.slot + (prach_length_slots - 1);
-    ul_prach_repo.add(context, buffer, nof_prach_ports, slot);
+    ul_prach_repo.add(context, buffer, slot);
   }
 
   if (!is_prach_cp_enabled) {

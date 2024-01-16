@@ -56,8 +56,8 @@ public:
   prach_context() = default;
 
   /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
-  prach_context(const prach_buffer_context& context, prach_buffer& buffer, unsigned nof_ports_) :
-    nof_ports(nof_ports_), context_info({context, &buffer}), nof_symbols(get_preamble_duration(context.format))
+  prach_context(const prach_buffer_context& context, prach_buffer& buffer) :
+    context_info({context, &buffer}), nof_symbols(get_preamble_duration(context.format))
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
     srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
@@ -75,7 +75,7 @@ public:
     }
     // Initialize statistic.
     for (unsigned i = 0; i != nof_symbols; ++i) {
-      buffer_stats.push_back({nof_ports, preamble_info.sequence_length});
+      buffer_stats.push_back({buffer.get_max_nof_ports(), preamble_info.sequence_length});
     }
   }
 
@@ -92,7 +92,7 @@ public:
   unsigned get_prach_offset_to_first_re() const { return freq_mapping_info.k_bar; }
 
   /// Gets the maximum number of ports supported in PRACH buffer.
-  unsigned get_max_nof_ports() const { return empty() ? 0U : nof_ports; }
+  unsigned get_max_nof_ports() const { return empty() ? 0U : context_info.buffer->get_max_nof_ports(); }
 
   /// Returns a span of bitmaps that indicate the REs that have been written for the given symbol. Each element of the
   /// span corresponds to a port.
@@ -109,7 +109,7 @@ public:
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
 
     // Skip writing if the given port does not fit in the PRACH buffer.
-    if (port >= nof_ports) {
+    if (port >= context_info.buffer->get_max_nof_ports()) {
       return;
     }
 
@@ -144,8 +144,6 @@ public:
   }
 
 private:
-  /// Number of ports.
-  unsigned nof_ports;
   /// PRACH context information
   prach_context_information context_info;
   /// Statistic of written data.
@@ -192,10 +190,7 @@ public:
   }
 
   /// Adds the given entry to the repository at slot.
-  void add(const prach_buffer_context& context,
-           prach_buffer&               buffer_,
-           unsigned                    nof_ports = 1,
-           slot_point                  slot      = slot_point())
+  void add(const prach_buffer_context& context, prach_buffer& buffer_, slot_point slot = slot_point())
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -210,7 +205,7 @@ public:
       }
     }
 
-    entry(current_slot) = prach_context(context, buffer_, nof_ports);
+    entry(current_slot) = prach_context(context, buffer_);
   }
 
   /// Function to write the uplink PRACH buffer.

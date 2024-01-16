@@ -92,8 +92,9 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
       (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured",
-                ecpri_iq_params.pc_id);
+    logger.info(
+        "Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured in reception",
+        ecpri_iq_params.pc_id);
 
     return true;
   }
