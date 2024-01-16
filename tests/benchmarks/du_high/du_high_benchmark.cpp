@@ -1104,7 +1104,7 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
 
 int main(int argc, char** argv)
 {
-  static const std::size_t byte_buffer_nof_segments = 1U << 18U;
+  static const std::size_t byte_buffer_nof_segments = 1U << 19U;
   static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
