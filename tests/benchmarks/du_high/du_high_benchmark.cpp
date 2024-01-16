@@ -541,6 +541,9 @@ public:
     cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets = 4;
     cfg.cells[0].pucch_cfg.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
     cfg.cells[0].pucch_cfg.f1_params.occ_supported      = true;
+    cfg.sched_cfg.ue.max_pucchs_per_slot                = 61;
+    cfg.sched_cfg.ue.max_puschs_per_slot                = 61;
+    cfg.sched_cfg.ue.max_ul_grants_per_slot             = 64;
 
     du_hi = std::make_unique<du_high_impl>(cfg);
 
