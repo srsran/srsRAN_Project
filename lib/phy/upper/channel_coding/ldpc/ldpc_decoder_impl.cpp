@@ -82,7 +82,7 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
   }
 
   // Ensure check-to-variable messages are not initialized.
-  std::fill(is_check_to_var_initialised.begin(), is_check_to_var_initialised.end(), false);
+  std::fill(is_check_to_var_initialized.begin(), is_check_to_var_initialized.end(), false);
 
   unsigned input_size = static_cast<unsigned>(last - input.begin());
 
@@ -167,7 +167,7 @@ void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
     span<const log_likelihood_ratio> c2v      = get_check_to_var(check_node, i_node);
     span<log_likelihood_ratio>       v2c      = get_var_to_check(i_node, 0);
     span<log_likelihood_ratio>       v2c_copy = get_var_to_check(i_node, lifting_size);
-    if (is_check_to_var_initialised[check_node]) {
+    if (is_check_to_var_initialized[check_node]) {
       compute_var_to_check_msgs(v2c, soft, c2v);
     } else {
       srsvec::copy(v2c, soft);
@@ -183,7 +183,7 @@ void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
     span<const log_likelihood_ratio> c2v      = get_check_to_var(check_node, bg_N_high_rate);
     span<log_likelihood_ratio>       v2c      = get_var_to_check(bg_N_high_rate, 0);
     span<log_likelihood_ratio>       v2c_copy = get_var_to_check(bg_N_high_rate, lifting_size);
-    if (is_check_to_var_initialised[check_node]) {
+    if (is_check_to_var_initialized[check_node]) {
       compute_var_to_check_msgs(v2c, soft, c2v);
     } else {
       srsvec::copy(v2c, soft);
@@ -278,5 +278,5 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
                               shift,
                               var_node);
   }
-  is_check_to_var_initialised[check_node] = true;
+  is_check_to_var_initialized[check_node] = true;
 }

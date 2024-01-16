@@ -65,13 +65,14 @@ private:
     return span<log_likelihood_ratio>(soft_bits).subspan(i_node * node_size_byte, node_size_byte);
   }
 
-  /// Gets a view to a node check-to-var for a given layer.
+  /// Gets a view to the check-to-var message from layer (check node) \c i_layer to variable node \c i_node.
   span<log_likelihood_ratio> get_check_to_var(unsigned i_layer, unsigned i_node)
   {
     return span<log_likelihood_ratio>(check_to_var[i_layer]).subspan(i_node * node_size_byte, node_size_byte);
   }
 
-  /// Gets a view to a node var-to-check with a shift.
+  /// Gets a view to the variable-to-check message from variable node \c i_node to the current layer (check node) after
+  /// applying a \c shift.
   span<log_likelihood_ratio> get_var_to_check(unsigned i_node, unsigned shift)
   {
     return span<log_likelihood_ratio>(var_to_check).subspan(2 * i_node * node_size_byte + shift, node_size_byte);
@@ -90,7 +91,7 @@ private:
   /// \param[out] min_var_to_check_index  Buffer to store the index of the absolute minimum variable-to-check message.
   /// \param[out] sign_prod_var_to_check  Buffer to store the sign of the product of all the messages reaching the check
   ///                                     node.
-  /// \param[in]  rotated_node            Buffer to store a cyclically-shifted version of the variable-to-check
+  /// \param[in]  rotated_node            Buffer with the cyclically-shifted version of the considered variable-to-check
   ///                                     messages.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
@@ -199,6 +200,8 @@ private:
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding
   /// to the current (base graph) check node.
+  /// \remark The factor 2 stems from the fact that we store two copies of all messages to facilitate their circular
+  ///         shift.
   std::array<log_likelihood_ratio, static_cast<size_t>(2 * MAX_CHECK_NODE_DEGREE * ldpc::MAX_LIFTING_SIZE)>
       var_to_check = {};
 
@@ -208,7 +211,7 @@ private:
       check_to_var;
 
   /// Initialization flags of check-to-variable messages: true if initialized.
-  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised;
+  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialized;
 };
 
 } // namespace srsran
