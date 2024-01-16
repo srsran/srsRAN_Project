@@ -199,7 +199,7 @@ const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx
 
   if (res.success) {
     // Store UCI PDUs for later decoding.
-    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx, res.ul.pucchs);
+    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx, res.ul.pucchs, res.ul.puschs);
   }
 
   return res;

@@ -23,40 +23,6 @@ uci_cell_decoder::uci_cell_decoder(const sched_cell_configuration_request_messag
 {
 }
 
-static optional<csi_report_data>
-decode_csi(uci_pusch_or_pucch_f2_3_4_detection_status                            csi_status,
-           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi1_bits,
-           const optional<uint8_t>&                                              ri,
-           const optional<uint8_t>&                                              pmi)
-{
-  optional<csi_report_data> rep;
-
-  if (csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-    rep.emplace();
-
-    // Convert CSI-1 bits to CSI report.
-    // TODO: Support more CSI encodings.
-
-    // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
-    // encoding.
-    unsigned wb_cqi = (static_cast<unsigned>(csi1_bits.test(0)) << 3) +
-                      (static_cast<unsigned>(csi1_bits.test(1)) << 2) +
-                      (static_cast<unsigned>(csi1_bits.test(2)) << 1) + (static_cast<unsigned>(csi1_bits.test(3)));
-    rep->first_tb_wideband_cqi = wb_cqi;
-
-    if (ri.has_value()) {
-      rep->ri = csi_report_data::ri_type{*ri}; // TODO: Support RI decoding.
-    }
-
-    if (pmi.has_value()) {
-      rep->pmi.emplace();
-      rep->pmi->type = csi_report_pmi::two_antenna_port{*pmi}; // TODO: Support PMI decoding.
-    }
-  }
-
-  return rep;
-}
-
 static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
                                                        const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
 {
@@ -73,16 +39,32 @@ static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4
   return ret;
 }
 
-static csi_report_data decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
-                                       const csi_report_configuration&               csi_rep_cfg)
+static csi_report_data decode_csi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
+                                  const csi_report_configuration&                                       csi_rep_cfg)
 {
   // Convert UCI CSI1 bits to "csi_report_packed".
-  csi_report_packed csi_bits(pucch.uci_part1_or_csi_part1_info->payload.size());
+  csi_report_packed csi_bits(payload.size());
   for (unsigned k = 0; k != csi_bits.size(); ++k) {
-    csi_bits.set(k, pucch.uci_part1_or_csi_part1_info->payload.test(k));
+    csi_bits.set(k, payload.test(k));
   }
 
   return csi_report_unpack_pucch(csi_bits, csi_rep_cfg);
+}
+
+static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
+                                                 const csi_report_configuration&               csi_rep_cfg)
+{
+  // TODO: Handle CSI part 2.
+  return decode_csi(pucch.uci_part1_or_csi_part1_info->payload, csi_rep_cfg);
+}
+
+static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pusch_type&  pusch,
+                                                 const csi_report_configuration& csi_rep_cfg)
+{
+  // TODO: Revisit this logic since its valid only for periodic CSI reporting and for both Type I and Type II reports
+  //  configured for PUCCH but transmitted on PUSCH"
+  // TODO: Handle CSI part 2.
+  return decode_csi(pusch.csi_part1_info->payload, csi_rep_cfg);
 }
 
 uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& msg)
@@ -165,7 +147,24 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       if (pusch.csi_part1_info.has_value()) {
-        pdu.csi = decode_csi(pusch.csi_part1_info->csi_status, pusch.csi_part1_info->payload, pusch.ri, pusch.pmi);
+        if (pusch.csi_part1_info->csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          // Decode CSI bits given the CSI report config previously stored in the grid.
+          const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
+
+          // Search for CSI report config with matching RNTI.
+          for (const auto& expected_slot_uci : slot_ucis) {
+            if (expected_slot_uci.rnti == uci_pdu.crnti) {
+              pdu.csi = decode_csi_bits(pusch, expected_slot_uci.csi_rep_cfg);
+              break;
+            }
+          }
+          if (not pdu.csi.has_value()) {
+            logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
+                           cell_index,
+                           uci_pdu.ue_index,
+                           uci_pdu.crnti);
+          }
+        }
         // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
@@ -229,7 +228,9 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
   return ind;
 }
 
-void uci_cell_decoder::store_uci(slot_point uci_sl, span<const pucch_info> scheduled_pucchs)
+void uci_cell_decoder::store_uci(slot_point                uci_sl,
+                                 span<const pucch_info>    scheduled_pucchs,
+                                 span<const ul_sched_info> scheduled_puschs)
 {
   auto& slot_ucis = expected_uci_report_grid[to_grid_index(uci_sl)];
   slot_ucis.clear();
@@ -239,6 +240,13 @@ void uci_cell_decoder::store_uci(slot_point uci_sl, span<const pucch_info> sched
       uci_context& uci_ctx = slot_ucis.emplace_back();
       uci_ctx.rnti         = pucch.crnti;
       uci_ctx.csi_rep_cfg  = *pucch.csi_rep_cfg;
+    }
+  }
+  for (const ul_sched_info& pusch : scheduled_puschs) {
+    if (pusch.uci.has_value() and pusch.uci->csi.has_value()) {
+      uci_context& uci_ctx = slot_ucis.emplace_back();
+      uci_ctx.rnti         = pusch.pusch_cfg.rnti;
+      uci_ctx.csi_rep_cfg  = pusch.uci->csi->csi_rep_cfg;
     }
   }
 }
