@@ -24,7 +24,7 @@ using namespace srsran;
 unique_rx_buffer rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks)
 {
   // No more reservations are allowed if the pool is stopped.
-  if (stopped) {
+  if (stopped.load(std::memory_order_acquire)) {
     return unique_rx_buffer();
   }
 
@@ -124,7 +124,7 @@ rx_buffer_pool& rx_buffer_pool_impl::get_pool()
 void rx_buffer_pool_impl::stop()
 {
   // Signals the stop of the pool. No more reservation are allowed after this point.
-  stopped = true;
+  stopped.store(true, std::memory_order_release);
 
   // Makes sure all buffers are unlocked.
   for (const auto& buffer : buffers) {

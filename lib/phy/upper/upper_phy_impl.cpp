@@ -138,6 +138,7 @@ tx_buffer_pool& upper_phy_impl::get_tx_buffer_pool()
 {
   return tx_buf_pool->get_pool();
 }
+
 void upper_phy_impl::stop()
 {
   tx_buf_pool->stop();
