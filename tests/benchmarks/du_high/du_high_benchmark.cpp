@@ -63,7 +63,7 @@ struct bench_params {
   /// \brief Maximum number of RBs per UE DL grant per slot.
   unsigned max_dl_rb_grant = MAX_NOF_PRBS;
   /// \brief Logical cores used by the "du_cell" thread.
-  std::vector<unsigned> du_cell_cores = {0, 1};
+  std::vector<unsigned> du_cell_cores = {};
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -81,7 +81,7 @@ static void usage(const char* prog, const bench_params& params)
              "[Default {}]\n",
              params.ul_bsr_bytes);
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
-  fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default 0,1]\n");
+  fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
   fmt::print("\t-h Show this message\n");
 }
 
@@ -332,8 +332,10 @@ struct du_high_single_cell_worker_manager {
   static os_sched_affinity_bitmask get_du_cell_affinity_mask(span<const unsigned> du_cell_cores)
   {
     os_sched_affinity_bitmask mask;
-    for (auto core : du_cell_cores) {
-      mask.set(core);
+    if (not du_cell_cores.empty()) {
+      for (auto core : du_cell_cores) {
+        mask.set(core);
+      }
     }
     return mask;
   }
@@ -341,9 +343,11 @@ struct du_high_single_cell_worker_manager {
   static os_sched_affinity_bitmask get_other_affinity_mask(span<const unsigned> du_cell_cores)
   {
     os_sched_affinity_bitmask mask;
-    for (unsigned i = 0; i != mask.size(); ++i) {
-      if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
-        mask.set(i);
+    if (not du_cell_cores.empty()) {
+      for (unsigned i = 0; i != mask.size(); ++i) {
+        if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
+          mask.set(i);
+        }
       }
     }
     return mask;
@@ -1090,15 +1094,17 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
   }
 
   // Set main test thread to use same cores as du_cell.
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  for (unsigned i : du_cell_cores) {
-    CPU_SET(i, &cpuset);
-  }
-  int ret;
-  if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
-    fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
-    return;
+  if (not du_cell_cores.empty()) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    for (unsigned i : du_cell_cores) {
+      CPU_SET(i, &cpuset);
+    }
+    int ret;
+    if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
+      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
+      return;
+    }
   }
 }
 
