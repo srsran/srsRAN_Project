@@ -54,7 +54,7 @@ static std::atomic<bool>     slot_synchronized{false};
 static std::atomic<unsigned> slot_val{0};
 static std::atomic<unsigned> nof_malformed_packets{0};
 static std::atomic<unsigned> nof_missing_dl_packets{0};
-static unsigned              nof_test_slots{100};
+static unsigned              nof_test_slots{1000};
 
 namespace {
 
