@@ -471,7 +471,9 @@ std::vector<pucch_resource> srsran::srs_du::generate_cell_pucch_res_list(unsigne
                                                                          pucch_f2_params f2_params,
                                                                          unsigned        bwp_size_rbs)
 {
-  if (pucch_parameters_validator(nof_res_f1, nof_res_f2, f1_params, f2_params, bwp_size_rbs).is_error()) {
+  auto outcome = pucch_parameters_validator(nof_res_f1, nof_res_f2, f1_params, f2_params, bwp_size_rbs);
+  if (outcome.is_error()) {
+    srsran_assertion_failure("The cell list could not be generated due to: {}", outcome.error());
     return {};
   }
 
