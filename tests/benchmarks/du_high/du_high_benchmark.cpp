@@ -72,7 +72,9 @@ static void usage(const char* prog, const bench_params& params)
              "per UE DL grant] [-a CPU affinity]\n",
              prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
-  fmt::print("\t-U Nof. DU UEs for each simulation (1 or more) [Default {}]\n", params.nof_ues);
+  fmt::print("\t-U Nof. DU UEs for each simulation (e.g. \"1,5,10\" would run three benchmarks with 1, 5 and 10 UEs) "
+             "[Default {}]\n",
+             params.nof_ues);
   fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
   fmt::print("\t-d Number of bytes pushed to the DU DL F1-U interface every slot. Setting this value to 0 will "
              "disable DL Tx. [Default {}]\n",
