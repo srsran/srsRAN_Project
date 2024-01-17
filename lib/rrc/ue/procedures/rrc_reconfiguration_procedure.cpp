@@ -10,7 +10,6 @@
 
 #include "rrc_reconfiguration_procedure.h"
 #include "../rrc_asn1_helpers.h"
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/ran/cause.h"
 
 using namespace srsran;

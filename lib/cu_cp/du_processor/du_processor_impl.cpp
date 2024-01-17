@@ -15,7 +15,6 @@
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pci_helpers.h"
 #include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
