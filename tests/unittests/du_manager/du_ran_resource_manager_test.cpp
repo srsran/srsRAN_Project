@@ -89,8 +89,8 @@ protected:
     // UE can have different values within this range.
     pucch_checker =
         pucch_checker and
-        pucch_cfg.sr_res_list.front().pucch_res_id >= du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() and
-        pucch_cfg.sr_res_list.front().pucch_res_id <
+        pucch_cfg.sr_res_list.front().pucch_res_id.first >= du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() and
+        pucch_cfg.sr_res_list.front().pucch_res_id.first <
             du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() + du_cfg.pucch_cfg.nof_sr_resources;
 
     // We always put the CSI PUCCH resource is always at the end of the list.
@@ -161,8 +161,8 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
                                             cyclic_prefix::NORMAL)
                       .length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     }
-    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
-    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));
+    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id.first, sr_res_list[0].offset)), 0);
+    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.first, sr_res_list[0].offset));
 
     // Check if PUCCH config is correctly updated.
     const serving_cell_config serving_cell_cfg = ue_res->cells[0].serv_cell_cfg;
@@ -176,7 +176,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
       csi_pucch_res.emplace(srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                                 serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type)
                                 .pucch_csi_res_list.front()
-                                .pucch_res_id);
+                                .pucch_res_id.first);
     }
     ASSERT_TRUE(
         verify_pucch_cfg(ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(), csi_pucch_res));
@@ -194,7 +194,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
   // Removing one UE, should make one SR offset available.
   const du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
   const unsigned      rem_pucch_resource =
-      ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id;
+      ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id.first;
   const unsigned rem_sr_offset =
       ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset;
   ues.erase(ue_idx_to_rem);
@@ -202,7 +202,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
   const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
   ASSERT_FALSE(ue_res.empty());
   ASSERT_EQ(rem_pucch_resource,
-            ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id);
+            ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id.first);
   ASSERT_EQ(rem_sr_offset, ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
 }
 
@@ -245,7 +245,7 @@ static const auto* get_pucch_resource_with_id(const pucch_config& pucch_cfg, uns
 {
   return std::find_if(pucch_cfg.pucch_res_list.begin(),
                       pucch_cfg.pucch_res_list.end(),
-                      [res_id](const pucch_resource& res) { return res.res_id == res_id; });
+                      [res_id](const pucch_resource& res) { return res.res_id.first == res_id; });
 };
 
 class du_ran_res_mng_multiple_cfg_tester : public ::testing::TestWithParam<pucch_cfg_builder_params>
@@ -312,11 +312,11 @@ protected:
       return {};
     }
 
-    const auto* pucch_res_id_start_it = get_pucch_resource_with_id(pucch_cfg, pucch_res_set.front());
-    const auto* pucch_res_id_stop_it  = get_pucch_resource_with_id(pucch_cfg, pucch_res_set.back());
+    const auto* pucch_res_id_start_it = get_pucch_resource_with_id(pucch_cfg, pucch_res_set.front().first);
+    const auto* pucch_res_id_stop_it  = get_pucch_resource_with_id(pucch_cfg, pucch_res_set.back().first);
     if (pucch_res_id_start_it != pucch_cfg.pucch_res_list.end() and
         pucch_res_id_stop_it != pucch_cfg.pucch_res_list.end()) {
-      return {pucch_res_id_start_it->res_id, pucch_res_id_stop_it->res_id};
+      return {pucch_res_id_start_it->res_id.first, pucch_res_id_stop_it->res_id.first};
     }
 
     return {};
@@ -427,14 +427,14 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
                                             cyclic_prefix::NORMAL)
                       .length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     }
-    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
-    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));
+    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id.first, sr_res_list[0].offset)), 0);
+    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id.first, sr_res_list[0].offset));
 
     // Check if the CSI has been assigned to the UE.
     ASSERT_TRUE(has_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg));
     const auto& ue_csi_cfg = get_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg);
     ASSERT_FALSE(ue_csi_cfg.pucch_csi_res_list.empty());
-    const unsigned ue_csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id;
+    const unsigned ue_csi_pucch_res_id = ue_csi_cfg.pucch_csi_res_list.front().pucch_res_id.first;
     const unsigned ue_csi_pucch_offset = ue_csi_cfg.report_slot_offset;
     ASSERT_EQ(csi_period, csi_report_periodicity_to_uint(ue_csi_cfg.report_slot_period));
     // Make sure the CSI is in a fully-UL slot.
@@ -473,11 +473,11 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
   // Remove 1 UE and verify if the new resource can be allocated to another UE.
   const du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
   const unsigned      rem_sr_pucch_resource =
-      ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id;
+      ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id.first;
   const unsigned rem_sr_offset =
       ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset;
   const unsigned rem_csi_pucch_resource_id =
-      get_ue_csi_cfg(ues[ue_idx_to_rem]->cells[0].serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id;
+      get_ue_csi_cfg(ues[ue_idx_to_rem]->cells[0].serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id.first;
   const unsigned rem_csi_offset = get_ue_csi_cfg(ues[ue_idx_to_rem]->cells[0].serv_cell_cfg).report_slot_offset;
 
   ues.erase(ue_idx_to_rem);
@@ -489,7 +489,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
   const bool nof_ue_limited_by_sr_resources = std::get<1>(avail_res);
   if (nof_ue_limited_by_sr_resources) {
     ASSERT_EQ(rem_sr_pucch_resource,
-              ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id);
+              ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id.first);
     ASSERT_EQ(rem_sr_offset, ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
   }
 
@@ -497,7 +497,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexi
   const bool nof_ue_limited_by_csi_resources = std::get<2>(avail_res);
   if (nof_ue_limited_by_csi_resources) {
     ASSERT_EQ(rem_csi_pucch_resource_id,
-              get_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id);
+              get_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id.first);
     ASSERT_EQ(rem_csi_offset, get_ue_csi_cfg(ue_res->cells[0].serv_cell_cfg).report_slot_offset);
   }
 }

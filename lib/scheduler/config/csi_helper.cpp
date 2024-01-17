@@ -464,7 +464,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   report_cfg_type.report_slot_period = convert_csi_resource_period_to_report_period(params.csi_rs_period);
   report_cfg_type.report_slot_offset = params.csi_report_slot_offset;
   report_cfg_type.pucch_csi_res_list = {
-      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9}};
+      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = pucch_res_id_t{9, 9}}};
   reps[0].report_cfg_type = report_cfg_type;
 
   reps[0].report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;

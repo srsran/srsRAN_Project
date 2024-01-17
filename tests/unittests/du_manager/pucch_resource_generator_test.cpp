@@ -636,27 +636,27 @@ protected:
     test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq_per_ue;
 
     // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
-    auto get_pucch_resource_with_id = [&pucch_cfg](unsigned res_id) {
+    auto get_pucch_resource_with_id = [&pucch_cfg](pucch_res_id_t res_id) {
       return std::find_if(pucch_cfg.pucch_res_list.begin(),
                           pucch_cfg.pucch_res_list.end(),
                           [res_id](const pucch_resource& res) { return res.res_id == res_id; });
     };
 
     // Check the PUCCH resources indexing in PUCCH resource Set 0.
-    for (unsigned res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
-      test_result = test_result and res_idx >= nof_f1_res_harq_per_ue * harq_cfg_idx and
-                    res_idx < nof_f1_res_harq_per_ue * (harq_cfg_idx + 1);
+    for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
+      test_result = test_result and res_idx.first >= nof_f1_res_harq_per_ue * harq_cfg_idx and
+                    res_idx.first < nof_f1_res_harq_per_ue * (harq_cfg_idx + 1);
       // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
       auto* res_it = get_pucch_resource_with_id(res_idx);
       test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
     }
     // Check the PUCCH resources indexing in PUCCH resource Set 1.
-    for (unsigned res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
+    for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
       test_result = test_result and
-                    res_idx >= nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
-                                   nof_f2_res_harq_per_ue * harq_cfg_idx and
-                    res_idx < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
-                                  nof_f2_res_harq_per_ue * (harq_cfg_idx + 1);
+                    res_idx.first >= nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
+                                         nof_f2_res_harq_per_ue * harq_cfg_idx and
+                    res_idx.first < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
+                                        nof_f2_res_harq_per_ue * (harq_cfg_idx + 1);
       // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
       auto* res_it = get_pucch_resource_with_id(res_idx);
       test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
@@ -665,17 +665,17 @@ protected:
     // Check the format correctness.
     for (const auto& res : pucch_cfg.pucch_res_list) {
       const pucch_format expected_format =
-          res.res_id < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell
+          res.res_id.first < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell
               ? srsran::pucch_format::FORMAT_1
               : srsran::pucch_format::FORMAT_2;
       test_result = test_result && expected_format == res.format;
     }
 
     // Check SR and related PUCCH resource.
-    test_result                    = test_result and pucch_cfg.sr_res_list.size() == 1;
-    const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
+    test_result                          = test_result and pucch_cfg.sr_res_list.size() == 1;
+    const pucch_res_id_t sr_pucch_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
     // Check the PUCCH resouce ID for SR is correct.
-    test_result = test_result and sr_pucch_res_id == (nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + sr_idx);
+    test_result = test_result and sr_pucch_res_id.first == (nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + sr_idx);
     // Check the PUCCH resouce for SR present in the list.
     auto* res_it = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
     test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
@@ -692,14 +692,15 @@ protected:
                               .pucch_csi_res_list.empty(),
                   "PUCCH-CSI-ResourceList has not been configured in the CSI-reportConfig");
 
-    const unsigned csi_res_id = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                                    csi_cfg.csi_report_cfg_list.front().report_cfg_type)
-                                    .pucch_csi_res_list.front()
-                                    .pucch_res_id;
+    const pucch_res_id_t csi_res_id = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                                          csi_cfg.csi_report_cfg_list.front().report_cfg_type)
+                                          .pucch_csi_res_list.front()
+                                          .pucch_res_id;
 
     // Check the PUCCH resouce ID for SR is correct.
-    test_result = test_result and csi_res_id == nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
-                                                    nof_f2_res_harq_per_ue * nof_harq_cfg_per_ue + csi_idx;
+    test_result = test_result and csi_res_id.first == nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue +
+                                                          nof_sr_res_per_cell +
+                                                          nof_f2_res_harq_per_ue * nof_harq_cfg_per_ue + csi_idx;
     // Check the PUCCH resouce for SR present in the list.
     res_it      = get_pucch_resource_with_id(csi_res_id);
     test_result = test_result and res_it != pucch_cfg.pucch_res_list.end();

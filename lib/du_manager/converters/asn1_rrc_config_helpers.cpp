@@ -1291,7 +1291,7 @@ asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(c
   pucch_res_set_s pucch_res_set;
   pucch_res_set.pucch_res_set_id = cfg.pucch_res_set_id;
   for (const auto& it : cfg.pucch_res_id_list) {
-    pucch_res_set.res_list.push_back(it);
+    pucch_res_set.res_list.push_back(it.second);
   }
   if (cfg.max_payload_size.has_value()) {
     pucch_res_set.max_payload_size = cfg.max_payload_size.value();
@@ -1359,7 +1359,7 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
 asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
 {
   pucch_res_s pucch_res;
-  pucch_res.pucch_res_id                = cfg.res_id;
+  pucch_res.pucch_res_id                = cfg.res_id.second;
   pucch_res.start_prb                   = cfg.starting_prb;
   pucch_res.intra_slot_freq_hop_present = cfg.second_hop_prb.has_value();
   pucch_res.second_hop_prb_present      = cfg.second_hop_prb.has_value();
@@ -1441,7 +1441,7 @@ srsran::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_conf
   sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
   sr_res_cfg.sched_request_id               = cfg.sr_id;
   sr_res_cfg.res_present                    = true;
-  sr_res_cfg.res                            = cfg.pucch_res_id;
+  sr_res_cfg.res                            = cfg.pucch_res_id.second;
   sr_res_cfg.periodicity_and_offset_present = true;
   switch (cfg.period) {
     case sr_periodicity::sym_2:
@@ -1525,7 +1525,7 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
       src.pucch_res_list,
       dest.pucch_res_list,
       [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
-      [](const pucch_resource& res) { return res.res_id; });
+      [](const pucch_resource& res) { return res.res_id.second; });
 
   if ((dest.format_1_common_param.has_value() && not src.format_1_common_param.has_value()) ||
       (dest.format_1_common_param.has_value() && src.format_1_common_param.has_value() &&

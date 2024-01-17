@@ -147,9 +147,16 @@ struct pucch_format_4_cfg {
   bool operator!=(const pucch_format_4_cfg& rhs) const { return !(rhs == *this); }
 };
 
+/// \brief Defines a couple of PUCCH resource IDs, the PUCCH cell resource ID and the PUCCH UE resource ID.
+/// The first element is the PUCCH cell resource ID and is used by the DU and by the scheduler to identify the
+/// PUCCH resource.
+/// The second element corresponds to \c pucch-ResourceId, as part of \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
+/// The second element is used by the DU only to populate the ASN1 message, while it's not used by the scheduler.
+using pucch_res_id_t = std::pair<unsigned, unsigned>;
+
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  unsigned                                                                                  res_id;
+  pucch_res_id_t                                                                            res_id = {0, 0};
   unsigned                                                                                  starting_prb;
   optional<unsigned>                                                                        second_hop_prb;
   pucch_format                                                                              format;
@@ -170,7 +177,7 @@ struct pucch_resource_set {
   /// \c PUCCH-ResourceSetId.
   uint8_t pucch_res_set_id;
   /// \c resourceList.
-  static_vector<unsigned, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
+  static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
   /// \c maxPayloadSize.
   optional<unsigned> max_payload_size;
 
