@@ -262,8 +262,9 @@ TEST(security_nia1_test, testset1)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -287,8 +288,9 @@ TEST(security_nia1_test, testset2)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -313,8 +315,9 @@ TEST(security_nia1_test, testset3)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -340,8 +343,9 @@ TEST(security_nia1_test, testset4)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -366,8 +370,9 @@ TEST(security_nia1_test, testset5)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -397,8 +402,9 @@ TEST(security_nia1_test, testset6)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -459,8 +465,9 @@ TEST(security_nia1_test, testset7)
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
 
   // Apply integrity check
-  sec_mac mact_out = {};
-  security_nia1(mact_out, key, count_i, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mact_out = {};
+  security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
