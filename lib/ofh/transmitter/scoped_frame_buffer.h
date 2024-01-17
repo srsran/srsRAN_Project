@@ -53,7 +53,7 @@ public:
   ~scoped_frame_buffer()
   {
     if (!frames.empty()) {
-      frame_pool.eth_frames_ready(context, frames);
+      frame_pool.push_frame_buffers(context, frames);
     }
   }
 };

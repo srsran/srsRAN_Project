@@ -28,7 +28,8 @@ class frame_buffer_array;
 /// Storage for one Ethernet frame buffer.
 class frame_buffer
 {
-  enum class frame_buffer_status { free, locked };
+  /// State of the buffer inside a buffer pool.
+  enum class frame_buffer_status { free, reserved, used, marked_to_send };
 
   size_t               sz     = 0;
   frame_buffer_status  status = frame_buffer_status::free;
@@ -80,7 +81,6 @@ class frame_buffer_array
 {
   /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
   using storage_array_type = std::vector<frame_buffer>;
-  using ready_frames_type  = std::vector<frame_buffer*>;
 
   /// Number of entries in the internal storage. Each entry comprises multiple frame buffers, the number of
   /// buffers in one entry is received at construction time.
@@ -102,79 +102,82 @@ public:
   // Constructor receives number of buffers stored/read at a time, reserves storage for all eAxCs.
   frame_buffer_array(unsigned nof_buffers, unsigned buffer_size) :
     increment_quant(nof_buffers),
-    buf_array(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES, frame_buffer{buffer_size}),
-    write_position(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES),
-    max_nof_prepared_buffers(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES)
+    storage_nof_buffers(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES),
+    buffers_array(storage_nof_buffers, frame_buffer{buffer_size}),
+    write_position(storage_nof_buffers)
   {
-    ready_frames.reserve(max_nof_prepared_buffers);
+    aux_array.reserve(storage_nof_buffers);
   }
 
-  // Returns view over increment_quant buffers for writing. Unread buffers might be overwritten
-  span<frame_buffer> get_wr_buffers()
+  // Returns view over increment_quant buffers for writing if they are free, returns empty span otherwise.
+  // The state of returned buffers is changed to 'reserved'.
+  span<frame_buffer> reserve_buffers()
   {
-    span<frame_buffer> wr_buffers(&buf_array[write_position.value()], increment_quant);
-    bool               locked = std::any_of(wr_buffers.begin(), wr_buffers.end(), [](const frame_buffer& buffer) {
-      return buffer.status == frame_buffer::frame_buffer_status::locked;
+    span<frame_buffer> wr_buffers(&buffers_array[write_position.value()], increment_quant);
+
+    bool free = std::all_of(wr_buffers.begin(), wr_buffers.end(), [](const frame_buffer& buffer) {
+      return buffer.status == frame_buffer::frame_buffer_status::free;
     });
-    if (locked) {
+    if (!free) {
       return {};
+    }
+    // Mark buffers as reserved.
+    for (auto& buffer : wr_buffers) {
+      buffer.status = frame_buffer::frame_buffer_status::reserved;
     }
     write_position.increment(increment_quant);
     return wr_buffers;
   }
 
+  // Stores actually used buffers in a list of buffers ready for sending.
+  // Unused buffers state is changed to 'free'.
   void push_buffers(span<frame_buffer> prepared_buffers)
   {
-    // Overwrite old data.
-    bool locked = std::any_of(ready_frames.begin(), ready_frames.end(), [](const frame_buffer* buffer) {
-      return buffer->status == frame_buffer::frame_buffer_status::locked;
-    });
-    if (locked) {
-      // Drop new buffers if the queue of prepared buffers is being read.
-      return;
-    }
-    if (ready_frames.size() == max_nof_prepared_buffers) {
-      clear_buffers();
-    }
-    for (unsigned i = 0, e = prepared_buffers.size(); i != e; ++i) {
-      if (prepared_buffers[i].empty()) {
-        break;
+    for (auto& buffer : prepared_buffers) {
+      if (buffer.empty()) {
+        buffer.status = frame_buffer::frame_buffer_status::free;
+      } else {
+        buffer.status = frame_buffer::frame_buffer_status::used;
+        used_buffers.push_back(&buffer);
       }
-      ready_frames.push_back(&prepared_buffers[i]);
     }
   }
 
+  // Changed state of sent buffers to 'free'.
   void clear_buffers()
   {
-    std::for_each(ready_frames.begin(), ready_frames.end(), [](frame_buffer* buffer) {
-      buffer->status = frame_buffer::frame_buffer_status::free;
-    });
-    ready_frames.clear();
+    for (auto& buffer : buffers_array) {
+      if (buffer.status == frame_buffer::frame_buffer_status::marked_to_send) {
+        buffer.status = frame_buffer::frame_buffer_status::free;
+      }
+    }
   }
 
-  // Returns a view over the written buffers for reading; returns an empty span if no buffers were written.
-  span<const frame_buffer* const> get_rd_buffers() const
+  // Returns a vector of pointers to the buffers ready for sending.
+  span<const frame_buffer*> find_buffers_ready_for_sending()
   {
-    if (ready_frames.empty()) {
-      return {};
+    aux_array.clear();
+    for (auto& buffer : used_buffers) {
+      buffer->status = frame_buffer::frame_buffer_status::marked_to_send;
+      aux_array.push_back(buffer);
     }
-    std::for_each(ready_frames.begin(), ready_frames.end(), [](frame_buffer* buffer) {
-      buffer->status = frame_buffer::frame_buffer_status::locked;
-    });
-    return ready_frames;
+    used_buffers.clear();
+    return aux_array;
   }
 
 private:
   // Number of buffers accessed at a time.
   unsigned increment_quant;
+  // Maximum number of buffers stored in the pool.
+  unsigned storage_nof_buffers;
   // Data buffers.
-  storage_array_type buf_array;
-  // Vector of spans of prepared Ethernet packets.
-  ready_frames_type ready_frames;
+  storage_array_type buffers_array;
+  // Used buffers are added to this list.
+  static_vector<frame_buffer*, 128> used_buffers;
+  // Auxiliary array used as a list of ready-to-send buffers returned to a reader.
+  std::vector<const frame_buffer*> aux_array;
   // Keeps track of the current write position.
   rd_wr_counter write_position;
-  // Maximum number of prepared buffers stored in the pool before overwriting takes place.
-  unsigned max_nof_prepared_buffers;
 };
 
 /// Pool of Ethernet frames pre-allocated for each slot symbol.
@@ -222,10 +225,10 @@ class eth_frame_pool
     }
 
     /// Returns a view over next free frame buffers for a given OFH type, or an empty span if there is no free space.
-    span<frame_buffer> get_write_buffers(const frame_pool_context& context)
+    span<frame_buffer> reserve_buffers(const frame_pool_context& context)
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      span<frame_buffer>  buffs     = entry_buf.get_wr_buffers();
+      span<frame_buffer>  buffs     = entry_buf.reserve_buffers();
       // Reset size of buffers before returning.
       for (auto& buf : buffs) {
         buf.clear();
@@ -247,10 +250,10 @@ class eth_frame_pool
     }
 
     /// Returns a view over a next stored frame buffer for a given OFH type.
-    span<const frame_buffer* const> get_read_buffers(const frame_pool_context& context) const
+    span<const frame_buffer*> read_buffers(const frame_pool_context& context)
     {
-      const frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      return entry_buf.get_rd_buffers();
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
+      return entry_buf.find_buffers_ready_for_sending();
     }
   }; // End of pool_entry class.
 
@@ -277,11 +280,11 @@ public:
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.get_write_buffers(context);
+    return p_entry.reserve_buffers(context);
   }
 
   /// Increments number of prepared Ethernet frames in the given slot symbol.
-  void eth_frames_ready(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
+  void push_frame_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Lock and update the pool entry.
@@ -290,19 +293,19 @@ public:
   }
 
   /// Returns data buffer from the pool to a consumer thread.
-  span<const frame_buffer* const> read_frame_buffers(const frame_pool_context& context) const
+  span<const frame_buffer*> read_frame_buffers(const frame_pool_context& context)
   {
-    const pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
+    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.get_read_buffers(context);
+    return p_entry.read_buffers(context);
   }
 
   /// Clear prepared Ethernet frames in the given symbol once it was sent to a gateway (thread-safe).
-  void eth_frames_sent(const frame_pool_context& context)
+  void clear_sent_frame_buffers(const frame_pool_context& context)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
-    // Lock and increment number of read Ethernet frames.
+    // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
     p_entry.clear_buffers(context);
   }

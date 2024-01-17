@@ -120,11 +120,13 @@ TEST_P(EthFramePoolFixture, writing_small_pkt_is_rounded_to_min_eth_size)
       // Get span of frame buffers.
       ether::frame_pool_context context(slot, symbol, ofh_type, direction);
       span<frame_buffer>        wr_buffers = pool.get_frame_buffers(context);
+      ASSERT_TRUE(!wr_buffers.empty()) << "Non-empty span of buffers expected";
+
       // Write random data to the first buffer.
       span<uint8_t> wr_data_buffer = wr_buffers[0].data().first(pkt_size);
       std::copy(pkt_data.begin(), pkt_data.end(), wr_data_buffer.begin());
       wr_buffers[0].set_size(pkt_size);
-      pool.eth_frames_ready(context, wr_buffers);
+      pool.push_frame_buffers(context, wr_buffers);
 
       // Read frame buffers and verify length and content of the first one.
       auto rd_buffers = pool.read_frame_buffers(context);
@@ -133,7 +135,7 @@ TEST_P(EthFramePoolFixture, writing_small_pkt_is_rounded_to_min_eth_size)
       ASSERT_EQ(rd_buffers[0]->size(), MIN_ETH_FRAME_LENGTH) << "Expected size is {}" << MIN_ETH_FRAME_LENGTH;
       ASSERT_TRUE(std::equal(rd_buffers[0]->data().begin(), rd_buffers[0]->data().end(), zeros.begin()))
           << "Data mismatch";
-      pool.eth_frames_sent(context);
+      pool.clear_sent_frame_buffers(context);
     }
     ++slot;
   }
@@ -157,8 +159,9 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
       }
 
       // Get span of frame buffers.
-      ether::frame_pool_context         context(slot, symbol, ofh_type, direction);
-      span<frame_buffer>                frame_buffers = pool.get_frame_buffers(context);
+      ether::frame_pool_context context(slot, symbol, ofh_type, direction);
+      span<frame_buffer>        frame_buffers = pool.get_frame_buffers(context);
+      ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
       std::vector<std::vector<uint8_t>> test_data(frame_buffers.size());
 
       // Number of Ethernet frames written in the current slot symbol.
@@ -166,7 +169,7 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
 
       // Write random data to the buffers.
       init_eth_buffers_with_rnd_data(frame_buffers, test_data, num_frames);
-      pool.eth_frames_ready(context, frame_buffers);
+      pool.push_frame_buffers(context, frame_buffers);
 
       // Read frame buffers from the pool.
       auto rd_frame_buffers = pool.read_frame_buffers(context);
@@ -184,7 +187,7 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
               << "Data mismatch";
         }
       }
-      pool.eth_frames_sent(context);
+      pool.clear_sent_frame_buffers(context);
     }
     ++slot;
   }
@@ -216,6 +219,7 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
       for (unsigned eaxc = 0; eaxc != num_antennas; ++eaxc) {
         // Get a batch of frame buffers for the current slot symbol.
         span<frame_buffer> frame_buffers = pool.get_frame_buffers(context);
+        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
 
         // Number of Ethernet frames to fill with data.
         unsigned num_frames = test_rgen::uniform_int<unsigned>(1, frame_buffers.size());
@@ -226,7 +230,7 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
         }
         span<std::vector<uint8_t>> test_data_span = {&test_data[test_data.size() - num_frames], num_frames};
         init_eth_buffers_with_rnd_data(frame_buffers, test_data_span, num_frames);
-        pool.eth_frames_ready(context, frame_buffers);
+        pool.push_frame_buffers(context, frame_buffers);
         eax_num_of_packets.push_back(num_frames);
       }
 
@@ -237,13 +241,14 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
       unsigned start_idx = 0;
       for (unsigned i = 0; i < num_antennas; ++i) {
         span<std::vector<uint8_t>> test_data_span     = {&test_data[start_idx], eax_num_of_packets[i]};
-        auto                       eaxc_frame_buffers = rd_frame_buffers.subspan(start_idx, eax_num_of_packets[i]);
+        span<const frame_buffer*>  eaxc_frame_buffers = {&rd_frame_buffers[start_idx], eax_num_of_packets[i]};
         start_idx += eax_num_of_packets[i];
 
         for (unsigned j = 0, e = test_data_span.size(); j != e; ++j) {
           // Size and data should match the randomly generated ones.
           EXPECT_EQ(test_data_span[j].size(), eaxc_frame_buffers[j]->size())
-              << "Size of read packet doesn't match the size of written vector";
+              << "Size of read packet doesn't match the size of written vector, slot=" << slot_count
+              << " symbol=" << symbol;
           if (!test_data_span[j].empty()) {
             ASSERT_TRUE(std::equal(
                 eaxc_frame_buffers[j]->data().begin(), eaxc_frame_buffers[j]->data().end(), test_data_span[j].begin()))
@@ -251,7 +256,7 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
           }
         }
       }
-      pool.eth_frames_sent(context);
+      pool.clear_sent_frame_buffers(context);
     }
     ++slot;
   }

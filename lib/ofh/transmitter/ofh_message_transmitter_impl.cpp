@@ -57,7 +57,7 @@ void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symb
                symbol_index,
                (type == message_type::control_plane) ? "control" : "user");
 
-  pool.eth_frames_sent(context);
+  pool.clear_sent_frame_buffers(context);
 }
 
 void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
