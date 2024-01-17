@@ -186,11 +186,11 @@ variables:
 
         if [ -n "${DPDK_VERSION}" ]; then
           BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-          LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
         fi
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-          LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
         fi
         if [ -n "${CLEAN_BUILD}" ]; then
           BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
@@ -257,6 +257,7 @@ variables:
             exit $ret
           fi
         fi
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
