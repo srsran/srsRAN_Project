@@ -67,84 +67,37 @@ inline void security_nia2(sec_mac&           mac,
                           byte_buffer_view&  msg,
                           uint32_t           msg_len)
 {
-  uint32_t    len             = msg.length();
-  uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
-  uint8_t     M[msg_len_block_8 + 8 + 16];
-  aes_context ctx;
-  uint32_t    i;
-  uint32_t    j;
-  uint32_t    n;
-  uint32_t    pad_bits;
-  uint8_t     const_zero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t     L[16];
-  uint8_t     K1[16];
-  uint8_t     K2[16];
-  uint8_t     T[16];
-  uint8_t     tmp[16];
+  uint32_t                     len = msg.length();
+  int                          ret;
+  mbedtls_cipher_context_t     ctx;
+  const mbedtls_cipher_info_t* cipher_info;
+  cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
+  if (cipher_info == nullptr) {
+    printf("\nmbedtls_cipher_info_from_type failed\n");
+  }
+  mbedtls_cipher_init(&ctx);
 
-  if (msg_len_block_8 <= len) {
-    // Subkey L generation
-    aes_setkey_enc(&ctx, key.data(), 128);
-    aes_crypt_ecb(&ctx, aes_encrypt, const_zero, L);
+  ret = mbedtls_cipher_setup(&ctx, cipher_info);
+  printf("\n mbedtls_cipher_setup returned %d %d\n", ret, ctx.private_cipher_info->private_type);
 
-    // Subkey K1 generation
-    for (i = 0; i < 15; i++) {
-      K1[i] = (L[i] << 1) | ((L[i + 1] >> 7) & 0x01);
-    }
-    K1[15] = L[15] << 1;
-    if (L[0] & 0x80) {
-      K1[15] ^= 0x87;
-    }
+  ret = mbedtls_cipher_cmac_starts(&ctx, key.data(), 128);
+  printf("\n mbedtls_cipher_cmac_starts returned %d\n", ret);
 
-    // Subkey K2 generation
-    for (i = 0; i < 15; i++) {
-      K2[i] = (K1[i] << 1) | ((K1[i + 1] >> 7) & 0x01);
-    }
-    K2[15] = K1[15] << 1;
-    if (K1[0] & 0x80) {
-      K2[15] ^= 0x87;
-    }
-
-    // Construct M
-    memset(M, 0, msg_len_block_8 + 8 + 16);
-    M[0] = (count >> 24) & 0xff;
-    M[1] = (count >> 16) & 0xff;
-    M[2] = (count >> 8) & 0xff;
-    M[3] = count & 0xff;
-    M[4] = (bearer << 3) | (to_number(direction) << 2);
-    for (i = 0; i < msg_len_block_8; i++) {
-      M[8 + i] = msg[i];
-    }
-
-    // MAC generation
-    n = (uint32_t)(ceilf((float)(msg_len_block_8 + 8) / (float)(16)));
-    for (i = 0; i < 16; i++) {
-      T[i] = 0;
-    }
-    for (i = 0; i < n - 1; i++) {
-      for (j = 0; j < 16; j++) {
-        tmp[j] = T[j] ^ M[i * 16 + j];
-      }
-      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
-    }
-    pad_bits = ((msg_len) + 64) % 128;
-    if (pad_bits == 0) {
-      for (j = 0; j < 16; j++) {
-        tmp[j] = T[j] ^ K1[j] ^ M[i * 16 + j];
-      }
-      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
-    } else {
-      pad_bits = (128 - pad_bits) - 1;
-      M[i * 16 + (15 - (pad_bits / 8))] |= 0x1 << (pad_bits % 8);
-      for (j = 0; j < 16; j++) {
-        tmp[j] = T[j] ^ K2[j] ^ M[i * 16 + j];
-      }
-      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
-    }
-
-    for (i = 0; i < 4; i++) {
-      mac[i] = T[i];
-    }
+  byte_buffer_segment_span_range segments = msg.modifiable_segments();
+  for (const auto& segment : segments) {
+    ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size() * 8);
+    printf("\n mbedtls_cipher_cmac_update returned %d\n", ret);
+  }
+  uint8_t tmp_mac[16];
+  ret = mbedtls_cipher_cmac_finish(&ctx, tmp_mac);
+  mbedtls_cipher_free(&ctx);
+  printf("\n mbedtls_cipher_cmac_finish returned %d\n", ret);
+  for (int i = 0; i < 16; ++i) {
+    printf("0x%x ", tmp_mac[i]);
+  }
+  printf("\n");
+  for (int i = 0; i < 4; ++i) {
+    mac[i] = tmp_mac[i];
   }
 }
 
