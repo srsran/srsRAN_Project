@@ -49,7 +49,7 @@ struct bench_params {
   /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
   unsigned nof_repetitions = 100;
   /// \brief Number to DU UEs to consider for benchmark.
-  unsigned nof_ues = 1;
+  std::vector<unsigned> nof_ues = {1};
   /// \brief Set duplex mode (FDD or TDD) to use for benchmark.
   duplex_mode dplx_mode = duplex_mode::FDD;
   /// \brief Set the number of bytes pushed to the DU DL F1-U interface per slot.
@@ -69,10 +69,10 @@ struct bench_params {
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL bytes per slot] [-u UL BSR] [-r Max RBs "
-             "per UE DL grant]\n",
+             "per UE DL grant] [-a CPU affinity]\n",
              prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
-  fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
+  fmt::print("\t-U Nof. DU UEs for each simulation (1 or more) [Default {}]\n", params.nof_ues);
   fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
   fmt::print("\t-d Number of bytes pushed to the DU DL F1-U interface every slot. Setting this value to 0 will "
              "disable DL Tx. [Default {}]\n",
@@ -81,21 +81,34 @@ static void usage(const char* prog, const bench_params& params)
              "[Default {}]\n",
              params.ul_bsr_bytes);
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
-  fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
+  fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
   fmt::print("\t-h Show this message\n");
+}
+
+template <typename Func, typename Ret = decltype(std::declval<Func>()(std::string{}))>
+static std::vector<Ret> tokenize(const std::string& s, Func&& func)
+{
+  std::vector<Ret>   tokens;
+  std::string        token;
+  std::istringstream tokenStream(s);
+  while (std::getline(tokenStream, token, ',')) {
+    tokens.push_back(func(token));
+  }
+  return tokens;
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:c:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
-      case 'U':
-        params.nof_ues = std::strtol(optarg, nullptr, 10);
-        break;
+      case 'U': {
+        params.nof_ues = tokenize(
+            optarg, [](const std::string& token) -> unsigned { return std::strtol(token.c_str(), nullptr, 10); });
+      } break;
       case 'D': {
         if (std::string(optarg) == "FDD") {
           params.dplx_mode = duplex_mode::FDD;
@@ -116,7 +129,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'r':
         params.max_dl_rb_grant = std::strtol(optarg, nullptr, 10);
         break;
-      case 'c': {
+      case 'a': {
         std::string optstr{optarg};
         if (optstr.find(",") != std::string::npos) {
           size_t pos = optstr.find(",");
@@ -1144,13 +1157,17 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_dl_ul_only_rlc_um(bm,
-                              params.nof_ues,
-                              params.dplx_mode,
-                              params.dl_bytes_per_slot,
-                              params.ul_bsr_bytes,
-                              params.max_dl_rb_grant,
-                              params.du_cell_cores);
+  const unsigned nof_scenarios = params.nof_ues.size();
+
+  for (unsigned sim_idx = 0; sim_idx != nof_scenarios; ++sim_idx) {
+    benchmark_dl_ul_only_rlc_um(bm,
+                                params.nof_ues[sim_idx],
+                                params.dplx_mode,
+                                params.dl_bytes_per_slot,
+                                params.ul_bsr_bytes,
+                                params.max_dl_rb_grant,
+                                params.du_cell_cores);
+  }
 
   if (not tracing_filename.empty()) {
     fmt::print("Closing event tracer...\n");
