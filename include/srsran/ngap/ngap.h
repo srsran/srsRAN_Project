@@ -127,7 +127,8 @@ public:
 
   /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
   /// \param[in] msg The ue context release request to transmit.
-  /// \returns True if successful, false otherwise.
+  /// \returns True if if a UeContextReleaseRequest was sent to the AMF, false if the UeContextReleaseRequest could not
+  /// be sent e.g. because the UE didn't exist in the NGAP.
   virtual async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.

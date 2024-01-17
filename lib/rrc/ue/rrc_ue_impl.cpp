@@ -170,7 +170,7 @@ void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
         CORO_AWAIT_VALUE(ngap_release_result,
                          ngap_ctrl_notifier.on_ue_context_release_request({context.ue_index, {}, cause}));
         if (!ngap_release_result) {
-          // If NGAP release failed, release UE from DU processor, RRC and F1AP
+          // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
           CORO_AWAIT(du_processor_notifier.on_ue_context_release_command({context.ue_index, cause}));
         }
 
