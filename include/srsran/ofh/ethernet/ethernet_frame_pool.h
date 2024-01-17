@@ -15,6 +15,7 @@
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/support/units.h"
@@ -62,6 +63,7 @@ public:
   span<const uint8_t> data() const noexcept { return {buffer.data(), sz}; }
 };
 
+/// Context used for accessing specific entry in the \c eth_frame_pool object.
 struct frame_pool_context {
   slot_point          slot;
   unsigned            symbol;
@@ -72,6 +74,13 @@ struct frame_pool_context {
     slot(slot_), symbol(symbol_), type(type_), direction(direction_)
   {
   }
+};
+
+/// Specifies an interval of symbols for which \c eth_frame_pool object must be accessed.
+struct frame_pool_interval {
+  frame_pool_context     context;
+  ofh::slot_symbol_point start;
+  ofh::slot_symbol_point end;
 };
 
 /// Class encapsulating \c ether::frame_buffer buffers used in a circular manner. It is used by \c eth_frame_pool
@@ -186,6 +195,9 @@ class eth_frame_pool
   /// Maximum number of entries contained by the pool, one entry per OFDM symbol, sized to accommodate 20 slots.
   static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * 20L;
 
+  /// Number of symbols in an interval for which an auxiliary vector is pre-allocated to store buffer pointers.
+  static constexpr size_t NUM_INTERVAL_SYMBOL = 8;
+
   /// Pool entry stores three circular arrays for every OFH type (DL C-Plane, UL C-Plane and U-Plane).
   struct pool_entry {
     /// Number of buffers returned for Control-Plane messages at a time.
@@ -272,7 +284,10 @@ class eth_frame_pool
 
 public:
   /// Constructor;
-  eth_frame_pool(units::bytes mtu, unsigned num_of_frames) : pool(NUM_ENTRIES, {mtu, num_of_frames}) {}
+  eth_frame_pool(units::bytes mtu, unsigned num_of_frames) : pool(NUM_ENTRIES, {mtu, num_of_frames})
+  {
+    aux_array.reserve(ofh::MAX_NOF_SUPPORTED_EAXC * num_of_frames * NUM_INTERVAL_SYMBOL);
+  }
 
   /// Returns data buffer from the pool for the given slot and symbol.
   span<frame_buffer> get_frame_buffers(const frame_pool_context& context)
@@ -292,7 +307,7 @@ public:
     p_entry.push_buffers(context, prepared_buffers);
   }
 
-  /// Returns data buffer from the pool to a consumer thread.
+  /// Returns data buffers from the pool to a reader thread given a specific symbol context.
   span<const frame_buffer*> read_frame_buffers(const frame_pool_context& context)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
@@ -301,13 +316,62 @@ public:
     return p_entry.read_buffers(context);
   }
 
-  /// Clear prepared Ethernet frames in the given symbol once it was sent to a gateway (thread-safe).
+  /// Returns data buffers from the pool to a reader thread for an interval of symbols.
+  span<const frame_buffer*> read_frame_buffers(const frame_pool_interval& interval)
+  {
+    if (interval.start > interval.end) {
+      return {};
+    }
+    // Acquire lock before accessing pool entries.
+    std::lock_guard<std::mutex> lock(mutex);
+
+    aux_array.clear();
+    frame_pool_context pool_context = interval.context;
+
+    unsigned distance = (interval.end - interval.start) + 1;
+    for (unsigned i = 0; i != distance; ++i) {
+      ofh::slot_symbol_point tmp_symbol = interval.start + i;
+      pool_context.slot                 = tmp_symbol.get_slot();
+      pool_context.symbol               = tmp_symbol.get_symbol_index();
+
+      pool_entry& p_entry        = get_pool_entry(pool_context.slot, pool_context.symbol);
+      auto        symbol_buffers = p_entry.read_buffers(pool_context);
+      for (const auto& buffer : symbol_buffers) {
+        aux_array.push_back(buffer);
+      }
+    }
+    return aux_array;
+  }
+
+  /// Clears prepared Ethernet frame buffers for the given symbol context.
   void clear_sent_frame_buffers(const frame_pool_context& context)
   {
     pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
     p_entry.clear_buffers(context);
+  }
+
+  /// Clears prepared Ethernet frame buffers for an interval of symbols.
+  void clear_sent_frame_buffers(const frame_pool_interval& interval)
+  {
+    if (interval.start > interval.end) {
+      return;
+    }
+    // Acquire lock before accessing pool entries.
+    std::lock_guard<std::mutex> lock(mutex);
+
+    frame_pool_context pool_context = interval.context;
+
+    unsigned distance = (interval.end - interval.start) + 1;
+    for (unsigned i = 0; i != distance; ++i) {
+      ofh::slot_symbol_point tmp_symbol = interval.start + i;
+      pool_context.slot                 = tmp_symbol.get_slot();
+      pool_context.symbol               = tmp_symbol.get_symbol_index();
+
+      pool_entry& p_entry = get_pool_entry(pool_context.slot, pool_context.symbol);
+      p_entry.clear_buffers(pool_context);
+    }
   }
 
   /// Clear stored buffers associated with the given slot.
@@ -338,6 +402,8 @@ private:
   std::vector<pool_entry> pool;
   /// Mutex protecting buffers read/write counters.
   mutable std::mutex mutex;
+  /// Auxiliary buffer.
+  std::vector<const frame_buffer*> aux_array;
 };
 
 } // namespace ether

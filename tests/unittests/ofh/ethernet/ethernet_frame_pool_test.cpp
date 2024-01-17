@@ -262,6 +262,148 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
   }
 }
 
+// Verify reading the data right after writing it.
+TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
+{
+  // Initialize slot to a random value.
+  slot_point slot(to_numerology_value(scs), 0);
+  unsigned   slots_per_system_frame = slot.nof_slots_per_system_frame();
+  slot += test_rgen::uniform_int<unsigned>(0, slots_per_system_frame);
+
+  unsigned num_antennas = test_rgen::uniform_int<unsigned>(1, ofh::MAX_NOF_SUPPORTED_EAXC);
+
+  /// 1. Test C-Plane (prepare a packet for each antenna in symbol 0 and read back an interval including symbol 0).
+  if (ofh_type == ofh::message_type::control_plane) {
+    ofh::slot_symbol_point test_symbol_point(slot, 0, nof_symbols);
+    ofh::slot_symbol_point start_symbol_point = test_symbol_point - 3U;
+    ofh::slot_symbol_point end_symbol_point   = test_symbol_point + 1U;
+
+    // For C-Plane messages randomly choose the direction.
+    ofh::data_direction direction = static_cast<ofh::data_direction>(test_rgen::uniform_int<unsigned>(
+        static_cast<unsigned>(ofh::data_direction::uplink), static_cast<unsigned>(ofh::data_direction::downlink)));
+
+    ether::frame_pool_context         context(slot, 0, ofh_type, direction);
+    std::vector<std::vector<uint8_t>> test_data;
+
+    for (unsigned eaxc = 0; eaxc != num_antennas; ++eaxc) {
+      // Get span of frame buffers.
+      auto frame_buffers = pool.get_frame_buffers(context);
+      ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+
+      // Fill 1 buffer with random data.
+      test_data.emplace_back();
+      init_eth_buffers_with_rnd_data(frame_buffers, {&test_data[eaxc], 1}, 1);
+      pool.push_frame_buffers(context, frame_buffers);
+    }
+
+    // Create interval and read frame buffers from the pool.
+    ether::frame_pool_interval interval{context, start_symbol_point, end_symbol_point};
+    auto                       rd_frame_buffers = pool.read_frame_buffers(interval);
+    // Make sure we got 1 buffer for each antenna.
+    ASSERT_TRUE(rd_frame_buffers.size() == num_antennas)
+        << "Reading from the pool returned incorrect number of buffers";
+    // Verify data.
+    for (unsigned i = 0; i != num_antennas; ++i) {
+      EXPECT_EQ(test_data[i].size(), rd_frame_buffers[i]->size())
+          << "Size of read packet doesn't match the size of written vector";
+      ASSERT_TRUE(
+          std::equal(rd_frame_buffers[i]->data().begin(), rd_frame_buffers[i]->data().end(), test_data[i].begin()))
+          << "Data mismatch";
+    }
+    pool.clear_sent_frame_buffers(interval);
+
+    // Try to get buffers for the same context and make sure the buffers are available.
+    for (unsigned i = 0; i < 2 * ofh::MAX_NOF_SUPPORTED_EAXC; ++i) {
+      auto frame_buffers = pool.get_frame_buffers(context);
+      ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+      pool.push_frame_buffers(context, frame_buffers);
+    }
+    // Read buffers and push it back without actually using. Verify the pool returns empty vector for the interval.
+    auto frame_buffers = pool.get_frame_buffers(context);
+    pool.push_frame_buffers(context, frame_buffers);
+    rd_frame_buffers = pool.read_frame_buffers(interval);
+    ASSERT_TRUE(rd_frame_buffers.empty()) << "Reading from the pool returned incorrect number of buffers";
+    return;
+  }
+  /// 2. Test U-Plane.
+  ofh::data_direction    direction = ofh::data_direction::downlink;
+  unsigned               symbol_id = test_rgen::uniform_int<unsigned>(0, nof_symbols - 1);
+  ofh::slot_symbol_point middle_symbol_point(slot, symbol_id, nof_symbols);
+  ofh::slot_symbol_point start_symbol_point = middle_symbol_point - 3U;
+  ofh::slot_symbol_point end_symbol_point   = middle_symbol_point + 1U;
+
+  // Fill data for the start symbol in the interval and one symbol in the middle.
+  ether::frame_pool_context context_mid(slot, symbol_id, ofh_type, direction);
+  ether::frame_pool_context context_start(
+      start_symbol_point.get_slot(), start_symbol_point.get_symbol_index(), ofh_type, direction);
+
+  std::vector<std::vector<uint8_t>> test_data_start_symbol;
+  std::vector<std::vector<uint8_t>> test_data_mid_symbol;
+  unsigned                          total_nof_prepared_buffers = 0;
+
+  for (unsigned eaxc = 0; eaxc != num_antennas; ++eaxc) {
+    // Get a batch of frame buffers for the start symbol in the interval.
+    span<frame_buffer> frame_buffers = pool.get_frame_buffers(context_start);
+    ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+
+    // Number of Ethernet frames to fill with data.
+    unsigned num_frames = test_rgen::uniform_int<unsigned>(1, frame_buffers.size());
+    for (unsigned i = 0; i < num_frames; ++i) {
+      test_data_start_symbol.emplace_back();
+    }
+    // Write random data.
+    span<std::vector<uint8_t>> test_data_span = {&test_data_start_symbol[test_data_start_symbol.size() - num_frames],
+                                                 num_frames};
+    init_eth_buffers_with_rnd_data(frame_buffers, test_data_span, num_frames);
+    pool.push_frame_buffers(context_start, frame_buffers);
+    total_nof_prepared_buffers += num_frames;
+
+    // Get a batch of frame buffers for the middle symbol in the interval.
+    frame_buffers = pool.get_frame_buffers(context_mid);
+    ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+
+    num_frames = test_rgen::uniform_int<unsigned>(1, frame_buffers.size());
+    for (unsigned i = 0; i < num_frames; ++i) {
+      test_data_mid_symbol.emplace_back();
+    }
+    test_data_span = {&test_data_mid_symbol[test_data_mid_symbol.size() - num_frames], num_frames};
+    init_eth_buffers_with_rnd_data(frame_buffers, test_data_span, num_frames);
+    pool.push_frame_buffers(context_mid, frame_buffers);
+    total_nof_prepared_buffers += num_frames;
+  }
+
+  // Create interval and read frame buffers from the pool.
+  ether::frame_pool_interval interval{context_mid, start_symbol_point, end_symbol_point};
+
+  auto rd_frame_buffers = pool.read_frame_buffers(interval);
+  // Make sure we got all buffers prepared in the interval.
+  ASSERT_TRUE(rd_frame_buffers.size() == total_nof_prepared_buffers)
+      << "Reading from the pool returned incorrect number of buffers";
+
+  unsigned rd_buffer_idx = 0;
+  for (auto& test_vector : test_data_start_symbol) {
+    // Size and data should match the randomly generated ones.
+    EXPECT_EQ(test_vector.size(), rd_frame_buffers[rd_buffer_idx]->size())
+        << "Size of read packet doesn't match the size of written vector";
+    ASSERT_TRUE(std::equal(rd_frame_buffers[rd_buffer_idx]->data().begin(),
+                           rd_frame_buffers[rd_buffer_idx]->data().end(),
+                           test_vector.begin()))
+        << "Data mismatch";
+    ++rd_buffer_idx;
+  }
+  for (auto& test_vector : test_data_mid_symbol) {
+    // Size and data should match the randomly generated ones.
+    EXPECT_EQ(test_vector.size(), rd_frame_buffers[rd_buffer_idx]->size())
+        << "Size of read packet doesn't match the size of written vector";
+    ASSERT_TRUE(std::equal(rd_frame_buffers[rd_buffer_idx]->data().begin(),
+                           rd_frame_buffers[rd_buffer_idx]->data().end(),
+                           test_vector.begin()))
+        << "Data mismatch";
+    ++rd_buffer_idx;
+  }
+  pool.clear_sent_frame_buffers(interval);
+}
+
 INSTANTIATE_TEST_SUITE_P(EthFramePoolTestSuite,
                          EthFramePoolFixture,
                          ::testing::Combine(::testing::Values(mtu::MTU_9000, mtu::MTU_5000, mtu::MTU_1500),
