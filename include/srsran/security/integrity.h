@@ -67,35 +67,46 @@ inline void security_nia2(sec_mac&           mac,
                           byte_buffer_view&  msg,
                           uint32_t           msg_len)
 {
-  uint32_t                     len = msg.length();
   int                          ret;
   mbedtls_cipher_context_t     ctx;
   const mbedtls_cipher_info_t* cipher_info;
   cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
   if (cipher_info == nullptr) {
-    printf("\nmbedtls_cipher_info_from_type failed\n");
+    return;
   }
   mbedtls_cipher_init(&ctx);
 
   ret = mbedtls_cipher_setup(&ctx, cipher_info);
-  printf("\n mbedtls_cipher_setup returned %d %d\n", ret, ctx.private_cipher_info->private_type);
+  if (ret != 0) {
+    return;
+  }
 
   ret = mbedtls_cipher_cmac_starts(&ctx, key.data(), 128);
-  printf("\n mbedtls_cipher_cmac_starts returned %d\n", ret);
+  if (ret != 0) {
+    return;
+  }
+
+  std::array<uint8_t, 8> preamble = {};
+  preamble[0]                     = (count >> 24) & 0xff;
+  preamble[1]                     = (count >> 16) & 0xff;
+  preamble[2]                     = (count >> 8) & 0xff;
+  preamble[3]                     = count & 0xff;
+  preamble[4]                     = (bearer << 3) | (to_number(direction) << 2);
+  ret                             = mbedtls_cipher_cmac_update(&ctx, preamble.data(), preamble.size());
 
   byte_buffer_segment_span_range segments = msg.modifiable_segments();
   for (const auto& segment : segments) {
-    ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size() * 8);
-    printf("\n mbedtls_cipher_cmac_update returned %d\n", ret);
+    ret = mbedtls_cipher_cmac_update(&ctx, segment.data(), segment.size());
+    if (ret != 0) {
+      return;
+    }
   }
   uint8_t tmp_mac[16];
   ret = mbedtls_cipher_cmac_finish(&ctx, tmp_mac);
-  mbedtls_cipher_free(&ctx);
-  printf("\n mbedtls_cipher_cmac_finish returned %d\n", ret);
-  for (int i = 0; i < 16; ++i) {
-    printf("0x%x ", tmp_mac[i]);
+  if (ret != 0) {
+    return;
   }
-  printf("\n");
+  mbedtls_cipher_free(&ctx);
   for (int i = 0; i < 4; ++i) {
     mac[i] = tmp_mac[i];
   }
