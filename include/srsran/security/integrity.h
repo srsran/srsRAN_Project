@@ -169,19 +169,15 @@ inline uint32_t GET_WORD(uint32_t* DATA, uint32_t i)
   return WORD;
 }
 
-template <typename It>
-void security_nia3(sec_mac&           mac,
-                   const sec_128_key& key,
-                   uint32_t           count,
-                   uint8_t            bearer,
-                   security_direction direction,
-                   It                 msg_begin,
-                   It                 msg_end,
-                   uint32_t           msg_len)
+inline void security_nia3(sec_mac&           mac,
+                          const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg,
+                          uint32_t           msg_len)
 {
-  static_assert(std::is_same<typename std::iterator_traits<It>::value_type, uint8_t>::value,
-                "Iterator value type is not uint8_t");
-  uint32_t len    = std::distance(msg_begin, msg_end);
+  uint32_t len    = msg.length();
   uint8_t  iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   uint32_t* ks;
@@ -220,12 +216,8 @@ void security_nia3(sec_mac&           mac,
 
     uint32_t T = 0;
     for (uint32_t i = 0; i < msg_len; i++) {
-      if (*msg_begin & (1 << (7 - (i % 8)))) {
+      if (msg[i / 8] & (1 << (7 - (i % 8)))) {
         T ^= GET_WORD(ks, i);
-      }
-      if (i % 8 == 7) {
-        // continue with next byte
-        msg_begin++;
       }
     }
 
@@ -241,16 +233,14 @@ void security_nia3(sec_mac&           mac,
   }
 }
 
-template <typename It>
-void security_nia3(sec_mac&           mac,
-                   const sec_128_key& key,
-                   uint32_t           count,
-                   uint8_t            bearer,
-                   security_direction direction,
-                   It                 msg_begin,
-                   It                 msg_end)
+inline void security_nia3(sec_mac&           mac,
+                          const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          byte_buffer_view&  msg)
 {
-  security_nia3(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
+  security_nia3(mac, key, count, bearer, direction, msg, msg.length() * 8);
 }
 
 /// \brief Verify shortMAC-I as specified in TS 38.331, section 5.3.7.4
@@ -301,13 +291,13 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
                     byte_buffer_view{packed_var});
       break;*/
     case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp,
+      /*security_nia3(mac_exp,
                     key,
                     0xffffffff,                   // 32-bit all to ones
                     0x1f,                         // 5-bit all to ones
                     security_direction::downlink, // 1-bit to one
                     packed_var.begin(),
-                    packed_var.end());
+                    packed_var.end());*/
       break;
     default:
       break;

@@ -1109,8 +1109,9 @@ TEST(security_nia3_test, testset1)
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
 
   // Apply integrity check
-  sec_mac mac_out = {};
-  security_nia3(mac_out, key, count, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mac_out), mac_buf);
 }
 
@@ -1136,8 +1137,9 @@ TEST(security_nia3_test, testset2)
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
 
   // Apply integrity check
-  sec_mac mac_out = {};
-  security_nia3(mac_out, key, count, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mac_out), mac_buf);
 }
 
@@ -1164,8 +1166,9 @@ TEST(security_nia3_test, testset3)
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
 
   // Apply integrity check
-  sec_mac mac_out = {};
-  security_nia3(mac_out, key, count, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mac_out), mac_buf);
 }
 
@@ -1196,8 +1199,9 @@ TEST(security_nia3_test, testset4)
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
 
   // Apply integrity check
-  sec_mac mac_out = {};
-  security_nia3(mac_out, key, count, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mac_out), mac_buf);
 }
 
@@ -1236,8 +1240,9 @@ TEST(security_nia3_test, testset5)
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
 
   // Apply integrity check
-  sec_mac mac_out = {};
-  security_nia3(mac_out, key, count, bearer, dir, message.begin(), message.end(), length);
+  byte_buffer_view message_view{message};
+  sec_mac          mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message_view, length);
   EXPECT_EQ(byte_buffer(mac_out), mac_buf);
 }
 

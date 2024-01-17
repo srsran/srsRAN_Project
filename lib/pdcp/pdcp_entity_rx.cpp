@@ -434,7 +434,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
       security_nia2(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
       break;
     default:
       break;
