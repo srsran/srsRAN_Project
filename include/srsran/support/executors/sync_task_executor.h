@@ -21,9 +21,7 @@ namespace srsran {
 template <typename Executor>
 class sync_task_executor final : public task_executor
 {
-  Executor                executor;
-  std::mutex              mutex;
-  std::condition_variable cvar;
+  Executor executor;
 
 public:
   template <typename E>
@@ -33,15 +31,23 @@ public:
 
   bool execute(unique_task task) override
   {
-    bool done = false;
-    bool ret  = get(executor).execute([this, &done, task = std::move(task)]() {
+    std::mutex              mutex;
+    std::condition_variable cvar;
+    bool                    done = false;
+
+    bool ret = get(executor).execute([&mutex, &cvar, &done, task = std::move(task)]() {
       task();
 
       mutex.lock();
       done = true;
-      mutex.unlock();
       cvar.notify_one();
+      mutex.unlock();
     });
+
+    // Nothing to wait for if the task was not enqueued.
+    if (not ret) {
+      return false;
+    }
 
     // Wait for the condition variable to be set.
     std::unique_lock<std::mutex> lock(mutex);
