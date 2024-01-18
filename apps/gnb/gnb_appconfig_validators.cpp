@@ -1197,6 +1197,26 @@ static bool validate_expert_execution_appconfig(const gnb_appconfig& config)
   return true;
 }
 
+static bool validate_pcap_configs(const gnb_appconfig& config)
+{
+  if (config.pcap_cfg.mac.enabled) {
+    for (const auto& cell : config.cells_cfg) {
+      // FIXME don't use just the nof_antennas, but compute MAX PDU size from bandwidth, MCS table, etc.
+      if (cell.cell.nof_antennas_dl >= 2 && config.pcap_cfg.mac.type != "dlt") {
+        fmt::print("Using more than two DL antennas might make the MAC PDU larger than what is supported in the UDP "
+                   "wrapper. Use PCAP DLT type to avoid pcap corruption.\n");
+        return false;
+      }
+      if (cell.cell.nof_antennas_ul >= 2 && config.pcap_cfg.mac.type != "dlt") {
+        fmt::print("Using more than two UL antennas might make the MAC PDU larger than what is supported in the UDP "
+                   "wrapper. Use PCAP DLT type to avoid pcap corruption.\n");
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -1294,6 +1314,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_expert_execution_appconfig(config)) {
+    return false;
+  }
+
+  if (!validate_pcap_configs(config)) {
     return false;
   }
 
