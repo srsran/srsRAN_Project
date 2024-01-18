@@ -27,23 +27,27 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
 
   supported_metrics.emplace(
       "RRU.PrbAvailDl",
-      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl});
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl});
 
   supported_metrics.emplace(
       "RRU.PrbAvailUl",
-      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul});
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul});
 
   supported_metrics.emplace(
       "RRU.PrbTotDl",
-      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl});
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl});
 
   supported_metrics.emplace(
       "RRU.PrbTotUl",
-      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul});
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul});
 
   supported_metrics.emplace("DRB.RlcSduDelayDl",
                             e2sm_kpm_supported_metric_t{
-                                NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency});
+                                NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency});
 
   supported_metrics.emplace(
       "DRB.PacketSuccessRateUlgNBUu",
