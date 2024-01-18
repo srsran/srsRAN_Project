@@ -43,7 +43,7 @@ TEST_F(cu_cp_connectivity_test, when_cu_cp_starts_then_it_initiates_ng_setup_pro
   get_amf().enqueue_next_tx_pdu(ng_setup_resp);
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  get_cu_cp().start();
+  ASSERT_TRUE(get_cu_cp().start());
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
@@ -60,7 +60,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_amf_connec
   get_amf().enqueue_next_tx_pdu(ng_setup_fail);
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  get_cu_cp().start();
+  ASSERT_FALSE(get_cu_cp().start());
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";

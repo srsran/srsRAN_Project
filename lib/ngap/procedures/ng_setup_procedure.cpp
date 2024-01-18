@@ -39,7 +39,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized", name());
+  logger.debug("\"{}\" started...", name());
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
@@ -97,7 +97,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   ngap_ng_setup_result res{};
 
   if (transaction_sink.successful()) {
-    logger.debug("\"{}\" finalized", name());
+    logger.info("\"{}\" finished successfully", name());
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
@@ -107,7 +107,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
 
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
-    logger.debug("\"{}\" failed with cause={}", name(), get_cause_str(ng_fail->cause));
+    logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), get_cause_str(ng_fail->cause));
 
     fill_ngap_ng_setup_result(res, ng_fail);
   }

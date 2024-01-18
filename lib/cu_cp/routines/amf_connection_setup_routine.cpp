@@ -8,20 +8,20 @@
  *
  */
 
-#include "initial_cu_cp_setup_routine.h"
+#include "amf_connection_setup_routine.h"
 #include "srsran/ngap/ngap_setup.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_routine::initial_cu_cp_setup_routine(const ngap_configuration&       ngap_config_,
-                                                         cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                                         ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
+amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration&       ngap_config_,
+                                                           cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
+                                                           ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
   ngap_cfg(ngap_config_), ngap_ctrl_notifier(ngap_ctrl_notifier_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
 {
 }
 
-void initial_cu_cp_setup_routine::operator()(coro_context<async_task<void>>& ctx)
+void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -33,10 +33,10 @@ void initial_cu_cp_setup_routine::operator()(coro_context<async_task<void>>& ctx
 
   // TODO process response
 
-  CORO_RETURN();
+  CORO_RETURN(variant_holds_alternative<ngap_ng_setup_response>(result_msg));
 }
 
-ngap_ng_setup_request initial_cu_cp_setup_routine::fill_ng_setup_request()
+ngap_ng_setup_request amf_connection_setup_routine::fill_ng_setup_request()
 {
   ngap_ng_setup_request request;
 
@@ -72,7 +72,7 @@ ngap_ng_setup_request initial_cu_cp_setup_routine::fill_ng_setup_request()
   return request;
 }
 
-async_task<ngap_ng_setup_result> initial_cu_cp_setup_routine::send_ng_setup_request()
+async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_request()
 {
   // Prepare request to send to ng.
   ngap_ng_setup_request request = fill_ng_setup_request();
@@ -82,7 +82,7 @@ async_task<ngap_ng_setup_result> initial_cu_cp_setup_routine::send_ng_setup_requ
   return ngap_ctrl_notifier.on_ng_setup_request(request);
 }
 
-void initial_cu_cp_setup_routine::handle_ng_setup_result()
+void amf_connection_setup_routine::handle_ng_setup_result()
 {
   if (variant_holds_alternative<ngap_ng_setup_response>(result_msg)) {
     cu_cp_ngap_ev_notifier.on_amf_connection();

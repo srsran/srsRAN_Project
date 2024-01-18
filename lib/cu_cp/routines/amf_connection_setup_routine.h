@@ -18,14 +18,15 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class initial_cu_cp_setup_routine
+/// \brief Handles the setup of the connection between the CU-CP and AMF, handling in particular the NG Setup procedure.
+class amf_connection_setup_routine
 {
 public:
-  initial_cu_cp_setup_routine(const ngap_configuration&       ngap_cfg_,
-                              cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                              ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
+  amf_connection_setup_routine(const ngap_configuration&       ngap_cfg_,
+                               cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
+                               ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<bool>>& ctx);
 
 private:
   ngap_ng_setup_request            fill_ng_setup_request();

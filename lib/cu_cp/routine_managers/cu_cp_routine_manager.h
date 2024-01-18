@@ -27,10 +27,10 @@ namespace srs_cu_cp {
 class cu_cp_routine_manager
 {
 public:
-  explicit cu_cp_routine_manager(cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                 ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_,
-                                 ue_task_scheduler&              ue_task_sched_);
+  explicit cu_cp_routine_manager(ue_task_scheduler& ue_task_sched_);
   ~cu_cp_routine_manager() = default;
+
+  bool schedule_async_task(async_task<void> task);
 
   void start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg);
 
@@ -43,9 +43,7 @@ public:
                                 srslog::basic_logger&           logger);
 
 private:
-  cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
-  ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
-  ue_task_scheduler&              ue_task_sched;
+  ue_task_scheduler& ue_task_sched;
 
   // cu-cp task event loop
   fifo_async_task_scheduler main_ctrl_loop;

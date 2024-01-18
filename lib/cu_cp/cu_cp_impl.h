@@ -27,6 +27,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "amf_connection_manager/amf_connection_manager.h"
 #include <memory>
 #include <unordered_map>
 
@@ -43,7 +44,7 @@ public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
   ~cu_cp_impl() override;
 
-  void start() override;
+  bool start() override;
   void stop() override;
 
   // CU-CP CU-UP interface
@@ -168,7 +169,10 @@ private:
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
 
-  std::unique_ptr<cu_cp_routine_manager> routine_mng;
+  cu_cp_routine_manager routine_mng;
+
+  // Handler of the connection to the AMF.
+  std::unique_ptr<amf_connection_manager> amf_conn_mng;
 
   std::atomic<bool> amf_connected = {false};
 

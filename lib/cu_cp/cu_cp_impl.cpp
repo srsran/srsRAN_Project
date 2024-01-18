@@ -48,7 +48,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              amf_connected,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP"))
+  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
+  routine_mng(ue_task_sched)
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -73,7 +74,9 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
-  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, ue_task_sched);
+  // Instantiate CU-CP AMF connection handler.
+  amf_conn_mng =
+      std::make_unique<amf_connection_manager>(routine_mng, cfg.ngap_config, ngap_adapter, ngap_cu_cp_ev_notifier);
 
   // Start statistics report timer
   statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
@@ -87,26 +90,20 @@ cu_cp_impl::~cu_cp_impl()
   stop();
 }
 
-void cu_cp_impl::start()
+bool cu_cp_impl::start()
 {
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
+  std::promise<bool> p;
+  std::future<bool>  fut = p.get_future();
 
   if (not cfg.cu_cp_executor->execute([this, &p]() {
-        // start NG setup procedure.
-        routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
-        p.set_value();
+        // start AMF connection procedure.
+        amf_conn_mng->connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup.");
   }
 
   // Block waiting for CU-CP setup to complete.
-  fut.wait();
-
-  // TODO: wait for setup procedure to complete shouldn't depend on a sleep.
-  for (unsigned i = 0; i != 100 and not amf_is_connected(); ++i) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
+  return fut.get();
 }
 
 void cu_cp_impl::stop()
@@ -283,13 +280,13 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 {
   du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
-  routine_mng->start_ue_removal_routine(ue_index,
-                                        rrc_du_adapters.at(du_index),
-                                        e1ap_adapters.at(cu_up_index),
-                                        f1ap_adapters.at(du_index),
-                                        ngap_adapter,
-                                        ue_mng,
-                                        logger);
+  routine_mng.start_ue_removal_routine(ue_index,
+                                       rrc_du_adapters.at(du_index),
+                                       e1ap_adapters.at(cu_up_index),
+                                       f1ap_adapters.at(du_index),
+                                       ngap_adapter,
+                                       ue_mng,
+                                       logger);
 }
 
 // private

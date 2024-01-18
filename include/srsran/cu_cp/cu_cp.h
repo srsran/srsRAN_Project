@@ -84,7 +84,8 @@ public:
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
   /// \brief Initiate NG Setup Procedure and wait for AMF response.
-  virtual void start() = 0;
+  /// \return Returns true if the connection to the AMF was successful. False, otherwise.
+  virtual bool start() = 0;
 
   /// \brief Stop the CU-CP operation.
   virtual void stop() = 0;

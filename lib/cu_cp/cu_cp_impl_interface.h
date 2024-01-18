@@ -255,8 +255,6 @@ public:
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()   = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() = 0;
   virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() = 0;
-
-  virtual void start() = 0;
 };
 
 } // namespace srs_cu_cp
