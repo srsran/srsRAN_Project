@@ -17,6 +17,7 @@
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "amf_connection_manager/amf_connection_manager.h"
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
@@ -27,7 +28,6 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "amf_connection_manager/amf_connection_manager.h"
 #include <memory>
 #include <unordered_map>
 
@@ -55,7 +55,7 @@ public:
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
-  bool amf_is_connected() override { return amf_connected; };
+  bool amf_is_connected() override { return amf_connected and amf_conn_mng->is_amf_connected(); };
 
   // CU-UP handler
   void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
@@ -174,6 +174,7 @@ private:
   // Handler of the connection to the AMF.
   std::unique_ptr<amf_connection_manager> amf_conn_mng;
 
+  // TEMP: remove this variable and use only amf connection handler.
   std::atomic<bool> amf_connected = {false};
 
   unique_timer statistics_report_timer;

@@ -38,6 +38,9 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
     CORO_AWAIT_VALUE(bool success,
                      launch_async<amf_connection_setup_routine>(ngap_cfg, ngap_ctrl_notifier, cu_cp_ngap_ev_notifier));
 
+    // Update AMF connection handler state.
+    amf_connected = success;
+
     // Signal through the promise the result of the connection setup.
     if (p != nullptr) {
       p->set_value(success);

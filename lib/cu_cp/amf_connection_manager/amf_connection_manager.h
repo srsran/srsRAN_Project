@@ -34,11 +34,15 @@ public:
   /// async task and the caller side.
   void connect_to_amf(std::promise<bool>* completion_signal = nullptr);
 
+  bool is_amf_connected() { return amf_connected.load(std::memory_order_relaxed); }
+
 private:
   cu_cp_routine_manager&          routine_manager;
   const ngap_configuration&       ngap_cfg;
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
+
+  std::atomic<bool> amf_connected{false};
 };
 
 } // namespace srs_cu_cp
