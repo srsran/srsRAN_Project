@@ -186,7 +186,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     // > Check if the configuration with SR on the same slot as CSI is allowed.
 
     // Set temporarily CSI report with a default PUCCH_res_id.
-    target_csi_cfg.pucch_csi_res_list.front().pucch_res_id.first = default_pucch_cfg.pucch_res_list.size() - 1U;
+    target_csi_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
 
     const unsigned csi_period          = csi_report_periodicity_to_uint(target_csi_cfg.report_slot_period);
     const unsigned lowest_period       = std::min(sr_periodicity_to_slot(sr_candidate.period), csi_period);
@@ -248,13 +248,13 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
 {
   auto& sr_to_deallocate = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.front();
   cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_res_offset_free_list.emplace_back(
-      pucch_res_idx_to_sr_du_res_idx(sr_to_deallocate.pucch_res_id.first), sr_to_deallocate.offset);
+      pucch_res_idx_to_sr_du_res_idx(sr_to_deallocate.pucch_res_id.cell_res_id), sr_to_deallocate.offset);
 
   if (cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
     auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
     cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_res_offset_free_list.emplace_back(
-        pucch_res_idx_to_csi_du_res_idx(target_csi_cfg.pucch_csi_res_list.front().pucch_res_id.first),
+        pucch_res_idx_to_csi_du_res_idx(target_csi_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id),
         target_csi_cfg.report_slot_offset);
   }
 }

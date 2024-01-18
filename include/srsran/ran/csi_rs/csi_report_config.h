@@ -68,7 +68,7 @@ struct csi_report_config {
     bwp_id_t ul_bwp;
     /// Defines the PUCCH resource ID used for this config report. Ref to \ref srsran::pucch_res_id_t for the
     /// documentation.
-    std::pair<unsigned, unsigned> pucch_res_id = {0, 0};
+    pucch_res_id_t pucch_res_id = {0, 0};
 
     bool operator==(const pucch_csi_resource& rhs) const
     {

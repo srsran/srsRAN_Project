@@ -224,7 +224,8 @@ TEST_F(test_pucch_resource_manager, allocate_1_ue_res_f2)
       res_manager.reserve_next_f2_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
 
   ASSERT_EQ(0, record.pucch_res_indicator);
-  const unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  const unsigned res_idx_from_list =
+      pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[res_idx_from_list], record.pucch_res);
 }
 
@@ -236,7 +237,8 @@ TEST_F(test_pucch_resource_manager, allocate_2_ue_res_f2)
       res_manager.reserve_next_f2_harq_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
 
   ASSERT_EQ(1, record.pucch_res_indicator);
-  const unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  const unsigned res_idx_from_list =
+      pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[res_idx_from_list], record.pucch_res);
 }
 
@@ -248,7 +250,8 @@ TEST_F(test_pucch_resource_manager, allocate_3_ue_res_f2)
       res_manager.reserve_next_f2_harq_res_available(sl_tx, to_rnti(0x4603), pucch_cfg);
 
   ASSERT_EQ(2, record.pucch_res_indicator);
-  const unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  const unsigned res_idx_from_list =
+      pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[res_idx_from_list], record.pucch_res);
 }
 
@@ -303,7 +306,8 @@ TEST_F(test_pucch_resource_manager, get_format2_different_slot)
 
   // Expect that pucch_res_indicator = 0 is returned, as the UE 0x4602 is allocated in a different slot to UE 0x4601.
   ASSERT_EQ(0, record.pucch_res_indicator);
-  const unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  const unsigned res_idx_from_list =
+      pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[res_idx_from_list], record.pucch_res);
 }
 
@@ -314,7 +318,7 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_f2)
       res_manager.reserve_next_f2_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
 
   ASSERT_EQ(0, record.pucch_res_indicator);
-  unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  unsigned res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[res_idx_from_list], record.pucch_res);
 
   // Release the resource and verify the UE does not hold it anymore.
@@ -325,7 +329,7 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_f2)
   const pucch_harq_resource_alloc_record reallocation =
       res_manager.reserve_next_f2_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
   ASSERT_EQ(0, reallocation.pucch_res_indicator);
-  res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].first;
+  res_idx_from_list = pucch_cfg.pucch_res_set[1].pucch_res_id_list[record.pucch_res_indicator].cell_res_id;
   ASSERT_EQ(record.pucch_res, reallocation.pucch_res);
 }
 
@@ -579,7 +583,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f1_only)
 
   ASSERT_EQ(0, record_ue_0.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[0], record_ue_0.pucch_res);
-  ASSERT_EQ(0, record_ue_0.pucch_res->res_id.first);
+  ASSERT_EQ(0, record_ue_0.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_1_idx = 1;
   const pucch_harq_resource_alloc_record record_ue_1 =
@@ -587,7 +591,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f1_only)
 
   ASSERT_EQ(0, record_ue_1.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[0], record_ue_1.pucch_res);
-  ASSERT_EQ(9, record_ue_1.pucch_res->res_id.first);
+  ASSERT_EQ(9, record_ue_1.pucch_res->res_id.cell_res_id);
 
   // UE 2 and 3 will get assigned the different pucch_res_indicator from UE 0 and 1, as they share the PUCCH configs.
   const unsigned                         ue_2_idx = 2;
@@ -595,7 +599,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f1_only)
       res_manager.reserve_next_f1_harq_res_available(sl_tx, ues[ue_2_idx]->cnrti, ues[ue_2_idx]->get_pucch_cfg());
   ASSERT_EQ(1, record_ue_2.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_2_idx]->get_pucch_cfg().pucch_res_list[1], record_ue_2.pucch_res);
-  ASSERT_EQ(1, record_ue_2.pucch_res->res_id.first);
+  ASSERT_EQ(1, record_ue_2.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_3_idx = 3;
   const pucch_harq_resource_alloc_record record_ue_3 =
@@ -603,7 +607,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f1_only)
 
   ASSERT_EQ(1, record_ue_3.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_3_idx]->get_pucch_cfg().pucch_res_list[1], record_ue_3.pucch_res);
-  ASSERT_EQ(10, record_ue_3.pucch_res->res_id.first);
+  ASSERT_EQ(10, record_ue_3.pucch_res->res_id.cell_res_id);
 }
 
 TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f2_only)
@@ -618,7 +622,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f2_only)
   ASSERT_EQ(0, record_ue_0.pucch_res_indicator);
   // The first F2 resource is has index 9 within the UE pucch_res_list (after 8+1 PUCCH F1).
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[9], record_ue_0.pucch_res);
-  ASSERT_EQ(18, record_ue_0.pucch_res->res_id.first);
+  ASSERT_EQ(18, record_ue_0.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_1_idx = 1;
   const pucch_harq_resource_alloc_record record_ue_1 =
@@ -627,7 +631,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f2_only)
   ASSERT_EQ(0, record_ue_1.pucch_res_indicator);
   // The first F2 resource is has index 9 within the UE pucch_res_list (after 8+1 PUCCH F1).
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[9], record_ue_1.pucch_res);
-  ASSERT_EQ(27, record_ue_1.pucch_res->res_id.first);
+  ASSERT_EQ(27, record_ue_1.pucch_res->res_id.cell_res_id);
 
   // UE 2 and 3 will get assigned the different pucch_res_indicator from UE 0 and 1, as they share the PUCCH configs.
   const unsigned                         ue_2_idx = 2;
@@ -636,7 +640,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f2_only)
   ASSERT_EQ(1, record_ue_2.pucch_res_indicator);
   // The second F2 resource is has index 10 within the UE pucch_res_list (first 8+1 PUCCH F1, then 1 F2).
   ASSERT_EQ(&ues[ue_2_idx]->get_pucch_cfg().pucch_res_list[10], record_ue_2.pucch_res);
-  ASSERT_EQ(19, record_ue_2.pucch_res->res_id.first);
+  ASSERT_EQ(19, record_ue_2.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_3_idx = 3;
   const pucch_harq_resource_alloc_record record_ue_3 =
@@ -645,7 +649,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_f2_only)
   ASSERT_EQ(1, record_ue_3.pucch_res_indicator);
   // The second F2 resource is has index 10 within the UE pucch_res_list (first 8+1 PUCCH F1, then 1 F2).
   ASSERT_EQ(&ues[ue_3_idx]->get_pucch_cfg().pucch_res_list[10], record_ue_3.pucch_res);
-  ASSERT_EQ(28, record_ue_3.pucch_res->res_id.first);
+  ASSERT_EQ(28, record_ue_3.pucch_res->res_id.cell_res_id);
 }
 
 TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_fetch_release)
@@ -659,7 +663,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_fetch_releas
 
   ASSERT_EQ(0, record_ue_0.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[0], record_ue_0.pucch_res);
-  ASSERT_EQ(0, record_ue_0.pucch_res->res_id.first);
+  ASSERT_EQ(0, record_ue_0.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_1_idx = 1;
   const pucch_harq_resource_alloc_record record_ue_1 =
@@ -667,7 +671,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_fetch_releas
 
   ASSERT_EQ(0, record_ue_1.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[0], record_ue_1.pucch_res);
-  ASSERT_EQ(9, record_ue_1.pucch_res->res_id.first);
+  ASSERT_EQ(9, record_ue_1.pucch_res->res_id.cell_res_id);
 
   const int res_indicator_ue_0 =
       res_manager.fetch_f1_pucch_res_indic(sl_tx, ues[ue_0_idx]->cnrti, ues[ue_0_idx]->get_pucch_cfg());
@@ -698,7 +702,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_fetch_releas
   ASSERT_EQ(0, record_ue_0.pucch_res_indicator);
   // The first F2 resource is has index 9 within the UE pucch_res_list (after 8+1 PUCCH F1).
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[9], record_ue_0.pucch_res);
-  ASSERT_EQ(18, record_ue_0.pucch_res->res_id.first);
+  ASSERT_EQ(18, record_ue_0.pucch_res->res_id.cell_res_id);
 
   const unsigned                         ue_1_idx = 1;
   const pucch_harq_resource_alloc_record record_ue_1 =
@@ -707,7 +711,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_fetch_releas
   ASSERT_EQ(0, record_ue_1.pucch_res_indicator);
   // The first F2 resource is has index 9 within the UE pucch_res_list (after 8+1 PUCCH F1).
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[9], record_ue_1.pucch_res);
-  ASSERT_EQ(27, record_ue_1.pucch_res->res_id.first);
+  ASSERT_EQ(27, record_ue_1.pucch_res->res_id.cell_res_id);
 
   const int res_indicator_ue_0 =
       res_manager.fetch_f2_pucch_res_indic(sl_tx, ues[ue_0_idx]->cnrti, ues[ue_0_idx]->get_pucch_cfg());
@@ -736,14 +740,14 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_specific_f2)
       res_manager.reserve_specific_format2_res(sl_tx, ues[ue_0_idx]->cnrti, 5, ues[ue_0_idx]->get_pucch_cfg());
 
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[14], res_ue_0);
-  ASSERT_EQ(23, res_ue_0->res_id.first);
+  ASSERT_EQ(23, res_ue_0->res_id.cell_res_id);
 
   const unsigned        ue_1_idx = 1;
   const pucch_resource* res_ue_1 =
       res_manager.reserve_specific_format2_res(sl_tx, ues[ue_1_idx]->cnrti, 5, ues[ue_1_idx]->get_pucch_cfg());
 
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[14], res_ue_1);
-  ASSERT_EQ(32, res_ue_1->res_id.first);
+  ASSERT_EQ(32, res_ue_1->res_id.cell_res_id);
 
   // Try to allocate the same PUCCH resource (already reserved to UE 0 and 1) and check that the allocation fails.
   const unsigned        ue_2_idx = 2;
@@ -785,7 +789,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_8_ues_2_cfgs_allocate_all_resou
       res_manager.reserve_next_f1_harq_res_available(sl_tx, ues[ue_6_idx]->cnrti, ues[ue_6_idx]->get_pucch_cfg());
   ASSERT_EQ(1, record_ue_6.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_6_idx]->get_pucch_cfg().pucch_res_list[1], record_ue_6.pucch_res);
-  ASSERT_EQ(1, record_ue_6.pucch_res->res_id.first);
+  ASSERT_EQ(1, record_ue_6.pucch_res->res_id.cell_res_id);
 
   ASSERT_TRUE(res_manager.release_harq_f1_resource(sl_tx, ues[3]->cnrti, ues[3]->get_pucch_cfg()));
   const unsigned ue_7_idx = 7;
@@ -793,7 +797,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_8_ues_2_cfgs_allocate_all_resou
       res_manager.reserve_next_f1_harq_res_available(sl_tx, ues[ue_7_idx]->cnrti, ues[ue_7_idx]->get_pucch_cfg());
   ASSERT_EQ(1, record_ue_7.pucch_res_indicator);
   ASSERT_EQ(&ues[ue_7_idx]->get_pucch_cfg().pucch_res_list[1], record_ue_7.pucch_res);
-  ASSERT_EQ(5, record_ue_7.pucch_res->res_id.first);
+  ASSERT_EQ(5, record_ue_7.pucch_res->res_id.cell_res_id);
 }
 
 TEST_F(test_pucch_res_manager_multiple_cfg, test_8_ues_2_cfgs_allocate_all_resources_f2)
@@ -827,7 +831,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_8_ues_2_cfgs_allocate_all_resou
   // F1, then 1 F2).
   ASSERT_EQ(&ues[ue_6_idx]->get_pucch_cfg().pucch_res_list[5], record_ue_6.pucch_res);
   // The F2 resource corresponding to pucch_res_indicator = 1 has res ID 9.
-  ASSERT_EQ(9, record_ue_6.pucch_res->res_id.first);
+  ASSERT_EQ(9, record_ue_6.pucch_res->res_id.cell_res_id);
 
   ASSERT_TRUE(res_manager.release_harq_f2_resource(sl_tx, ues[3]->cnrti, ues[3]->get_pucch_cfg()));
   const unsigned ue_7_idx = 7;
@@ -838,7 +842,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_8_ues_2_cfgs_allocate_all_resou
   // F1, then 1 F2).
   ASSERT_EQ(&ues[ue_7_idx]->get_pucch_cfg().pucch_res_list[5], record_ue_7.pucch_res);
   // The F2 resource corresponding to pucch_res_indicator = 1 has res ID 13.
-  ASSERT_EQ(13, record_ue_7.pucch_res->res_id.first);
+  ASSERT_EQ(13, record_ue_7.pucch_res->res_id.cell_res_id);
 }
 
 TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_sr)
@@ -850,7 +854,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_sr)
       res_manager.reserve_sr_res_available(sl_tx, ues[0]->cnrti, ues[0]->get_pucch_cfg());
   ASSERT_EQ(&ues[0]->get_pucch_cfg().pucch_res_list[8], sr_resource);
   ASSERT_EQ(nullptr, res_manager.reserve_sr_res_available(sl_tx, ues[2]->cnrti, ues[2]->get_pucch_cfg()));
-  ASSERT_EQ(8, sr_resource->res_id.first);
+  ASSERT_EQ(8, sr_resource->res_id.cell_res_id);
 
   // Release resource and verify it was successful.
   ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, ues[0]->cnrti, ues[0]->get_pucch_cfg()));
@@ -859,13 +863,13 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_sr)
   const pucch_resource* sr_resource_ue2 =
       res_manager.reserve_sr_res_available(sl_tx, ues[2]->cnrti, ues[2]->get_pucch_cfg());
   ASSERT_EQ(&ues[2]->get_pucch_cfg().pucch_res_list[8], sr_resource_ue2);
-  ASSERT_EQ(8, sr_resource_ue2->res_id.first);
+  ASSERT_EQ(8, sr_resource_ue2->res_id.cell_res_id);
 
   const pucch_resource* sr_resource_ue1 =
       res_manager.reserve_sr_res_available(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg());
   ASSERT_EQ(&ues[1]->get_pucch_cfg().pucch_res_list[8], sr_resource_ue1);
   ASSERT_EQ(nullptr, res_manager.reserve_sr_res_available(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg()));
-  ASSERT_EQ(17, sr_resource_ue1->res_id.first);
+  ASSERT_EQ(17, sr_resource_ue1->res_id.cell_res_id);
 
   // Release resource and verify it was successful.
   ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg()));
@@ -874,7 +878,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_sr)
   const pucch_resource* sr_resource_ue3 =
       res_manager.reserve_sr_res_available(sl_tx, ues[3]->cnrti, ues[3]->get_pucch_cfg());
   ASSERT_EQ(&ues[3]->get_pucch_cfg().pucch_res_list[8], sr_resource_ue3);
-  ASSERT_EQ(17, sr_resource_ue3->res_id.first);
+  ASSERT_EQ(17, sr_resource_ue3->res_id.cell_res_id);
 }
 
 TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
@@ -885,7 +889,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
   const pucch_resource* csi_resource = res_manager.reserve_csi_resource(sl_tx, ues[0]->cnrti, ues[0]->ue_cell_cfg);
   ASSERT_EQ(&ues[0]->get_pucch_cfg().pucch_res_list[17], csi_resource);
   ASSERT_EQ(nullptr, res_manager.reserve_csi_resource(sl_tx, ues[2]->cnrti, ues[2]->ue_cell_cfg));
-  ASSERT_EQ(26, csi_resource->res_id.first);
+  ASSERT_EQ(26, csi_resource->res_id.cell_res_id);
   // Test fetch CSI operation.
   ASSERT_EQ(csi_resource, res_manager.fetch_csi_pucch_res_config(sl_tx, ues[0]->cnrti, ues[0]->ue_cell_cfg));
   ASSERT_EQ(nullptr, res_manager.fetch_csi_pucch_res_config(sl_tx, ues[2]->cnrti, ues[2]->ue_cell_cfg));
@@ -896,12 +900,12 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
   // Allocate SR to another UE and verify it is assigned a resource.
   const pucch_resource* csi_resource_ue2 = res_manager.reserve_csi_resource(sl_tx, ues[2]->cnrti, ues[2]->ue_cell_cfg);
   ASSERT_EQ(&ues[2]->get_pucch_cfg().pucch_res_list[17], csi_resource_ue2);
-  ASSERT_EQ(26, csi_resource_ue2->res_id.first);
+  ASSERT_EQ(26, csi_resource_ue2->res_id.cell_res_id);
 
   const pucch_resource* csi_resource_ue1 = res_manager.reserve_csi_resource(sl_tx, ues[1]->cnrti, ues[1]->ue_cell_cfg);
   ASSERT_EQ(&ues[1]->get_pucch_cfg().pucch_res_list[17], csi_resource_ue1);
   ASSERT_EQ(nullptr, res_manager.reserve_csi_resource(sl_tx, ues[3]->cnrti, ues[3]->ue_cell_cfg));
-  ASSERT_EQ(35, csi_resource_ue1->res_id.first);
+  ASSERT_EQ(35, csi_resource_ue1->res_id.cell_res_id);
   // Test fetch CSI operation.
   ASSERT_EQ(csi_resource_ue1, res_manager.fetch_csi_pucch_res_config(sl_tx, ues[1]->cnrti, ues[1]->ue_cell_cfg));
   ASSERT_EQ(nullptr, res_manager.fetch_csi_pucch_res_config(sl_tx, ues[3]->cnrti, ues[3]->ue_cell_cfg));
@@ -912,5 +916,5 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
   // Allocate SR to another UE and verify it is assigned a resource.
   const pucch_resource* sr_resource_ue3 = res_manager.reserve_csi_resource(sl_tx, ues[3]->cnrti, ues[3]->ue_cell_cfg);
   ASSERT_EQ(&ues[3]->get_pucch_cfg().pucch_res_list[17], sr_resource_ue3);
-  ASSERT_EQ(35, sr_resource_ue3->res_id.first);
+  ASSERT_EQ(35, sr_resource_ue3->res_id.cell_res_id);
 }

@@ -147,13 +147,6 @@ struct pucch_format_4_cfg {
   bool operator!=(const pucch_format_4_cfg& rhs) const { return !(rhs == *this); }
 };
 
-/// \brief Defines a couple of PUCCH resource IDs, the cell's and UE's resource PUCCH resource ID, respectively.
-/// The first element is the PUCCH cell resource ID and is used by the DU and by the scheduler to identify the
-/// PUCCH resource.
-/// The second element corresponds to \c pucch-ResourceId, as part of \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
-/// The second element is used by the DU only to populate the ASN1 message, while it's not used by the scheduler.
-using pucch_res_id_t = std::pair<unsigned, unsigned>;
-
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
   pucch_res_id_t                                                                            res_id = {0, 0};

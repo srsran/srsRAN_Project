@@ -592,15 +592,15 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
     const auto& cell_res = res_list[ue_f1_cnt + f1_idx_offset];
 
     // Add PUCCH resource to pucch_res_list.
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = {cell_res.res_id.first, ue_pucch_res_id},
-                                                         .starting_prb   = cell_res.starting_prb,
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id       = {cell_res.res_id.cell_res_id, ue_pucch_res_id},
+                                                         .starting_prb = cell_res.starting_prb,
                                                          .second_hop_prb = cell_res.second_hop_prb,
                                                          .format         = cell_res.format,
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
     pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_id_list.emplace_back(
-        std::pair<unsigned, unsigned>{cell_res.res_id.first, ue_pucch_res_id});
+        pucch_res_id_t{cell_res.res_id.cell_res_id, ue_pucch_res_id});
 
     // Increment the PUCCH resource ID for ASN1 message.
     ++ue_pucch_res_id;
@@ -610,12 +610,12 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
   const unsigned sr_res_idx =
       nof_ue_pucch_f1_res_harq.to_uint() * nof_harq_pucch_sets + (du_sr_res_idx % nof_cell_pucch_f1_res_sr);
   const auto& sr_cell_res = res_list[sr_res_idx];
-  pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = {sr_cell_res.res_id.first, ue_pucch_res_id},
+  pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id = {sr_cell_res.res_id.cell_res_id, ue_pucch_res_id},
                                                        .starting_prb   = sr_cell_res.starting_prb,
                                                        .second_hop_prb = sr_cell_res.second_hop_prb,
                                                        .format         = sr_cell_res.format,
                                                        .format_params  = sr_cell_res.format_params});
-  pucch_cfg.sr_res_list.front().pucch_res_id = std::pair<unsigned, unsigned>{sr_cell_res.res_id.first, ue_pucch_res_id};
+  pucch_cfg.sr_res_list.front().pucch_res_id = pucch_res_id_t{sr_cell_res.res_id.cell_res_id, ue_pucch_res_id};
   // Increment the PUCCH resource ID for ASN1 message.
   ++ue_pucch_res_id;
 
@@ -624,15 +624,15 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
       tot_nof_cell_f1_res + (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_res_harq.to_uint();
   for (unsigned ue_f2_cnt = 0; ue_f2_cnt < nof_ue_pucch_f2_res_harq.to_uint(); ++ue_f2_cnt) {
     const auto& cell_res = res_list[f2_idx_offset + ue_f2_cnt];
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = {cell_res.res_id.first, ue_pucch_res_id},
-                                                         .starting_prb   = cell_res.starting_prb,
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id       = {cell_res.res_id.cell_res_id, ue_pucch_res_id},
+                                                         .starting_prb = cell_res.starting_prb,
                                                          .second_hop_prb = cell_res.second_hop_prb,
                                                          .format         = cell_res.format,
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=1.
     pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.emplace_back(
-        std::pair<unsigned, unsigned>{cell_res.res_id.first, ue_pucch_res_id});
+        pucch_res_id_t{cell_res.res_id.cell_res_id, ue_pucch_res_id});
     // Increment the PUCCH resource ID for ASN1 message.
     ++ue_pucch_res_id;
   }
@@ -642,7 +642,7 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
     const unsigned csi_res_idx = tot_nof_cell_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_sets +
                                  (du_csi_res_idx % nof_cell_pucch_f2_res_csi);
     const auto& csi_cell_res = res_list[csi_res_idx];
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = {csi_cell_res.res_id.first, ue_pucch_res_id},
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id = {csi_cell_res.res_id.cell_res_id, ue_pucch_res_id},
                                                          .starting_prb   = csi_cell_res.starting_prb,
                                                          .second_hop_prb = csi_cell_res.second_hop_prb,
                                                          .format         = csi_cell_res.format,
@@ -650,7 +650,7 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
     srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
         .pucch_csi_res_list.front()
-        .pucch_res_id = {csi_cell_res.res_id.first, ue_pucch_res_id};
+        .pucch_res_id = {csi_cell_res.res_id.cell_res_id, ue_pucch_res_id};
     // Increment the PUCCH resource ID for ASN1 message.
     ++ue_pucch_res_id;
   }
