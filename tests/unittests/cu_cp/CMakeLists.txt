@@ -17,7 +17,12 @@ add_subdirectory(ue_manager)
 add_subdirectory(up_resource_manager)
 add_subdirectory(mobility)
 
-add_library(cu_cp_test_helpers cu_cp_test_helpers.cpp du_processor_test_messages.cpp test_helpers.cpp)
+add_library(cu_cp_test_helpers
+        test_doubles/dummy_cu_up.cpp
+        cu_cp_test_environment.cpp
+        cu_cp_test_helpers.cpp
+        du_processor_test_messages.cpp
+        test_helpers.cpp)
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cu_cp_test_helpers srsran_cu_cp srsran_support srslog f1ap_test_helpers e1ap_test_helpers f1ap_asn1 ngap_asn1 e1ap_asn1)
 

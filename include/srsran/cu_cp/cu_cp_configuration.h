@@ -32,7 +32,7 @@ struct mobility_configuration {
 struct cu_cp_configuration {
   task_executor*         cu_cp_executor = nullptr;
   task_executor*         cu_cp_e2_exec  = nullptr;
-  ngap_message_notifier* ngap_notifier  = nullptr; ///> Callack for outgoing NGAP messages.
+  ngap_message_notifier* ngap_notifier  = nullptr; ///> Callback for outgoing NGAP messages.
   timer_manager*         timers         = nullptr;
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
