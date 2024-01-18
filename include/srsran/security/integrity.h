@@ -270,34 +270,33 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
   sec_128_key       key      = truncate_key(source_as_config.k_int.value());
+  byte_buffer_view  packed_var_view{packed_var};
   switch (source_as_config.integ_algo.value()) {
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:
-      /*security_nia1(mac_exp,
+      security_nia1(mac_exp,
                     key,
                     0xffffffff,                   // 32-bit all to ones
                     0x1f,                         // 5-bit all to ones
                     security_direction::downlink, // 1-bit to one
-                    packed_var.begin(),
-                    packed_var.end());*/
+                    packed_var_view);
       break;
-    /*case security::integrity_algorithm::nia2:
+    case security::integrity_algorithm::nia2:
       security_nia2(mac_exp,
                     key,
                     0xffffffff,                   // 32-bit all to ones
                     0x1f,                         // 5-bit all to ones
                     security_direction::downlink, // 1-bit to one
-                    byte_buffer_view{packed_var});
-      break;*/
+                    packed_var_view);
+      break;
     case security::integrity_algorithm::nia3:
-      /*security_nia3(mac_exp,
+      security_nia3(mac_exp,
                     key,
                     0xffffffff,                   // 32-bit all to ones
                     0x1f,                         // 5-bit all to ones
                     security_direction::downlink, // 1-bit to one
-                    packed_var.begin(),
-                    packed_var.end());*/
+                    packed_var_view);
       break;
     default:
       break;
