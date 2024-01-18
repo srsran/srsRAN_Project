@@ -9,7 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
-#include "tests/test_doubles/ngap/synchronized_ngap_notifier.h"
+#include "tests/unittests/cu_cp/test_doubles/dummy_amf.h"
 #include "tests/unittests/cu_cp/test_doubles/dummy_cu_up.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
@@ -34,14 +34,16 @@ public:
 class cu_cp_test_environment::gateway_manager
 {
 public:
-  synchronized_dummy_ngap_message_notifier  ngap_pdu_notifier;
   std::unique_ptr<synchronized_dummy_cu_up> cu_up;
 };
 
 // ////
 
-cu_cp_test_environment::cu_cp_test_environment(const ngap_configuration& ngap_cfg) :
-  cu_cp_workers(std::make_unique<worker_manager>()), timers(64), gw(std::make_unique<gateway_manager>())
+cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
+  cu_cp_workers(std::make_unique<worker_manager>()),
+  timers(64),
+  amf_stub(std::move(params.amf_stub)),
+  gw(std::make_unique<gateway_manager>())
 {
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
@@ -55,12 +57,15 @@ cu_cp_test_environment::cu_cp_test_environment(const ngap_configuration& ngap_cf
   // create CU-CP config
   cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
   cfg.cu_cp_executor      = cu_cp_workers->exec.get();
-  cfg.ngap_notifier       = &gw->ngap_pdu_notifier;
+  cfg.ngap_notifier       = &*amf_stub;
   cfg.timers              = &timers;
-  cfg.ngap_config         = ngap_cfg;
+  cfg.ngap_config         = config_helpers::make_default_ngap_config();
 
   // create CU-CP instance.
   cu_cp = create_cu_cp(cfg);
+
+  // Pass CU-CP PDU handler to AMF.
+  amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
 
   // Instantiate CU-UP.
   gw->cu_up = std::make_unique<synchronized_dummy_cu_up>(cu_cp->get_connected_cu_ups());
@@ -113,14 +118,9 @@ bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const
   return false;
 }
 
-bool cu_cp_test_environment::try_pop_ngap_tx_pdu(ngap_message& pdu)
-{
-  return gw->ngap_pdu_notifier.try_pop_pdu(pdu);
-}
-
 bool cu_cp_test_environment::wait_for_ngap_tx_pdu(ngap_message& pdu, std::chrono::milliseconds timeout)
 {
-  return tick_until(timeout, [&]() { return gw->ngap_pdu_notifier.try_pop_pdu(pdu); });
+  return tick_until(timeout, [&]() { return amf_stub->try_pop_rx_pdu(pdu); });
 }
 
 bool cu_cp_test_environment::try_pop_e1ap_tx_pdu(e1ap_message& pdu)

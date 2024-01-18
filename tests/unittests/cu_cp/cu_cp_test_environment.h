@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "test_doubles/dummy_amf.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
@@ -17,25 +18,28 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+struct cu_cp_test_env_params {
+  /// Injected AMF stub to handle CU-CP PDUs.
+  std::unique_ptr<amf_test_stub> amf_stub = create_manual_amf_stub();
+};
+
 class cu_cp_test_environment
 {
 public:
-  cu_cp_test_environment(const ngap_configuration& ngap_cfg = config_helpers::make_default_ngap_config());
+  explicit cu_cp_test_environment(cu_cp_test_env_params params = {});
   ~cu_cp_test_environment();
 
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  cu_cp_interface& get_cu_cp() const { return *cu_cp; }
+  cu_cp_interface& get_cu_cp() { return *cu_cp; }
+  amf_test_stub&   get_amf() { return *amf_stub; }
 
   /// Tick the CU-CP clock.
   void tick();
 
   /// Keep ticking the CU-CP clock until the condition provided returns true.
   bool tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition);
-
-  /// Try popping the oldest NGAP PDU sent by the CU-CP.
-  bool try_pop_ngap_tx_pdu(ngap_message& ngap_pdu);
 
   /// Tick CU-CP timer until a NGAP PDU is sent.
   bool wait_for_ngap_tx_pdu(ngap_message& ngap_pdu, std::chrono::milliseconds timeout);
@@ -56,6 +60,7 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
+  std::unique_ptr<amf_test_stub>   amf_stub;
   std::unique_ptr<gateway_manager> gw;
 
   /// CU-CP instance.

@@ -83,6 +83,7 @@ public:
   /// \brief Get handler of the E1 interface of the CU-CP.
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
+  /// \brief Initiate NG Setup Procedure and wait for AMF response.
   virtual void start() = 0;
 
   /// \brief Stop the CU-CP operation.

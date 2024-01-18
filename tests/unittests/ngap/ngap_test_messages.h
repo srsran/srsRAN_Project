@@ -10,13 +10,18 @@
 
 #pragma once
 
-#include "srsran/asn1/ngap/ngap_ies.h"
+#include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// \brief Check that two NGAP PDUs have the same type.
+bool is_same_pdu_type(const ngap_message& lhs, const ngap_message& rhs);
+bool is_pdu_type(const ngap_message& pdu, const asn1::ngap::ngap_elem_procs_o::init_msg_c::types type);
+bool is_pdu_type(const ngap_message& pdu, const asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types type);
 
 // NG Application Protocol (NGSetupRequest)
 //     NGAP-PDU: initiatingMessage (0)

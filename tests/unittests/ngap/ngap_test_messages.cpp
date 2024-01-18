@@ -20,6 +20,42 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::ngap;
 
+bool srsran::srs_cu_cp::is_same_pdu_type(const ngap_message& lhs, const ngap_message& rhs)
+{
+  if (lhs.pdu.type().value != rhs.pdu.type().value) {
+    return false;
+  }
+  switch (lhs.pdu.type().value) {
+    case ngap_pdu_c::types_opts::init_msg:
+      return lhs.pdu.init_msg().value.type().value == rhs.pdu.init_msg().value.type().value;
+    case ngap_pdu_c::types_opts::successful_outcome:
+      return lhs.pdu.successful_outcome().value.type().value == rhs.pdu.successful_outcome().value.type().value;
+    case ngap_pdu_c::types_opts::unsuccessful_outcome:
+      return lhs.pdu.unsuccessful_outcome().value.type().value == rhs.pdu.unsuccessful_outcome().value.type().value;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool srsran::srs_cu_cp::is_pdu_type(const ngap_message&                                    pdu,
+                                    const asn1::ngap::ngap_elem_procs_o::init_msg_c::types type)
+{
+  if (pdu.pdu.type().value != ngap_pdu_c::types_opts::init_msg) {
+    return false;
+  }
+  return pdu.pdu.init_msg().value.type().value == type;
+}
+
+bool srsran::srs_cu_cp::is_pdu_type(const ngap_message&                                              pdu,
+                                    const asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types type)
+{
+  if (pdu.pdu.type().value != ngap_pdu_c::types_opts::successful_outcome) {
+    return false;
+  }
+  return pdu.pdu.successful_outcome().value.type().value == type;
+}
+
 ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
   ngap_ng_setup_request request_msg;
