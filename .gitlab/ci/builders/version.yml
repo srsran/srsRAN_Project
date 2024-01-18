@@ -21,7 +21,7 @@ builder version:
 
         # Clean up the temporary archive
         rm "$temp_archive"
-      }
+      } 
     - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders)
     - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
     - echo $DOCKER_BUILDER_VERSION

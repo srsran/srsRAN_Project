@@ -32,7 +32,7 @@ def main():
 
     MAKE_ARGS = "-j7"
     BUILD_ARGS = "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DENABLE_AVX512=True"
-    DPDK_VERSION = "23.07"
+    DPDK_VERSION = "23.11"
 
     TESTBED = "viavi"
     MARKERS = "viavi_manual"

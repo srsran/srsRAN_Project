@@ -399,7 +399,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    DPDK_VERSION: "23.07"
+    DPDK_VERSION: "23.11"
   tags: ["${AMD64_TAG}"]
 
 .smoke valgrind:
@@ -752,7 +752,7 @@ basic avx512 dpdk:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.07"
+    DPDK_VERSION: "23.11"
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
     SAVE_ARTIFACTS: "True"
@@ -992,16 +992,16 @@ smoke dpdk:
     matrix:
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-23.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
 
 ###################
 # Alternative OSs #
@@ -1242,16 +1242,16 @@ build uhd alt:
     matrix:
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0"]
       - OS: ubuntu-23.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
 
@@ -1563,7 +1563,7 @@ rhel-8 arm neon:
   ENABLE_ZEROMQ: "False"
   ENABLE_DPDK: "True"
   COMPILER: [gcc, clang]
-  DPDK_VERSION: ["22.11.2", "23.07"]
+  DPDK_VERSION: ["22.11.3", "23.11"]
 
 ubuntu-20.04 amd64 avx2 dpdk:
   extends: .build_and_unit
