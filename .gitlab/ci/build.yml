@@ -17,6 +17,7 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
+  AMD64_LIB_BUILDER_TAG: on-prem-amd64
 
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
@@ -774,7 +775,7 @@ package:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
     KUBERNETES_MEMORY_REQUEST: 12Gi
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["${AMD64_LIB_BUILDER_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
@@ -791,7 +792,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["${AMD64_LIB_BUILDER_TAG}"]
   script:
     - gnb --version
   parallel:

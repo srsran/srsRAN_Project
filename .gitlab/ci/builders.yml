@@ -27,7 +27,7 @@ stages:
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - ${AMD64_LIB_BUILDER_TAG}
   variables:
     os_version: ""
     uhd_version: ""
@@ -136,7 +136,7 @@ ubuntu-20.04-uhd:
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - ${AMD64_LIB_BUILDER_TAG}
   variables:
     os_version: ""
     dpdk_version: ""
