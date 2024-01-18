@@ -33,6 +33,7 @@ e2sm_action_definition
 e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
 {
   e2sm_action_definition action_def;
+  action_def.service_model = e2sm_service_model_t::RC;
   asn1::cbit_ref         bref(action_definition);
   if (variant_get<asn1::e2sm_rc::e2_sm_rc_action_definition_s>(action_def.action_definition).unpack(bref) !=
       asn1::SRSASN_SUCCESS) {

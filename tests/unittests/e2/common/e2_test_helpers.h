@@ -666,6 +666,7 @@ class dummy_e2sm_handler : public e2sm_handler
   e2sm_action_definition handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) override
   {
     e2sm_action_definition         action_def;
+    action_def.service_model = e2sm_service_model_t::KPM;
     e2_sm_kpm_action_definition_s& e2_sm_kpm_action_definition =
         variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
     e2_sm_kpm_action_definition.ric_style_type = 3;

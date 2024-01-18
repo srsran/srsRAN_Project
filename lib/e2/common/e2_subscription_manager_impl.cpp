@@ -90,6 +90,10 @@ void e2_subscription_manager_impl::start_subscription(const asn1::e2ap::ri_crequ
     auto& action_def = action.action_definition;
     if (action.ric_action_type == asn1::e2ap::ri_caction_type_e::report) {
       action.report_service = e2sm->get_e2sm_report_service(action_def);
+      if (action.report_service == nullptr) {
+        logger.error("Failed to get E2SM report service for RAN function ID {}", ran_func_id);
+        return;
+      }
     }
   }
 
