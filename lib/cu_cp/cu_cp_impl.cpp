@@ -172,7 +172,7 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
   du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
 }
 
-void cu_cp_impl::handle_amf_connection()
+void cu_cp_impl::handle_amf_connection_establishment()
 {
   amf_connected = true;
 

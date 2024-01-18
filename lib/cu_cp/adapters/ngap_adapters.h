@@ -65,10 +65,10 @@ public:
     cu_cp_du_repository_handler = &cu_cp_du_repository_handler_;
   }
 
-  void on_amf_connection() override
+  void on_amf_connection_establishment() override
   {
     srsran_assert(cu_cp_amf_handler != nullptr, "CU-CP AMF handler must not be nullptr");
-    cu_cp_amf_handler->handle_amf_connection();
+    cu_cp_amf_handler->handle_amf_connection_establishment();
   }
 
   void on_amf_connection_drop() override

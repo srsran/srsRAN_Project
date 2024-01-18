@@ -85,7 +85,7 @@ async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_req
 void amf_connection_setup_routine::handle_ng_setup_result()
 {
   if (variant_holds_alternative<ngap_ng_setup_response>(result_msg)) {
-    cu_cp_ngap_ev_notifier.on_amf_connection();
+    cu_cp_ngap_ev_notifier.on_amf_connection_establishment();
     // TODO
   } else {
     // TODO

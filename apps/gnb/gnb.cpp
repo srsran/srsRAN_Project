@@ -465,7 +465,7 @@ int main(int argc, char** argv)
 
   // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
   if (gnb_cfg.amf_cfg.no_core) {
-    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection();
+    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
   }
 
   // start CU-CP

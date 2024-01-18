@@ -64,7 +64,7 @@ public:
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
-  void handle_amf_connection() override;
+  void handle_amf_connection_establishment() override;
   void handle_amf_connection_drop() override;
 
   // RRC UE handler

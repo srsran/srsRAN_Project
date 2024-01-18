@@ -102,7 +102,7 @@ cu_cp_test::cu_cp_test()
 
   // create and start CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
-  cu_cp_obj->handle_amf_connection();
+  cu_cp_obj->handle_amf_connection_establishment();
   cu_cp_obj->start();
 
   // Attach F1-C gateway to CU-CP
