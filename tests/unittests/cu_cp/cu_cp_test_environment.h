@@ -26,6 +26,8 @@ public:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
+  cu_cp_interface& get_cu_cp() const { return *cu_cp; }
+
   /// Tick the CU-CP clock.
   void tick();
 

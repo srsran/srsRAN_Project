@@ -68,6 +68,7 @@ cu_cp_test_environment::cu_cp_test_environment(const ngap_configuration& ngap_cf
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
+  cu_cp->stop();
   cu_cp_workers->stop();
 }
 
