@@ -83,6 +83,25 @@ load retina variables:
     - job: "load retina variables"
       artifacts: true
 
+e2e request validation:
+  stage: static
+  extends:
+    - .prepare_test
+  rules:
+    - if: $ON_MR
+      changes:
+        - .gitlab/ci/e2e/**/*
+  image:
+    name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
+    entrypoint: ["/bin/sh", "-c"]
+  script:
+    - |
+      cd ${CI_PROJECT_DIR}/.gitlab/ci/e2e
+      file_list=$(ls *.yml)
+      for f in $file_list; do
+          retina-request-checker --input $f
+      done
+
 .e2e-run:
   stage: e2e
   resource_group: e2e-${GROUP}
