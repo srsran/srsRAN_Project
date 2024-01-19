@@ -38,12 +38,16 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // > Check if UE context was created in the DU manager.
-  ue_ctx = create_du_ue_context();
-  if (ue_ctx == nullptr) {
-    proc_logger.log_proc_failure("Failed to create DU UE context");
+  ue_ctx_creation_outcome = create_du_ue_context();
+  if (ue_ctx_creation_outcome.is_error()) {
+    proc_logger.log_proc_failure("Failed to create DU UE context due to: {}", ue_ctx_creation_outcome.error().data());
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
+
+  srsran_assert(ue_ctx_creation_outcome.has_value() and ue_ctx_creation_outcome.value() != nullptr,
+                "Uninitialized UE creating ctx");
+  ue_ctx = ue_ctx_creation_outcome.value();
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
@@ -89,12 +93,12 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-du_ue* ue_creation_procedure::create_du_ue_context()
+expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
 {
   // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
   ue_ran_resource_configurator ue_res = du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index);
   if (ue_res.empty()) {
-    return nullptr;
+    return ue_res.get_error();
   }
 
   // Create the DU UE context.

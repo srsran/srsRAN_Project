@@ -39,8 +39,10 @@ public:
     virtual const cell_group_config&       get()                                                 = 0;
   };
 
-  explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_) :
-    ue_res_impl(std::move(ue_res_)), cached_res(ue_res_impl != nullptr ? &ue_res_impl->get() : nullptr)
+  explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
+    ue_res_impl(std::move(ue_res_)),
+    cached_res(ue_res_impl != nullptr ? &ue_res_impl->get() : nullptr),
+    configurator_error(ue_res_impl != nullptr ? std::string{} : error)
   {
   }
 
@@ -57,6 +59,9 @@ public:
   /// \brief Checks whether the UE resources have been correctly allocated.
   bool empty() const { return ue_res_impl == nullptr; }
 
+  /// \brief Returns the configurator error, which non-empty string only if the procedure failed.
+  std::string get_error() const { return empty() ? configurator_error : std::string{}; }
+
   const cell_group_config& value() const { return *cached_res; }
   const cell_group_config& operator*() const { return *cached_res; }
   const cell_group_config* operator->() const { return cached_res; }
@@ -64,6 +69,7 @@ public:
 private:
   std::unique_ptr<resource_updater> ue_res_impl;
   const cell_group_config*          cached_res;
+  std::string                       configurator_error;
 };
 
 /// \brief This class creates new UE resource configs (PHY, MAC and RLC), using a specific pool of DU resources.

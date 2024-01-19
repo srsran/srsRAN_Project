@@ -57,7 +57,7 @@ class ue_manager_dummy : public du_ue_manager_repository
 public:
   slotted_array<du_ue_dummy, MAX_NOF_DU_UES> ues;
 
-  du_ue* add_ue(const du_ue_context& u, ue_ran_resource_configurator resources) override
+  expected<du_ue*, std::string> add_ue(const du_ue_context& u, ue_ran_resource_configurator resources) override
   {
     du_ue_index_t ue_index = u.ue_index;
     ues.emplace(ue_index, std::move(u), std::move(resources), &ue_ctrl_loop);
