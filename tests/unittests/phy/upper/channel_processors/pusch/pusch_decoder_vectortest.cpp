@@ -29,7 +29,7 @@
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hal_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 #endif // HWACC_PUSCH_ENABLED
 #include <getopt.h>
@@ -189,8 +189,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
       create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);
 
-  // Set the hardware-accelerator configuration (neither the memory map, nor the debug configuration are used in the
-  // ACC100).
+  // Set the hardware-accelerator configuration.
   hw_accelerator_pusch_dec_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
@@ -206,16 +205,8 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
 static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factory()
 {
-  // Software-based PUSCH decoder implementation.
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calculator_factory);
-
-  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
-  TESTASSERT(ldpc_decoder_factory);
-
-  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
-      create_ldpc_rate_dematcher_factory_sw("auto");
-  TESTASSERT(ldpc_rate_dematcher_factory);
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
   TESTASSERT(segmenter_rx_factory);

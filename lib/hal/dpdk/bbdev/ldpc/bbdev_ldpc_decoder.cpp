@@ -88,24 +88,23 @@ void dpdk::set_ldpc_dec_bbdev_config(::rte_bbdev_dec_op&                        
   dec_op.ldpc_dec.op_flags = bitmask;
 }
 
-bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                                dec_op,
-                                   ::rte_mempool&                                     in_mbuf_pool,
-                                   ::rte_mempool&                                     harq_in_mbuf_pool,
-                                   ::rte_mempool&                                     out_mbuf_pool,
-                                   ::rte_mempool&                                     harq_out_mbuf_pool,
-                                   span<const int8_t>                                 data,
-                                   span<const int8_t>                                 soft_data,
-                                   const srsran::hal::hw_pusch_decoder_configuration& cfg,
-                                   bool                                               ext_softbuffer,
-                                   uint32_t                                           soft_data_len,
-                                   unsigned                                           cb_index,
-                                   unsigned                                           absolute_cb_id,
-                                   srslog::basic_logger&                              logger)
+bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&   dec_op,
+                                   ::rte_mempool&        in_mbuf_pool,
+                                   ::rte_mempool&        harq_in_mbuf_pool,
+                                   ::rte_mempool&        out_mbuf_pool,
+                                   ::rte_mempool&        harq_out_mbuf_pool,
+                                   span<const int8_t>    data,
+                                   span<const int8_t>    soft_data,
+                                   bool                  new_data,
+                                   bool                  ext_softbuffer,
+                                   uint32_t              soft_data_len,
+                                   unsigned              cb_index,
+                                   unsigned              absolute_cb_id,
+                                   srslog::basic_logger& logger)
 {
   // Allocate an mbuf for the input data from the received mempool.
-  char*          input_data;
-  ::rte_mempool* in_pool   = &in_mbuf_pool;
-  ::rte_mbuf*    m_head_in = ::rte_pktmbuf_alloc(in_pool);
+  char*       input_data;
+  ::rte_mbuf* m_head_in = ::rte_pktmbuf_alloc(&in_mbuf_pool);
   if (m_head_in == nullptr) {
     logger.error("[bbdev] Not enough mbufs in the input ldpc decoder mbuf pool.");
     return false;
@@ -120,6 +119,8 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                          
   uint16_t cw_len = data.size();
   input_data      = ::rte_pktmbuf_append(m_head_in, cw_len);
   if (input_data == nullptr) {
+    // Free the input mbuf back to its original mbuf pools.
+    ::rte_pktmbuf_free(m_head_in);
     logger.error("[bbdev] Couldn't append {} bytes to the ldpc decoder input mbuf.", cw_len);
     return false;
   }
@@ -133,13 +134,12 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                          
   unsigned harq_offset = srsran::hal::HARQ_INCR * absolute_cb_id;
 
   // Input HARQ combining data is only needed in case of a retransmission.
-  if (!cfg.new_data) {
+  if (!new_data) {
     // Copy of HARQ input data is only needed if the soft-buffer is implemented in the host.
     if (!ext_softbuffer) {
       // Allocate an mbuf for the input soft-data from the received mempool.
-      char*          soft_input_data;
-      ::rte_mempool* harq_in_pool   = &harq_in_mbuf_pool;
-      ::rte_mbuf*    m_head_soft_in = ::rte_pktmbuf_alloc(harq_in_pool);
+      char*       soft_input_data;
+      ::rte_mbuf* m_head_soft_in = ::rte_pktmbuf_alloc(&harq_in_mbuf_pool);
       if (m_head_soft_in == nullptr) {
         logger.error("[bbdev] Not enough mbufs in the harq input ldpc decoder mbuf pool.");
         return false;
@@ -155,6 +155,9 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                          
       // Allocate the required bytes in the mbuf and update the memory pointers.
       soft_input_data = ::rte_pktmbuf_append(m_head_soft_in, harq_output_len);
       if (soft_input_data == nullptr) {
+        // Free the input and input soft-data mbufs back to its original mbuf pools.
+        ::rte_pktmbuf_free(dec_op.ldpc_dec.input.data);
+        ::rte_pktmbuf_free(m_head_soft_in);
         logger.error("[bbdev] Couldn't append {} bytes to the ldpc decoder harq input mbuf.", harq_output_len);
         return false;
       }
@@ -190,9 +193,13 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                          
   }
 
   // Allocate an mbuf for the output data from the received mempool.
-  ::rte_mempool* out_pool   = &out_mbuf_pool;
-  ::rte_mbuf*    m_head_out = ::rte_pktmbuf_alloc(out_pool);
+  ::rte_mbuf* m_head_out = ::rte_pktmbuf_alloc(&out_mbuf_pool);
   if (m_head_out == nullptr) {
+    // Free the input and input soft-data mbufs back to its original mbuf pools.
+    ::rte_pktmbuf_free(dec_op.ldpc_dec.input.data);
+    if (!new_data && !ext_softbuffer) {
+      ::rte_pktmbuf_free(dec_op.ldpc_dec.harq_combined_input.data);
+    }
     logger.error("[bbdev] Not enough mbufs in the output ldpc decoder mbuf pool.");
     return false;
   }
@@ -218,6 +225,11 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                          
     ::rte_mempool* harq_out_pool   = &harq_out_mbuf_pool;
     ::rte_mbuf*    m_head_soft_out = ::rte_pktmbuf_alloc(harq_out_pool);
     if (m_head_soft_out == nullptr) {
+      // Free the input and input soft-data mbufs back to its original mbuf pools.
+      ::rte_pktmbuf_free(dec_op.ldpc_dec.input.data);
+      if (!new_data && !ext_softbuffer) {
+        ::rte_pktmbuf_free(dec_op.ldpc_dec.harq_combined_input.data);
+      }
       logger.error("[bbdev] Not enough mbufs in the harq output ldpc decoder mbuf pool.");
       return false;
     }
@@ -233,12 +245,24 @@ bool dpdk::enqueue_ldpc_dec_operation(::rte_bbdev_dec_op&   dec_ops,
                                       uint16_t              num_dec_ops,
                                       uint16_t              bbdev_id,
                                       uint16_t              dec_queue_id,
+                                      bool                  new_data,
+                                      bool                  ext_softbuffer,
                                       srslog::basic_logger& logger)
 {
   // Enqueue new operations on the hardware-accelerator LDPC decoder.
   ::rte_bbdev_dec_op* ops             = &dec_ops;
   uint16_t            num_enq_dec_ops = ::rte_bbdev_enqueue_ldpc_dec_ops(bbdev_id, dec_queue_id, &ops, num_dec_ops);
   if (num_enq_dec_ops <= 0) {
+    // Free the input and output mbuf back to its original mbuf pools.
+    ::rte_pktmbuf_free(dec_ops.ldpc_dec.input.data);
+    // Input HARQ combining data is only needed in case of a retransmission.
+    if (!new_data && !ext_softbuffer) {
+      ::rte_pktmbuf_free(dec_ops.ldpc_dec.harq_combined_input.data);
+    }
+    ::rte_pktmbuf_free(dec_ops.ldpc_dec.hard_output.data);
+    if (!ext_softbuffer) {
+      ::rte_pktmbuf_free(dec_ops.ldpc_dec.harq_combined_output.data);
+    }
     logger.error(
         "[bbdev] Couldn't enqueue new operations in the ldpc decoder. The operation will be dropped: acc [queue={}].",
         dec_queue_id);
@@ -265,11 +289,11 @@ bool dpdk::dequeue_ldpc_dec_operation(::rte_bbdev_dec_op&   dec_ops,
   return true;
 }
 
-uint32_t dpdk::read_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                                dec_op,
-                                        span<uint8_t>                                      data,
-                                        span<int8_t>                                       soft_data,
-                                        const srsran::hal::hw_pusch_decoder_configuration& cfg,
-                                        bool                                               ext_softbuffer)
+uint32_t dpdk::read_ldpc_dec_bbdev_data(::rte_bbdev_dec_op& dec_op,
+                                        span<uint8_t>       data,
+                                        span<int8_t>        soft_data,
+                                        bool                new_data,
+                                        bool                ext_softbuffer)
 {
   uint32_t new_soft_data_len = 0;
 
@@ -321,7 +345,7 @@ uint32_t dpdk::read_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&                     
   // Free the input and output mbuf back to its original mbuf pools.
   ::rte_pktmbuf_free(dec_op.ldpc_dec.input.data);
   // Input HARQ combining data is only needed in case of a retransmission.
-  if (!cfg.new_data && !ext_softbuffer) {
+  if (!new_data && !ext_softbuffer) {
     ::rte_pktmbuf_free(dec_op.ldpc_dec.harq_combined_input.data);
   }
   ::rte_pktmbuf_free(dec_op.ldpc_dec.hard_output.data);

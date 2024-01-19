@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pucch_detector.h"
+#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
@@ -115,6 +116,18 @@ struct pdsch_encoder_factory_sw_configuration {
 };
 
 std::shared_ptr<pdsch_encoder_factory> create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config);
+
+/// HW-accelerated PDSCH encoder factory configuration parameters.
+struct pdsch_encoder_factory_hw_configuration {
+  bool                                                   cb_mode = false;
+  unsigned                                               max_tb_size;
+  std::shared_ptr<crc_calculator_factory>                crc_factory;
+  std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
+  std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory;
+};
+
+std::shared_ptr<pdsch_encoder_factory>
+create_pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configuration& config);
 
 class pdsch_modulator_factory
 {

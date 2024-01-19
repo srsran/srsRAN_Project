@@ -11,11 +11,11 @@
 /// \file
 /// \brief Benchmark for hardware-accelerated PUSCH decoder implementations.
 ///
-/// The benchmark compares the latency of a hardware-accelerated PUSCH decoder implementation in comparison to that of
-/// the generic one.
+/// The benchmark compares the latency of a hardware-accelerated PUSCH decoder implementation to that of the generic
+/// one.
 
+#include "../../../../../../lib/scheduler/support/tbs_calculator.h"
 #include "../../../../../unittests/phy/upper/channel_processors/pusch/pusch_decoder_notifier_spy.h"
-#include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
@@ -26,7 +26,7 @@
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hal_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 #include <rte_cycles.h>
 #endif // DPDK_FOUND
@@ -36,10 +36,11 @@
 /// \cond
 using namespace srsran;
 
-// A test case consists of a LDPC segmenter configuration, a Transport Block Size, a number of LLRs and a PRB size.
+// A test case consists of a LDPC segmenter configuration, a Transport Block size, a number of LLRs and a PRB size.
 using test_case_type = std::tuple<segmenter_config, unsigned, unsigned, unsigned>;
 
 static std::string                        hwacc_decoder_type          = "acc100";
+static bool                               ext_softbuffer              = true;
 static bool                               use_early_stop              = true;
 static unsigned                           nof_ldpc_iterations         = 2;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
@@ -48,11 +49,10 @@ static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
-static bool        test_harq      = false;
-static bool        ext_softbuffer = true;
-static std::string hal_log_level  = "ERROR";
-static bool        std_out_sink   = true;
-static std::string eal_arguments  = "";
+static bool        test_harq     = false;
+static std::string hal_log_level = "ERROR";
+static bool        std_out_sink  = true;
+static std::string eal_arguments = "";
 #endif // DPDK_FOUND
 
 // Test profile structure, initialized with default profile values.
@@ -123,7 +123,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "T:ei:xyzh")) != -1) {
+  while ((opt = getopt(argc, argv, "T:ei:xyz:h")) != -1) {
     switch (opt) {
       case 'T':
         hwacc_decoder_type = std::string(optarg);
@@ -142,7 +142,7 @@ static int parse_args(int argc, char** argv)
         std_out_sink = false;
         break;
       case 'z':
-        hal_log_level = "DEBUG";
+        hal_log_level = std::string(optarg);
         break;
 #endif // DPDK_FOUND
       case 'h':
@@ -211,8 +211,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
       create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);
 
-  // Set the hardware-accelerator configuration (neither the memory map, nor the debug configuration are used in the
-  // ACC100).
+  // Set the hardware-accelerator configuration.
   hw_accelerator_pusch_dec_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
@@ -338,7 +337,7 @@ int main(int argc, char** argv)
   // Pseudo-random generator.
   std::mt19937 rgen(0);
 
-  // Create the generic PUSCH decoder agains which to benchmark the hardware-accelerated PUSCH decoder.
+  // Create the generic PUSCH decoder against which to benchmark the hardware-accelerated PUSCH decoder.
   std::shared_ptr<pusch_decoder_factory> gen_pusch_dec_factory = create_pusch_decoder_factory("generic");
   TESTASSERT(gen_pusch_dec_factory, "Failed to create PUSCH decoder factory of type {}.", "generic");
 
@@ -390,14 +389,14 @@ int main(int argc, char** argv)
     pool_config.nof_buffers          = 1;
     pool_config.nof_codeblocks       = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
-    pool_config.external_soft_bits   = true;
+    pool_config.external_soft_bits   = ext_softbuffer;
 
-    // Call the ACC100 hardware-accelerator PUSCH decoder function.
-    uint64_t total_acc100_time = 0;
+    // Call the hardware-accelerator PUSCH decoder function.
+    uint64_t total_hwacc_time = 0;
 
-    // Create Rx buffer pool.
-    std::unique_ptr<rx_buffer_pool_controller> pool_acc100 = create_rx_buffer_pool(pool_config);
-    TESTASSERT(pool_acc100);
+    // Create Rx softbuffer pool.
+    std::unique_ptr<rx_buffer_pool_controller> pool_hwacc = create_rx_buffer_pool(pool_config);
+    TESTASSERT(pool_hwacc);
 
     pusch_decoder::configuration dec_cfg = {};
 
@@ -411,34 +410,34 @@ int main(int argc, char** argv)
     dec_cfg.Nref                = cfg.Nref;
     dec_cfg.nof_layers          = cfg.nof_layers;
 
-    // Reserve tbuffer.
-    unique_rx_buffer softbuffer_acc100 = pool_acc100->reserve({}, {}, nof_codeblocks);
-    TESTASSERT(softbuffer_acc100.is_valid());
+    // Reserve softbuffer.
+    unique_rx_buffer softbuffer_hwacc = pool_hwacc->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+    TESTASSERT(softbuffer_hwacc.is_valid());
 
     // Force all CRCs to false to test LLR combining.
-    softbuffer_acc100.get().reset_codeblocks_crc();
+    softbuffer_hwacc.get().reset_codeblocks_crc();
 
     // Setup decoder for new data.
-    pusch_decoder_notifier_spy decoder_notifier_spy_acc100;
-    uint64_t                   acc100_start_time = get_current_time();
-    pusch_decoder_buffer&      decoder_buffer_acc100 =
-        hwacc_decoder->new_data(data, std::move(softbuffer_acc100), decoder_notifier_spy_acc100, dec_cfg);
+    pusch_decoder_notifier_spy decoder_notifier_spy_hwacc;
+    uint64_t                   hwacc_start_time = get_current_time();
+    pusch_decoder_buffer&      decoder_buffer_hwacc =
+        hwacc_decoder->new_data(data, std::move(softbuffer_hwacc), decoder_notifier_spy_hwacc, dec_cfg);
 
     // Feed codeword.
-    decoder_buffer_acc100.on_new_softbits(span<const log_likelihood_ratio>(random_llrs).subspan(0, nof_llr));
-    decoder_buffer_acc100.on_end_softbits();
-    uint64_t acc100_op_time = get_current_time() - acc100_start_time;
-    total_acc100_time += acc100_op_time;
+    decoder_buffer_hwacc.on_new_softbits(span<const log_likelihood_ratio>(random_llrs).subspan(0, nof_llr));
+    decoder_buffer_hwacc.on_end_softbits();
+    uint64_t hwacc_op_time = get_current_time() - hwacc_start_time;
+    total_hwacc_time += hwacc_op_time;
 
-    double acc100_lat = conv_time_to_latency(total_acc100_time);
+    double hwacc_lat = conv_time_to_latency(total_hwacc_time);
 
     // Call the software PUSCH decoder function.
     uint64_t total_gen_time = 0;
 
-    // Create Rx buffer pool.
+    // Create Rx softbuffer pool.
     pool_config.external_soft_bits                      = false;
-    std::unique_ptr<rx_buffer_pool_controller> pool_cpu = create_rx_buffer_pool(pool_config);
-    TESTASSERT(pool_cpu);
+    std::unique_ptr<rx_buffer_pool_controller> pool_gen = create_rx_buffer_pool(pool_config);
+    TESTASSERT(pool_gen);
 
     // Prepare decoder configuration.
     dec_cfg                     = {};
@@ -452,27 +451,27 @@ int main(int argc, char** argv)
     dec_cfg.nof_layers          = cfg.nof_layers;
 
     // Reserve softbuffer.
-    unique_rx_buffer softbuffer_cpu = pool_cpu->reserve({}, {}, nof_codeblocks);
-    TESTASSERT(softbuffer_cpu.is_valid());
+    unique_rx_buffer softbuffer_gen = pool_gen->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+    TESTASSERT(softbuffer_gen.is_valid());
 
     // Force all CRCs to false to test LLR combining.
-    softbuffer_cpu.get().reset_codeblocks_crc();
+    softbuffer_gen.get().reset_codeblocks_crc();
 
     // Setup decoder for new data.
-    pusch_decoder_notifier_spy decoder_notifier_spy_cpu;
+    pusch_decoder_notifier_spy decoder_notifier_spy_gen;
     uint64_t                   gen_start_time = get_current_time();
-    pusch_decoder_buffer&      decoder_buffer_cpu =
-        gen_decoder->new_data(data, std::move(softbuffer_cpu), decoder_notifier_spy_cpu, dec_cfg);
+    pusch_decoder_buffer&      decoder_buffer_gen =
+        gen_decoder->new_data(data, std::move(softbuffer_gen), decoder_notifier_spy_gen, dec_cfg);
 
     // Feed codeword.
-    decoder_buffer_cpu.on_new_softbits(span<const log_likelihood_ratio>(random_llrs).subspan(0, nof_llr));
-    decoder_buffer_cpu.on_end_softbits();
+    decoder_buffer_gen.on_new_softbits(span<const log_likelihood_ratio>(random_llrs).subspan(0, nof_llr));
+    decoder_buffer_gen.on_end_softbits();
     uint64_t gen_op_time = get_current_time() - gen_start_time;
     total_gen_time += gen_op_time;
 
     double gen_lat = conv_time_to_latency(total_gen_time);
 
-    float perf_gain = 100.0 - (static_cast<float>(acc100_lat) * 100.0 / static_cast<float>(gen_lat));
+    float perf_gain = 100.0 - (static_cast<float>(hwacc_lat) * 100.0 / static_cast<float>(gen_lat));
     fmt::print(
         "PUSCH RB={:<3} Mod={:<2} tbs={:<8}: latency gain {:<3.2f}%% (generic {:<10.2f} us, {:<5} {:<10.2f} us)\n",
         nof_prb,
@@ -480,8 +479,8 @@ int main(int argc, char** argv)
         tbs,
         perf_gain,
         gen_lat,
-        "acc100",
-        acc100_lat);
+        hwacc_decoder_type,
+        hwacc_lat);
   }
 }
 /// \endcond

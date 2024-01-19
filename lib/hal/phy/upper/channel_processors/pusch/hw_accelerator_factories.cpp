@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/hal/phy/upper/channel_processors/pusch/hal_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "../../../../dpdk/bbdev/bbdev.h"
 #include "../../../../dpdk/dpdk.h"
 #include "hw_accelerator_pusch_dec_acc100_impl.h"

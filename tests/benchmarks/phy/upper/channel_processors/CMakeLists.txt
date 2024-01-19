@@ -11,6 +11,17 @@ add_subdirectory(pusch)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
+# Only implement if hardware-acceleration for the PDSCH is enabled.
+if (ENABLE_PDSCH_HWACC)
+    add_executable(pdsch_encoder_hwacc_benchmark pdsch_encoder_hwacc_benchmark.cpp)
+    set(PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES srsran_channel_processors srsran_sched srslog)
+    if (DPDK_FOUND)
+        set_source_files_properties(pdsch_encoder_hwacc_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "DPDK_FOUND")
+        list(APPEND PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES hal_hwacc_pdsch)
+    endif (DPDK_FOUND)
+    target_link_libraries(pdsch_encoder_hwacc_benchmark ${PDSCH_ENCODER_HWACC_BENCHMARK_LIBRARIES})
+endif (ENABLE_PDSCH_HWACC)
+
 add_executable(pdsch_processor_benchmark pdsch_processor_benchmark.cpp)
 target_link_libraries(pdsch_processor_benchmark
         srsran_phy_support
