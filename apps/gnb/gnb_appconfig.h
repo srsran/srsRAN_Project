@@ -856,6 +856,8 @@ struct expert_upper_phy_appconfig {
 struct test_mode_ue_appconfig {
   /// C-RNTI to assign to the test UE.
   rnti_t rnti = rnti_t::INVALID_RNTI;
+  /// Number of test UE(s) to create.
+  uint16_t nof_ues = 1;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.

@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
@@ -1567,6 +1568,9 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
   app.add_option("--rnti", test_params.rnti, "C-RNTI (0x0 if not configured)")
       ->capture_default_str()
       ->check(CLI::Range(to_value((rnti_t::INVALID_RNTI)), to_value(rnti_t::MAX_CRNTI)));
+  app.add_option("--nof_ues", test_params.nof_ues, "Number of test UE(s) to create.")
+      ->capture_default_str()
+      ->check(CLI::Range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES));
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")

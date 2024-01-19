@@ -19,6 +19,7 @@ namespace srs_du {
 struct du_test_config {
   struct test_ue_config {
     rnti_t             rnti;
+    uint16_t           nof_ues;
     bool               pdsch_active;
     bool               pusch_active;
     unsigned           cqi;
