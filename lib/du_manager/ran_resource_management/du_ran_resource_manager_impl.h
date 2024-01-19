@@ -74,7 +74,8 @@ public:
   void deallocate_context(du_ue_index_t ue_index);
 
 private:
-  bool allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
+  error_type<std::string>
+       allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
   void modify_rlc_for_ntn(cell_group_config& ue_mcg);
 

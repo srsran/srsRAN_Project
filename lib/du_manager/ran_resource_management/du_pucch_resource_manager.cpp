@@ -219,17 +219,15 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   // Iterate over the list of SR resource/offsets and find the first one that doesn't exceed the maximum number of PUCCH
   // grants.
   while (sr_res_offset_it != free_sr_list.end()) {
-    std::vector<unsigned> sr_offsets_within_lcm_period;
+    bool pucch_cnt_exceeded = false;
     for (unsigned sr_off = sr_res_offset_it->second; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
-      sr_offsets_within_lcm_period.emplace_back(sr_off);
+      srsran_assert(sr_off < static_cast<unsigned>(cells[0].pucch_grants_per_slot_cnt.size()),
+                    "Index exceeds the size of the PUCCH grants vector");
+      pucch_cnt_exceeded = cells[0].pucch_grants_per_slot_cnt[sr_off] >= max_pucch_grants_per_slot;
+      if (pucch_cnt_exceeded) {
+        break;
+      }
     }
-
-    const bool pucch_cnt_exceeded =
-        std::any_of(sr_offsets_within_lcm_period.begin(), sr_offsets_within_lcm_period.end(), [&](unsigned sr_off) {
-          srsran_assert(sr_off < static_cast<unsigned>(cells[0].pucch_grants_per_slot_cnt.size()),
-                        "Index exceeds the size of the PUCCH grants vector");
-          return cells[0].pucch_grants_per_slot_cnt[sr_off] >= max_pucch_grants_per_slot;
-        });
 
     // If the PUCCH is exceeded, proceed with the next SR resource/offset pair.
     if (not pucch_cnt_exceeded) {

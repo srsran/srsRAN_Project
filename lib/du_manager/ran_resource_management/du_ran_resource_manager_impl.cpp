@@ -87,8 +87,9 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   auto& mcg = ue_res_pool[ue_index].cg_cfg;
 
   // UE initialized PCell.
-  if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {
-    logger.warning("RAN Resource Allocation failed for ue={}", ue_index);
+  error_type<std::string> err = allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX);
+  if (err.is_error()) {
+    logger.warning("RAN Resource Allocation failed for ue={}. Cause: {}", ue_index, err.error());
     ue_res_pool.erase(ue_index);
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
@@ -192,14 +193,14 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   // > Allocate resources for new or modified cells.
   if (not ue_mcg.cells.contains(0) or ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
-    if (not allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX)) {
+    if (allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX).is_error()) {
       resp.release_required = true;
       return resp;
     }
   }
   for (const f1ap_scell_to_setup& sc : upd_req.scells_to_setup) {
     // >> SCells Added/Modified. Allocate new SCell resources.
-    if (not allocate_cell_resources(ue_index, sc.cell_index, sc.serv_cell_index)) {
+    if (allocate_cell_resources(ue_index, sc.cell_index, sc.serv_cell_index).is_error()) {
       resp.failed_scells.push_back(sc.serv_cell_index);
     }
   }
@@ -218,9 +219,9 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   ue_res_pool.erase(ue_index);
 }
 
-bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_index,
-                                                           du_cell_index_t   cell_index,
-                                                           serv_cell_index_t serv_cell_index)
+error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_index,
+                                                                              du_cell_index_t   cell_index,
+                                                                              serv_cell_index_t serv_cell_index)
 {
   cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 
@@ -239,8 +240,8 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
     if (not pucch_res_mng.alloc_resources(ue_res)) {
-      logger.warning("Unable to allocate dedicated PUCCH resources for ue={}, cell={}", ue_index, cell_index);
-      return false;
+      return error_type<std::string>(
+          fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", ue_index, cell_index));
     }
   } else {
     srsran_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
@@ -250,7 +251,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
     // TODO: Allocate SCell params.
   }
-  return true;
+  return {};
 }
 
 void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index)
