@@ -36,19 +36,18 @@ public:
 struct bench_params {
   unsigned nof_repetitions   = 1000;
   bool     print_timing_info = false;
-  int      algo              = 2;
 };
 
-static void usage(const char* prog, const bench_params& params)
+static void usage(const char* prog, const bench_params& params, int algo)
 {
   fmt::print("Usage: {} [-R repetitions] [-t timing information]\n", prog);
-  fmt::print("\t-a Security algorithm to use [Default {2}, valid {1,2,3}]\n", params.algo);
+  fmt::print("\t-a Security algorithm to use [Default {2}, valid {-1,0,1,2,3}]\n", algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-h Show this message\n");
 }
 
-static void parse_args(int argc, char** argv, bench_params& params)
+static void parse_args(int argc, char** argv, bench_params& params, int& algo)
 {
   int opt = 0;
   while ((opt = getopt(argc, argv, "a:R:th")) != -1) {
@@ -57,14 +56,14 @@ static void parse_args(int argc, char** argv, bench_params& params)
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
-        params.algo = std::strtol(optarg, nullptr, 10);
+        algo = std::strtol(optarg, nullptr, 10);
         break;
       case 't':
         params.print_timing_info = true;
         break;
       case 'h':
       default:
-        usage(argv[0], params);
+        usage(argv[0], params, algo);
         exit(0);
     }
   }
@@ -152,34 +151,47 @@ void benchmark_pdcp_tx(bench_params                  params,
   bm->print_percentiles_throughput(" bps");
 }
 
-int main(int argc, char** argv)
+int run_benchmark(bench_params params, int algo)
 {
-  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::error);
-
-  srslog::init();
-
-  bench_params params{};
-  parse_args(argc, argv, params);
-
-  if (params.algo != 1 && params.algo != 2 && params.algo != 3) {
-    fmt::print("Unsupported algortithm. Use NIA/NEA 1, 2 or 3.\n");
+  if (algo != 0 && algo != 1 && algo != 2 && algo != 3) {
+    fmt::print("Unsupported algortithm. Use NIA/NEA 0, 1, 2 or 3.\n");
     return -1;
   }
+  fmt::print("------ Benchmarcking: NIA{} NEA{} ------\n", algo, algo);
 
-  security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(params.algo);
-  security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(params.algo);
+  security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(algo);
+  security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
-  {
-    benchmark_pdcp_tx(params, security::integrity_enabled::off, security::ciphering_enabled::off, int_algo, ciph_algo);
-  }
-  {
+  if (algo == 0) {
+    benchmark_pdcp_tx(params,
+                      security::integrity_enabled::off,
+                      security::ciphering_enabled::off,
+                      security::integrity_algorithm::nia2, // NIA0 is forbiden, use NIA2 and disable integrity
+                      ciph_algo);
+  } else {
     benchmark_pdcp_tx(params, security::integrity_enabled::on, security::ciphering_enabled::on, int_algo, ciph_algo);
-  }
-  {
     benchmark_pdcp_tx(params, security::integrity_enabled::on, security::ciphering_enabled::off, int_algo, ciph_algo);
-  }
-  {
     benchmark_pdcp_tx(params, security::integrity_enabled::off, security::ciphering_enabled::on, int_algo, ciph_algo);
+  }
+  fmt::print("------ End of Benchmarck ------\n");
+  return 0;
+}
+
+int main(int argc, char** argv)
+{
+  srslog::init();
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::error);
+
+  int          algo = -1;
+  bench_params params{};
+  parse_args(argc, argv, params, algo);
+
+  if (algo != -1) {
+    run_benchmark(params, algo);
+  } else {
+    for (unsigned i = 0; i < 4; i++) {
+      run_benchmark(params, i);
+    }
   }
   srslog::flush();
 }
