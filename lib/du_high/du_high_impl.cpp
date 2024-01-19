@@ -165,11 +165,15 @@ void du_high_impl::start()
   // If test mode is enabled, create a test-mode UE by injecting a Msg3.
   if (cfg.test_cfg.test_ue.has_value()) {
     // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
-    mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
-        slot_point{0, 0},
-        to_du_cell_index(0),
-        {mac_rx_pdu{
-            cfg.test_cfg.test_ue->rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}});
+    for (auto ue_num = 0; ue_num < cfg.test_cfg.test_ue->nof_ues; ++ue_num) {
+      mac->get_pdu_handler().handle_rx_data_indication(
+          mac_rx_data_indication{slot_point{0, 0},
+                                 to_du_cell_index(0),
+                                 {mac_rx_pdu{to_rnti(to_value(cfg.test_cfg.test_ue->rnti) + ue_num),
+                                             0,
+                                             0,
+                                             {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}});
+    }
   }
 }
 

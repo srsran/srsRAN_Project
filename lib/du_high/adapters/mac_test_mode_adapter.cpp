@@ -69,15 +69,15 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(const srs_du::du_test_con
                                                        mac_pdu_handler&                              pdu_handler_,
                                                        mac_cell_slot_handler&                        slot_handler_,
                                                        mac_cell_result_notifier&                     result_notifier_,
-                                                       std::function<void()>                         dl_bs_notifier_,
-                                                       const sched_ue_config_request&                ue_cfg_req_) :
+                                                       std::function<void(rnti_t)>                   dl_bs_notifier_,
+                                                       test_ue_info_manager&                         ue_info_mgr_) :
   test_ue_cfg(test_ue_cfg_),
   adapted(adapted_),
   pdu_handler(pdu_handler_),
   slot_handler(slot_handler_),
   result_notifier(result_notifier_),
   dl_bs_notifier(dl_bs_notifier_),
-  ue_cfg_req(ue_cfg_req_)
+  ue_info_mgr(ue_info_mgr_)
 {
   // Note: The history ring size has to be a multiple of the TDD frame size in slots.
   const size_t HISTORY_RING_SIZE =
@@ -116,17 +116,17 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 
             // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 has been received. At this point, we
             // update the test UE with positive DL buffer states and BSR.
-            if (not msg4_rx_flag) {
+            if (not ue_info_mgr.is_msg4_rxed(pdu.rnti)) {
               if (test_ue_cfg.pdsch_active) {
                 // Update DL buffer state automatically.
-                dl_bs_notifier();
+                dl_bs_notifier(pucch.crnti);
               }
 
               if (test_ue_cfg.pusch_active) {
                 // In case of PUSCH test mode is enabled, push a BSR.
-                pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(sl_rx, test_ue_cfg.rnti, to_harq_id(0)));
+                pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(sl_rx, pucch.crnti, to_harq_id(0)));
               }
-              msg4_rx_flag = true;
+              ue_info_mgr.msg4_rxed(pdu.rnti, true);
             }
           }
         } break;
@@ -148,7 +148,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
             f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
                 uci_payload_or_csi_information::payload_type_t::csi_part_payload;
             f2.uci_part1_or_csi_part1_info->status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-            fill_csi_bits(f2.uci_part1_or_csi_part1_info->payload);
+            fill_csi_bits(pdu.rnti, f2.uci_part1_or_csi_part1_info->payload);
           }
         } break;
         default:
@@ -160,50 +160,57 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
     adapted.handle_uci(uci_ind);
   }
 
-  if (entry.pusch.has_value()) {
+  if (not entry.puschs.empty()) {
     // In case there is UCI in the PUSCH, send an UCI indication to real MAC.
-    if (entry.pusch->uci.has_value()) {
-      // Prepare the PUSCH UCI.
-      mac_uci_indication_message uci_ind;
-      uci_ind.sl_rx     = sl_rx;
-      mac_uci_pdu& pdu  = uci_ind.ucis.emplace_back();
-      pdu.rnti          = test_ue_cfg.rnti;
-      auto& pusch_uci   = pdu.pdu.emplace<mac_uci_pdu::pusch_type>();
-      pusch_uci.ul_sinr = 100;
-      if (entry.pusch->uci.value().harq.has_value() and entry.pusch->uci.value().harq.value().harq_ack_nof_bits > 0) {
-        pusch_uci.harq_info.emplace();
-        pusch_uci.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-        pusch_uci.harq_info->payload.resize(entry.pusch->uci.value().harq.value().harq_ack_nof_bits);
-        pusch_uci.harq_info->payload.fill();
-      }
-      if (entry.pusch->uci.value().csi.has_value() and entry.pusch->uci.value().csi.value().csi_part1_nof_bits > 0) {
-        pusch_uci.csi_part1_info.emplace();
-        pusch_uci.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-        fill_csi_bits(pusch_uci.csi_part1_info->payload);
-      }
-
-      // Forward MAC UCI to the real MAC.
-      adapted.handle_uci(uci_ind);
-    }
-
+    mac_uci_indication_message pusch_uci_ind{};
+    pusch_uci_ind.sl_rx = sl_rx;
     // Handle pending CRC indications
     mac_crc_indication_message crc_ind{};
-    crc_ind.sl_rx   = sl_rx;
-    auto& crc_pdu   = crc_ind.crcs.emplace_back();
-    crc_pdu.rnti    = test_ue_cfg.rnti;
-    crc_pdu.harq_id = entry.pusch->pusch_cfg.harq_id;
-    // Force CRC=OK for test UE.
-    crc_pdu.tb_crc_success = true;
-    // Force UL SINR.
-    crc_pdu.ul_sinr_metric = 100;
+    crc_ind.sl_rx = sl_rx;
+    for (const ul_sched_info& pusch : entry.puschs) {
+      if (pusch.uci.has_value()) {
+        mac_uci_pdu& pdu  = pusch_uci_ind.ucis.emplace_back();
+        pdu.rnti          = pusch.pusch_cfg.rnti;
+        auto& pusch_uci   = pdu.pdu.emplace<mac_uci_pdu::pusch_type>();
+        pusch_uci.ul_sinr = 100;
+        if (pusch.uci.value().harq.has_value() and pusch.uci.value().harq.value().harq_ack_nof_bits > 0) {
+          pusch_uci.harq_info.emplace();
+          pusch_uci.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          pusch_uci.harq_info->payload.resize(pusch.uci.value().harq.value().harq_ack_nof_bits);
+          pusch_uci.harq_info->payload.fill();
+        }
+        if (pusch.uci.value().csi.has_value() and pusch.uci.value().csi.value().csi_part1_nof_bits > 0) {
+          pusch_uci.csi_part1_info.emplace();
+          pusch_uci.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          fill_csi_bits(pdu.rnti, pusch_uci.csi_part1_info->payload);
+        }
+      }
 
-    // Forward CRC to the real MAC.
-    adapted.handle_crc(crc_ind);
+      auto& crc_pdu   = crc_ind.crcs.emplace_back();
+      crc_pdu.rnti    = pusch.pusch_cfg.rnti;
+      crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
+      // Force CRC=OK for test UE.
+      crc_pdu.tb_crc_success = true;
+      // Force UL SINR.
+      crc_pdu.ul_sinr_metric = 100;
+    }
+
+    if (not pusch_uci_ind.ucis.empty()) {
+      // Forward MAC UCI to the real MAC.
+      adapted.handle_uci(pusch_uci_ind);
+    }
+
+    if (not crc_ind.crcs.empty()) {
+      // Forward CRC to the real MAC.
+      adapted.handle_crc(crc_ind);
+    }
 
     if (test_ue_cfg.pusch_active) {
-      // In case of PUSCH test mode is enabled, push a BSR.
-      pdu_handler.handle_rx_data_indication(
-          create_test_pdu_with_bsr(sl_rx, test_ue_cfg.rnti, to_harq_id(crc_pdu.harq_id)));
+      for (const auto& crc_pdu : crc_ind.crcs) {
+        // In case of PUSCH test mode is enabled, push a BSR.
+        pdu_handler.handle_rx_data_indication(
+            create_test_pdu_with_bsr(sl_rx, crc_pdu.rnti, to_harq_id(crc_pdu.harq_id)));
+      }
     }
   }
 
@@ -216,7 +223,7 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
 
   if (event.pusch_and_pucch_discarded) {
     // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
-    entry.pusch.reset();
+    entry.puschs.clear();
     entry.pucchs.clear();
   }
 
@@ -225,19 +232,11 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
 
 void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& msg)
 {
-  auto pdu_it = std::find_if(
-      msg.crcs.begin(), msg.crcs.end(), [this](const mac_crc_pdu& pdu) { return pdu.rnti == test_ue_cfg.rnti; });
-  if (pdu_it == msg.crcs.end()) {
-    // No CRC for the test mode UE. Just forward message to MAC.
-    adapted.handle_crc(msg);
-    return;
-  }
-
   // Forward CRC to MAC, but remove the UCI for the test mode UE.
   mac_crc_indication_message msg_copy;
   msg_copy.sl_rx = msg.sl_rx;
-  for (auto& crc : msg.crcs) {
-    if (crc.rnti != test_ue_cfg.rnti) {
+  for (const auto& crc : msg.crcs) {
+    if (not ue_info_mgr.is_test_ue(crc.rnti)) {
       msg_copy.crcs.push_back(crc);
     }
   }
@@ -248,19 +247,11 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
 
 void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& msg)
 {
-  auto uci_it = std::find_if(
-      msg.ucis.begin(), msg.ucis.end(), [this](const mac_uci_pdu& uci) { return uci.rnti == test_ue_cfg.rnti; });
-  if (uci_it == msg.ucis.end()) {
-    // No UCI for the test mode UE. Just forward message to MAC.
-    adapted.handle_uci(msg);
-    return;
-  }
-
   // Forward UCI to MAC, but remove the UCI for the test mode UE.
   mac_uci_indication_message msg_copy;
   msg_copy.sl_rx = msg.sl_rx;
   for (const mac_uci_pdu& pdu : msg.ucis) {
-    if (pdu.rnti != test_ue_cfg.rnti) {
+    if (not ue_info_mgr.is_test_ue(pdu.rnti)) {
       msg_copy.ucis.push_back(pdu);
     }
   }
@@ -276,26 +267,29 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 
   // Resets the history for this ring element.
   entry.pucchs.clear();
-  entry.pusch.reset();
+  entry.puschs.clear();
 
   // Fill the ring element with the scheduler decisions.
   for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
-    if (pucch.crnti == test_ue_cfg.rnti) {
+    if (ue_info_mgr.is_test_ue(pucch.crnti)) {
       entry.pucchs.push_back(pucch);
     }
   }
   for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
-    if (pusch.pusch_cfg.rnti == test_ue_cfg.rnti) {
-      entry.pusch = pusch;
+    if (ue_info_mgr.is_test_ue(pusch.pusch_cfg.rnti)) {
+      entry.puschs.push_back(pusch);
     }
   }
 
   result_notifier.on_new_uplink_scheduler_results(ul_res);
 }
 
-void mac_test_mode_cell_adapter::fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
+void mac_test_mode_cell_adapter::fill_csi_bits(rnti_t                                                          rnti,
+                                               bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
 {
   static constexpr size_t CQI_BITLEN = 4;
+
+  const sched_ue_config_request& ue_cfg_req = ue_info_mgr.get_sched_ue_cfg_request(rnti);
 
   if (ue_cfg_req.cells->empty() or not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
     return;
@@ -361,7 +355,9 @@ void phy_test_mode_adapter::phy_cell::on_cell_results_completion(slot_point slot
 
 mac_test_mode_adapter::mac_test_mode_adapter(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
                                              mac_result_notifier&                          phy_notifier_) :
-  test_ue(test_ue_cfg_), phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_))
+  test_ue(test_ue_cfg_),
+  phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_)),
+  ue_info_mgr(test_ue.rnti, test_ue.nof_ues)
 {
 }
 
@@ -378,9 +374,9 @@ void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
   mac_adapted->get_cell_manager().add_cell(cell_cfg);
 
   // Create the cell in the MAC test mode.
-  auto func_dl_bs_push = [this]() {
+  auto func_dl_bs_push = [this](rnti_t rnti) {
     get_ue_control_info_handler().handle_dl_buffer_state_update(
-        {test_ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
+        {ue_info_mgr.rnti_to_du_ue_idx(rnti), lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
   };
   auto new_cell =
       std::make_unique<mac_test_mode_cell_adapter>(test_ue,
@@ -390,7 +386,7 @@ void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
                                                    mac_adapted->get_slot_handler(cell_cfg.cell_index),
                                                    phy_notifier->adapted_phy.get_cell(cell_cfg.cell_index),
                                                    func_dl_bs_push,
-                                                   test_ue_cfg);
+                                                   ue_info_mgr);
 
   if (cell_info_handler.size() <= cell_cfg.cell_index) {
     cell_info_handler.resize(cell_cfg.cell_index + 1);
@@ -424,7 +420,7 @@ mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_ha
 void mac_test_mode_adapter::handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs)
 {
   mac_dl_buffer_state_indication_message dl_bs_copy = dl_bs;
-  if (test_ue_index == dl_bs.ue_index and test_ue.pdsch_active and dl_bs.lcid != LCID_SRB0) {
+  if (ue_info_mgr.is_test_ue(dl_bs.ue_index) and test_ue.pdsch_active and dl_bs.lcid != LCID_SRB0) {
     // It is the test UE. Set a positive DL buffer state if PDSCH is set to "activated".
     dl_bs_copy.bs = TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE;
   }
@@ -450,18 +446,15 @@ mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_confi
 
 async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request& cfg)
 {
-  if (cfg.crnti == test_ue.rnti) {
+  if (ue_info_mgr.is_test_ue(cfg.crnti)) {
     // It is the test UE.
     mac_ue_create_request cfg_copy = cfg;
 
-    // Save UE index.
-    test_ue_index = cfg_copy.ue_index;
+    // Save UE index and configuration of test mode UE.
+    ue_info_mgr.add_ue(cfg.crnti, cfg_copy.ue_index, cfg_copy.sched_cfg);
 
     // Add adapters to the UE config bearers before passing it to MAC.
     cfg_copy.bearers = adapt_bearers(cfg.bearers);
-
-    // Save config of test mode UE.
-    test_ue_cfg = cfg_copy.sched_cfg;
 
     // Forward test UE creation request to MAC.
     return mac_adapted->get_ue_configurator().handle_ue_create_request(cfg_copy);
@@ -474,7 +467,7 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
 async_task<mac_ue_reconfiguration_response>
 mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg)
 {
-  if (cfg.crnti == test_ue.rnti) {
+  if (ue_info_mgr.is_test_ue(cfg.crnti)) {
     // If it is the test UE.
     auto cfg_adapted = cfg;
 
