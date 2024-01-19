@@ -1490,6 +1490,29 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
   }
 }
 
+static void generate_ru_dummy_config(ru_dummy_configuration&    out_cfg,
+                                     const gnb_appconfig&       config,
+                                     span<const du_cell_config> du_cells)
+{
+  // Select reference to the RU dummy configuration.
+  const ru_dummy_appconfig& ru_cfg = variant_get<ru_dummy_appconfig>(config.ru_cfg);
+
+  // Select common cell configuration.
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
+  // Derive parameters.
+  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+
+  // Fill configuration parameters.
+  out_cfg.scs                        = cell.common_scs;
+  out_cfg.nof_sectors                = config.cells_cfg.size();
+  out_cfg.rx_rg_nof_prb              = channel_bw_prb;
+  out_cfg.rx_rg_nof_ports            = cell.nof_antennas_ul;
+  out_cfg.rx_prach_nof_ports         = cell.prach_cfg.ports.size();
+  out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
+  out_cfg.dl_processing_delay        = ru_cfg.dl_processing_delay;
+}
+
 ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<const du_cell_config> cells)
 {
   ru_configuration out_cfg;
@@ -1497,9 +1520,12 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<co
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     ru_generic_configuration& cfg = out_cfg.config.emplace<ru_generic_configuration>();
     generate_ru_generic_config(cfg, config);
-  } else {
+  } else if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     ru_ofh_configuration& cfg = out_cfg.config.emplace<ru_ofh_configuration>();
     generate_ru_ofh_config(cfg, config, cells);
+  } else {
+    ru_dummy_configuration& cfg = out_cfg.config.emplace<ru_dummy_configuration>();
+    generate_ru_dummy_config(cfg, config, cells);
   }
 
   return out_cfg;

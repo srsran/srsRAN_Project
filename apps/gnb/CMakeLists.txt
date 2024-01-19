@@ -49,6 +49,7 @@ target_link_libraries(gnb
         srsran_channel_processors
         srsran_channel_equalizer
         srsran_channel_precoder
+        srsran_ru_dummy
         srsran_ru_generic
         srsran_ru_ofh
         srsran_pcap

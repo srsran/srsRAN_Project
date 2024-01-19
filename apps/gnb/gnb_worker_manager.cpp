@@ -574,12 +574,22 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
     return;
   }
 
-  const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
-  std::string             driver  = sdr_cfg.device_driver;
+  if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
+    const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
+    std::string             driver  = sdr_cfg.device_driver;
 
-  create_lower_phy_executors((driver != "zmq") ? appcfg.expert_execution_cfg.threads.lower_threads.execution_profile
-                                               : lower_phy_thread_profile::blocking,
-                             appcfg.cells_cfg.size());
+    create_lower_phy_executors((driver != "zmq") ? appcfg.expert_execution_cfg.threads.lower_threads.execution_profile
+                                                 : lower_phy_thread_profile::blocking,
+                               appcfg.cells_cfg.size());
+    return;
+  }
+
+  create_prio_worker("ru_dummy",
+                     task_worker_queue_size,
+                     {{"ru_dummy"}},
+                     affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                     os_thread_realtime_priority::max());
+  radio_exec = exec_mng.executors().at("ru_dummy");
 }
 
 du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)

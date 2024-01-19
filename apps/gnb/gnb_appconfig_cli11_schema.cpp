@@ -1860,6 +1860,12 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
+static void configure_cli11_ru_dummy_args(CLI::App& app, ru_dummy_appconfig& config)
+{
+  app.add_option("--dl_processing_delay", config.dl_processing_delay, "DL processing processing delay in slots")
+      ->capture_default_str();
+}
+
 static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
 {
   app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
@@ -2182,27 +2188,38 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
   configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads.ofh_threads);
 }
 
-static void manage_ru_variant(CLI::App&               app,
-                              gnb_appconfig&          gnb_cfg,
-                              const ru_sdr_appconfig  sdr_cfg,
-                              const ru_ofh_appconfig& ofh_cfg)
+static void manage_ru_variant(CLI::App&                 app,
+                              gnb_appconfig&            gnb_cfg,
+                              const ru_sdr_appconfig    sdr_cfg,
+                              const ru_ofh_appconfig&   ofh_cfg,
+                              const ru_dummy_appconfig& dummy_cfg)
 {
   // Manage the RU optionals
-  unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
-  unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
+  unsigned nof_ofh_entries   = app.get_subcommand("ru_ofh")->count_all();
+  unsigned nof_sdr_entries   = app.get_subcommand("ru_sdr")->count_all();
+  unsigned nof_dummy_entries = app.get_subcommand("ru_dummy")->count_all();
 
-  if (nof_sdr_entries && nof_ofh_entries) {
-    srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
-                     "of them at the same time");
+  // Count the number of RU types.
+  unsigned nof_ru_types = (nof_ofh_entries != 0) ? 1 : 0;
+  nof_ru_types += (nof_sdr_entries != 0) ? 1 : 0;
+  nof_dummy_entries += (nof_dummy_entries != 0) ? 1 : 0;
+
+  if (nof_ru_types > 1) {
+    srsran_terminate("Radio Unit configuration allows either a SDR, Open Fronthaul, or Dummy configuration, but not "
+                     "different types of them at the same time");
   }
 
   if (nof_ofh_entries != 0) {
     gnb_cfg.ru_cfg = ofh_cfg;
-
     return;
   }
 
-  gnb_cfg.ru_cfg = sdr_cfg;
+  if (nof_sdr_entries != 0) {
+    gnb_cfg.ru_cfg = sdr_cfg;
+    return;
+  }
+
+  gnb_cfg.ru_cfg = dummy_cfg;
 }
 
 static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
@@ -2314,6 +2331,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
   configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 
+  static ru_dummy_appconfig dummy_cfg;
+  CLI::App* ru_dummy_subcmd = app.add_subcommand("ru_dummy", "Dummy Radio Unit configuration")->configurable();
+  configure_cli11_ru_dummy_args(*ru_dummy_subcmd, dummy_cfg);
+
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_parsed_cfg.common_cell_cfg);
@@ -2421,7 +2442,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 
   app.callback([&]() {
-    manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
+    manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg, dummy_cfg);
     manage_hal_optional(app, gnb_cfg);
     manage_ntn_optional(app, gnb_cfg);
     manage_processing_delay(app, gnb_cfg);

@@ -6,6 +6,9 @@
 # the distribution.
 #
 
-add_subdirectory(dummy)
-add_subdirectory(generic)
-add_subdirectory(ofh)
+set(SOURCES
+        ru_dummy_factory.cpp
+        ru_dummy_impl.cpp)
+
+add_library(srsran_ru_dummy STATIC ${SOURCES})
+target_link_libraries(srsran_ru_dummy srslog)

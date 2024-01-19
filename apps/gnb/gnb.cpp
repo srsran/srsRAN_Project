@@ -48,6 +48,7 @@
 
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
+#include "srsran/ru/ru_dummy_factory.h"
 #include "srsran/ru/ru_generic_factory.h"
 #include "srsran/ru/ru_ofh_factory.h"
 
@@ -145,6 +146,23 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
     sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
     sector_deps.downlink_executor           = workers.ru_dl_exec[i];
   }
+}
+
+/// Resolves the Dummy Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_dummy_executors_and_notifiers(ru_dummy_configuration&             config,
+                                                       ru_dummy_dependencies&              dependencies,
+                                                       const log_appconfig&                log_cfg,
+                                                       worker_manager&                     workers,
+                                                       ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                       ru_timing_notifier&                 timing_notifier)
+{
+  srslog::basic_logger& ru_logger = srslog::fetch_basic_logger("RU", true);
+  ru_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
+
+  dependencies.logger          = &ru_logger;
+  dependencies.executor        = workers.radio_exec;
+  dependencies.timing_notifier = &timing_notifier;
+  dependencies.symbol_notifier = &symbol_notifier;
 }
 
 int main(int argc, char** argv)
@@ -496,11 +514,21 @@ int main(int argc, char** argv)
                                              ru_timing_adapt);
 
     ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
-  } else {
+  } else if (variant_holds_alternative<ru_generic_configuration>(ru_cfg.config)) {
     configure_ru_generic_executors_and_notifiers(
         variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
 
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
+  } else {
+    ru_dummy_dependencies ru_dependencies;
+    configure_ru_dummy_executors_and_notifiers(variant_get<ru_dummy_configuration>(ru_cfg.config),
+                                               ru_dependencies,
+                                               gnb_cfg.log_cfg,
+                                               workers,
+                                               ru_ul_adapt,
+                                               ru_timing_adapt);
+
+    ru_object = create_dummy_ru(variant_get<ru_dummy_configuration>(ru_cfg.config), ru_dependencies);
   }
   report_error_if_not(ru_object, "Unable to create Radio Unit.");
   gnb_logger.info("Radio Unit created successfully");

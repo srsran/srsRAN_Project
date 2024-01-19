@@ -1040,6 +1040,15 @@ struct ru_ofh_appconfig {
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
 
+/// gNB app dummy Radio Unit configuration.
+struct ru_dummy_appconfig {
+  /// \brief DL processing processing delay in slots.
+  ///
+  /// It is the number of slots that the RU expects the downlink resource grid in advance for having enough time margin
+  /// for processing.
+  unsigned dl_processing_delay = 1;
+};
+
 struct buffer_pool_appconfig {
   std::size_t nof_segments = 1048576;
   std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
@@ -1184,7 +1193,7 @@ struct gnb_appconfig {
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
-  variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
+  variant<ru_sdr_appconfig, ru_ofh_appconfig, ru_dummy_appconfig> ru_cfg = {ru_sdr_appconfig{}};
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
