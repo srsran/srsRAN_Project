@@ -25,6 +25,8 @@ namespace ofh {
 struct data_flow_cplane_scheduling_commands_impl_config {
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
   /// VLAN frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Downlink compression parameters.
@@ -67,6 +69,7 @@ public:
 
 private:
   srslog::basic_logger&                             logger;
+  const unsigned                                    nof_symbols_per_slot;
   const unsigned                                    ru_nof_prbs;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;

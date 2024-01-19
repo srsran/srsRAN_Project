@@ -81,12 +81,13 @@ TEST_P(EthFramePoolFixture, read_empty_pool_should_return_empty_span)
   slot_point slot(to_numerology_value(scs), 0);
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
-      ether::frame_pool_context ctx(slot, symbol, ofh_type, ofh::data_direction::downlink);
+      ofh::slot_symbol_point    symbol_point(slot, symbol, nof_symbols);
+      ether::frame_pool_context ctx{{ofh_type, ofh::data_direction::downlink}, symbol_point};
       auto                      buffers = pool.read_frame_buffers(ctx);
       ASSERT_TRUE(buffers.empty()) << "Reading empty pool returned non-empty span of buffers";
       if (ofh_type == ofh::message_type::control_plane) {
-        ctx.direction = ofh::data_direction::uplink;
-        buffers       = pool.read_frame_buffers(ctx);
+        ctx.type.direction = ofh::data_direction::uplink;
+        buffers            = pool.read_frame_buffers(ctx);
         ASSERT_TRUE(buffers.empty()) << "Reading empty pool returned non-empty span of buffers";
       }
     }
@@ -104,6 +105,8 @@ TEST_P(EthFramePoolFixture, writing_small_pkt_is_rounded_to_min_eth_size)
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
+      ofh::slot_symbol_point symbol_point(slot, symbol, nof_symbols);
+
       // Generate small packet filled with random data.
       std::array<uint8_t, MIN_ETH_FRAME_LENGTH> zeros{0};
       unsigned                                  pkt_size = test_rgen::uniform_int<unsigned>(1, MIN_ETH_FRAME_LENGTH);
@@ -118,7 +121,7 @@ TEST_P(EthFramePoolFixture, writing_small_pkt_is_rounded_to_min_eth_size)
       }
 
       // Get span of frame buffers.
-      ether::frame_pool_context context(slot, symbol, ofh_type, direction);
+      ether::frame_pool_context context{{ofh_type, direction}, symbol_point};
       span<frame_buffer>        wr_buffers = pool.get_frame_buffers(context);
       ASSERT_TRUE(!wr_buffers.empty()) << "Non-empty span of buffers expected";
 
@@ -151,6 +154,8 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
+      ofh::slot_symbol_point symbol_point(slot, symbol, nof_symbols);
+
       ofh::data_direction direction = ofh::data_direction::downlink;
       if (ofh_type == ofh::message_type::control_plane) {
         // For Control-Plane messages randomly choose the direction.
@@ -159,7 +164,7 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
       }
 
       // Get span of frame buffers.
-      ether::frame_pool_context context(slot, symbol, ofh_type, direction);
+      ether::frame_pool_context context{{ofh_type, direction}, symbol_point};
       span<frame_buffer>        frame_buffers = pool.get_frame_buffers(context);
       ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
       std::vector<std::vector<uint8_t>> test_data(frame_buffers.size());
@@ -203,6 +208,8 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
+      ofh::slot_symbol_point symbol_point(slot, symbol, nof_symbols);
+
       // Random test data for random number of eAxC.
       unsigned                          num_antennas = test_rgen::uniform_int<unsigned>(1, ofh::MAX_NOF_SUPPORTED_EAXC);
       std::vector<std::vector<uint8_t>> test_data;
@@ -214,7 +221,7 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
         direction = static_cast<ofh::data_direction>(test_rgen::uniform_int<unsigned>(
             static_cast<unsigned>(ofh::data_direction::uplink), static_cast<unsigned>(ofh::data_direction::downlink)));
       }
-      ether::frame_pool_context context(slot, symbol, ofh_type, direction);
+      ether::frame_pool_context context{{ofh_type, direction}, symbol_point};
 
       for (unsigned eaxc = 0; eaxc != num_antennas; ++eaxc) {
         // Get a batch of frame buffers for the current slot symbol.
@@ -282,7 +289,8 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
     ofh::data_direction direction = static_cast<ofh::data_direction>(test_rgen::uniform_int<unsigned>(
         static_cast<unsigned>(ofh::data_direction::uplink), static_cast<unsigned>(ofh::data_direction::downlink)));
 
-    ether::frame_pool_context         context(slot, 0, ofh_type, direction);
+    ether::ofh_pool_message_type      pool_msg_type{ofh_type, direction};
+    ether::frame_pool_context         context{pool_msg_type, test_symbol_point};
     std::vector<std::vector<uint8_t>> test_data;
 
     for (unsigned eaxc = 0; eaxc != num_antennas; ++eaxc) {
@@ -297,7 +305,7 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
     }
 
     // Create interval and read frame buffers from the pool.
-    ether::frame_pool_interval interval{context, start_symbol_point, end_symbol_point};
+    ether::frame_pool_interval interval{pool_msg_type, start_symbol_point, end_symbol_point};
     auto                       rd_frame_buffers = pool.read_frame_buffers(interval);
     // Make sure we got 1 buffer for each antenna.
     ASSERT_TRUE(rd_frame_buffers.size() == num_antennas)
@@ -333,9 +341,9 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
   ofh::slot_symbol_point end_symbol_point   = middle_symbol_point + 1U;
 
   // Fill data for the start symbol in the interval and one symbol in the middle.
-  ether::frame_pool_context context_mid(slot, symbol_id, ofh_type, direction);
-  ether::frame_pool_context context_start(
-      start_symbol_point.get_slot(), start_symbol_point.get_symbol_index(), ofh_type, direction);
+  ether::ofh_pool_message_type pool_msg_type{ofh_type, direction};
+  ether::frame_pool_context    context_mid{pool_msg_type, middle_symbol_point};
+  ether::frame_pool_context    context_start{pool_msg_type, start_symbol_point};
 
   std::vector<std::vector<uint8_t>> test_data_start_symbol;
   std::vector<std::vector<uint8_t>> test_data_mid_symbol;
@@ -373,7 +381,7 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
   }
 
   // Create interval and read frame buffers from the pool.
-  ether::frame_pool_interval interval{context_mid, start_symbol_point, end_symbol_point};
+  ether::frame_pool_interval interval{pool_msg_type, start_symbol_point, end_symbol_point};
 
   auto rd_frame_buffers = pool.read_frame_buffers(interval);
   // Make sure we got all buffers prepared in the interval.

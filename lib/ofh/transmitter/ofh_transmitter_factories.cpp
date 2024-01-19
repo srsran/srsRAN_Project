@@ -41,6 +41,7 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.dl_compr_params             = tx_config.dl_compr_params;
   config.ul_compr_params             = tx_config.ul_compr_params;
   config.prach_compr_params          = tx_config.prach_compr_params;
+  config.cp                          = tx_config.cp;
 
   data_flow_cplane_scheduling_commands_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
@@ -68,6 +69,7 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
   config.vlan_params.mac_src_address = tx_config.mac_src_address;
   config.compr_params                = tx_config.dl_compr_params;
+  config.cp                          = tx_config.cp;
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
   dependencies.logger        = &logger;

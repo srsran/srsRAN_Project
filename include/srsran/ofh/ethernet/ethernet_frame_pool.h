@@ -63,22 +63,22 @@ public:
   span<const uint8_t> data() const noexcept { return {buffer.data(), sz}; }
 };
 
-/// Context used for accessing specific entry in the \c eth_frame_pool object.
-struct frame_pool_context {
-  slot_point          slot;
-  unsigned            symbol;
+/// Aggregates Open Fronthaul message properties used by the \c eth_frame_pool.
+struct ofh_pool_message_type {
   ofh::message_type   type;
   ofh::data_direction direction;
-
-  frame_pool_context(slot_point slot_, unsigned symbol_, ofh::message_type type_, ofh::data_direction direction_) :
-    slot(slot_), symbol(symbol_), type(type_), direction(direction_)
-  {
-  }
 };
 
-/// Specifies an interval of symbols for which \c eth_frame_pool object must be accessed.
+/// Context used for accessing specific entry in the \c eth_frame_pool object.
+struct frame_pool_context {
+  ofh_pool_message_type  type;
+  ofh::slot_symbol_point symbol_point;
+};
+
+/// Specifies an interval of symbols for which \c eth_frame_pool object must be accessed. Interval includes start and
+/// end symbols.
 struct frame_pool_interval {
-  frame_pool_context     context;
+  ofh_pool_message_type  type;
   ofh::slot_symbol_point start;
   ofh::slot_symbol_point end;
 };
@@ -196,7 +196,7 @@ class eth_frame_pool
   static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * 20L;
 
   /// Number of symbols in an interval for which an auxiliary vector is pre-allocated to store buffer pointers.
-  static constexpr size_t NUM_INTERVAL_SYMBOL = 8;
+  static constexpr size_t NUM_INTERVAL_SYMBOL = 14;
 
   /// Pool entry stores three circular arrays for every OFH type (DL C-Plane, UL C-Plane and U-Plane).
   struct pool_entry {
@@ -237,7 +237,7 @@ class eth_frame_pool
     }
 
     /// Returns a view over next free frame buffers for a given OFH type, or an empty span if there is no free space.
-    span<frame_buffer> reserve_buffers(const frame_pool_context& context)
+    span<frame_buffer> reserve_buffers(const ofh_pool_message_type& context)
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       span<frame_buffer>  buffs     = entry_buf.reserve_buffers();
@@ -249,20 +249,20 @@ class eth_frame_pool
     }
 
     /// Push span of ready buffers to the array associated with the given OFH type.
-    void push_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
+    void push_buffers(const ofh_pool_message_type& context, span<frame_buffer> prepared_buffers)
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.push_buffers(prepared_buffers);
     }
 
-    void clear_buffers(const frame_pool_context& context)
+    void clear_buffers(const ofh_pool_message_type& context)
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.clear_buffers();
     }
 
     /// Returns a view over a next stored frame buffer for a given OFH type.
-    span<const frame_buffer*> read_buffers(const frame_pool_context& context)
+    span<const frame_buffer*> read_buffers(const ofh_pool_message_type& context)
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       return entry_buf.find_buffers_ready_for_sending();
@@ -292,28 +292,28 @@ public:
   /// Returns data buffer from the pool for the given slot and symbol.
   span<frame_buffer> get_frame_buffers(const frame_pool_context& context)
   {
-    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
+    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.reserve_buffers(context);
+    return p_entry.reserve_buffers(context.type);
   }
 
   /// Increments number of prepared Ethernet frames in the given slot symbol.
   void push_frame_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
   {
-    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
+    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
     // Lock and update the pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    p_entry.push_buffers(context, prepared_buffers);
+    p_entry.push_buffers(context.type, prepared_buffers);
   }
 
   /// Returns data buffers from the pool to a reader thread given a specific symbol context.
   span<const frame_buffer*> read_frame_buffers(const frame_pool_context& context)
   {
-    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
+    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.read_buffers(context);
+    return p_entry.read_buffers(context.type);
   }
 
   /// Returns data buffers from the pool to a reader thread for an interval of symbols.
@@ -326,16 +326,14 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
 
     aux_array.clear();
-    frame_pool_context pool_context = interval.context;
 
+    // Extra 1 is added to include the end symbol of the interval.
     unsigned distance = (interval.end - interval.start) + 1;
     for (unsigned i = 0; i != distance; ++i) {
       ofh::slot_symbol_point tmp_symbol = interval.start + i;
-      pool_context.slot                 = tmp_symbol.get_slot();
-      pool_context.symbol               = tmp_symbol.get_symbol_index();
 
-      pool_entry& p_entry        = get_pool_entry(pool_context.slot, pool_context.symbol);
-      auto        symbol_buffers = p_entry.read_buffers(pool_context);
+      pool_entry& p_entry        = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
+      auto        symbol_buffers = p_entry.read_buffers(interval.type);
       for (const auto& buffer : symbol_buffers) {
         aux_array.push_back(buffer);
       }
@@ -346,10 +344,10 @@ public:
   /// Clears prepared Ethernet frame buffers for the given symbol context.
   void clear_sent_frame_buffers(const frame_pool_context& context)
   {
-    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
+    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    p_entry.clear_buffers(context);
+    p_entry.clear_buffers(context.type);
   }
 
   /// Clears prepared Ethernet frame buffers for an interval of symbols.
@@ -361,16 +359,13 @@ public:
     // Acquire lock before accessing pool entries.
     std::lock_guard<std::mutex> lock(mutex);
 
-    frame_pool_context pool_context = interval.context;
-
+    // Extra 1 is added to include the end symbol of the interval.
     unsigned distance = (interval.end - interval.start) + 1;
     for (unsigned i = 0; i != distance; ++i) {
       ofh::slot_symbol_point tmp_symbol = interval.start + i;
-      pool_context.slot                 = tmp_symbol.get_slot();
-      pool_context.symbol               = tmp_symbol.get_symbol_index();
 
-      pool_entry& p_entry = get_pool_entry(pool_context.slot, pool_context.symbol);
-      p_entry.clear_buffers(pool_context);
+      pool_entry& p_entry = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
+      p_entry.clear_buffers(interval.type);
     }
   }
 
@@ -382,18 +377,18 @@ public:
 
     pool_entry& cp_entry = get_pool_entry(slot_point, 0);
     // Clear buffers with DL Control-Plane messages.
-    frame_pool_context context(slot_point, 0, ofh::message_type::control_plane, ofh::data_direction::downlink);
-    cp_entry.clear_buffers(context);
+    ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::downlink};
+    cp_entry.clear_buffers(msg_type);
     // Clear buffers with UL Control-Plane messages.
-    context.direction = ofh::data_direction::uplink;
-    cp_entry.clear_buffers(context);
+    msg_type.direction = ofh::data_direction::uplink;
+    cp_entry.clear_buffers(msg_type);
 
     // Clear buffers with User-Plane messages.
-    context.type      = ofh::message_type::user_plane;
-    context.direction = ofh::data_direction::downlink;
+    msg_type.type      = ofh::message_type::user_plane;
+    msg_type.direction = ofh::data_direction::downlink;
     for (unsigned symbol = 0; symbol != 14; ++symbol) {
       pool_entry& up_entry = get_pool_entry(slot_point, symbol);
-      up_entry.clear_buffers(context);
+      up_entry.clear_buffers(msg_type);
     }
   }
 

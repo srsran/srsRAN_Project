@@ -26,12 +26,11 @@ class scoped_frame_buffer
 
 public:
   /// On construction, acquire Ethernet frame buffers for the given slot, symbol and Open Fronthaul type.
-  scoped_frame_buffer(ether::eth_frame_pool& frame_pool_,
-                      slot_point             slot_,
-                      unsigned               symbol_,
-                      message_type           type_,
-                      data_direction         direction_) :
-    frame_pool(frame_pool_), context(slot_, symbol_, type_, direction_), frames(frame_pool.get_frame_buffers(context))
+  scoped_frame_buffer(ether::eth_frame_pool&   frame_pool_,
+                      const slot_symbol_point& symbol_point,
+                      message_type             type,
+                      data_direction           direction) :
+    frame_pool(frame_pool_), context({{type, direction}, symbol_point}), frames(frame_pool.get_frame_buffers(context))
   {
   }
 
@@ -44,7 +43,9 @@ public:
       }
     }
 
-    srsran_terminate("No empty Ethernet frame available in slot '{}'\n", context.slot);
+    srsran_terminate("No empty Ethernet frame available in slot '{}' symbol '{}'\n",
+                     context.symbol_point.get_slot(),
+                     context.symbol_point.get_symbol_index());
   }
 
   bool empty() const { return frames.empty(); }
