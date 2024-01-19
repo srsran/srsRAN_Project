@@ -9,7 +9,7 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
-  nof_ports: 4
+  nof_ports: 32
   requirements:
     arch: amd64
     cpu:
