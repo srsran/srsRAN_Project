@@ -65,7 +65,7 @@ struct bench_params {
 static void usage(const char* prog, const bench_params& params, int algo)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
-  fmt::print("\t-a Security algorithm to use [Default {2}, valid {-1,0,1,2,3}]\n", algo);
+  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", algo);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-h Show this message\n");
 }
@@ -119,7 +119,7 @@ std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params
   sec_cfg.k_128_int = k_128_int;
   sec_cfg.k_128_enc = k_128_enc;
 
-  // Set encription/integrity algorithms
+  // Set encryption/integrity algorithms
   sec_cfg.integ_algo  = int_algo;
   sec_cfg.cipher_algo = ciph_algo;
 
@@ -183,7 +183,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   sec_cfg.k_128_int = k_128_int;
   sec_cfg.k_128_enc = k_128_enc;
 
-  // Set encription/integrity algorithms
+  // Set encryption/integrity algorithms
   sec_cfg.integ_algo  = int_algo;
   sec_cfg.cipher_algo = ciph_algo;
 
@@ -227,10 +227,10 @@ void benchmark_pdcp_rx(bench_params                  params,
 int run_benchmark(bench_params params, int algo)
 {
   if (algo != 0 && algo != 1 && algo != 2 && algo != 3) {
-    fmt::print("Unsupported algortithm. Use NIA/NEA 0, 1, 2 or 3.\n");
+    fmt::print("Unsupported algorithm. Use NIA/NEA 0, 1, 2 or 3.\n");
     return -1;
   }
-  fmt::print("------ Benchmarcking: NIA{} NEA{} ------\n", algo, algo);
+  fmt::print("------ Benchmarking: NIA{} NEA{} ------\n", algo, algo);
 
   security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(algo);
   security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(algo);
@@ -239,14 +239,14 @@ int run_benchmark(bench_params params, int algo)
     benchmark_pdcp_rx(params,
                       security::integrity_enabled::off,
                       security::ciphering_enabled::off,
-                      security::integrity_algorithm::nia2, // NIA0 is forbiden, use NIA2 and disable integrity
+                      security::integrity_algorithm::nia2, // NIA0 is forbidden, use NIA2 and disable integrity
                       ciph_algo);
   } else {
     benchmark_pdcp_rx(params, security::integrity_enabled::on, security::ciphering_enabled::on, int_algo, ciph_algo);
     benchmark_pdcp_rx(params, security::integrity_enabled::on, security::ciphering_enabled::off, int_algo, ciph_algo);
     benchmark_pdcp_rx(params, security::integrity_enabled::off, security::ciphering_enabled::on, int_algo, ciph_algo);
   }
-  fmt::print("------ End of Benchmarck ------\n");
+  fmt::print("------ End of Benchmark ------\n");
   return 0;
 }
 
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params, algo);
 
   if (algo != -1 && algo != 0 && algo != 1 && algo != 2 && algo != 3) {
-    fmt::print("Unsupported algortithm. Use -1, 0, 1, 2 or 3.\n");
+    fmt::print("Unsupported algorithm. Use -1, 0, 1, 2 or 3.\n");
     return -1;
   }
 

@@ -41,7 +41,7 @@ struct bench_params {
 static void usage(const char* prog, const bench_params& params, int algo)
 {
   fmt::print("Usage: {} [-R repetitions] [-t timing information]\n", prog);
-  fmt::print("\t-a Security algorithm to use [Default {2}, valid {-1,0,1,2,3}]\n", algo);
+  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-h Show this message\n");
