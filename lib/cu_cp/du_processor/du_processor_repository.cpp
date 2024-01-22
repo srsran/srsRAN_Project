@@ -56,8 +56,8 @@ void du_processor_repository::stop()
   force_blocking_execute(
       *cfg.cu_cp.cu_cp_executor,
       [this]() {
-        for (auto& du : du_db) {
-          du_index_t du_idx = du.first;
+        while (not du_db.empty()) {
+          du_index_t du_idx = du_db.begin()->first;
           remove_du_impl(du_idx);
         }
       },

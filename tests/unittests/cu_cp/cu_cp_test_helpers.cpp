@@ -18,6 +18,25 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+namespace {
+
+struct amf_test_stub final : public ngap_message_handler {
+  amf_test_stub(ngap_message_handler& cu_cp_) : cu_cp(cu_cp_) {}
+
+  void handle_message(const ngap_message& msg) override
+  {
+    if (is_pdu_type(msg, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request)) {
+      // Generate fake NG Setup Response.
+      cu_cp.handle_message(generate_ng_setup_response());
+    }
+  }
+
+private:
+  ngap_message_handler& cu_cp;
+};
+
+} // namespace
+
 cu_cp_test::cu_cp_test()
 {
   test_logger.set_level(srslog::basic_levels::debug);
@@ -100,8 +119,14 @@ cu_cp_test::cu_cp_test()
   cell_cfg_2.serving_cell_cfg.ssb_mtc.value().dur = 5;
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_2);
 
-  // create and start CU-CP.
+  // create CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
+
+  // Connect CU-CP to AMF stub.
+  dummy_amf = std::make_unique<amf_test_stub>(cu_cp_obj->get_ngap_message_handler());
+  ngap_amf_notifier.attach_handler(dummy_amf.get());
+
+  // Start CU-CP.
   cu_cp_obj->start();
 
   // Attach F1-C gateway to CU-CP
