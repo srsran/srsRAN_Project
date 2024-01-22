@@ -513,6 +513,7 @@ def test_zmq(
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
         gnb_post_cmd="log --hex_max_size=32",
+        ue_stop_timeout=10,
     )
 
 
@@ -601,6 +602,7 @@ def _iperf(
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
     prach_config_index=-1,
+    ue_stop_timeout: int = 0,
 ):
     wait_before_power_off = 5
 
@@ -637,4 +639,4 @@ def _iperf(
     )
 
     sleep(wait_before_power_off)
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)

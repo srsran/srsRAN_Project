@@ -338,7 +338,7 @@ def iperf_sequentially(
                 ue_attached_info.ipv4,
                 _iperf_proto_to_str(iperf_request.proto),
                 _iperf_dir_to_str(iperf_request.direction),
-                err,
+                ErrorReportedByAgent(err).details,
             )
             sleep(sleep_between_retries)
 

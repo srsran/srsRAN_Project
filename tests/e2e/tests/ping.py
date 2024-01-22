@@ -167,6 +167,7 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
+        ue_stop_timeout=10,
     )
 
 
@@ -322,6 +323,7 @@ def _ping(
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,
+    ue_stop_timeout: int = 0,
     plmn: Optional[PLMN] = None,
 ):
     logging.info("Ping Test")
@@ -360,5 +362,6 @@ def _ping(
         retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
+        ue_stop_timeout=ue_stop_timeout,
         warning_as_errors=warning_as_errors,
     )
