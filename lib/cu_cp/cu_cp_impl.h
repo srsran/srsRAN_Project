@@ -37,7 +37,6 @@ namespace srs_cu_cp {
 class cu_cp_impl final : public cu_cp_interface,
                          public cu_cp_impl_interface,
                          public cu_cp_ngap_connection_interface,
-                         public cu_cp_ngap_handler,
                          public cu_cp_cu_up_connection_interface
 {
 public:
@@ -55,17 +54,13 @@ public:
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
-  bool amf_is_connected() override { return amf_connected and amf_conn_mng->is_amf_connected(); };
+  bool amf_is_connected() override { return amf_conn_mng.is_amf_connected(); };
 
   // CU-UP handler
   void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
                            e1ap_bearer_context_removal_handler& bearer_removal_handler,
                            e1ap_statistics_handler&             e1ap_statistic_handler) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
-
-  // NGAP connection handler
-  void handle_amf_connection_establishment() override;
-  void handle_amf_connection_drop() override;
 
   // RRC UE handler
   rrc_reestablishment_ue_context_t
@@ -81,7 +76,6 @@ public:
   cu_cp_cu_up_connection_interface&      get_cu_cp_cu_up_connection_interface() override { return *this; }
   cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ngap_connection_interface&       get_cu_cp_ngap_connection_interface() override { return *this; }
-  cu_cp_ngap_handler&                    get_cu_cp_ngap_handler() override { return *this; }
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
@@ -172,10 +166,7 @@ private:
   cu_cp_routine_manager routine_mng;
 
   // Handler of the connection to the AMF.
-  std::unique_ptr<amf_connection_manager> amf_conn_mng;
-
-  // TEMP: remove this variable and use only amf connection handler.
-  std::atomic<bool> amf_connected = {false};
+  amf_connection_manager amf_conn_mng;
 
   unique_timer statistics_report_timer;
 

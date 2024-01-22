@@ -463,10 +463,10 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
 
-  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
-  if (gnb_cfg.amf_cfg.no_core) {
-    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
-  }
+//  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
+//  if (gnb_cfg.amf_cfg.no_core) {
+//    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
+//  }
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");

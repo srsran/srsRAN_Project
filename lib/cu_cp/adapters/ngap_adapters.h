@@ -53,28 +53,15 @@ private:
 };
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier, public ngap_cu_cp_du_repository_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap_cu_cp_connection_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(cu_cp_ngap_handler&               cu_cp_amf_handler_,
-                     cu_cp_du_repository_ngap_handler& cu_cp_du_repository_handler_)
+  void connect_cu_cp(cu_cp_du_repository_ngap_handler& cu_cp_du_repository_handler_, cu_cp_ngap_handler& ngap_handler_)
   {
-    cu_cp_amf_handler           = &cu_cp_amf_handler_;
     cu_cp_du_repository_handler = &cu_cp_du_repository_handler_;
-  }
-
-  void on_amf_connection_establishment() override
-  {
-    srsran_assert(cu_cp_amf_handler != nullptr, "CU-CP AMF handler must not be nullptr");
-    cu_cp_amf_handler->handle_amf_connection_establishment();
-  }
-
-  void on_amf_connection_drop() override
-  {
-    srsran_assert(cu_cp_amf_handler != nullptr, "CU-CP AMF handler must not be nullptr");
-    cu_cp_amf_handler->handle_amf_connection_drop();
+    ngap_handler                = &ngap_handler_;
   }
 
   void on_paging_message(cu_cp_paging_message& msg) override
@@ -96,9 +83,22 @@ public:
     return cu_cp_du_repository_handler->handle_ngap_handover_request(request);
   }
 
+  void on_amf_connection_establishment() override
+  {
+    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
+    ngap_handler->handle_amf_connection_establishment();
+  }
+
+  /// \brief Notifies the CU-CP about a dropped AMF connection.
+  void on_amf_connection_drop() override
+  {
+    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
+    ngap_handler->handle_amf_connection_drop();
+  }
+
 private:
-  cu_cp_ngap_handler*               cu_cp_amf_handler           = nullptr;
   cu_cp_du_repository_ngap_handler* cu_cp_du_repository_handler = nullptr;
+  cu_cp_ngap_handler*               ngap_handler                = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE

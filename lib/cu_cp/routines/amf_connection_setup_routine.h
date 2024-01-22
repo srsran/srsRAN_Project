@@ -23,19 +23,16 @@ class amf_connection_setup_routine
 {
 public:
   amf_connection_setup_routine(const ngap_configuration&       ngap_cfg_,
-                               cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                               ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
+                               cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
 private:
   ngap_ng_setup_request            fill_ng_setup_request();
   async_task<ngap_ng_setup_result> send_ng_setup_request();
-  void                             handle_ng_setup_result();
 
   const ngap_configuration&       ngap_cfg;
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
-  ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
   ngap_ng_setup_result result_msg = {};
 };

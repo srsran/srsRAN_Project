@@ -45,16 +45,16 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              du_processor_task_sched,
                              ue_mng,
                              *cell_meas_mng,
-                             amf_connected,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
-  routine_mng(ue_task_sched)
+  routine_mng(ue_task_sched),
+  amf_conn_mng(routine_mng, cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_adapter)
 {
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), du_db);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, du_db);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
@@ -73,10 +73,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
-
-  // Instantiate CU-CP AMF connection handler.
-  amf_conn_mng =
-      std::make_unique<amf_connection_manager>(routine_mng, cfg.ngap_config, ngap_adapter, ngap_cu_cp_ev_notifier);
 
   // Start statistics report timer
   statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
@@ -97,7 +93,7 @@ bool cu_cp_impl::start()
 
   if (not cfg.cu_cp_executor->execute([this, &p]() {
         // start AMF connection procedure.
-        amf_conn_mng->connect_to_amf(&p);
+        amf_conn_mng.connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup.");
   }
@@ -119,6 +115,9 @@ void cu_cp_impl::stop()
 
   // Shut down components from within CU-CP executor.
   while (not cfg.cu_cp_executor->execute([this, &p]() {
+    // Stop DU repository.
+    du_db.stop();
+
     // Stop statistics gathering.
     statistics_report_timer.stop();
 
@@ -170,20 +169,6 @@ void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager&         bearer
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
-}
-
-void cu_cp_impl::handle_amf_connection_establishment()
-{
-  amf_connected = true;
-
-  du_db.handle_amf_connection();
-}
-
-void cu_cp_impl::handle_amf_connection_drop()
-{
-  amf_connected = false;
-
-  du_db.handle_amf_connection_drop();
 }
 
 rrc_reestablishment_ue_context_t

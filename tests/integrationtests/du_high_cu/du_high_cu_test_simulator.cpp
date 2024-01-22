@@ -104,7 +104,6 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
 
   // Instatiate CU-CP.
   cu_cp_inst = create_cu_cp(cu_cfg);
-  cu_cp_inst->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
 
   // Start CU-CP.
   cu_cp_inst->start();

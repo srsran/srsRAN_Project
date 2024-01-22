@@ -41,14 +41,15 @@ struct du_repository_config {
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   cell_meas_manager&                     cell_meas_mng;
-  const std::atomic<bool>&               amf_connected;
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler
+class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler, public cu_cp_ngap_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
+
+  void stop();
 
   // DU interface
   std::unique_ptr<f1ap_message_notifier>
@@ -66,8 +67,8 @@ public:
   async_task<ngap_handover_resource_allocation_response>
   handle_ngap_handover_request(const ngap_handover_request& request) override;
 
-  void handle_amf_connection();
-  void handle_amf_connection_drop();
+  void handle_amf_connection_establishment() override;
+  void handle_amf_connection_drop() override;
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
@@ -102,8 +103,10 @@ private:
   du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
   /// \brief Removes the specified DU processor object from the CU-CP.
+  ///
+  /// Note: This function assumes that the caller is in the CU-CP execution context.
   /// \param[in] du_index The index of the DU processor to delete.
-  void remove_du(du_index_t du_index);
+  void remove_du_impl(du_index_t du_index);
 
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
@@ -121,6 +124,9 @@ private:
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
   std::unordered_map<du_index_t, du_context> removed_du_db;
+
+  // Current state of the AMF connection.
+  bool amf_connected = false;
 };
 
 } // namespace srs_cu_cp

@@ -73,6 +73,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
+  dus.clear();
   cu_cp->stop();
   cu_cp_workers->stop();
 }
@@ -85,37 +86,35 @@ void cu_cp_test_environment::tick()
 
 bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition)
 {
-  enum class task_done { running, condition_true, condition_false };
   std::mutex              mutex;
   std::condition_variable cvar;
-  task_done               done = task_done::running;
+  bool                    done = false;
 
   // Tick up to "timeout" times, waiting for stop_condition() to return true.
   for (unsigned i = 0; i != timeout.count(); ++i) {
+    if (stop_condition()) {
+      return true;
+    }
+
+    // Push to CU-CP worker task taht checks the state of the condition.
     cu_cp_workers->worker.push_task_blocking([&]() {
-      bool success = stop_condition();
-      if (not success) {
-        // Need to tick the clock.
-        tick();
-        success = stop_condition();
-      }
+      // Need to tick the clock.
+      tick();
 
       std::lock_guard<std::mutex> lock(mutex);
-      done = success ? task_done::condition_true : task_done::condition_false;
+      done = true;
       cvar.notify_one();
     });
 
     // Wait for tick to be processed.
     {
       std::unique_lock<std::mutex> lock(mutex);
-      cvar.wait(lock, [&done]() { return done == task_done::running; });
+      cvar.wait(lock, [&done]() { return done; });
     }
-
-    if (done == task_done::condition_true) {
-      return true;
-    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
-  return false;
+
+  return stop_condition();
 }
 
 bool cu_cp_test_environment::wait_for_ngap_tx_pdu(ngap_message& pdu, std::chrono::milliseconds timeout)
@@ -131,4 +130,39 @@ bool cu_cp_test_environment::try_pop_e1ap_tx_pdu(e1ap_message& pdu)
 bool cu_cp_test_environment::wait_for_e1ap_tx_pdu(e1ap_message& pdu, std::chrono::milliseconds timeout)
 {
   return tick_until(timeout, [&]() { return gw->cu_up->try_pop_rx_pdu(pdu); });
+}
+
+bool cu_cp_test_environment::wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& pdu, std::chrono::milliseconds timeout)
+{
+  report_fatal_error_if_not(dus.size() >= du_idx and dus[du_idx] != nullptr, "DU index out of range");
+
+  return tick_until(timeout, [&]() {
+    if (du_idx >= dus.size() or dus[du_idx] == nullptr) {
+      return false;
+    }
+    return dus[du_idx]->try_pop_rx_pdu(pdu);
+  });
+}
+
+optional<unsigned> cu_cp_test_environment::connect_new_du()
+{
+  auto du_stub = create_du_stub({get_cu_cp().get_connected_dus()});
+  if (not du_stub) {
+    return nullopt;
+  }
+  for (; dus.count(next_du_idx) != 0; ++next_du_idx) {
+  }
+  auto ret = dus.insert(std::make_pair(next_du_idx, std::move(du_stub)));
+  report_fatal_error_if_not(ret.second, "Race condition detected");
+  return next_du_idx;
+}
+
+bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
+{
+  auto it = dus.find(du_idx);
+  if (it == dus.end()) {
+    return false;
+  }
+  dus.erase(it);
+  return true;
 }

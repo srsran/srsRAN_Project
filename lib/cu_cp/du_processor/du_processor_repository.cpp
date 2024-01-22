@@ -12,6 +12,8 @@
 #include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor_config.h"
+#include "srsran/support/executors/sync_task_executor.h"
+#include <thread>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -25,12 +27,8 @@ public:
     parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_f1ap_message_handler())
   {
   }
-  f1ap_rx_pdu_notifier(const f1ap_rx_pdu_notifier&)            = delete;
-  f1ap_rx_pdu_notifier(f1ap_rx_pdu_notifier&&)                 = delete;
-  f1ap_rx_pdu_notifier& operator=(const f1ap_rx_pdu_notifier&) = delete;
-  f1ap_rx_pdu_notifier& operator=(f1ap_rx_pdu_notifier&&)      = delete;
 
-  ~f1ap_rx_pdu_notifier()
+  ~f1ap_rx_pdu_notifier() override
   {
     if (parent != nullptr) {
       parent->handle_du_remove_request(du_index);
@@ -53,6 +51,22 @@ du_processor_repository::du_processor_repository(du_repository_config cfg_) :
   f1ap_ev_notifier.connect_du_repository(*this);
 }
 
+void du_processor_repository::stop()
+{
+  force_blocking_execute(
+      *cfg.cu_cp.cu_cp_executor,
+      [this]() {
+        for (auto& du : du_db) {
+          du_index_t du_idx = du.first;
+          remove_du_impl(du_idx);
+        }
+      },
+      [this]() {
+        logger.warning("Failed to schedule DU removal task. Retrying...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      });
+}
+
 std::unique_ptr<f1ap_message_notifier>
 du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
@@ -63,7 +77,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
   }
 
   logger.info("Added DU {}", du_index);
-  if (cfg.amf_connected) {
+  if (amf_connected) {
     du_db.at(du_index).du_processor->get_rrc_amf_connection_handler().handle_amf_connection();
   }
 
@@ -72,8 +86,13 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
-  logger.debug("Removing DU {}...", du_index);
-  remove_du(du_index);
+  force_blocking_execute(
+      *cfg.cu_cp.cu_cp_executor,
+      [this, du_index]() { remove_du_impl(du_index); },
+      [&]() {
+        logger.warning("Failed to schedule DU removal task. Retrying...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      });
 }
 
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
@@ -133,8 +152,10 @@ du_index_t du_processor_repository::get_next_du_index()
   return du_index_t::invalid;
 }
 
-void du_processor_repository::remove_du(du_index_t du_index)
+void du_processor_repository::remove_du_impl(du_index_t du_index)
 {
+  logger.debug("Removing DU {}...", du_index);
+
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the DU. This is achieved via a scheduled async task
 
@@ -230,8 +251,10 @@ du_processor_ue_context_notifier& du_processor_repository::du_context::get_du_pr
   return du_processor->get_du_processor_ue_context_notifier();
 }
 
-void du_processor_repository::handle_amf_connection()
+void du_processor_repository::handle_amf_connection_establishment()
 {
+  amf_connected = true;
+
   // inform all connected DU objects about the new connection
   for (auto& du : du_db) {
     du.second.du_processor->get_rrc_amf_connection_handler().handle_amf_connection();
@@ -240,6 +263,8 @@ void du_processor_repository::handle_amf_connection()
 
 void du_processor_repository::handle_amf_connection_drop()
 {
+  amf_connected = false;
+
   // inform all DU objects about the AMF connection drop
   for (auto& du : du_db) {
     du.second.du_processor->get_rrc_amf_connection_handler().handle_amf_connection_drop();

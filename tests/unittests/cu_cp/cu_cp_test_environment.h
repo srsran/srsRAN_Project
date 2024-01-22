@@ -11,9 +11,11 @@
 #pragma once
 
 #include "test_doubles/dummy_amf.h"
+#include "test_doubles/dummy_du.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -34,6 +36,10 @@ public:
 
   cu_cp_interface& get_cu_cp() { return *cu_cp; }
   amf_test_stub&   get_amf() { return *amf_stub; }
+  du_test_stub&    get_du(size_t du_index) { return *dus.at(du_index); }
+
+  optional<unsigned> connect_new_du();
+  bool drop_du_connection(unsigned du_idx);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -49,6 +55,8 @@ public:
 
   bool wait_for_e1ap_tx_pdu(e1ap_message& e1ap_pdu, std::chrono::milliseconds timeout);
 
+  bool wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& f1ap_pdu, std::chrono::milliseconds timeout);
+
 private:
   class worker_manager;
   class gateway_manager;
@@ -60,8 +68,12 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
-  std::unique_ptr<amf_test_stub>   amf_stub;
-  std::unique_ptr<gateway_manager> gw;
+  std::unique_ptr<amf_test_stub>             amf_stub;
+  std::unique_ptr<gateway_manager>           gw;
+
+  // Emulated DU nodes.
+  std::unordered_map<unsigned, std::unique_ptr<du_test_stub>> dus;
+  unsigned next_du_idx = 0;
 
   /// CU-CP instance.
   std::unique_ptr<cu_cp_interface> cu_cp;

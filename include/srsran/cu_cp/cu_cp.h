@@ -77,7 +77,6 @@ public:
   virtual cu_up_repository& get_connected_cu_ups() = 0;
 
   /// \brief Get handler of the NG interface of the CU-CP.
-  virtual cu_cp_ngap_handler&              get_cu_cp_ngap_handler()              = 0;
   virtual cu_cp_ngap_connection_interface& get_cu_cp_ngap_connection_interface() = 0;
 
   /// \brief Get handler of the E1 interface of the CU-CP.

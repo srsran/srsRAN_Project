@@ -46,50 +46,6 @@ TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_receive
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* DU connection handling                                                           */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the DU connection
-TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
-{
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-
-  // check that DU has been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1U);
-}
-
-/// Test the DU removal
-TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
-{
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-
-  // Remove DU
-  this->f1c_gw.remove_du_connection(0);
-
-  // Check that DU has been removed
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 0U);
-}
-
-/// Test exeeding the maximum number of connected DUs
-TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
-{
-  for (int it = 0; it < MAX_NOF_DUS; it++) {
-    this->f1c_gw.request_new_du_connection();
-  }
-
-  // Check that MAX_NOF_DUS are connected
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), MAX_NOF_DUS);
-
-  // Attempting connection beyond CU-CP MAX_NOF_DUS limit.
-  this->f1c_gw.request_new_du_connection();
-
-  // Check that MAX_NOF_DUS are connected
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), MAX_NOF_DUS);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 /* CU-UP connection handling                                                        */
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -139,19 +95,6 @@ TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
 /* AMF connection handling                                                          */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
-{
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
-
-  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-/* UE connection handling                                                           */
-//////////////////////////////////////////////////////////////////////////////////////
-
 TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
   // Connect AMF by injecting a ng_setup_response
@@ -190,111 +133,6 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id, 0);
-}
-
-TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
-{
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-  // Disconnect CU-CP from AMF.
-  cu_cp_obj->handle_amf_connection_drop();
-
-  // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
-
-  du_index_t du_index = uint_to_du_index(0);
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
-
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
-  rnti_t              crnti    = to_rnti(0x4601);
-
-  // Inject Initial UL RRC message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
-  test_logger.info("Injecting Initial UL RRC message");
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
-
-  // Inject UE Context Release Complete message
-  f1ap_message ue_context_release_complete_msg = generate_ue_context_release_complete(cu_ue_id, du_ue_id);
-  test_logger.info("Injecting UE Context Release Complete message");
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(
-      ue_context_release_complete_msg);
-
-  // check that UE has not been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0U);
-
-  // check that the Initial UE Message was not send to the AMF
-  ASSERT_NE(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
-            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-}
-
-/// Test the f1 initial UL RRC message transfer procedure
-TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
-{
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
-
-  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
-
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
-
-  du_index_t du_index = uint_to_du_index(0);
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
-
-  // Attach first UE (successful)
-  {
-    gnb_cu_ue_f1ap_id_t first_ue_cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-    gnb_du_ue_f1ap_id_t first_ue_du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
-    rnti_t              crnti             = to_rnti(0x4601);
-
-    attach_ue(first_ue_du_ue_id, first_ue_cu_ue_id, crnti, du_index);
-  }
-
-  // check that UE has been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
-
-  // Disconnect AMF
-  cu_cp_obj->handle_amf_connection_drop();
-
-  ASSERT_FALSE(cu_cp_obj->amf_is_connected());
-
-  // Attach second UE (failure)
-  {
-    gnb_cu_ue_f1ap_id_t second_ue_cu_ue_id = int_to_gnb_cu_ue_f1ap_id(1);
-    gnb_du_ue_f1ap_id_t second_ue_du_ue_id = int_to_gnb_du_ue_f1ap_id(41256);
-    rnti_t              crnti              = to_rnti(0x4602);
-
-    // Inject Initial UL RRC message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(second_ue_du_ue_id, crnti);
-    test_logger.info("Injecting Initial UL RRC message");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
-
-    // Inject UE Context Release Complete message
-    f1ap_message ue_context_release_complete_msg =
-        generate_ue_context_release_complete(second_ue_cu_ue_id, second_ue_du_ue_id);
-    test_logger.info("Injecting UE Context Release Complete message");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(
-        ue_context_release_complete_msg);
-  }
-
-  // The UE should not exists in the CU-CP
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
-
-  // Check that UE has also been removed from F1AP
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_statistics_handler().get_nof_ues(), 1);
 }
 
 /// Test the UE rejection if DU can't serve the UE

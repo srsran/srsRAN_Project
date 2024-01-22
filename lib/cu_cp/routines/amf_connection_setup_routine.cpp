@@ -14,10 +14,9 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration&       ngap_config_,
-                                                           cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                                           ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngap_cfg(ngap_config_), ngap_ctrl_notifier(ngap_ctrl_notifier_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
+amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration&    ngap_config_,
+                                                           cu_cp_ngap_control_notifier& ngap_ctrl_notifier_) :
+  ngap_cfg(ngap_config_), ngap_ctrl_notifier(ngap_ctrl_notifier_)
 {
 }
 
@@ -27,11 +26,6 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
 
   // Initiate NG Setup.
   CORO_AWAIT_VALUE(result_msg, send_ng_setup_request());
-
-  // Handle NG setup result.
-  handle_ng_setup_result();
-
-  // TODO process response
 
   CORO_RETURN(variant_holds_alternative<ngap_ng_setup_response>(result_msg));
 }
@@ -80,14 +74,4 @@ async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_req
 
   // Initiate NG Setup Request.
   return ngap_ctrl_notifier.on_ng_setup_request(request);
-}
-
-void amf_connection_setup_routine::handle_ng_setup_result()
-{
-  if (variant_holds_alternative<ngap_ng_setup_response>(result_msg)) {
-    cu_cp_ngap_ev_notifier.on_amf_connection_establishment();
-    // TODO
-  } else {
-    // TODO
-  }
 }

@@ -20,6 +20,7 @@ add_subdirectory(mobility)
 add_library(cu_cp_test_helpers
         test_doubles/dummy_cu_up.cpp
         test_doubles/dummy_amf.cpp
+        test_doubles/dummy_du.cpp
         cu_cp_test_environment.cpp
         cu_cp_test_helpers.cpp
         du_processor_test_messages.cpp
