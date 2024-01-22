@@ -14,10 +14,23 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/support/math_utils.h"
+#ifdef HWACC_PUSCH_ENABLED
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#endif // HWACC_PUSCH_ENABLED
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
 using namespace srsran;
+
+#ifdef HWACC_PUSCH_ENABLED
+static bool skip_hwacc_test = false;
+#endif // HWACC_PUSCH_ENABLED
 
 namespace srsran {
 
@@ -37,96 +50,223 @@ std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
 
 namespace {
 
-using PuschProcessorParams = test_case_t;
+using PuschProcessorParams = std::tuple<std::string, test_case_t>;
 
 class PuschProcessorFixture : public ::testing::TestWithParam<PuschProcessorParams>
 {
-protected:
-  std::unique_ptr<pusch_processor>     pusch_proc;
-  std::unique_ptr<pusch_pdu_validator> pdu_validator;
-
-  void SetUp() override
+private:
+  static std::shared_ptr<pusch_decoder_factory>
+  create_generic_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
   {
-    const test_case_context& context = GetParam().context;
-
-    if (pusch_proc && pdu_validator) {
-      return;
+    std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
+    if (!ldpc_decoder_factory) {
+      return nullptr;
     }
 
+    std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
+        create_ldpc_rate_dematcher_factory_sw("auto");
+    if (!ldpc_rate_dematcher_factory) {
+      return nullptr;
+    }
+
+    std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+    if (!segmenter_rx_factory) {
+      return nullptr;
+    }
+
+    pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
+    pusch_decoder_factory_sw_config.crc_factory       = crc_calculator_factory;
+    pusch_decoder_factory_sw_config.decoder_factory   = ldpc_decoder_factory;
+    pusch_decoder_factory_sw_config.dematcher_factory = ldpc_rate_dematcher_factory;
+    pusch_decoder_factory_sw_config.segmenter_factory = segmenter_rx_factory;
+    return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
+  }
+
+  static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
+  {
+#ifdef HWACC_PUSCH_ENABLED
+    // :TODO: Enable file-based HAL logging.
+    srslog::sink* log_sink = srslog::create_stdout_sink();
+    srslog::set_default_sink(*log_sink);
+    srslog::init();
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
+    // :TODO: Enable configurable HAL logging level.
+    logger.set_level(srslog::str_to_basic_level("error"));
+
+    // Pointer to a dpdk-based hardware-accelerator interface.
+    static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
+    if (!dpdk_interface && !skip_hwacc_test) {
+      // :TODO: Enable passing EAL arguments.
+      dpdk_interface = dpdk::create_dpdk_eal("pusch_processor_vectortest", logger);
+      if (!dpdk_interface) {
+        skip_hwacc_test = true;
+        return nullptr;
+      }
+    } else if (skip_hwacc_test) {
+      return nullptr;
+    }
+
+    // Intefacing to the bbdev-based hardware-accelerator.
+    dpdk::bbdev_acc_configuration bbdev_config;
+    bbdev_config.id                                    = 0;
+    bbdev_config.nof_ldpc_enc_lcores                   = 0;
+    bbdev_config.nof_ldpc_dec_lcores                   = 1;
+    bbdev_config.nof_fft_lcores                        = 0;
+    bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
+    std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+    if (!bbdev_accelerator || skip_hwacc_test) {
+      skip_hwacc_test = true;
+      return nullptr;
+    }
+
+    // Interfacing to a shared external HARQ buffer context repository.
+    unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
+    unsigned acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size().value();
+    std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context =
+        create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, false);
+    if (!harq_buffer_context) {
+      skip_hwacc_test = true;
+      return nullptr;
+    }
+
+    // Set the hardware-accelerator configuration.
+    hw_accelerator_pusch_dec_configuration hw_decoder_config;
+    hw_decoder_config.acc_type            = "acc100";
+    hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
+    hw_decoder_config.ext_softbuffer      = true;
+    hw_decoder_config.harq_buffer_context = harq_buffer_context;
+
+    // ACC100 hardware-accelerator implementation.
+    return hal::create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
+#else  // HWACC_PUSCH_ENABLED
+    return nullptr;
+#endif // HWACC_PUSCH_ENABLED
+  }
+
+  static std::shared_ptr<pusch_decoder_factory>
+  create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
+  {
+    std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+    if (!segmenter_rx_factory) {
+      return nullptr;
+    }
+
+    std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory =
+        create_hw_accelerator_pusch_dec_factory();
+    if (!hw_decoder_factory) {
+      return nullptr;
+    }
+
+    // Set the hardware-accelerated PUSCH decoder configuration.
+    pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
+    decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
+    decoder_hw_factory_config.crc_factory        = crc_calculator_factory;
+    decoder_hw_factory_config.hw_decoder_factory = hw_decoder_factory;
+    return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
+  }
+
+  static std::shared_ptr<pusch_decoder_factory>
+  create_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory,
+                               const std::string&                      decoder_type)
+  {
+    if (decoder_type == "generic") {
+      return create_generic_pusch_decoder_factory(crc_calculator_factory);
+    }
+
+    if (decoder_type == "acc100") {
+      return create_acc100_pusch_decoder_factory(crc_calculator_factory);
+    }
+
+    return nullptr;
+  }
+
+  std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory(const test_case_context& context,
+                                                                          const std::string&       decoder_type)
+  {
     // Create pseudo-random sequence generator.
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-    ASSERT_NE(prg_factory, nullptr);
+    if (!prg_factory) {
+      return nullptr;
+    }
 
     // Create demodulator mapper factory.
     std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
-    ASSERT_NE(chan_modulation_factory, nullptr);
+    if (!chan_modulation_factory) {
+      return nullptr;
+    }
 
     // Create CRC calculator factory.
     std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-    ASSERT_NE(crc_calc_factory, nullptr) << "Cannot create CRC calculator factory.";
-
-    // Create LDPC decoder factory.
-    std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory = create_ldpc_decoder_factory_sw("generic");
-    ASSERT_NE(ldpc_dec_factory, nullptr);
-
-    // Create LDPC rate dematcher factory.
-    std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory = create_ldpc_rate_dematcher_factory_sw("auto");
-    ASSERT_NE(ldpc_rm_factory, nullptr);
-
-    // Create LDPC desegmenter factory.
-    std::shared_ptr<ldpc_segmenter_rx_factory> ldpc_segm_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-    ASSERT_NE(ldpc_segm_rx_factory, nullptr);
+    if (!crc_calc_factory) {
+      return nullptr;
+    }
 
     // Create short block detector factory.
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-    ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
+    if (!short_block_det_factory) {
+      return nullptr;
+    }
 
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
       dft_factory = create_dft_processor_factory_generic();
     }
-    ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+    if (!dft_factory) {
+      return nullptr;
+    }
 
     // Create port channel estimator factory.
     std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
         create_port_channel_estimator_factory_sw(dft_factory);
-    ASSERT_NE(port_chan_estimator_factory, nullptr);
+    if (!port_chan_estimator_factory) {
+      return nullptr;
+    }
 
     // Create DM-RS for PUSCH channel estimator.
     std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
         create_dmrs_pusch_estimator_factory_sw(prg_factory, port_chan_estimator_factory);
-    ASSERT_NE(dmrs_pusch_chan_estimator_factory, nullptr);
+    if (!dmrs_pusch_chan_estimator_factory) {
+      return nullptr;
+    }
 
     // Create channel equalizer factory.
     std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_factory_zf();
-    ASSERT_NE(eq_factory, nullptr);
+    if (!eq_factory) {
+      return nullptr;
+    }
 
     // Create PUSCH demodulator factory.
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
         create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory, true, true);
-    ASSERT_NE(pusch_demod_factory, nullptr);
+    if (!pusch_demod_factory) {
+      return nullptr;
+    }
 
     // Create PUSCH demultiplexer factory.
     std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
-    ASSERT_NE(demux_factory, nullptr);
+    if (!demux_factory) {
+      return nullptr;
+    }
 
     // Create PUSCH decoder factory.
-    pusch_decoder_factory_sw_configuration pusch_dec_config;
-    pusch_dec_config.crc_factory                             = crc_calc_factory;
-    pusch_dec_config.decoder_factory                         = ldpc_dec_factory;
-    pusch_dec_config.dematcher_factory                       = ldpc_rm_factory;
-    pusch_dec_config.segmenter_factory                       = ldpc_segm_rx_factory;
-    std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
-    ASSERT_NE(pusch_dec_factory, nullptr);
+    std::shared_ptr<pusch_decoder_factory> pusch_dec_factory =
+        create_pusch_decoder_factory(crc_calc_factory, decoder_type);
+    if (!pusch_dec_factory) {
+      return nullptr;
+    }
 
     // Create polar decoder factory.
     std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
-    ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
+    if (!polar_dec_factory) {
+      return nullptr;
+    }
 
     // Create UCI decoder factory.
     std::shared_ptr<uci_decoder_factory> uci_dec_factory =
         create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
-    ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
+    if (!uci_dec_factory) {
+      return nullptr;
+    }
 
     // Create PUSCH processor.
     pusch_processor_factory_sw_configuration pusch_proc_factory_config;
@@ -141,9 +281,28 @@ protected:
     pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = context.config.nof_tx_layers;
     pusch_proc_factory_config.csi_sinr_calc_method       = channel_state_information::sinr_type::post_equalization;
     pusch_proc_factory_config.max_nof_concurrent_threads = 1;
-    std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
-        create_pusch_processor_factory_sw(pusch_proc_factory_config);
-    ASSERT_NE(pusch_proc_factory, nullptr);
+    return create_pusch_processor_factory_sw(pusch_proc_factory_config);
+  }
+
+protected:
+  std::unique_ptr<pusch_processor>     pusch_proc;
+  std::unique_ptr<pusch_pdu_validator> pdu_validator;
+
+  void SetUp() override
+  {
+    const PuschProcessorParams& param        = GetParam();
+    const std::string&          decoder_type = std::get<0>(param);
+    const test_case_t&          test_case    = std::get<1>(param);
+    const test_case_context&    context      = test_case.context;
+
+    // Create PDSCH processor factory.
+    std::shared_ptr<pusch_processor_factory> pusch_proc_factory = create_pusch_processor_factory(context, decoder_type);
+#ifdef HWACC_PUSCH_ENABLED
+    if (decoder_type == "acc100" && skip_hwacc_test) {
+      GTEST_SKIP() << "[WARNING] ACC100 not found. Skipping test.";
+    }
+#endif // HWACC_PUSCH_ENABLED
+    ASSERT_NE(pusch_proc_factory, nullptr) << "Invalid PUSCH processor factory.";
 
     // Create actual PUSCH processor.
     pusch_proc = pusch_proc_factory->create();
@@ -157,7 +316,8 @@ protected:
 
 TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 {
-  const test_case_t&            test_case = GetParam();
+  const PuschProcessorParams&   param     = GetParam();
+  const test_case_t&            test_case = std::get<1>(param);
   const test_case_context&      context   = test_case.context;
   const pusch_processor::pdu_t& config    = context.config;
 
@@ -235,7 +395,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
 {
   // Reuses the configurations from the vector test.
-  const test_case_t&            test_case = GetParam();
+  const PuschProcessorParams&   param     = GetParam();
+  const test_case_t&            test_case = std::get<1>(param);
   const test_case_context&      context   = test_case.context;
   const pusch_processor::pdu_t& config    = context.config;
 
@@ -309,6 +470,10 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PuschProcessorVectortest,
                          PuschProcessorFixture,
-                         ::testing::ValuesIn(pusch_processor_test_data));
-
+#ifdef HWACC_PUSCH_ENABLED
+                         testing::Combine(testing::Values("generic", "acc100"),
+#else  // HWACC_PUSCH_ENABLED
+                         testing::Combine(testing::Values("generic"),
+#endif // HWACC_PUSCH_ENABLED
+                                          ::testing::ValuesIn(pusch_processor_test_data)));
 } // namespace

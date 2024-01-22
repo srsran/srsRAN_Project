@@ -23,6 +23,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/test_utils.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -174,11 +175,11 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
   // Intefacing to the bbdev-based hardware-accelerator.
   dpdk::bbdev_acc_configuration bbdev_config;
-  bbdev_config.id                  = 0;
-  bbdev_config.nof_ldpc_enc_lcores = 0;
-  bbdev_config.nof_ldpc_dec_lcores = 1;
-  bbdev_config.nof_fft_lcores      = 0;
-  bbdev_config.nof_mbuf            = static_cast<unsigned>(pow(2, ceil(log(MAX_NOF_SEGMENTS) / log(2))));
+  bbdev_config.id                                    = 0;
+  bbdev_config.nof_ldpc_enc_lcores                   = 0;
+  bbdev_config.nof_ldpc_dec_lcores                   = 1;
+  bbdev_config.nof_fft_lcores                        = 0;
+  bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 

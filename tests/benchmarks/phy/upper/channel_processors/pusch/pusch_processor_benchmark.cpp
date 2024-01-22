@@ -18,8 +18,17 @@
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/unique_thread.h"
+#ifdef HWACC_PUSCH_ENABLED
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#endif // HWACC_PUSCH_ENABLED
 #include <condition_variable>
 #include <getopt.h>
 #include <mutex>
@@ -121,6 +130,13 @@ static std::condition_variable cvar_count;
 static std::atomic<bool>       thread_quit   = {};
 static unsigned                pending_count = 0;
 static unsigned                finish_count  = 0;
+
+#ifdef HWACC_PUSCH_ENABLED
+static bool        ext_softbuffer = true;
+static bool        std_out_sink   = true;
+static std::string hal_log_level  = "error";
+static std::string eal_arguments  = "";
+#endif // HWACC_PUSCH_ENABLED
 
 // Test profile structure, initialized with default profile values.
 struct test_profile {
@@ -232,7 +248,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-m benchmark mode] [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D "
              "LDPC type] [-M rate "
-             "dematcher type] [-P profile]\n",
+             "dematcher type] [-P profile] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n",
              prog);
   fmt::print("\t-m Benchmark mode. [Default {}]\n", to_string(benchmark_mode));
   fmt::print("\t\t {:<20}It does not print any result.\n", to_string(benchmark_modes::silent));
@@ -255,13 +271,53 @@ static void usage(const char* prog)
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
+#ifdef HWACC_PUSCH_ENABLED
+  fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
+  fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
+  fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
+  fmt::print("\teal_args EAL arguments\n");
+#endif // HWACC_PUSCH_ENABLED
+
   fmt::print("\t-h Show this message\n");
 }
+
+#ifdef HWACC_PUSCH_ENABLED
+// Separates EAL and non-EAL arguments.
+// The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
+static std::string capture_eal_args(int* argc, char*** argv)
+{
+  // Searchs for the EAL args (if any), flagged by 'eal_args', while removing all the rest (except argv[0]).
+  bool        eal_found = false;
+  char**      mod_argv  = *argv;
+  std::string eal_argv  = {mod_argv[0]};
+  int         opt_ind   = *argc;
+  for (int j = 1; j < opt_ind; ++j) {
+    // Search for the 'eal_args' flag (if any).
+    if (!eal_found) {
+      if (strcmp(mod_argv[j], "eal_args") == 0) {
+        // 'eal_args' flag found.
+        eal_found = true;
+        // Remove all main app arguments starting from that point, while copying them to the EAL argument string.
+        mod_argv[j] = NULL;
+        for (int k = j + 1; k < opt_ind; ++k) {
+          eal_argv += " ";
+          eal_argv += mod_argv[k];
+          mod_argv[k] = NULL;
+        }
+        *argc = j;
+      }
+    }
+  }
+  *argv = mod_argv;
+
+  return eal_argv;
+}
+#endif // HWACC_PUSCH_ENABLED
 
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:t:p:B:D:M:EP:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:t:p:B:D:M:EP:m:xyz:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -298,6 +354,17 @@ static int parse_args(int argc, char** argv)
           return -1;
         }
         break;
+#ifdef HWACC_PUSCH_ENABLED
+      case 'x':
+        ext_softbuffer = false;
+        break;
+      case 'y':
+        std_out_sink = false;
+        break;
+      case 'z':
+        hal_log_level = std::string(optarg);
+        break;
+#endif // HWACC_PUSCH_ENABLED
       case 'h':
       default:
         usage(argv[0]);
@@ -379,6 +446,93 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
   return test_case_set;
 }
 
+static std::shared_ptr<pusch_decoder_factory>
+create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
+{
+  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw(ldpc_decoder_type);
+  TESTASSERT(ldpc_decoder_factory);
+
+  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
+      create_ldpc_rate_dematcher_factory_sw(rate_dematcher_type);
+  TESTASSERT(ldpc_rate_dematcher_factory);
+
+  std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+  TESTASSERT(segmenter_rx_factory);
+
+  pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
+  pusch_decoder_factory_sw_config.crc_factory               = crc_calculator_factory;
+  pusch_decoder_factory_sw_config.decoder_factory           = ldpc_decoder_factory;
+  pusch_decoder_factory_sw_config.dematcher_factory         = ldpc_rate_dematcher_factory;
+  pusch_decoder_factory_sw_config.segmenter_factory         = segmenter_rx_factory;
+  pusch_decoder_factory_sw_config.nof_pusch_decoder_threads = nof_threads + nof_pusch_decoder_threads + 1;
+  pusch_decoder_factory_sw_config.executor                  = executor.get();
+  return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
+}
+
+static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
+{
+#ifdef HWACC_PUSCH_ENABLED
+  // Intefacing to the bbdev-based hardware-accelerator.
+  // :TODO: Enable further concurrency in hardware-accelerated PUSCH processor implementations.
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("HWACC", false);
+  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+  dpdk::bbdev_acc_configuration bbdev_config;
+  bbdev_config.id                                    = 0;
+  bbdev_config.nof_ldpc_enc_lcores                   = 0;
+  bbdev_config.nof_ldpc_dec_lcores                   = nof_threads;
+  bbdev_config.nof_fft_lcores                        = 0;
+  bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+  TESTASSERT(bbdev_accelerator);
+
+  // Interfacing to a shared external HARQ buffer context repository.
+  unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
+  unsigned acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size().value();
+  std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context =
+      create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, false);
+  TESTASSERT(harq_buffer_context);
+
+  // Set the hardware-accelerator configuration.
+  hw_accelerator_pusch_dec_configuration hw_decoder_config;
+  hw_decoder_config.acc_type            = "acc100";
+  hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
+  hw_decoder_config.ext_softbuffer      = ext_softbuffer;
+  hw_decoder_config.harq_buffer_context = harq_buffer_context;
+
+  // ACC100 hardware-accelerator implementation.
+  return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);
+#else  // HWACC_PUSCH_ENABLED
+  return nullptr;
+#endif // HWACC_PUSCH_ENABLED
+}
+
+static std::shared_ptr<pusch_decoder_factory>
+create_acc100_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
+{
+  std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+  TESTASSERT(segmenter_rx_factory);
+
+  std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> hw_decoder_factory = create_hw_accelerator_pusch_dec_factory();
+  TESTASSERT(hw_decoder_factory, "Failed to create a HW acceleration decoder factory.");
+
+  // Set the hardware-accelerated PUSCH decoder configuration.
+  pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
+  decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
+  decoder_hw_factory_config.crc_factory        = crc_calculator_factory;
+  decoder_hw_factory_config.hw_decoder_factory = hw_decoder_factory;
+  return create_pusch_decoder_factory_hw(decoder_hw_factory_config);
+}
+
+static std::shared_ptr<pusch_decoder_factory>
+create_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
+{
+  if (ldpc_decoder_type == "acc100") {
+    return create_acc100_pusch_decoder_factory(crc_calculator_factory);
+  }
+
+  return create_sw_pusch_decoder_factory(crc_calculator_factory);
+}
+
 static pusch_processor_factory& get_pusch_processor_factory()
 {
   static std::shared_ptr<pusch_processor_factory> pusch_proc_factory = nullptr;
@@ -398,19 +552,6 @@ static pusch_processor_factory& get_pusch_processor_factory()
   // Create CRC calculator factory.
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
-
-  // Create LDPC decoder factory.
-  std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory = create_ldpc_decoder_factory_sw(ldpc_decoder_type);
-  TESTASSERT(ldpc_dec_factory);
-
-  // Create LDPC rate dematcher factory.
-  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory =
-      create_ldpc_rate_dematcher_factory_sw(rate_dematcher_type);
-  TESTASSERT(ldpc_rm_factory);
-
-  // Create LDPC desegmenter factory.
-  std::shared_ptr<ldpc_segmenter_rx_factory> ldpc_segm_rx_factory = create_ldpc_segmenter_rx_factory_sw();
-  TESTASSERT(ldpc_segm_rx_factory);
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   TESTASSERT(short_block_det_factory);
@@ -444,22 +585,16 @@ static pusch_processor_factory& get_pusch_processor_factory()
   std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
   TESTASSERT(demux_factory);
 
-  // Create
-  if (nof_pusch_decoder_threads != 0) {
+  // Create worker pool and exectuors for concurrent PUSCH processor implementations.
+  // :TODO: Enable further concurrency in hardware-accelerated PUSCH processor implementations.
+  if (nof_pusch_decoder_threads != 0 && ldpc_decoder_type != "acc100" && rate_dematcher_type != "acc100") {
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
         nof_pusch_decoder_threads, 1024, "decoder", std::chrono::microseconds{0}, os_thread_realtime_priority::max());
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
   }
 
   // Create PUSCH decoder factory.
-  pusch_decoder_factory_sw_configuration pusch_dec_config;
-  pusch_dec_config.crc_factory                             = crc_calc_factory;
-  pusch_dec_config.decoder_factory                         = ldpc_dec_factory;
-  pusch_dec_config.dematcher_factory                       = ldpc_rm_factory;
-  pusch_dec_config.segmenter_factory                       = ldpc_segm_rx_factory;
-  pusch_dec_config.nof_pusch_decoder_threads               = nof_threads + nof_pusch_decoder_threads + 1;
-  pusch_dec_config.executor                                = executor.get();
-  std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
+  std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory(crc_calc_factory);
   TESTASSERT(pusch_dec_factory);
 
   // Create polar decoder factory.
@@ -593,10 +728,32 @@ static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, u
 
 int main(int argc, char** argv)
 {
+#ifdef HWACC_PUSCH_ENABLED
+  // Separate EAL and non-EAL arguments.
+  eal_arguments = capture_eal_args(&argc, &argv);
+#endif // HWACC_PUSCH_ENABLED
+
   int ret = parse_args(argc, argv);
   if (ret < 0) {
     return ret;
   }
+
+#ifdef HWACC_PUSCH_ENABLED
+  // Check if we actually need to initialize the EAL.
+  static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
+  if (ldpc_decoder_type == "acc100" || rate_dematcher_type == "acc100") {
+    ldpc_decoder_type   = "acc100";
+    rate_dematcher_type = "acc100";
+    srslog::sink* log_sink =
+        std_out_sink ? srslog::create_stdout_sink() : srslog::create_file_sink("pusch_processor_benchmark.log");
+    srslog::set_default_sink(*log_sink);
+    srslog::init();
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("EAL", false);
+    logger.set_level(srslog::str_to_basic_level(hal_log_level));
+    dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
+    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+  }
+#endif // HWACC_PUSCH_ENABLED
 
   // Inform of the benchmark configuration.
   if (benchmark_mode != benchmark_modes::silent) {
