@@ -39,7 +39,7 @@ public:
   du_test_stub&    get_du(size_t du_index) { return *dus.at(du_index); }
 
   optional<unsigned> connect_new_du();
-  bool drop_du_connection(unsigned du_idx);
+  bool               drop_du_connection(unsigned du_idx);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -68,12 +68,12 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
-  std::unique_ptr<amf_test_stub>             amf_stub;
-  std::unique_ptr<gateway_manager>           gw;
+  std::unique_ptr<amf_test_stub>   amf_stub;
+  std::unique_ptr<gateway_manager> gw;
 
   // Emulated DU nodes.
   std::unordered_map<unsigned, std::unique_ptr<du_test_stub>> dus;
-  unsigned next_du_idx = 0;
+  unsigned                                                    next_du_idx = 0;
 
   /// CU-CP instance.
   std::unique_ptr<cu_cp_interface> cu_cp;

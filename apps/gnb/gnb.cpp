@@ -417,24 +417,17 @@ int main(int argc, char** argv)
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
 
-  // NGAP configuration.
-  srsran::sctp_network_gateway_config ngap_nw_config = generate_ngap_nw_config(gnb_cfg);
+  // Create NGAP Gateway.
+  std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
+  {
+    using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
+    using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
+    using ngap_mode_t    = variant<no_core_mode_t, network_mode_t>;
 
-  // Create NGAP adapter.
-  std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
-
-  // Create SCTP network adapter.
-  std::unique_ptr<sctp_network_gateway> sctp_gateway;
-  if (not gnb_cfg.amf_cfg.no_core) {
-    gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
-    sctp_gateway = create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
-
-    // Connect NGAP adapter to SCTP network gateway.
-    ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
-    gnb_logger.info("AMF connection established");
-  } else {
-    gnb_logger.info("Bypassing AMF connection");
+    ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
+        *ngap_p,
+        gnb_cfg.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
+                                : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(gnb_cfg)}}});
   }
 
   // E2AP configuration.
@@ -454,8 +447,8 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_ngap(&cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
-                             &cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
+  ngap_adapter->connect_cu_cp(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
+                              cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
@@ -463,10 +456,10 @@ int main(int argc, char** argv)
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
 
-//  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
-//  if (gnb_cfg.amf_cfg.no_core) {
-//    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
-//  }
+  //  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
+  //  if (gnb_cfg.amf_cfg.no_core) {
+  //    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection_establishment();
+  //  }
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
@@ -596,7 +589,7 @@ int main(int argc, char** argv)
 
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Closing network connections...");
-    ngap_adapter->disconnect_gateway();
+    ngap_adapter->disconnect();
     gnb_logger.info("Network connections closed successfully");
   }
 
