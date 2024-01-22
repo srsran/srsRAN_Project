@@ -573,7 +573,7 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  timeout: 2h
+  timeout: 1h
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
