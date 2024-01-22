@@ -1525,11 +1525,13 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
       src.pucch_res_list,
       dest.pucch_res_list,
       [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
-      // NOTE: In the following, we compare by using the cell PUCCH resource ID, not the UE PUCCH resource ID. This is
-      // because the UE PUCCH resource ID always uses index {0 , ..., max_UE_PUCCH_resources - 1}; therefore, even if we
-      // changed the configuration, this index wouldn't change and the function would not detect the change of
-      // configuration.
-      [](const pucch_resource& res) { return res.res_id.cell_res_id; });
+      [](const pucch_resource& res) {
+        // NOTE: For safety, we use an ID composed of both UE and cell PUCCH resource IDs. We cannot compare only by
+        // using the UE PUCCH resource ID. This is because the UE PUCCH resource ID always uses index {0 , ...,
+        // max_UE_PUCCH_resources - 1}; therefore, even if we changed the configuration, this index wouldn't change and
+        // the function would not detect the change of configuration.
+        return (static_cast<uint64_t>(res.res_id.ue_res_id) << 32U) + static_cast<uint64_t>(res.res_id.cell_res_id);
+      });
 
   if ((dest.format_1_common_param.has_value() && not src.format_1_common_param.has_value()) ||
       (dest.format_1_common_param.has_value() && src.format_1_common_param.has_value() &&
