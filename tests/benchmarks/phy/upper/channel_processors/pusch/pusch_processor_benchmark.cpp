@@ -589,7 +589,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   // :TODO: Enable further concurrency in hardware-accelerated PUSCH processor implementations.
   if (nof_pusch_decoder_threads != 0 && ldpc_decoder_type != "acc100" && rate_dematcher_type != "acc100") {
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-        nof_pusch_decoder_threads, 1024, "decoder", std::chrono::microseconds{0}, os_thread_realtime_priority::max());
+        nof_pusch_decoder_threads, 1024, "decoder");
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
   }
 
@@ -829,18 +829,10 @@ int main(int argc, char** argv)
       // Select thread.
       unique_thread& thread = threads[thread_id];
 
-      // Prepare priority.
-      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime() + 1;
-
-      // Prepare affinity mask.
-      os_sched_affinity_bitmask cpuset;
-      cpuset.set(thread_id);
-
       // Create thread.
-      thread = unique_thread(
-          "thread_" + std::to_string(thread_id), prio, cpuset, [&proc = *processor, &config, &tbs, &grid] {
-            thread_process(proc, config, tbs, grid.get()->get_reader());
-          });
+      thread = unique_thread("thread_" + std::to_string(thread_id), [&proc = *processor, &config, &tbs, &grid] {
+        thread_process(proc, config, tbs, grid.get()->get_reader());
+      });
     }
 
     // Wait for finish thread init.

@@ -477,19 +477,8 @@ static pdsch_processor_factory& get_processor_factory()
       nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
     }
 
-    // Prepare workers affinities.
-    std::vector<os_sched_affinity_bitmask> affinity(nof_pdsch_processor_concurrent_threads);
-    for (unsigned i = 0; i != nof_pdsch_processor_concurrent_threads; ++i) {
-      affinity[i].set(i + nof_threads);
-    }
-
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-        nof_pdsch_processor_concurrent_threads,
-        1024,
-        "pdsch_proc",
-        std::chrono::microseconds(10),
-        os_thread_realtime_priority::max(),
-        affinity);
+        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc");
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
@@ -659,17 +648,9 @@ int main(int argc, char** argv)
       // Select thread.
       unique_thread& thread = threads[thread_id];
 
-      // Prepare priority.
-      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime() + 1;
-
-      // Prepare affinity mask.
-      os_sched_affinity_bitmask cpuset;
-      cpuset.set(thread_id);
-
       // Create thread.
-      thread = unique_thread("thread_" + std::to_string(thread_id), prio, cpuset, [&proc, &config, &data] {
-        thread_process(*proc, config, data);
-      });
+      thread = unique_thread("thread_" + std::to_string(thread_id),
+                             [&proc, &config, &data] { thread_process(*proc, config, data); });
     }
 
     // Wait for finish thread init.
