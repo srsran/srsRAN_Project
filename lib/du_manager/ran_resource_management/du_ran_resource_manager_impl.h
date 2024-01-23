@@ -46,6 +46,7 @@ class du_ran_resource_manager_impl : public du_ran_resource_manager
 {
 public:
   du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
+                               const scheduler_expert_config&            scheduler_cfg,
                                const std::map<srb_id_t, du_srb_config>&  srbs,
                                const std::map<five_qi_t, du_qos_config>& qos);
   du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
@@ -78,6 +79,7 @@ private:
   void modify_rlc_for_ntn(cell_group_config& ue_mcg);
 
   span<const du_cell_config>                cell_cfg_list;
+  const scheduler_expert_config             sched_cfg;
   const std::map<srb_id_t, du_srb_config>&  srb_config;
   const std::map<five_qi_t, du_qos_config>& qos_config;
   srslog::basic_logger&                     logger;

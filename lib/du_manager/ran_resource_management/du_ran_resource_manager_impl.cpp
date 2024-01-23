@@ -64,13 +64,15 @@ du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_i
 ///////////////////////////
 
 du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
+                                                           const scheduler_expert_config&            scheduler_cfg,
                                                            const std::map<srb_id_t, du_srb_config>&  srbs_,
                                                            const std::map<five_qi_t, du_qos_config>& qos_) :
   cell_cfg_list(cell_cfg_list_),
+  sched_cfg(scheduler_cfg),
   srb_config(srbs_),
   qos_config(qos_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  pucch_res_mng(cell_cfg_list)
+  pucch_res_mng(cell_cfg_list, scheduler_cfg.ue.max_pucchs_per_slot)
 {
 }
 

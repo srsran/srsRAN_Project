@@ -29,7 +29,10 @@ protected:
     cell_cfg_list({config_helpers::make_default_du_cell_config(params)}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config(params)),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, srb_cfg_list, qos_cfg_list))
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list,
+                                                           scheduler_expert_config{},
+                                                           srb_cfg_list,
+                                                           qos_cfg_list))
   {
   }
 
@@ -257,7 +260,10 @@ protected:
     cell_cfg_list({make_custom_du_cell_config(GetParam())}),
     qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, srb_cfg_list, qos_cfg_list))
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list,
+                                                           scheduler_expert_config{},
+                                                           srb_cfg_list,
+                                                           qos_cfg_list))
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
