@@ -359,6 +359,8 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
   decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
   decoder_config.executor                  = config.pusch_decoder_executor;
+  decoder_config.nof_prb                   = config.ul_bw_rb;
+  decoder_config.nof_layers                = 1;
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
@@ -383,7 +385,6 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.demodulator_factory = create_pusch_demodulator_factory_sw(
       equalizer_factory, demodulation_factory, prg_factory, enable_evm, enable_eq_sinr);
   pusch_config.demux_factory              = create_ulsch_demultiplex_factory_sw();
-  pusch_config.decoder_factory            = create_pusch_decoder_factory_sw(decoder_config);
   pusch_config.uci_dec_factory            = uci_dec_factory;
   pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop      = config.ldpc_decoder_early_stop;
@@ -391,10 +392,11 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.max_nof_concurrent_threads = config.max_ul_thread_concurrency;
 
   // :TODO: check these values in the future. Extract them to more public config.
-  pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
+  pusch_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
   pusch_config.ch_estimate_dimensions.nof_tx_layers = 1;
   pusch_config.ch_estimate_dimensions.nof_prb       = config.ul_bw_rb;
   pusch_config.ch_estimate_dimensions.nof_rx_ports  = config.nof_rx_ports;
+  pusch_config.decoder_factory                      = create_pusch_decoder_factory_sw(decoder_config);
 
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");

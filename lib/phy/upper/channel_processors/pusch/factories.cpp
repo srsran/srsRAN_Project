@@ -32,7 +32,10 @@ public:
   explicit pusch_decoder_factory_generic(pusch_decoder_factory_sw_configuration config) :
     crc_factory(std::move(config.crc_factory)),
     segmenter_factory(std::move(config.segmenter_factory)),
-    executor(config.executor)
+    executor(config.executor),
+    nof_prb(config.nof_prb),
+    nof_layers(config.nof_layers)
+
   {
     srsran_assert(crc_factory, "Invalid CRC calculator factory.");
     srsran_assert(config.decoder_factory, "Invalid LDPC decoder factory.");
@@ -61,7 +64,8 @@ public:
     crcs.crc24A = crc_factory->create(crc_generator_poly::CRC24A);
     crcs.crc24B = crc_factory->create(crc_generator_poly::CRC24B);
 
-    return std::make_unique<pusch_decoder_impl>(segmenter_factory->create(), decoder_pool, std::move(crcs), executor);
+    return std::make_unique<pusch_decoder_impl>(
+        segmenter_factory->create(), decoder_pool, std::move(crcs), executor, nof_prb, nof_layers);
   }
 
 private:
@@ -69,6 +73,8 @@ private:
   std::shared_ptr<crc_calculator_factory>                     crc_factory;
   std::shared_ptr<ldpc_segmenter_rx_factory>                  segmenter_factory;
   task_executor*                                              executor;
+  unsigned                                                    nof_prb;
+  unsigned                                                    nof_layers;
 };
 
 /// HW-accelerated PUSCH decoder factory.

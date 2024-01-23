@@ -42,6 +42,8 @@ struct pusch_decoder_factory_sw_configuration {
   std::shared_ptr<ldpc_segmenter_rx_factory>   segmenter_factory;
   unsigned                                     nof_pusch_decoder_threads = 1;
   task_executor*                               executor                  = nullptr;
+  unsigned                                     nof_prb;
+  unsigned                                     nof_layers;
 };
 
 std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config);

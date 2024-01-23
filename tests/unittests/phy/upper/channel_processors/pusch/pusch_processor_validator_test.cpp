@@ -219,6 +219,8 @@ protected:
     pusch_dec_config.decoder_factory                         = ldpc_dec_factory;
     pusch_dec_config.dematcher_factory                       = ldpc_rm_factory;
     pusch_dec_config.segmenter_factory                       = ldpc_segm_rx_factory;
+    pusch_dec_config.nof_prb                                 = MAX_RB;
+    pusch_dec_config.nof_layers                              = pusch_constants::MAX_NOF_LAYERS;
     std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
     ASSERT_NE(pusch_dec_factory, nullptr);
 

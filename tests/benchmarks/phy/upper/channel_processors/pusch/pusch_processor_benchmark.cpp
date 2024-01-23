@@ -466,6 +466,9 @@ create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calc
   pusch_decoder_factory_sw_config.segmenter_factory         = segmenter_rx_factory;
   pusch_decoder_factory_sw_config.nof_pusch_decoder_threads = nof_threads + nof_pusch_decoder_threads + 1;
   pusch_decoder_factory_sw_config.executor                  = executor.get();
+  pusch_decoder_factory_sw_config.nof_prb                   = MAX_RB;
+  pusch_decoder_factory_sw_config.nof_layers                = pusch_constants::MAX_NOF_LAYERS;
+
   return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
 }
 

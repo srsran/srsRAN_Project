@@ -54,15 +54,21 @@ public:
   /// \param[in] crc_set_      Structure with pointers to three CRC calculator objects, with generator
   ///                          polynomials of type \c CRC16, \c CRC24A and \c CRC24B.
   /// \param[in] executor_     Task executor for asynchronous PUSCH code block decoding.
+  /// \param[in] nof_prb       Number of PRBs.
+  /// \param[in] nof_layers    Number of layers.
+
   pusch_decoder_impl(std::unique_ptr<ldpc_segmenter_rx>      segmenter_,
                      std::shared_ptr<codeblock_decoder_pool> decoder_pool_,
                      sch_crc                                 crc_set_,
-                     task_executor*                          executor_) :
+                     task_executor*                          executor_,
+                     unsigned                                nof_prb,
+                     unsigned                                nof_layers) :
+
     segmenter(std::move(segmenter_)),
     decoder_pool(std::move(decoder_pool_)),
     crc_set(std::move(crc_set_)),
     executor(executor_),
-    softbits_buffer(pusch_constants::CODEWORD_MAX_SIZE.value()),
+    softbits_buffer(pusch_constants::get_max_codeword_size(nof_prb, nof_layers).value()),
     cb_stats(MAX_NOF_SEGMENTS)
   {
     srsran_assert(segmenter, "Invalid segmenter.");
