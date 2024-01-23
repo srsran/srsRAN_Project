@@ -29,7 +29,7 @@ target_link_libraries(pdsch_processor_benchmark
         srsran_channel_equalizer
         srsran_channel_precoder
         srsran_channel_processors
-        srsran_sched
+        srsran_ran
         srslog
         srsvec)
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t generic)

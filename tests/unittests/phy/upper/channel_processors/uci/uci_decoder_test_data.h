@@ -15,7 +15,7 @@
 
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/support/file_vector.h"
 
 namespace srsran {

@@ -29,6 +29,10 @@ gtest_discover_tests(csi_report_on_pusch_validator_test)
 add_library(du_test_suite ssb_coreset0_freq_pos_checker.cpp)
 target_link_libraries(du_test_suite srsran_ran gtest)
 
+add_executable(tbs_calculator_test sch/tbs_calculator_test.cpp)
+target_link_libraries(tbs_calculator_test srsran_sched srslog)
+add_test_vector(tbs_calculator_test none "")
+
 add_executable(test_ssb_coreset0_freq_pos_generator test_ssb_coreset0_freq_pos_generator.cpp)
 target_link_libraries(test_ssb_coreset0_freq_pos_generator srsran_support du_test_suite gtest gtest_main)
 add_test(test_ssb_coreset0_freq_pos_generator test_ssb_coreset0_freq_pos_generator)

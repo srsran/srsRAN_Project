@@ -9,13 +9,13 @@
  */
 
 #include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
-#include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/srsran_test.h"

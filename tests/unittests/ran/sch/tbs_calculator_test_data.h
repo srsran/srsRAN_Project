@@ -10,10 +10,10 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
+// This file was generated using the following MATLAB class on 21-01-2024 (seed 0):
 //   + "srsTBSCalculatorUnittest.m"
 
-#include "lib/scheduler/support/tbs_calculator.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include <vector>
 
 namespace srsran {

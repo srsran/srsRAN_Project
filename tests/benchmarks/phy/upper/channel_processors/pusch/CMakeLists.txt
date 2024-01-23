@@ -14,7 +14,6 @@ if (ENABLE_PUSCH_HWACC)
     add_executable(pusch_decoder_hwacc_benchmark pusch_decoder_hwacc_benchmark.cpp)
     set(PUSCH_DECODER_HWACC_BENCHMARK_LIBRARIES srsran_phy_support 
             srsran_channel_processors
-            srsran_sched
             srslog
             srsvec)
     if (DPDK_FOUND)
@@ -30,7 +29,6 @@ set(PUSCH_PROCESSOR_LIBRARIES srsran_phy_support
         srsran_channel_equalizer
         srsran_channel_precoder
         srsran_channel_processors
-        srsran_sched
         srslog
         srsvec)
 

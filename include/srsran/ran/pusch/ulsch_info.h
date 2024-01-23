@@ -14,9 +14,9 @@
 #include "srsran/adt/optional.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/dmrs.h"
-#include "srsran/ran/ldpc_base_graph.h"
+#include "srsran/ran/sch/ldpc_base_graph.h"
+#include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sch/sch_segmentation.h"
-#include "srsran/ran/sch_mcs.h"
 #include "srsran/support/units.h"
 
 namespace srsran {

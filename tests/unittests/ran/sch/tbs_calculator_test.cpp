@@ -8,7 +8,7 @@
  *
  */
 
-#include "tbs_calculator_test_data.h"
+#include "tests/unittests/ran/sch/tbs_calculator_test_data.h"
 #include "srsran/support/srsran_test.h"
 
 using namespace srsran;

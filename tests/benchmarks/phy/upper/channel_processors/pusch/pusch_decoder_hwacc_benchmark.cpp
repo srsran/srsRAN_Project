@@ -14,13 +14,12 @@
 /// The benchmark compares the latency of a hardware-accelerated PUSCH decoder implementation to that of the generic
 /// one.
 
-#include "../../../../../../lib/scheduler/support/tbs_calculator.h"
 #include "../../../../../unittests/phy/upper/channel_processors/pusch/pusch_decoder_notifier_spy.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/test_utils.h"
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"

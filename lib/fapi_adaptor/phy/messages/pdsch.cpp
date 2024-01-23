@@ -11,7 +11,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
-#include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/ran/sch/sch_dmrs_power.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

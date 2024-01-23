@@ -15,7 +15,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"

@@ -18,7 +18,7 @@
 #include "ulsch_demultiplex_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/srsvec/compare.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>

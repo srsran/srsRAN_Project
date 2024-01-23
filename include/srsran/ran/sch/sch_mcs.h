@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_integer.h"
-#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 
 namespace srsran {
 

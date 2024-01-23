@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/sch/sch_mcs.h"
 
 namespace srsran {
 

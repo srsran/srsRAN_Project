@@ -11,13 +11,13 @@
 #include "../ue_scheduling/ue_channel_state_manager.h"
 #include "dmrs_helpers.h"
 #include "pdsch/pdsch_default_time_allocation.h"
-#include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;

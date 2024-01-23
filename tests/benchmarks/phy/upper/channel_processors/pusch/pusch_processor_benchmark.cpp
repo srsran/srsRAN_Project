@@ -9,12 +9,12 @@
  */
 
 #include "../../../lib/phy/upper/rx_buffer_pool_impl.h"
-#include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker_pool.h"

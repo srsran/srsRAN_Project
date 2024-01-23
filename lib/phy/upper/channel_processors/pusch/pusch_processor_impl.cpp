@@ -15,7 +15,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
 

@@ -14,12 +14,11 @@
 /// The benchmark compares the latency of a hardware-accelerated PDSCH encoder implementation to that of the generic
 /// one.
 
-#include "../../../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/support/math_utils.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/test_utils.h"
 #ifdef DPDK_FOUND

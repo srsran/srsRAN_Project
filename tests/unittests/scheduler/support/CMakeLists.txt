@@ -30,10 +30,6 @@ add_executable(pusch_dmrs_symbol_mask_test pusch/pusch_dmrs_symbol_mask_test.cpp
 target_link_libraries(pusch_dmrs_symbol_mask_test srsran_sched srslog gtest gtest_main)
 add_test(pusch_dmrs_symbol_mask_test pusch_dmrs_symbol_mask_test)
 
-add_executable(tbs_calculator_test tbs_calculator_test.cpp)
-target_link_libraries(tbs_calculator_test srsran_sched srslog)
-add_test_vector(tbs_calculator_test none "")
-
 add_executable(prbs_calculator_test prbs_calculator_test.cpp)
 target_link_libraries(prbs_calculator_test srsran_sched srslog gtest gtest_main)
 add_test(prbs_calculator_test prbs_calculator_test)
