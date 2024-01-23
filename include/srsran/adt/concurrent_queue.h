@@ -16,6 +16,7 @@
 #include "srsran/adt/detail/tuple_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/support/compiler.h"
+#include <cstdlib>
 
 namespace srsran {
 
@@ -54,24 +55,40 @@ class queue_impl;
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
 {
+  struct custom_deleter {
+    void operator()(rigtorp::SPSCQueue<T>* ptr) const
+    {
+      using namespace rigtorp;
+      if (ptr != nullptr) {
+        ptr->~SPSCQueue<T>();
+        free(ptr);
+      }
+    }
+  };
+
 public:
   template <typename... Args>
-  explicit queue_impl(size_t qsize) : queue(qsize)
+  explicit queue_impl(size_t qsize)
   {
+    // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
+    void* ptr = nullptr;
+    int   ret = posix_memalign(&ptr, alignof(rigtorp::SPSCQueue<T>), sizeof(rigtorp::SPSCQueue<T>));
+    srsran_assert(ret == 0, "Unable to allocate memory for SPSCQueue");
+    queue.reset(new (ptr) rigtorp::SPSCQueue<T>(qsize));
   }
 
   template <typename U>
   bool try_push(U&& elem)
   {
-    return queue.try_push(std::forward<U>(elem));
+    return queue->try_push(std::forward<U>(elem));
   }
 
   bool try_pop(T& elem)
   {
-    T* front = queue.front();
+    T* front = queue->front();
     if (front != nullptr) {
       elem = std::move(*front);
-      queue.pop();
+      queue->pop();
       return true;
     }
     return false;
@@ -80,23 +97,23 @@ public:
   template <typename PoppingFunc>
   bool try_call_on_pop(PoppingFunc&& func)
   {
-    T* front = queue.front();
+    T* front = queue->front();
     if (front != nullptr) {
       func(*front);
-      queue.pop();
+      queue->pop();
       return true;
     }
     return false;
   }
 
-  size_t size() const { return queue.size(); }
+  size_t size() const { return queue->size(); }
 
-  bool empty() const { return queue.empty(); }
+  bool empty() const { return queue->empty(); }
 
-  size_t capacity() const { return queue.capacity(); }
+  size_t capacity() const { return queue->capacity(); }
 
 protected:
-  rigtorp::SPSCQueue<T> queue;
+  std::unique_ptr<rigtorp::SPSCQueue<T>, custom_deleter> queue;
 };
 
 // Specialization for lockfree SPSC using a spin sleep loop as blocking mechanism.
@@ -133,7 +150,7 @@ public:
     T* f = front_blocking();
     if (f != nullptr) {
       elem = std::move(*f);
-      this->queue.pop();
+      this->queue->pop();
       return true;
     }
     return false;
@@ -145,7 +162,7 @@ public:
     T* f = front_blocking();
     if (f != nullptr) {
       func(*f);
-      this->queue.pop();
+      this->queue->pop();
       return true;
     }
     return false;
@@ -155,7 +172,7 @@ private:
   T* front_blocking()
   {
     while (running.load(std::memory_order_relaxed)) {
-      T* front = this->queue.front();
+      T* front = this->queue->front();
       if (front != nullptr) {
         return front;
       }
@@ -172,22 +189,38 @@ private:
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
+  struct custom_deleter {
+    void operator()(rigtorp::MPMCQueue<T>* ptr) const
+    {
+      using namespace rigtorp;
+      if (ptr != nullptr) {
+        ptr->~MPMCQueue<T>();
+        free(ptr);
+      }
+    }
+  };
+
 public:
   template <typename... Args>
-  explicit queue_impl(size_t qsize) : queue(qsize)
+  explicit queue_impl(size_t qsize)
   {
+    // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
+    void* ptr = nullptr;
+    int   ret = posix_memalign(&ptr, alignof(rigtorp::MPMCQueue<T>), sizeof(rigtorp::MPMCQueue<T>));
+    srsran_assert(ret == 0, "Unable to allocate memory for MPMCQueue");
+    queue.reset(new (ptr) rigtorp::MPMCQueue<T>(qsize));
   }
 
-  bool try_push(const T& elem) { return queue.try_push(elem); }
-  bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
+  bool try_push(const T& elem) { return queue->try_push(elem); }
+  bool try_push(T&& elem) { return queue->try_push(std::move(elem)); }
 
-  bool try_pop(T& elem) { return queue.try_pop(elem); }
+  bool try_pop(T& elem) { return queue->try_pop(elem); }
 
   template <typename PoppingFunc>
   bool try_call_on_pop(PoppingFunc&& func)
   {
     T t;
-    if (queue.try_pop(t)) {
+    if (queue->try_pop(t)) {
       func(t);
       return true;
     }
@@ -197,16 +230,16 @@ public:
   size_t size() const
   {
     // Note: MPMCqueue size can be negative.
-    ptrdiff_t ret = queue.size();
+    ptrdiff_t ret = queue->size();
     return static_cast<size_t>(std::max(ret, static_cast<ptrdiff_t>(0)));
   }
 
-  bool empty() const { return queue.empty(); }
+  bool empty() const { return queue->empty(); }
 
-  size_t capacity() const { return queue.capacity(); }
+  size_t capacity() const { return queue->capacity(); }
 
 protected:
-  rigtorp::MPMCQueue<T> queue;
+  std::unique_ptr<rigtorp::MPMCQueue<T>, custom_deleter> queue;
 };
 
 // Specialization for lockfree MPMC using a sleep as blocking mechanism.
