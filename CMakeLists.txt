@@ -94,7 +94,10 @@ if (ENABLE_DPDK)
     SET(ENABLE_PUSCH_HWACC ON CACHE BOOL "Enable PUSCH hardware-acceleration")
     message(STATUS "Hardware-acceleration enabled for PUSCH.")
   endif ()
-endif ()
+else (ENABLE_DPDK)
+    unset(ENABLE_PDSCH_HWACC CACHE)
+    unset(ENABLE_PUSCH_HWACC CACHE)
+endif (ENABLE_DPDK)
 
 ########################################################################
 # Install Dirs
