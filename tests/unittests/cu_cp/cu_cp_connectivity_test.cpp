@@ -87,7 +87,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
 // DU connection handling                                                           //
 //----------------------------------------------------------------------------------//
 
-TEST_F(cu_cp_connectivity_test, when_new_f1_setup_request_is_received_and_ng_is_not_setup_then_f1_setup_is_rejected)
+TEST_F(cu_cp_connectivity_test, when_new_f1_setup_request_is_received_and_ng_is_setup_then_f1_setup_is_accepted)
 {
   // Run NG setup to completion.
   run_ng_setup();

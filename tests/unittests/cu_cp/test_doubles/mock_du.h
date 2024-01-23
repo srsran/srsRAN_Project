@@ -29,9 +29,9 @@ public:
   /// Push new Tx PDU from DU to CU-CP.
   virtual void push_tx_pdu(const f1ap_message& msg) = 0;
 
-  /// Pop Rx PDU sent by CU-CP and received by DU.
+  /// \brief Pop Rx PDU sent by CU-CP and received by DU.
   ///
-  /// \param msg Rx PDU popped.
+  /// \param[out] msg Rx PDU popped.
   /// \return return true if a PDU was popped, false otherwise.
   virtual bool try_pop_rx_pdu(f1ap_message& msg) = 0;
 };
