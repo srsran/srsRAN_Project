@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "test_doubles/dummy_amf.h"
-#include "test_doubles/dummy_du.h"
+#include "test_doubles/mock_amf.h"
+#include "test_doubles/mock_du.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 
 struct cu_cp_test_env_params {
   /// Injected AMF stub to handle CU-CP PDUs.
-  std::unique_ptr<amf_test_stub> amf_stub = create_manual_amf_stub();
+  std::unique_ptr<mock_amf> amf_stub = create_mock_amf();
 };
 
 class cu_cp_test_environment
@@ -35,8 +35,8 @@ public:
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
   cu_cp_interface& get_cu_cp() { return *cu_cp; }
-  amf_test_stub&   get_amf() { return *amf_stub; }
-  du_test_stub&    get_du(size_t du_index) { return *dus.at(du_index); }
+  mock_amf&        get_amf() { return *amf_stub; }
+  mock_du&         get_du(size_t du_index) { return *dus.at(du_index); }
 
   optional<unsigned> connect_new_du();
   bool               drop_du_connection(unsigned du_idx);
@@ -68,12 +68,12 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
-  std::unique_ptr<amf_test_stub>   amf_stub;
+  std::unique_ptr<mock_amf>        amf_stub;
   std::unique_ptr<gateway_manager> gw;
 
   // Emulated DU nodes.
-  std::unordered_map<unsigned, std::unique_ptr<du_test_stub>> dus;
-  unsigned                                                    next_du_idx = 0;
+  std::unordered_map<unsigned, std::unique_ptr<mock_du>> dus;
+  unsigned                                               next_du_idx = 0;
 
   /// CU-CP instance.
   std::unique_ptr<cu_cp_interface> cu_cp;

@@ -22,7 +22,7 @@ using namespace srs_cu_cp;
 class cu_cp_connectivity_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{create_manual_amf_stub()}) {}
+  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{create_mock_amf()}) {}
 
   void run_ng_setup()
   {

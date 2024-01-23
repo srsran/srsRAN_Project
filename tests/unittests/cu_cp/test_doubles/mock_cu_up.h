@@ -17,10 +17,12 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class synchronized_dummy_cu_up
+/// \brief Mock class for the interface between CU-UP and CU-CP that accounts for the fact that the CU-CP may push
+/// PDUs from different threads.
+class synchronized_mock_cu_up
 {
 public:
-  synchronized_dummy_cu_up(cu_up_repository& cu_cp_e1_handler_) : cu_cp_node(&cu_cp_e1_handler_) {}
+  synchronized_mock_cu_up(cu_up_repository& cu_cp_e1_handler_) : cu_cp_node(&cu_cp_e1_handler_) {}
 
   void handle_rx_pdu(const e1ap_message& rx_pdu);
 

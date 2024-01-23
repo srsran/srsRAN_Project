@@ -8,7 +8,7 @@
  *
  */
 
-#include "dummy_du.h"
+#include "mock_du.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/cu_cp/du_repository.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -19,10 +19,12 @@ using namespace srs_cu_cp;
 
 namespace {
 
-class manual_mock_du final : public du_test_stub
+/// \brief Mock class for the interface between DU and CU-CP that accounts for the fact that the CU-CP may push PDUs
+/// from different threads.
+class synchronized_mock_du final : public mock_du
 {
 public:
-  manual_mock_du(du_stub_params params) : cu_cp_f1c(params.cu_cp_f1c_itf)
+  synchronized_mock_du(mock_du_params params) : cu_cp_f1c(params.cu_cp)
   {
     tx_pdu_notifier = cu_cp_f1c.handle_new_du_connection(std::make_unique<rx_pdu_notifier>(*this));
   }
@@ -41,12 +43,12 @@ private:
   class rx_pdu_notifier final : public f1ap_message_notifier
   {
   public:
-    rx_pdu_notifier(manual_mock_du& parent_) : parent(parent_) {}
+    rx_pdu_notifier(synchronized_mock_du& parent_) : parent(parent_) {}
 
     void on_new_message(const f1ap_message& msg) override { parent.handle_rx_pdu(msg); }
 
   private:
-    manual_mock_du& parent;
+    synchronized_mock_du& parent;
   };
 
   void handle_rx_pdu(const f1ap_message& msg)
@@ -65,9 +67,9 @@ private:
 
 } // namespace
 
-std::unique_ptr<du_test_stub> srsran::srs_cu_cp::create_du_stub(du_stub_params params)
+std::unique_ptr<mock_du> srsran::srs_cu_cp::create_mock_du(mock_du_params params)
 {
-  auto du = std::make_unique<manual_mock_du>(params);
+  auto du = std::make_unique<synchronized_mock_du>(params);
   if (not du->connected()) {
     return nullptr;
   }

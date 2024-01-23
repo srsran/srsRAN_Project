@@ -16,7 +16,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Interface to AMF node that can be accessed safely from the test main thread.
-class amf_test_stub : public ngap_message_notifier
+class mock_amf : public ngap_message_notifier
 {
 public:
   virtual void attach_cu_cp_pdu_handler(ngap_message_handler& cu_cp_) = 0;
@@ -31,11 +31,8 @@ public:
   virtual void enqueue_next_tx_pdu(const ngap_message& pdu) = 0;
 };
 
-/// Creates a dummy AMF node that does not automatically respond to NG setup requests.
-std::unique_ptr<amf_test_stub> create_manual_amf_stub();
-
-/// Creates a dummy AMF node that automatically responds to the NG setup request with success, for convenience.
-std::unique_ptr<amf_test_stub> create_amf_stub();
+/// Creates a mock AMF to interface with the CU-CP.
+std::unique_ptr<mock_amf> create_mock_amf();
 
 } // namespace srs_cu_cp
 } // namespace srsran

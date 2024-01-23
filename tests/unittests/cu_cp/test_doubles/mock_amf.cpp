@@ -8,7 +8,7 @@
  *
  */
 
-#include "dummy_amf.h"
+#include "mock_amf.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/ngap/ngap_message.h"
@@ -16,10 +16,12 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-class manual_dummy_amf : public amf_test_stub
+/// \brief Mock class for the interface between DU and CU-CP that accounts for the fact that the CU-CP may push PDUs
+/// from different threads.
+class synchronized_mock_du : public mock_amf
 {
 public:
-  explicit manual_dummy_amf() : rx_pdus(1024), pending_tx_pdus(16) {}
+  explicit synchronized_mock_du() : rx_pdus(1024), pending_tx_pdus(16) {}
 
   void attach_cu_cp_pdu_handler(ngap_message_handler& cu_cp_) override { cu_cp_pdu_handler = &cu_cp_; }
 
@@ -55,35 +57,7 @@ private:
   ngap_pdu_queue pending_tx_pdus;
 };
 
-class auto_dummy_amf : public manual_dummy_amf
+std::unique_ptr<mock_amf> srsran::srs_cu_cp::create_mock_amf()
 {
-public:
-  auto_dummy_amf() {}
-
-  void on_new_message(const ngap_message& msg) override
-  {
-    if (not ng_is_setup) {
-      report_fatal_error_if_not(is_pdu_type(msg, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request),
-                                "Unexpected message received");
-      ng_is_setup = true;
-      this->push_tx_pdu(generate_ng_setup_response());
-      return;
-    }
-
-    // Let parent class handle the message.
-    manual_dummy_amf::on_new_message(msg);
-  }
-
-private:
-  bool ng_is_setup = false;
-};
-
-std::unique_ptr<amf_test_stub> srsran::srs_cu_cp::create_manual_amf_stub()
-{
-  return std::make_unique<manual_dummy_amf>();
-}
-
-std::unique_ptr<amf_test_stub> srsran::srs_cu_cp::create_amf_stub()
-{
-  return std::make_unique<auto_dummy_amf>();
+  return std::make_unique<synchronized_mock_du>();
 }

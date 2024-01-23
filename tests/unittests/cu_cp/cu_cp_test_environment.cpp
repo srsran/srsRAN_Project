@@ -9,8 +9,8 @@
  */
 
 #include "cu_cp_test_environment.h"
-#include "tests/unittests/cu_cp/test_doubles/dummy_amf.h"
-#include "tests/unittests/cu_cp/test_doubles/dummy_cu_up.h"
+#include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
+#include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/support/executors/task_worker.h"
@@ -34,7 +34,7 @@ public:
 class cu_cp_test_environment::gateway_manager
 {
 public:
-  std::unique_ptr<synchronized_dummy_cu_up> cu_up;
+  std::unique_ptr<synchronized_mock_cu_up> cu_up;
 };
 
 // ////
@@ -68,7 +68,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
   amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
 
   // Instantiate CU-UP.
-  gw->cu_up = std::make_unique<synchronized_dummy_cu_up>(cu_cp->get_connected_cu_ups());
+  gw->cu_up = std::make_unique<synchronized_mock_cu_up>(cu_cp->get_connected_cu_ups());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()
@@ -146,7 +146,7 @@ bool cu_cp_test_environment::wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message&
 
 optional<unsigned> cu_cp_test_environment::connect_new_du()
 {
-  auto du_stub = create_du_stub({get_cu_cp().get_connected_dus()});
+  auto du_stub = create_mock_du({get_cu_cp().get_connected_dus()});
   if (not du_stub) {
     return nullopt;
   }
