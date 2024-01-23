@@ -88,17 +88,46 @@ struct ulsch_information {
   ///
   /// The effective code rate is determined as the quotient of the number of information bits plus CRCs and the total
   /// number of channel bits.
+  ///
+  /// An assertion is triggered if:
+  /// - UL-SCH is not present;
+  /// - the resultant codeblock size is not greater than the number of filler bits; or
+  /// - the number of rate matched bits for HARQ-ACK feedback is not smaller than the number of rate matched UL-SCH
+  /// bits.
   float get_effective_code_rate() const
   {
+    using namespace units::literals;
+
+    // Ensure UL-SCH is present and the number of bits per CB is greater than filler bits.
     srsran_assert(sch.has_value(), "SCH information is not present.");
     srsran_assert(sch.value().nof_bits_per_cb.value() > sch.value().nof_filler_bits_per_cb.value(),
                   "The number of bits per CB must be greater than the number of filler bits.");
+
+    // Return 0 if no UL-SCH bits are present.
     if (nof_ul_sch_bits.value() == 0) {
       return 0;
     }
-    return static_cast<float>((sch.value().nof_bits_per_cb.value() - sch.value().nof_filler_bits_per_cb.value()) *
-                              sch.value().nof_cb) /
-           static_cast<float>(nof_ul_sch_bits.value());
+
+    // Select the number of effective rate matched bits carrying UL-SCH.
+    unsigned effective_ul_sch_bits = nof_ul_sch_bits.value();
+
+    // Adjust the effective rate matched UL-SCH bits considering HARQ-ACK feedback bits.
+    if (nof_harq_ack_rvd > 0_bits) {
+      // Ensure the subtraction of HARQ-ACK bits does not result in zero or negative.
+      srsran_assert(nof_ul_sch_bits > nof_harq_ack_bits,
+                    "UL-SCH rate match length ({} bits) must be greater than the HARQ-ACK rate match length ({} bits).",
+                    nof_ul_sch_bits,
+                    nof_harq_ack_bits);
+
+      effective_ul_sch_bits -= nof_harq_ack_bits.value();
+    }
+
+    // Calculate the exact number of bits to encode, including payload, transport block CRC, and codeblock CRC.
+    unsigned nof_effective_payload_bits =
+        (sch.value().nof_bits_per_cb.value() - sch.value().nof_filler_bits_per_cb.value()) * sch.value().nof_cb;
+
+    // Calculate the effective code rate as the quotient of the effective payload bits to effective rate matched bits.
+    return static_cast<float>(nof_effective_payload_bits) / static_cast<float>(effective_ul_sch_bits);
   }
 };
 
