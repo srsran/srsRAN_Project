@@ -13,6 +13,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/executors/sync_task_executor.h"
 #include <chrono>
 #include <future>
 #include <thread>
@@ -108,29 +109,23 @@ void cu_cp_impl::stop()
   if (already_stopped) {
     return;
   }
-
   logger.info("Stopping CU-CP...");
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
 
-  // Shut down components from within CU-CP executor.
-  while (not cfg.cu_cp_executor->execute([this, &p]() {
-    // Stop DU repository.
-    du_db.stop();
+  force_blocking_execute(
+      *cfg.cu_cp_executor,
+      [this]() {
+        // Shut down components from within CU-CP executor.
 
-    // Stop statistics gathering.
-    statistics_report_timer.stop();
+        // Stop DU repository.
+        du_db.stop();
 
-    // Signal back that CU-CP is stopped.
-    p.set_value();
-  })) {
-    logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
-    // Keep dispatching until the task is accepted.
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  // Block waiting for CU-CP stop to complete.
-  fut.wait();
+        // Stop statistics gathering.
+        statistics_report_timer.stop();
+      },
+      [this]() {
+        logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      });
 
   logger.info("CU-CP stopped successfully.");
 }

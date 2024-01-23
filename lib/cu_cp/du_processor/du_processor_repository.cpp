@@ -53,18 +53,10 @@ du_processor_repository::du_processor_repository(du_repository_config cfg_) :
 
 void du_processor_repository::stop()
 {
-  force_blocking_execute(
-      *cfg.cu_cp.cu_cp_executor,
-      [this]() {
-        while (not du_db.empty()) {
-          du_index_t du_idx = du_db.begin()->first;
-          remove_du_impl(du_idx);
-        }
-      },
-      [this]() {
-        logger.warning("Failed to schedule DU removal task. Retrying...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      });
+  while (not du_db.empty()) {
+    du_index_t du_idx = du_db.begin()->first;
+    remove_du_impl(du_idx);
+  }
 }
 
 std::unique_ptr<f1ap_message_notifier>
