@@ -11,6 +11,7 @@
 #pragma once
 
 #include "test_doubles/mock_amf.h"
+#include "test_doubles/mock_cu_up.h"
 #include "test_doubles/mock_du.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap_configuration.h"
@@ -37,9 +38,13 @@ public:
   cu_cp_interface& get_cu_cp() { return *cu_cp; }
   mock_amf&        get_amf() { return *amf_stub; }
   mock_du&         get_du(size_t du_index) { return *dus.at(du_index); }
+  mock_cu_up&      get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
 
   optional<unsigned> connect_new_du();
   bool               drop_du_connection(unsigned du_idx);
+
+  optional<unsigned> connect_new_cu_up();
+  bool               drop_cu_up_connection(unsigned cu_up_idx);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -50,10 +55,7 @@ public:
   /// Tick CU-CP timer until a NGAP PDU is sent.
   bool wait_for_ngap_tx_pdu(ngap_message& ngap_pdu, std::chrono::milliseconds timeout);
 
-  /// Try popping the oldest E1AP PDU sent by the CU-CP.
-  bool try_pop_e1ap_tx_pdu(e1ap_message& e1ap_pdu);
-
-  bool wait_for_e1ap_tx_pdu(e1ap_message& e1ap_pdu, std::chrono::milliseconds timeout);
+  bool wait_for_e1ap_tx_pdu(unsigned cu_up_idx, e1ap_message& e1ap_pdu, std::chrono::milliseconds timeout);
 
   bool wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& f1ap_pdu, std::chrono::milliseconds timeout);
 
@@ -68,8 +70,11 @@ private:
   timer_manager timers;
 
   /// Notifiers for the CU-CP interface.
-  std::unique_ptr<mock_amf>        amf_stub;
-  std::unique_ptr<gateway_manager> gw;
+  std::unique_ptr<mock_amf> amf_stub;
+
+  // emulated CU-UP nodes.
+  std::unordered_map<unsigned, std::unique_ptr<mock_cu_up>> cu_ups;
+  unsigned                                                  next_cu_up_idx = 0;
 
   // Emulated DU nodes.
   std::unordered_map<unsigned, std::unique_ptr<mock_du>> dus;

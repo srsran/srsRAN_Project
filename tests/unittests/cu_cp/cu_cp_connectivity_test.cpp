@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/e1ap/common/e1ap_message.h"
@@ -36,15 +37,11 @@ public:
 // CU-CP to AMF connection handling                                                 //
 //----------------------------------------------------------------------------------//
 
-TEST_F(cu_cp_connectivity_test, when_cu_cp_is_created_then_it_is_not_connected_to_any_other_node)
+TEST_F(cu_cp_connectivity_test, when_cu_cp_is_created_then_it_is_not_connected_to_amf)
 {
   ngap_message ngap_pdu;
   ASSERT_FALSE(get_amf().try_pop_rx_pdu(ngap_pdu))
       << "The CU-CP should not send a message to the NG interface before being started";
-
-  e1ap_message e1ap_pdu;
-  ASSERT_FALSE(try_pop_e1ap_tx_pdu(e1ap_pdu))
-      << "The CU-CP should not send a message to the E1 interface before being started";
 
   ASSERT_FALSE(get_cu_cp().get_cu_cp_ngap_connection_interface().amf_is_connected());
 }
@@ -165,4 +162,30 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_is_not_successful_then_f1_setup_is
   // The CU-CP should reject F1 setup.
   //  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome);
   // TODO: Fix F1AP procedure handling.
+}
+
+//----------------------------------------------------------------------------------//
+// CU-UP connection handling                                                        //
+//----------------------------------------------------------------------------------//
+
+TEST_F(cu_cp_connectivity_test, when_new_e1_setup_request_is_received_and_ng_is_setup_then_e1_setup_is_accepted)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Establish TNL connection between CU-CP and CU-UP.
+  auto ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = *ret;
+
+  // CU-UP sends E1 Setup Request.
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_valid_cu_up_e1_setup_request());
+
+  // Ensure the E1 Setup Response is received and correct.
+  e1ap_message e1ap_pdu;
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{1000}))
+      << "E1 Setup Response was not received by the CU-UP";
+  ASSERT_EQ(e1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(e1ap_pdu.pdu.successful_outcome().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_e1_setup_resp);
 }

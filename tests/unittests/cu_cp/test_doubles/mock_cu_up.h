@@ -17,31 +17,24 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Mock class for the interface between CU-UP and CU-CP that accounts for the fact that the CU-CP may push
-/// PDUs from different threads.
-class synchronized_mock_cu_up
+/// \brief Mock class for the interface between CU-UP and CU-CP.
+class mock_cu_up
 {
 public:
-  synchronized_mock_cu_up(cu_up_repository& cu_cp_e1_handler_) : cu_cp_node(&cu_cp_e1_handler_) {}
+  virtual ~mock_cu_up() = default;
 
-  void handle_rx_pdu(const e1ap_message& rx_pdu);
+  /// Request from the CU-UP to the CU-CP to establish a E1 connection.
+  virtual bool request_cu_cp_connection() = 0;
 
-  bool request_new_cu_up_connection();
+  /// Called when the CU-UP pushes a E1 Tx PDU to the CU-CP.
+  virtual void push_tx_pdu(const e1ap_message& rx_pdu) = 0;
 
-  bool try_pop_rx_pdu(e1ap_message& pdu);
-
-private:
-  using rx_pdu_queue = concurrent_queue<e1ap_message,
-                                        concurrent_queue_policy::locking_mpmc,
-                                        concurrent_queue_wait_policy::condition_variable>;
-
-  cu_up_repository* cu_cp_node = nullptr;
-
-  rx_pdu_queue rx_pdus{1024};
-
-  // Notifier used by the CU-UP to send PDUs to the CU-CP.
-  std::unique_ptr<e1ap_message_notifier> tx_pdu_notifier;
+  /// Pop the last E1AP PDU received by the CU-UP.
+  virtual bool try_pop_rx_pdu(e1ap_message& pdu) = 0;
 };
+
+/// Create a mock of the CU-UP for CU-CP testing.
+std::unique_ptr<mock_cu_up> create_mock_cu_up(cu_up_repository& cu_cp_e1_handler);
 
 } // namespace srs_cu_cp
 } // namespace srsran

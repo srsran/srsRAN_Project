@@ -31,19 +31,10 @@ public:
   std::unique_ptr<task_executor> exec{std::make_unique<task_worker_executor>(worker)};
 };
 
-class cu_cp_test_environment::gateway_manager
-{
-public:
-  std::unique_ptr<synchronized_mock_cu_up> cu_up;
-};
-
 // ////
 
 cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
-  cu_cp_workers(std::make_unique<worker_manager>()),
-  timers(64),
-  amf_stub(std::move(params.amf_stub)),
-  gw(std::make_unique<gateway_manager>())
+  cu_cp_workers(std::make_unique<worker_manager>()), timers(64), amf_stub(std::move(params.amf_stub))
 {
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
@@ -66,14 +57,12 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
 
   // Pass CU-CP PDU handler to AMF.
   amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
-
-  // Instantiate CU-UP.
-  gw->cu_up = std::make_unique<synchronized_mock_cu_up>(cu_cp->get_connected_cu_ups());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
   dus.clear();
+  cu_ups.clear();
   cu_cp->stop();
   cu_cp_workers->stop();
 }
@@ -122,14 +111,11 @@ bool cu_cp_test_environment::wait_for_ngap_tx_pdu(ngap_message& pdu, std::chrono
   return tick_until(timeout, [&]() { return amf_stub->try_pop_rx_pdu(pdu); });
 }
 
-bool cu_cp_test_environment::try_pop_e1ap_tx_pdu(e1ap_message& pdu)
+bool cu_cp_test_environment::wait_for_e1ap_tx_pdu(unsigned                  cu_up_idx,
+                                                  e1ap_message&             pdu,
+                                                  std::chrono::milliseconds timeout)
 {
-  return gw->cu_up->try_pop_rx_pdu(pdu);
-}
-
-bool cu_cp_test_environment::wait_for_e1ap_tx_pdu(e1ap_message& pdu, std::chrono::milliseconds timeout)
-{
-  return tick_until(timeout, [&]() { return gw->cu_up->try_pop_rx_pdu(pdu); });
+  return tick_until(timeout, [&]() { return cu_ups.at(cu_up_idx)->try_pop_rx_pdu(pdu); });
 }
 
 bool cu_cp_test_environment::wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& pdu, std::chrono::milliseconds timeout)
@@ -164,5 +150,28 @@ bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
     return false;
   }
   dus.erase(it);
+  return true;
+}
+
+optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
+{
+  auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_connected_cu_ups());
+  if (not cu_up_obj) {
+    return nullopt;
+  }
+  for (; cu_ups.count(next_cu_up_idx) != 0; ++next_cu_up_idx) {
+  }
+  auto ret = cu_ups.insert(std::make_pair(next_cu_up_idx, std::move(cu_up_obj)));
+  report_fatal_error_if_not(ret.second, "Race condition detected");
+  return next_cu_up_idx;
+}
+
+bool cu_cp_test_environment::drop_cu_up_connection(unsigned cu_up_idx)
+{
+  auto it = cu_ups.find(cu_up_idx);
+  if (it == cu_ups.end()) {
+    return false;
+  }
+  cu_ups.erase(it);
   return true;
 }
