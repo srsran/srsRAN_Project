@@ -88,5 +88,9 @@ private:
 
 std::unique_ptr<mock_cu_up> srsran::srs_cu_cp::create_mock_cu_up(cu_up_repository& cu_cp_e1_handler)
 {
-  return std::make_unique<synchronized_mock_cu_up>(cu_cp_e1_handler);
+  auto ptr = std::make_unique<synchronized_mock_cu_up>(cu_cp_e1_handler);
+  if (not ptr->connected()) {
+    return nullptr;
+  }
+  return ptr;
 }

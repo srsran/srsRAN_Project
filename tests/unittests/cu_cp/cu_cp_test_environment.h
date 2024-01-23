@@ -22,6 +22,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_cp_test_env_params {
+  unsigned max_nof_cu_ups = 4;
+  unsigned max_nof_dus    = 4;
   /// Injected AMF stub to handle CU-CP PDUs.
   std::unique_ptr<mock_amf> amf_stub = create_mock_amf();
 };
@@ -59,9 +61,13 @@ public:
 
   bool wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& f1ap_pdu, std::chrono::milliseconds timeout);
 
+  const cu_cp_test_env_params& get_test_env_params() const { return params; }
+
 private:
   class worker_manager;
   class gateway_manager;
+
+  cu_cp_test_env_params params;
 
   /// Workers for CU-CP.
   std::unique_ptr<worker_manager> cu_cp_workers;

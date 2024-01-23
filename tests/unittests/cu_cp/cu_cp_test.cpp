@@ -50,16 +50,6 @@ TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_receive
 /* CU-UP connection handling                                                        */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Test the CU-UP connection
-TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
-{
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // check that CU-UP has been added
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
-}
-
 /// Test the CU-UP removal
 TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 {
@@ -74,22 +64,6 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 
   // Check that CU-UP has been removed
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
-}
-
-/// Test exeeding the maximum number of connected CU-UPs
-TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
-{
-  for (int it = cu_up_index_to_uint(cu_up_index_t::min); it < MAX_NOF_CU_UPS; it++) {
-    this->e1ap_gw.request_new_cu_up_connection();
-  }
-
-  // Check that MAX_NOF_CU_UPS are connected
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
-
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Check that MAX_NOF_CU_UPS are connected
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

@@ -36,11 +36,11 @@ namespace srs_cu_cp {
 /// Maximum number of UEs per DU (implementation-defined).
 const uint16_t MAX_NOF_UES_PER_DU = 1024;
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_DUS = 10;
+const uint16_t MAX_NOF_DUS = 16;
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
 #define MAX_NOF_CU_UES (MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_CU_UPS = 2;
+const uint16_t MAX_NOF_CU_UPS = 16;
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_DU_CELLS = 16;
 

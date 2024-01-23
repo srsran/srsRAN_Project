@@ -23,7 +23,7 @@ using namespace srs_cu_cp;
 class cu_cp_connectivity_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{create_mock_amf()}) {}
+  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, create_mock_amf()}) {}
 
   void run_ng_setup()
   {
@@ -108,7 +108,7 @@ TEST_F(cu_cp_connectivity_test, when_new_f1_setup_request_is_received_and_ng_is_
 
 TEST_F(cu_cp_connectivity_test, when_max_nof_dus_connected_reached_then_cu_cp_rejects_new_du_connections)
 {
-  for (int idx = 0; idx < MAX_NOF_DUS; idx++) {
+  for (unsigned idx = 0; idx < this->get_test_env_params().max_nof_dus; idx++) {
     auto ret = connect_new_du();
     ASSERT_TRUE(ret.has_value());
   }
@@ -125,7 +125,7 @@ TEST_F(
   run_ng_setup();
 
   // Establish TNL connection and F1 Setup for max number of DUs.
-  for (int idx = 0; idx < MAX_NOF_DUS; idx++) {
+  for (unsigned idx = 0; idx < this->get_test_env_params().max_nof_dus; idx++) {
     auto ret = connect_new_du();
     ASSERT_TRUE(ret.has_value());
     unsigned du_idx = *ret;
@@ -135,7 +135,7 @@ TEST_F(
   }
 
   // Drop DU connection.
-  this->drop_du_connection(0);
+  ASSERT_TRUE(this->drop_du_connection(0));
 
   // A new DU can now be created.
   auto ret = connect_new_du();
@@ -188,4 +188,45 @@ TEST_F(cu_cp_connectivity_test, when_new_e1_setup_request_is_received_and_ng_is_
   ASSERT_EQ(e1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(e1ap_pdu.pdu.successful_outcome().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_e1_setup_resp);
+}
+
+TEST_F(cu_cp_connectivity_test, when_max_nof_cu_ups_connected_reached_then_cu_cp_rejects_new_cu_up_connections)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Establish TNL connection between CU-CP and CU-UP.
+  for (unsigned i = 0; i != this->get_test_env_params().max_nof_cu_ups; ++i) {
+    auto ret = connect_new_cu_up();
+    ASSERT_TRUE(ret.has_value());
+  }
+
+  // The last one is rejected.
+  auto ret = connect_new_cu_up();
+  ASSERT_FALSE(ret.has_value());
+}
+
+TEST_F(
+    cu_cp_connectivity_test,
+    when_max_nof_cu_ups_connected_reached_and_cu_up_connection_drops_then_cu_up_is_removed_from_cu_cp_and_new_cu_up_connection_is_accepted)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Establish TNL connection and E1 Setup for max number of CU-UPs.
+  for (unsigned idx = 0; idx < this->get_test_env_params().max_nof_dus; idx++) {
+    auto ret = connect_new_cu_up();
+    ASSERT_TRUE(ret.has_value());
+    unsigned cu_up_idx = *ret;
+    get_cu_up(cu_up_idx).push_tx_pdu(generate_valid_cu_up_e1_setup_request());
+    e1ap_message e1ap_pdu;
+    ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{1000}));
+  }
+
+  // Drop DU connection.
+  ASSERT_TRUE(this->drop_cu_up_connection(0));
+
+  // A new CU-UP can now be created.
+  auto ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
 }

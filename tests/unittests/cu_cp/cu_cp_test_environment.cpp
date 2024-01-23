@@ -33,8 +33,11 @@ public:
 
 // ////
 
-cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
-  cu_cp_workers(std::make_unique<worker_manager>()), timers(64), amf_stub(std::move(params.amf_stub))
+cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
+  params(std::move(params_)),
+  cu_cp_workers(std::make_unique<worker_manager>()),
+  timers(64),
+  amf_stub(std::move(params.amf_stub))
 {
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
@@ -51,6 +54,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params) :
   cfg.ngap_notifier       = &*amf_stub;
   cfg.timers              = &timers;
   cfg.ngap_config         = config_helpers::make_default_ngap_config();
+  cfg.max_nof_dus         = params.max_nof_dus;
+  cfg.max_nof_cu_ups      = params.max_nof_cu_ups;
 
   // create CU-CP instance.
   cu_cp = create_cu_cp(cfg);

@@ -26,6 +26,9 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
   srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
   srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
   srsran_assert(cfg.timers != nullptr, "Invalid timers");
+
+  report_error_if_not(cfg.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
+  report_error_if_not(cfg.max_nof_cu_ups <= MAX_NOF_CU_UPS, "Invalid max number of CU-UPs");
 }
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :

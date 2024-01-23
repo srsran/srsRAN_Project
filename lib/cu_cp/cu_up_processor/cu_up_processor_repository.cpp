@@ -112,7 +112,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 
 cu_up_index_t cu_up_processor_repository::get_next_cu_up_index()
 {
-  for (int cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < MAX_NOF_CU_UPS;
+  for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < cfg.cu_cp.max_nof_cu_ups;
        cu_up_index_int++) {
     cu_up_index_t cu_up_index = uint_to_cu_up_index(cu_up_index_int);
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {

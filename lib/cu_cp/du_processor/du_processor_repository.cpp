@@ -141,7 +141,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 
 du_index_t du_processor_repository::get_next_du_index()
 {
-  for (int du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < MAX_NOF_DUS; du_idx_int++) {
+  for (unsigned du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < cfg.cu_cp.max_nof_dus; du_idx_int++) {
     du_index_t du_idx = uint_to_du_index(du_idx_int);
     if (du_db.find(du_idx) == du_db.end()) {
       return du_idx;
