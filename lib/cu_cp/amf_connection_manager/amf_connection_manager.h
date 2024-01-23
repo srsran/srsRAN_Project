@@ -34,7 +34,8 @@ public:
   /// async task and the caller side.
   void connect_to_amf(std::promise<bool>* completion_signal = nullptr);
 
-  bool is_amf_connected() { return amf_connected.load(std::memory_order_relaxed); }
+  /// Checks whether the CU-CP is connected to the AMF.
+  bool is_amf_connected() const { return amf_connected.load(std::memory_order_relaxed); }
 
 private:
   void handle_connection_setup_result(bool success);
