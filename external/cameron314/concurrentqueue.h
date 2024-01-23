@@ -266,7 +266,7 @@ namespace moodycamel { namespace details {
 // See https://clang.llvm.org/docs/ThreadSanitizer.html#has-feature-thread-sanitizer
 #define MOODYCAMEL_NO_TSAN
 #if defined(__has_feature)
- #if __has_feature(thread_sanitizer)
+ #if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
   #undef MOODYCAMEL_NO_TSAN
   #define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
  #endif // TSAN
