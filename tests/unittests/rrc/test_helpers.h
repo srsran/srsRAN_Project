@@ -39,9 +39,8 @@ public:
   on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_cu_cp_ue_context_release_command.ue_index        = msg.ue_index;
-    last_cu_cp_ue_context_release_command.cause           = msg.cause;
-    last_cu_cp_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+    last_cu_cp_ue_context_release_command.ue_index = msg.ue_index;
+    last_cu_cp_ue_context_release_command.cause    = msg.cause;
 
     return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);

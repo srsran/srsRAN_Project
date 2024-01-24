@@ -230,7 +230,7 @@ public:
   }
 
   async_task<cu_cp_ue_context_release_complete>
-  on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
+  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
 

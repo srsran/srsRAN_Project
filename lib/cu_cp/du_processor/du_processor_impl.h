@@ -62,9 +62,11 @@ public:
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
-  // du_processor_rrc_ue_interface
+  // du_processor_ue_context_notifier
   async_task<cu_cp_ue_context_release_complete>
-                   handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+
+  // du_processor_rrc_ue_interface
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
@@ -74,8 +76,6 @@ public:
   handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) override;
   async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
-  async_task<cu_cp_ue_context_release_complete>
-  handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
   // du_processor_mobility_manager_interface
   optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
@@ -106,12 +106,15 @@ public:
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
-  du_processor_f1ap_interface&           get_du_processor_f1ap_interface() override { return *this; }
-  du_processor_rrc_interface&            get_du_processor_rrc_interface() override { return *this; }
-  du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface() override { return *this; }
-  du_processor_ngap_interface&           get_du_processor_ngap_interface() override { return *this; }
-  du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override { return *this; }
-  du_processor_ue_context_notifier&      get_du_processor_ue_context_notifier() override { return *this; }
+  du_processor_f1ap_interface&      get_du_processor_f1ap_interface() override { return *this; }
+  du_processor_rrc_interface&       get_du_processor_rrc_interface() override { return *this; }
+  du_processor_rrc_ue_interface&    get_du_processor_rrc_ue_interface() override { return *this; }
+  du_processor_ngap_interface&      get_du_processor_ngap_interface() override { return *this; }
+  du_processor_ue_task_handler&     get_du_processor_ue_task_handler() override { return *this; }
+  du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() override
+  {
+    return get_du_processor_rrc_ue_interface();
+  }
   du_processor_paging_handler&           get_du_processor_paging_handler() override { return *this; }
   du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler&       get_du_processor_statistics_handler() override { return *this; }

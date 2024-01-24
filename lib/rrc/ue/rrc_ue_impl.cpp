@@ -162,9 +162,8 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
 
 void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
 {
-  bool ngap_release_result = false;
   task_sched.schedule_async_task(
-      launch_async([this, ngap_release_result, cause](coro_context<async_task<void>>& ctx) mutable {
+      launch_async([this, ngap_release_result = bool{false}, cause](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         CORO_AWAIT_VALUE(ngap_release_result,

@@ -53,9 +53,9 @@ private:
   cu_cp_pdu_session_resource_setup_response pdu_session_response;
 
   // (sub-)routine results
-  ngap_init_context_setup_failure       fail_msg;
-  cu_cp_ngap_ue_context_release_command rel_cmd;
-  ngap_init_context_setup_response      resp_msg;
+  ngap_init_context_setup_failure  fail_msg;
+  cu_cp_ue_context_release_command rel_cmd;
+  ngap_init_context_setup_response resp_msg;
 
   bool success = false;
 };

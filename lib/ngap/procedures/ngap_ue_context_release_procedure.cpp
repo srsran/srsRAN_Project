@@ -17,11 +17,11 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
-    const cu_cp_ngap_ue_context_release_command& command_,
-    const ngap_ue_ids&                           ue_ids_,
-    ngap_du_processor_control_notifier&          du_processor_ctrl_notifier_,
-    ngap_message_notifier&                       amf_notifier_,
-    ngap_ue_logger&                              logger_) :
+    const cu_cp_ue_context_release_command& command_,
+    const ngap_ue_ids&                      ue_ids_,
+    ngap_du_processor_control_notifier&     du_processor_ctrl_notifier_,
+    ngap_message_notifier&                  amf_notifier_,
+    ngap_ue_logger&                         logger_) :
   command(command_),
   ue_ids(ue_ids_),
   du_processor_ctrl_notifier(du_processor_ctrl_notifier_),

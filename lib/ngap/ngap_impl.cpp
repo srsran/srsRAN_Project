@@ -558,9 +558,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ue_ctxt.logger.log_info("Received UeContextReleaseCommand");
 
   // Convert to common type
-  cu_cp_ngap_ue_context_release_command msg;
+  cu_cp_ue_context_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
-  fill_cu_cp_ngap_ue_context_release_command(msg, cmd);
+  fill_cu_cp_ue_context_release_command(msg, cmd);
 
   // start routine
   task_sched.schedule_async_task(

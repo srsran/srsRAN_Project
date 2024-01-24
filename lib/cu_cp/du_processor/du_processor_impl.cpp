@@ -393,7 +393,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
           // Release UE from DU, if it doesn't exist in the NGAP
           logger.debug("ue={}: Releasing UE from DU. ReleaseRequest not sent to AMF", request.ue_index);
           CORO_AWAIT(handle_ue_context_release_command(
-              cu_cp_ngap_ue_context_release_command{request.ue_index, cause_nas_t::unspecified}));
+              cu_cp_ue_context_release_command{request.ue_index, cause_nas_t::unspecified}));
         }
         CORO_RETURN();
       }));
@@ -412,26 +412,6 @@ du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_rele
   }
 
   return routine_mng->start_ue_context_release_routine(cmd, cu_cp_notifier);
-}
-
-async_task<cu_cp_ue_context_release_complete>
-du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
-{
-  du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  if (ue == nullptr) {
-    logger.warning("ue={}: Dropping UE context release command. UE does not exist", cmd.ue_index);
-    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(cu_cp_ue_context_release_complete{});
-    });
-  }
-
-  // Create release command from NGAP UE context release command
-  cu_cp_ue_context_release_command release_command;
-  release_command.ue_index = cmd.ue_index;
-  release_command.cause    = cmd.cause;
-
-  return handle_ue_context_release_command(release_command);
 }
 
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)

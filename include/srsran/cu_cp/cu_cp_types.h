@@ -429,7 +429,7 @@ struct cu_cp_pdu_session_resource_modify_response {
   // id-CriticalityDiagnostics
 };
 
-struct cu_cp_ngap_ue_context_release_command {
+struct cu_cp_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
   cause_t    cause;
 };
@@ -447,13 +447,6 @@ struct cu_cp_recommended_cell_item {
 
 struct cu_cp_recommended_cells_for_paging {
   std::vector<cu_cp_recommended_cell_item> recommended_cell_list;
-};
-
-struct cu_cp_ue_context_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  cause_t            cause;
-  byte_buffer        rrc_release_pdu;
-  optional<srb_id_t> srb_id;
 };
 
 struct cu_cp_global_gnb_id {

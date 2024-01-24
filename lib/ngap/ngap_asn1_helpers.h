@@ -800,8 +800,8 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
 /// \param[out] cu_cp_ngap_ue_context_release_cmd The cu_cp_ngap_ue_context_release_cmd struct to fill.
 /// \param[in] asn1_ue_context_release_cmd The UE Context Release Command ASN1 struct.
 inline void
-fill_cu_cp_ngap_ue_context_release_command(cu_cp_ngap_ue_context_release_command&      cu_cp_ue_context_release_cmd,
-                                           const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
+fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&           cu_cp_ue_context_release_cmd,
+                                      const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
 {
   cu_cp_ue_context_release_cmd.cause = asn1_to_cause(asn1_ue_context_release_cmd->cause);
 }
