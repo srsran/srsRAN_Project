@@ -295,6 +295,21 @@ zmq-valgrind:
     - *txrx-lib
     - *retina-needs
 
+zmq_test_mode:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
+  variables:
+    TESTBED: "zmq_4x4_mimo"
+    MARKERS: "testmode"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "smoke relwithdeb update cache"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
 ################################################################################
 # RF
 ################################################################################
