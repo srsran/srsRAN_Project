@@ -167,7 +167,7 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        ue_stop_timeout=10,
+        ue_stop_timeout=2,
     )
 
 
@@ -319,7 +319,7 @@ def _ping(
     warning_as_errors: bool = True,
     always_download_artifacts: bool = False,
     ping_count: int = 10,
-    reattach_count: int = 0,
+    reattach_count: int = 2,
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,

@@ -443,6 +443,7 @@ def test_zmq_smoke(
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
+        ue_stop_timeout=10,
     )
 
 
@@ -513,7 +514,7 @@ def test_zmq(
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
         gnb_post_cmd="log --hex_max_size=32",
-        ue_stop_timeout=10,
+        ue_stop_timeout=2,
     )
 
 
