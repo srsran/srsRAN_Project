@@ -33,6 +33,7 @@ protected:
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     e1ap               = std::make_unique<dummy_e1ap>();
 
+    std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
     // Create UE cfg
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, 0};
 
@@ -45,8 +46,8 @@ protected:
                                           *gtpu_tx_notifier,
                                           *gtpu_rx_demux,
                                           *gtpu_f1u_allocator,
+                                          *cu_up_exec_mapper,
                                           gtpu_pcap,
-                                          worker,
                                           test_logger);
   }
 

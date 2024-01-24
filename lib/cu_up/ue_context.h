@@ -18,6 +18,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include <map>
+#include <utility>
 
 namespace srsran {
 namespace srs_cu_up {
@@ -34,19 +35,20 @@ struct ue_context_cfg {
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
-  ue_context(ue_index_t                           index_,
-             ue_context_cfg                       cfg_,
-             e1ap_control_message_handler&        e1ap_,
-             network_interface_config&            net_config_,
-             n3_interface_config&                 n3_config_,
-             timer_factory                        timers_,
-             f1u_cu_up_gateway&                   f1u_gw_,
-             gtpu_teid_pool&                      f1u_teid_allocator_,
-             gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
-             gtpu_demux_ctrl&                     gtpu_rx_demux_,
-             dlt_pcap&                            gtpu_pcap) :
+  ue_context(ue_index_t                                                            index_,
+             ue_context_cfg                                                        cfg_,
+             e1ap_control_message_handler&                                         e1ap_,
+             network_interface_config&                                             net_config_,
+             n3_interface_config&                                                  n3_config_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec_,
+             timer_factory                                                         timers_,
+             f1u_cu_up_gateway&                                                    f1u_gw_,
+             gtpu_teid_pool&                                                       f1u_teid_allocator_,
+             gtpu_tunnel_tx_upper_layer_notifier&                                  gtpu_tx_notifier_,
+             gtpu_demux_ctrl&                                                      gtpu_rx_demux_,
+             dlt_pcap&                                                             gtpu_pcap) :
     index(index_),
-    cfg(cfg_),
+    cfg(std::move(cfg_)),
     logger("CU-UP", {index_}),
     e1ap(e1ap_),
     pdu_session_manager(index,
@@ -61,7 +63,9 @@ public:
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
                         gtpu_rx_demux_,
+                        *ue_exec_,
                         gtpu_pcap),
+    ue_exec(std::move(ue_exec_)),
     timers(timers_)
   {
     if (cfg.activity_level == activity_notification_level_t::ue) {
@@ -105,6 +109,8 @@ private:
 
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
+
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec;
 
   timer_factory timers;
   unique_timer  ue_inactivity_timer;

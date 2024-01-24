@@ -28,13 +28,13 @@ constexpr auto default_wait_timeout = std::chrono::seconds(3);
 namespace srsran {
 
 /// Dummy GTP-U Rx Demux
-class dummy_gtpu_demux_ctrl : public gtpu_demux_ctrl
+class dummy_gtpu_demux_ctrl final : public gtpu_demux_ctrl
 {
 public:
   dummy_gtpu_demux_ctrl()  = default;
   ~dummy_gtpu_demux_ctrl() = default;
 
-  bool add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
+  bool add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
     return true;
@@ -50,23 +50,23 @@ public:
 };
 
 /// Dummy GTP-U Rx Demux
-class dummy_gtpu_teid_pool : public gtpu_teid_pool
+class dummy_gtpu_teid_pool final : public gtpu_teid_pool
 {
 public:
-  dummy_gtpu_teid_pool()  = default;
-  ~dummy_gtpu_teid_pool() = default;
+  dummy_gtpu_teid_pool()           = default;
+  ~dummy_gtpu_teid_pool() override = default;
 
-  SRSRAN_NODISCARD virtual expected<gtpu_teid_t> request_teid() override
+  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
   {
     expected<gtpu_teid_t> teid = gtpu_teid_t{next_teid++};
     return teid;
   }
 
-  SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) override { return true; }
+  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override { return true; }
 
-  virtual bool full() const override { return true; };
+  bool full() const override { return true; };
 
-  virtual uint32_t get_max_teids() override { return UINT32_MAX; }
+  uint32_t get_max_teids() override { return UINT32_MAX; }
 
   uint32_t next_teid = 0;
 };

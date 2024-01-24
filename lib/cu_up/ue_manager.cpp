@@ -21,8 +21,8 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_,
                        gtpu_teid_pool&                      f1u_teid_allocator_,
+                       cu_up_executor_pool&                 exec_pool_,
                        dlt_pcap&                            gtpu_pcap_,
-                       task_executor&                       ue_exec_,
                        srslog::basic_logger&                logger_) :
   net_config(net_config_),
   n3_config(n3_config_),
@@ -31,9 +31,9 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
   gtpu_tx_notifier(gtpu_tx_notifier_),
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_teid_allocator(f1u_teid_allocator_),
+  exec_pool(exec_pool_),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
-  ue_exec(ue_exec_),
   logger(logger_)
 {
 }
@@ -57,13 +57,17 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
     return nullptr;
   }
 
+  // Create UE executor
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec = exec_pool.create_dl_pdu_executor();
+
   // Create UE object
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
                                                                      ue_cfg,
                                                                      e1ap,
                                                                      net_config,
                                                                      n3_config,
-                                                                     timer_factory{timers, ue_exec},
+                                                                     std::move(ue_exec),
+                                                                     timer_factory{timers, *ue_exec},
                                                                      f1u_gw,
                                                                      f1u_teid_allocator,
                                                                      gtpu_tx_notifier,

@@ -40,6 +40,8 @@ protected:
     std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
     qos[uint_to_five_qi(9)] = {};
 
+    manual_task_worker teid_worker{128};
+
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  qos,
                                                                  security_info,
@@ -52,6 +54,7 @@ protected:
                                                                  *f1u_allocator,
                                                                  *gtpu_tx_notifier,
                                                                  *gtpu_rx_demux,
+								 teid_worker,
                                                                  gtpu_pcap);
   }
 

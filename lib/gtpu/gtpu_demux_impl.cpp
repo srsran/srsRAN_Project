@@ -14,20 +14,22 @@
 
 using namespace srsran;
 
-gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, task_executor& cu_up_exec_, dlt_pcap& gtpu_pcap_) :
-  cfg(cfg_), cu_up_exec(cu_up_exec_), gtpu_pcap(gtpu_pcap_), logger(srslog::fetch_basic_logger("GTPU"))
+gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, dlt_pcap& gtpu_pcap_) :
+  cfg(cfg_), gtpu_pcap(gtpu_pcap_), logger(srslog::fetch_basic_logger("GTPU"))
 {
   logger.info("GTP-U demux. {}", cfg);
 }
 
-bool gtpu_demux_impl::add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel)
+bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                           teid,
+                                 task_executor&                        tunnel_exec,
+                                 gtpu_tunnel_rx_upper_layer_interface* tunnel)
 {
   if (teid_to_tunnel.find(teid) != teid_to_tunnel.end()) {
     logger.error("Tunnel already exists. teid={}", teid);
     return false;
   }
   logger.info("Tunnel added. teid={}", teid);
-  teid_to_tunnel[teid] = tunnel;
+  teid_to_tunnel[teid] = {&tunnel_exec, tunnel};
   return true;
 }
 
@@ -44,16 +46,24 @@ bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
 
 void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr)
 {
-  uint32_t teid = 0;
-  if (!gtpu_read_teid(teid, pdu, logger)) {
+  uint32_t read_teid = 0;
+  if (!gtpu_read_teid(read_teid, pdu, logger)) {
     logger.error("Failed to read TEID from GTP-U PDU. pdu_len={}", pdu.length());
     return;
   }
+  gtpu_teid_t teid{read_teid};
 
-  auto fn = [this, teid, p = std::move(pdu), src_addr]() mutable {
-    handle_pdu_impl(gtpu_teid_t{teid}, std::move(p), src_addr);
+  const auto& it = teid_to_tunnel.find(teid);
+  if (it == teid_to_tunnel.end()) {
+    logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
+    return;
+  }
+
+  auto fn = [this, teid, p = std::move(pdu), tunnel = it->second.tunnel, src_addr]() mutable {
+    handle_pdu_impl(teid, tunnel, std::move(p), src_addr);
   };
-  if (not cu_up_exec.execute(std::move(fn))) {
+
+  if (not it->second.tunnel_exec->execute(std::move(fn))) {
     if (not cfg.warn_on_drop) {
       logger.info("Dropped GTP-U PDU, queue is full. teid={}", teid);
     } else {
@@ -62,19 +72,17 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
   }
 }
 
-void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr)
+void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t                           teid,
+                                      gtpu_tunnel_rx_upper_layer_interface* tunnel,
+                                      byte_buffer                           pdu,
+                                      const sockaddr_storage&               src_addr)
 {
   if (gtpu_pcap.is_write_enabled()) {
     gtpu_pcap.push_pdu(pdu.deep_copy());
   }
 
-  const auto& it = teid_to_tunnel.find(teid);
-  if (it == teid_to_tunnel.end()) {
-    logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
-    return;
-  }
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu.length(), teid);
 
   // Forward entire PDU to the tunnel
-  it->second->handle_pdu(std::move(pdu), src_addr);
+  tunnel->handle_pdu(std::move(pdu), src_addr);
 }
