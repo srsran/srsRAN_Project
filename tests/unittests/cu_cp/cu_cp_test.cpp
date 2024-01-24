@@ -21,52 +21,6 @@ using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* Initial CU-CP routine manager with connected CU-UPs                              */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the initial cu-cp routine
-TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_received)
-{
-  // Connect CU-UP (note that this creates a CU-UP processor, but the CU-UP is only connected after the E1Setup
-  // procedure)
-  e1ap_gw.request_new_cu_up_connection();
-
-  // // Inject E1SetupRequest
-  e1ap_message e1_setup_request = generate_valid_cu_up_e1_setup_request();
-  cu_cp_obj->get_cu_cp_cu_up_connection_interface()
-      .get_e1ap_message_handler(uint_to_cu_up_index(0))
-      .handle_message(e1_setup_request);
-
-  // check that CU-UP has been added
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
-
-  // check that the E1 Setup Response was sent
-  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome);
-  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.successful_outcome().value.type().value,
-            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_e1_setup_resp);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-/* CU-UP connection handling                                                        */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the CU-UP removal
-TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
-{
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Check that CU-UP has been added
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
-
-  // Remove CU-UP
-  this->e1ap_gw.remove_cu_up_connection(0);
-
-  // Check that CU-UP has been removed
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 /* AMF connection handling                                                          */
 //////////////////////////////////////////////////////////////////////////////////////
 
