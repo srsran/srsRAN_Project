@@ -762,6 +762,31 @@ basic avx512 dpdk:
     <<: *build_artifacts
     expire_in: 1 day
 
+release avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11"
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+    SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX512_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
 # Packaging
 
 package:

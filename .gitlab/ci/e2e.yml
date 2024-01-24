@@ -406,7 +406,7 @@ viavi:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     RETINA_ARGS: "gnb.all.pcap=False"
   needs:
-    - job: "basic avx512 dpdk"
+    - job: "release avx512 dpdk"
       artifacts: true
     - *retina-needs
 
