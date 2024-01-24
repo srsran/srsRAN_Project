@@ -14,6 +14,16 @@
 
 namespace srsran {
 
+/// \brief SRB0 default configuration (only implementation-specific parameters)
+inline rlc_config make_default_srb0_rlc_config()
+{
+  rlc_config cfg       = {};
+  cfg.mode             = rlc_mode::tm;
+  cfg.tm.tx.queue_size = 32;
+  cfg.metrics_period   = std::chrono::milliseconds(0); // disable metrics reporting for SRBs
+  return cfg;
+}
+
 /// \brief SRB1, SRB2 and SRB3 default configuration as per TS 38.331, 9.2.1.
 inline rlc_config make_default_srb_rlc_config()
 {

@@ -13,6 +13,7 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/rlc/rlc_factory.h"
 #include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
@@ -142,9 +143,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
   }
 
   // Create DU UE SRB0 and SRB1.
-  rlc_config tm_rlc_cfg{};
-  tm_rlc_cfg.mode = rlc_mode::tm;
-  ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
+  ue_ctx->bearers.add_srb(srb_id_t::srb0, make_default_srb0_rlc_config());
   ue_ctx->bearers.add_srb(
       srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg, ue_ctx->resources->rlc_bearers[0].mac_cfg);
 
