@@ -426,16 +426,10 @@ du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context
     });
   }
 
-  // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
-  // complete message
-  rrc_ue_release_context release_context = ue->get_rrc_ue_notifier().get_rrc_ue_release_context();
-
   // Create release command from NGAP UE context release command
   cu_cp_ue_context_release_command release_command;
-  release_command.ue_index        = cmd.ue_index;
-  release_command.cause           = cmd.cause;
-  release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();
-  release_command.srb_id          = release_context.srb_id;
+  release_command.ue_index = cmd.ue_index;
+  release_command.cause    = cmd.cause;
 
   return handle_ue_context_release_command(release_command);
 }
