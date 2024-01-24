@@ -68,8 +68,8 @@ public:
   // See ru_downlink_plane_handler interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override
   {
-    std::unique_lock<std::mutex> lock(dl_request_mutex);
-    resource_grid_context        prev_context = std::exchange(dl_request[context.slot.system_slot()], context);
+    std::lock_guard<std::mutex> lock(dl_request_mutex);
+    resource_grid_context       prev_context = std::exchange(dl_request[context.slot.system_slot()], context);
 
     // If the previous slot is valid, it is a late.
     if (prev_context.slot.valid()) {
@@ -102,7 +102,7 @@ public:
 
     resource_grid_context prev_context = {slot_point(), 0};
     {
-      std::unique_lock<std::mutex> lock(dl_request_mutex);
+      std::lock_guard<std::mutex> lock(dl_request_mutex);
       prev_context = std::exchange(dl_request[current_dl_slot.system_slot()], prev_context);
     }
 

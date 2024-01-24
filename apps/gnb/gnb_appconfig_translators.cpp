@@ -1520,7 +1520,7 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<co
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     ru_generic_configuration& cfg = out_cfg.config.emplace<ru_generic_configuration>();
     generate_ru_generic_config(cfg, config);
-  } else if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
+  } else if (variant_holds_alternative<ru_ofh_appconfig>(config.ru_cfg)) {
     ru_ofh_configuration& cfg = out_cfg.config.emplace<ru_ofh_configuration>();
     generate_ru_ofh_config(cfg, config, cells);
   } else {

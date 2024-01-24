@@ -1042,7 +1042,7 @@ struct ru_ofh_appconfig {
 
 /// gNB app dummy Radio Unit configuration.
 struct ru_dummy_appconfig {
-  /// \brief DL processing processing delay in slots.
+  /// \brief DL processing delay in slots.
   ///
   /// It is the number of slots that the RU expects the downlink resource grid in advance for having enough time margin
   /// for processing.

@@ -2202,7 +2202,7 @@ static void manage_ru_variant(CLI::App&                 app,
   // Count the number of RU types.
   unsigned nof_ru_types = (nof_ofh_entries != 0) ? 1 : 0;
   nof_ru_types += (nof_sdr_entries != 0) ? 1 : 0;
-  nof_dummy_entries += (nof_dummy_entries != 0) ? 1 : 0;
+  nof_ru_types += (nof_dummy_entries != 0) ? 1 : 0;
 
   if (nof_ru_types > 1) {
     srsran_terminate("Radio Unit configuration allows either a SDR, Open Fronthaul, or Dummy configuration, but not "
