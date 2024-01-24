@@ -192,8 +192,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   // > Allocate resources for new or modified cells.
   if (not ue_mcg.cells.contains(0) or ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
-    if (allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX).is_error()) {
-      resp.release_required = true;
+    error_type<std::string> outcome = allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX);
+    if (outcome.is_error()) {
+      resp.procedure_error = outcome;
       return resp;
     }
   }

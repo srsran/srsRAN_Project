@@ -18,10 +18,14 @@ namespace srs_du {
 
 /// \brief Outcome report of an DU UE Resource allocation request.
 struct du_ue_resource_update_response {
-  bool                           release_required = false;
+  /// \brief Defines whether the UE release is required due to an error during the update procedure.
+  /// If \c procedure_error doesn't contain any error string, then the UE resource update was successful.
+  error_type<std::string>        procedure_error = {};
   std::vector<srb_id_t>          failed_srbs;
   std::vector<drb_id_t>          failed_drbs;
   std::vector<serv_cell_index_t> failed_scells;
+
+  bool release_required() const { return procedure_error.is_error(); }
 };
 
 /// \brief This class manages the PHY (e.g. RB and symbols used for PUCCH), MAC (e.g. LCIDs) and RLC resources used

@@ -210,7 +210,6 @@ expected<du_ue*, std::string> du_ue_manager::add_ue(const du_ue_context&        
   if (ue_db.contains(ue_ctx.ue_index) or (is_crnti(ue_ctx.rnti) and rnti_to_ue_index.count(ue_ctx.rnti) > 0)) {
     // UE already existed with same ue_index or C-RNTI.
     return std::string("UE already existed with same ue_index or C-RNTI");
-    ;
   }
 
   // Create UE context object

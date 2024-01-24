@@ -40,13 +40,11 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Check if UE context was created in the DU manager.
   ue_ctx_creation_outcome = create_du_ue_context();
   if (ue_ctx_creation_outcome.is_error()) {
-    proc_logger.log_proc_failure("Failed to create DU UE context due to: {}", ue_ctx_creation_outcome.error().data());
+    proc_logger.log_proc_failure("Failed to create DU UE context. Cause: {}", ue_ctx_creation_outcome.error().data());
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
-  srsran_assert(ue_ctx_creation_outcome.has_value() and ue_ctx_creation_outcome.value() != nullptr,
-                "Uninitialized UE creating ctx");
   ue_ctx = ue_ctx_creation_outcome.value();
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
@@ -141,8 +139,9 @@ bool ue_creation_procedure::setup_du_ue_resources()
   f1_req.srbs_to_setup.resize(1);
   f1_req.srbs_to_setup[0]             = srb_id_t::srb1;
   du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
-  if (resp.release_required) {
-    proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources");
+  if (resp.release_required()) {
+    proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources. Cause: {}",
+                                 resp.procedure_error.error().data());
     return false;
   }
 
