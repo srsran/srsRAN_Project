@@ -16,6 +16,7 @@
 #include "srsran/adt/detail/tuple_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/support/compiler.h"
+#include "srsran/support/error_handling.h"
 #include <cstdlib>
 
 namespace srsran {
@@ -56,9 +57,9 @@ template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
 {
   struct custom_deleter {
-    void operator()(rigtorp::SPSCQueue<T>* ptr) const
+    void operator()(::rigtorp::SPSCQueue<T>* ptr) const
     {
-      using namespace rigtorp;
+      using namespace ::rigtorp;
       if (ptr != nullptr) {
         ptr->~SPSCQueue<T>();
         free(ptr);
@@ -72,9 +73,9 @@ public:
   {
     // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
     void* ptr = nullptr;
-    int   ret = posix_memalign(&ptr, alignof(rigtorp::SPSCQueue<T>), sizeof(rigtorp::SPSCQueue<T>));
-    srsran_assert(ret == 0, "Unable to allocate memory for SPSCQueue");
-    queue.reset(new (ptr) rigtorp::SPSCQueue<T>(qsize));
+    int   ret = posix_memalign(&ptr, alignof(::rigtorp::SPSCQueue<T>), sizeof(::rigtorp::SPSCQueue<T>));
+    report_error_if_not(ret == 0, "Unable to allocate memory for SPSCQueue");
+    queue.reset(new (ptr)::rigtorp::SPSCQueue<T>(qsize));
   }
 
   template <typename U>
@@ -113,7 +114,7 @@ public:
   size_t capacity() const { return queue->capacity(); }
 
 protected:
-  std::unique_ptr<rigtorp::SPSCQueue<T>, custom_deleter> queue;
+  std::unique_ptr<::rigtorp::SPSCQueue<T>, custom_deleter> queue;
 };
 
 // Specialization for lockfree SPSC using a spin sleep loop as blocking mechanism.
@@ -190,9 +191,9 @@ template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
   struct custom_deleter {
-    void operator()(rigtorp::MPMCQueue<T>* ptr) const
+    void operator()(::rigtorp::MPMCQueue<T>* ptr) const
     {
-      using namespace rigtorp;
+      using namespace ::rigtorp;
       if (ptr != nullptr) {
         ptr->~MPMCQueue<T>();
         free(ptr);
@@ -206,9 +207,9 @@ public:
   {
     // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
     void* ptr = nullptr;
-    int   ret = posix_memalign(&ptr, alignof(rigtorp::MPMCQueue<T>), sizeof(rigtorp::MPMCQueue<T>));
-    srsran_assert(ret == 0, "Unable to allocate memory for MPMCQueue");
-    queue.reset(new (ptr) rigtorp::MPMCQueue<T>(qsize));
+    int   ret = posix_memalign(&ptr, alignof(::rigtorp::MPMCQueue<T>), sizeof(::rigtorp::MPMCQueue<T>));
+    report_error_if_not(ret == 0, "Unable to allocate memory for MPMCQueue");
+    queue.reset(new (ptr)::rigtorp::MPMCQueue<T>(qsize));
   }
 
   bool try_push(const T& elem) { return queue->try_push(elem); }
@@ -239,7 +240,7 @@ public:
   size_t capacity() const { return queue->capacity(); }
 
 protected:
-  std::unique_ptr<rigtorp::MPMCQueue<T>, custom_deleter> queue;
+  std::unique_ptr<::rigtorp::MPMCQueue<T>, custom_deleter> queue;
 };
 
 // Specialization for lockfree MPMC using a sleep as blocking mechanism.
