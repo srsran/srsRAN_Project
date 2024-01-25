@@ -276,6 +276,8 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                        f1ap_adapters.at(du_index),
                                        ngap_adapter,
                                        ue_mng,
+                                       ngap_rrc_ue_ev_notifiers,
+                                       cu_cp_rrc_ue_ev_notifiers,
                                        logger);
 }
 
