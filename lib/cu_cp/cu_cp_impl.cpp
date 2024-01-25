@@ -54,7 +54,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
   routine_mng(ue_task_sched),
-  controller(routine_mng, cfg.ngap_config, ngap_adapter)
+  controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db)
 {
   assert_cu_cp_configuration_valid(cfg);
 

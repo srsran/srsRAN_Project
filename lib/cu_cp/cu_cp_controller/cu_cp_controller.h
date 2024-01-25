@@ -13,6 +13,7 @@
 #include "amf_connection_manager.h"
 #include "node_connection_notifier.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_up_repository.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -30,7 +31,8 @@ class cu_cp_controller
 public:
   cu_cp_controller(cu_cp_routine_manager&       routine_manager_,
                    const ngap_configuration&    ngap_cfg_,
-                   cu_cp_ngap_control_notifier& ngap_ctrl_notif_);
+                   cu_cp_ngap_control_notifier& ngap_ctrl_notif_,
+                   const cu_up_repository&      cu_ups_);
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
@@ -40,7 +42,8 @@ public:
   bool request_ue_setup() const;
 
 private:
-  amf_connection_manager amf_mng;
+  amf_connection_manager  amf_mng;
+  const cu_up_repository& cu_ups;
 };
 
 } // namespace srs_cu_cp
