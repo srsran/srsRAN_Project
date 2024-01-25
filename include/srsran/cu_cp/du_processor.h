@@ -404,6 +404,24 @@ public:
   virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
+/// Interface for the NGAP to interface with the DU repository
+/// Useful for paging and handover
+class du_repository_ngap_handler
+{
+public:
+  virtual ~du_repository_ngap_handler() = default;
+
+  /// \brief Handles a Paging message notification.
+  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
+
+  /// \brief Handles UE index allocation request for N2 handover at target gNB
+  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
+
+  /// \brief Handles a handover request to start the ngap handover routine at the target CU
+  virtual async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
+};
+
 /// Methods to get statistics of the DU processor.
 class du_processor_statistics_handler
 {

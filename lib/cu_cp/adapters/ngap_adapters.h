@@ -58,30 +58,30 @@ class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(cu_cp_du_repository_ngap_handler& cu_cp_du_repository_handler_,
-                     cu_cp_ngap_ue_creation_handler&   ngap_ue_creation_handler_)
+  void connect_cu_cp(du_repository_ngap_handler&     du_repository_handler_,
+                     cu_cp_ngap_ue_creation_handler& ngap_ue_creation_handler_)
   {
-    cu_cp_du_repository_handler = &cu_cp_du_repository_handler_;
-    ngap_ue_creation_handler    = &ngap_ue_creation_handler_;
+    du_repository_handler    = &du_repository_handler_;
+    ngap_ue_creation_handler = &ngap_ue_creation_handler_;
   }
 
   void on_paging_message(cu_cp_paging_message& msg) override
   {
-    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    cu_cp_du_repository_handler->handle_paging_message(msg);
+    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    du_repository_handler->handle_paging_message(msg);
   }
 
   ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
   {
-    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_du_repository_handler->handle_ue_index_allocation_request(cgi);
+    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    return du_repository_handler->handle_ue_index_allocation_request(cgi);
   }
 
   async_task<ngap_handover_resource_allocation_response>
   on_ngap_handover_request(const ngap_handover_request& request) override
   {
-    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_du_repository_handler->handle_ngap_handover_request(request);
+    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    return du_repository_handler->handle_ngap_handover_request(request);
   }
 
   bool on_new_ngap_ue(ue_index_t ue_index) override
@@ -91,8 +91,8 @@ public:
   }
 
 private:
-  cu_cp_du_repository_ngap_handler* cu_cp_du_repository_handler = nullptr;
-  cu_cp_ngap_ue_creation_handler*   ngap_ue_creation_handler    = nullptr;
+  du_repository_ngap_handler*     du_repository_handler    = nullptr;
+  cu_cp_ngap_ue_creation_handler* ngap_ue_creation_handler = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE
