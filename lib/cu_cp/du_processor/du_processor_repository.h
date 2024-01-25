@@ -39,16 +39,15 @@ struct du_repository_config {
   f1ap_ue_removal_notifier&              f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
-  rrc_ue_reestablishment_notifier&       rrc_ue_cu_cp_notifier;
+  rrc_ue_context_update_notifier&        rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   cell_meas_manager&                     cell_meas_mng;
   du_connection_notifier&                du_conn_notif;
-  ue_setup_notifier&                     ue_setup_notif;
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler, public cu_cp_ngap_handler
+class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
@@ -70,9 +69,6 @@ public:
   ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& nci) override;
   async_task<ngap_handover_resource_allocation_response>
   handle_ngap_handover_request(const ngap_handover_request& request) override;
-
-  void handle_amf_connection_establishment() override;
-  void handle_amf_connection_drop() override;
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
@@ -128,9 +124,6 @@ private:
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
   std::unordered_map<du_index_t, du_context> removed_du_db;
-
-  // Current state of the AMF connection.
-  bool amf_connected = false;
 
   std::atomic<bool> running{true};
 };

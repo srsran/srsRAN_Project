@@ -13,11 +13,10 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_controller::cu_cp_controller(cu_cp_routine_manager&          routine_manager_,
-                                   const ngap_configuration&       ngap_cfg_,
-                                   ngap_cu_cp_connection_notifier& cu_cp_amf_conn_notif_,
-                                   cu_cp_ngap_control_notifier&    ngap_ctrl_notif_) :
-  amf_mng(routine_manager_, ngap_cfg_, cu_cp_amf_conn_notif_, ngap_ctrl_notif_)
+cu_cp_controller::cu_cp_controller(cu_cp_routine_manager&       routine_manager_,
+                                   const ngap_configuration&    ngap_cfg_,
+                                   cu_cp_ngap_control_notifier& ngap_ctrl_notif_) :
+  amf_mng(routine_manager_, ngap_cfg_, ngap_ctrl_notif_)
 {
 }
 

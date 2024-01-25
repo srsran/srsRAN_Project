@@ -19,12 +19,12 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                 cfg_,
-                         rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notif_,
-                         rrc_ue_nas_notifier&             nas_notif_,
-                         rrc_ue_control_notifier&         ngap_ctrl_notif_,
-                         rrc_ue_reestablishment_notifier& cu_cp_notif_,
-                         cell_meas_manager&               cell_meas_mng_) :
+rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                cfg_,
+                         rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notif_,
+                         rrc_ue_nas_notifier&            nas_notif_,
+                         rrc_ue_control_notifier&        ngap_ctrl_notif_,
+                         rrc_ue_context_update_notifier& cu_cp_notif_,
+                         cell_meas_manager&              cell_meas_mng_) :
   cfg(cfg_),
   rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
   nas_notifier(nas_notif_),
@@ -142,7 +142,6 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          ue_cfg,
                                                          msg.du_to_cu_container.copy(),
                                                          *msg.ue_task_sched,
-                                                         reject_users,
                                                          msg.rrc_context));
 
   if (res.second) {
@@ -160,19 +159,4 @@ void rrc_du_impl::remove_ue(ue_index_t ue_index)
 void rrc_du_impl::release_ues()
 {
   // release all UEs connected to this RRC entity
-}
-
-bool rrc_du_impl::is_rrc_connect_allowed()
-{
-  return !reject_users;
-}
-
-void rrc_du_impl::handle_amf_connection()
-{
-  reject_users = false;
-}
-
-void rrc_du_impl::handle_amf_connection_drop()
-{
-  reject_users = true;
 }

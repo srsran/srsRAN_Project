@@ -57,8 +57,8 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
   // Perform various checks to make sure we can serve the RRC Setup Request
-  if (reject_users) {
-    logger.log_error("Sending rrcReject. Cause: RRC connections not allowed");
+  if (not cu_cp_notifier.on_ue_setup_request()) {
+    logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
     on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
@@ -182,7 +182,7 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "RX {} PDCP PDU", srb_id);
 
   if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UlDcchPdu. Rx {} is not set up", srb_id);
+    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UL-DCCH PDU. Rx {} is not set up", srb_id);
     return;
   }
 

@@ -53,7 +53,6 @@ public:
 class rrc_ue_setup_proc_notifier
 {
 public:
-  rrc_ue_setup_proc_notifier()          = default;
   virtual ~rrc_ue_setup_proc_notifier() = default;
 
   /// \brief Notify about a DL CCCH message.
@@ -295,11 +294,15 @@ struct rrc_reestablishment_ue_context_t {
   bool                                old_ue_fully_attached = false;
 };
 
-/// Interface to notify about RRC Reestablishment Requests.
-class rrc_ue_reestablishment_notifier
+/// Interface to notify about UE context updates.
+class rrc_ue_context_update_notifier
 {
 public:
-  virtual ~rrc_ue_reestablishment_notifier() = default;
+  virtual ~rrc_ue_context_update_notifier() = default;
+
+  /// \brief Notifies that a new RRC UE needs to be setup.
+  /// \return True if the UE is accepted.
+  virtual bool on_ue_setup_request() = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

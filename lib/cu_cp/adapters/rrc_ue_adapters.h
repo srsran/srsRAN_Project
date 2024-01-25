@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/du_processor.h"
@@ -152,13 +153,22 @@ private:
 };
 
 /// Adapter between RRC UE and CU-CP
-class rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+class rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_rrc_ue_interface& cu_cp_rrc_ue_, cu_cp_ue_removal_handler& ue_removal_handler_)
+  void connect_cu_cp(cu_cp_rrc_ue_interface&   cu_cp_rrc_ue_,
+                     cu_cp_ue_removal_handler& ue_removal_handler_,
+                     cu_cp_controller&         ctrl_)
   {
     cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_;
     ue_removal_handler   = &ue_removal_handler_;
+    controller           = &ctrl_;
+  }
+
+  bool on_ue_setup_request() override
+  {
+    srsran_assert(controller != nullptr, "CU-CP controller must not be nullptr");
+    return controller->request_ue_setup();
   }
 
   rrc_reestablishment_ue_context_t
@@ -183,6 +193,7 @@ public:
 private:
   cu_cp_rrc_ue_interface*   cu_cp_rrc_ue_handler = nullptr;
   cu_cp_ue_removal_handler* ue_removal_handler   = nullptr;
+  cu_cp_controller*         controller           = nullptr;
 };
 
 } // namespace srs_cu_cp

@@ -19,19 +19,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Interface to handle AMF connections
-class cu_cp_ngap_handler
-{
-public:
-  virtual ~cu_cp_ngap_handler() = default;
-
-  /// \brief Handles a AMF connection establishment notification.
-  virtual void handle_amf_connection_establishment() = 0;
-
-  /// \brief Handles a AMF connection drop notification.
-  virtual void handle_amf_connection_drop() = 0;
-};
-
 class cu_cp_ngap_connection_interface
 {
 public:

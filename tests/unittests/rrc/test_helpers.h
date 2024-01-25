@@ -104,10 +104,14 @@ private:
   srslog::basic_logger& logger                     = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier
 {
 public:
   void add_ue_context(rrc_reestablishment_ue_context_t context) { reest_context = context; }
+
+  bool next_ue_setup_response = true;
+
+  bool on_ue_setup_request() override { return next_ue_setup_response; }
 
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override

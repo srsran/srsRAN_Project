@@ -38,7 +38,7 @@ public:
                     f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
-                    rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
+                    rrc_ue_context_update_notifier&     rrc_ue_cu_cp_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
                     cell_meas_manager&                  cell_meas_mng_,
@@ -47,11 +47,10 @@ public:
 
   // getter functions
 
-  du_index_t                  get_du_index() override { return context.du_index; }
-  f1ap_message_handler&       get_f1ap_message_handler() override { return *f1ap; }
-  f1ap_ue_context_manager&    get_f1ap_ue_context_manager() override { return *f1ap; }
-  f1ap_statistics_handler&    get_f1ap_statistics_handler() override { return *f1ap; }
-  rrc_amf_connection_handler& get_rrc_amf_connection_handler() override { return *rrc; };
+  du_index_t               get_du_index() override { return context.du_index; }
+  f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
+  f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
+  f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
 
   size_t get_nof_ues() const override { return ue_manager.get_nof_du_ues(context.du_index); };
 
@@ -107,7 +106,6 @@ public:
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
   du_processor_f1ap_interface&      get_du_processor_f1ap_interface() override { return *this; }
-  du_processor_rrc_interface&       get_du_processor_rrc_interface() override { return *this; }
   du_processor_rrc_ue_interface&    get_du_processor_rrc_ue_interface() override { return *this; }
   du_processor_ngap_interface&      get_du_processor_ngap_interface() override { return *this; }
   du_processor_ue_task_handler&     get_du_processor_ue_task_handler() override { return *this; }
@@ -164,7 +162,7 @@ private:
   f1ap_ue_removal_notifier&            f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
-  rrc_ue_reestablishment_notifier&     rrc_ue_cu_cp_notifier;
+  rrc_ue_context_update_notifier&      rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&      task_sched;
   du_processor_ue_manager&             ue_manager;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;

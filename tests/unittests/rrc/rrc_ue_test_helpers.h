@@ -103,7 +103,6 @@ protected:
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
-                                           reject_users,
                                            optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
@@ -162,12 +161,6 @@ protected:
   rrc_ue_control_message_handler* get_rrc_ue_control_message_handler()
   {
     return &rrc_ue->get_rrc_ue_control_message_handler();
-  }
-
-  void connect_amf()
-  {
-    // Notify RRC about successful AMF connection
-    reject_users = false;
   }
 
   void init_security_context()
@@ -394,7 +387,6 @@ protected:
               92);
   }
 
-private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
@@ -409,8 +401,6 @@ private:
   std::unique_ptr<dummy_ue_task_scheduler> task_sched_handle;
   std::unique_ptr<rrc_ue_interface>        rrc_ue;
   manual_task_worker                       ctrl_worker{64};
-
-  bool reject_users = true;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

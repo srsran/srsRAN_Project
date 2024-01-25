@@ -28,10 +28,9 @@ namespace srs_cu_cp {
 class cu_cp_controller
 {
 public:
-  cu_cp_controller(cu_cp_routine_manager&          routine_manager_,
-                   const ngap_configuration&       ngap_cfg_,
-                   ngap_cu_cp_connection_notifier& cu_cp_amf_conn_notif_,
-                   cu_cp_ngap_control_notifier&    ngap_ctrl_notif_);
+  cu_cp_controller(cu_cp_routine_manager&       routine_manager_,
+                   const ngap_configuration&    ngap_cfg_,
+                   cu_cp_ngap_control_notifier& ngap_ctrl_notif_);
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 

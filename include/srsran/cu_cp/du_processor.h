@@ -416,7 +416,6 @@ public:
 };
 
 class du_processor_interface : public du_processor_f1ap_interface,
-                               public du_processor_rrc_interface,
                                public du_processor_rrc_ue_interface,
                                public du_processor_cell_info_interface,
                                public du_processor_ngap_interface,
@@ -431,7 +430,6 @@ public:
   virtual ~du_processor_interface() = default;
 
   virtual du_processor_f1ap_interface&           get_du_processor_f1ap_interface()           = 0;
-  virtual du_processor_rrc_interface&            get_du_processor_rrc_interface()            = 0;
   virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;
   virtual du_processor_ngap_interface&           get_du_processor_ngap_interface()           = 0;
   virtual du_processor_ue_task_handler&          get_du_processor_ue_task_handler()          = 0;

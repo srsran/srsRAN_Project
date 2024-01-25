@@ -71,11 +71,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
     return nullptr;
   }
 
-  logger.info("Added DU {}", du_index);
-  if (amf_connected) {
-    du_db.at(du_index).du_processor->get_rrc_amf_connection_handler().handle_amf_connection();
-  }
-
+  logger.info("Added TNL connection to DU {}", du_index);
   return std::make_unique<f1ap_rx_pdu_notifier>(*this, du_index);
 }
 
@@ -115,7 +111,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
   du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
   du_cfg.du_setup_notif              = &cfg.du_conn_notif;
-  du_cfg.ue_setup_notif              = &cfg.ue_setup_notif;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
                                                                    du_ctxt.du_to_cu_cp_notifier,
@@ -249,26 +244,6 @@ du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_
 du_processor_ue_context_notifier& du_processor_repository::du_context::get_du_processor_ue_context_notifier()
 {
   return du_processor->get_du_processor_ue_context_notifier();
-}
-
-void du_processor_repository::handle_amf_connection_establishment()
-{
-  amf_connected = true;
-
-  // inform all connected DU objects about the new connection
-  for (auto& du : du_db) {
-    du.second.du_processor->get_rrc_amf_connection_handler().handle_amf_connection();
-  }
-}
-
-void du_processor_repository::handle_amf_connection_drop()
-{
-  amf_connected = false;
-
-  // inform all DU objects about the AMF connection drop
-  for (auto& du : du_db) {
-    du.second.du_processor->get_rrc_amf_connection_handler().handle_amf_connection_drop();
-  }
 }
 
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)

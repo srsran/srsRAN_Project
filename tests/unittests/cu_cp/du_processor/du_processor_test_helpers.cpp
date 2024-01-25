@@ -33,7 +33,6 @@ du_processor_test::du_processor_test()
   du_processor_config_t du_cfg = {};
   du_cfg.du_index              = uint_to_du_index(0);
   du_cfg.du_setup_notif        = &du_conn_notifier;
-  du_cfg.ue_setup_notif        = &du_conn_notifier;
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          *cu_cp_notifier,

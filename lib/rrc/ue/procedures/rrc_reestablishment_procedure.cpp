@@ -26,7 +26,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
     rrc_ue_srb_handler&                      srb_notifier_,
     rrc_ue_du_processor_notifier&            du_processor_notifier_,
-    rrc_ue_reestablishment_notifier&         cu_cp_notifier_,
+    rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,
     rrc_ue_event_manager&                    event_mng_,

@@ -27,7 +27,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
-                                     rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
+                                     rrc_ue_context_update_notifier&     rrc_ue_cu_cp_notifier_,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
                                      cell_meas_manager&                  cell_meas_mng_,

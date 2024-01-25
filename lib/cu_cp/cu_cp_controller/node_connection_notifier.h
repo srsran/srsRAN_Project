@@ -26,15 +26,5 @@ public:
   virtual bool on_du_setup_request(const du_setup_request& req) = 0;
 };
 
-class ue_setup_notifier
-{
-public:
-  virtual ~ue_setup_notifier() = default;
-
-  /// \brief Notifies the CU-CP about an RRC UE setup request.
-  /// \brief True if CU-CP accepts the request.
-  virtual bool on_ue_setup_request() = 0;
-};
-
 } // namespace srs_cu_cp
 } // namespace srsran

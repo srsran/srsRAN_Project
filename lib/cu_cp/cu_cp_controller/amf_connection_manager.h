@@ -24,10 +24,9 @@ class ngap_cu_cp_connection_notifier;
 class amf_connection_manager
 {
 public:
-  amf_connection_manager(cu_cp_routine_manager&          routine_manager_,
-                         const ngap_configuration&       ngap_cfg_,
-                         ngap_cu_cp_connection_notifier& cu_cp_amf_conn_notif_,
-                         cu_cp_ngap_control_notifier&    ngap_ctrl_notif_);
+  amf_connection_manager(cu_cp_routine_manager&       routine_manager_,
+                         const ngap_configuration&    ngap_cfg_,
+                         cu_cp_ngap_control_notifier& ngap_ctrl_notif_);
 
   /// \brief Initiates the connection to the AMF.
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
@@ -40,10 +39,9 @@ public:
 private:
   void handle_connection_setup_result(bool success);
 
-  cu_cp_routine_manager&          routine_manager;
-  const ngap_configuration&       ngap_cfg;
-  ngap_cu_cp_connection_notifier& cu_cp_amf_conn_notifier;
-  cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
+  cu_cp_routine_manager&       routine_manager;
+  const ngap_configuration&    ngap_cfg;
+  cu_cp_ngap_control_notifier& ngap_ctrl_notifier;
 
   std::atomic<bool> amf_connected{false};
 };

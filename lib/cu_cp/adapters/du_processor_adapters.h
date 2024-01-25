@@ -357,7 +357,7 @@ private:
   ngap_control_message_handler* ngap_handler = nullptr;
 };
 
-class du_processor_cu_cp_connection_adapter final : public du_connection_notifier, public ue_setup_notifier
+class du_processor_cu_cp_connection_adapter final : public du_connection_notifier
 {
 public:
   void connect_node_connection_handler(cu_cp_controller& cu_ctrl_) { cu_ctrl = &cu_ctrl_; }
@@ -366,12 +366,6 @@ public:
   {
     srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
     return cu_ctrl->handle_du_setup_request(req);
-  }
-
-  bool on_ue_setup_request() override
-  {
-    srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
-    return cu_ctrl->request_ue_setup();
   }
 
 private:

@@ -22,7 +22,6 @@ struct du_processor_config_t {
   uint8_t                 rrc_version    = 2;
   srslog::basic_logger&   logger         = srslog::fetch_basic_logger("CU-CP");
   du_connection_notifier* du_setup_notif = nullptr;
-  ue_setup_notifier*      ue_setup_notif = nullptr;
   rrc_cfg_t               rrc_cfg;                     // TODO: do we put subcomponent configs here?
   security_indication_t   default_security_indication; // default if not signaled via NGAP
 };

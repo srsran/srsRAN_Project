@@ -138,12 +138,10 @@ private:
   bool                                              ue_transfer_outcome = true;
 };
 
-class dummy_du_connection_notifier : public du_connection_notifier, public ue_setup_notifier
+class dummy_du_connection_notifier : public du_connection_notifier
 {
 public:
   bool on_du_setup_request(const du_setup_request& req) override { return true; }
-
-  bool on_ue_setup_request() override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {

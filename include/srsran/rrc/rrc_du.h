@@ -42,21 +42,9 @@ struct rrc_ue_creation_message {
   optional<rrc_ue_transfer_context> rrc_context;
 };
 
-/// \brief Interface class for the main RRC DU object used by the RRC UE objects.
-/// This interface provides the RRC connection permission.
-class rrc_du_ue_manager
-{
-public:
-  rrc_du_ue_manager()          = default;
-  virtual ~rrc_du_ue_manager() = default;
-
-  /// Check if the parent allows RRC connections.
-  virtual bool is_rrc_connect_allowed() = 0;
-};
-
 /// \brief Interface class to the main RRC DU object to manage RRC UEs.
 /// This interface provides functions to add, remove and release UEs.
-class rrc_du_ue_repository : public rrc_amf_connection_handler
+class rrc_du_ue_repository
 {
 public:
   rrc_du_ue_repository()          = default;
@@ -96,7 +84,6 @@ public:
 
 /// Combined entry point for the RRC DU handling.
 class rrc_du_interface : public rrc_du_cell_manager,
-                         public rrc_du_ue_manager,
                          public rrc_du_ue_repository,
                          public rrc_ue_removal_handler,
                          public rrc_du_statistics_handler
@@ -105,7 +92,6 @@ public:
   virtual ~rrc_du_interface() = default;
 
   virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
-  virtual rrc_du_ue_manager&         get_rrc_du_ue_manager()         = 0;
   virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
   virtual rrc_ue_removal_handler&    get_rrc_ue_removal_handler()    = 0;
   virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;

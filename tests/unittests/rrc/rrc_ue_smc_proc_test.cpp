@@ -37,7 +37,6 @@ protected:
     pdcp_logger.set_level(srslog::basic_levels::debug);
     pdcp_logger.set_hex_dump_max_size(32);
 
-    connect_amf();
     receive_setup_request();
 
     // check if the RRC setup message was generated
