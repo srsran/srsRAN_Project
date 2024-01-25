@@ -45,8 +45,7 @@ public:
       const uint32_t pdcp_sn_value = sdu.pdcp_sn.value();
       uint32_t       slot_state    = sdu_states[pdcp_sn_value % capacity].load(std::memory_order_relaxed);
       if (slot_state != STATE_FREE) {
-        logger.log_warning(
-            "Could not write pdcp_sn={} to queue. Slot occupied by pdcp_sn={}", pdcp_sn_value, slot_state);
+        logger.log_debug("Could not write pdcp_sn={} to queue. Slot occupied by pdcp_sn={}", pdcp_sn_value, slot_state);
         return false;
       }
 
@@ -60,7 +59,7 @@ public:
     // push to queue
     bool pushed = queue->try_push(std::move(sdu));
     if (not pushed) {
-      logger.log_warning("Could not write pdcp_sn={} to queue. Queue is full", pdcp_sn);
+      logger.log_debug("Could not write pdcp_sn={} to queue. Queue is full", pdcp_sn);
       // if we have a PDCP SN, release the slot that we just reserved
       if (pdcp_sn.has_value()) {
         sdu_states[pdcp_sn.value() % capacity].store(STATE_FREE);
