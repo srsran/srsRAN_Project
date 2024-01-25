@@ -14,9 +14,9 @@
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../routine_managers/du_processor_routine_manager.h"
+#include "du_processor_config.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/nr_cgi.h"
@@ -26,7 +26,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor_interface
+class du_processor_impl : public du_processor_interface, public du_setup_handler
 {
 public:
   du_processor_impl(const du_processor_config_t&        du_processor_config_,
@@ -56,7 +56,7 @@ public:
   size_t get_nof_ues() const override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
-  void                         handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
+  du_setup_result              handle_du_setup_request(const du_setup_request& req) override;
   ue_index_t                   get_new_ue_index() override;
   ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
@@ -147,14 +147,6 @@ private:
 
   // F1AP senders
 
-  /// \brief Create and transmit the F1 Setup response message.
-  /// \param[in] du_ctxt The context of the DU that should receive the message.
-  void send_f1_setup_response(const du_processor_context& du_ctxt);
-
-  /// \brief Create and transmit the F1 Setup failure message.
-  /// \param[in] cause The cause of the failure.
-  void send_f1_setup_failure(cause_t cause);
-
   // NGAP senders
   /// \brief Request UE context release over NGAP.
   /// \param[in] ue_index The UE.
@@ -179,6 +171,9 @@ private:
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
   task_executor&                       ctrl_exec;
 
+  // F1AP to DU processor adapter
+  f1ap_du_processor_adapter f1ap_ev_notifier;
+
   du_processor_context                       context;
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
   std::atomic<uint16_t>                      next_du_cell_index{0};
@@ -191,9 +186,6 @@ private:
   // Components
   std::unique_ptr<f1ap_cu>          f1ap;
   std::unique_ptr<rrc_du_interface> rrc;
-
-  // F1AP to DU processor adapter
-  f1ap_du_processor_adapter f1ap_ev_notifier;
 
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;

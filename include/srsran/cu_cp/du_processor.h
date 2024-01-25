@@ -14,8 +14,8 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
@@ -39,10 +39,6 @@ public:
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
-
-  /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
-  /// \param[in] msg The received F1 Setup Request message.
-  virtual void handle_f1_setup_request(const f1ap_f1_setup_request& request) = 0;
 
   /// \brief Allocate a new UE index.
   virtual ue_index_t get_new_ue_index() = 0;

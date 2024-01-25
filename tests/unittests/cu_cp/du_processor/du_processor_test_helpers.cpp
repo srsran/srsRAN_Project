@@ -10,6 +10,7 @@
 
 #include "du_processor_test_helpers.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
+#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <memory>
@@ -31,6 +32,7 @@ du_processor_test::du_processor_test()
   // create and start DU processor
   du_processor_config_t du_cfg = {};
   du_cfg.du_index              = uint_to_du_index(0);
+  du_cfg.conn_handler          = &du_conn_notifier;
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          *cu_cp_notifier,
@@ -57,10 +59,9 @@ du_processor_test::~du_processor_test()
 void du_processor_test::attach_ue()
 {
   // Generate valid F1SetupRequest
-  f1ap_f1_setup_request f1_setup_request_msg;
-  generate_valid_f1_setup_request(f1_setup_request_msg);
+  f1ap_message f1_setup_req = generate_f1_setup_request();
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Generate ue_creation message
   ue_index_t                ue_index        = ue_index_t::min;

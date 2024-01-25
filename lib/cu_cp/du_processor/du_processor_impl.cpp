@@ -9,7 +9,6 @@
  */
 
 #include "du_processor_impl.h"
-#include "../adapters/rrc_ue_adapters.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/nr_cgi_helpers.h"
@@ -45,7 +44,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   rrc_ue_cu_cp_notifier(rrc_ue_cu_cp_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
-  ctrl_exec(ctrl_exec_)
+  ctrl_exec(ctrl_exec_),
+  f1ap_ev_notifier(*this)
 {
   context.du_index = cfg.du_index;
 
@@ -82,16 +82,9 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                          rrc->get_rrc_du_statistics_handler());
 }
 
-void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& request)
+du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
 {
-  logger.debug("Received F1 setup request");
-
-  // Reject request without served cells
-  if (request.gnb_du_served_cells_list.size() == 0) {
-    logger.warning("Not handling F1 setup without served cells");
-    send_f1_setup_failure(cause_radio_network_t::unspecified);
-    return;
-  }
+  du_setup_result res;
 
   // Set DU context
   context.id = request.gnb_du_id;
@@ -99,11 +92,19 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
     context.name = request.gnb_du_name.value();
   }
 
+  // Check if CU-CP is in a state to accept a new DU connection.
+  if (not cfg.conn_handler->on_du_setup_request(request)) {
+    res.result =
+        du_setup_result::rejected{cause_misc_t::unspecified, "CU-CP is not in a state to accept a new DU connection"};
+    return res;
+  }
+
   // Forward serving cell list to RRC DU
   // TODO: How to handle missing optional freq and timing in meas timing config?
   if (!rrc_du_adapter.on_new_served_cell_list(request.gnb_du_served_cells_list)) {
-    send_f1_setup_failure(cause_protocol_t::unspecified);
-    return;
+    res.result =
+        du_setup_result::rejected{cause_transport_t::unspecified, "Could not establish served cell list in RRC"};
+    return res;
   }
 
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
@@ -112,42 +113,35 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
     du_cell.cell_index = get_next_du_cell_index();
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
-      logger.warning("Not handling F1 setup, maximum number of DU cells reached");
-      send_f1_setup_failure(cause_radio_network_t::unspecified);
-      return;
+      res.result = du_setup_result::rejected{cause_misc_t::ctrl_processing_overload,
+                                             "Maximum number of DU cells supported in the CU-CP reached"};
+      return res;
     }
 
     du_cell.cgi = served_cell.served_cell_info.nr_cgi;
-    if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
-      logger.warning("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(cause_radio_network_t::unspecified);
-      return;
+    if (not config_helpers::is_valid(du_cell.cgi)) {
+      res.result = du_setup_result::rejected{cause_protocol_t::semantic_error,
+                                             fmt::format("Invalid CGI for cell {}", du_cell.cell_index)};
+      return res;
     }
 
     du_cell.pci = served_cell.served_cell_info.nr_pci;
-    if (not srsran::config_helpers::is_valid(du_cell.pci)) {
-      logger.warning("Not handling F1 setup, invalid PCI for cell {}", du_cell.pci);
-      send_f1_setup_failure(cause_radio_network_t::unspecified);
-      return;
-    }
 
     if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
-      logger.warning("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(cause_radio_network_t::unspecified);
-      return;
-    } else {
-      du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
+      res.result = du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
+                                             fmt::format("Missing TAC for cell {}", du_cell.cell_index)};
+      return res;
     }
+    du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
 
     if (not served_cell.gnb_du_sys_info.has_value()) {
-      logger.warning("Not handling served cells without system information");
-      send_f1_setup_failure(cause_radio_network_t::unspecified);
-      return;
-    } else {
-      // Store and unpack system information
-      du_cell.sys_info.packed_mib  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
-      du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
+      res.result = du_setup_result::rejected{cause_protocol_t::semantic_error,
+                                             fmt::format("Missing system information for cell {}", du_cell.cell_index)};
+      return res;
     }
+    // Store and unpack system information
+    du_cell.sys_info.packed_mib  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
+    du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
 
     // Add band information.
     if (served_cell.served_cell_info.nr_mode_info.fdd.has_value()) {
@@ -170,11 +164,22 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
     tac_to_nr_cgi.emplace(cell_db.at(cell_index).tac, cell_db.at(cell_index).cgi);
   }
 
-  // send setup response
-  send_f1_setup_response(context);
-
   // connect paging f1ap paging adapter
   f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
+
+  // Prepare DU response with accepted setup.
+  auto& accepted              = res.result.emplace<du_setup_result::accepted>();
+  accepted.gnb_cu_name        = cfg.name;
+  accepted.gnb_cu_rrc_version = cfg.rrc_version;
+
+  // Accept all cells
+  accepted.cells_to_be_activ_list.resize(request.gnb_du_served_cells_list.size());
+  for (unsigned i = 0; i != accepted.cells_to_be_activ_list.size(); ++i) {
+    accepted.cells_to_be_activ_list[i].nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;
+    accepted.cells_to_be_activ_list[i].nr_pci = request.gnb_du_served_cells_list[i].served_cell_info.nr_pci;
+  }
+
+  return res;
 }
 
 ue_index_t du_processor_impl::get_new_ue_index()
@@ -191,38 +196,6 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
     }
   }
   return du_cell_index_t::invalid;
-}
-
-/// Sender for F1AP messages
-void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
-{
-  f1ap_f1_setup_response response;
-  response.success = true;
-
-  // fill CU common info
-  response.gnb_cu_name        = cfg.name;
-  response.gnb_cu_rrc_version = cfg.rrc_version;
-
-  // activate all DU cells
-  for (const auto& du_cell_pair : cell_db) {
-    const auto& du_cell = du_cell_pair.second;
-
-    f1ap_cells_to_be_activ_list_item resp_cell;
-    resp_cell.nr_cgi = du_cell.cgi;
-    resp_cell.nr_pci = du_cell.pci;
-
-    response.cells_to_be_activ_list.push_back(resp_cell);
-  }
-
-  f1ap->handle_f1_setup_response(response);
-}
-
-void du_processor_impl::send_f1_setup_failure(cause_t cause)
-{
-  f1ap_f1_setup_response response;
-  response.success = false;
-  response.cause   = cause;
-  f1ap->handle_f1_setup_response(response);
 }
 
 du_cell_index_t du_processor_impl::get_next_du_cell_index()

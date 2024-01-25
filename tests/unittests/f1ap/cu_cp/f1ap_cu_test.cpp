@@ -11,13 +11,39 @@
 #include "f1ap_cu_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
+#include "lib/f1ap/common/asn1_helpers.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
+
+static du_setup_result create_du_setup_result_accept(const f1ap_message& f1_msg)
+{
+  du_setup_result resp;
+  auto&           accepted    = resp.result.emplace<du_setup_result::accepted>();
+  accepted.gnb_cu_name        = "dummy_gnb_cu_name";
+  accepted.gnb_cu_rrc_version = 2;
+
+  auto& cells = f1_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list;
+  accepted.cells_to_be_activ_list.resize(cells.size());
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    auto& cell  = accepted.cells_to_be_activ_list[i];
+    cell.nr_cgi = cgi_from_asn1(cells[i]->gnb_du_served_cells_item().served_cell_info.nr_cgi);
+    cell.nr_pci = cells[i]->gnb_du_served_cells_item().served_cell_info.nr_pci;
+  }
+  return resp;
+}
+
+static du_setup_result create_du_setup_result_reject(const f1ap_message& f1_msg)
+{
+  du_setup_result resp;
+  auto&           rejected = resp.result.emplace<du_setup_result::rejected>();
+  rejected.cause           = cause_misc_t::unspecified;
+  rejected.cause_str       = "dummy reason";
+  return resp;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 /* Handling of unsupported messages                                                 */
@@ -91,24 +117,19 @@ TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message
 /// Test the successful f1 setup procedure
 TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 {
-  // Action 1: Receive F1SetupRequest message
-  test_logger.info("TEST: Receive F1SetupRequest message...");
-
-  // Generate F1SetupRequest
+  // Create F1SetupRequest.
   f1ap_message f1setup_msg = generate_f1_setup_request();
 
+  // Prepare the DU processor response.
+  du_processor_notifier.next_du_setup_resp = create_du_setup_result_accept(f1setup_msg);
+
+  test_logger.info("TEST: Receive F1SetupRequest message...");
   f1ap->handle_message(f1setup_msg);
 
-  // Action 2: Check if F1SetupRequest was forwarded to DU processor
+  // Check if F1SetupRequest was forwarded to DU processor
   ASSERT_EQ(du_processor_notifier.last_f1_setup_request_msg.gnb_du_id, 0x11U);
 
-  // Action 3: Transmit F1SetupResponse message
-  test_logger.info("TEST: Transmit F1SetupResponse message...");
-  f1ap_f1_setup_response msg = {};
-  msg.success                = true;
-  f1ap->handle_f1_setup_response(msg);
-
-  // Check the generated PDU is indeed the F1 Setup response
+  // Check the F1 Tx PDU is indeed the F1 Setup response
   ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types_opts::options::successful_outcome,
             f1ap_pdu_notifier.last_f1ap_msg.pdu.type());
   ASSERT_EQ(asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp,
@@ -124,16 +145,13 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   setup_req->gnb_du_served_cells_list_present = false;
   setup_req->gnb_du_served_cells_list.clear();
 
+  // Prepare the DU processor response.
+  du_processor_notifier.next_du_setup_resp = create_du_setup_result_reject(f1setup_msg);
+
   f1ap->handle_message(f1setup_msg);
 
-  // Action 2: Check if F1SetupRequest was forwarded to DU processor
+  // Check if F1SetupRequest was forwarded to DU processor
   ASSERT_EQ(du_processor_notifier.last_f1_setup_request_msg.gnb_du_id, 0x11U);
-
-  // Action 3: Transmit F1SetupFailure message
-  test_logger.info("TEST: Transmit F1SetupFailure message...");
-  f1ap_f1_setup_response msg = {};
-  msg.success                = false;
-  f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types_opts::options::unsuccessful_outcome,

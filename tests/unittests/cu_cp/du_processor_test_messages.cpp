@@ -12,6 +12,7 @@
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
+#include "lib/f1ap/cu_cp/procedures/f1_setup_procedure.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/e1ap/common/e1ap_message.h"
@@ -20,24 +21,39 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-void srsran::srs_cu_cp::generate_valid_f1_setup_request(f1ap_f1_setup_request& f1_setup_request,
-                                                        unsigned               gnb_du_id,
-                                                        unsigned               nrcell_id,
-                                                        pci_t                  pci)
+void srsran::srs_cu_cp::generate_valid_f1_setup_request(du_setup_request& setup_request,
+                                                        unsigned          gnb_du_id,
+                                                        unsigned          nrcell_id,
+                                                        pci_t             pci)
 {
   f1ap_message f1setup_msg = generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
-  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
+  setup_request            = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-void srsran::srs_cu_cp::generate_f1_setup_request_base(f1ap_f1_setup_request& f1_setup_request)
+void srsran::srs_cu_cp::generate_f1_setup_request_base(du_setup_request& setup_request)
 {
   f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, 0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
-  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
+  setup_request = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(f1ap_f1_setup_request& f1_setup_request)
+f1ap_message srsran::srs_cu_cp::create_f1_setup_request_with_too_many_cells(const f1ap_message& base)
+{
+  f1ap_message msg = base;
+
+  msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = true;
+  auto& cells = msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list;
+  cells.resize(MAX_NOF_DU_CELLS + 1);
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    cells[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    cells[i]->gnb_du_served_cells_item() = generate_served_cells_item(i, i);
+  }
+
+  return msg;
+}
+
+void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(du_setup_request& setup_request)
 {
   f1ap_message f1setup_msg  = generate_f1_setup_request(0x11, 6576, 0);
   auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
@@ -52,7 +68,8 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(f1ap_f1_se
     f1_setup_req->gnb_du_served_cells_list.back()->gnb_du_served_cells_item() =
         generate_served_cells_item(du_cell_idx_int, du_cell_idx_int);
   }
-  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
+
+  setup_request = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
 cu_cp_ue_creation_message

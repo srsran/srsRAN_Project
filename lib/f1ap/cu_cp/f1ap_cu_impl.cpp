@@ -11,6 +11,7 @@
 #include "f1ap_cu_impl.h"
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "procedures/f1_setup_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
@@ -41,47 +42,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
-
-void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
-{
-  // Pack message into PDU
-  f1ap_message f1ap_msg;
-  if (msg.success) {
-    f1ap_msg.pdu.set_successful_outcome();
-    f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    fill_asn1_f1_setup_response(f1ap_msg.pdu.successful_outcome().value.f1_setup_resp(), msg);
-
-    // set values handled by F1
-    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id = current_transaction_id;
-
-    // send response
-    logger.debug("Sending F1SetupResponse");
-    if (logger.debug.enabled()) {
-      asn1::json_writer js;
-      f1ap_msg.pdu.to_json(js);
-      logger.debug("Containerized F1SetupResponse: {}", js.to_string());
-    }
-    pdu_notifier.on_new_message(f1ap_msg);
-  } else {
-    logger.debug("Sending F1SetupFailure");
-    f1ap_msg.pdu.set_unsuccessful_outcome();
-    f1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    fill_asn1_f1_setup_failure(f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail(), msg);
-    auto& setup_fail = f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
-
-    // set values handled by F1
-    setup_fail->transaction_id = current_transaction_id;
-    setup_fail->cause.set_radio_network();
-    setup_fail->cause.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
-
-    // send response
-    pdu_notifier.on_new_message(f1ap_msg);
-
-    // send DU remove request
-    du_index_t du_index = du_processor_notifier.get_du_index();
-    du_management_notifier.on_du_remove_request_received(du_index);
-  }
-}
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
@@ -259,10 +219,7 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 {
   current_transaction_id = request->transaction_id;
 
-  f1ap_f1_setup_request req_msg = {};
-  fill_f1_setup_request(req_msg, request);
-
-  du_processor_notifier.on_f1_setup_request_received(req_msg);
+  handle_f1_setup_procedure(request, pdu_notifier, du_processor_notifier, logger);
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)

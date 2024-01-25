@@ -210,11 +210,47 @@ struct cu_cp_served_cell_info {
   std::vector<std::string> served_plmns;
   cu_cp_nr_mode_info       nr_mode_info;
   byte_buffer              meas_timing_cfg;
+
+  cu_cp_served_cell_info() = default;
+  cu_cp_served_cell_info(const cu_cp_served_cell_info& other) :
+    nr_cgi(other.nr_cgi),
+    nr_pci(other.nr_pci),
+    five_gs_tac(other.five_gs_tac),
+    cfg_eps_tac(other.cfg_eps_tac),
+    served_plmns(other.served_plmns),
+    nr_mode_info(other.nr_mode_info),
+    meas_timing_cfg(other.meas_timing_cfg.copy())
+  {
+  }
+  cu_cp_served_cell_info& operator=(const cu_cp_served_cell_info& other)
+  {
+    if (this != &other) {
+      nr_cgi          = other.nr_cgi;
+      nr_pci          = other.nr_pci;
+      five_gs_tac     = other.five_gs_tac;
+      cfg_eps_tac     = other.cfg_eps_tac;
+      served_plmns    = other.served_plmns;
+      nr_mode_info    = other.nr_mode_info;
+      meas_timing_cfg = other.meas_timing_cfg.copy();
+    }
+    return *this;
+  }
 };
 
 struct cu_cp_gnb_du_sys_info {
   byte_buffer mib_msg;
   byte_buffer sib1_msg;
+
+  cu_cp_gnb_du_sys_info() = default;
+  cu_cp_gnb_du_sys_info(const cu_cp_gnb_du_sys_info& other) : mib_msg(other.mib_msg), sib1_msg(other.sib1_msg) {}
+  cu_cp_gnb_du_sys_info& operator=(const cu_cp_gnb_du_sys_info& other)
+  {
+    if (this != &other) {
+      mib_msg  = other.mib_msg.copy();
+      sib1_msg = other.sib1_msg.copy();
+    }
+    return *this;
+  }
 };
 
 struct cu_cp_du_served_cells_item {

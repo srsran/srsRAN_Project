@@ -13,21 +13,23 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
-void generate_valid_f1_setup_request(f1ap_f1_setup_request& f1_setup_request,
-                                     unsigned               gnb_du_id = 0x11,
-                                     unsigned               nrcell_id = 6576,
-                                     pci_t                  pci       = 0);
+void generate_valid_f1_setup_request(du_setup_request& setup_request,
+                                     unsigned          gnb_du_id = 0x11,
+                                     unsigned          nrcell_id = 6576,
+                                     pci_t             pci       = 0);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
-void generate_f1_setup_request_base(f1ap_f1_setup_request& f1_setup_request);
+void generate_f1_setup_request_base(du_setup_request& setup_request);
 
 /// \brief Generate a dummy F1 Setup Request with unsupported number of cells.
-void generate_f1_setup_request_with_too_many_cells(f1ap_f1_setup_request& f1_setup_request);
+f1ap_message create_f1_setup_request_with_too_many_cells(const f1ap_message& base = {});
+void         generate_f1_setup_request_with_too_many_cells(du_setup_request& setup_request);
 
 /// \brief Generate a dummy UE Creation Message.
 /// \param[in] ue_index The UE index to use.

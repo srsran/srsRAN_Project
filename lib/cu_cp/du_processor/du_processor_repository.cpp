@@ -9,9 +9,9 @@
  */
 
 #include "du_processor_repository.h"
+#include "du_processor_config.h"
 #include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
 
@@ -114,6 +114,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.du_index                    = du_index;
   du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
   du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
+  du_cfg.conn_handler                = &cfg.du_conn_notifier;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
                                                                    du_ctxt.du_to_cu_cp_notifier,

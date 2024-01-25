@@ -50,6 +50,7 @@ protected:
   dummy_cell_meas_manager                               cell_meas_mng;
   dummy_ngap_ue_context_removal_handler                 ngap_ue_removal_handler;
   std::unique_ptr<dummy_du_processor_cu_cp_notifier>    cu_cp_notifier;
+  dummy_du_connection_notifier                          du_conn_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
   dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;

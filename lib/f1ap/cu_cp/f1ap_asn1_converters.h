@@ -14,8 +14,8 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
-#include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 #include <vector>
