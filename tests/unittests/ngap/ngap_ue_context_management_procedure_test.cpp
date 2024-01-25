@@ -393,8 +393,9 @@ TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_is_tranfered_a
   ue.rrc_ue_notifier.last_nas_pdu.clear();
 
   // Create new UE object (with own RRC UE notifier).
-  ue_index_t target_ue_index = create_ue(rnti_t::MAX_CRNTI);
+  ue_index_t target_ue_index = create_ue_without_init_ue_message(rnti_t::MAX_CRNTI);
   ASSERT_NE(target_ue_index, ue_index_t::invalid);
+  ASSERT_NE(target_ue_index, ue_index);
   auto& target_ue = test_ues.at(target_ue_index);
   ASSERT_TRUE(target_ue.rrc_ue_notifier.last_nas_pdu.empty());
 

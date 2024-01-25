@@ -83,7 +83,8 @@ cu_cp_test::cu_cp_test()
   cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
   rrc_report_cfg_nr periodic_rep_cfg                                             = {};
   periodic_rep_cfg.periodical.emplace();
-  periodic_rep_cfg.periodical.value().report_interv = 1024;
+  periodic_rep_cfg.periodical.value().report_interv    = 1024;
+  periodic_rep_cfg.periodical.value().max_report_cells = 4;
   cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_rep_cfg);
   rrc_report_cfg_nr ev_triggered_rep_cfg = {};
   ev_triggered_rep_cfg.event_triggered.emplace();
@@ -92,6 +93,7 @@ cu_cp_test::cu_cp_test()
   ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().hysteresis      = 0;
   ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().time_to_trigger = 100;
   ev_triggered_rep_cfg.event_triggered.value().report_interv                             = 1024;
+  ev_triggered_rep_cfg.event_triggered.value().max_report_cells                          = 4;
   cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(2), ev_triggered_rep_cfg);
 
   cell_meas_config cell_cfg_1;

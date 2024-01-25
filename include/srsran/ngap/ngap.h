@@ -87,6 +87,18 @@ public:
   virtual void on_amf_connection_drop() = 0;
 };
 
+/// Interface to notify the CU-CP about an NGAP UE creation.
+class ngap_cu_cp_ue_creation_notifier
+{
+public:
+  virtual ~ngap_cu_cp_ue_creation_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a new NGAP UE.
+  /// \param[in] ue_index The index of the new NGAP UE.
+  /// \returns True if the UE was successfully created, false otherwise.
+  virtual bool on_new_ngap_ue(ue_index_t ue_index) = 0;
+};
+
 /// Interface to communication with the DU repository
 /// Useful when the NGAP does not know the DU for an UE, e.g. paging and handover.
 class ngap_cu_cp_du_repository_notifier
@@ -206,16 +218,6 @@ class ngap_ue_control_manager
 {
 public:
   virtual ~ngap_ue_control_manager() = default;
-
-  /// \brief Creates a NGAP UE.
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] rrc_ue_pdu_notifier The pdu notifier to the RRC UE.
-  /// \param[in] rrc_ue_ctrl_notifier The control notifier to the RRC UE.
-  /// \param[in] du_processor_ctrl_notifier The pdu notifier to the DU processor.
-  virtual void create_ngap_ue(ue_index_t                          ue_index,
-                              ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                              ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                              ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 
   /// \brief Updates the NGAP UE context with a new UE index.
   /// \param[in] new_ue_index The new index of the UE.

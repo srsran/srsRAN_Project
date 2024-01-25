@@ -9,6 +9,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -35,7 +36,8 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   cfg.slice_configurations.push_back(slice_cfg);
   cfg.ue_context_setup_timeout_s = std::chrono::seconds(2);
 
-  ngap = create_ngap(cfg, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
+  ngap = create_ngap(
+      cfg, ngap_ue_creation_notifier, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 
   du_processor_notifier =
       std::make_unique<dummy_ngap_du_processor_notifier>(ngap->get_ngap_ue_context_removal_handler());
@@ -60,7 +62,10 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   // Inject UE creation at NGAP
   test_ues.emplace(ue_index, test_ue(ue_index));
   test_ue& new_test_ue = test_ues.at(ue_index);
-  ngap->create_ngap_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
+
+  // Add UE to NGAP notifier
+  ngap_ue_creation_notifier.add_ue(
+      ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
 
   // generate and inject valid initial ue message
   cu_cp_initial_ue_message msg = generate_initial_ue_message(ue_index);
@@ -68,6 +73,27 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
 
   new_test_ue.ran_ue_id =
       uint_to_ran_ue_id(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
+
+  return ue_index;
+}
+
+ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
+{
+  // Create UE in UE manager
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(uint_to_du_index(0));
+  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
+  if (ue == nullptr) {
+    test_logger.error("Failed to create UE with pci={} and rnti={}", MIN_PCI, rnti_t::MIN_CRNTI);
+    return ue_index_t::invalid;
+  }
+
+  // Inject UE creation at NGAP
+  test_ues.emplace(ue_index, test_ue(ue_index));
+  test_ue& new_test_ue = test_ues.at(ue_index);
+
+  // Add UE to NGAP notifier
+  ngap_ue_creation_notifier.add_ue(
+      ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
 
   return ue_index;
 }

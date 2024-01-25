@@ -55,7 +55,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, du_db);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, du_db, *this);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
@@ -66,8 +66,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
 
   // Create NGAP.
-  ngap_entity = create_ngap(
-      cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
+  ngap_entity = create_ngap(cfg.ngap_config,
+                            ngap_cu_cp_ev_notifier,
+                            ngap_cu_cp_ev_notifier,
+                            ngap_task_sched,
+                            ue_mng,
+                            *cfg.ngap_notifier,
+                            *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
                             ngap_entity->get_ngap_ue_context_removal_handler(),
                             ngap_entity->get_ngap_statistics_handler());
@@ -287,17 +292,39 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
                                         rrc_ue_interface&                   rrc_ue,
                                         ngap_du_processor_control_notifier& ngap_du_notifier)
 {
-  ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
+  // Store NGAP to DU processor notifier
+  ngap_du_processor_ctrl_notifiers.emplace(get_du_index_from_ue_index(ue_index), ngap_du_notifier);
 
-  ngap_rrc_ue_adapter& rrc_ue_adapter = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
-  ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, ngap_du_notifier);
+  ngap_rrc_ue_ev_notifiers.emplace(ue_index, ngap_rrc_ue_adapter{});
+
+  ngap_rrc_ue_adapter& rrc_ue_adapter = ngap_rrc_ue_ev_notifiers[ue_index];
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
                                 &rrc_ue.get_rrc_ue_init_security_context_handler(),
                                 &rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Create and connect cu-cp to rrc ue adapter
-  cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
+  cu_cp_rrc_ue_ev_notifiers.emplace(ue_index, cu_cp_rrc_ue_adapter{});
   cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
+}
+
+bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
+{
+  // Check if the UE was created in the DU processor
+  if (ngap_rrc_ue_ev_notifiers.find(ue_index) == ngap_rrc_ue_ev_notifiers.end()) {
+    logger.warning("ue={}: ngap_rrc_ue_notifier was not found", ue_index);
+    return false;
+  }
+  if (ngap_du_processor_ctrl_notifiers.find(get_du_index_from_ue_index(ue_index)) ==
+      ngap_du_processor_ctrl_notifiers.end()) {
+    logger.warning(
+        "ue={}, du={}: ngap_du_processor_ctrl_notifier was not found", ue_index, get_du_index_from_ue_index(ue_index));
+    return false;
+  }
+
+  return ue_mng.add_ue(ue_index,
+                       ngap_rrc_ue_ev_notifiers.at(ue_index),
+                       ngap_rrc_ue_ev_notifiers.at(ue_index),
+                       ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()
@@ -332,7 +359,6 @@ void cu_cp_impl::on_statistics_report_timer_expired()
   logger.debug("num_f1ap_ues={} num_rrc_ues={} num_ngap_ues={} num_e1ap_ues={} num_cu_cp_ues={}",
                nof_f1ap_ues,
                nof_rrc_ues,
-               nof_e1ap_ues,
                nof_ngap_ues,
                nof_e1ap_ues,
                nof_cu_cp_ues);

@@ -65,6 +65,18 @@ public:
   handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
+/// Interface for the NGAP notifier to communicate with the CU-CP.
+class cu_cp_ngap_ue_creation_handler
+{
+public:
+  virtual ~cu_cp_ngap_ue_creation_handler() = default;
+
+  /// \brief Handle the creation of a new NGAP UE. This will add the NGAP adapters to the UE manager.
+  /// \param[in] ue_index The index of the new NGAP UE.
+  /// \returns True if the UE was successfully created, false otherwise.
+  virtual bool handle_new_ngap_ue(ue_index_t ue_index) = 0;
+};
+
 /// Interface for an E1AP notifier to communicate with the CU-CP.
 class cu_cp_e1ap_handler
 {
@@ -245,6 +257,7 @@ public:
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
+                             public cu_cp_ngap_ue_creation_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_ue_removal_handler
 {

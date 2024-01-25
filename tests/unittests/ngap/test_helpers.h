@@ -13,9 +13,8 @@
 #include "ngap_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap_message.h"
-#include "srsran/pcap/dlt_pcap.h"
-#include "srsran/rrc/rrc_ue.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
@@ -302,6 +301,63 @@ public:
 
 private:
   srslog::basic_logger& logger;
+};
+
+class dummy_ngap_cu_cp_ue_creation_notifier : public ngap_cu_cp_ue_creation_notifier
+{
+public:
+  dummy_ngap_cu_cp_ue_creation_notifier(ngap_ue_manager& ue_manager_) :
+    ue_manager(ue_manager_), logger(srslog::fetch_basic_logger("TEST")){};
+
+  void add_ue(ue_index_t                          ue_index,
+              ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+              ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+              ngap_du_processor_control_notifier& du_processor_ctrl_notifier)
+  {
+    ue_notifiers_map.emplace(
+        ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier, &du_processor_ctrl_notifier});
+  }
+
+  bool on_new_ngap_ue(ue_index_t ue_index) override
+  {
+    srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
+    auto& ue_notifier = ue_notifiers_map.at(ue_index);
+
+    srsran_assert(ue_notifier.rrc_ue_pdu_notifier != nullptr, "rrc_ue_pdu_notifier must not be nullptr");
+    srsran_assert(ue_notifier.rrc_ue_ctrl_notifier != nullptr, "rrc_ue_ctrl_notifier must not be nullptr");
+    srsran_assert(ue_notifier.du_processor_ctrl_notifier != nullptr, "du_processor_ctrl_notifier must not be nullptr");
+
+    last_ue = ue_index;
+
+    // Add NGAP UE to UE manager
+    ngap_ue* ue = ue_manager.add_ue(ue_index,
+                                    *ue_notifier.rrc_ue_pdu_notifier,
+                                    *ue_notifier.rrc_ue_ctrl_notifier,
+                                    *ue_notifier.du_processor_ctrl_notifier);
+
+    if (ue == nullptr) {
+      logger.error("ue={}: Failed to create UE", ue_index);
+      return false;
+    }
+
+    logger.info("ue={}: NGAP UE was created", ue_index);
+    return true;
+  }
+
+  ue_index_t last_ue = ue_index_t::invalid;
+
+private:
+  ngap_ue_manager& ue_manager;
+
+  srslog::basic_logger& logger;
+
+  struct ngap_ue_notifiers {
+    ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
+    ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
+    ngap_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+  };
+
+  std::map<ue_index_t, ngap_ue_notifiers> ue_notifiers_map;
 };
 
 } // namespace srs_cu_cp

@@ -28,18 +28,13 @@ class ngap_impl final : public ngap_interface
 {
 public:
   ngap_impl(ngap_configuration&                ngap_cfg_,
+            ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
             ngap_ue_task_scheduler&            task_sched_,
             ngap_ue_manager&                   ue_manager_,
             ngap_message_notifier&             ngap_notifier_,
             task_executor&                     ctrl_exec_);
   ~ngap_impl();
-
-  // ngap ue control manager functions
-  void create_ngap_ue(ue_index_t                          ue_index,
-                      ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                      ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                      ngap_du_processor_control_notifier& du_processor_ctrl_notifier) override;
 
   bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
 
@@ -149,6 +144,7 @@ private:
   /// Repository of UE Contexts.
   ngap_ue_context_list ue_ctxt_list;
 
+  ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;

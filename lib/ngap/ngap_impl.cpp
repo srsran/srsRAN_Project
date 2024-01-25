@@ -30,6 +30,7 @@ using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
 ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
+                     ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier_,
                      ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
                      ngap_ue_task_scheduler&            task_sched_,
                      ngap_ue_manager&                   ue_manager_,
@@ -37,6 +38,7 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
                      task_executor&                     ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
+  cu_cp_ue_creation_notifier(cu_cp_ue_creation_notifier_),
   cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
@@ -54,31 +56,6 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngap_impl::~ngap_impl() {}
 
-void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
-                               ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                               ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                               ngap_du_processor_control_notifier& du_processor_ctrl_notifier)
-{
-  ran_ue_id_t ran_ue_id = ue_ctxt_list.get_next_ran_ue_id();
-  if (ran_ue_id == ran_ue_id_t::invalid) {
-    logger.error("ue={}: No RAN-UE-ID available", ue_index);
-    return;
-  }
-
-  // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_index, ran_ue_id, task_sched.get_timer_manager(), ctrl_exec);
-
-  // Add NGAP UE to UE manager
-  ngap_ue* ue = ue_manager.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
-
-  if (ue == nullptr) {
-    logger.error("ue={}: Failed to create UE", ue_index);
-    return;
-  }
-
-  ue_ctxt_list[ue_index].logger.log_debug("Created UE");
-}
-
 bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {
@@ -89,6 +66,12 @@ bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index
   }
 
   ue_ctxt_list[old_ue_index].logger.log_debug("Transferring NGAP UE context to ue={}", new_ue_index);
+
+  // Notify CU-CP about creation of NGAP UE
+  if (!cu_cp_ue_creation_notifier.on_new_ngap_ue(new_ue_index)) {
+    logger.error("ue={}: Failed to transfer UE context", new_ue_index);
+    return false;
+  }
 
   ue_ctxt_list.update_ue_index(new_ue_index, old_ue_index);
 
@@ -117,10 +100,31 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_n
 
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 {
-  if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping InitialUeMessage. UE context does not exist", msg.ue_index);
+  if (ue_ctxt_list.contains(msg.ue_index)) {
+    logger.warning("ue={}: Dropping InitialUeMessage. UE context already exist", msg.ue_index);
     return;
   }
+
+  // Create NGAP UE
+  // Allocate RAN-UE-ID
+  ran_ue_id_t ran_ue_id = ue_ctxt_list.get_next_ran_ue_id();
+  if (ran_ue_id == ran_ue_id_t::invalid) {
+    logger.error("ue={}: No RAN-UE-ID available", msg.ue_index);
+    return;
+  }
+
+  // Create UE context and store it
+  ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, task_sched.get_timer_manager(), ctrl_exec);
+
+  // Notify CU-CP about creation of NGAP UE
+  if (!cu_cp_ue_creation_notifier.on_new_ngap_ue(msg.ue_index)) {
+    logger.error("ue={}: Failed to create UE", msg.ue_index);
+    // Remove created UE context
+    ue_ctxt_list.remove_ue_context(msg.ue_index);
+    return;
+  }
+
+  ue_ctxt_list[msg.ue_index].logger.log_debug("Created UE");
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
@@ -631,8 +635,11 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
       launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
                                                                 uint_to_amf_ue_id(msg->amf_ue_ngap_id),
                                                                 ue_ctxt_list,
+                                                                cu_cp_ue_creation_notifier,
                                                                 cu_cp_du_repository_notifier,
                                                                 ngap_notifier,
+                                                                task_sched.get_timer_manager(),
+                                                                ctrl_exec,
                                                                 logger));
 }
 

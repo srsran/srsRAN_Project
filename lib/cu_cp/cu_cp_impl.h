@@ -92,6 +92,9 @@ private:
                               rrc_ue_interface&                   rrc_ue,
                               ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
 
+  // NGAP UE creation handler
+  bool handle_new_ngap_ue(ue_index_t ue_index) override;
+
   void on_statistics_report_timer_expired();
 
   cu_cp_configuration cfg;
@@ -149,7 +152,10 @@ private:
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
 
   // NGAP to RRC UE adapter array
-  slotted_array<ngap_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
+  std::map<ue_index_t, ngap_rrc_ue_adapter> ngap_rrc_ue_ev_notifiers; // indexed by UE index
+
+  // NGAP to DU processor adapter array
+  std::map<du_index_t, ngap_du_processor_control_notifier&> ngap_du_processor_ctrl_notifiers; // indexed by DU index
 
   // CU-CP to RRC UE adapter array
   std::map<ue_index_t, cu_cp_rrc_ue_adapter> cu_cp_rrc_ue_ev_notifiers; // indexed by UE index
