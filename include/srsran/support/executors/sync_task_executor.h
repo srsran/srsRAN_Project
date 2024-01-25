@@ -86,4 +86,23 @@ std::unique_ptr<task_executor> make_sync_executor(Executor&& executor)
   return std::make_unique<sync_task_executor<Executor>>(std::forward<Executor>(executor));
 }
 
+/// \brief Forces the dispatch of a task and its execution to completion.
+///
+/// The user should be only use this call in exceptional situations where a blocking call is required.
+template <typename Exec, typename Task, typename OnTaskDispatchFailure>
+void force_blocking_execute(Exec&&                  exec,
+                            Task&&                  task,
+                            OnTaskDispatchFailure&& fail_func,
+                            unsigned                max_attempts = std::numeric_limits<unsigned>::max())
+{
+  static_assert(std::is_copy_constructible<Task>::value, "Task must be copy assignable");
+
+  // Create a sync executor that will block the thread until the task is executed.
+  sync_task_executor<Exec> sync_task_exec(std::forward<Exec>(exec));
+
+  for (unsigned count = 0; count < max_attempts and not sync_task_exec.execute(task); ++count) {
+    fail_func();
+  }
+}
+
 } // namespace srsran
