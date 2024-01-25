@@ -319,7 +319,7 @@ def _ping(
     warning_as_errors: bool = True,
     always_download_artifacts: bool = False,
     ping_count: int = 10,
-    reattach_count: int = 2,
+    reattach_count: int = 0,
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,

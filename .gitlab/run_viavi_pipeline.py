@@ -25,13 +25,13 @@ def main():
     timeout = args.timeout
     loglevel = args.loglevel
 
-    INFRASTRUCTURE_TAG = "amd64-avx2-avx512"
+    INFRASTRUCTURE_TAG = "on-prem-amd64-avx2-avx512"
     OS_NAME = "ubuntu-22.04"
     COMPILER = "gcc"
     TESTMODE = "none"
 
     MAKE_ARGS = "-j7"
-    BUILD_ARGS = "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DENABLE_AVX512=True"
+    BUILD_ARGS = "-DCMAKE_BUILD_TYPE=Release -DAUTO_DETECT_ISA=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DENABLE_AVX512=True"
     DPDK_VERSION = "23.11"
 
     TESTBED = "viavi"
