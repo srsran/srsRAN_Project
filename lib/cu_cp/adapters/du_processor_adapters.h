@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../node_connection_manager/node_connection_manager.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
@@ -357,19 +357,25 @@ private:
   ngap_control_message_handler* ngap_handler = nullptr;
 };
 
-class du_processor_cu_cp_connection_adapter : public du_connection_notifier
+class du_processor_cu_cp_connection_adapter final : public du_connection_notifier, public ue_setup_notifier
 {
 public:
-  void connect_node_connection_handler(node_connection_manager& mng_) { mng = &mng_; }
+  void connect_node_connection_handler(cu_cp_controller& cu_ctrl_) { cu_ctrl = &cu_ctrl_; }
 
   bool on_du_setup_request(const du_setup_request& req) override
   {
-    srsran_assert(mng != nullptr, "Node connection handler must not be nullptr");
-    return mng->handle_du_setup_request(req);
+    srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
+    return cu_ctrl->handle_du_setup_request(req);
+  }
+
+  bool on_ue_setup_request() override
+  {
+    srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
+    return cu_ctrl->request_ue_setup();
   }
 
 private:
-  node_connection_manager* mng = nullptr;
+  cu_cp_controller* cu_ctrl = nullptr;
 };
 
 } // namespace srs_cu_cp

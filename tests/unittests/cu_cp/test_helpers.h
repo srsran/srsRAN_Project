@@ -11,8 +11,8 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
+#include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
-#include "lib/cu_cp/node_connection_manager/node_connection_notifier.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
@@ -138,10 +138,12 @@ private:
   bool                                              ue_transfer_outcome = true;
 };
 
-class dummy_du_connection_notifier : public du_connection_notifier
+class dummy_du_connection_notifier : public du_connection_notifier, public ue_setup_notifier
 {
 public:
   bool on_du_setup_request(const du_setup_request& req) override { return true; }
+
+  bool on_ue_setup_request() override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {

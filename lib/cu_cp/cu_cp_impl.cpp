@@ -49,12 +49,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              du_processor_task_sched,
                              ue_mng,
                              *cell_meas_mng,
-                             du_conn_notifier,
+                             conn_notifier,
+                             conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
   routine_mng(ue_task_sched),
-  node_conn_mng(routine_mng, cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_adapter)
+  controller(routine_mng, cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_adapter)
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -64,7 +65,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
   rrc_ue_cu_cp_notifier.connect_cu_cp(get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler());
-  du_conn_notifier.connect_node_connection_handler(node_conn_mng);
+  conn_notifier.connect_node_connection_handler(controller);
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
@@ -104,7 +105,7 @@ bool cu_cp_impl::start()
 
   if (not cfg.cu_cp_executor->execute([this, &p]() {
         // start AMF connection procedure.
-        node_conn_mng.amf_connection_handler().connect_to_amf(&p);
+        controller.amf_connection_handler().connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup.");
   }

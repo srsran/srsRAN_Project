@@ -17,10 +17,10 @@
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "cu_cp_controller/cu_cp_controller.h"
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
-#include "node_connection_manager/node_connection_manager.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager_impl.h"
@@ -54,7 +54,7 @@ public:
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
-  bool amf_is_connected() override { return node_conn_mng.amf_connection_handler().is_amf_connected(); };
+  bool amf_is_connected() override { return controller.amf_connection_handler().is_amf_connected(); };
 
   // CU-UP handler
   void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
@@ -127,7 +127,7 @@ private:
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
 
   // DU repository to Node Manager adapter.
-  du_processor_cu_cp_connection_adapter du_conn_notifier;
+  du_processor_cu_cp_connection_adapter conn_notifier;
 
   // DU Processor to E1AP adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
@@ -175,7 +175,7 @@ private:
   cu_cp_routine_manager routine_mng;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
-  node_connection_manager node_conn_mng;
+  cu_cp_controller controller;
 
   unique_timer statistics_report_timer;
 

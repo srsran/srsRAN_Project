@@ -11,15 +11,13 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
-#include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
+#include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
+#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
-#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
-#include "srsran/support/test_utils.h"
 #include <chrono>
 #include <gtest/gtest.h>
 
@@ -48,17 +46,22 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    // create message handler for CU and DU to relay messages back and forth
-    srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_cp_executor           = &workers.ctrl_exec;
-    cu_cfg.ngap_notifier            = &ngap_amf_notifier;
+    cu_cfg.ngap_notifier            = &*amf;
     cu_cfg.timers                   = &timers;
     cu_cfg.statistics_report_period = std::chrono::seconds(1);
 
-    // create and start CU
+    // create CU-CP.
     cu_cp_obj = create_cu_cp(cu_cfg);
+
+    // Create AMF response to NG Setup.
+    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
+    amf->enqueue_next_tx_pdu(srs_cu_cp::generate_ng_setup_response());
+
+    // Start CU-CP.
+    cu_cp_obj->start();
 
     // Attach F1-C gateway to CU-CP.
     f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
@@ -73,6 +76,7 @@ protected:
     du_cfg.timers      = &timers;
     du_cfg.cells       = {config_helpers::make_default_du_cell_config()};
     du_cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+    du_cfg.gnb_du_name = "test_du";
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg));
@@ -82,10 +86,12 @@ protected:
   }
 
 public:
-  du_high_worker_manager                      workers;
-  timer_manager                               timers;
-  srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
-  f1c_test_local_gateway                      f1c_gw{};
+  du_high_worker_manager workers;
+  timer_manager          timers;
+  srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
+  f1c_test_local_gateway f1c_gw{};
+
+  std::unique_ptr<srs_cu_cp::mock_amf>        amf{srs_cu_cp::create_mock_amf()};
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
   std::unique_ptr<du_high>                    du_obj;
 };

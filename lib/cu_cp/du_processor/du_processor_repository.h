@@ -13,8 +13,8 @@
 #include "../adapters/du_processor_adapters.h"
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../node_connection_manager/node_connection_notifier.h"
 #include "../task_schedulers/du_task_scheduler.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -27,7 +27,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_cp_configuration;
-class node_connection_manager;
+class cu_cp_controller;
 
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
@@ -43,7 +43,8 @@ struct du_repository_config {
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   cell_meas_manager&                     cell_meas_mng;
-  du_connection_notifier&                du_conn_notifier;
+  du_connection_notifier&                du_conn_notif;
+  ue_setup_notifier&                     ue_setup_notif;
   srslog::basic_logger&                  logger;
 };
 

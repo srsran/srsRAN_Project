@@ -184,10 +184,9 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   f1ap_message f1ap_msg;
   if (not request_outcome.is_accepted()) {
     // Failed to setup DU case.
-    auto&                     fail_resp = variant_get<du_setup_result::rejected>(request_outcome.result);
-    const asn1::f1ap::cause_c cause     = cause_to_f1ap_asn1(fail_resp.cause);
-    logger.warning("Rejecting F1 Setup Request. Cause: {}", cause.type().to_string());
-    f1ap_msg = create_f1_setup_reject(request, cause);
+    auto& fail_resp = variant_get<du_setup_result::rejected>(request_outcome.result);
+    logger.warning("Rejecting F1 Setup Request. Cause: {}", fail_resp.cause_str);
+    f1ap_msg = create_f1_setup_reject(request, cause_to_f1ap_asn1(fail_resp.cause));
   } else {
     // DU has been accepted.
     f1ap_msg = create_f1_setup_response(request, variant_get<du_setup_result::accepted>(request_outcome.result));

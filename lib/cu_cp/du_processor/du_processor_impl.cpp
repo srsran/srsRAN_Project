@@ -93,7 +93,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   }
 
   // Check if CU-CP is in a state to accept a new DU connection.
-  if (not cfg.conn_handler->on_du_setup_request(request)) {
+  if (not cfg.du_setup_notif->on_du_setup_request(request)) {
     res.result =
         du_setup_result::rejected{cause_misc_t::unspecified, "CU-CP is not in a state to accept a new DU connection"};
     return res;

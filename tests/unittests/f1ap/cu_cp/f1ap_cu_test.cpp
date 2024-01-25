@@ -150,9 +150,6 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 
   f1ap->handle_message(f1setup_msg);
 
-  // Check if F1SetupRequest was forwarded to DU processor
-  ASSERT_EQ(du_processor_notifier.last_f1_setup_request_msg.gnb_du_id, 0x11U);
-
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types_opts::options::unsuccessful_outcome,
             f1ap_pdu_notifier.last_f1ap_msg.pdu.type());

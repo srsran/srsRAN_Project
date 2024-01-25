@@ -42,6 +42,7 @@ f1ap_message srsran::srs_cu_cp::create_f1_setup_request_with_too_many_cells(cons
 {
   f1ap_message msg = base;
 
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = true;
   auto& cells = msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list;
   cells.resize(MAX_NOF_DU_CELLS + 1);
