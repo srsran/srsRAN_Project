@@ -15,10 +15,10 @@ using namespace srsran;
 
 namespace {
 
-// Size of an NEON register in complex numbers with 32-bit floating point precision.
+// Size of a NEON register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned NEON_CF_SIZE = 4;
 
-// Size of an NEON register in complex numbers with 8-bit fixed point precision.
+// Size of a NEON register in complex numbers with 8-bit fixed point precision.
 static constexpr unsigned NEON_CI8_SIZE = 16;
 
 // Representation of a set of complex numbers using a pair of NEON registers, for the real and imaginary parts.
@@ -34,7 +34,7 @@ struct simd_cf_t {
   }
 };
 
-// Type to hold a set of complex numbers using an NEON register, with interleaved real and imaginary parts.
+// Type to hold a set of complex numbers using a NEON register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = float32x4x2_t;
 
 simd_cf_interleaved operator+(simd_cf_interleaved a, simd_cf_interleaved b)
@@ -281,7 +281,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer&              outpu
       simd_cf_interleaved infp_0, infp_1, infp_2, infp_3;
       from_ci8_to_cf(infp_0, infp_1, infp_2, infp_3, in8);
 
-      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
         // Apply precoding.
         simd_cf_interleaved result0 = infp_0 * weights[i_port][0];
         simd_cf_interleaved result1 = infp_1 * weights[i_port][0];
@@ -438,5 +438,5 @@ void channel_precoder_neon::apply_layer_map_and_precoding(re_buffer_writer&     
                                                           span<const ci8_t>              input,
                                                           const precoding_weight_matrix& precoding) const
 {
-  template_apply_layer_map_and_precoding<4>(output, input, precoding);
+  template_apply_layer_map_and_precoding<precoding_constants::MAX_NOF_PORTS>(output, input, precoding);
 }
