@@ -21,7 +21,6 @@
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/rlc/rlc_config.h"
-#include "srsran/srslog/logger.h"
 
 using namespace srsran;
 
@@ -63,7 +62,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
           : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
   if (!preamble_info.cp_length.is_sample_accurate(config.srate_MHz * 1e6)) {
     // List of common sampling rates for offering an alternative.
-    static const std::array<double, 10> sampling_rates = {
+    static constexpr std::array<double, 10> sampling_rates = {
         7.68, 11.52, 15.36, 23.04, 30.76, 46.08, 61.44, 92.16, 122.88, 184.32};
     std::vector<double> valid_sampling_rates;
     for (double sampling_rate : sampling_rates) {
@@ -122,7 +121,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
 
 /// Validates that the given ports are not duplicated. Returns true on success, otherwise false.
 template <typename T>
-__attribute_noinline__ static bool validate_duplicated_ports(span<const T> ports)
+[[gnu::noinline]] static bool validate_duplicated_ports(span<const T> ports)
 {
   std::vector<T> temp_ports(ports.begin(), ports.end());
   std::sort(temp_ports.begin(), temp_ports.end());
@@ -256,8 +255,8 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, su
     return false;
   }
 
-  const std::array<unsigned, 11> valid_sr_period_slots{1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320};
-  const unsigned                 sr_period_slots = get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec;
+  static constexpr std::array<unsigned, 11> valid_sr_period_slots{1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320};
+  const unsigned sr_period_slots = get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec;
   if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
       valid_sr_period_slots.end()) {
     fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
@@ -629,7 +628,7 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
     return false;
   }
 
-  // Check TX
+  // Check TX.
   if (config.tx.sn_field_length != 12 && config.tx.sn_field_length != 18) {
     fmt::print("PDCP TX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.tx.sn_field_length);
     return false;
@@ -639,7 +638,7 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
     return false;
   }
 
-  // Check RX
+  // Check RX.
   if (config.rx.sn_field_length != 12 && config.rx.sn_field_length != 18) {
     fmt::print("PDCP RX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.rx.sn_field_length);
     return false;
@@ -655,9 +654,7 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
     return false;
   }
   if (t_reordering == pdcp_t_reordering::infinity) {
-    srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
     fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}\n", five_qi);
-    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}", five_qi);
   }
 
   if (config.rx.out_of_order_delivery) {
@@ -669,22 +666,27 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
 
 static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig& config)
 {
-  // Validate TX
-  rlc_um_sn_size   tmp_sn_size;
-  rlc_t_reassembly tmp_t_reassembly;
+  // Validate TX.
+
+  rlc_um_sn_size tmp_sn_size;
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
     fmt::print("RLC UM TX SN length is neither 6 or 12 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
+
   if (config.tx.queue_size == 0) {
     fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
     return false;
   }
-  // Validate RX
+
+  // Validate RX.
+
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
     fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
     return false;
   }
+
+  rlc_t_reassembly tmp_t_reassembly;
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
     fmt::print("RLC UM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
     fmt::print("Valid values are:"
@@ -700,20 +702,15 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig&
 template <typename id_type>
 static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config)
 {
-  // Validate TX
-  rlc_am_sn_size         tmp_sn_size;
-  rlc_max_retx_threshold tmp_max_retx_threshold;
-  rlc_t_poll_retransmit  tmp_t_poll_retransmit;
-  rlc_t_reassembly       tmp_t_reassembly;
-  rlc_poll_pdu           tmp_poll_pdu;
-  rlc_poll_kilo_bytes    tmp_poll_bytes;
-  rlc_t_status_prohibit  tmp_t_status_prohibit;
+  // Validate TX.
 
+  rlc_am_sn_size tmp_sn_size;
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
     fmt::print("RLC AM TX SN length is neither 12 or 18 bits. {} sn_size={}\n", id, config.tx.sn_field_length);
     return false;
   }
 
+  rlc_t_poll_retransmit tmp_t_poll_retransmit;
   if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
     fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_retx={}\n", id, config.tx.t_poll_retx);
     fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
@@ -726,12 +723,14 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
     return false;
   }
 
+  rlc_max_retx_threshold tmp_max_retx_threshold;
   if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
     fmt::print("Invalid RLC AM TX max retx threshold. {} max_retx_threshold={}\n", id, config.tx.max_retx_thresh);
     fmt::print(" Valid values are: t1, t2, t3, t4, t6, t8, t16, t32\n");
     return false;
   }
 
+  rlc_poll_pdu tmp_poll_pdu;
   if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
     fmt::print("Invalid RLC AM TX PollPDU. {} poll_pdu={}\n", id, config.tx.poll_pdu);
     fmt::print(" Valid values are:"
@@ -741,6 +740,7 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
     return false;
   }
 
+  rlc_poll_kilo_bytes tmp_poll_bytes;
   if (!rlc_poll_kilo_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
     fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", id, config.tx.poll_byte);
     fmt::print(" Valid values are (in KBytes):"
@@ -758,11 +758,14 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
     return false;
   }
 
-  // Validate RX
+  // Validate RX.
+
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
     fmt::print("RLC AM RX SN length is neither 12 or 18 bits. {} sn_size={}\n", id, config.rx.sn_field_length);
     return false;
   }
+
+  rlc_t_reassembly tmp_t_reassembly;
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
     fmt::print("RLC AM RX t-Reassembly is invalid. {} t_reassembly={}\n", id, config.rx.t_reassembly);
     fmt::print("Valid values are:"
@@ -772,6 +775,8 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
                " ms180, ms190, ms200\n");
     return false;
   }
+
+  rlc_t_status_prohibit tmp_t_status_prohibit;
   if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
     fmt::print("RLC AM RX t-statusProhibit is invalid. {} t_status_prohibit={}\n", id, config.rx.t_status_prohibit);
     fmt::print("Valid values are:"
@@ -787,6 +792,7 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
                "ms1200, ms1600, ms2000, ms2400\n");
     return false;
   }
+
   if (config.rx.max_sn_per_status >= window_size(config.rx.sn_field_length)) {
     fmt::print("RLC AM RX max_sn_per_status={} exceeds window_size={}. sn_size={}\n",
                config.rx.max_sn_per_status,
@@ -800,25 +806,21 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_appconfig& config
 
 static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_appconfig& config)
 {
-  // Check mode
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+  // Check mode.
   if (config.mode != "am" && config.mode != "um-bidir") {
     fmt::print("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}\n", five_qi, config.mode);
-    logger.warning("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}", five_qi, config.mode);
     return false;
   }
 
-  // Check AM
+  // Check AM.
   if (config.mode == "am" && !validate_rlc_am_appconfig(five_qi, config.am)) {
     fmt::print("RLC AM config is invalid. {}\n", five_qi);
-    logger.warning("RLC AM config is invalid. {}\n", five_qi);
     return false;
   }
 
-  // Check UM
+  // Check UM.
   if (config.mode == "um-bidir" && !validate_rlc_um_appconfig(five_qi, config.um)) {
     fmt::print("RLC UM config is invalid. {}\n", five_qi);
-    logger.warning("RLC UM config is invalid. {}\n", five_qi);
     return false;
   }
   return true;

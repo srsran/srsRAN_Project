@@ -199,24 +199,6 @@ int main(int argc, char** argv)
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
   }
-  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
-    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
-    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
-  }
-
-#ifdef DPDK_FOUND
-  std::unique_ptr<dpdk::dpdk_eal> eal;
-  if (gnb_cfg.hal_config) {
-    // Prepend the application name in argv[0] as it is expected by EAL.
-    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + gnb_cfg.hal_config->eal_args,
-                                srslog::fetch_basic_logger("EAL", false));
-  }
-#endif
-
-  // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
 
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
@@ -319,6 +301,25 @@ int main(int argc, char** argv)
     gnb_logger.info("Event tracer opened successfully");
   }
 
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
+    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
+      report_error("Failed to isolate specified CPUs");
+    }
+  }
+
+#ifdef DPDK_FOUND
+  std::unique_ptr<dpdk::dpdk_eal> eal;
+  if (gnb_cfg.hal_config) {
+    // Prepend the application name in argv[0] as it is expected by EAL.
+    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + gnb_cfg.hal_config->eal_args,
+                                srslog::fetch_basic_logger("EAL", false));
+  }
+#endif
+
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
@@ -333,8 +334,7 @@ int main(int argc, char** argv)
                  get_cpu_feature_info());
   }
 
-  // Check some common causes of performance issues and
-  // print a warning if required.
+  // Check some common causes of performance issues and print a warning if required.
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
       std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
-  std::unique_ptr<sctp_network_gateway> sctp_gateway = {};
+  std::unique_ptr<sctp_network_gateway> sctp_gateway;
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
     sctp_gateway = create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
