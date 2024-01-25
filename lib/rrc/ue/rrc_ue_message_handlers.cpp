@@ -317,7 +317,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
     reject.wait_time         = rrc_reject_max_wait_time_s;
 
     // pack DL CCCH msg
-    release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg);
+    release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg, "RRCReject");
     release_context.srb_id          = srb_id_t::srb0;
 
     // Log Tx message
@@ -332,8 +332,9 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
       dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
       // pack DL CCCH msg
-      release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
-      release_context.srb_id          = srb_id_t::srb1;
+      release_context.rrc_release_pdu =
+          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+      release_context.srb_id = srb_id_t::srb1;
 
       // Log Tx message
       log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
@@ -411,16 +412,16 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   // pack RRC Reconfig
   rrc_recfg_s rrc_reconfig;
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);
-  byte_buffer reconfig_pdu = pack_into_pdu(rrc_reconfig);
+  byte_buffer reconfig_pdu = pack_into_pdu(rrc_reconfig, "RRCReconfiguration");
 
   ho_cmd_s ho_cmd;
   ho_cmd.crit_exts.set_c1().set_ho_cmd().ho_cmd_msg = reconfig_pdu.copy();
 
   // pack Handover Command
-  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd);
+  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd, "HandoverCommand");
 
   // Log message
-  logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RrcHandoverCommand ({} B)", ho_cmd_pdu.length());
+  logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RRCHandoverCommand ({} B)", ho_cmd_pdu.length());
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     ho_cmd.to_json(js);

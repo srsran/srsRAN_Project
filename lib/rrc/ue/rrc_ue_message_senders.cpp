@@ -18,7 +18,7 @@ using namespace asn1::rrc_nr;
 void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
 {
   // pack DL CCCH msg
-  byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
+  byte_buffer pdu = pack_into_pdu(dl_ccch_msg, "DL-CCCH-Message");
 
   // Log Tx message
   log_rrc_message(logger, Tx, pdu, dl_ccch_msg, "CCCH DL");
@@ -36,7 +36,7 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   }
 
   // pack DL CCCH msg
-  byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
+  byte_buffer pdu = pack_into_pdu(dl_dcch_msg, "DL-DCCH-Message");
 
   // Log Tx message
   log_rrc_message(logger, Tx, pdu, dl_dcch_msg, "DCCH DL");
