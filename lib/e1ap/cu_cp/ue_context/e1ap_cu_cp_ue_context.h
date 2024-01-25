@@ -189,18 +189,19 @@ public:
         ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
 
     // Update UE context
-    auto& ue_ctxt           = ues.at(cu_cp_ue_e1ap_id);
-    ue_ctxt.ue_ids.ue_index = new_ue_index;
+    ues.at(cu_cp_ue_e1ap_id).ue_ids.ue_index = new_ue_index;
 
     // Update lookup
     ue_index_to_ue_e1ap_id.emplace(new_ue_index, cu_cp_ue_e1ap_id);
     ue_index_to_ue_e1ap_id.erase(old_ue_index);
 
     // Update logger
-    ue_ctxt.logger.set_prefix(
-        {ue_ctxt.ue_ids.ue_index, ue_ctxt.ue_ids.cu_cp_ue_e1ap_id, ue_ctxt.ue_ids.cu_up_ue_e1ap_id});
+    ues.at(cu_cp_ue_e1ap_id)
+        .logger.set_prefix({ues.at(cu_cp_ue_e1ap_id).ue_ids.ue_index,
+                            ues.at(cu_cp_ue_e1ap_id).ue_ids.cu_cp_ue_e1ap_id,
+                            ues.at(cu_cp_ue_e1ap_id).ue_ids.cu_up_ue_e1ap_id});
 
-    ue_ctxt.logger.log_debug("Updated UE index from ue_index={}", old_ue_index);
+    ues.at(cu_cp_ue_e1ap_id).logger.log_debug("Updated UE index from ue_index={}", old_ue_index);
   }
 
 protected:
