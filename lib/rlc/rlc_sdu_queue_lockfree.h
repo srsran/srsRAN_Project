@@ -147,9 +147,9 @@ private:
 
   rlc_bearer_logger& logger;
 
-  uint16_t              capacity = 256;
-  std::atomic<uint32_t> n_bytes  = {0};
-  std::atomic<uint32_t> n_sdus   = {0};
+  uint16_t              capacity;
+  std::atomic<uint32_t> n_bytes = {0};
+  std::atomic<uint32_t> n_sdus  = {0};
 
   std::unique_ptr<
       concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>>
