@@ -130,7 +130,7 @@ inline slot_symbol_point operator-(int jump, slot_symbol_point symbol_point)
 
 /// Implementation of subtraction operation.
 /// Returns difference between two slot_symbol_point objects in number of symbols.
-inline int operator-(const slot_symbol_point& lhs, const slot_symbol_point& rhs)
+inline int operator-(slot_symbol_point lhs, slot_symbol_point rhs)
 {
   srsran_assert(rhs.get_numerology() == lhs.get_numerology(),
                 "Cannot calculate the distance of two slot symbol points that have different numerologies");

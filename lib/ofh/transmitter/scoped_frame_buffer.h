@@ -26,10 +26,10 @@ class scoped_frame_buffer
 
 public:
   /// On construction, acquire Ethernet frame buffers for the given slot, symbol and Open Fronthaul type.
-  scoped_frame_buffer(ether::eth_frame_pool&   frame_pool_,
-                      const slot_symbol_point& symbol_point,
-                      message_type             type,
-                      data_direction           direction) :
+  scoped_frame_buffer(ether::eth_frame_pool& frame_pool_,
+                      slot_symbol_point      symbol_point,
+                      message_type           type,
+                      data_direction         direction) :
     frame_pool(frame_pool_), context({{type, direction}, symbol_point}), frames(frame_pool.get_frame_buffers(context))
   {
   }
