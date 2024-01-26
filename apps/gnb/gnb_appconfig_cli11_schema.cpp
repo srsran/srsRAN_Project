@@ -1912,20 +1912,20 @@ static void validate_cpu_range(const os_sched_affinity_bitmask& allowed_cpus_mas
                                const os_sched_affinity_bitmask& mask,
                                const std::string&               name)
 {
-  for (unsigned i = 0; i != mask.size(); ++i) {
-    if (mask.test(i) && !allowed_cpus_mask.test(i)) {
-      report_error("CPU core {} selected in '{}' option doesn't belong to isolated cpuset.", i, name);
-    }
+  auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
+  if (not invalid_cpu_ids.empty()) {
+    report_error("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.", invalid_cpu_ids, name);
   }
 }
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
-  unsigned nof_cpus = compute_host_nof_hardware_threads();
-  if (cpu_idx >= nof_cpus) {
-    return fmt::format("Invalid CPU core selected '{}'. Valid range is [{}-{}]", cpu_idx, 0, nof_cpus - 1);
+  os_sched_affinity_bitmask one_cpu_mask(cpu_idx);
+  if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus).empty()) {
+    return fmt::format("Invalid CPU core selected '{}'. Valid CPU ids: {}",
+                       cpu_idx,
+                       os_sched_affinity_bitmask::available_cpus.get_cpu_ids());
   }
-
   return default_success_t();
 }
 

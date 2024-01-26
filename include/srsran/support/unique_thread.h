@@ -98,6 +98,8 @@ private:
 /// CPU affinity bitmap.
 struct os_sched_affinity_bitmask {
 public:
+  static constexpr size_t MAX_CPUS = 1024;
+
   /// Bitmap of the total CPUs available to the application.
   const static os_sched_affinity_bitmask available_cpus;
 
@@ -137,11 +139,17 @@ public:
   /// \brief Number of CPUs enabled in the bitmask.
   size_t count() const { return cpu_bitset.count(); }
 
-  /// \brief Get CPU id bitmap.
-  const bounded_bitset<1024>& get_cpu_id_bitmap() const { return cpu_bitset; }
+  /// \brief Returns the list of CPU Ids contained in \c this bitmask but not in the \c rhs bitmask.
+  static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS> subtract(const os_sched_affinity_bitmask& rhs) const;
+
+  /// \brief Get CPU ids of the affinity mask.
+  static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS> get_cpu_ids() const
+  {
+    return cpu_bitset.get_bit_positions();
+  }
 
 private:
-  bounded_bitset<1024> cpu_bitset;
+  bounded_bitset<MAX_CPUS> cpu_bitset;
 };
 
 /// Unique thread wrapper that ensures the thread is joined on destruction and provides an interface to set/get

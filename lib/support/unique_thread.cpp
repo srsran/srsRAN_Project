@@ -88,13 +88,10 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 
 static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap, const std::string& name)
 {
-  const auto& this_bitmap    = bitmap.get_cpu_id_bitmap();
-  const auto& all_bitmap     = os_sched_affinity_bitmask::available_cpus.get_cpu_id_bitmap();
-  auto        invalid_bitmap = (~all_bitmap) & this_bitmap;
-  if (invalid_bitmap.any()) {
-    auto bitpos_list = invalid_bitmap.get_bit_positions();
+  auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus);
+  if (invalid_ids.size() > 0) {
     fmt::print(
-        "Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n", name, bitpos_list);
+        "Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n", name, invalid_ids);
   }
 
   cpu_set_t* cpusetp     = CPU_ALLOC(bitmap.size());
@@ -180,6 +177,13 @@ const os_sched_affinity_bitmask os_sched_affinity_bitmask::available_cpus = []()
   }
   return bitmask;
 }();
+
+static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS>
+os_sched_affinity_bitmask::subtract(const os_sched_affinity_bitmask& rhs) const
+{
+  auto invalid_bitmap = (~rhs.cpu_bitset) & cpu_bitset;
+  return invalid_bitmap.get_bit_positions();
+}
 
 ///////////////////////////////////////
 
