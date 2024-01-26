@@ -241,7 +241,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 
     if (not pucch_res_mng.alloc_resources(ue_res)) {
       return error_type<std::string>(
-          fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", ue_index, cell_index));
+          fmt::format("Unable to allocate dedicated PUCCH resources for cell={}", cell_index));
     }
   } else {
     srsran_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
