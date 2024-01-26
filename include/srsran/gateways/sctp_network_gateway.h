@@ -60,6 +60,12 @@ public:
 
   /// \brief Start listening on socket.
   virtual bool listen() = 0;
+
+  /// \brief Return the port on which the socket is listening.
+  ///
+  /// In case the gateway was configured to listen on port 0, i.e. the operating system shall pick a random free port,
+  /// this function can be used to get the actual port number.
+  virtual bool get_listen_port(uint16_t& port) = 0;
 };
 
 /// Interface to inform upper layers about connection establishment, drops, etc.

@@ -60,6 +60,18 @@ public:
     broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
   }
 
+  /// \brief Return the port on which the gateway is listening.
+  ///
+  /// In case the gateway was configured to listen on port 0, i.e. the operating system shall pick a random free port,
+  /// this function can be used to get the actual port number.
+  bool get_listen_port(uint16_t& gw_listen_port)
+  {
+    if (gateway_ctrl_handler == nullptr) {
+      return false;
+    }
+    return gateway_ctrl_handler->get_listen_port(gw_listen_port);
+  }
+
   void connect_e2ap(e2_message_handler* e2ap_msg_handler_, e2_event_handler* event_handler_)
   {
     e2ap_msg_handler = e2ap_msg_handler_;

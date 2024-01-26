@@ -219,6 +219,37 @@ bool sctp_network_gateway_impl::listen()
   return true;
 }
 
+bool sctp_network_gateway_impl::get_listen_port(uint16_t& gw_listen_port)
+{
+  if (not is_initialized()) {
+    logger.error("Socket of UDP network gateway not initialized.");
+    return false;
+  }
+
+  sockaddr_storage gw_addr_storage;
+  sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
+  socklen_t        gw_addr_len = sizeof(gw_addr_storage);
+
+  int ret = getsockname(sock_fd, gw_addr, &gw_addr_len);
+  if (ret != 0) {
+    logger.error("Failed `getsockname` in SCTP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
+    return false;
+  }
+
+  if (gw_addr->sa_family == AF_INET) {
+    gw_listen_port = ntohs(((sockaddr_in*)gw_addr)->sin_port);
+  } else if (gw_addr->sa_family == AF_INET6) {
+    gw_listen_port = ntohs(((sockaddr_in6*)gw_addr)->sin6_port);
+  } else {
+    logger.error(
+        "Unhandled address family in SCTP network gateway with sock_fd={}, family={}", sock_fd, gw_addr->sa_family);
+    return false;
+  }
+
+  logger.debug("Read bind port of SCTP network gateway: {}", gw_listen_port);
+  return true;
+}
+
 bool sctp_network_gateway_impl::create_and_connect()
 {
   // bind to address/port

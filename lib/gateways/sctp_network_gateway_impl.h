@@ -45,6 +45,9 @@ public:
   /// \brief Start listening on socket.
   bool listen() override;
 
+  /// \brief Return the port on which the socket is listening.
+  bool get_listen_port(uint16_t& port) override;
+
 private:
   bool is_initialized();
 
