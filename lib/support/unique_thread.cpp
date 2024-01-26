@@ -172,8 +172,10 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
 
 const os_sched_affinity_bitmask os_sched_affinity_bitmask::available_cpus = []() {
   os_sched_affinity_bitmask bitmask;
-  for (size_t i = 0; i < host_desc.max_cpu_id + 1; ++i) {
-    bitmask.cpu_bitset.set(i);
+  for (size_t i = 0; i < bitmask.size(); ++i) {
+    if (CPU_ISSET(i, &host_desc.cpuset)) {
+      bitmask.cpu_bitset.set(i);
+    }
   }
   return bitmask;
 }();
