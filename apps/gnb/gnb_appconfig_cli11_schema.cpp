@@ -187,6 +187,9 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   app.add_option("--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
       ->always_capture_default();
 
+  app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
+      ->capture_default_str();
+
   app.add_option("--cu_cp_statistics_report_period",
                  metrics_params.cu_cp_statistics_report_period,
                  "CU-CP statistics report period in seconds. Set this value to 0 to disable this feature")

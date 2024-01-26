@@ -807,6 +807,9 @@ struct metrics_appconfig {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
+  struct {
+    unsigned report_period = 0; // PDCP report period in ms
+  } pdcp;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
   unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.

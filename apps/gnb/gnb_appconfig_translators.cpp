@@ -1015,7 +1015,8 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop);
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop,
+                                                                 timer_duration(config.metrics_cfg.pdcp.report_period));
     return out_cfg;
   }
 
@@ -1032,6 +1033,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
     out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
+    out_pdcp_custom.metrics_period      = timer_duration(config.metrics_cfg.pdcp.report_period);
 
     // Obtain RLC config parameters from the respective RLC mode
     const auto& du_five_qi = du_qos[qos.five_qi];
