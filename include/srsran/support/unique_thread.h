@@ -21,6 +21,9 @@ namespace srsran {
 /// Computes the number of threads that are usable in the given host.
 size_t compute_host_nof_hardware_threads();
 
+/// Get maximum CPU ID available to the application.
+size_t get_host_max_cpu_id();
+
 /// OS thread RT scheduling priority.
 /// Note: posix defines a minimum spread between sched_get_priority_max() and sched_get_priority_min() of 32.
 struct os_thread_realtime_priority_tag {};
@@ -95,9 +98,12 @@ private:
 /// CPU affinity bitmap.
 struct os_sched_affinity_bitmask {
 public:
-  os_sched_affinity_bitmask() : cpu_bitset(compute_host_nof_hardware_threads()) {}
+  /// Bitmap of the total CPUs available to the application.
+  const static os_sched_affinity_bitmask available_cpus;
 
-  explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(compute_host_nof_hardware_threads()) { set(cpu_idx); }
+  os_sched_affinity_bitmask() : cpu_bitset(get_host_max_cpu_id() + 1) {}
+
+  explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(get_host_max_cpu_id() + 1) { set(cpu_idx); }
 
   os_sched_affinity_bitmask(size_t bitset_size, size_t cpu_idx) : cpu_bitset(bitset_size) { set(cpu_idx); }
 
@@ -130,6 +136,9 @@ public:
 
   /// \brief Number of CPUs enabled in the bitmask.
   size_t count() const { return cpu_bitset.count(); }
+
+  /// \brief Get CPU id bitmap.
+  const bounded_bitset<1024>& get_cpu_id_bitmap() const { return cpu_bitset; }
 
 private:
   bounded_bitset<1024> cpu_bitset;
