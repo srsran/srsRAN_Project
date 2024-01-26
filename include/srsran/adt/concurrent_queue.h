@@ -193,9 +193,9 @@ class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wai
   struct custom_deleter {
     void operator()(::rigtorp::MPMCQueue<T>* ptr) const
     {
-      using namespace ::rigtorp;
+      using mpmc_queue = ::rigtorp::MPMCQueue<T>;
       if (ptr != nullptr) {
-        ptr->~MPMCQueue<T>();
+        ptr->~mpmc_queue();
         free(ptr);
       }
     }
