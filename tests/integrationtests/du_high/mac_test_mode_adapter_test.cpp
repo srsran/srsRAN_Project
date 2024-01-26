@@ -167,7 +167,7 @@ mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
 
   mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2;
   f2.uci_part1_or_csi_part1_info.emplace();
-  f2.uci_part1_or_csi_part1_info->status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
+  f2.uci_part1_or_csi_part1_info->detection_valid = false;
   f2.uci_part1_or_csi_part1_info->payload_type =
       mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
   f2.uci_part1_or_csi_part1_info->payload.resize(test_rgen::uniform_int<unsigned>(0, 11));
@@ -315,14 +315,14 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
   ASSERT_TRUE(f2.ul_sinr.value() > 0);
   // check HARQ info.
   ASSERT_TRUE(f2.harq_info.has_value());
-  ASSERT_EQ(f2.harq_info->harq_status, uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass);
+  ASSERT_TRUE(f2.harq_info->harq_detection_valid);
   ASSERT_EQ(f2.harq_info->payload.size(), 1);
   ASSERT_TRUE(f2.harq_info->payload.test(0));
   // check CSI info.
   ASSERT_TRUE(f2.uci_part1_or_csi_part1_info.has_value());
   ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload_type,
             mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload);
-  ASSERT_EQ(f2.uci_part1_or_csi_part1_info->status, uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass);
+  ASSERT_TRUE(f2.uci_part1_or_csi_part1_info->detection_valid);
   // Check that the payload size is the same as the expected, given the UE config.
   units::bits expected_payload_size = get_csi_report_pucch_size(this->csi_cfg);
   ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload.size(), expected_payload_size.value());

@@ -47,45 +47,39 @@ struct mac_crc_indication_message {
 struct mac_uci_pdu {
   struct pusch_type {
     struct harq_information {
-      /// HARQ Detection Status values for UCI multiplexed in the PUSCH.
-      using harq_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
-
       /// Creates an HARQ information object when the HARQ was not detected by the underlying layers.
-      static harq_information create_undetected_harq_info(harq_detection_status harq_status, unsigned expected_nof_bits)
+      static harq_information create_undetected_harq_info(bool harq_status, unsigned expected_nof_bits)
       {
         harq_information info;
-        info.harq_status = harq_status;
+        info.harq_detection_valid = harq_status;
         info.payload.resize(expected_nof_bits);
 
         return info;
       }
 
       /// Creates an HARQ information object when the HARQ was successfully detected by the underlying layers.
-      static harq_information create_detected_harq_info(harq_detection_status harq_status,
+      static harq_information create_detected_harq_info(bool harq_status,
                                                         const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
       {
         harq_information info;
-        info.harq_status = harq_status;
-        info.payload     = payload;
+        info.harq_detection_valid = harq_status;
+        info.payload              = payload;
 
         return info;
       }
 
-      /// Indicates the CRC result on UCI.
-      harq_detection_status harq_status;
+      /// Indicates the detection outcome on UCI/CSI.
+      bool harq_detection_valid;
       /// Contents of HARQ, excluding any CRC.
-      /// NOTE: If \c harq_status == crc_pass, then all HARQs bits set in \c payload should be interpreted as an ACK.
-      /// \n Example: If the number of HARQ bits is 20, then it is represented as:
+      /// NOTE: If \c harq_detection_valid == crc_pass, then all HARQs bits set in \c payload should be interpreted as
+      /// an ACK. \n Example: If the number of HARQ bits is 20, then it is represented as:
       /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
     };
 
     struct csi_information {
-      /// CSI Part 1/CSI Part 2 Detection Status values for UCI multiplexed in the PUSCH.
-      using csi_part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
-
       /// Indicates the detection outcome on UCI/CSI.
-      csi_part1_or_part2_detection_status csi_status;
+      bool csi_detection_valid;
       /// Contents of UCI/CSI, excluding any CRC.
       /// Example: If the number of CSI bits is 20, then it is represented as:
       /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
@@ -133,35 +127,32 @@ struct mac_uci_pdu {
     using sr_information = bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>;
 
     struct harq_information {
-      /// HARQ Detection Status values for UCI PUCCH Format 2, 3, 4.
-      using harq_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
-
       /// Creates an HARQ information object when the HARQ was not detected by the underlying layers.
-      static harq_information create_undetected_harq_info(harq_detection_status harq_status, unsigned expected_nof_bits)
+      static harq_information create_undetected_harq_info(bool harq_status, unsigned expected_nof_bits)
       {
         harq_information info;
-        info.harq_status = harq_status;
+        info.harq_detection_valid = harq_status;
         info.payload.resize(expected_nof_bits);
 
         return info;
       }
 
       /// Creates an HARQ information object when the HARQ was successfully detected by the underlying layers.
-      static harq_information create_detected_harq_info(harq_detection_status harq_status,
+      static harq_information create_detected_harq_info(bool harq_status,
                                                         const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
       {
         harq_information info;
-        info.harq_status = harq_status;
-        info.payload     = payload;
+        info.harq_detection_valid = harq_status;
+        info.payload              = payload;
 
         return info;
       }
 
-      /// Indicates CRC result on UCI.
-      harq_detection_status harq_status;
+      /// Indicates the detection outcome on UCI/CSI.
+      bool harq_detection_valid;
       /// Contents of HARQ, excluding any CRC.
-      /// NOTE: If \c harq_status == crc_pass, then all HARQs bits set in \c payload should be interpreted as an ACK.
-      /// \n Example: If the number of HARQ bits is 20, then it is represented as:
+      /// NOTE: If \c harq_detection_valid == crc_pass, then all HARQs bits set in \c payload should be interpreted as
+      /// an ACK. \n Example: If the number of HARQ bits is 20, then it is represented as:
       /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
     };
@@ -170,12 +161,9 @@ struct mac_uci_pdu {
       /// \brief Indicates whether the object includes UCI parts payload or CSI parts payload.
       enum class payload_type_t { uci_part_payload, csi_part_payload };
 
-      /// UCI payload Part 1/Part 2 or CSI Part 1/CSI Part 2 Detection Status values for UCI PUCCH Format 2, 3, 4.
-      using part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
-
       payload_type_t payload_type;
       /// Indicates the detection outcome on UCI/CSI.
-      part1_or_part2_detection_status status;
+      bool detection_valid;
       /// Contents of UCI/CSI, excluding any CRC.
       /// Example: If the number of CSI bits is 20, then it is represented as:
       /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
