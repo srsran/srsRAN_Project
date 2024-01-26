@@ -166,13 +166,11 @@ mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
   pdu.rnti = test_rnti;
 
   mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2;
-  f2.uci_part1_or_csi_part1_info.emplace();
-  f2.uci_part1_or_csi_part1_info->detection_valid = false;
-  f2.uci_part1_or_csi_part1_info->payload_type =
-      mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
-  f2.uci_part1_or_csi_part1_info->payload.resize(test_rgen::uniform_int<unsigned>(0, 11));
-  for (unsigned i = 0; i != f2.uci_part1_or_csi_part1_info->payload.size(); ++i) {
-    f2.uci_part1_or_csi_part1_info->payload.set(i, test_rgen::uniform_int<unsigned>(0, 1));
+  f2.csi_part1_info.emplace();
+  f2.csi_part1_info->is_valid = false;
+  f2.csi_part1_info->payload.resize(test_rgen::uniform_int<unsigned>(0, 11));
+  for (unsigned i = 0; i != f2.csi_part1_info->payload.size(); ++i) {
+    f2.csi_part1_info->payload.set(i, test_rgen::uniform_int<unsigned>(0, 1));
   }
 
   pdu.pdu = f2;
@@ -315,21 +313,19 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
   ASSERT_TRUE(f2.ul_sinr.value() > 0);
   // check HARQ info.
   ASSERT_TRUE(f2.harq_info.has_value());
-  ASSERT_TRUE(f2.harq_info->harq_detection_valid);
+  ASSERT_TRUE(f2.harq_info->is_valid);
   ASSERT_EQ(f2.harq_info->payload.size(), 1);
   ASSERT_TRUE(f2.harq_info->payload.test(0));
   // check CSI info.
-  ASSERT_TRUE(f2.uci_part1_or_csi_part1_info.has_value());
-  ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload_type,
-            mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload);
-  ASSERT_TRUE(f2.uci_part1_or_csi_part1_info->detection_valid);
+  ASSERT_TRUE(f2.csi_part1_info.has_value());
+  ASSERT_TRUE(f2.csi_part1_info->is_valid);
   // Check that the payload size is the same as the expected, given the UE config.
   units::bits expected_payload_size = get_csi_report_pucch_size(this->csi_cfg);
-  ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload.size(), expected_payload_size.value());
+  ASSERT_EQ(f2.csi_part1_info->payload.size(), expected_payload_size.value());
   // Decode the CSI report and check that the CQI is the same as the one in the test config.
   csi_report_packed csi_bits(expected_payload_size.value());
   for (unsigned i = 0; i != csi_bits.size(); ++i) {
-    csi_bits.set(i, f2.uci_part1_or_csi_part1_info->payload.test(i));
+    csi_bits.set(i, f2.csi_part1_info->payload.test(i));
   }
   csi_report_data report = csi_report_unpack_pucch(csi_bits, this->csi_cfg);
   ASSERT_EQ(*report.first_tb_wideband_cqi, params.test_ue_cfg.cqi);

@@ -104,7 +104,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
           f1.ul_sinr = 100;
           if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
             f1.sr_info.emplace();
-            f1.sr_info.value().sr_detected = false;
+            f1.sr_info.value().detected = false;
           }
           if (pucch.format_1.harq_ack_nof_bits > 0) {
             f1.harq_info.emplace();
@@ -135,7 +135,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
           f2.ul_sinr = 100;
           if (pucch.format_2.harq_ack_nof_bits > 0) {
             f2.harq_info.emplace();
-            f2.harq_info->harq_detection_valid = true;
+            f2.harq_info->is_valid = true;
             f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
             f2.harq_info->payload.fill();
           }
@@ -144,11 +144,9 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
             f2.sr_info->resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
           }
           if (pucch.csi_rep_cfg.has_value()) {
-            f2.uci_part1_or_csi_part1_info.emplace();
-            f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
-                uci_payload_or_csi_information::payload_type_t::csi_part_payload;
-            f2.uci_part1_or_csi_part1_info->detection_valid = true;
-            fill_csi_bits(pdu.rnti, f2.uci_part1_or_csi_part1_info->payload);
+            f2.csi_part1_info.emplace();
+            f2.csi_part1_info->is_valid = true;
+            fill_csi_bits(pdu.rnti, f2.csi_part1_info->payload);
           }
         } break;
         default:
@@ -175,13 +173,13 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
         pusch_uci.ul_sinr = 100;
         if (pusch.uci.value().harq.has_value() and pusch.uci.value().harq.value().harq_ack_nof_bits > 0) {
           pusch_uci.harq_info.emplace();
-          pusch_uci.harq_info->harq_detection_valid = true;
+          pusch_uci.harq_info->is_valid = true;
           pusch_uci.harq_info->payload.resize(pusch.uci.value().harq.value().harq_ack_nof_bits);
           pusch_uci.harq_info->payload.fill();
         }
         if (pusch.uci.value().csi.has_value() and pusch.uci.value().csi.value().csi_part1_nof_bits > 0) {
           pusch_uci.csi_part1_info.emplace();
-          pusch_uci.csi_part1_info->csi_detection_valid = true;
+          pusch_uci.csi_part1_info->is_valid = true;
           fill_csi_bits(pdu.rnti, pusch_uci.csi_part1_info->payload);
         }
       }

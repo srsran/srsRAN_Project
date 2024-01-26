@@ -54,7 +54,7 @@ static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pucch_f2_or_
                                                  const csi_report_configuration&               csi_rep_cfg)
 {
   // TODO: Handle CSI part 2.
-  return decode_csi(pucch.uci_part1_or_csi_part1_info->payload, csi_rep_cfg);
+  return decode_csi(pucch.csi_part1_info->payload, csi_rep_cfg);
 }
 
 static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pusch_type&  pusch,
@@ -94,7 +94,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
       pdu.sr_detected = false;
       if (pucch.sr_info.has_value()) {
-        pdu.sr_detected = pucch.sr_info.value().sr_detected;
+        pdu.sr_detected = pucch.sr_info.value().detected;
       }
       if (pucch.harq_info.has_value()) {
         // NOTES:
@@ -136,8 +136,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       const auto& pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
       auto&       pdu   = ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
       if (pusch.harq_info.has_value()) {
-        pdu.harqs = convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().harq_detection_valid,
-                                                               pusch.harq_info->payload);
+        pdu.harqs =
+            convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().is_valid, pusch.harq_info->payload);
 
         // Report ACK for RLF detection purposes.
         for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
@@ -146,7 +146,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       if (pusch.csi_part1_info.has_value()) {
-        if (pusch.csi_part1_info->csi_detection_valid) {
+        if (pusch.csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
 
@@ -167,7 +167,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
-        if (pusch.csi_part1_info->csi_detection_valid) {
+        if (pusch.csi_part1_info->is_valid) {
           rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, true);
         }
       }
@@ -186,8 +186,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         pdu.sr_info = pucch.sr_info.value();
       }
       if (pucch.harq_info.has_value()) {
-        pdu.harqs = convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().harq_detection_valid,
-                                                               pucch.harq_info->payload);
+        pdu.harqs =
+            convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().is_valid, pucch.harq_info->payload);
 
         // Report ACK for RLF detection purposes.
         for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
@@ -196,8 +196,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       // Check if the UCI has been correctly decoded.
-      if (pucch.uci_part1_or_csi_part1_info.has_value()) {
-        if (pucch.uci_part1_or_csi_part1_info->detection_valid) {
+      if (pucch.csi_part1_info.has_value()) {
+        if (pucch.csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
 
@@ -216,7 +216,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
         }
         // We consider any status other than "crc_pass" as non-decoded CSI.
-        rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, pucch.uci_part1_or_csi_part1_info->detection_valid);
+        rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, pucch.csi_part1_info->is_valid);
       }
     }
   }
