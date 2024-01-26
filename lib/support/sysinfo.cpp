@@ -160,5 +160,4 @@ void cleanup_cgroups()
   if (cgroup_changed) {
     std::this_thread::sleep_for(100ms);
   }
-  move_to_cgroup("/sys/fs/cgroup");
 }
