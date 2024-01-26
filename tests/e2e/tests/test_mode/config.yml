@@ -55,4 +55,4 @@ test_mode:
     rnti: 0x4655
     ri: 2
     cqi: 15
-    # nof_ues: 2
+    nof_ues: 2
