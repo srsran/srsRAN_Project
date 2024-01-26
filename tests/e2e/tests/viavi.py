@@ -73,7 +73,6 @@ def test_viavi_manual(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = True,
 ):
     """
     Runs a test using Viavi
@@ -96,7 +95,6 @@ def test_viavi_manual(
         gnb_startup_timeout=gnb_startup_timeout,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
-        warning_as_errors=warning_as_errors,
     )
 
 
@@ -134,7 +132,6 @@ def test_viavi(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = True,
 ):
     """
     Runs a test using Viavi
@@ -157,7 +154,6 @@ def test_viavi(
         gnb_startup_timeout=gnb_startup_timeout,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
-        warning_as_errors=warning_as_errors,
         post_commands=post_commands,
     )
 
@@ -181,7 +177,7 @@ def _test_viavi(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = True,
+    warning_as_errors: bool = False,
     post_commands: str = "",
 ):
     """

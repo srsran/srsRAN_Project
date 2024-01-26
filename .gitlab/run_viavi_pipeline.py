@@ -38,7 +38,7 @@ def main():
     MARKERS = "viavi_manual"
 
     PYARGS = f"--viavi-manual-campaign-filename \"{campaign_name}\" --viavi-manual-test-name \"{test_name}\" --viavi-manual-test-timeout {timeout}"
-    RETINA_ARGS = "gnb.all.pcap=False"
+    RETINA_ARGS = "gnb.all.pcap=False gnb.all.enable_metrics=False"
 
     variables = [
         {
