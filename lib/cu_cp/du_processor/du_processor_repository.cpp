@@ -53,6 +53,9 @@ du_processor_repository::du_processor_repository(du_repository_config cfg_) :
 
 void du_processor_repository::stop()
 {
+  if (running.exchange(false, std::memory_order_acq_rel)) {
+    return;
+  }
   while (not du_db.empty()) {
     du_index_t du_idx = du_db.begin()->first;
     remove_du_impl(du_idx);
@@ -78,6 +81,9 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
+  if (not running.load(std::memory_order_acquire)) {
+    return;
+  }
   force_blocking_execute(
       *cfg.cu_cp.cu_cp_executor,
       [this, du_index]() { remove_du_impl(du_index); },

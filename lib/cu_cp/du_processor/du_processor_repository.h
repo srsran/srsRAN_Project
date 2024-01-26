@@ -127,6 +127,8 @@ private:
 
   // Current state of the AMF connection.
   bool amf_connected = false;
+
+  std::atomic<bool> running{true};
 };
 
 } // namespace srs_cu_cp
