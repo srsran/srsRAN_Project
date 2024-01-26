@@ -208,7 +208,8 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
-  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 100);
+  bool ret =
+      run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 1000 * (next_slot.numerology() + 1));
   return ret and test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 
