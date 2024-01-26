@@ -119,8 +119,11 @@ public:
   void disconnect() override
   {
     if (sctp_gateway != nullptr) {
-      broker.unregister_fd(sctp_gateway->get_socket_fd());
+      if (not broker.unregister_fd(sctp_gateway->get_socket_fd())) {
+        logger.error("NGAP Gateway failed to stop SCTP socket");
+      }
       packer.reset();
+      sctp_gateway.reset();
     }
   }
 

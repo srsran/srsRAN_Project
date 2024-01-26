@@ -149,6 +149,14 @@ void cu_up::stop()
   if (not std::exchange(running, false)) {
     return;
   }
+  logger.debug("CU-UP stopping...");
+
+  // CU-UP stops listening to new GTPU Rx PDUs.
+  if (ngu_gw) {
+    if (not cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd())) {
+      logger.warning("Failed to stop NG-U gateway socket");
+    }
+  }
 
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};
@@ -175,14 +183,12 @@ void cu_up::stop()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+
+  logger.info("CU-UP stopped successfully");
 }
 
 cu_up::~cu_up()
 {
-  if (ngu_gw) {
-    cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
-  }
-
   stop();
 }
 
