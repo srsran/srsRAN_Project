@@ -88,12 +88,11 @@ private:
   static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
   {
 #ifdef HWACC_PUSCH_ENABLED
-    // :TODO: Enable file-based HAL logging.
+    // Hardcoded stdout and error logging.
     srslog::sink* log_sink = srslog::create_stdout_sink();
     srslog::set_default_sink(*log_sink);
     srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
-    // :TODO: Enable configurable HAL logging level.
     logger.set_level(srslog::str_to_basic_level("error"));
 
     // Pointer to a dpdk-based hardware-accelerator interface.

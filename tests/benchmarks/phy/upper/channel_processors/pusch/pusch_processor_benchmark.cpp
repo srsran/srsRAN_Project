@@ -476,7 +476,6 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 {
 #ifdef HWACC_PUSCH_ENABLED
   // Intefacing to the bbdev-based hardware-accelerator.
-  // :TODO: Enable further concurrency in hardware-accelerated PUSCH processor implementations.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HWACC", false);
   logger.set_level(srslog::str_to_basic_level(hal_log_level));
   dpdk::bbdev_acc_configuration bbdev_config;
@@ -589,7 +588,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   TESTASSERT(demux_factory);
 
   // Create worker pool and exectuors for concurrent PUSCH processor implementations.
-  // :TODO: Enable further concurrency in hardware-accelerated PUSCH processor implementations.
+  // Note that currently hardware-acceleration is limited to "generic" processor types.
   if (nof_pusch_decoder_threads != 0 && ldpc_decoder_type != "acc100" && rate_dematcher_type != "acc100") {
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
         nof_pusch_decoder_threads, 1024, "decoder");

@@ -110,7 +110,14 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pdsch_modulator_test pdsch_modulator_test_data.tar.gz "")
 
     add_executable(pdsch_processor_vectortest pdsch_processor_vectortest.cpp)
-    target_link_libraries(pdsch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    set(PDSCH_PROCESSOR_LIBRARIES srsran_channel_processors srslog gtest gtest_main)
+
+    if (ENABLE_PDSCH_HWACC)
+        set_source_files_properties(pdsch_processor_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED")
+        list(APPEND PDSCH_PROCESSOR_LIBRARIES hal_hwacc_pdsch)
+    endif (ENABLE_PDSCH_HWACC)
+
+    target_link_libraries(pdsch_processor_vectortest ${PDSCH_PROCESSOR_LIBRARIES})
     add_test_vector(pdsch_processor_vectortest pdsch_processor_test_data.tar.gz "")
 
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)

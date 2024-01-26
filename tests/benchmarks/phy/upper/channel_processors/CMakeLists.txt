@@ -23,8 +23,7 @@ if (ENABLE_PDSCH_HWACC)
 endif (ENABLE_PDSCH_HWACC)
 
 add_executable(pdsch_processor_benchmark pdsch_processor_benchmark.cpp)
-target_link_libraries(pdsch_processor_benchmark
-        srsran_phy_support
+set(PDSCH_PROCESSOR_LIBRARIES srsran_phy_support
         srsran_pdsch_processor
         srsran_channel_equalizer
         srsran_channel_precoder
@@ -32,6 +31,13 @@ target_link_libraries(pdsch_processor_benchmark
         srsran_ran
         srslog
         srsvec)
+
+if (ENABLE_PDSCH_HWACC)
+    set_source_files_properties(pdsch_processor_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED")
+    list(APPEND PDSCH_PROCESSOR_LIBRARIES hal_hwacc_pdsch)
+endif (ENABLE_PDSCH_HWACC)
+
+target_link_libraries(pdsch_processor_benchmark ${PDSCH_PROCESSOR_LIBRARIES})
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t generic)
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P 2port_2layer_scs30_100MHz_256qam -t generic)
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t concurrent)
