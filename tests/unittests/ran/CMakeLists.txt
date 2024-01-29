@@ -110,6 +110,10 @@ add_executable(ssb_mapping_test ssb_mapping_test.cpp)
 target_link_libraries(ssb_mapping_test srsran_ran srslog)
 add_test(ssb_mapping_test ssb_mapping_test)
 
+add_executable(srs_bandwidth_configuration_test srs/srs_bandwidth_configuration_test.cpp)
+target_link_libraries(srs_bandwidth_configuration_test srsran_ran srslog gtest gtest_main)
+add_test(srs_bandwidth_configuration_test srs_bandwidth_configuration_test)
+
 add_executable(bcd_helpers_test bcd_helpers_test.cpp)
 target_link_libraries(bcd_helpers_test srsran_support gtest gtest_main)
 gtest_discover_tests(bcd_helpers_test)
