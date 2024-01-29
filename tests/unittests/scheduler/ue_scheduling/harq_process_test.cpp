@@ -187,7 +187,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
   ASSERT_FALSE(h_dl.has_pending_retx()) << "HARQ was not reset after ACK";
 }
 
-TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_available_for_retx)
+TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_reset)
 {
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0, 15, 1);
   bool ndi = h_dl.tb(0).ndi;
@@ -198,21 +198,12 @@ TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_avail
     slot_indication();
   }
 
-  for (unsigned i = 0; i != this->max_harq_retxs; ++i) {
-    ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
-    ASSERT_TRUE(h_dl.has_pending_retx()) << "It is too early for HARQ to be available for retx";
-
-    h_dl.new_retx(sl_tx, this->k1, 0);
-    ASSERT_EQ(h_dl.tb(0).ndi, ndi) << "NDI should not change during retxs";
-    for (unsigned j = 0; j != max_ack_wait_slots + this->k1; ++j) {
-      ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
-      ASSERT_FALSE(h_dl.has_pending_retx()) << "It is too early for HARQ to be available for retx";
-      ASSERT_EQ(h_dl.tb(0).nof_retxs, i + 1) << "nof_retxs() has not been updated";
-      slot_indication();
-    }
-  }
-
   ASSERT_TRUE(h_dl.empty()) << "HARQ should be automatically reset once max HARQ retxs is achieved";
+
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0, 15, 1);
+  ASSERT_FALSE(h_dl.empty()) << "It should be possible to reuse the HARQ";
+  ASSERT_NE(h_dl.tb(0).ndi, ndi) << "NDI should have been toggled";
+  ASSERT_EQ(h_dl.tb(0).nof_retxs, 0) << "nof_retxs() has not been updated";
 }
 
 TEST_P(dl_harq_process_param_tester, harq_newtxs_flip_ndi)
@@ -304,13 +295,13 @@ TEST_F(dl_harq_process_multi_harq_ack_timeout_test,
       ASSERT_TRUE(h_dl.is_waiting_ack());
       ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX);
     }
-    // Once the shortened_ack_wait_slots has passed, expect pending reTXs.
+    // Once the shortened_ack_wait_slots has passed, expect HARQ to be reset.
     else {
+      ASSERT_TRUE(h_dl.empty());
       if (ack_val == srsran::mac_harq_ack_report_status::ack) {
-        ASSERT_TRUE(h_dl.empty());
         ASSERT_NE(timeout_handler.last_ue_index, to_du_ue_index(0));
       } else {
-        ASSERT_TRUE(h_dl.has_pending_retx());
+        // In case of NACK/DTX, the HARQ should report the timeout.
         ASSERT_EQ(timeout_handler.last_ue_index, to_du_ue_index(0));
         ASSERT_TRUE(timeout_handler.last_dir_is_dl);
       }

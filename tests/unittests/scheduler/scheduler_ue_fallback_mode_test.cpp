@@ -171,8 +171,12 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
   ASSERT_TRUE(this->run_slot_until([this]() {
-    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
-    return pucch != nullptr and pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0;
+    for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
+      if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
+        return true;
+      }
+    }
+    return false;
   }));
 
   // Enqueue SRB1 data.
@@ -188,12 +192,15 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
 
   // Ensure common PUCCH resources are used.
-  ASSERT_TRUE(this->run_slot_until([this]() {
-    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
-    if (pucch == nullptr) {
-      return false;
+  const pucch_info* pucch_ptr = nullptr;
+  ASSERT_TRUE(this->run_slot_until([this, &pucch_ptr]() {
+    for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
+      if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
+        pucch_ptr = &pucch;
+        return true;
+      }
     }
-    return pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0;
+    return false;
   }));
   // TODO: Once PUCCH scheduler avoids multiplexing SR and HARQ-ACK for common PUCCH resources, uncomment the following.
   //  ASSERT_EQ(std::count_if(this->last_sched_res->ul.pucchs.begin(),
@@ -201,10 +208,10 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   //                          [this](const pucch_info& pucch) { return pucch.crnti == rnti; }),
   //            1)
   //      << "In case of common PUCCH scheduling, multiplexing with SR or CSI should be avoided";
-  const pucch_info& pucch = *find_ue_pucch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
-  ASSERT_EQ(pucch.format, pucch_format::FORMAT_1);
-  ASSERT_EQ(pucch.format_1.sr_bits, sr_nof_bits::no_sr);
-  ASSERT_FALSE(pucch.resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";
+  ASSERT_NE(pucch_ptr, nullptr);
+  ASSERT_EQ(pucch_ptr->format, pucch_format::FORMAT_1);
+  ASSERT_EQ(pucch_ptr->format_1.sr_bits, sr_nof_bits::no_sr);
+  ASSERT_FALSE(pucch_ptr->resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
