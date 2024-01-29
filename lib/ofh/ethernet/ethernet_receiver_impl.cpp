@@ -33,7 +33,7 @@ receiver_impl::receiver_impl(const std::string&    interface,
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ECPRI_ETH_TYPE));
   if (socket_fd < 0) {
-    report_error("Unable to open socket for Ethernet receiver");
+    report_error("Unable to open raw socket for Ethernet receiver: {}", strerror(errno));
   }
 
   if (interface.size() > (IFNAMSIZ - 1)) {

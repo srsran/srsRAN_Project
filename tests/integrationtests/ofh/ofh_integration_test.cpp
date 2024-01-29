@@ -455,7 +455,7 @@ private:
   {
     socket_fd = ::socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_RAW);
     if (socket_fd < 0) {
-      report_error("Unable to open socket for Ethernet gateway");
+      report_error("Unable to open raw socket for Ethernet gateway: {}", strerror(errno));
     }
 
     // Get the index of loopback interface.
