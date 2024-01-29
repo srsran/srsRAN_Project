@@ -458,6 +458,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   task_sched.schedule_async_task(
       ue_ctxt.ue_ids.ue_index,
       launch_async<ngap_pdu_session_resource_modify_procedure>(msg,
+                                                               request,
                                                                ue_ctxt.ue_ids,
                                                                ue->get_du_processor_control_notifier(),
                                                                ngap_notifier,

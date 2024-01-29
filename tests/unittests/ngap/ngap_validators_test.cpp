@@ -132,6 +132,48 @@ public:
 
     return ngap_msg;
   }
+
+  asn1::ngap::pdu_session_res_modify_item_mod_req_s generate_pdu_session_resource_modify_item(pdu_session_id_t psi)
+  {
+    asn1::ngap::pdu_session_res_modify_item_mod_req_s pdu_session_res_item;
+
+    pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(psi);
+
+    // Add PDU Session Resource Modify Request Transfer
+    asn1::ngap::pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
+
+    // Add qos flow add or modify request item
+    pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present = true;
+    asn1::ngap::qos_flow_add_or_modify_request_item_s qos_flow_add_item;
+
+    // qosFlowIdentifier
+    qos_flow_add_item.qos_flow_id = 1;
+
+    pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
+
+    pdu_session_res_item.pdu_session_res_modify_request_transfer =
+        pack_into_pdu(pdu_session_res_modify_request_transfer);
+
+    return pdu_session_res_item;
+  }
+
+  ngap_message generate_pdu_session_resource_modify_request_with_one_unique_and_two_duplicate_pdu_sessions(
+      amf_ue_id_t      amf_ue_id,
+      ran_ue_id_t      ran_ue_id,
+      pdu_session_id_t unique_psi,
+      pdu_session_id_t duplicate_psi)
+  {
+    ngap_message ngap_msg =
+        generate_invalid_pdu_session_resource_modify_request_message(amf_ue_id, ran_ue_id, duplicate_psi);
+
+    auto& pdu_session_res_modify_req = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+    // Add unique PDU session
+    pdu_session_res_modify_req->pdu_session_res_modify_list_mod_req.push_back(
+        generate_pdu_session_resource_modify_item(unique_psi));
+
+    return ngap_msg;
+  }
 };
 
 // Test handling of valid PDU Session Resource Modification Request
@@ -227,4 +269,75 @@ TEST_F(
 
   ASSERT_TRUE(verification_outcome.request.pdu_session_res_setup_items.empty());
   ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_setup_items.size(), 1U);
+}
+
+// Test handling of valid PDU Session Resource Modification Request
+TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_modify_succeeds)
+{
+  pdu_session_id_t psi       = uint_to_pdu_session_id(1);
+  ue_index_t       ue_index  = uint_to_ue_index(0);
+  amf_ue_id_t      amf_ue_id = uint_to_amf_ue_id(0);
+  ran_ue_id_t      ran_ue_id = uint_to_ran_ue_id(0);
+
+  ngap_message ngap_msg = generate_valid_pdu_session_resource_modify_request_message(amf_ue_id, ran_ue_id, psi);
+
+  auto& asn1_request = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+  cu_cp_pdu_session_resource_modify_request request;
+  fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
+
+  ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
+  // Verify PDU Session Resource Modify Request
+  auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
+
+  ASSERT_EQ(verification_outcome.request.pdu_session_res_modify_items.size(), 1U);
+  ASSERT_EQ(verification_outcome.response.pdu_session_res_modify_list.size(), 0U);
+  ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_modify_list.size(), 0U);
+}
+
+// Test handling of duplicate PDU Session IDs in PDU Session Resource Modification Request
+TEST_F(ngap_validator_test, when_duplicate_pdu_session_id_then_pdu_session_modification_fails)
+{
+  ue_index_t  ue_index  = uint_to_ue_index(0);
+  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(0);
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+
+  ngap_message ngap_msg =
+      generate_invalid_pdu_session_resource_modify_request_message(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1));
+
+  auto& asn1_request = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+  cu_cp_pdu_session_resource_modify_request request;
+  fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
+
+  ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
+  // Verify PDU Session Resource Modify Request
+  auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
+
+  ASSERT_TRUE(verification_outcome.request.pdu_session_res_modify_items.empty());
+  ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_modify_list.size(), 1U);
+}
+
+TEST_F(ngap_validator_test, when_unique_and_duplicate_pdu_session_id_then_pdu_session_modify_partly_fails)
+{
+  pdu_session_id_t psi           = uint_to_pdu_session_id(1);
+  pdu_session_id_t duplicate_psi = uint_to_pdu_session_id(2);
+  ue_index_t       ue_index      = uint_to_ue_index(0);
+  amf_ue_id_t      amf_ue_id     = uint_to_amf_ue_id(0);
+  ran_ue_id_t      ran_ue_id     = uint_to_ran_ue_id(0);
+
+  ngap_message ngap_msg = generate_pdu_session_resource_modify_request_with_one_unique_and_two_duplicate_pdu_sessions(
+      amf_ue_id, ran_ue_id, psi, duplicate_psi);
+
+  auto& asn1_request = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+  cu_cp_pdu_session_resource_modify_request request;
+  fill_cu_cp_pdu_session_resource_modify_request(request, asn1_request->pdu_session_res_modify_list_mod_req);
+
+  ngap_ue_logger ue_logger{"NGAP", {ue_index, ran_ue_id}};
+  // Verify PDU Session Resource Modify Request
+  auto verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, ue_logger);
+
+  ASSERT_EQ(verification_outcome.request.pdu_session_res_modify_items.size(), 1U);
+  ASSERT_EQ(verification_outcome.response.pdu_session_res_failed_to_modify_list.size(), 1U);
 }

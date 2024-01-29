@@ -84,3 +84,42 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
 
   return verification_outcome;
 }
+
+pdu_session_resource_modify_validation_outcome srsran::srs_cu_cp::verify_pdu_session_resource_modify_request(
+    const cu_cp_pdu_session_resource_modify_request&    request,
+    const asn1::ngap::pdu_session_res_modify_request_s& asn1_request,
+    const ngap_ue_logger&                               ue_logger)
+{
+  pdu_session_resource_modify_validation_outcome verification_outcome;
+
+  std::unordered_set<pdu_session_id_t> psis;
+  std::unordered_set<pdu_session_id_t> failed_psis;
+  for (const auto& pdu_session_item : asn1_request->pdu_session_res_modify_list_mod_req) {
+    pdu_session_id_t psi = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
+    // Check for duplicate PDU Session IDs
+    if (!psis.emplace(psi).second) {
+      ue_logger.log_warning("Duplicate {} in PduSessionResourceModifyRequest", psi);
+      // Make sure to only add each duplicate psi once
+      if (failed_psis.emplace(psi).second) {
+        // Add failed psi to response
+        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        failed_item.pdu_session_id              = psi;
+        failed_item.unsuccessful_transfer.cause = cause_radio_network_t::multiple_pdu_session_id_instances;
+        verification_outcome.response.pdu_session_res_failed_to_modify_list.emplace(psi, failed_item);
+      }
+    }
+  }
+
+  // Remove failed psis from psis
+  for (const auto& failed_psi : failed_psis) {
+    psis.erase(failed_psi);
+  }
+
+  // Add remaining PDU sessions to verified request
+  for (const auto& psi : psis) {
+    verification_outcome.request.pdu_session_res_modify_items.emplace(psi, request.pdu_session_res_modify_items[psi]);
+  }
+  verification_outcome.request.ue_index = request.ue_index;
+
+  return verification_outcome;
+}

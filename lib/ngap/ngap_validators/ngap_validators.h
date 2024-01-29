@@ -34,5 +34,22 @@ verify_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup
                                           const asn1::ngap::pdu_session_res_setup_request_s& asn1_request,
                                           const ngap_ue_logger&                              logger);
 
+struct pdu_session_resource_modify_validation_outcome {
+  cu_cp_pdu_session_resource_modify_request  request;
+  cu_cp_pdu_session_resource_modify_response response;
+};
+
+/// \brief Verify a received PduSessionResourceModifyRequest message as per TS 38.413 section 8.2.3.4.
+/// \param[in] request The common type PduSessionResourceModifyRequest message.
+/// \param[in] asn1_request The received PduSessionResourceModifyRequest message.
+/// \param[in] logger The NGAP UE logger.
+/// \returnsthe verified PduSessionResourceModifyRequest and PduSessionResourceModifyResponse messages. The
+/// verified request will only contain PDU sessions that passed the verification. The verified response will contain PDU
+/// sessions that failed the verification.
+pdu_session_resource_modify_validation_outcome
+verify_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request&    request,
+                                           const asn1::ngap::pdu_session_res_modify_request_s& asn1_request,
+                                           const ngap_ue_logger&                               ue_logger);
+
 } // namespace srs_cu_cp
 } // namespace srsran

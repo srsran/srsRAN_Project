@@ -18,16 +18,19 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_modify_procedure::ngap_pdu_session_resource_modify_procedure(
-    const cu_cp_pdu_session_resource_modify_request& request_,
-    const ngap_ue_ids&                               ue_ids_,
-    ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
-    ngap_message_notifier&                           amf_notif_,
-    ngap_control_message_handler&                    ngap_ctrl_handler_,
-    ngap_ue_logger&                                  logger_) :
+    const cu_cp_pdu_session_resource_modify_request&    request_,
+    const asn1::ngap::pdu_session_res_modify_request_s& asn1_request_,
+    const ngap_ue_ids&                                  ue_ids_,
+    ngap_du_processor_control_notifier&                 du_processor_ctrl_notifier_,
+    ngap_message_notifier&                              amf_notifier_,
+    ngap_control_message_handler&                       ngap_ctrl_handler_,
+    ngap_ue_logger&                                     logger_) :
+
   request(request_),
+  asn1_request(asn1_request_),
   ue_ids(ue_ids_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notif_),
-  amf_notifier(amf_notif_),
+  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
+  amf_notifier(amf_notifier_),
   ngap_ctrl_handler(ngap_ctrl_handler_),
   logger(logger_)
 {
@@ -39,10 +42,26 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 
   logger.log_debug("\"{}\" initialized", name());
 
-  // Handle mandatory IEs
-  CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_modify_request(request));
+  // Verify PDU Session Resource Modify Request
+  verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, logger);
 
-  // TODO: Handle optional IEs
+  if (verification_outcome.request.pdu_session_res_modify_items.empty()) {
+    logger.log_info("Validation of PduSessionResourceModifyRequest failed");
+    response = verification_outcome.response;
+  } else {
+    // Handle mandatory IEs
+    CORO_AWAIT_VALUE(
+        response, du_processor_ctrl_notifier.on_new_pdu_session_resource_modify_request(verification_outcome.request));
+
+    // TODO: Handle optional IEs
+
+    // Combine validation response with DU processor response
+    combine_pdu_session_resource_modify_response();
+  }
+
+  if (!response.pdu_session_res_failed_to_modify_list.empty()) {
+    logger.log_warning("Some or all PduSessionResourceModifyItems failed to setup");
+  }
 
   send_pdu_session_resource_modify_response();
 
@@ -57,6 +76,16 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
   CORO_RETURN();
 }
 
+void ngap_pdu_session_resource_modify_procedure::combine_pdu_session_resource_modify_response()
+{
+  for (const auto& modify_item : verification_outcome.response.pdu_session_res_modify_list) {
+    response.pdu_session_res_modify_list.emplace(modify_item.pdu_session_id, modify_item);
+  }
+  for (const auto& failed_item : verification_outcome.response.pdu_session_res_failed_to_modify_list) {
+    response.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+  }
+}
+
 void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modify_response()
 {
   ngap_message ngap_msg = {};
@@ -64,12 +93,11 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   ngap_msg.pdu.set_successful_outcome();
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_MODIFY);
 
-  fill_asn1_pdu_session_res_modify_response(ngap_msg.pdu.successful_outcome().value.pdu_session_res_modify_resp(),
-                                            response);
+  auto& pdu_session_res_modify_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_modify_resp();
+  pdu_session_res_modify_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  pdu_session_res_modify_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
-  auto& pdu_session_res_setup_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_modify_resp();
-  pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
-  pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+  fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response);
 
   logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);
