@@ -10,6 +10,7 @@
 
 #include "ngap_handover_resource_allocation_procedure.h"
 #include "../ngap_asn1_helpers.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;

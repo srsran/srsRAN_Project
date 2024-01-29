@@ -11,6 +11,7 @@
 #include "ngap_initial_context_setup_procedure.h"
 #include "../ngap_asn1_helpers.h"
 #include "ngap_procedure_helpers.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/cause.h"

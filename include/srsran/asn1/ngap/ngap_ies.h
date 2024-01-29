@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 namespace asn1 {
 namespace ngap {
@@ -425,9 +425,6 @@ struct plmn_support_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -442,10 +439,8 @@ struct plmn_support_item_ext_ies_o {
     const onboarding_support_e&          onboarding_support() const;
 
   private:
-    types                                                         type_;
-    choice_buffer_t<extended_slice_support_list_l, npn_support_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1361,9 +1356,6 @@ struct global_ran_node_id_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1378,10 +1370,8 @@ struct global_ran_node_id_ext_ies_o {
     const global_w_agf_id_s& global_w_agf_id() const;
 
   private:
-    types                                                                  type_;
-    choice_buffer_t<global_tngf_id_s, global_twif_id_s, global_w_agf_id_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2752,9 +2742,6 @@ struct assist_data_for_paging_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2767,10 +2754,8 @@ struct assist_data_for_paging_ext_ies_o {
     const paging_assis_datafor_c_ecapab_ue_s& paging_assis_datafor_c_ecapab_ue() const;
 
   private:
-    types                                                                         type_;
-    choice_buffer_t<npn_paging_assist_info_c, paging_assis_datafor_c_ecapab_ue_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3850,9 +3835,6 @@ struct broadcast_plmn_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3867,10 +3849,8 @@ struct broadcast_plmn_item_ext_ies_o {
     const tai_nsag_support_list_l&       tai_nsag_support_list() const;
 
   private:
-    types                                                                                  type_;
-    choice_buffer_t<extended_slice_support_list_l, npn_support_c, tai_nsag_support_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4923,9 +4903,6 @@ struct core_network_assist_info_for_inactive_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4948,15 +4925,8 @@ struct core_network_assist_info_for_inactive_ext_ies_o {
     const pe_ip_sassist_info_s&                 pe_ip_sassist_info() const;
 
   private:
-    types type_;
-    choice_buffer_t<eutra_paginge_drx_info_s,
-                    fixed_bitstring<16, false, true>,
-                    nr_paginge_drx_info_s,
-                    pe_ip_sassist_info_s,
-                    ue_radio_cap_for_paging_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5811,9 +5781,6 @@ struct mob_restrict_list_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5830,10 +5797,8 @@ struct mob_restrict_list_ext_ies_o {
     const npn_mob_info_c&                     npn_mob_info() const;
 
   private:
-    types                                                                                         type_;
-    choice_buffer_t<cn_type_restricts_for_equivalent_l, fixed_octstring<3, true>, npn_mob_info_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -7220,9 +7185,6 @@ struct intersys_son_info_report_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -7235,10 +7197,8 @@ struct intersys_son_info_report_ext_ies_o {
     const intersys_res_status_report_s& intersys_res_status_upd() const;
 
   private:
-    types                                                                    type_;
-    choice_buffer_t<intersys_cell_state_ind_s, intersys_res_status_report_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -7471,9 +7431,6 @@ struct intersys_son_info_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -7486,10 +7443,8 @@ struct intersys_son_info_ext_ies_o {
     const intersys_son_info_reply_c&   intersys_son_info_reply() const;
 
   private:
-    types                                                                   type_;
-    choice_buffer_t<intersys_son_info_reply_c, intersys_son_info_request_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -8113,9 +8068,6 @@ struct dyn_5qi_descriptor_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -8130,10 +8082,8 @@ struct dyn_5qi_descriptor_ext_ies_o {
     const uint32_t& cn_packet_delay_budget_ul() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -8203,9 +8153,6 @@ struct erab_info_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -8218,10 +8165,8 @@ struct erab_info_item_ext_ies_o {
     const bounded_bitstring<1, 160, true, true>& source_node_tnla_ddr_info() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<bounded_bitstring<1, 160, true, true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -9103,9 +9048,6 @@ struct ho_cmd_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -9124,15 +9066,8 @@ struct ho_cmd_transfer_ext_ies_o {
     const qos_flow_list_with_cause_l&       qos_flow_failed_to_setup_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<data_forwarding_resp_erab_list_l,
-                    qos_flow_list_with_cause_l,
-                    qos_flow_per_tnl_info_list_l,
-                    up_transport_layer_info_c,
-                    up_transport_layer_info_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -9283,9 +9218,6 @@ struct user_location_info_w_agf_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -9300,10 +9232,8 @@ struct user_location_info_w_agf_ext_ies_o {
     const global_cable_id_new_s&     global_cable_id_new() const;
 
   private:
-    types                                                                                type_;
-    choice_buffer_t<global_cable_id_new_s, hfc_node_id_new_s, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -9391,9 +9321,6 @@ struct user_location_info_nr_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -9408,10 +9335,8 @@ struct user_location_info_nr_ext_ies_o {
     const nr_ntn_tai_info_s&                nr_ntn_tai_info() const;
 
   private:
-    types                                                                             type_;
-    choice_buffer_t<fixed_bitstring<44, false, true>, ngran_cgi_c, nr_ntn_tai_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -9531,9 +9456,6 @@ struct user_location_info_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -9548,10 +9470,8 @@ struct user_location_info_ext_ies_o {
     const user_location_info_w_agf_c& user_location_info_w_agf() const;
 
   private:
-    types                                                                                             type_;
-    choice_buffer_t<user_location_info_tngf_s, user_location_info_twif_s, user_location_info_w_agf_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -10100,9 +10020,6 @@ struct m1_cfg_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -10115,10 +10032,8 @@ struct m1_cfg_ext_ies_o {
     const beam_meass_report_cfg_s&  beam_meass_report_cfg() const;
 
   private:
-    types                                    type_;
-    choice_buffer_t<beam_meass_report_cfg_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -10270,9 +10185,6 @@ struct m6_cfg_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -10285,10 +10197,8 @@ struct m6_cfg_ext_ies_o {
     const excess_packet_delay_thres_cfg_l& excess_packet_delay_thres_cfg() const;
 
   private:
-    types                                            type_;
-    choice_buffer_t<excess_packet_delay_thres_cfg_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -11078,9 +10988,6 @@ struct trace_activation_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -11093,10 +11000,8 @@ struct trace_activation_ext_ies_o {
     const visible_string<0, MAX_ASN_STRING_LENGTH, false, true>& trace_collection_entity_uri() const;
 
   private:
-    types                                                                             type_;
-    choice_buffer_t<mdt_cfg_s, visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -11614,9 +11519,6 @@ struct ho_request_ack_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -11641,16 +11543,8 @@ struct ho_request_ack_transfer_ext_ies_o {
     const mbs_support_ind_e&                mbs_support_ind() const;
 
   private:
-    types type_;
-    choice_buffer_t<add_dl_up_tnl_info_for_ho_list_l,
-                    data_forwarding_resp_erab_list_l,
-                    global_ran_node_id_c,
-                    redundant_pdu_session_info_s,
-                    up_transport_layer_info_c,
-                    up_transport_layer_info_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -11825,9 +11719,6 @@ struct target_id_ext_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -11840,10 +11731,8 @@ struct target_id_ext_ies_o {
     const target_home_enb_id_s& target_home_enb_id() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<target_home_enb_id_s, target_rnc_id_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -12671,9 +12560,6 @@ struct pdu_session_res_modify_item_mod_req_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -12686,10 +12572,8 @@ struct pdu_session_res_modify_item_mod_req_ext_ies_o {
     const expected_ue_activity_behaviour_s& pdu_session_expected_ue_activity_behaviour() const;
 
   private:
-    types                                                        type_;
-    choice_buffer_t<expected_ue_activity_behaviour_s, s_nssai_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -12819,9 +12703,6 @@ struct supported_ta_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -12834,10 +12715,8 @@ struct supported_ta_item_ext_ies_o {
     const rat_info_e&    rat_info() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -14405,9 +14284,6 @@ struct non_dyn_5qi_descriptor_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -14420,10 +14296,8 @@ struct non_dyn_5qi_descriptor_ext_ies_o {
     const uint32_t& cn_packet_delay_budget_ul() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -14567,9 +14441,6 @@ struct qos_flow_level_qos_params_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -14582,10 +14453,8 @@ struct qos_flow_level_qos_params_ext_ies_o {
     const uint16_t&                 qos_monitoring_report_freq() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -15226,9 +15095,6 @@ struct mbs_session_setup_or_mod_request_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -15243,10 +15109,8 @@ struct mbs_session_setup_or_mod_request_transfer_ies_o {
     const mbs_session_fsa_id_list_l&        mbs_session_fsa_id_list() const;
 
   private:
-    types                                                                                                    type_;
-    choice_buffer_t<mbs_qos_flows_to_be_setup_list_l, mbs_session_fsa_id_list_l, mbs_session_tnl_info5_gc_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -15452,9 +15316,6 @@ struct multicast_session_upd_request_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -15473,15 +15334,8 @@ struct multicast_session_upd_request_transfer_ies_o {
     const mbs_session_tnl_info5_gc_c&       mbs_session_tnl_info5_gc() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_qos_flows_to_be_setup_list_l,
-                    mbs_service_area_c,
-                    mbs_session_id_s,
-                    mbs_session_tnl_info5_gc_c,
-                    qos_flow_list_with_cause_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -15614,9 +15468,6 @@ struct qos_flow_info_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -15631,10 +15482,8 @@ struct qos_flow_info_item_ext_ies_o {
     const bounded_bitstring<1, 160, true, true>& source_node_tnla_ddr_info() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<bounded_bitstring<1, 160, true, true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -15757,9 +15606,6 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -15772,10 +15618,8 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_o {
     const up_transport_layer_info_pair_list_l& add_redundant_ngu_up_tnl_info() const;
 
   private:
-    types                                                                           type_;
-    choice_buffer_t<up_transport_layer_info_c, up_transport_layer_info_pair_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -15944,9 +15788,6 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -15965,15 +15806,8 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
     const global_ran_node_id_c&         global_ran_node_id() const;
 
   private:
-    types type_;
-    choice_buffer_t<global_ran_node_id_c,
-                    qos_flow_per_tnl_info_list_l,
-                    qos_flow_per_tnl_info_s,
-                    secondary_rat_usage_info_s,
-                    security_result_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16137,9 +15971,6 @@ struct qos_flow_add_or_modify_request_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16152,10 +15983,8 @@ struct qos_flow_add_or_modify_request_item_ext_ies_o {
     const redundant_qos_flow_ind_e&      redundant_qos_flow_ind() const;
 
   private:
-    types                                          type_;
-    choice_buffer_t<tsc_traffic_characteristics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16179,9 +16008,6 @@ struct ul_ngu_up_tnl_modify_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16194,10 +16020,8 @@ struct ul_ngu_up_tnl_modify_item_ext_ies_o {
     const up_transport_layer_info_c& redundant_dl_ngu_up_tnl_info() const;
 
   private:
-    types                                      type_;
-    choice_buffer_t<up_transport_layer_info_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16365,9 +16189,6 @@ struct pdu_session_res_modify_request_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16402,20 +16223,8 @@ struct pdu_session_res_modify_request_transfer_ies_o {
     const mbs_session_to_release_list_l&             mbs_session_to_release_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_session_setupor_modify_request_list_l,
-                    mbs_session_to_release_list_l,
-                    pdu_session_aggr_max_bit_rate_s,
-                    qos_flow_add_or_modify_request_list_l,
-                    qos_flow_list_with_cause_l,
-                    security_ind_s,
-                    ul_ngu_up_tnl_modify_list_l,
-                    unbounded_octstring<true>,
-                    up_transport_layer_info_c,
-                    up_transport_layer_info_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16535,9 +16344,6 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16564,16 +16370,8 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_o {
     const mbs_session_failedto_setup_list_l&   mbs_session_failedto_setupor_modify_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_session_failedto_setup_list_l,
-                    mbs_session_setup_resp_list_l,
-                    qos_flow_per_tnl_info_list_l,
-                    secondary_rat_usage_info_s,
-                    up_transport_layer_info_c,
-                    up_transport_layer_info_pair_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16796,9 +16594,6 @@ struct pdu_session_res_notify_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16811,10 +16606,8 @@ struct pdu_session_res_notify_transfer_ext_ies_o {
     const qos_flow_feedback_list_l&   qos_flow_feedback_list() const;
 
   private:
-    types                                                                 type_;
-    choice_buffer_t<qos_flow_feedback_list_l, secondary_rat_usage_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -16931,9 +16724,6 @@ struct qos_flow_setup_request_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -16946,10 +16736,8 @@ struct qos_flow_setup_request_item_ext_ies_o {
     const redundant_qos_flow_ind_e&      redundant_qos_flow_ind() const;
 
   private:
-    types                                          type_;
-    choice_buffer_t<tsc_traffic_characteristics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17040,9 +16828,6 @@ struct pdu_session_res_setup_request_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17081,18 +16866,8 @@ struct pdu_session_res_setup_request_transfer_ies_o {
     const mbs_session_setup_request_list_l&      mbs_session_setup_request_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_session_setup_request_list_l,
-                    pdu_session_aggr_max_bit_rate_s,
-                    qos_flow_setup_request_list_l,
-                    redundant_pdu_session_info_s,
-                    security_ind_s,
-                    unbounded_octstring<true>,
-                    up_transport_layer_info_c,
-                    up_transport_layer_info_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17164,9 +16939,6 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17189,16 +16961,8 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_o {
     const mbs_session_failedto_setup_list_l& mbs_session_failedto_setup_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<global_ran_node_id_c,
-                    mbs_session_failedto_setup_list_l,
-                    mbs_session_setup_resp_list_l,
-                    qos_flow_per_tnl_info_list_l,
-                    qos_flow_per_tnl_info_s,
-                    redundant_pdu_session_info_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17283,9 +17047,6 @@ struct qos_flow_params_item_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17300,10 +17061,8 @@ struct qos_flow_params_item_ext_ies_o {
     const unbounded_octstring<true>& burst_arrival_time_dl() const;
 
   private:
-    types                                      type_;
-    choice_buffer_t<unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17365,9 +17124,6 @@ struct path_switch_request_ack_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17384,10 +17140,8 @@ struct path_switch_request_ack_transfer_ext_ies_o {
     const qos_flow_params_list_l&              qos_flow_params_list() const;
 
   private:
-    types                                                                                                   type_;
-    choice_buffer_t<qos_flow_params_list_l, up_transport_layer_info_c, up_transport_layer_info_pair_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17530,9 +17284,6 @@ struct path_switch_request_transfer_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17555,14 +17306,8 @@ struct path_switch_request_transfer_ext_ies_o {
     const mbs_support_ind_e&            mbs_support_ind() const;
 
   private:
-    types type_;
-    choice_buffer_t<global_ran_node_id_c,
-                    qos_flow_per_tnl_info_list_l,
-                    redundant_pdu_session_info_s,
-                    up_transport_layer_info_c>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17804,9 +17549,6 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17829,15 +17571,8 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
     const ngap_ie_support_info_request_list_l&            ngap_ie_support_info_request_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_active_session_info_sourceto_target_list_l,
-                    ngap_ie_support_info_request_list_l,
-                    q_mcc_onfig_info_s,
-                    source_node_id_c,
-                    ue_history_info_from_the_ue_c>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -17958,9 +17693,6 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o {
 
     // choice methods
     ext_c() = default;
-    ext_c(const ext_c& other);
-    ext_c& operator=(const ext_c& other);
-    ~ext_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -17977,13 +17709,8 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o {
     const ngap_ie_support_info_resp_list_l&               ngap_ie_support_info_resp_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<daps_resp_info_list_l,
-                    mbs_active_session_info_targetto_source_list_l,
-                    ngap_ie_support_info_resp_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -18094,11 +17821,48 @@ struct ue_context_suspend_request_transfer_s {
 } // namespace asn1
 
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::cp_transport_layer_info_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::plmn_support_item_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::global_ran_node_id_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::assist_data_for_paging_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::broadcast_plmn_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::core_network_assist_info_for_inactive_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::mob_restrict_list_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::son_info_report_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::intersys_son_info_report_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::intersys_son_info_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::son_info_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::dyn_5qi_descriptor_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::erab_info_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::ho_cmd_transfer_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::user_location_info_w_agf_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::user_location_info_nr_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::user_location_info_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::m1_cfg_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::m6_cfg_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::trace_activation_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::ho_request_ack_transfer_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::ngap::target_id_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_item_mod_req_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::supported_ta_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::non_dyn_5qi_descriptor_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_level_qos_params_ext_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::mbs_session_setup_or_mod_request_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_upd_request_transfer_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_info_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_confirm_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_ind_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_add_or_modify_request_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::ul_ngu_up_tnl_modify_item_ext_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_request_transfer_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_resp_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_notify_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_setup_request_item_ext_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_setup_request_transfer_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_setup_resp_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_params_item_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::path_switch_request_ack_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::ngap::path_switch_request_transfer_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<
+    asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<
+    asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o>;

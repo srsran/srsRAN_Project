@@ -11,6 +11,7 @@
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
 #include <gtest/gtest.h>

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/asn1/ngap/ngap.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"

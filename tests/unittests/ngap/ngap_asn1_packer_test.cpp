@@ -14,6 +14,7 @@
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 

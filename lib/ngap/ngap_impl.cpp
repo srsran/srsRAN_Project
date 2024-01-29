@@ -20,6 +20,7 @@
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_ue_context_release_procedure.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cause.h"
 #include "srsran/support/srsran_assert.h"

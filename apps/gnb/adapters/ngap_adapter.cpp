@@ -9,6 +9,8 @@
  */
 
 #include "ngap_adapter.h"
+#include "srsran/asn1/ngap/common.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_message.h"
 
