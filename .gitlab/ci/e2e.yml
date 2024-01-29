@@ -115,7 +115,7 @@ e2e request validation:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     GROUP: zmq
   tags:
-    - on-prem-amd64
+    - "${RETINA_TAG}"
   extends:
     - .prepare_test
   rules:
@@ -441,7 +441,7 @@ viavi:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
   tags:
-    - on-prem-amd64
+    - "${RETINA_TAG}"
   script:
     - |
       retina-garbage-collector --mode demolition
