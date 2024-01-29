@@ -522,6 +522,114 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_release_response(pdu_sess
   return pdu_session_res_release_resp;
 }
 
+ngap_message srsran::srs_cu_cp::generate_pdu_session_resource_modify_request_base(amf_ue_id_t amf_ue_id,
+                                                                                  ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_MODIFY);
+
+  auto& pdu_session_res_modify_req           = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+  pdu_session_res_modify_req->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  pdu_session_res_modify_req->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+
+  return ngap_msg;
+}
+
+ngap_message
+srsran::srs_cu_cp::generate_valid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
+                                                                              ran_ue_id_t      ran_ue_id,
+                                                                              pdu_session_id_t pdu_session_id,
+                                                                              qos_flow_id_t    qos_flow_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_modify_request_base(amf_ue_id, ran_ue_id);
+
+  auto& pdu_session_res_modify_req = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+  pdu_session_res_modify_item_mod_req_s pdu_session_res_item;
+
+  pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+
+  // Add PDU Session Resource Modify Request Transfer
+  pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
+
+  // Add qos flow add or modify request item
+  pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present = true;
+  qos_flow_add_or_modify_request_item_s qos_flow_add_item;
+
+  // qosFlowIdentifier
+  qos_flow_add_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+
+  pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
+
+  pdu_session_res_item.pdu_session_res_modify_request_transfer = pack_into_pdu(pdu_session_res_modify_request_transfer);
+
+  pdu_session_res_modify_req->pdu_session_res_modify_list_mod_req.push_back(pdu_session_res_item);
+
+  return ngap_msg;
+}
+
+ngap_message
+srsran::srs_cu_cp::generate_invalid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
+                                                                                ran_ue_id_t      ran_ue_id,
+                                                                                pdu_session_id_t pdu_session_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_modify_request_base(amf_ue_id, ran_ue_id);
+
+  auto& pdu_session_res_modify_req = ngap_msg.pdu.init_msg().value.pdu_session_res_modify_request();
+
+  // Add pdu sessions with duplicate IDs
+  for (auto it = 0; it < 2; ++it) {
+    pdu_session_res_modify_item_mod_req_s pdu_session_res_item;
+
+    pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+
+    // Add PDU Session Resource Modify Request Transfer
+    pdu_session_res_modify_request_transfer_s pdu_session_res_modify_request_transfer;
+
+    // Add qos flow add or modify request item
+    pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list_present = true;
+    qos_flow_add_or_modify_request_item_s qos_flow_add_item;
+
+    // qosFlowIdentifier
+    qos_flow_add_item.qos_flow_id = 1;
+
+    pdu_session_res_modify_request_transfer->qos_flow_add_or_modify_request_list.push_back(qos_flow_add_item);
+
+    pdu_session_res_item.pdu_session_res_modify_request_transfer =
+        pack_into_pdu(pdu_session_res_modify_request_transfer);
+
+    pdu_session_res_modify_req->pdu_session_res_modify_list_mod_req.push_back(pdu_session_res_item);
+  }
+
+  return ngap_msg;
+}
+
+cu_cp_pdu_session_resource_modify_response
+srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
+                                                                       qos_flow_id_t    qos_flow_id)
+{
+  cu_cp_pdu_session_resource_modify_response pdu_session_res_modify_resp;
+
+  cu_cp_pdu_session_resource_modify_response_item pdu_session_modify_response_item;
+  pdu_session_modify_response_item.pdu_session_id = pdu_session_id;
+
+  cu_cp_qos_flow_per_tnl_information qos_flow_per_tnl_info;
+  qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid(1)};
+
+  cu_cp_associated_qos_flow assoc_qos_flow;
+  assoc_qos_flow.qos_flow_id = qos_flow_id;
+
+  qos_flow_per_tnl_info.associated_qos_flow_list.emplace(qos_flow_id, assoc_qos_flow);
+
+  pdu_session_modify_response_item.transfer.add_dl_qos_flow_per_tnl_info.push_back(qos_flow_per_tnl_info);
+
+  pdu_session_res_modify_resp.pdu_session_res_modify_list.emplace(pdu_session_id, pdu_session_modify_response_item);
+
+  return pdu_session_res_modify_resp;
+}
+
 ngap_message srsran::srs_cu_cp::generate_valid_minimal_paging_message()
 {
   ngap_message ngap_msg;

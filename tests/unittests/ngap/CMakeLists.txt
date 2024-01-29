@@ -18,6 +18,7 @@ set(SOURCES
         ngap_ue_context_management_procedure_test.cpp
         ngap_pdu_session_resource_setup_procedure_test.cpp
         ngap_pdu_session_resource_release_procedure_test.cpp
+        ngap_pdu_session_resource_modify_procedure_test.cpp
         ngap_paging_test.cpp
         ngap_error_indication_test.cpp
         ngap_handover_test.cpp

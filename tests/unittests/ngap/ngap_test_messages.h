@@ -162,6 +162,26 @@ ngap_message generate_invalid_pdu_session_resource_release_command(amf_ue_id_t a
 cu_cp_pdu_session_resource_release_response
 generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id);
 
+/// \brief Generate a dummy PDU Session Resource Modify Request base.
+ngap_message generate_pdu_session_resource_modify_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate a valid dummy PDU Session Resource Modify Request Message.
+ngap_message
+generate_valid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
+                                                           ran_ue_id_t      ran_ue_id,
+                                                           pdu_session_id_t pdu_session_id,
+                                                           qos_flow_id_t    qos_flow_id = uint_to_qos_flow_id(1));
+
+/// \brief Generate an invalid dummy PDU Session Resource Modify Request Message.
+ngap_message generate_invalid_pdu_session_resource_modify_request_message(amf_ue_id_t      amf_ue_id,
+                                                                          ran_ue_id_t      ran_ue_id,
+                                                                          pdu_session_id_t pdu_session_id);
+
+/// \brief Generate a dummy PDU Session Resource Modify Response.
+cu_cp_pdu_session_resource_modify_response
+generate_cu_cp_pdu_session_resource_modify_response(pdu_session_id_t pdu_session_id,
+                                                    qos_flow_id_t    qos_flow_id = uint_to_qos_flow_id(1));
+
 /// \brief Generate a valid dummy Paging message with only mandatory fields set.
 ngap_message generate_valid_minimal_paging_message();
 
