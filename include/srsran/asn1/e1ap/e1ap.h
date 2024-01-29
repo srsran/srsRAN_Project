@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 namespace asn1 {
 namespace e1ap {

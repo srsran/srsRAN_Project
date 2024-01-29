@@ -9,6 +9,9 @@
  */
 
 #include "f1ap_test_messages.h"
+#include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/test_utils.h"

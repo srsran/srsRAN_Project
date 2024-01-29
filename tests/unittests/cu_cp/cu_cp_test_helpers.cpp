@@ -9,8 +9,8 @@
  */
 
 #include "cu_cp_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
-#include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ran/cu_types.h"
 #include <chrono>
 #include <utility>

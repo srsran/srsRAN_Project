@@ -9,8 +9,6 @@
  */
 
 #include "srsran/asn1/f1ap/f1ap_pdu_items.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::f1ap;
 
@@ -74,6 +72,12 @@ SRSASN_CODE associated_scell_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* associated_scell_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Associated-SCell-Item"};
+  return convert_enum_idx(names, 1, value, "associated_scell_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<associated_scell_item_ies_o>;
 
 // BAP-Header-Rewriting-Added-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -130,6 +134,12 @@ SRSASN_CODE bap_hdr_rewriting_added_list_item_ies_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bap_hdr_rewriting_added_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BAP-Header-Rewriting-Added-List-Item"};
+  return convert_enum_idx(names, 1, value, "bap_hdr_rewriting_added_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bap_hdr_rewriting_added_list_item_ies_o>;
@@ -190,6 +200,12 @@ SRSASN_CODE bap_hdr_rewriting_remd_list_item_ies_o::value_c::unpack(cbit_ref& br
   return SRSASN_SUCCESS;
 }
 
+const char* bap_hdr_rewriting_remd_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BAP-Header-Rewriting-Removed-List-Item"};
+  return convert_enum_idx(names, 1, value, "bap_hdr_rewriting_remd_list_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bap_hdr_rewriting_remd_list_item_ies_o>;
 
 // BH-Routing-Information-Added-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -248,6 +264,12 @@ SRSASN_CODE bh_routing_info_added_list_item_ies_o::value_c::unpack(cbit_ref& bre
   return SRSASN_SUCCESS;
 }
 
+const char* bh_routing_info_added_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BH-Routing-Information-Added-List-Item"};
+  return convert_enum_idx(names, 1, value, "bh_routing_info_added_list_item_ies_o::value_c::types");
+}
+
 // BH-Routing-Information-Removed-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t bh_routing_info_remd_list_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -302,6 +324,12 @@ SRSASN_CODE bh_routing_info_remd_list_item_ies_o::value_c::unpack(cbit_ref& bref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_routing_info_remd_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BH-Routing-Information-Removed-List-Item"};
+  return convert_enum_idx(names, 1, value, "bh_routing_info_remd_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_routing_info_added_list_item_ies_o>;
@@ -364,6 +392,12 @@ SRSASN_CODE bh_chs_failed_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_failed_to_be_modified_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_failed_to_be_modified_item_ies_o>;
 
 // BHChannels-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -420,6 +454,12 @@ SRSASN_CODE bh_chs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_chs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_failed_to_be_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_chs_failed_to_be_setup_item_ies_o>;
@@ -481,6 +521,12 @@ SRSASN_CODE bh_chs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_failed_to_be_setup_mod_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_failed_to_be_setup_mod_item_ies_o>;
 
 // BHChannels-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -537,6 +583,12 @@ SRSASN_CODE bh_chs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_chs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_chs_modified_item_ies_o>;
@@ -598,6 +650,12 @@ SRSASN_CODE bh_chs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_required_to_be_released_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_required_to_be_released_item_ies_o>;
 
 // BHChannels-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -654,6 +712,12 @@ SRSASN_CODE bh_chs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_chs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_chs_setup_item_ies_o>;
@@ -714,6 +778,12 @@ SRSASN_CODE bh_chs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_setup_mod_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_setup_mod_item_ies_o>;
 
 // BHChannels-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -770,6 +840,12 @@ SRSASN_CODE bh_chs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_chs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_to_be_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_chs_to_be_modified_item_ies_o>;
@@ -830,6 +906,12 @@ SRSASN_CODE bh_chs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_to_be_released_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_to_be_released_item_ies_o>;
 
 // BHChannels-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -888,6 +970,12 @@ SRSASN_CODE bh_chs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* bh_chs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_to_be_setup_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<bh_chs_to_be_setup_item_ies_o>;
 
 // BHChannels-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -944,6 +1032,12 @@ SRSASN_CODE bh_chs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* bh_chs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BHChannels-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "bh_chs_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<bh_chs_to_be_setup_mod_item_ies_o>;
@@ -1005,6 +1099,12 @@ SRSASN_CODE broadcast_to_be_cancelled_list_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_to_be_cancelled_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Broadcast-To-Be-Cancelled-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_to_be_cancelled_list_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>;
 
 // BroadcastMRBs-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1064,6 +1164,12 @@ SRSASN_CODE broadcast_m_rbs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_to_be_modified_item_ies_o::value_c::types");
+}
+
 // BroadcastMRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_m_rbs_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1121,6 +1227,12 @@ SRSASN_CODE broadcast_m_rbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_to_be_released_item_ies_o::value_c::types");
+}
+
 // BroadcastMRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_m_rbs_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1176,6 +1288,12 @@ SRSASN_CODE broadcast_m_rbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* broadcast_m_rbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<broadcast_m_rbs_to_be_modified_item_ies_o>;
@@ -1241,6 +1359,12 @@ SRSASN_CODE broadcast_m_rbs_failed_to_be_modified_item_ies_o::value_c::unpack(cb
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_failed_to_be_modified_item_ies_o::value_c::types");
+}
+
 // BroadcastMRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1296,6 +1420,12 @@ SRSASN_CODE broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(c
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // BroadcastMRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1354,6 +1484,12 @@ SRSASN_CODE broadcast_m_rbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_modified_item_ies_o::value_c::types");
+}
+
 // BroadcastMRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_m_rbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1408,6 +1544,12 @@ SRSASN_CODE broadcast_m_rbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* broadcast_m_rbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<broadcast_m_rbs_failed_to_be_modified_item_ies_o>;
@@ -1474,6 +1616,12 @@ SRSASN_CODE broadcast_m_rbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& br
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_to_be_setup_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<broadcast_m_rbs_to_be_setup_item_ies_o>;
 
 // BroadcastMRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1533,6 +1681,12 @@ SRSASN_CODE broadcast_m_rbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_
   return SRSASN_SUCCESS;
 }
 
+const char* broadcast_m_rbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_failed_to_be_setup_item_ies_o::value_c::types");
+}
+
 // BroadcastMRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_m_rbs_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1587,6 +1741,12 @@ SRSASN_CODE broadcast_m_rbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* broadcast_m_rbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"BroadcastMRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_m_rbs_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<broadcast_m_rbs_failed_to_be_setup_item_ies_o>;
@@ -1649,6 +1809,12 @@ SRSASN_CODE candidate_sp_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* candidate_sp_cell_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Candidate-SpCell-Item"};
+  return convert_enum_idx(names, 1, value, "candidate_sp_cell_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>;
 
 // Cells-Broadcast-Cancelled-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1706,6 +1872,12 @@ SRSASN_CODE cells_broadcast_cancelled_list_item_ies_o::value_c::unpack(cbit_ref&
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* cells_broadcast_cancelled_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-Broadcast-Cancelled-Item"};
+  return convert_enum_idx(names, 1, value, "cells_broadcast_cancelled_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>;
@@ -1767,6 +1939,12 @@ SRSASN_CODE cells_broadcast_completed_list_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* cells_broadcast_completed_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-Broadcast-Completed-Item"};
+  return convert_enum_idx(names, 1, value, "cells_broadcast_completed_list_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>;
 
 // Cells-Failed-to-be-Activated-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1824,6 +2002,12 @@ SRSASN_CODE cells_failed_to_be_activ_list_item_ies_o::value_c::unpack(cbit_ref& 
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* cells_failed_to_be_activ_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-Failed-to-be-Activated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_failed_to_be_activ_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>;
@@ -1884,6 +2068,12 @@ SRSASN_CODE cells_status_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* cells_status_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-Status-Item"};
+  return convert_enum_idx(names, 1, value, "cells_status_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<cells_status_item_ies_o>;
 
 // Cells-To-Be-Broadcast-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -1940,6 +2130,12 @@ SRSASN_CODE cells_to_be_broadcast_list_item_ies_o::value_c::unpack(cbit_ref& bre
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* cells_to_be_broadcast_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-To-Be-Broadcast-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_broadcast_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>;
@@ -2000,6 +2196,12 @@ SRSASN_CODE cells_to_be_activ_list_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* cells_to_be_activ_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-to-be-Activated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_activ_list_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>;
 
 // Cells-to-be-Barred-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2058,6 +2260,12 @@ SRSASN_CODE cells_to_be_barred_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* cells_to_be_barred_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-to-be-Barred-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_barred_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>;
 
 // Cells-to-be-Deactivated-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2114,6 +2322,12 @@ SRSASN_CODE cells_to_be_deactiv_list_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* cells_to_be_deactiv_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Cells-to-be-Deactivated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_deactiv_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>;
@@ -2175,6 +2389,12 @@ SRSASN_CODE dl_up_tnl_address_to_upd_list_item_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* dl_up_tnl_address_to_upd_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DL-UP-TNL-Address-to-Update-List-Item"};
+  return convert_enum_idx(names, 1, value, "dl_up_tnl_address_to_upd_list_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<dl_up_tnl_address_to_upd_list_item_ies_o>;
 
 // DRB-Activity-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2231,6 +2451,12 @@ SRSASN_CODE drb_activity_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drb_activity_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRB-Activity-Item"};
+  return convert_enum_idx(names, 1, value, "drb_activity_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drb_activity_item_ies_o>;
@@ -2291,6 +2517,12 @@ SRSASN_CODE drb_notify_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drb_notify_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRB-Notify-Item"};
+  return convert_enum_idx(names, 1, value, "drb_notify_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drb_notify_item_ies_o>;
 
 // DRBs-FailedToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2347,6 +2579,12 @@ SRSASN_CODE drbs_failed_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bre
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o>;
@@ -2407,6 +2645,12 @@ SRSASN_CODE drbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_setup_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o>;
 
 // DRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2463,6 +2707,12 @@ SRSASN_CODE drbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& br
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o>;
@@ -2523,6 +2773,12 @@ SRSASN_CODE drbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_modified_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_modified_item_ies_o>;
 
 // DRBs-ModifiedConf-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2579,6 +2835,12 @@ SRSASN_CODE drbs_modified_conf_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_modified_conf_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-ModifiedConf-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_modified_conf_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>;
@@ -2639,6 +2901,12 @@ SRSASN_CODE drbs_required_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_required_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-Required-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_required_to_be_modified_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>;
 
 // DRBs-Required-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2695,6 +2963,12 @@ SRSASN_CODE drbs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_required_to_be_released_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o>;
@@ -2755,6 +3029,12 @@ SRSASN_CODE drbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_setup_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_setup_item_ies_o>;
 
 // DRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2811,6 +3091,12 @@ SRSASN_CODE drbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>;
@@ -2871,6 +3157,12 @@ SRSASN_CODE drbs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_modified_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o>;
 
 // DRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2927,6 +3219,12 @@ SRSASN_CODE drbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* drbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_released_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_released_item_ies_o>;
@@ -2987,6 +3285,12 @@ SRSASN_CODE drbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_setup_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o>;
 
 // DRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3045,6 +3349,12 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* drbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"DRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_setup_mod_item_ies_o::value_c::types");
+}
+
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o>;
 
 // Dedicated-SIDelivery-NeededUE-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3101,6 +3411,12 @@ SRSASN_CODE ded_si_delivery_needed_ue_item_ies_o::value_c::unpack(cbit_ref& bref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ded_si_delivery_needed_ue_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Dedicated-SIDelivery-NeededUE-Item"};
+  return convert_enum_idx(names, 1, value, "ded_si_delivery_needed_ue_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>;
@@ -3162,6 +3478,12 @@ SRSASN_CODE gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::unpack(cbit_re
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-CU-TNL-Association-Failed-To-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::types");
+}
+
 // GNB-CU-TNL-Association-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3216,6 +3538,12 @@ SRSASN_CODE gnb_cu_tnl_assoc_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_cu_tnl_assoc_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-CU-TNL-Association-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_setup_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-To-Add-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3274,6 +3602,12 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Add-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::types");
+}
+
 // GNB-CU-TNL-Association-To-Remove-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_to_rem_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3328,6 +3662,12 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Remove-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-To-Update-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3386,6 +3726,12 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Update-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::types");
+}
+
 // GNB-DU-Served-Cells-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_served_cells_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3442,6 +3788,12 @@ SRSASN_CODE gnb_du_served_cells_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_served_cells_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-DU-Served-Cells-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_du_served_cells_item_ies_o::value_c::types");
+}
+
 // GNB-DU-TNL-Association-To-Remove-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_tnl_assoc_to_rem_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3496,6 +3848,12 @@ SRSASN_CODE gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"GNB-DU-TNL-Association-To-Remove-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::types");
 }
 
 // IAB-Allocated-TNL-Address-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3555,6 +3913,12 @@ SRSASN_CODE iab_allocated_tnl_address_list_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* iab_allocated_tnl_address_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"IAB-Allocated-TNL-Address-Item"};
+  return convert_enum_idx(names, 1, value, "iab_allocated_tnl_address_list_item_ies_o::value_c::types");
+}
+
 // IAB-TNL-Addresses-To-Remove-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_tnl_addresses_to_rem_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3611,6 +3975,12 @@ SRSASN_CODE iab_tnl_addresses_to_rem_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_tnl_addresses_to_rem_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"IAB-TNL-Addresses-To-Remove-Item"};
+  return convert_enum_idx(names, 1, value, "iab_tnl_addresses_to_rem_item_ies_o::value_c::types");
+}
+
 // MC-PagingCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t mc_paging_cell_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3665,6 +4035,12 @@ SRSASN_CODE mc_paging_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* mc_paging_cell_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MC-PagingCell-Item"};
+  return convert_enum_idx(names, 1, value, "mc_paging_cell_item_ies_o::value_c::types");
 }
 
 // MulticastF1UContext-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3724,6 +4100,17 @@ SRSASN_CODE multicast_f1_u_context_failed_to_be_setup_item_ies_o::value_c::unpac
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_f1_u_context_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastF1UContext-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_f1_u_context_failed_to_be_setup_item_ies_o::value_c::types");
+}
+uint8_t multicast_f1_u_context_failed_to_be_setup_item_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "multicast_f1_u_context_failed_to_be_setup_item_ies_o::value_c::types");
+}
+
 // MulticastF1UContext-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_f1_u_context_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3778,6 +4165,17 @@ SRSASN_CODE multicast_f1_u_context_setup_item_ies_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* multicast_f1_u_context_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastF1UContext-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_f1_u_context_setup_item_ies_o::value_c::types");
+}
+uint8_t multicast_f1_u_context_setup_item_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "multicast_f1_u_context_setup_item_ies_o::value_c::types");
 }
 
 // MulticastF1UContext-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3837,6 +4235,17 @@ SRSASN_CODE multicast_f1_u_context_to_be_setup_item_ies_o::value_c::unpack(cbit_
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_f1_u_context_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastF1UContext-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_f1_u_context_to_be_setup_item_ies_o::value_c::types");
+}
+uint8_t multicast_f1_u_context_to_be_setup_item_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "multicast_f1_u_context_to_be_setup_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-FailedToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_failed_to_be_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -3892,6 +4301,12 @@ SRSASN_CODE multicast_m_rbs_failed_to_be_modified_item_ies_o::value_c::unpack(cb
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* multicast_m_rbs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_failed_to_be_modified_item_ies_o::value_c::types");
 }
 
 // MulticastMRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3951,6 +4366,12 @@ SRSASN_CODE multicast_m_rbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_failed_to_be_setup_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_failed_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4006,6 +4427,12 @@ SRSASN_CODE multicast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(c
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* multicast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // MulticastMRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4064,6 +4491,12 @@ SRSASN_CODE multicast_m_rbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_modified_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4120,6 +4553,12 @@ SRSASN_CODE multicast_m_rbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_setup_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4174,6 +4613,12 @@ SRSASN_CODE multicast_m_rbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* multicast_m_rbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_setup_mod_item_ies_o::value_c::types");
 }
 
 // MulticastMRBs-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4233,6 +4678,12 @@ SRSASN_CODE multicast_m_rbs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_to_be_modified_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4290,6 +4741,12 @@ SRSASN_CODE multicast_m_rbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_to_be_released_item_ies_o::value_c::types");
+}
+
 // MulticastMRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_m_rbs_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4344,6 +4801,12 @@ SRSASN_CODE multicast_m_rbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& br
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* multicast_m_rbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_to_be_setup_item_ies_o::value_c::types");
 }
 
 // MulticastMRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4403,6 +4866,12 @@ SRSASN_CODE multicast_m_rbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_m_rbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MulticastMRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "multicast_m_rbs_to_be_setup_mod_item_ies_o::value_c::types");
+}
+
 // NR-CGI-List-For-Restart-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t nr_cgi_list_for_restart_list_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4457,6 +4926,12 @@ SRSASN_CODE nr_cgi_list_for_restart_list_item_ies_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* nr_cgi_list_for_restart_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"NR-CGI-List-For-Restart-Item"};
+  return convert_enum_idx(names, 1, value, "nr_cgi_list_for_restart_list_item_ies_o::value_c::types");
 }
 
 // Neighbour-Cell-Information-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4515,6 +4990,12 @@ SRSASN_CODE neighbour_cell_info_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* neighbour_cell_info_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Neighbour-Cell-Information-Item"};
+  return convert_enum_idx(names, 1, value, "neighbour_cell_info_item_ies_o::value_c::types");
+}
+
 // PWS-Failed-NR-CGI-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_failed_nr_cgi_list_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4569,6 +5050,12 @@ SRSASN_CODE pws_failed_nr_cgi_list_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* pws_failed_nr_cgi_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"PWS-Failed-NR-CGI-Item"};
+  return convert_enum_idx(names, 1, value, "pws_failed_nr_cgi_list_item_ies_o::value_c::types");
 }
 
 // PagingCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4627,6 +5114,12 @@ SRSASN_CODE paging_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* paging_cell_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"PagingCell-Item"};
+  return convert_enum_idx(names, 1, value, "paging_cell_item_ies_o::value_c::types");
+}
+
 // Potential-SpCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t potential_sp_cell_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4681,6 +5174,12 @@ SRSASN_CODE potential_sp_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* potential_sp_cell_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Potential-SpCell-Item"};
+  return convert_enum_idx(names, 1, value, "potential_sp_cell_item_ies_o::value_c::types");
 }
 
 // Protected-EUTRA-Resources-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4739,6 +5238,12 @@ SRSASN_CODE protected_eutra_res_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* protected_eutra_res_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Protected-EUTRA-Resources-Item"};
+  return convert_enum_idx(names, 1, value, "protected_eutra_res_item_ies_o::value_c::types");
+}
+
 // SCell-FailedtoSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_failedto_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4793,6 +5298,12 @@ SRSASN_CODE scell_failedto_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* scell_failedto_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SCell-FailedtoSetup-Item"};
+  return convert_enum_idx(names, 1, value, "scell_failedto_setup_item_ies_o::value_c::types");
 }
 
 // SCell-FailedtoSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4851,6 +5362,12 @@ SRSASN_CODE scell_failedto_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* scell_failedto_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SCell-FailedtoSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "scell_failedto_setup_mod_item_ies_o::value_c::types");
+}
+
 // SCell-ToBeRemoved-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_to_be_remd_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -4905,6 +5422,12 @@ SRSASN_CODE scell_to_be_remd_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* scell_to_be_remd_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SCell-ToBeRemoved-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_remd_item_ies_o::value_c::types");
 }
 
 // SCell-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -4963,6 +5486,12 @@ SRSASN_CODE scell_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* scell_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SCell-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_item_ies_o::value_c::types");
+}
+
 // SCell-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5017,6 +5546,12 @@ SRSASN_CODE scell_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* scell_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SCell-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // SLDRBs-FailedToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5076,6 +5611,12 @@ SRSASN_CODE sl_drbs_failed_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_failed_to_be_modified_item_ies_o::value_c::types");
+}
+
 // SLDRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_failed_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5130,6 +5671,12 @@ SRSASN_CODE sl_drbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bre
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_failed_to_be_setup_item_ies_o::value_c::types");
 }
 
 // SLDRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5189,6 +5736,12 @@ SRSASN_CODE sl_drbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref&
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
+}
+
 // SLDRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5245,6 +5798,12 @@ SRSASN_CODE sl_drbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_modified_item_ies_o::value_c::types");
+}
+
 // SLDRBs-ModifiedConf-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_modified_conf_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5299,6 +5858,12 @@ SRSASN_CODE sl_drbs_modified_conf_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_modified_conf_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-ModifiedConf-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_modified_conf_item_ies_o::value_c::types");
 }
 
 // SLDRBs-Required-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5358,6 +5923,12 @@ SRSASN_CODE sl_drbs_required_to_be_modified_item_ies_o::value_c::unpack(cbit_ref
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_required_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-Required-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_required_to_be_modified_item_ies_o::value_c::types");
+}
+
 // SLDRBs-Required-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_required_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5413,6 +5984,12 @@ SRSASN_CODE sl_drbs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_required_to_be_released_item_ies_o::value_c::types");
 }
 
 // SLDRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5471,6 +6048,12 @@ SRSASN_CODE sl_drbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_setup_item_ies_o::value_c::types");
+}
+
 // SLDRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5525,6 +6108,12 @@ SRSASN_CODE sl_drbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_setup_mod_item_ies_o::value_c::types");
 }
 
 // SLDRBs-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5583,6 +6172,12 @@ SRSASN_CODE sl_drbs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_to_be_modified_item_ies_o::value_c::types");
+}
+
 // SLDRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5637,6 +6232,12 @@ SRSASN_CODE sl_drbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_to_be_released_item_ies_o::value_c::types");
 }
 
 // SLDRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5695,6 +6296,12 @@ SRSASN_CODE sl_drbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* sl_drbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_to_be_setup_item_ies_o::value_c::types");
+}
+
 // SLDRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sl_drbs_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5749,6 +6356,12 @@ SRSASN_CODE sl_drbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* sl_drbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SLDRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "sl_drbs_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // SRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5807,6 +6420,12 @@ SRSASN_CODE srbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_failed_to_be_setup_item_ies_o::value_c::types");
+}
+
 // SRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_failed_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5861,6 +6480,12 @@ SRSASN_CODE srbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& br
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* srbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // SRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -5919,6 +6544,12 @@ SRSASN_CODE srbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srbs_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_modified_item_ies_o::value_c::types");
+}
+
 // SRBs-Required-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_required_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5973,6 +6604,12 @@ SRSASN_CODE srbs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* srbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_required_to_be_released_item_ies_o::value_c::types");
 }
 
 // SRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6031,6 +6668,12 @@ SRSASN_CODE srbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_setup_item_ies_o::value_c::types");
+}
+
 // SRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6085,6 +6728,12 @@ SRSASN_CODE srbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* srbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_setup_mod_item_ies_o::value_c::types");
 }
 
 // SRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6143,6 +6792,12 @@ SRSASN_CODE srbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_released_item_ies_o::value_c::types");
+}
+
 // SRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6197,6 +6852,12 @@ SRSASN_CODE srbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* srbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_setup_item_ies_o::value_c::types");
 }
 
 // SRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6255,6 +6916,12 @@ SRSASN_CODE srbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_setup_mod_item_ies_o::value_c::types");
+}
+
 // Served-Cells-To-Add-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t served_cells_to_add_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6309,6 +6976,12 @@ SRSASN_CODE served_cells_to_add_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* served_cells_to_add_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Served-Cells-To-Add-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_add_item_ies_o::value_c::types");
 }
 
 // Served-Cells-To-Delete-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6367,6 +7040,12 @@ SRSASN_CODE served_cells_to_delete_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* served_cells_to_delete_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Served-Cells-To-Delete-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_delete_item_ies_o::value_c::types");
+}
+
 // Served-Cells-To-Modify-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t served_cells_to_modify_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6423,6 +7102,12 @@ SRSASN_CODE served_cells_to_modify_item_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* served_cells_to_modify_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"Served-Cells-To-Modify-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_modify_item_ies_o::value_c::types");
+}
+
 // ServingCellMO-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t serving_cell_mo_list_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6477,6 +7162,12 @@ SRSASN_CODE serving_cell_mo_list_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* serving_cell_mo_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"ServingCellMO-List-Item"};
+  return convert_enum_idx(names, 1, value, "serving_cell_mo_list_item_ies_o::value_c::types");
 }
 
 // UE-MulticastMRBs-ConfirmedToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6536,6 +7227,12 @@ SRSASN_CODE ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o::value_c::unp
   return SRSASN_SUCCESS;
 }
 
+const char* ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-ConfirmedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o::value_c::types");
+}
+
 // UE-MulticastMRBs-RequiredToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_multicast_m_rbs_required_to_be_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6591,6 +7288,12 @@ SRSASN_CODE ue_multicast_m_rbs_required_to_be_modified_item_ies_o::value_c::unpa
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_multicast_m_rbs_required_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-RequiredToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_required_to_be_modified_item_ies_o::value_c::types");
 }
 
 // UE-MulticastMRBs-RequiredToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6650,6 +7353,12 @@ SRSASN_CODE ue_multicast_m_rbs_required_to_be_released_item_ies_o::value_c::unpa
   return SRSASN_SUCCESS;
 }
 
+const char* ue_multicast_m_rbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-RequiredToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_required_to_be_released_item_ies_o::value_c::types");
+}
+
 // UE-MulticastMRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_multicast_m_rbs_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6704,6 +7413,12 @@ SRSASN_CODE ue_multicast_m_rbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_multicast_m_rbs_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_setup_item_ies_o::value_c::types");
 }
 
 // UE-MulticastMRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6763,6 +7478,12 @@ SRSASN_CODE ue_multicast_m_rbs_to_be_released_item_ies_o::value_c::unpack(cbit_r
   return SRSASN_SUCCESS;
 }
 
+const char* ue_multicast_m_rbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_to_be_released_item_ies_o::value_c::types");
+}
+
 // UE-MulticastMRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_multicast_m_rbs_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6818,6 +7539,12 @@ SRSASN_CODE ue_multicast_m_rbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref&
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_multicast_m_rbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_to_be_setup_item_ies_o::value_c::types");
 }
 
 // UE-MulticastMRBs-ToBeSetup-atModify-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6877,6 +7604,12 @@ SRSASN_CODE ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o::value_c::unpack
   return SRSASN_SUCCESS;
 }
 
+const char* ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-MulticastMRBs-ToBeSetup-atModify-Item"};
+  return convert_enum_idx(names, 1, value, "ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o::value_c::types");
+}
+
 // UEIdentity-List-For-Paging-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_id_list_for_paging_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6931,6 +7664,12 @@ SRSASN_CODE ue_id_list_for_paging_item_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_id_list_for_paging_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UEIdentity-List-For-Paging-Item"};
+  return convert_enum_idx(names, 1, value, "ue_id_list_for_paging_item_ies_o::value_c::types");
 }
 
 // UL-UP-TNL-Address-to-Update-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -6990,6 +7729,12 @@ SRSASN_CODE ul_up_tnl_address_to_upd_list_item_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* ul_up_tnl_address_to_upd_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UL-UP-TNL-Address-to-Update-List-Item"};
+  return convert_enum_idx(names, 1, value, "ul_up_tnl_address_to_upd_list_item_ies_o::value_c::types");
+}
+
 // UL-UP-TNL-Information-to-Update-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ul_up_tnl_info_to_upd_list_item_ies_o::idx_to_id(uint32_t idx)
 {
@@ -7044,6 +7789,12 @@ SRSASN_CODE ul_up_tnl_info_to_upd_list_item_ies_o::value_c::unpack(cbit_ref& bre
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ul_up_tnl_info_to_upd_list_item_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UL-UP-TNL-Information-to-Update-List-Item"};
+  return convert_enum_idx(names, 1, value, "ul_up_tnl_info_to_upd_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<gnb_cu_tnl_assoc_failed_to_setup_item_ies_o>;

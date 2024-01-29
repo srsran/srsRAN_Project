@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_cu_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi.h"

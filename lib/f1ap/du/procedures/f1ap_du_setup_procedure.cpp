@@ -10,6 +10,7 @@
 
 #include "f1ap_du_setup_procedure.h"
 #include "../f1ap_du_context.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/async/async_timer.h"

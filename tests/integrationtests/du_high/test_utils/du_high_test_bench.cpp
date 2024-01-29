@@ -12,6 +12,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"

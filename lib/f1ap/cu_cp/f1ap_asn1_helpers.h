@@ -14,6 +14,7 @@
 #include "f1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
