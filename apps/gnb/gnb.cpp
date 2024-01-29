@@ -301,9 +301,8 @@ int main(int argc, char** argv)
     gnb_logger.info("Event tracer opened successfully");
   }
 
-  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
-    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
-    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
+  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
+    if (!configure_cgroups(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
       report_error("Failed to isolate specified CPUs");
     }
   }
@@ -614,7 +613,7 @@ int main(int argc, char** argv)
     gnb_logger.info("Event tracer closed successfully");
   }
 
-  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
     cleanup_cgroups();
   }
 

@@ -1056,28 +1056,36 @@ struct buffer_pool_appconfig {
   std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
 };
 
-/// CPU isolation configuration in the gNB app.
-struct cpu_isolation_config {
-  /// Set of CPUs exclusively used by the gNB app.
-  std::string isolated_cpus;
-  /// Set of CPUs dedicated to other operating system processes.
-  std::string os_tasks_cpus;
+/// CPU affinities configuration for the cell.
+struct cpu_affinities_cell_appconfig {
+  /// L1 uplink CPU affinity mask.
+  gnb_os_sched_affinity_config l1_ul_cpu_cfg = {gnb_sched_affinity_mask_types::l1_ul,
+                                                {},
+                                                gnb_sched_affinity_mask_policy::mask};
+  /// L1 downlink workers CPU affinity mask.
+  gnb_os_sched_affinity_config l1_dl_cpu_cfg = {gnb_sched_affinity_mask_types::l1_dl,
+                                                {},
+                                                gnb_sched_affinity_mask_policy::mask};
+
+  /// L2 workers CPU affinity mask.
+  gnb_os_sched_affinity_config l2_cell_cpu_cfg = {gnb_sched_affinity_mask_types::l2_cell,
+                                                  {},
+                                                  gnb_sched_affinity_mask_policy::mask};
+
+  /// Radio Unit workers CPU affinity mask.
+  gnb_os_sched_affinity_config ru_cpu_cfg = {gnb_sched_affinity_mask_types::ru,
+                                             {},
+                                             gnb_sched_affinity_mask_policy::mask};
 };
 
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
-  /// L1 uplink CPU affinity mask.
-  gnb_os_sched_affinity_config l1_ul_cpu_cfg;
-  /// L1 downlink workers CPU affinity mask.
-  gnb_os_sched_affinity_config l1_dl_cpu_cfg;
-  /// L2 workers CPU affinity mask.
-  gnb_os_sched_affinity_config l2_cell_cpu_cfg;
-  /// Radio Unit workers CPU affinity mask.
-  gnb_os_sched_affinity_config ru_cpu_cfg;
-  /// Low priority workers CPU affinity mask.
-  gnb_os_sched_affinity_config low_priority_cpu_cfg;
   /// CPUs isolation.
-  optional<cpu_isolation_config> isol_cpus;
+  optional<os_sched_affinity_bitmask> isolated_cpus;
+  /// Low priority workers CPU affinity mask.
+  gnb_os_sched_affinity_config low_priority_cpu_cfg = {gnb_sched_affinity_mask_types::low_priority,
+                                                       {},
+                                                       gnb_sched_affinity_mask_policy::mask};
 };
 
 /// Upper PHY thread configuration for the gNB.
@@ -1160,10 +1168,12 @@ struct expert_threads_appconfig {
 
 /// Expert configuration of the gNB app.
 struct expert_execution_appconfig {
-  /// CPU affinities of the gNB app.
+  /// gNB CPU affinities.
   cpu_affinities_appconfig affinities;
   /// Expert thread configuration of the gNB app.
   expert_threads_appconfig threads;
+  /// CPU affinities per cell of the gNB app.
+  std::vector<cpu_affinities_cell_appconfig> cell_affinities = {{}};
 };
 
 /// HAL configuration of the gNB app.

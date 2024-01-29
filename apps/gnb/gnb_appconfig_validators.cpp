@@ -1196,6 +1196,15 @@ static bool validate_expert_execution_appconfig(const gnb_appconfig& config)
     return false;
   }
 
+  // Configure more cells for expert execution than the number of cells is an error.
+  if (config.expert_execution_cfg.cell_affinities.size() > config.cells_cfg.size()) {
+    fmt::print("Using more cells for expert execution '{}' than the number of defined cells '{}'\n",
+               config.expert_execution_cfg.cell_affinities.size(),
+               config.cells_cfg.size());
+
+    return false;
+  }
+
   return true;
 }
 

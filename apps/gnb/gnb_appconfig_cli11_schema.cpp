@@ -1908,16 +1908,6 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
   app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
-static void validate_cpu_range(const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name)
-{
-  auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-  if (not invalid_cpu_ids.empty()) {
-    report_error("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.", invalid_cpu_ids, name);
-  }
-}
-
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
   os_sched_affinity_bitmask one_cpu_mask(cpu_idx);
@@ -1972,89 +1962,53 @@ static expected<interval<unsigned, true>, std::string> parse_cpu_range(const std
   return interval<unsigned, true>(range[0], range[1]);
 }
 
-static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfig& config)
+static void
+parse_affinity_mask(os_sched_affinity_bitmask& mask, const std::string& value, const std::string& property_name)
 {
-  auto parsing_fcn = [](os_sched_affinity_bitmask& mask, const std::string& value, const std::string& property_name) {
-    std::stringstream ss(value);
+  std::stringstream ss(value);
 
-    while (ss.good()) {
-      std::string str;
-      getline(ss, str, ',');
-      if (str.find('-') != std::string::npos) {
-        auto range = parse_cpu_range(str);
-        if (range.is_error()) {
-          report_error("{} in the '{}' property", range.error(), property_name);
-        }
-
-        // Add 1 to the stop value as the fill method excludes the end position.
-        mask.fill(range.value().start(), range.value().stop() + 1);
-      } else {
-        auto cpu_idx = parse_one_cpu(str);
-        if (cpu_idx.is_error()) {
-          report_error("{} in the '{}' property", cpu_idx.error(), property_name);
-        }
-
-        mask.set(cpu_idx.value());
+  while (ss.good()) {
+    std::string str;
+    getline(ss, str, ',');
+    if (str.find('-') != std::string::npos) {
+      auto range = parse_cpu_range(str);
+      if (range.is_error()) {
+        report_error("{} in the '{}' property", range.error(), property_name);
       }
-    }
-  };
 
-  auto parsing_isolated_cpus_fcn = [parsing_fcn](cpu_affinities_appconfig& affinity_config,
-                                                 const std::string&        value,
-                                                 const std::string&        property_name) {
-    os_sched_affinity_bitmask mask;
-    parsing_fcn(mask, value, property_name);
-    // If parsing was successful, store the string in the config.
-    affinity_config.isol_cpus.emplace();
-    affinity_config.isol_cpus->isolated_cpus = value;
-
-    // Find free CPUs to be assigned to OS tasks.
-    std::stringstream ss;
-    for (unsigned pos = 0; pos != mask.size(); ++pos) {
-      if (!mask.test(pos)) {
-        ss << pos << ",";
-      }
-    }
-    std::string os_tasks_cpus = ss.str();
-    if (!os_tasks_cpus.empty()) {
-      // Remove last ',' character.
-      affinity_config.isol_cpus->os_tasks_cpus = os_tasks_cpus.substr(0, os_tasks_cpus.size() - 1);
+      // Add 1 to the stop value as the fill method excludes the end position.
+      mask.fill(range.value().start(), range.value().stop() + 1);
     } else {
-      report_error("Error in '{}' property: can not assign all available CPUs to the gNB app", property_name);
-    }
-  };
+      auto cpu_idx = parse_one_cpu(str);
+      if (cpu_idx.is_error()) {
+        report_error("{} in the '{}' property", cpu_idx.error(), property_name);
+      }
 
+      mask.set(cpu_idx.value());
+    }
+  }
+}
+
+static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cell_appconfig& config)
+{
   app.add_option_function<std::string>(
       "--l1_dl_cpus",
-      [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.l1_dl_cpu_cfg.mask, value, "l1_dl_cpus");
-      },
+      [&config](const std::string& value) { parse_affinity_mask(config.l1_dl_cpu_cfg.mask, value, "l1_dl_cpus"); },
       "CPU cores assigned to L1 downlink tasks");
 
   app.add_option_function<std::string>(
       "--l1_ul_cpus",
-      [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus");
-      },
+      [&config](const std::string& value) { parse_affinity_mask(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus"); },
       "CPU cores assigned to L1 uplink tasks");
 
   app.add_option_function<std::string>(
       "--l2_cell_cpus",
-      [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus");
-      },
+      [&config](const std::string& value) { parse_affinity_mask(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus"); },
       "CPU cores assigned to L2 cell tasks");
 
   app.add_option_function<std::string>(
-      "--low_priority_cpus",
-      [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.low_priority_cpu_cfg.mask, value, "low_priority_cpus");
-      },
-      "CPU cores assigned to low priority tasks");
-
-  app.add_option_function<std::string>(
       "--ru_cpus",
-      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.ru_cpu_cfg.mask, value, "ru_cpus"); },
+      [&config](const std::string& value) { parse_affinity_mask(config.ru_cpu_cfg.mask, value, "ru_cpus"); },
       "Number of CPUs used for the Radio Unit tasks");
 
   app.add_option_function<std::string>(
@@ -2088,16 +2042,6 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
       "Policy used for assigning CPU cores to L2 cell tasks");
 
   app.add_option_function<std::string>(
-      "--low_priority_pinning",
-      [&config](const std::string& value) {
-        config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.low_priority_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to low priority tasks");
-
-  app.add_option_function<std::string>(
       "--ru_pinning",
       [&config](const std::string& value) {
         config.ru_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
@@ -2106,33 +2050,6 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         }
       },
       "Policy used for assigning CPU cores to the Radio Unit tasks");
-
-  app.add_option_function<std::string>(
-      "--isolated_cpus",
-      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
-        parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
-      },
-      "CPU cores isolated for gNB application");
-
-  // Callback function for validating that thread affinities do use allowed set of CPUs in case the 'isolated_cpus'
-  // option was specified.
-  auto validate_isolation = [parsing_fcn](CLI::App& cli_app, cpu_affinities_appconfig& cfg) {
-    unsigned isol_cpus_option_count = cli_app.count("--isolated_cpus");
-    if (!isol_cpus_option_count) {
-      return;
-    }
-    os_sched_affinity_bitmask isol_cpus_bitmask;
-    parsing_fcn(isol_cpus_bitmask, cfg.isol_cpus.value().isolated_cpus, "isolated_cpus");
-
-    validate_cpu_range(isol_cpus_bitmask, cfg.l1_dl_cpu_cfg.mask, "l1_dl_cpus");
-    validate_cpu_range(isol_cpus_bitmask, cfg.l1_ul_cpu_cfg.mask, "l1_ul_cpus");
-    validate_cpu_range(isol_cpus_bitmask, cfg.l2_cell_cpu_cfg.mask, "l2_cell_cpus");
-    validate_cpu_range(isol_cpus_bitmask, cfg.ru_cpu_cfg.mask, "ru_cpus");
-    validate_cpu_range(isol_cpus_bitmask, cfg.low_priority_cpu_cfg.mask, "low_priority_cpus");
-  };
-
-  // Post-parsing callback for the case when both manual pinning and isolated_cpus were used.
-  app.callback([&]() { validate_isolation(app, config); });
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
@@ -2190,11 +2107,49 @@ static void configure_cli11_ofh_threads_args(CLI::App& app, ofh_threads_appconfi
       ->capture_default_str();
 }
 
+static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
+{
+  auto parsing_isolated_cpus_fcn = [](optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
+                                      const std::string&                   value,
+                                      const std::string&                   property_name) {
+    isolated_cpu_cfg.emplace();
+    parse_affinity_mask(*isolated_cpu_cfg, value, property_name);
+
+    if (isolated_cpu_cfg->all()) {
+      report_error("Error in '{}' property: can not assign all available CPUs to the gNB app", property_name);
+    }
+  };
+
+  app.add_option_function<std::string>(
+      "--isolated_cpus",
+      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
+        parsing_isolated_cpus_fcn(config.isolated_cpus, value, "isolated_cpus");
+      },
+      "CPU cores isolated for gNB application");
+
+  app.add_option_function<std::string>(
+      "--low_priority_cpus",
+      [&config](const std::string& value) {
+        parse_affinity_mask(config.low_priority_cpu_cfg.mask, value, "low_priority_cpus");
+      },
+      "CPU cores assigned to low priority tasks");
+
+  app.add_option_function<std::string>(
+      "--low_priority_pinning",
+      [&config](const std::string& value) {
+        config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.low_priority_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to low priority tasks");
+}
+
 static void configure_cli11_expert_execution_args(CLI::App& app, expert_execution_appconfig& config)
 {
   // Affinity section.
-  CLI::App* affinity_subcmd = app.add_subcommand("affinities", "CPU affinities")->configurable();
-  configure_cli11_affinity_args(*affinity_subcmd, config.affinities);
+  CLI::App* affinities_subcmd = app.add_subcommand("affinities", "gNB CPU affinities configuration")->configurable();
+  configure_cli11_cpu_affinities_args(*affinities_subcmd, config.affinities);
 
   // Threads section.
   CLI::App* threads_subcmd = app.add_subcommand("threads", "Threads configuration")->configurable();
@@ -2213,6 +2168,52 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
   CLI::App* ofh_threads_subcmd =
       threads_subcmd->add_subcommand("ofh", "Open Fronthaul thread configuration")->configurable();
   configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads.ofh_threads);
+
+  // Cell affinity section.
+  app.add_option_function<std::vector<std::string>>(
+      "--cell_affinities",
+      [&config](const std::vector<std::string>& values) {
+        config.cell_affinities.resize(values.size());
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("Expert execution cell CPU affinities");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_cell_affinity_args(subapp, config.cell_affinities[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the cell CPU affinities configuration on a per cell basis");
+
+  // Callback function for validating that thread affinities do use allowed set of CPUs in case the 'isolated_cpus'
+  // option was specified.
+  auto validate_isolation = [](CLI::App& cli_app, expert_execution_appconfig& cfg) {
+    if (!cli_app.get_subcommand("affinities") || cli_app.get_subcommand("affinities")->count("--isolated_cpus") == 0) {
+      cfg.affinities.isolated_cpus.reset();
+
+      return;
+    }
+
+    auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
+                                 const os_sched_affinity_bitmask& mask,
+                                 const std::string&               name) {
+      auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
+      if (not invalid_cpu_ids.empty()) {
+        report_error("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.", invalid_cpu_ids, name);
+      }
+    };
+
+    for (const auto& cell : cfg.cell_affinities) {
+      validate_cpu_range(*cfg.affinities.isolated_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus");
+      validate_cpu_range(*cfg.affinities.isolated_cpus, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus");
+      validate_cpu_range(*cfg.affinities.isolated_cpus, cell.l2_cell_cpu_cfg.mask, "l2_cell_cpus");
+      validate_cpu_range(*cfg.affinities.isolated_cpus, cell.ru_cpu_cfg.mask, "ru_cpus");
+      validate_cpu_range(*cfg.affinities.isolated_cpus, cfg.affinities.low_priority_cpu_cfg.mask, "low_priority_cpus");
+    }
+  };
+
+  // Post-parsing callback for the case when both manual pinning and isolated_cpus were used.
+  app.callback([&]() { validate_isolation(app, config); });
 }
 
 static void manage_ru_variant(CLI::App&                 app,

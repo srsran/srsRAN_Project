@@ -134,6 +134,8 @@ public:
 
   bool any() const { return cpu_bitset.any(); }
 
+  bool all() const { return cpu_bitset.all(); }
+
   uint64_t to_uint64() const { return cpu_bitset.to_uint64(); }
 
   /// \brief Number of CPUs enabled in the bitmask.
