@@ -243,7 +243,7 @@ variables:
             ;;
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
-            ctest_extra="-T memcheck -E NO_MEMCHECK --timeout 10800"
+            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout 10800"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
