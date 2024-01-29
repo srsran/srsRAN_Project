@@ -135,13 +135,14 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdus += metrics.rx.num_pdus;
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdu_bytes += metrics.rx.num_pdu_bytes;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdus += metrics.tx.num_sdus;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_of_pulled_sdus += metrics.tx.num_of_pulled_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdu_bytes += metrics.tx.num_sdu_bytes;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_dropped_sdus += metrics.tx.num_dropped_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discarded_sdus += metrics.tx.num_discarded_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discard_failures += metrics.tx.num_discard_failures;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus_no_segmentation += metrics.tx.num_pdus_no_segmentation;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes_no_segmentation += metrics.tx.num_pdu_bytes_no_segmentation;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.sdu_latency_us += metrics.tx.sdu_latency_us;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.sum_sdu_latency_us += metrics.tx.sum_sdu_latency_us;
     switch (ue_aggr_rlc_metrics[metrics.ue_index].tx.mode) {
       case rlc_mode::um_bidir:
       case rlc_mode::um_unidir_dl:
@@ -729,16 +730,21 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(
   }
   if (ues.size() == 0) {
     meas_record_item_c meas_record_item;
-    uint32_t           av_ue_sdu_latency_us = 0;
+    float              av_ue_sdu_latency_us = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      av_ue_sdu_latency_us += rlc_metric.second.tx.sdu_latency_us / rlc_metric.second.tx.num_sdus;
+      if (rlc_metric.second.tx.num_of_pulled_sdus && rlc_metric.second.tx.sum_sdu_latency_us) {
+        av_ue_sdu_latency_us +=
+            (float)rlc_metric.second.tx.sum_sdu_latency_us / (float)rlc_metric.second.tx.num_of_pulled_sdus;
+      }
     }
     if (av_ue_sdu_latency_us) {
-      meas_record_item.set_integer() = av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
+      meas_record_item.set_real();
+      meas_record_item.real().value = av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
       logger.warning("Invalid RLC SDU latency value.");
+      return meas_collected;
     }
   } else {
     for (auto& ue : ues) {
@@ -751,9 +757,10 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(
         meas_collected = true;
         continue;
       }
-      if (ue_aggr_rlc_metrics[ue_idx].tx.sdu_latency_us) {
-        meas_record_item.set_integer() =
-            ue_aggr_rlc_metrics[ue_idx].tx.sdu_latency_us / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
+      if (ue_aggr_rlc_metrics[ue_idx].tx.sum_sdu_latency_us) {
+        meas_record_item.set_real();
+        meas_record_item.real().value =
+            ue_aggr_rlc_metrics[ue_idx].tx.sum_sdu_latency_us / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {

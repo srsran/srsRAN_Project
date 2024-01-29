@@ -156,6 +156,7 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
                                                                         sdu.time_of_arrival);
     metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
+    metrics.metrics_add_pulled_sdus(1);
   } else {
     // advance SO offset
     next_so += payload_len;

@@ -64,6 +64,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
 void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 {
+  sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
   size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(
@@ -191,6 +192,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   rlc_tx_am_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
   sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
+  sdu_info.time_of_arrival     = sdu.time_of_arrival;
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
@@ -230,6 +232,10 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_len, grant_len);
 
   // Update TX Next
+  auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                      sdu_info.time_of_arrival);
+  metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
+  metrics.metrics_add_pulled_sdus(1);
   st.tx_next = (st.tx_next + 1) % mod;
 
   // Update metrics
@@ -388,6 +394,10 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
 
   // Update TX Next (when segmentation has finished)
   if (si == rlc_si_field::last_segment) {
+    auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                        sdu_info.time_of_arrival);
+    metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
+    metrics.metrics_add_pulled_sdus(1);
     st.tx_next = (st.tx_next + 1) % mod;
   }
 
