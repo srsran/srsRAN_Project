@@ -411,6 +411,33 @@ ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_setup_requ
 {
   ngap_message ngap_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
 
+  auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+
+  // Add pdu sessions with duplicate IDs
+  for (auto it = 0; it < 2; ++it) {
+    pdu_session_res_setup_item_su_req_s pdu_session_res_item;
+
+    pdu_session_res_item.pdu_session_id = 1;
+
+    // Add PDU Session NAS PDU
+    pdu_session_res_item.pdu_session_nas_pdu.from_string("7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff08060"
+                                                         "6014a06014a2905010c02010c2204010027db79000608204101"
+                                                         "01087b002080802110030000108106ac1503648306ac150364000d04ac150"
+                                                         "364001002054e251c036f61690469707634066d6e6330393906"
+                                                         "6d636332303804677072731201");
+
+    // Add S-NSSAI
+    pdu_session_res_item.s_nssai.sst.from_number(1);
+    pdu_session_res_item.s_nssai.sd_present = true;
+    pdu_session_res_item.s_nssai.sd.from_string("0027db");
+
+    // Add PDU Session Resource Setup Request Transfer
+    pdu_session_res_item.pdu_session_res_setup_request_transfer.from_string(
+        "0000040082000a0c400000003040000000008b000a01f00a321302000028d600860001000088000700010000091c00");
+
+    pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.push_back(pdu_session_res_item);
+  }
+
   return ngap_msg;
 }
 

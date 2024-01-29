@@ -20,19 +20,19 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
-    const cu_cp_pdu_session_resource_setup_request& request_,
-    byte_buffer                                     nas_pdu_,
-    const ngap_ue_ids&                              ue_ids_,
-    ngap_rrc_ue_pdu_notifier&                       rrc_ue_pdu_notifier_,
-    ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
-    ngap_message_notifier&                          amf_notif_,
-    ngap_control_message_handler&                   ngap_ctrl_handler_,
-    ngap_ue_logger&                                 logger_) :
+    const cu_cp_pdu_session_resource_setup_request&    request_,
+    const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
+    const ngap_ue_ids&                                 ue_ids_,
+    ngap_rrc_ue_pdu_notifier&                          rrc_ue_pdu_notifier_,
+    ngap_du_processor_control_notifier&                du_processor_ctrl_notifier_,
+    ngap_message_notifier&                             amf_notif_,
+    ngap_control_message_handler&                      ngap_ctrl_handler_,
+    ngap_ue_logger&                                    logger_) :
   request(request_),
-  nas_pdu(nas_pdu_),
+  asn1_request(asn1_request_),
   ue_ids(ue_ids_),
   rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notif_),
+  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
   amf_notifier(amf_notif_),
   ngap_ctrl_handler(ngap_ctrl_handler_),
   logger(logger_)
@@ -45,12 +45,28 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 
   logger.log_debug("\"{}\" initialized", name());
 
-  // Handle mandatory IEs
-  CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(request));
+  // Verify PDU Session Resource Setup Request
+  verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, logger);
 
-  // TODO: Handle optional IEs
-  if (!nas_pdu.empty()) {
-    handle_nas_pdu(logger, std::move(nas_pdu), rrc_ue_pdu_notifier);
+  if (verification_outcome.request.pdu_session_res_setup_items.empty()) {
+    logger.log_info("Validation of PduSessionResourceSetupRequest failed");
+    response = verification_outcome.response;
+  } else {
+    // Handle mandatory IEs
+    CORO_AWAIT_VALUE(
+        response, du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(verification_outcome.request));
+
+    // TODO: Handle optional IEs
+    if (asn1_request->nas_pdu_present) {
+      handle_nas_pdu(logger, asn1_request->nas_pdu.copy(), rrc_ue_pdu_notifier);
+    }
+
+    // Combine validation response with DU processor response
+    combine_pdu_session_resource_setup_response();
+  }
+
+  if (!response.pdu_session_res_failed_to_setup_items.empty()) {
+    logger.log_warning("Some or all PduSessionResourceSetupItems failed to setup");
   }
 
   send_pdu_session_resource_setup_response();
@@ -64,6 +80,19 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
   logger.log_debug("\"{}\" finalized", name());
 
   CORO_RETURN();
+}
+
+void ngap_pdu_session_resource_setup_procedure::combine_pdu_session_resource_setup_response()
+{
+  for (const auto& setup_item : verification_outcome.response.pdu_session_res_setup_response_items) {
+    response.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, setup_item);
+  }
+  for (const auto& failed_item : verification_outcome.response.pdu_session_res_failed_to_setup_items) {
+    response.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+  }
+  if (!response.crit_diagnostics.has_value()) {
+    response.crit_diagnostics = verification_outcome.response.crit_diagnostics;
+  }
 }
 
 void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()

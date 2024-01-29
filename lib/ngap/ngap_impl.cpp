@@ -410,7 +410,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   task_sched.schedule_async_task(
       ue_ctxt.ue_ids.ue_index,
       launch_async<ngap_pdu_session_resource_setup_procedure>(msg,
-                                                              request->nas_pdu.copy(),
+                                                              request,
                                                               ue_ctxt.ue_ids,
                                                               ue->get_rrc_ue_pdu_notifier(),
                                                               ue->get_du_processor_control_notifier(),
