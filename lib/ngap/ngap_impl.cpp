@@ -436,6 +436,17 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
     return;
   }
 
+  // Check for duplicate messages
+  byte_buffer asn1_request_pdu = pack_into_pdu(request);
+  if (asn1_request_pdu == ue_ctxt.last_pdu_session_resource_modify_request) {
+    ue_ctxt.logger.log_warning("Received duplicate PduSessionResourceModifyRequest");
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unspecified);
+    return;
+  } else {
+    // Store last PDU session resource modify request
+    ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
+  }
+
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",

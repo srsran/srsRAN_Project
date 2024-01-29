@@ -143,3 +143,30 @@ TEST_F(ngap_pdu_session_resource_modify_procedure_test,
   // Check that PDU Session Resource Modify Request was invalid
   ASSERT_TRUE(was_pdu_session_resource_modify_request_invalid());
 }
+
+/// Test valid PDU Session Resource Modify Request
+TEST_F(ngap_pdu_session_resource_modify_procedure_test,
+       when_valid_pdu_session_resource_modify_request_received_twice_then_error_indication_is_send)
+{
+  // Test preamble
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint16_t>(
+      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+  ue_index_t       ue_index       = this->start_procedure(pdu_session_id);
+  auto&            ue             = test_ues.at(ue_index);
+
+  // Inject PDU Session Resource Modify Request
+  ngap_message pdu_session_resource_modify_request = generate_valid_pdu_session_resource_modify_request_message(
+      ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+  ngap->handle_message(pdu_session_resource_modify_request);
+
+  // Check conversion in adapter
+  ASSERT_TRUE(was_conversion_successful(pdu_session_resource_modify_request, pdu_session_id));
+
+  // Check that PDU Session Resource Modify Request was valid
+  ASSERT_TRUE(was_pdu_session_resource_modify_request_valid());
+
+  // Inject same PDU Session Resource Modify Request again
+  ngap->handle_message(pdu_session_resource_modify_request);
+
+  ASSERT_TRUE(was_error_indication_sent());
+}
