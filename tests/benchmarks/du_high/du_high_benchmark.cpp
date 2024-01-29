@@ -938,7 +938,6 @@ public:
     for (const ul_sched_info& pusch : sim_phy.slot_ul_result.ul_res->puschs) {
       mac_crc_pdu& crc_pdu   = crc.crcs.emplace_back();
       crc_pdu.rnti           = pusch.pusch_cfg.rnti;
-      crc_pdu.rapid          = 0;
       crc_pdu.harq_id        = pusch.pusch_cfg.harq_id;
       crc_pdu.tb_crc_success = true;
       crc_pdu.ul_sinr_metric = 21.0;
