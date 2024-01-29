@@ -26,7 +26,7 @@ target_compile_options(f1ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(f1ap_asn1 asn1_utils)
 
 # E1AP ASN1
-add_library(e1ap_asn1 STATIC e1ap/e1ap.cpp)
+add_library(e1ap_asn1 STATIC e1ap/e1ap.cpp e1ap/e1ap_ies.cpp e1ap/e1ap_pdu_contents.cpp)
 target_compile_options(e1ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e1ap_asn1 asn1_utils)
 
