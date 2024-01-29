@@ -46,7 +46,7 @@ public:
   bool listen() override;
 
   /// \brief Return the port on which the socket is listening.
-  bool get_listen_port(uint16_t& port) override;
+  optional<uint16_t> get_listen_port() override;
 
 private:
   bool is_initialized();
@@ -55,9 +55,6 @@ private:
 
   /// \brief Recreate and reconnect socket to given address.
   bool recreate_and_reconnect() override;
-
-  /// \brief Return socket bind port.
-  int get_bind_port() override;
 
   // internal helpers
   using socket_buffer_type = uint8_t;

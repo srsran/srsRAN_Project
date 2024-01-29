@@ -64,12 +64,12 @@ public:
   ///
   /// In case the gateway was configured to listen on port 0, i.e. the operating system shall pick a random free port,
   /// this function can be used to get the actual port number.
-  bool get_listen_port(uint16_t& gw_listen_port)
+  optional<uint16_t> get_listen_port()
   {
     if (gateway_ctrl_handler == nullptr) {
-      return false;
+      return {};
     }
-    return gateway_ctrl_handler->get_listen_port(gw_listen_port);
+    return gateway_ctrl_handler->get_listen_port();
   }
 
   void connect_e2ap(e2_message_handler* e2ap_msg_handler_, e2_event_handler* event_handler_)

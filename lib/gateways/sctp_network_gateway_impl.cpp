@@ -219,11 +219,11 @@ bool sctp_network_gateway_impl::listen()
   return true;
 }
 
-bool sctp_network_gateway_impl::get_listen_port(uint16_t& gw_listen_port)
+optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
 {
   if (not is_initialized()) {
     logger.error("Socket of UDP network gateway not initialized.");
-    return false;
+    return {};
   }
 
   sockaddr_storage gw_addr_storage;
@@ -233,9 +233,10 @@ bool sctp_network_gateway_impl::get_listen_port(uint16_t& gw_listen_port)
   int ret = getsockname(sock_fd, gw_addr, &gw_addr_len);
   if (ret != 0) {
     logger.error("Failed `getsockname` in SCTP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
-    return false;
+    return {};
   }
 
+  uint16_t gw_listen_port;
   if (gw_addr->sa_family == AF_INET) {
     gw_listen_port = ntohs(((sockaddr_in*)gw_addr)->sin_port);
   } else if (gw_addr->sa_family == AF_INET6) {
@@ -243,11 +244,11 @@ bool sctp_network_gateway_impl::get_listen_port(uint16_t& gw_listen_port)
   } else {
     logger.error(
         "Unhandled address family in SCTP network gateway with sock_fd={}, family={}", sock_fd, gw_addr->sa_family);
-    return false;
+    return {};
   }
 
   logger.debug("Read bind port of SCTP network gateway: {}", gw_listen_port);
-  return true;
+  return gw_listen_port;
 }
 
 bool sctp_network_gateway_impl::create_and_connect()
@@ -474,28 +475,6 @@ void sctp_network_gateway_impl::receive()
 int sctp_network_gateway_impl::get_socket_fd()
 {
   return sock_fd;
-}
-
-int sctp_network_gateway_impl::get_bind_port()
-{
-  int gw_bind_port = 0;
-
-  if (not is_initialized()) {
-    logger.error("Socket of SCTP network gateway not initialized.");
-    return gw_bind_port;
-  }
-
-  sockaddr_in gw_addr;
-  socklen_t   gw_addr_len = sizeof(gw_addr);
-
-  int ret = getsockname(sock_fd, (struct sockaddr*)&gw_addr, &gw_addr_len);
-  if (ret != 0) {
-    logger.error("Failed `getsockname` in SCTP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
-  }
-  gw_bind_port = ntohs(gw_addr.sin_port);
-
-  logger.debug("Read bind port of UDP network gateway: {}", gw_bind_port);
-  return gw_bind_port;
 }
 
 void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> payload)

@@ -140,9 +140,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
   ASSERT_EQ(server_address, "127.0.0.1");
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_bind_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
@@ -156,9 +156,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
   ASSERT_EQ(server_address, "::1");
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_bind_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
@@ -185,14 +185,14 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_bind_port(server_port));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address_v4, server_port);
+  send_to_server(pdu_small.copy(), server_address_v4, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address_v4, server_port);
+  send_to_server(pdu_large.copy(), server_address_v4, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address_v4, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v4, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -231,14 +231,14 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_bind_port(server_port));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address_v6, server_port);
+  send_to_server(pdu_small.copy(), server_address_v6, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address_v6, server_port);
+  send_to_server(pdu_large.copy(), server_address_v6, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address_v6, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v6, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -277,14 +277,14 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_bind_port(server_port));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address, server_port);
+  send_to_server(pdu_small.copy(), server_address, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address, server_port);
+  send_to_server(pdu_large.copy(), server_address, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address, server_port);
+  send_to_server(pdu_oversized.copy(), server_address, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));

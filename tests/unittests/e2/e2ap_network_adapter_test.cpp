@@ -141,14 +141,14 @@ protected:
     ric_e2_iface = std::make_unique<dummy_ric_e2>(*ric_net_adapter);
     ric_net_adapter->connect_e2ap(ric_e2_iface.get(), ric_e2_iface.get());
 
-    uint16_t ric_gw_port;
-    ASSERT_TRUE(ric_net_adapter->get_listen_port(ric_gw_port));
-    ASSERT_NE(ric_gw_port, 0);
+    optional<uint16_t> ric_gw_port = ric_net_adapter->get_listen_port();
+    ASSERT_TRUE(ric_gw_port.has_value());
+    ASSERT_NE(ric_gw_port.value(), 0);
 
     // create E2 agent
     sctp_network_gateway_config e2agent_config;
     e2agent_config.connect_address = ric_config.bind_address;
-    e2agent_config.connect_port    = ric_gw_port;
+    e2agent_config.connect_port    = ric_gw_port.value();
     e2agent_config.bind_address    = "127.0.0.101";
     e2agent_config.bind_port       = 0;
 

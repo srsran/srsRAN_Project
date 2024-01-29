@@ -105,9 +105,8 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_FALSE(bind_and_listen());
-  uint16_t server_port = 0;
-  ASSERT_FALSE(server->get_listen_port(server_port));
-  ASSERT_EQ(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_FALSE(server_port.has_value());
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
@@ -118,9 +117,8 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_FALSE(bind_and_listen());
-  uint16_t server_port = 0;
-  ASSERT_FALSE(server->get_listen_port(server_port));
-  ASSERT_EQ(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_FALSE(server_port.has_value());
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
@@ -131,9 +129,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_TRUE(bind_and_listen());
-  uint16_t server_port = 0;
-  ASSERT_TRUE(server->get_listen_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
@@ -144,9 +142,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succe
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_TRUE(bind_and_listen());
-  uint16_t server_port = 0;
-  ASSERT_TRUE(server->get_listen_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
@@ -186,14 +184,14 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_listen_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
 
   create_client(client_config);
@@ -231,14 +229,14 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_listen_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
 
   create_client(client_config);
@@ -276,14 +274,14 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  uint16_t server_port;
-  ASSERT_TRUE(server->get_listen_port(server_port));
-  ASSERT_NE(server_port, 0);
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
 
   create_client(client_config);

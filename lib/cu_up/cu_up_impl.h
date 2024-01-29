@@ -38,12 +38,7 @@ public:
   void start() override;
   void stop() override;
 
-  int get_n3_bind_port() override
-  {
-    uint16_t port = {};
-    ngu_gw->get_bind_port(port);
-    return port;
-  }
+  optional<uint16_t> get_n3_bind_port() override { return ngu_gw->get_bind_port(); }
 
   // cu_up_e1ap_interface
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
