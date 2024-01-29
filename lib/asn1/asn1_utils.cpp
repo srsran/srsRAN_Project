@@ -1632,4 +1632,94 @@ const char* detail::empty_obj_set_item_c::types_opts::to_string() const
   return "";
 }
 
+const int real_mantissa_len = 23;
+const int real_exponent_len = 7;
+
+SRSASN_CODE pack_unconstrained_real(bit_ref& bref, float n, bool aligned)
+{
+  if (aligned) {
+    HANDLE_CODE(bref.align_bytes_zero());
+  }
+  uint8_t   to_pack[10];
+  uint32_t* bits_ptr      = (uint32_t*)&n;
+  uint32_t  bits          = *bits_ptr;
+  bool      sign          = ((bits >> 31) & 0x1);
+  uint32_t  mantissa      = (bits & 0x7FFFFF) | 0x800000;
+  uint32_t  trailingZeros = __builtin_ctz(mantissa);
+  uint32_t  pack_mantissa = mantissa >> trailingZeros;
+  // the inverse of the trailing zeros gives the number of bits to shift
+  // the mantissa to the right to make it a whole number, this number must be added to the exponent
+  uint8_t inv_trailing_zeros = real_mantissa_len - trailingZeros;
+
+  int8_t exponent = (bits >> real_mantissa_len) & 0xFF;
+  exponent -= (127 + inv_trailing_zeros);
+  uint8_t pack_exponent = exponent & 0xFF;
+
+  uint8_t info_octet = 0x80;
+  if (sign) {
+    info_octet |= 0x1 << 6;
+  }
+  // compute the number of octets needed to represent the mantissa
+  uint8_t mantissa_bit_len = real_mantissa_len + 1 - trailingZeros;
+  uint8_t mantissa_oct_len = (mantissa_bit_len + 7) / 8;
+
+  to_pack[0] = info_octet;
+  to_pack[1] = pack_exponent;
+  for (uint8_t i = 0; i < mantissa_oct_len; i++) {
+    uint8_t octet                       = pack_mantissa & 0xFF;
+    to_pack[(mantissa_oct_len + 1) - i] = octet;
+    pack_mantissa >>= 8;
+  }
+  uint32_t len = mantissa_oct_len + 2;
+  pack_length(bref, len, aligned);
+
+  for (uint8_t i = 0; i < (mantissa_oct_len + 2); i++) {
+    bref.pack(to_pack[i], 8);
+  }
+  return SRSASN_SUCCESS;
+};
+
+SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned)
+{
+  if (aligned) {
+    HANDLE_CODE(bref.align_bytes());
+  }
+  uint32_t len;
+  HANDLE_CODE(unpack_length(len, bref, aligned));
+
+  uint8_t buf[len];
+  for (uint32_t i = 0; i < len; i++) {
+    HANDLE_CODE(bref.unpack(buf[i], 8));
+  }
+
+  uint8_t  info_octet = buf[0];
+  uint8_t  exponent   = buf[1];
+  uint32_t mantissa   = 0;
+
+  bool    sign             = (info_octet >> 6) & 0x1;
+  uint8_t mantissa_oct_len = len - 2;
+
+  for (uint32_t i = 0; i < mantissa_oct_len; i++) {
+    mantissa |= (uint32_t)buf[i + 2] << (8 * i);
+  }
+
+  uint8_t leading_zeros = __builtin_clz(mantissa) - 9;
+
+  mantissa <<= leading_zeros + 1;
+  mantissa &= 0x7FFFFF;
+
+  uint32_t trailingZeros      = __builtin_ctz(mantissa);
+  uint8_t  inv_trailing_zeros = real_mantissa_len - trailingZeros;
+
+  int8_t unpacked_exponent = exponent;
+  unpacked_exponent += 127 + inv_trailing_zeros;
+
+  uint32_t bits =
+      (sign << (real_mantissa_len + real_exponent_len)) | (unpacked_exponent << real_mantissa_len) | (mantissa);
+
+  float* bits_ptr = (float*)&bits;
+  n               = *bits_ptr;
+  return SRSASN_SUCCESS;
+};
+
 } // namespace asn1

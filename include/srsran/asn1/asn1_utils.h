@@ -1542,17 +1542,21 @@ inline void to_json(json_writer& j, int64_t number)
   j.write_int(number);
 }
 
-struct real_s {
-  SRSASN_CODE pack(bit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL packing function\n");
-    return SRSASN_SUCCESS;
-  };
-  SRSASN_CODE unpack(cbit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL unpacking function\n");
-    return SRSASN_SUCCESS;
-  };
+/****************
+ REAL type
+***************/
+
+SRSASN_CODE pack_unconstrained_real(bit_ref& bref, float n, bool aligned = false);
+
+SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned = false);
+
+class real_s
+{
+public:
+  float value;
+  real_s() = default;
+  SRSASN_CODE pack(bit_ref& bref) const { return pack_unconstrained_real(bref, value, true); };
+  SRSASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); };
   void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
 };
 
