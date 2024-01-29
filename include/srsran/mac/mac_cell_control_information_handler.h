@@ -77,7 +77,9 @@ struct mac_uci_pdu {
       /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
       /// NOTE: If \c is_valid == true, then the HARQs bits set in \c payload should be interpreted as an ACK (if the
       /// bit is 1) or NACK (if the bit is 0).
-      /// If \c is_valid == false, then all HARQs bits set in \c payload should be interpreted as not-detected.
+      /// If \c is_valid == false, then all HARQs bits set in \c payload should be interpreted as not-detected; note
+      /// that these bits cannot be ignored when \c is_valid == false, as the "not-detected" outcome will be used to
+      /// acknowledge (negatively) the HARQ processes corresponding to each single bit.
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
     };
 
@@ -88,6 +90,7 @@ struct mac_uci_pdu {
       /// Contents of CSI, excluding any CRC.
       /// Example: If the number of CSI bits is 20, then it is represented as:
       /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
+      /// NOTE: if \c is_valid == false, then the CSI payload will be ignored.
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
@@ -172,7 +175,9 @@ struct mac_uci_pdu {
       /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
       /// NOTE: If \c is_valid == true, then the HARQs bits set in \c payload should be interpreted as an ACK (if the
       /// bit is 1) or NACK (if the bit is 0).
-      /// If \c is_valid == false, then all HARQs bits set in \c payload should be interpreted as not-detected.
+      /// If \c is_valid == false, then all HARQs bits set in \c payload should be interpreted as not-detected; note
+      /// that these bits cannot be ignored when \c is_valid == false, as the "not-detected" outcome will be used to
+      /// acknowledge (negatively) the HARQ processes corresponding to each single bit.
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
     };
 
@@ -183,6 +188,7 @@ struct mac_uci_pdu {
       /// Contents of CSI, excluding any CRC.
       /// Example: If the number of CSI bits is 20, then it is represented as:
       /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
+      /// NOTE: if \c is_valid == false, then the CSI payload will be ignored.
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
