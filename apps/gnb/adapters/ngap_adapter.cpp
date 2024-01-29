@@ -135,7 +135,7 @@ public:
     ev_handler  = &ev_handler_;
 
     // Create NGAP ASN1 packer.
-    packer = std::make_unique<ngap_asn1_packer>(*sctp_gateway, *msg_handler, pcap_writer);
+    packer = std::make_unique<ngap_asn1_packer>(*sctp_gateway, *this, *msg_handler, pcap_writer);
 
     // Establish SCTP connection and register SCTP Rx message handler.
     logger.debug("Establishing TNL connection to AMF ({}:{})...", sctp_cfg.connect_address, sctp_cfg.connect_port);

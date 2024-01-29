@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ngap_asn1_converters.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"

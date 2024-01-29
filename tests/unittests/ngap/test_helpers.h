@@ -81,6 +81,22 @@ private:
 };
 
 /// Dummy handler storing and printing the received PDU.
+class dummy_ngap_message_notifier : public ngap_message_notifier
+{
+public:
+  dummy_ngap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  void on_new_message(const ngap_message& msg) override
+  {
+    last_msg = msg;
+    logger.info("Transmitted a PDU of type {}", msg.pdu.type().to_string());
+  }
+  ngap_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+/// Dummy handler storing and printing the received PDU.
 class dummy_ngap_message_handler : public ngap_message_handler
 {
 public:
