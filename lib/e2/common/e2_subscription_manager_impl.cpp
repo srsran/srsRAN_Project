@@ -118,13 +118,17 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
                                                     const asn1::e2ap::ri_crequest_id_s&  ric_request_id)
 {
   e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(ran_func_id);
+  if (e2sm == nullptr) {
+    logger.error("Failed to get E2SM interface, RAN function {} not in allowed list", ran_func_id);
+    return false;
+  }
   if (e2sm->action_supported(action)) {
     subscriptions[ric_request_id.ric_requestor_id].subscription_info.action_list.push_back(
         {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
     return true;
   }
 
-  logger.error("Action not supported");
+  logger.error("Action not supported {}", action.ric_action_id);
   return false;
 }
 
