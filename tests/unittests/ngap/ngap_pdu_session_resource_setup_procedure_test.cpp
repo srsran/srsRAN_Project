@@ -30,7 +30,7 @@ protected:
     run_ul_nas_transport(ue_index);
 
     // Inject Initial Context Setup Request
-    run_inital_context_setup(ue_index);
+    run_initial_context_setup(ue_index);
 
     return ue_index;
   }

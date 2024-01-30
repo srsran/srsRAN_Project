@@ -55,7 +55,7 @@ protected:
   void run_ul_nas_transport(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run Initial Context Setup in NGAP.
-  void run_inital_context_setup(ue_index_t ue_index);
+  void run_initial_context_setup(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run PDU Session Resource Setup in NGAP
   void run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t pdu_session_id);

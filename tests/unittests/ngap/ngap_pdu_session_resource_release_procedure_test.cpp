@@ -30,7 +30,7 @@ protected:
     run_ul_nas_transport(ue_index);
 
     // Inject Initial Context Setup request
-    run_inital_context_setup(ue_index);
+    run_initial_context_setup(ue_index);
 
     // Inject PDU Session Resource Setup request
     run_pdu_session_resource_setup(ue_index, pdu_session_id);

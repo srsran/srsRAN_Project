@@ -115,7 +115,7 @@ void ngap_test::run_ul_nas_transport(ue_index_t ue_index)
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 }
 
-void ngap_test::run_inital_context_setup(ue_index_t ue_index)
+void ngap_test::run_initial_context_setup(ue_index_t ue_index)
 {
   auto& ue = test_ues.at(ue_index);
 
