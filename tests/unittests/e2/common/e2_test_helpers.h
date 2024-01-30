@@ -371,15 +371,24 @@ public:
     if (ues.size() == 0) {
       // E2 Node level measurements
       meas_record_item_c meas_record_item;
-      if (meas_values.size()) {
-        meas_record_item.set_integer() = meas_values[0];
+      if (meas_type.meas_name().to_string().compare("DRB.RlcSduDelayDl")) {
+        if (meas_values_float.size()) {
+          meas_record_item.set_real();
+          meas_record_item.real().value = meas_values_float[0];
+        } else {
+          meas_record_item.set_real();
+          meas_record_item.real().value = 0.15625;
+        }
       } else {
-        meas_record_item.set_integer() = 1;
+        if (meas_values_int.size()) {
+          meas_record_item.integer() = meas_values_int[0];
+        } else {
+          meas_record_item.set_integer() = 1;
+        }
       }
       items.push_back(meas_record_item);
       return true;
     }
-
     // UE level measurements
     for (auto& ue_id : ues) {
       uint32_t                        ueid_  = ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
@@ -389,11 +398,20 @@ public:
       meas_record_item_c meas_record_item;
       if (ue_idx < presence.size()) {
         if (presence[ue_idx]) {
-          if (ue_idx < meas_values.size()) {
-            meas_record_item.set_integer() = meas_values[ue_idx];
+          if (meas_type.meas_name().to_string().compare("DRB.RlcSduDelayDl")) {
+            if (meas_values_float.size()) {
+              meas_record_item.set_real();
+              meas_record_item.real().value = meas_values_float[ue_idx];
+            } else {
+              meas_record_item.set_real();
+              meas_record_item.real().value = 0.15625;
+            }
           } else {
-            // no meas provided, by default return value 1001
-            meas_record_item.set_integer() = 1001;
+            if (meas_values_int.size()) {
+              meas_record_item.integer() = meas_values_int[ue_idx];
+            } else {
+              meas_record_item.set_integer() = 1;
+            }
           }
         } else {
           meas_record_item.set_no_value();
@@ -412,13 +430,22 @@ public:
     return false;
   };
 
-  void push_measurements(std::vector<uint32_t> presence_,
-                         std::vector<uint32_t> cond_satisfied_,
-                         std::vector<uint32_t> meas_values_)
+  void push_measurements_int(std::vector<uint32_t> presence_,
+                             std::vector<uint32_t> cond_satisfied_,
+                             std::vector<uint32_t> meas_values_int_)
   {
-    presence       = presence_;
-    cond_satisfied = cond_satisfied_;
-    meas_values    = meas_values_;
+    presence        = presence_;
+    cond_satisfied  = cond_satisfied_;
+    meas_values_int = meas_values_int_;
+  };
+
+  void push_measurements_float(std::vector<uint32_t> presence_,
+                               std::vector<uint32_t> cond_satisfied_,
+                               std::vector<float>    meas_values_float_)
+  {
+    presence          = presence_;
+    cond_satisfied    = cond_satisfied_;
+    meas_values_float = meas_values_float_;
   };
 
   void set_ue_ids(std::vector<uint32_t> ue_ids_) { ue_ids = ue_ids_; };
@@ -442,10 +469,11 @@ private:
     return false;
   };
 
-  std::vector<std::string> supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"};
+  std::vector<std::string> supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl", "DRB.RlcSduDelayDl"};
   std::vector<uint32_t>    presence          = {1};
   std::vector<uint32_t>    cond_satisfied    = {1};
-  std::vector<uint32_t>    meas_values       = {1};
+  std::vector<float>       meas_values_float = {0.15625};
+  std::vector<uint32_t>    meas_values_int   = {1};
   std::vector<uint32_t>    ue_ids            = {0};
 };
 
