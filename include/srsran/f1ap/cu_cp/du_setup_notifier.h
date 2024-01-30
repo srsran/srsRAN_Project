@@ -54,7 +54,7 @@ struct du_setup_result {
   bool is_accepted() const { return variant_holds_alternative<accepted>(result); }
 };
 
-/// \brief Interface usedto handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
+/// \brief Interface used to handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class du_setup_notifier
 {
 public:
