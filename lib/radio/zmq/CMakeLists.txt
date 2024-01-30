@@ -14,8 +14,14 @@ set(SOURCES_ZMQ
         radio_zmq_rx_stream.cpp
         radio_zmq_tx_channel.cpp
         radio_zmq_tx_stream.cpp)
-add_library(srsran_radio_zmq STATIC ${SOURCES_ZMQ})
 
-target_link_libraries(srsran_radio_zmq ${ZEROMQ_LIBRARIES})
+if (ENABLE_EXPORT)
+    add_library(srsran_radio_zmq SHARED ${SOURCES_ZMQ})
+    add_compile_definitions(ENABLE_DYNAMIC_FACTORY)
+else ()
+    add_library(srsran_radio_zmq STATIC ${SOURCES_ZMQ})
+endif ()
+
+target_link_libraries(srsran_radio_zmq ${ZEROMQ_LIBRARIES} fmt srslog)
 
 install(TARGETS srsran_radio_zmq EXPORT srsran_export)

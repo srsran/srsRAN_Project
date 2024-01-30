@@ -6,7 +6,9 @@
 # the distribution.
 #
 
-add_library(srsran_radio STATIC radio_factory.cpp)
+add_library(srsran_radio STATIC
+        plugin_radio_factory.cpp
+        radio_factory.cpp)
 
 set(SRSGNB_RADIO_DEFINITIONS "")
 set(SRSGNB_RADIO_LIBRARIES "")
@@ -24,6 +26,6 @@ if (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
 endif (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
 
 add_definitions(${SRSGNB_RADIO_DEFINITIONS})
-target_link_libraries(srsran_radio ${SRSGNB_RADIO_LIBRARIES} srslog)
+target_link_libraries(srsran_radio ${SRSGNB_RADIO_LIBRARIES} srslog dl)
 
 install(TARGETS srsran_radio EXPORT srsran_export)
