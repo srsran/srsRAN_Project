@@ -70,6 +70,8 @@ public:
   // cu_cp_ue_removal_interface
   void handle_ue_removal_request(ue_index_t ue_index) override;
 
+  metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
+
   // cu_cp interface
   du_repository&                         get_connected_dus() override { return du_db; }
   cu_up_repository&                      get_connected_cu_ups() override { return cu_up_db; }
@@ -170,6 +172,8 @@ private:
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   cu_cp_controller controller;
+
+  std::unique_ptr<metrics_handler> metrics_hdlr;
 
   unique_timer statistics_report_timer;
 

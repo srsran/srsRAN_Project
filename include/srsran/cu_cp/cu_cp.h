@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_cp_metrics_handler.h"
 #include "cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_repository.h"
 #include "srsran/cu_cp/du_repository.h"
@@ -68,6 +69,9 @@ public:
 
   /// \brief Get handler of the E1 interface of the CU-CP.
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
+
+  /// \brief Get the metrics handler interface of the CU-CP.
+  virtual metrics_handler& get_metrics_handler() = 0;
 
   /// \brief Initiate NG Setup Procedure and wait for AMF response.
   /// \return Returns true if the connection to the AMF was successful. False, otherwise.

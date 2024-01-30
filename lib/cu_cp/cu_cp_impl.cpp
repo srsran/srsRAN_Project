@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_impl.h"
+#include "metrics_handler/metrics_handler_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -57,7 +58,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                 cfg.ue_config.max_nof_supported_ues,
                 srslog::fetch_basic_logger("CU-CP")),
   routine_mng(ue_task_sched),
-  controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db)
+  controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
+  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers))
 {
   assert_cu_cp_configuration_valid(cfg);
 
