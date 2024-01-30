@@ -75,7 +75,7 @@ bool ngap_handover_resource_allocation_procedure::create_ngap_ue(ue_index_t ue_i
 {
   // Create NGAP UE
   // Allocate RAN-UE-ID
-  ran_ue_id_t ran_ue_id = ue_ctxt_list.get_next_ran_ue_id();
+  ran_ue_id_t ran_ue_id = ue_ctxt_list.allocate_ran_ue_id();
   if (ran_ue_id == ran_ue_id_t::invalid) {
     logger.error("ue={}: No RAN-UE-ID available", ue_index);
     return false;

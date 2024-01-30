@@ -185,7 +185,7 @@ public:
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available RAN-UE-ID.
-  ran_ue_id_t get_next_ran_ue_id()
+  ran_ue_id_t allocate_ran_ue_id()
   {
     // return invalid when no RAN-UE-ID is available
     if (ue_index_to_ran_ue_id.size() == MAX_NOF_RAN_UES) {

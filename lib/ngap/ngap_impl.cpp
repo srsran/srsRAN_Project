@@ -107,7 +107,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 
   // Create NGAP UE
   // Allocate RAN-UE-ID
-  ran_ue_id_t ran_ue_id = ue_ctxt_list.get_next_ran_ue_id();
+  ran_ue_id_t ran_ue_id = ue_ctxt_list.allocate_ran_ue_id();
   if (ran_ue_id == ran_ue_id_t::invalid) {
     logger.error("ue={}: No RAN-UE-ID available", msg.ue_index);
     return;
