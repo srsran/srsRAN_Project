@@ -67,7 +67,7 @@ private:
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
-  // Temporary (hold DL executor until creating new ones at UE creation is supported).
+  // Holds DL executor for the control TEID.
   std::unique_ptr<task_executor, unique_function<void(task_executor*)>> dl_exec;
 
   // Components

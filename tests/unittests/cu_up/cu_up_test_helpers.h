@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
+#include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -26,6 +27,53 @@
 constexpr auto default_wait_timeout = std::chrono::seconds(3);
 
 namespace srsran {
+
+/// Dummy CU-UP executor pool used for testing
+class dummy_cu_up_executor_pool final : public cu_up_executor_pool
+{
+public:
+  dummy_cu_up_executor_pool(task_executor* test_executor_) : test_executor(test_executor_) {}
+  using ptr = std::unique_ptr<task_executor, unique_function<void(task_executor*)>>;
+
+  ptr create_ul_pdu_executor() override
+  {
+    return {test_executor, [this](task_executor* p) {
+              if (p != nullptr) {
+                dealloc_pdu_executor(p);
+              }
+            }};
+  }
+
+  ptr create_dl_pdu_executor() override
+  {
+    return {test_executor, [this](task_executor* p) {
+              if (p != nullptr) {
+                dealloc_pdu_executor(p);
+              }
+            }};
+  }
+
+  ptr create_ctrl_executor() override
+  {
+    return {test_executor, [this](task_executor* p) {
+              if (p != nullptr) {
+                dealloc_pdu_executor(p);
+              }
+            }};
+  }
+
+private:
+  void dealloc_pdu_executor(task_executor* exec)
+  {
+    // do nothing.
+  }
+  void dealloc_ctrl_executor(task_executor* exec)
+  {
+    // do nothing.
+  }
+
+  task_executor* test_executor;
+};
 
 /// Dummy GTP-U Rx Demux
 class dummy_gtpu_demux_ctrl final : public gtpu_demux_ctrl
@@ -130,11 +178,10 @@ public:
       pdcp_tx_pdu sdu = std::move(tx_sdu_list.front());
       tx_sdu_list.pop_front();
       return sdu;
-    } else {
-      // timeout
-      pdcp_tx_pdu sdu = {};
-      return sdu;
     }
+    // timeout
+    pdcp_tx_pdu sdu = {};
+    return sdu;
   }
 
   bool have_tx_sdu()
