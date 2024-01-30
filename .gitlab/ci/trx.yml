@@ -20,7 +20,10 @@ build trx driver:
   variables:
     AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/44296988/packages/generic/amarisoft
     AMARISOFT_VERSION: "2023-03-17"
+    KUBERNETES_CPU_REQUEST: 2
+    KUBERNETES_CPU_LIMIT: 2
     KUBERNETES_MEMORY_REQUEST: 2.5Gi
+    KUBERNETES_MEMORY_LIMIT: 2.5Gi
   timeout: 30 min
   rules:
     - if: $ON_MR

@@ -40,8 +40,10 @@ stages:
     os_version: ""
     uhd_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -149,8 +151,10 @@ ubuntu-20.04-uhd:
     os_version: ""
     dpdk_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 

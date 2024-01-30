@@ -134,8 +134,10 @@ full-code-format:
     ANALYZER: ""
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
-    KUBERNETES_MEMORY_REQUEST: 6Gi
     KUBERNETES_CPU_REQUEST: "3.5"
+    KUBERNETES_CPU_LIMIT: "3.5"
+    KUBERNETES_MEMORY_REQUEST: 6Gi
+    KUBERNETES_MEMORY_LIMIT: 6Gi
   before_script:
     - |
       echo "
@@ -214,7 +216,9 @@ clangsa:
   needs: []
   variables:
     KUBERNETES_CPU_REQUEST: 7
+    KUBERNETES_CPU_LIMIT: 7
     KUBERNETES_MEMORY_REQUEST: 13Gi
+    KUBERNETES_MEMORY_LIMIT: 13Gi
   tags:
     - ${AMD64_TAG}
   interruptible: false
