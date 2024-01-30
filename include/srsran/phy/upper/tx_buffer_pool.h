@@ -54,15 +54,19 @@ public:
   ///   identifiers;
   /// - Insufficient number of codeblocks, \ref tx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
   ///   assigned to buffers;
-  /// - A buffer with the same identifier is locked; or
+  /// - A buffer with the same identifier is locked;
+  /// - No buffer is found with the same identifier while the reservation is not marked as new data;
+  /// - The number of codeblocks for a retransmission is different than the previous reservation; or
   /// - The pool operation has stopped.
   ///
   /// \param[in] slot           Slot context in which the reservation takes place.
   /// \param[in] id             Identifier for the buffer transmission.
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
+  /// \param[in] new_data       Set to true if the transmission is for new data.
   /// \return A valid unique transmit buffer if the reservation was successful; otherwise, an invalid unique transmit
   ///         buffer.
-  virtual unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) = 0;
+  virtual unique_tx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
 
   /// \brief Reserves and retrieves a transmit buffer without an identifier.
   ///

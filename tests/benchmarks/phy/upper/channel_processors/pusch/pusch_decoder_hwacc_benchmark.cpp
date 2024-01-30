@@ -403,7 +403,8 @@ int main(int argc, char** argv)
     dec_cfg.nof_layers          = cfg.nof_layers;
 
     // Reserve softbuffer.
-    unique_rx_buffer softbuffer_hwacc = pool_hwacc->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+    unique_rx_buffer softbuffer_hwacc =
+        pool_hwacc->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
     TESTASSERT(softbuffer_hwacc.is_valid());
 
     // Force all CRCs to false to test LLR combining.
@@ -443,7 +444,8 @@ int main(int argc, char** argv)
     dec_cfg.nof_layers          = cfg.nof_layers;
 
     // Reserve softbuffer.
-    unique_rx_buffer softbuffer_gen = pool_gen->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+    unique_rx_buffer softbuffer_gen =
+        pool_gen->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
     TESTASSERT(softbuffer_gen.is_valid());
 
     // Force all CRCs to false to test LLR combining.

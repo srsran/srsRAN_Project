@@ -316,7 +316,7 @@ int main(int argc, char** argv)
       dec_cfg.nof_layers = cfg.nof_layers;
 
       // Reserve buffer.
-      unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+      unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
       TESTASSERT(buffer.is_valid());
 
       // Reset code blocks CRCs.

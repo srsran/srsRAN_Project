@@ -337,7 +337,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   unsigned nof_codeblocks =
       ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), config.ldpc_base_graph);
 
-  unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks);
+  unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks, true);
 
   // Process PDSCH.
   pdsch_proc->process(*mapper, std::move(rm_buffer), notifier_spy, transport_blocks, config);

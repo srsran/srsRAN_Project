@@ -622,9 +622,13 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     trx_buffer_identifier id(pdsch_config.rnti,
                              (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0);
 
+    // Extract new data flag.
+    bool new_data = pdsch_config.codewords.front().new_data;
+
     // Get transmit buffer.
-    unique_tx_buffer buffer = (pdsch_config.context.has_value()) ? buffer_pool.reserve(pdsch_config.slot, id, nof_cb)
-                                                                 : buffer_pool.reserve(pdsch_config.slot, nof_cb);
+    unique_tx_buffer buffer = (pdsch_config.context.has_value())
+                                  ? buffer_pool.reserve(pdsch_config.slot, id, nof_cb, new_data)
+                                  : buffer_pool.reserve(pdsch_config.slot, nof_cb);
 
     // Check the soft buffer is valid.
     if (!buffer.is_valid()) {

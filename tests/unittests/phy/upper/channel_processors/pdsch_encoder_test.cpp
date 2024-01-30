@@ -248,7 +248,7 @@ int main(int argc, char** argv)
     unsigned nof_codeblocks =
         ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), test_case.config.base_graph);
 
-    unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks);
+    unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks, true);
 
     pdsch_encoder::configuration config;
     config.new_data       = true;

@@ -50,7 +50,8 @@ private:
   srslog::basic_logger& logger;
 
   // See interface for documentation.
-  unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override;
+  unique_tx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) override;
 
   // See interface for documentation.
   unique_tx_buffer reserve(const slot_point& slot, unsigned nof_codeblocks) override;

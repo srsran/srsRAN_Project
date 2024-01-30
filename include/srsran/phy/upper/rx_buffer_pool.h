@@ -47,8 +47,6 @@ public:
   /// - a buffer reservation is performed with the same identifier but different number of codeblocks, or
   /// - buffer reservation expires (by means run_slot()).
   ///
-  /// The buffer CRC are reset if one of the conditions above is satisfied.
-  ///
   /// The pool does not initialize or modify the codeblock contents of the buffers. The modules that use the buffers are
   /// responsible for initializing and modifying their contents upon new transmissions.
   ///
@@ -58,14 +56,18 @@ public:
   ///   identifiers;
   /// - Insufficient number of codeblocks, \ref rx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
   ///   assigned to buffers;
-  /// - A buffer with the same identifier is locked; or
+  /// - A buffer with the same identifier is locked;
+  /// - No buffer is found with the same identifier while the reservation is not marked as new data;
+  /// - The number of codeblocks for a retransmission is different than the previous reservation; or
   /// - The pool operation has stopped.
   ///
-  /// \param[in] slot Indicates the slot context in which the reservation occurs.
-  /// \param[in] id Identifies the buffer.
+  /// \param[in] slot           Slot context in which the reservation occurs.
+  /// \param[in] id             Buffer identifier.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
+  /// \param[in] new_data       Set to true if the transmission is for new data.
   /// \return A valid unique buffer if the reservation was successful. Otherwise, an invalid unique buffer.
-  virtual unique_rx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) = 0;
+  virtual unique_rx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
 
   /// \brief Runs pool housekeeping tasks.
   /// \param[in] slot Indicates the current slot.

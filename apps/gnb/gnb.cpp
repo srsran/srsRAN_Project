@@ -237,7 +237,7 @@ int main(int argc, char** argv)
   }
 
   // Set layer-specific logging options.
-  auto& phy_logger = srslog::fetch_basic_logger("PHY", false);
+  auto& phy_logger = srslog::fetch_basic_logger("PHY", true);
   phy_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.phy_level));
   phy_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 

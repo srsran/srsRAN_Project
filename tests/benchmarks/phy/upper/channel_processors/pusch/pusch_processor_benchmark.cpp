@@ -697,7 +697,7 @@ static void thread_process(pusch_processor&              proc,
     }
 
     // Reserve buffer.
-    unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks);
+    unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
 
     // Reset notifier.
     result_notifier.reset();

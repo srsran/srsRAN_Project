@@ -367,7 +367,8 @@ int main(int argc, char** argv)
     uint64_t total_hwacc_time = 0;
 
     // Reserve softbuffer.
-    unique_tx_buffer softbuffer = softbuffer_pool->get_pool().reserve(slot_point(), softbuffer_id, nof_codeblocks);
+    unique_tx_buffer softbuffer =
+        softbuffer_pool->get_pool().reserve(slot_point(), softbuffer_id, nof_codeblocks, true);
     TESTASSERT(softbuffer.is_valid());
 
     // Encode the TB.
