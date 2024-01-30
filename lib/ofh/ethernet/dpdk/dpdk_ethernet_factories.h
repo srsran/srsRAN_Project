@@ -25,10 +25,8 @@ class frame_notifier;
 struct gw_config;
 
 /// Creates a DPDK Ethernet transmitter and receiver pair.
-std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>> create_dpdk_txrx(const gw_config&      config,
-                                                                                task_executor&        rx_executor,
-                                                                                frame_notifier&       notifier,
-                                                                                srslog::basic_logger& logger);
+std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>>
+create_dpdk_txrx(const gw_config& config, task_executor& rx_executor, srslog::basic_logger& logger);
 
 } // namespace ether
 } // namespace srsran

@@ -13,6 +13,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
+#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -118,6 +119,8 @@ struct sector_dependencies {
   std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
   /// Ethernet gateway.
   std::unique_ptr<ether::gateway> eth_gateway;
+  /// Ethernet receiver.
+  std::unique_ptr<ether::receiver> eth_receiver;
 };
 
 } // namespace ofh

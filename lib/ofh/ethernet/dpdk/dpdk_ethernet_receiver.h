@@ -30,20 +30,11 @@ class dpdk_receiver_impl : public receiver
 
 public:
   dpdk_receiver_impl(task_executor&                     executor_,
-                     frame_notifier&                    notifier_,
                      std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
-                     srslog::basic_logger&              logger_) :
-    logger(logger_),
-    executor(executor_),
-    notifier(notifier_),
-    port_ctx_ptr(std::move(port_ctx_ptr_)),
-    port_ctx(*port_ctx_ptr)
-  {
-    srsran_assert(port_ctx_ptr, "Invalid port context");
-  }
+                     srslog::basic_logger&              logger_);
 
   // See interface for documentation.
-  void start() override;
+  void start(frame_notifier& notifier) override;
 
   // See interface for documentation.
   void stop() override;
@@ -56,12 +47,12 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger&              logger;
-  task_executor&                     executor;
-  frame_notifier&                    notifier;
-  std::shared_ptr<dpdk_port_context> port_ctx_ptr;
-  dpdk_port_context&                 port_ctx;
-  std::atomic<receiver_status>       rx_status{receiver_status::idle};
+  srslog::basic_logger&                  logger;
+  task_executor&                         executor;
+  std::reference_wrapper<frame_notifier> notifier;
+  std::shared_ptr<dpdk_port_context>     port_ctx_ptr;
+  dpdk_port_context&                     port_ctx;
+  std::atomic<receiver_status>           rx_status{receiver_status::idle};
 };
 
 } // namespace ether

@@ -18,8 +18,36 @@
 using namespace srsran;
 using namespace ether;
 
-void dpdk_receiver_impl::start()
+namespace {
+
+class dummy_frame_notifier : public frame_notifier
 {
+  // See interface for documentation.
+  void on_new_frame(span<const uint8_t> payload) override {}
+};
+
+} // namespace
+
+/// This dummy object is passed to the constructor of the DPDK Ethernet receiver implementation as a placeholder for the
+/// actual frame notifier, which will be later set up through the \ref start() method.
+static dummy_frame_notifier dummy_notifier;
+
+dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
+                                       std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                                       srslog::basic_logger&              logger_) :
+  logger(logger_),
+  executor(executor_),
+  notifier(dummy_notifier),
+  port_ctx_ptr(std::move(port_ctx_ptr_)),
+  port_ctx(*port_ctx_ptr)
+{
+  srsran_assert(port_ctx_ptr, "Invalid port context");
+}
+
+void dpdk_receiver_impl::start(frame_notifier& notifier_)
+{
+  notifier = std::ref(notifier_);
+
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
@@ -85,6 +113,6 @@ void dpdk_receiver_impl::receive()
     std::memcpy(buffer.data(), eth, length);
     ::rte_pktmbuf_free(mbuf);
 
-    notifier.on_new_frame(span<const uint8_t>(buffer.data(), length));
+    notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), length));
   }
 }

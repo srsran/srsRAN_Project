@@ -36,6 +36,7 @@ static message_receiver_dependencies get_message_receiver_dependencies(receiver_
 
   dependencies.logger         = rx_dependencies.logger;
   dependencies.window_checker = &window_checker;
+  dependencies.eth_receiver   = std::move(rx_dependencies.eth_receiver);
   dependencies.ecpri_decoder  = std::move(rx_dependencies.ecpri_decoder);
   srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
   dependencies.eth_frame_decoder = std::move(rx_dependencies.eth_frame_decoder);
@@ -61,11 +62,6 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                get_message_receiver_dependencies(std::move(dependencies), window_checker)),
   ctrl(msg_receiver)
 {
-}
-
-ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()
-{
-  return msg_receiver;
 }
 
 ota_symbol_boundary_notifier& receiver_impl::get_ota_symbol_boundary_notifier()

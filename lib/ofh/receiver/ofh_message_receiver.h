@@ -42,6 +42,8 @@ struct message_receiver_config {
 struct message_receiver_dependencies {
   /// Logger.
   srslog::basic_logger* logger;
+  /// Ethernet receiver.
+  std::unique_ptr<ether::receiver> eth_receiver;
   /// Reception window checker.
   rx_window_checker* window_checker;
   /// eCPRI packet decoder.
@@ -70,20 +72,8 @@ public:
   // See interface for documentation.
   void on_new_frame(span<const uint8_t> payload) override;
 
-  /// Sets the Ethernet receiver for this Open Fronthaul message receiver.
-  void set_ethernet_receiver(std::unique_ptr<ether::receiver> eth_rx)
-  {
-    srsran_assert(!eth_receiver, "Ethernet receiver already set");
-    srsran_assert(eth_rx, "Invalid Ethernet receiver to set");
-    eth_receiver = std::move(eth_rx);
-  }
-
   /// Returns the Ethernet receiver of this Open Fronthaul message receiver.
-  ether::receiver& get_ethernet_receiver()
-  {
-    srsran_assert(eth_receiver, "Ethernet receiver is not configured");
-    return *eth_receiver;
-  }
+  ether::receiver& get_ethernet_receiver() { return *eth_receiver; }
 
 private:
   /// Returns true if the ethernet frame represented by the given eth parameters should be filtered, otherwise false.

@@ -18,10 +18,7 @@ using namespace srsran;
 using namespace ether;
 
 std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>>
-srsran::ether::create_dpdk_txrx(const gw_config&      config,
-                                task_executor&        rx_executor,
-                                frame_notifier&       notifier,
-                                srslog::basic_logger& logger)
+srsran::ether::create_dpdk_txrx(const gw_config& config, task_executor& rx_executor, srslog::basic_logger& logger)
 {
   dpdk_port_config port_cfg;
   port_cfg.pcie_id                     = config.interface;
@@ -30,5 +27,5 @@ srsran::ether::create_dpdk_txrx(const gw_config&      config,
 
   auto ctx = dpdk_port_context::create(port_cfg);
   return {std::make_unique<dpdk_transmitter_impl>(ctx, logger),
-          std::make_unique<dpdk_receiver_impl>(rx_executor, notifier, ctx, logger)};
+          std::make_unique<dpdk_receiver_impl>(rx_executor, ctx, logger)};
 }

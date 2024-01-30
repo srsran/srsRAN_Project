@@ -24,12 +24,25 @@
 using namespace srsran;
 using namespace ether;
 
+namespace {
+
+class dummy_frame_notifier : public frame_notifier
+{
+  // See interface for documentation.
+  void on_new_frame(span<const uint8_t> payload) override {}
+};
+
+} // namespace
+
+/// This dummy object is passed to the constructor of the receiver implementation as a placeholder for the
+/// actual frame notifier, which will be later set up through the \ref start() method.
+static dummy_frame_notifier dummy_notifier;
+
 receiver_impl::receiver_impl(const std::string&    interface,
                              bool                  is_promiscuous_mode_enabled,
                              task_executor&        executor_,
-                             frame_notifier&       notifier_,
                              srslog::basic_logger& logger_) :
-  logger(logger_), executor(executor_), notifier(notifier_)
+  logger(logger_), executor(executor_), notifier(dummy_notifier)
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ECPRI_ETH_TYPE));
   if (socket_fd < 0) {
@@ -66,9 +79,11 @@ receiver_impl::~receiver_impl()
   ::close(socket_fd);
 }
 
-void receiver_impl::start()
+void receiver_impl::start(frame_notifier& notifier_)
 {
   logger.info("Starting the ethernet frame receiver");
+
+  notifier = std::ref(notifier_);
 
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
@@ -143,5 +158,5 @@ void receiver_impl::receive()
     return;
   }
 
-  notifier.on_new_frame(span<const uint8_t>(buffer.data(), nof_bytes));
+  notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), nof_bytes));
 }

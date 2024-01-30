@@ -12,7 +12,9 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
+#include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
+#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
@@ -28,7 +30,6 @@
 #include <netinet/ether.h>
 #include <random>
 #include <sys/ioctl.h>
-#include <unistd.h>
 
 using namespace srsran;
 using namespace ofh;
@@ -80,6 +81,7 @@ struct test_parameters {
   bs_channel_bandwidth_fr1 bw                                  = srsran::bs_channel_bandwidth_fr1::MHz20;
   subcarrier_spacing       scs                                 = subcarrier_spacing::kHz30;
   std::string              tdd_pattern_str                     = "7d2u";
+  bool                     use_loopback_receiver               = false;
 };
 
 } // namespace
@@ -144,6 +146,8 @@ static void usage(const char* prog)
              test_params.ignore_ecpri_payload_size_field);
   fmt::print("\t-P TDD pattern ['7d2u', '6d3u', default is {}]\n", test_params.tdd_pattern_str);
   fmt::print("\t-m Ethernet frame size [1500-9600, default is {}]\n", test_params.mtu.value());
+  fmt::print("\t-l Use loopback Ethernet interface (requires root permissions) [default is {}]\n",
+             test_params.use_loopback_receiver);
   fmt::print("\t-N Number of slots processed in the test [Default {}]]\n", nof_test_slots);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", test_params.silent);
   fmt::print("\t-v Logging level. [Default {}]\n", test_params.log_level);
@@ -206,7 +210,7 @@ static void parse_args(int argc, char** argv)
   int  opt         = 0;
   bool invalid_arg = false;
 
-  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:N:Aaerish")) != -1) {
+  while ((opt = ::getopt(argc, argv, "f:T:t:B:b:w:c:d:u:p:P:v:m:N:lAaerish")) != -1) {
     switch (opt) {
       case 'T':
         test_params.data_compr_method = std::string(optarg);
@@ -293,6 +297,9 @@ static void parse_args(int argc, char** argv)
       case 'N':
         nof_test_slots = std::strtol(optarg, nullptr, 10);
         break;
+      case 'l':
+        test_params.use_loopback_receiver = (!test_params.use_loopback_receiver);
+        break;
       case 's':
         test_params.silent = (!test_params.silent);
         break;
@@ -317,6 +324,127 @@ static void parse_args(int argc, char** argv)
 }
 
 namespace {
+
+class dummy_frame_notifier : public ether::frame_notifier
+{
+  // See interface for documentation.
+  void on_new_frame(span<const uint8_t> payload) override{};
+};
+dummy_frame_notifier dummy_notifier;
+
+/// Test Ethernet receiver interface.
+class test_ether_receiver : public ether::receiver
+{
+public:
+  test_ether_receiver(srslog::basic_logger& logger_) : logger(logger_), notifier(dummy_notifier) {}
+  virtual ~test_ether_receiver() = default;
+
+  void start(ether::frame_notifier& notifier_) override
+  {
+    notifier = std::ref(notifier_);
+    logger.debug("Test Ethernet receiver started");
+  }
+  void stop() override {}
+
+  virtual void push_new_data(span<const uint8_t> frame) = 0;
+
+protected:
+  srslog::basic_logger&                         logger;
+  std::reference_wrapper<ether::frame_notifier> notifier;
+};
+
+/// Dummy Ethernet receiver that receives data from RU emulator and pushes them to the OFH receiver without using real
+/// Ethernet interface.
+class dummy_eth_receiver : public test_ether_receiver
+{
+  static constexpr unsigned BUFFER_SIZE = 9600;
+  static constexpr unsigned QUEUE_SIZE  = 320;
+
+public:
+  dummy_eth_receiver(srslog::basic_logger& logger_, task_executor& executor_) :
+    test_ether_receiver(logger_), executor(executor_), write_pos(-1), read_pos(-1)
+  {
+    for (auto& buffer : queue) {
+      buffer.reserve(BUFFER_SIZE);
+    }
+  }
+
+  void push_new_data(span<const uint8_t> frame) override
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      int                         pos = (write_pos + 1) % QUEUE_SIZE;
+      if (pos == read_pos) {
+        logger.warning("Ethernet receiver dropped data - queue is full");
+        return;
+      }
+      queue[pos].resize(frame.size());
+      std::memcpy(queue[pos].data(), frame.data(), frame.size());
+      write_pos = pos;
+    }
+    while (!executor.defer([this]() {
+      {
+        std::lock_guard<std::mutex> lock(mutex);
+        read_pos = (read_pos + 1) % QUEUE_SIZE;
+      }
+      notifier.get().on_new_frame(span<const uint8_t>(queue[read_pos].data(), queue[read_pos].size()));
+    })) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+
+private:
+  task_executor&                               executor;
+  std::array<std::vector<uint8_t>, QUEUE_SIZE> queue;
+  int                                          write_pos;
+  int                                          read_pos;
+  std::mutex                                   mutex;
+};
+
+/// Ethernet receiver using loopback ('lo') interface.
+class lo_eth_receiver : public test_ether_receiver
+{
+public:
+  lo_eth_receiver(srslog::basic_logger& logger_) : test_ether_receiver(logger_) { init_loopback_connection(); }
+
+  // See interface for documentation.
+  void push_new_data(span<const uint8_t> frame) override
+  {
+    if (::sendto(socket_fd,
+                 frame.data(),
+                 frame.size(),
+                 0,
+                 reinterpret_cast<::sockaddr*>(&socket_address),
+                 sizeof(socket_address)) < 0) {
+      fmt::print("sendto failed to transmit {} bytes", frame.size());
+    }
+  }
+
+private:
+  void init_loopback_connection()
+  {
+    socket_fd = ::socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_RAW);
+    if (socket_fd < 0) {
+      report_error("Unable to open raw socket for Ethernet gateway: {}", strerror(errno));
+    }
+
+    // Get the index of loopback interface.
+    ::ifreq if_idx = {};
+    ::strncpy(if_idx.ifr_name, "lo", IFNAMSIZ - 1);
+    if (::ioctl(socket_fd, SIOCGIFINDEX, &if_idx) < 0) {
+      report_error("Unable to get index for loopback interface");
+    }
+
+    // Prepare the socket address used by sendto.
+    socket_address             = {};
+    socket_address.sll_ifindex = if_idx.ifr_ifindex;
+    socket_address.sll_halen   = ETH_ALEN;
+  }
+
+  /// Ethernet structures.
+  int         socket_fd = -1;
+  sockaddr_ll socket_address;
+};
 
 /// Dummy RU notifier class for symbol events.
 class dummy_rx_symbol_notifier : public ru_uplink_plane_rx_symbol_notifier
@@ -372,21 +500,18 @@ public:
   /// Constructor.
   test_ru_emulator(srslog::basic_logger& logger_,
                    task_executor&        executor_,
+                   test_ether_receiver&  receiver_,
                    ru_compression_params compr_params_,
                    unsigned              nof_prb_) :
-    logger(logger_), executor(executor_), compr_params(compr_params_), nof_prb(nof_prb_)
+    logger(logger_), executor(executor_), receiver(receiver_), compr_params(compr_params_), nof_prb(nof_prb_)
   {
     ul_eaxc.assign(test_params.ul_port_id.begin(), test_params.ul_port_id.end());
-    init_loopback_connection();
     prepare_test_data();
 
     for (unsigned K = 0; K != MAX_SUPPORTED_EAXC_ID_VALUE; ++K) {
       seq_counters.insert(K, 0);
     }
   }
-
-  /// Destructor.
-  ~test_ru_emulator() { ::close(socket_fd); }
 
   /// Generates UL packets with random IQ data for the specified slot and sends to loopback ethernet interface.
   void send_uplink_data(slot_point slot)
@@ -419,83 +544,75 @@ private:
   void send(const std::vector<std::vector<uint8_t>>& frames)
   {
     for (const auto& frame : frames) {
-      if (::sendto(socket_fd,
-                   frame.data(),
-                   frame.size(),
-                   0,
-                   reinterpret_cast<::sockaddr*>(&socket_address),
-                   sizeof(socket_address)) < 0) {
-        fmt::print("sendto failed to transmit {} bytes", frame.size());
-      }
+      receiver.push_new_data(frame);
     }
   }
 
   void set_header_parameters(span<uint8_t> frame, slot_point slot, unsigned symbol, unsigned eaxc)
   {
+    // Real receiver sends VLAN parameters as part of a Ethernet frame.
+    unsigned offset = (test_params.use_loopback_receiver) ? 4 : 0;
+
     // Set timestamp.
-    uint8_t octet = 0;
-    frame[27]     = uint8_t(slot.sfn());
+    uint8_t octet      = 0;
+    frame[23 + offset] = uint8_t(slot.sfn());
     // Subframe index; offset: 4, 4 bits long.
     octet |= uint8_t(slot.subframe_index()) << 4u;
     // Four MSBs of the slot index within 1ms subframe; offset: 4, 6 bits long.
     octet |= uint8_t(slot.subframe_slot_index() >> 2u);
-    frame[28] = octet;
+    frame[24 + offset] = octet;
 
     octet = 0;
     octet |= uint8_t(slot.subframe_slot_index() & 0x3) << 6u;
     octet |= uint8_t(symbol);
-    frame[29] = octet;
+    frame[25 + offset] = octet;
 
     // Set sequence index.
-    uint8_t& seq_id = seq_counters[eaxc];
-    frame[24]       = seq_id++;
-  }
-
-  void init_loopback_connection()
-  {
-    socket_fd = ::socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_RAW);
-    if (socket_fd < 0) {
-      report_error("Unable to open raw socket for Ethernet gateway: {}", strerror(errno));
-    }
-
-    // Get the index of loopback interface.
-    ::ifreq if_idx = {};
-    ::strncpy(if_idx.ifr_name, "lo", IFNAMSIZ - 1);
-    if (::ioctl(socket_fd, SIOCGIFINDEX, &if_idx) < 0) {
-      report_error("Unable to get index for loopback interface");
-    }
-
-    // Prepare the socket address used by sendto.
-    socket_address             = {};
-    socket_address.sll_ifindex = if_idx.ifr_ifindex;
-    socket_address.sll_halen   = ETH_ALEN;
+    uint8_t& seq_id    = seq_counters[eaxc];
+    frame[20 + offset] = seq_id++;
   }
 
   void initialize_header(span<uint8_t> frame, header_parameters params) const
   {
-    static const uint8_t hdr_template[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x81, 0x00, 0x00, 0x02, 0xae, 0xfe, 0x10, 0x00, 0x1d, 0xea, 0x00, 0x00,
-                                           0x00, 0x80, 0x10, 0xee, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x91, 0x00};
+    // Doesn't include VLAN header, as the OFH receiver expects a NIC to strip it.
+    static const uint8_t hdr_template_no_vlan[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                   0x00, 0xae, 0xfe, 0x10, 0x00, 0x1d, 0xea, 0x00, 0x00, 0x00, 0x80,
+                                                   0x10, 0xee, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x91, 0x00};
+
+    static const uint8_t hdr_template_vlan[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                0x81, 0x00, 0x00, 0x02, 0xae, 0xfe, 0x10, 0x00, 0x1d, 0xea, 0x00, 0x00,
+                                                0x00, 0x80, 0x10, 0xee, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x91, 0x00};
+
+    const uint8_t* hdr_template_ptr = (test_params.use_loopback_receiver) ? hdr_template_vlan : hdr_template_no_vlan;
+    const size_t   hdr_template_size =
+        (test_params.use_loopback_receiver) ? sizeof(hdr_template_vlan) : sizeof(hdr_template_no_vlan);
+    unsigned offset = (test_params.use_loopback_receiver) ? 4 : 0;
+
     // Copy default header.
-    std::memcpy(frame.data(), hdr_template, sizeof(hdr_template));
+    std::memcpy(frame.data(), hdr_template_ptr, hdr_template_size);
+
+    // Set VLAN tag.
+    if (test_params.use_loopback_receiver) {
+      frame[15] = vlan_tag;
+    }
 
     // Set correct payload size.
     uint16_t payload_size = htons(params.payload_size);
-    std::memcpy(&frame[20], &payload_size, sizeof(uint16_t));
+    std::memcpy(&frame[16 + offset], &payload_size, sizeof(uint16_t));
 
-    // Set port ID
-    frame[23] = params.port;
+    // Set port ID.
+    frame[19 + offset] = params.port;
 
     // Set start PRB and number of PRBs.
-    frame[31] = uint8_t(params.start_prb >> 8u) & 0x3;
-    frame[32] = uint8_t(params.start_prb);
-    frame[33] = uint8_t((params.nof_prbs == nof_prb) ? 0 : params.nof_prbs);
+    frame[27 + offset] = uint8_t(params.start_prb >> 8u) & 0x3;
+    frame[28 + offset] = uint8_t(params.start_prb);
+    frame[29 + offset] = uint8_t((params.nof_prbs == nof_prb) ? 0 : params.nof_prbs);
 
     // Set compression header.
     uint8_t octet = 0U;
     octet |= uint8_t(compr_params.data_width) << 4U;
     octet |= uint8_t(to_value(compr_params.type));
-    frame[34] = octet;
+    frame[30 + offset] = octet;
   }
 
   static void fill_random_data(span<uint8_t> frame)
@@ -506,10 +623,14 @@ private:
 
   void prepare_test_data()
   {
-    constexpr units::bytes ether_header_size(18);
-    constexpr units::bytes ecpri_iq_data_header_size(8);
-    constexpr units::bytes ofh_header_size(10);
-    constexpr unsigned     headers_size = (ether_header_size + ecpri_iq_data_header_size + ofh_header_size).value();
+    units::bytes ecpri_iq_data_header_size(8);
+    units::bytes ofh_header_size(10);
+    units::bytes ether_header_size(14);
+    if (test_params.use_loopback_receiver) {
+      // VLAN parameters are added in case real Ethernet receiver is used.
+      ether_header_size = units::bytes(18);
+    }
+    unsigned headers_size = (ether_header_size + ecpri_iq_data_header_size + ofh_header_size).value();
 
     prb_size = units::bits(compr_params.data_width * NOF_SUBCARRIERS_PER_RB * 2 +
                            (compr_params.type == compression_type::BFP ? 8 : 0))
@@ -562,6 +683,7 @@ private:
 private:
   srslog::basic_logger&       logger;
   task_executor&              executor;
+  test_ether_receiver&        receiver;
   const ru_compression_params compr_params;
   const unsigned              nof_prb;
   units::bytes                prb_size;
@@ -569,9 +691,6 @@ private:
   std::vector<std::vector<std::vector<uint8_t>>>               test_data;
   circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>         ul_eaxc;
-  /// Ethernet structures.
-  int         socket_fd = -1;
-  sockaddr_ll socket_address;
 };
 
 /// DU emulator that pushes resource grids to the OFH RU implementation.
@@ -655,7 +774,9 @@ private:
       std::this_thread::sleep_for(slot_duration_us - slot_sim_exec_time - 5us);
       slot_val = (++slot).to_uint();
     }
-
+    // Leave time fo the uplink slots to be processed.
+    auto proc_time = processing_delay_slots * slot_duration_us + tx_window_timing_params.T1a_max_cp_ul + 100ms;
+    std::this_thread::sleep_for(proc_time);
     test_finished.store(true, std::memory_order_relaxed);
   }
 
@@ -847,7 +968,7 @@ struct worker_manager {
       const std::string exec_name = "ru_rx_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, 2},
+                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                                     {{exec_name}},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 1};
@@ -961,7 +1082,8 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
                                                     worker_manager&                     workers,
                                                     ru_timing_notifier*                 timing_notifier,
                                                     ru_uplink_plane_rx_symbol_notifier* rx_symbol_notifier,
-                                                    test_gateway*&                      tx_gateway)
+                                                    test_gateway*&                      tx_gateway,
+                                                    test_ether_receiver*&               eth_receiver)
 {
   ru_ofh_dependencies dependencies;
   dependencies.logger             = &logger;
@@ -981,11 +1103,19 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   tx_gateway              = gateway.get();
   sector_deps.eth_gateway = std::move(gateway);
 
+  // Configure Ethernet receiver.
+  if (!test_params.use_loopback_receiver) {
+    auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, *workers.ru_rx_exec);
+    eth_receiver             = dummy_receiver.get();
+    sector_deps.eth_receiver = std::move(dummy_receiver);
+  }
+
   return dependencies;
 }
 
 int main(int argc, char** argv)
 {
+  std::unique_ptr<test_ether_receiver> eth_receiver_ptr;
   parse_args(argc, argv);
 
   // Set up logging.
@@ -1006,10 +1136,16 @@ int main(int argc, char** argv)
   dummy_rx_symbol_notifier rx_symbol_notifier;
   dummy_timing_notifier    timing_notifier;
   test_gateway*            tx_gateway;
+  test_ether_receiver*     eth_receiver;
+
+  if (test_params.use_loopback_receiver) {
+    eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
+    eth_receiver     = eth_receiver_ptr.get();
+  }
 
   ru_ofh_configuration ru_cfg = generate_ru_config();
   ru_ofh_dependencies  ru_deps =
-      generate_ru_dependencies(logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway);
+      generate_ru_dependencies(logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver);
   std::unique_ptr<radio_unit> ru_object = create_ofh_ru(ru_cfg, std::move(ru_deps));
 
   // Get RU downlink plane handler.
@@ -1019,7 +1155,7 @@ int main(int argc, char** argv)
   // Create RU emulator instance.
   ru_compression_params ul_compression_params{to_compression_type(test_params.data_compr_method),
                                               test_params.data_bitwidth};
-  test_ru_emulator      ru_emulator(logger, *workers.test_ru_sim_exec, ul_compression_params, nof_prb);
+  test_ru_emulator      ru_emulator(logger, *workers.test_ru_sim_exec, *eth_receiver, ul_compression_params, nof_prb);
 
   // Create DU emulator instance.
   test_du_emulator du_emulator(logger, *workers.test_du_sim_exec, ru_dl_handler, ru_ul_handler, nof_prb);
@@ -1037,23 +1173,24 @@ int main(int argc, char** argv)
   }
   // Start the DU emulator.
   du_emulator.start();
-  fmt::print("Running the test\n");
+  fmt::print("Running the test...\n");
 
   // Wait until test is finished.
   while (!du_emulator.is_test_finished()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+  fmt::print("DU emulator stopped\n");
 
   fmt::print("Stopping the RU...\n");
   ru_object->get_controller().stop();
   fmt::print("RU stopped successfully.\n");
 
+  workers.stop();
+  srslog::flush();
+
   fmt::print("Test finished, nof_missing_dl_packets={}, nof_malformed_packets={}\n",
              nof_missing_dl_packets,
              nof_malformed_packets);
-
-  workers.stop();
-  srslog::flush();
 
   return 0;
 }

@@ -26,7 +26,8 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
-  data_flow_prach(std::move(dependencies.data_flow_prach))
+  data_flow_prach(std::move(dependencies.data_flow_prach)),
+  eth_receiver(std::move(dependencies.eth_receiver))
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -34,6 +35,7 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   srsran_assert(data_flow_uplink, "Invalid uplink IQ data flow");
   srsran_assert(data_flow_prach, "Invalid uplink PRACH IQ data flow");
   srsran_assert(seq_id_checker, "Invalid sequence id checker");
+  srsran_assert(eth_receiver, "Invalid Ethernet receiver");
 }
 
 void message_receiver::on_new_frame(span<const uint8_t> payload)
