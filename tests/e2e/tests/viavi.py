@@ -214,7 +214,10 @@ def _test_viavi(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
                 fivegc_definition=FiveGCDefinition(amf_ip=amf_ip, amf_port=amf_port),
-                start_info=StartInfo(timeout=gnb_startup_timeout, post_commands=post_commands),
+                start_info=StartInfo(
+                    timeout=gnb_startup_timeout,
+                    post_commands="log --mac_level info --rlc_level info --fapi_level info " + post_commands,
+                ),
             )
         )
 
