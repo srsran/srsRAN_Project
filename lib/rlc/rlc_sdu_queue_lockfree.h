@@ -16,9 +16,22 @@
 
 namespace srsran {
 
-/// This class will hold RLC SDUs from upper layers.
-/// It provides methods for thread-safe read/writing of SDUs
-/// and discarding SDUs, if requested by the higher layers.
+/// \brief Lockfree RLC SDU queue
+///
+/// This class is used as FIFO buffer for RLC SDUs from upper layers that shall be transmitted by the RLC Tx entity.
+/// It implements SPSC (single producer single consumer) semantics, i.e. allows concurrent access by one upper-layer
+/// thread and one lower-layer thread. Internally, this class wraps a lock-free SPSC queue to store the actual SDUs and
+/// involves additional bookkeeping to support discard of SDUs and to track the amount of buffered SDUs and bytes.
+///
+/// From the perspective of the upper-layer thread this class provides methods to write RLC SDUs (with or without PDCP
+/// SN) and to discard SDUs by their PDCP SN. SDUs without PDCP SN cannot be discarded.
+/// SDUs that are marked as discarded remain in the internal queue until they are popped (and dropped) via \c read.
+/// Writing to the queue fails if the internal queue is either full or the queue already contains an SDU (whether valid
+/// or marked as discarded) with the same value for [PDCP_SN mod capacity].
+///
+/// From the perspective of the lower-layer thread it provides methods to read RLC SDUs and to query the total number of
+/// buffered SDUs and bytes.
+/// SDUs are read in the same order as they were written into the queue. There is no reordering by PDCP SN.
 class rlc_sdu_queue_lockfree
 {
 public:
@@ -36,33 +49,44 @@ public:
         capacity);
   }
 
+  /// \brief Writes an RLC SDU (with optional PDCP SN) to the queue, if possible.
+  ///
+  /// This function may be called by the upper-layer thread.
+  ///
+  /// The write fails (returns false) in the following cases:
+  /// - The internal queue is full.
+  /// - Another SDU with same value of [PDCP_SN mod capacity] exists (either valid or discarded) in the queue.
+  ///
+  /// \param sdu The RLC SDU that shall be written.
+  /// \return True if the RLC SDU was successfully written to the queue, otherwise false.
   bool write(rlc_sdu sdu)
   {
-    // if we have a PDCP SN, first check the slot is available
+    // if the SDU has a PDCP SN, first check the slot is available
     optional<uint32_t> pdcp_sn  = sdu.pdcp_sn;
     const size_t       sdu_size = sdu.buf.length();
     if (pdcp_sn.has_value()) {
       const uint32_t pdcp_sn_value = sdu.pdcp_sn.value();
-      uint32_t       slot_state    = sdu_states[pdcp_sn_value % capacity].load(std::memory_order_relaxed);
+      // load slot state (memory_order_relaxed, don't care about values of sdu_size)
+      uint32_t slot_state = sdu_states[pdcp_sn_value % capacity].load(std::memory_order_relaxed);
       if (slot_state != STATE_FREE) {
-        logger.log_debug("Could not write pdcp_sn={} to queue. Slot occupied by pdcp_sn={}", pdcp_sn_value, slot_state);
+        logger.log_debug("SDU queue failed to enqueue pdcp_sn={}. Slot holds pdcp_sn={}", pdcp_sn_value, slot_state);
         return false;
       }
 
       // slot is free, we can safely store the SDU size
       sdu_sizes[pdcp_sn_value % capacity].store(sdu_size, std::memory_order_relaxed);
 
-      // reserve slot by writing the PDCP SN into it
+      // allocate slot by writing the PDCP SN into it (memory_order_release ensures sdu_size becomes visible to others)
       sdu_states[pdcp_sn_value % capacity].store(pdcp_sn_value, std::memory_order_release);
     }
 
-    // push to queue
+    // push SDU to queue
     bool pushed = queue->try_push(std::move(sdu));
     if (not pushed) {
-      logger.log_debug("Could not write pdcp_sn={} to queue. Queue is full", pdcp_sn);
-      // if we have a PDCP SN, release the slot that we just reserved
+      logger.log_debug("SDU queue failed to enqueue pdcp_sn={}. Queue is full", pdcp_sn);
+      // if the SDU has a PDCP SN, release the slot (memory_order_relaxed, don't care about value of sdu_size)
       if (pdcp_sn.has_value()) {
-        sdu_states[pdcp_sn.value() % capacity].store(STATE_FREE);
+        sdu_states[pdcp_sn.value() % capacity].store(STATE_FREE, std::memory_order_relaxed);
       }
       return false;
     }
@@ -73,22 +97,41 @@ public:
     return true;
   }
 
-  bool discard(uint32_t pdcp_sn)
+  /// \brief Marks an RLC SDU as "discarded", if possible.
+  ///
+  /// This function may be called by the upper-layer thread.
+  ///
+  /// The function fails (returns false) in the following cases:
+  /// - The SDU with the PDCP SN is already marked as discarded.
+  /// - The SDU with the PDCP SN is not in the queue.
+  ///
+  /// In case of success, the number of SDUs/bytes will be updated immediately.
+  /// However, the actual SDU remains in the internal queue until it is popped and finally discarded via \c read.
+  /// Meanwhile, no further SDU with the same value of [PDCP_SN mod capacity] can be added to the queue.
+  ///
+  /// \param pdcp_sn The PDCP SN of the SDU that shall be discarded.
+  /// \return True if the RLC SDU was successfully discarded, otherwise false.
+  bool try_discard(uint32_t pdcp_sn)
   {
     uint32_t expected_state = pdcp_sn;
     uint32_t desired_state  = STATE_DISCARDED;
-    bool     discarded      = sdu_states[pdcp_sn % capacity].compare_exchange_strong(
-        expected_state, desired_state, std::memory_order_relaxed);
-    if (not discarded) {
+    // set slot state as "discarded" only if it holds the PDCP SN; otherwise load the existing state
+    // - on success: memory_order_acquire ensures sdu_size is up to date
+    // - on failure: memory_order_relaxed, don't care about value of sdu_size
+    bool success = sdu_states[pdcp_sn % capacity].compare_exchange_strong(
+        expected_state, desired_state, std::memory_order_acquire, std::memory_order_relaxed);
+    uint32_t sdu_size = sdu_sizes[pdcp_sn % capacity].load(std::memory_order_relaxed);
+
+    if (not success) {
       switch (expected_state) {
         case STATE_DISCARDED:
-          logger.log_debug("Discard ignored for pdcp_sn={}. SDU already discarded", pdcp_sn);
+          logger.log_debug("SDU queue cannot discard pdcp_sn={}. Slot is already discarded", pdcp_sn);
           break;
         case STATE_FREE:
-          logger.log_debug("Discard ignored for pdcp_sn={}. SDU is not present", pdcp_sn);
+          logger.log_debug("SDU queue cannot discard pdcp_sn={}. Slot is already free", pdcp_sn);
           break;
         default:
-          logger.log_debug("Discard ignored for pdcp_sn={}. Slot occupied by pdcp_sn={}", pdcp_sn, expected_state);
+          logger.log_debug("SDU queue cannot discard pdcp_sn={}. Slot holds pdcp_sn={}", pdcp_sn, expected_state);
           break;
       }
       return false;
@@ -96,13 +139,26 @@ public:
 
     // update totals
     n_sdus.fetch_sub(1, std::memory_order_relaxed);
-    n_bytes.fetch_sub(sdu_sizes[pdcp_sn % capacity].load(std::memory_order_relaxed), std::memory_order_relaxed);
+    n_bytes.fetch_sub(sdu_size, std::memory_order_relaxed);
     return true;
   }
 
+  /// \brief Reads an RLC SDU (with optional PDCP SN) from the queue, if possible.
+  ///
+  /// This function may be called by the lower-layer thread.
+  ///
+  /// The read fails (returns false) in the following cases:
+  /// - The internal queue only contains SDUs that are marked as discarded.
+  /// - The internal queue is empty.
+  ///
+  /// Each call of this function pops and drops SDUs that are marked as discarded from the internal queue in a loop
+  /// until a valid SDU is popped (return true) or the queue is empty (returns false).
+  ///
+  /// \param sdu Reference to a \c rlc_sdu object that will be filled with the read RLC SDU.
+  /// \return True if an RLC SDU was successfully read from the queue, otherwise false.
   bool read(rlc_sdu& sdu)
   {
-    bool discard_successful = true;
+    bool sdu_is_valid = true;
     do {
       // first try to pop front (SDU can still get discarded from upper layers)
       bool popped = queue->try_pop(sdu);
@@ -112,37 +168,103 @@ public:
       }
 
       if (sdu.pdcp_sn.has_value()) {
-        // if we have a PDCP SN, try to discard it to check if it has been discarded before
-        const uint32_t pdcp_sn_value = sdu.pdcp_sn.value();
-        discard_successful           = discard(pdcp_sn_value);
-        // release the slot
-        sdu_states[pdcp_sn_value % capacity].store(STATE_FREE, std::memory_order_relaxed);
+        // Check if the SDU is still valid (i.e. the PDCP SN was not already discarded) and release the slot
+        const uint32_t pdcp_sn = sdu.pdcp_sn.value();
+        sdu_is_valid           = check_and_release(pdcp_sn); // this also updates totals
       } else {
-        // without PDCP SN, proceed as if discarded
-        discard_successful = true;
+        // SDUs without PDCP SN are alway valid as they can't be discarded
+        sdu_is_valid = true;
 
-        // update totals (only for SDUs without PDCP SN which cannot be discarded)
+        // update totals
         n_sdus.fetch_sub(1, std::memory_order_relaxed);
         n_bytes.fetch_sub(sdu.buf.length(), std::memory_order_relaxed);
       }
-      // try again if discard failed, i.e. the SDU was already discarded before
-    } while (not discard_successful);
+      // try again if SDU is not valid
+    } while (not sdu_is_valid);
     return true;
   }
 
+  /// \brief Reads the number of buffered SDUs that are not marked as discarded.
+  ///
+  /// This function may be called by any thread.
+  ///
+  /// \return The number of buffered SDUs that are not marked as discarded.
   uint32_t size_sdus() const { return n_sdus.load(std::memory_order_relaxed); }
 
+  /// \brief Reads the number of buffered SDU bytes that are not marked as discarded.
+  ///
+  /// This function may be called by any thread.
+  ///
+  /// \return The number of buffered SDU bytes that are not marked as discarded.
   uint32_t size_bytes() const { return n_bytes.load(std::memory_order_relaxed); }
 
   // bool front_size_bytes(uint32_t& size) { return 0; }
 
+  /// \brief Checks if the internal queue is empty.
+  ///
+  /// This function may be called by any thread.
+  ///
+  /// \return True if the internal queue is empty, otherwise false.
   bool is_empty() { return queue->empty(); }
 
+  /// \brief Checks if the internal queue is full.
+  ///
+  /// This function may be called by any thread.
+  ///
+  /// \return True if the internal queue is full, otherwise false.
   bool is_full() { return queue->size() >= capacity; }
 
 private:
-  static constexpr uint32_t STATE_FREE      = 0xffffffff;
-  static constexpr uint32_t STATE_DISCARDED = 0xfffffffe;
+  /// \brief Checks if the RLC SDU with a PDCP SN is valid (i.e. not marked as discarded) and marks the respective slot
+  /// as free.
+  ///
+  /// This private function may be called by \c read by the lower-layer thread.
+  ///
+  /// The function fails (returns false) in the following cases:
+  /// - The SDU with the PDCP SN is already marked as discarded.
+  /// - The SDU with the PDCP SN is not in the queue.
+  ///
+  /// The number of SDUs/bytes will be updated unless the SDU is marked as discarded (in that case it was already
+  /// updated by \c try_discard).
+  ///
+  /// \param pdcp_sn The PDCP SN of the SDU that shall be checked and released.
+  /// \return True if the RLC SDU with given PDCP SN is valid, otherwise false.
+  bool check_and_release(uint32_t pdcp_sn)
+  {
+    // load slot state and block it by setting it as "discarded" (memory_order_acquire ensures sdu_size is up to date)
+    uint32_t old_state = sdu_states[pdcp_sn % capacity].exchange(STATE_DISCARDED, std::memory_order_acquire);
+    uint32_t sdu_size  = sdu_sizes[pdcp_sn % capacity].load(std::memory_order_relaxed);
+    // free the slot (memory_order_relaxed, doesn't care about sdu_size)
+    sdu_states[pdcp_sn % capacity].store(STATE_FREE, std::memory_order_relaxed);
+
+    bool sdu_is_valid;
+    if (old_state == pdcp_sn) {
+      sdu_is_valid = true;
+      logger.log_debug("SDU queue released valid pdcp_sn={}", pdcp_sn);
+    }
+    if (old_state != pdcp_sn) {
+      sdu_is_valid = false;
+      switch (old_state) {
+        case STATE_DISCARDED:
+          logger.log_debug("SDU queue released discarded pdcp_sn={}", pdcp_sn);
+          return false; // totals were already updated on discard
+        case STATE_FREE:
+          logger.log_error("SDU queue error: Invalid release of pdcp_sn={}. Slot was already free", pdcp_sn);
+          break;
+        default:
+          logger.log_error("SDU queue error: Invalid release of pdcp_sn={}. Slot holds pdcp_sn={}", pdcp_sn, old_state);
+          break;
+      }
+    }
+
+    // update totals
+    n_sdus.fetch_sub(1, std::memory_order_relaxed);
+    n_bytes.fetch_sub(sdu_size, std::memory_order_relaxed);
+    return sdu_is_valid;
+  }
+
+  static constexpr uint32_t STATE_FREE      = 0xffffffff; ///< Sentinel value to mark a slot as free.
+  static constexpr uint32_t STATE_DISCARDED = 0xfffffffe; ///< Sentinel value to mark a slot as discarded.
 
   rlc_bearer_logger& logger;
 

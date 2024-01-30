@@ -106,11 +106,11 @@ void discard_test()
   TESTASSERT_EQ(2 * n_sdus, tx_queue.size_bytes());
 
   // Discard pdcp_sn 2 and 4
-  TESTASSERT(tx_queue.discard(2));
-  TESTASSERT(tx_queue.discard(4));
+  TESTASSERT(tx_queue.try_discard(2));
+  TESTASSERT(tx_queue.try_discard(4));
 
   // Try to discard non-existing pdcp_sn
-  TESTASSERT(false == tx_queue.discard(16));
+  TESTASSERT(false == tx_queue.try_discard(16));
 
   // Double check correct number of SDUs and SDU bytes
   unsigned leftover_sdus = n_sdus - 2;
@@ -147,7 +147,7 @@ void discard_all_test()
 
   // Discard all SDUs
   for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
-    TESTASSERT(tx_queue.discard(pdcp_sn));
+    TESTASSERT(tx_queue.try_discard(pdcp_sn));
   }
 
   TESTASSERT_EQ(0, tx_queue.size_sdus());

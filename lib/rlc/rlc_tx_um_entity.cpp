@@ -61,7 +61,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
 // TS 38.322 v16.2.0 Sec. 5.4
 void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
 {
-  if (sdu_queue.discard(pdcp_sn)) {
+  if (sdu_queue.try_discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard(1);
     handle_changed_buffer_state();
