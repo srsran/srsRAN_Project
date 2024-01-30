@@ -13,6 +13,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "15"
     file: .gitlab/ci-shared/tools/docker.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "15"
+    file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -25,6 +28,20 @@ stages:
   - publish
   - alt registries
   - manifest
+
+################################################################################
+## CI
+################################################################################
+tox python in builder:
+  stage: ci
+  extends: .tox
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/builders/**/*.py
+  variables:
+    PY_DIR: .gitlab/ci/builders
 
 ################################################################################
 # UHD builder
@@ -170,7 +187,7 @@ ubuntu-dpdk-builder:
         curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
         cd dpdk*${dpdk_version}
         meson build --prefix "/opt/dpdk/${dpdk_version}"
-        ninja -C build install
+        ninja -j${KUBERNETES_CPU_REQUEST} -C build install
 
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
         cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
@@ -221,7 +238,7 @@ ubuntu-dpdk-builder:
     OS_FAMILY: none
     OS_NAME: none
     OS_VERSION: none
-    MULTI_ARCH_BUILD: none
+    MULTI_ARCH_BUILD: "false"
     RHEL_CT_VERSION: none
     MODE: publish
   tags:
@@ -233,7 +250,7 @@ ubuntu-dpdk-builder:
     - !reference [.fetch_src_cache, script]
     - |
       export NAME=builder-$OS_NAME-$OS_VERSION
-      export VERSION=$DOCKER_BUILDER_VERSION
+      export VERSION=${DOCKER_BUILDER_VERSION}-${PLATFORM}
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
@@ -317,7 +334,6 @@ image-build-publish [ubuntu, 20.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "20.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "amd64"
   needs:
     - builder version
@@ -352,7 +368,6 @@ image-build-publish [ubuntu, 20.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "20.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "arm64"
   needs:
     - builder version
@@ -405,7 +420,6 @@ image-build-publish [ubuntu, 22.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "amd64"
   needs:
     - builder version
@@ -440,7 +454,6 @@ image-build-publish [ubuntu, 22.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "arm64"
   needs:
     - builder version
@@ -493,7 +506,6 @@ image-build-publish [ubuntu, 23.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "amd64"
   needs:
     - builder version
@@ -528,7 +540,6 @@ image-build-publish [ubuntu, 23.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.04"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "arm64"
   needs:
     - builder version
@@ -581,7 +592,6 @@ image-build-publish [ubuntu, 23.10, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.10"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "amd64"
   needs:
     - builder version
@@ -616,7 +626,6 @@ image-build-publish [ubuntu, 23.10, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.10"
-    MULTI_ARCH_BUILD: "false"
     PLATFORM: "arm64"
   needs:
     - builder version
@@ -732,7 +741,7 @@ alternative-tag [archlinux, latest]:
 ################################################################################
 # Rhel 8
 ################################################################################
-image-build-publish [rhel, 8]:
+image-build-publish [rhel, 8, amd64]:
   extends:
     - .image-build-publish
   variables:
@@ -740,10 +749,7 @@ image-build-publish [rhel, 8]:
     OS_NAME: rhel
     OS_VERSION: "8"
     RHEL_CT_VERSION: "2023.5_1.0.3"
-    MULTI_ARCH_BUILD: "true"
-  parallel:
-    matrix:
-      - PLATFORM: ["amd64", "arm64"]
+    PLATFORM: "amd64"
   needs:
     - builder version
 
@@ -756,10 +762,19 @@ alternative-tag [rhel, 8, amd64]:
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
     - builder version
-    - job: image-build-publish [rhel, 8]
-      parallel:
-        matrix:
-          - PLATFORM: "amd64"
+    - image-build-publish [rhel, 8, amd64]
+
+image-build-publish [rhel, 8, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: rhel
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    RHEL_CT_VERSION: "2023.5_1.0.3"
+    PLATFORM: "amd64"
+  needs:
+    - builder version
 
 alternative-tag [rhel, 8, arm64]:
   extends:
@@ -770,10 +785,7 @@ alternative-tag [rhel, 8, arm64]:
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
     - builder version
-    - job: image-build-publish [rhel, 8]
-      parallel:
-        matrix:
-          - PLATFORM: "arm64"
+    - image-build-publish [rhel, 8, arm64]
 
 manifest [rhel, 8]:
   extends: .manifest
