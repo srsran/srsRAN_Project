@@ -51,7 +51,7 @@ def test_mode(
     # Test
     extra_config: str,
     nof_ant: int,
-    duration: int = 30,
+    duration: int = 5 * 60,
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
