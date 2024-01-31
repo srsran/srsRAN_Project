@@ -21,6 +21,7 @@ using namespace srsran;
 struct bench_params {
   unsigned nof_pdus         = 100000;
   unsigned slow_inter_rx_us = 500;
+  unsigned rx_mmsg          = 256;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -29,16 +30,20 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-n Number of PDUs [Default {}]\n", params.nof_pdus);
   fmt::print("\t-u Notify large PDU inter arrival time longer than t microseconds [Default {}]\n",
              params.slow_inter_rx_us);
+  fmt::print("\t-m Number of RX PDUs in a syscall (rx_mmsg) [Default {}]\n", params.rx_mmsg);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:n:m:u:h")) != -1) {
     switch (opt) {
       case 'n':
         params.nof_pdus = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'm':
+        params.rx_mmsg = std::strtol(optarg, nullptr, 10);
         break;
       case 'u':
         params.slow_inter_rx_us = std::strtol(optarg, nullptr, 10);
@@ -100,38 +105,6 @@ private:
   std::chrono::microseconds                      t_sum  = std::chrono::microseconds::zero();
 };
 
-byte_buffer make_tx_byte_buffer(uint32_t length)
-{
-  byte_buffer pdu{};
-  for (uint32_t i = 0; i < length; ++i) {
-    if (not pdu.append((uint8_t)i)) {
-      pdu.clear();
-      break;
-    }
-  }
-  return pdu;
-}
-
-sockaddr_storage to_sockaddr_storage(std::string dest_addr, uint16_t port)
-{
-  in_addr          inaddr_v4    = {};
-  in6_addr         inaddr_v6    = {};
-  sockaddr_storage addr_storage = {};
-
-  if (inet_pton(AF_INET, dest_addr.c_str(), &inaddr_v4) == 1) {
-    sockaddr_in* tmp = (sockaddr_in*)&addr_storage;
-    tmp->sin_family  = AF_INET;
-    tmp->sin_addr    = inaddr_v4;
-    tmp->sin_port    = htons(port);
-  } else if (inet_pton(AF_INET6, dest_addr.c_str(), &inaddr_v6) == 1) {
-    sockaddr_in6* tmp = (sockaddr_in6*)&addr_storage;
-    tmp->sin6_family  = AF_INET6;
-    tmp->sin6_addr    = inaddr_v6;
-    tmp->sin6_port    = htons(port);
-  }
-  return addr_storage;
-}
-
 int main(int argc, char** argv)
 {
   srslog::init();
@@ -143,33 +116,30 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
-  udp_network_gateway_config gw2_cfg;
-  gw2_cfg.bind_address      = "127.0.0.1";
-  gw2_cfg.bind_port         = 56701;
-  gw2_cfg.non_blocking_mode = false;
-  gw2_cfg.rx_max_mmsg       = 256;
+  udp_network_gateway_config gw_cfg;
+  gw_cfg.bind_address      = "127.0.0.1";
+  gw_cfg.bind_port         = 56701;
+  gw_cfg.non_blocking_mode = false;
+  gw_cfg.rx_max_mmsg       = 16;
 
-  dummy_network_gateway_data_notifier_with_src_addr gw2_dn{params};
-  std::unique_ptr<udp_network_gateway>              gw2;
+  dummy_network_gateway_data_notifier_with_src_addr gw_dn{params};
+  std::unique_ptr<udp_network_gateway>              gw;
 
   manual_task_worker io_tx_executor{128};
 
-  gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_tx_executor});
-  gw2->create_and_bind();
+  gw = create_udp_network_gateway({gw_cfg, gw_dn, io_tx_executor});
+  gw->create_and_bind();
 
   std::unique_ptr<io_broker> epoll_broker;
 
   epoll_broker = create_io_broker(io_broker_type::epoll);
-  epoll_broker->register_fd(gw2->get_socket_fd(), [&gw2](int fd) { gw2->receive(); });
+  epoll_broker->register_fd(gw->get_socket_fd(), [&gw](int fd) { gw->receive(); });
 
   // Wait for all packets to be received
-  while (gw2_dn.get_n_pdus() < params.nof_pdus) {
+  auto t_start = std::chrono::high_resolution_clock::now();
+  while (gw_dn.get_n_pdus() < params.nof_pdus) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
-
-  sockaddr_storage gw2_addr = to_sockaddr_storage(gw2_cfg.bind_address, gw2_cfg.bind_port);
-
-  auto t_start = std::chrono::high_resolution_clock::now();
 
   auto t_end    = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
@@ -177,14 +147,14 @@ int main(int argc, char** argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  fmt::print("Rx time: {} us\n", duration.count());
+  fmt::print("Test duration: {} us\n", duration.count());
   fmt::print("Rx data rate: {:.2f} Mbit/s\n\n",
-             (double)gw2_dn.get_rx_bytes() * 8 * 1e-6 / (gw2_dn.get_t_sum().count() * 1e-6));
+             (double)gw_dn.get_rx_bytes() * 8 * 1e-6 / (gw_dn.get_t_sum().count() * 1e-6));
 
-  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw2_dn.get_n_pdus() / (duration.count() * 1e-6));
+  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw_dn.get_n_pdus() / (gw_dn.get_t_sum().count() * 1e-6));
 
   fmt::print("PDU inter arrival time (min/avg/max) [us]: {}/{}/{}\n",
-             gw2_dn.get_t_min().count(),
-             gw2_dn.get_t_sum().count() / gw2_dn.get_n_pdus(),
-             gw2_dn.get_t_max().count());
+             gw_dn.get_t_min().count(),
+             gw_dn.get_t_sum().count() / gw_dn.get_n_pdus(),
+             gw_dn.get_t_max().count());
 }
