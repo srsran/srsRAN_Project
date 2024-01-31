@@ -26,26 +26,16 @@ bool cu_cp_routine_manager::schedule_async_task(async_task<void> task)
   return main_ctrl_loop.schedule(std::move(task));
 }
 
-void cu_cp_routine_manager::start_ue_removal_routine(
-    ue_index_t                                            ue_index,
-    cu_cp_rrc_ue_removal_notifier&                        rrc_du_notifier,
-    cu_cp_e1ap_ue_removal_notifier&                       e1ap_notifier,
-    cu_cp_f1ap_ue_removal_notifier&                       f1ap_notifier,
-    cu_cp_ngap_control_notifier&                          ngap_notifier,
-    ue_manager&                                           ue_mng,
-    std::unordered_map<ue_index_t, ngap_rrc_ue_adapter>&  ngap_rrc_ue_ev_notifiers,
-    std::unordered_map<ue_index_t, cu_cp_rrc_ue_adapter>& cu_cp_rrc_ue_ev_notifiers,
-    srslog::basic_logger&                                 logger)
+void cu_cp_routine_manager::start_ue_removal_routine(ue_index_t                      ue_index,
+                                                     cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier,
+                                                     cu_cp_e1ap_ue_removal_notifier& e1ap_notifier,
+                                                     cu_cp_f1ap_ue_removal_notifier& f1ap_notifier,
+                                                     cu_cp_ngap_control_notifier&    ngap_notifier,
+                                                     ue_manager&                     ue_mng,
+                                                     srslog::basic_logger&           logger)
 {
-  ue_task_sched.handle_ue_async_task(ue_index,
-                                     launch_async<ue_removal_routine>(ue_index,
-                                                                      rrc_du_notifier,
-                                                                      e1ap_notifier,
-                                                                      f1ap_notifier,
-                                                                      ngap_notifier,
-                                                                      ue_mng,
-                                                                      ngap_rrc_ue_ev_notifiers,
-                                                                      cu_cp_rrc_ue_ev_notifiers,
-                                                                      ue_task_sched,
-                                                                      logger));
+  ue_task_sched.handle_ue_async_task(
+      ue_index,
+      launch_async<ue_removal_routine>(
+          ue_index, rrc_du_notifier, e1ap_notifier, f1ap_notifier, ngap_notifier, ue_mng, ue_task_sched, logger));
 }

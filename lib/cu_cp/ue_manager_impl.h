@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "adapters/cu_cp_adapters.h"
+#include "adapters/ngap_adapters.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/timers.h"
 #include <unordered_map>
@@ -162,6 +164,13 @@ public:
 
   bool ngap_ue_created() { return ngap_ue_context.has_value(); }
 
+  // cu-cp ue
+  /// \brief Get the NGAP to RRC UE adapter of the UE.
+  ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter() { return ngap_rrc_ue_ev_notifier; }
+
+  /// \brief Get the CU-CP to RRC UE adapter of the UE.
+  cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter() { return cu_cp_rrc_ue_ev_notifier; }
+
 private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
@@ -179,6 +188,10 @@ private:
 
   // ngap ue context
   optional<ngap_ue_t> ngap_ue_context;
+
+  // cu-cp ue context
+  ngap_rrc_ue_adapter  ngap_rrc_ue_ev_notifier;
+  cu_cp_rrc_ue_adapter cu_cp_rrc_ue_ev_notifier;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
@@ -275,6 +288,25 @@ public:
       }
     }
     return ue_count;
+  }
+
+  // cu-cp ue manager
+  /// \brief Get the NGAP to RRC UE adapter of the UE.
+  ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_ngap_rrc_ue_adapter();
+  }
+
+  /// \brief Get the CU-CP to RRC UE adapter of the UE.
+  cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_cu_cp_rrc_ue_adapter();
   }
 
 private:

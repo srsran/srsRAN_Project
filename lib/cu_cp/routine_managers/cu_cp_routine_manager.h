@@ -35,15 +35,13 @@ public:
 
   void start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg);
 
-  void start_ue_removal_routine(ue_index_t                                            ue_index,
-                                cu_cp_rrc_ue_removal_notifier&                        rrc_du_notifier,
-                                cu_cp_e1ap_ue_removal_notifier&                       e1ap_notifier,
-                                cu_cp_f1ap_ue_removal_notifier&                       f1ap_notifier,
-                                cu_cp_ngap_control_notifier&                          ngap_notifier,
-                                ue_manager&                                           ue_mng,
-                                std::unordered_map<ue_index_t, ngap_rrc_ue_adapter>&  ngap_rrc_ue_ev_notifiers,
-                                std::unordered_map<ue_index_t, cu_cp_rrc_ue_adapter>& cu_cp_rrc_ue_ev_notifiers,
-                                srslog::basic_logger&                                 logger);
+  void start_ue_removal_routine(ue_index_t                      ue_index,
+                                cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier,
+                                cu_cp_e1ap_ue_removal_notifier& e1ap_notifier,
+                                cu_cp_f1ap_ue_removal_notifier& f1ap_notifier,
+                                cu_cp_ngap_control_notifier&    ngap_notifier,
+                                ue_manager&                     ue_mng,
+                                srslog::basic_logger&           logger);
 
 private:
   ue_task_scheduler& ue_task_sched;

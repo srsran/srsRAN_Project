@@ -201,7 +201,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   }
 
   // Get RRC Reestablishment UE Context from old UE
-  reest_context = cu_cp_rrc_ue_ev_notifiers.at(old_ue_index).on_rrc_ue_context_transfer();
+  reest_context = ue_mng.get_cu_cp_rrc_ue_adapter(old_ue_index).on_rrc_ue_context_transfer();
 
   reest_context.ue_index = old_ue_index;
 
@@ -276,8 +276,6 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                        f1ap_adapters.at(du_index),
                                        ngap_adapter,
                                        ue_mng,
-                                       ngap_rrc_ue_ev_notifiers,
-                                       cu_cp_rrc_ue_ev_notifiers,
                                        logger);
 }
 
@@ -302,25 +300,17 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
   // Store NGAP to DU processor notifier
   ngap_du_processor_ctrl_notifiers.emplace(get_du_index_from_ue_index(ue_index), ngap_du_notifier);
 
-  ngap_rrc_ue_ev_notifiers.emplace(ue_index, ngap_rrc_ue_adapter{});
+  // Connect RRC UE to NGAP to RRC UE adapter
+  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
+                                                          &rrc_ue.get_rrc_ue_init_security_context_handler(),
+                                                          &rrc_ue.get_rrc_ue_handover_preparation_handler());
 
-  ngap_rrc_ue_adapter& rrc_ue_adapter = ngap_rrc_ue_ev_notifiers[ue_index];
-  rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
-                                &rrc_ue.get_rrc_ue_init_security_context_handler(),
-                                &rrc_ue.get_rrc_ue_handover_preparation_handler());
-
-  // Create and connect cu-cp to rrc ue adapter
-  cu_cp_rrc_ue_ev_notifiers.emplace(ue_index, cu_cp_rrc_ue_adapter{});
-  cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
+  // Connect cu-cp to rrc ue adapter
+  ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
 }
 
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
-  // Check if the UE was created in the DU processor
-  if (ngap_rrc_ue_ev_notifiers.find(ue_index) == ngap_rrc_ue_ev_notifiers.end()) {
-    logger.warning("ue={}: ngap_rrc_ue_notifier was not found", ue_index);
-    return false;
-  }
   if (ngap_du_processor_ctrl_notifiers.find(get_du_index_from_ue_index(ue_index)) ==
       ngap_du_processor_ctrl_notifiers.end()) {
     logger.warning(
@@ -329,8 +319,8 @@ bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
   }
 
   return ue_mng.add_ue(ue_index,
-                       ngap_rrc_ue_ev_notifiers.at(ue_index),
-                       ngap_rrc_ue_ev_notifiers.at(ue_index),
+                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
+                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
                        ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
 }
 

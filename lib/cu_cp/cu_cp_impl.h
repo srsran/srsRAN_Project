@@ -154,15 +154,9 @@ private:
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
 
-  // NGAP to RRC UE adapter array
-  std::unordered_map<ue_index_t, ngap_rrc_ue_adapter> ngap_rrc_ue_ev_notifiers; // indexed by UE index
-
   // NGAP to DU processor adapter array
   std::unordered_map<du_index_t, ngap_du_processor_control_notifier&>
       ngap_du_processor_ctrl_notifiers; // indexed by DU index
-
-  // CU-CP to RRC UE adapter array
-  std::unordered_map<ue_index_t, cu_cp_rrc_ue_adapter> cu_cp_rrc_ue_ev_notifiers; // indexed by UE index
 
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;

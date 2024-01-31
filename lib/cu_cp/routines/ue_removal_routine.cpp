@@ -13,24 +13,20 @@
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
 
-ue_removal_routine::ue_removal_routine(ue_index_t                                            ue_index_,
-                                       cu_cp_rrc_ue_removal_notifier&                        rrc_du_notifier_,
-                                       cu_cp_e1ap_ue_removal_notifier&                       e1ap_notifier_,
-                                       cu_cp_f1ap_ue_removal_notifier&                       f1ap_notifier_,
-                                       cu_cp_ngap_control_notifier&                          ngap_notifier_,
-                                       ue_manager&                                           ue_mng_,
-                                       std::unordered_map<ue_index_t, ngap_rrc_ue_adapter>&  ngap_rrc_ue_ev_notifiers_,
-                                       std::unordered_map<ue_index_t, cu_cp_rrc_ue_adapter>& cu_cp_rrc_ue_ev_notifiers_,
-                                       ue_task_scheduler&                                    task_scheduler_,
-                                       srslog::basic_logger&                                 logger_) :
+ue_removal_routine::ue_removal_routine(ue_index_t                      ue_index_,
+                                       cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier_,
+                                       cu_cp_e1ap_ue_removal_notifier& e1ap_notifier_,
+                                       cu_cp_f1ap_ue_removal_notifier& f1ap_notifier_,
+                                       cu_cp_ngap_control_notifier&    ngap_notifier_,
+                                       ue_manager&                     ue_mng_,
+                                       ue_task_scheduler&              task_scheduler_,
+                                       srslog::basic_logger&           logger_) :
   ue_index(ue_index_),
   rrc_du_notifier(rrc_du_notifier_),
   e1ap_notifier(e1ap_notifier_),
   f1ap_notifier(f1ap_notifier_),
   ngap_notifier(ngap_notifier_),
   ue_mng(ue_mng_),
-  ngap_rrc_ue_ev_notifiers(ngap_rrc_ue_ev_notifiers_),
-  cu_cp_rrc_ue_ev_notifiers(cu_cp_rrc_ue_ev_notifiers_),
   task_scheduler(task_scheduler_),
   logger(logger_)
 {
@@ -56,10 +52,6 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
 
   // Remove UE from UE manager
   ue_mng.remove_ue(ue_index);
-
-  // Remove UE from lookups
-  ngap_rrc_ue_ev_notifiers.erase(ue_index);
-  cu_cp_rrc_ue_ev_notifiers.erase(ue_index);
 
   // Remove pending UE tasks
   task_scheduler.clear_pending_tasks(ue_index);
