@@ -38,7 +38,7 @@ private:
   srslog::basic_logger& logger;
 
   // task event loops indexed by du_index
-  slotted_array<fifo_async_task_scheduler, MAX_NOF_DUS> du_ctrl_loop;
+  std::map<du_index_t, fifo_async_task_scheduler> du_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

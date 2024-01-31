@@ -68,7 +68,7 @@ private:
   srslog::basic_logger&           logger;
 
   // RRC-internal user database indexed by ue_index
-  std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
+  std::map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
   // Cell database to store cell information from the DU
   std::map<nr_cell_id_t, rrc_cell_info> cell_info_db;
 };

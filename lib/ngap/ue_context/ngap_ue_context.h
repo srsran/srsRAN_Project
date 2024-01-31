@@ -234,9 +234,9 @@ private:
   }
 
   // Note: Given that UEs will self-remove from the map, we don't want to destructor to clear the lookups beforehand.
-  std::unordered_map<ue_index_t, ran_ue_id_t>      ue_index_to_ran_ue_id;  // indexed by ue_index
-  std::unordered_map<amf_ue_id_t, ran_ue_id_t>     amf_ue_id_to_ran_ue_id; // indexed by amf_ue_id_t
-  std::unordered_map<ran_ue_id_t, ngap_ue_context> ues;                    // indexed by ran_ue_id_t
+  std::map<ue_index_t, ran_ue_id_t>      ue_index_to_ran_ue_id;  // indexed by ue_index
+  std::map<amf_ue_id_t, ran_ue_id_t>     amf_ue_id_to_ran_ue_id; // indexed by amf_ue_id_t
+  std::map<ran_ue_id_t, ngap_ue_context> ues;                    // indexed by ran_ue_id_t
 };
 
 } // namespace srs_cu_cp

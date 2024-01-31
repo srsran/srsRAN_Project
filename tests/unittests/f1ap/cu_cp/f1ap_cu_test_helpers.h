@@ -228,7 +228,7 @@ public:
   }
 
 private:
-  std::unordered_map<ue_index_t, std::unique_ptr<fifo_async_task_scheduler>> task_loop;
+  std::map<ue_index_t, std::unique_ptr<fifo_async_task_scheduler>> task_loop;
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.

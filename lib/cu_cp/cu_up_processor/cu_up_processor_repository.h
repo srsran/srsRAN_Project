@@ -77,10 +77,10 @@ private:
 
   cu_up_task_scheduler cu_up_task_sched;
 
-  std::unordered_map<cu_up_index_t, cu_up_context> cu_up_db;
+  std::map<cu_up_index_t, cu_up_context> cu_up_db;
 
   // TODO: CU-UP removal not yet fully supported. Instead we just move the CU-UP context to a separate map.
-  std::unordered_map<cu_up_index_t, cu_up_context> removed_cu_up_db;
+  std::map<cu_up_index_t, cu_up_context> removed_cu_up_db;
 };
 
 } // namespace srs_cu_cp

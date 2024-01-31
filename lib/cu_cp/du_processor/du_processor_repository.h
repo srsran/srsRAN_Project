@@ -119,10 +119,10 @@ private:
 
   du_task_scheduler du_task_sched;
 
-  std::unordered_map<du_index_t, du_context> du_db;
+  std::map<du_index_t, du_context> du_db;
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
-  std::unordered_map<du_index_t, du_context> removed_du_db;
+  std::map<du_index_t, du_context> removed_du_db;
 
   std::atomic<bool> running{true};
 };

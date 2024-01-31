@@ -15,7 +15,7 @@
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
-#include <unordered_map>
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -43,7 +43,7 @@ private:
   srslog::basic_logger& logger;
 
   // task event loops indexed by ue_index
-  std::unordered_map<ue_index_t, fifo_async_task_scheduler> ue_ctrl_loop;
+  std::map<ue_index_t, fifo_async_task_scheduler> ue_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

@@ -19,7 +19,7 @@ du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec
   // init du control loops
   const size_t number_of_pending_du_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
-    du_ctrl_loop.emplace(i, number_of_pending_du_procedures);
+    du_ctrl_loop.emplace(uint_to_du_index(i), number_of_pending_du_procedures);
   }
 }
 
@@ -27,7 +27,7 @@ du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec
 void du_task_scheduler::handle_du_async_task(du_index_t du_index, async_task<void>&& task)
 {
   logger.debug("du={}: Scheduling async task", du_index);
-  du_ctrl_loop[du_index_to_uint(du_index)].schedule(std::move(task));
+  du_ctrl_loop.at(du_index).schedule(std::move(task));
 }
 
 unique_timer du_task_scheduler::make_unique_timer()
