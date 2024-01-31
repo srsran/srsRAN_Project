@@ -1543,6 +1543,17 @@ void json_writer::write_bool(bool value)
   write_bool("", value);
 }
 
+void json_writer::write_float(const char* fieldname, float value)
+{
+  write_fieldname(fieldname);
+  fmt::format_to(buffer, "{}", value);
+  sep = COMMA;
+}
+
+void json_writer::write_float(float value)
+{
+  write_float("", value);
+}
 void json_writer::write_null(const char* fieldname)
 {
   write_fieldname(fieldname);

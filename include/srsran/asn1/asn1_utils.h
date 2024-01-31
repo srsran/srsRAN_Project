@@ -1490,6 +1490,8 @@ public:
   void        write_int(int64_t value);
   void        write_bool(const char* fieldname, bool value);
   void        write_bool(bool value);
+  void        write_float(const char* fieldname, float value);
+  void        write_float(float value);
   void        write_null(const char* fieldname);
   void        write_null();
   void        start_obj(const char* fieldname = "");
@@ -1557,7 +1559,7 @@ public:
   real_s() = default;
   SRSASN_CODE pack(bit_ref& bref) const { return pack_unconstrained_real(bref, value, true); };
   SRSASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); };
-  void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
+  void        to_json(json_writer& j) const { j.write_float(value); };
 };
 
 /*******************
