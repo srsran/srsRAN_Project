@@ -48,6 +48,7 @@ protected:
 
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
+    cu_cfg.ngap_config.tac          = 7;
     cu_cfg.cu_cp_executor           = &workers.ctrl_exec;
     cu_cfg.ngap_notifier            = &*amf;
     cu_cfg.timers                   = &timers;
