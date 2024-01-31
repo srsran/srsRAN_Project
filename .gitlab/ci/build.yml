@@ -758,6 +758,10 @@ basic avx512 dpdk:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
     SAVE_ARTIFACTS: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
+    KUBERNETES_MEMORY_REQUEST: 32Gi
+    KUBERNETES_MEMORY_LIMIT: 32Gi
   tags: ["on-prem-amd64-avx2-avx512"]
   artifacts:
     <<: *build_artifacts
@@ -839,6 +843,9 @@ export on amd64:
 export on amd64 avx512:
   extends: export on amd64
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
@@ -937,6 +944,8 @@ ubuntu-22.04 amd64 avx512 release:
     TEST_MODE: default
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
@@ -1046,6 +1055,9 @@ archlinux amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -1092,6 +1104,9 @@ debian 12 amd64 avx512:
       start_in: 30 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: debian-12
@@ -1138,6 +1153,9 @@ debian 11 amd64 avx512:
       start_in: 60 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: debian-11
@@ -1199,6 +1217,8 @@ sanitizers amd64 avx512:
   extends: .weekly sanitizers
   variables:
     AUTO_DETECT_ISA: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
@@ -1282,6 +1302,9 @@ ubuntu-23.10 amd64 avx512:
       start_in: 30 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1354,6 +1377,9 @@ ubuntu-23.04 amd64 avx512:
       start_in: 30 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -1411,6 +1437,9 @@ ubuntu-22.04 amd64 avx512:
       start_in: 60 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1468,6 +1497,9 @@ ubuntu-20.04 amd64 avx512:
       start_in: 90 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -1525,6 +1557,9 @@ rhel-8 amd64 avx512:
       start_in: 120 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: rhel-8
@@ -1593,6 +1628,9 @@ ubuntu-20.04 amd64 avx512 dpdk:
       start_in: 210 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -1623,6 +1661,9 @@ ubuntu-22.04 amd64 avx512 dpdk:
       start_in: 270 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -1653,6 +1694,9 @@ ubuntu-23.04 amd64 avx512 dpdk:
       start_in: 330 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -1683,6 +1727,9 @@ ubuntu-23.10 amd64 avx512 dpdk:
       start_in: 390 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
+  variables:
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   parallel:
     matrix:
       - OS: ubuntu-23.10
@@ -1743,6 +1790,8 @@ custom-build:
     ENABLE_ZEROMQ: ""
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
   tags: ["${INFRASTRUCTURE_TAG}"]
   cache:
     - !reference [.fetch_src_cache, cache]
