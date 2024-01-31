@@ -112,20 +112,20 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
   du_cfg.du_setup_notif              = &cfg.du_conn_notif;
 
-  std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
-                                                                   du_ctxt.du_to_cu_cp_notifier,
-                                                                   f1ap_ev_notifier,
-                                                                   *du_ctxt.f1ap_tx_pdu_notifier,
-                                                                   cfg.e1ap_ctrl_notifier,
-                                                                   cfg.ngap_ctrl_notifier,
-                                                                   cfg.f1ap_cu_cp_notifier,
-                                                                   cfg.ue_nas_pdu_notifier,
-                                                                   cfg.ue_ngap_ctrl_notifier,
-                                                                   cfg.rrc_ue_cu_cp_notifier,
-                                                                   cfg.ue_task_sched,
-                                                                   cfg.ue_manager,
-                                                                   cfg.cell_meas_mng,
-                                                                   *cfg.cu_cp.cu_cp_executor);
+  std::unique_ptr<du_processor_impl_interface> du = create_du_processor(du_cfg,
+                                                                        du_ctxt.du_to_cu_cp_notifier,
+                                                                        f1ap_ev_notifier,
+                                                                        *du_ctxt.f1ap_tx_pdu_notifier,
+                                                                        cfg.e1ap_ctrl_notifier,
+                                                                        cfg.ngap_ctrl_notifier,
+                                                                        cfg.f1ap_cu_cp_notifier,
+                                                                        cfg.ue_nas_pdu_notifier,
+                                                                        cfg.ue_ngap_ctrl_notifier,
+                                                                        cfg.rrc_ue_cu_cp_notifier,
+                                                                        cfg.ue_task_sched,
+                                                                        cfg.ue_manager,
+                                                                        cfg.cell_meas_mng,
+                                                                        *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
   du_ctxt.du_processor = std::move(du);
@@ -177,7 +177,7 @@ void du_processor_repository::remove_du_impl(du_index_t du_index)
                                      }));
 }
 
-du_processor_interface& du_processor_repository::find_du(du_index_t du_index)
+du_processor_impl_interface& du_processor_repository::find_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);

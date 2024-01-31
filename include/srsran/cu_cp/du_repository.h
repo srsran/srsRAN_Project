@@ -10,11 +10,16 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Forward declared classes.
+class du_processor_mobility_handler;
+class du_processor_f1ap_ue_context_notifier;
+class du_processor_ue_task_handler;
+class du_processor_ue_context_notifier;
 
 /// Handler of a single DU connected to the CU-CP.
 class du_handler

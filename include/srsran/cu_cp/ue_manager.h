@@ -10,13 +10,16 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Forward declared classes.
+class du_processor_rrc_ue_control_message_notifier;
+class du_processor_rrc_ue_srb_control_notifier;
 
 /// Common UE interface.
 class ue_base

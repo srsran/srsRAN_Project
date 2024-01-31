@@ -15,6 +15,7 @@
 #include "../adapters/rrc_ue_adapters.h"
 #include "../routine_managers/du_processor_routine_manager.h"
 #include "du_processor_config.h"
+#include "du_processor_impl_interface.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_context.h"
@@ -26,7 +27,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor_interface, public du_setup_handler
+class du_processor_impl : public du_processor_impl_interface, public du_setup_handler
 {
 public:
   du_processor_impl(const du_processor_config_t&        du_processor_config_,

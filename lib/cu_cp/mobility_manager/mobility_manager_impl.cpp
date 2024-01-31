@@ -9,6 +9,7 @@
  */
 
 #include "mobility_manager_impl.h"
+#include "../du_processor/du_processor_impl_interface.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

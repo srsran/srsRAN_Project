@@ -9,8 +9,8 @@
  */
 
 #include "du_processor_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/cu_cp/du_processor.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

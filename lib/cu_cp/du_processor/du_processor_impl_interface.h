@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "cu_cp_types.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -433,19 +432,19 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-class du_processor_interface : public du_processor_f1ap_interface,
-                               public du_processor_rrc_ue_interface,
-                               public du_processor_cell_info_interface,
-                               public du_processor_ngap_interface,
-                               public du_processor_ue_task_handler,
-                               public du_processor_paging_handler,
-                               public du_processor_inactivity_handler,
-                               public du_processor_statistics_handler,
-                               public du_processor_mobility_handler
+class du_processor_impl_interface : public du_processor_f1ap_interface,
+                                    public du_processor_rrc_ue_interface,
+                                    public du_processor_cell_info_interface,
+                                    public du_processor_ngap_interface,
+                                    public du_processor_ue_task_handler,
+                                    public du_processor_paging_handler,
+                                    public du_processor_inactivity_handler,
+                                    public du_processor_statistics_handler,
+                                    public du_processor_mobility_handler
 
 {
 public:
-  virtual ~du_processor_interface() = default;
+  virtual ~du_processor_impl_interface() = default;
 
   virtual du_processor_f1ap_interface&           get_du_processor_f1ap_interface()           = 0;
   virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;

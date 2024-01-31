@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 

@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
+#include "../du_processor/du_processor_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp.h"
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
