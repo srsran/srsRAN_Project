@@ -40,7 +40,7 @@ private:
   metrics_report create_report();
 
   unsigned create_periodic_session(const periodic_metric_report_request& request);
-  void     request_session_reconfiguration(const periodic_metric_report_request& request);
+  void     request_session_reconfiguration(unsigned session_id, const periodic_metric_report_request& request);
   void     request_session_deletion(unsigned session_id);
 
   task_executor&        cu_cp_exec;

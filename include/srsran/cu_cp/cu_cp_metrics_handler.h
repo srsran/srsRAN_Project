@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/ran/rnti.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/rnti.h"
 #include <chrono>
 #include <memory>
 

@@ -38,7 +38,7 @@ metrics_handler_impl::create_periodic_report_session(const periodic_metric_repor
     void reconfigure_request(const periodic_metric_report_request& request) override
     {
       srsran_assert(handler != nullptr, "Using invalid metric report session");
-      handler->request_session_reconfiguration(request);
+      handler->request_session_reconfiguration(session_id, request);
     }
 
     /// Close the session, explicitly stopping the reporting of new metrics.
@@ -116,7 +116,12 @@ unsigned metrics_handler_impl::create_periodic_session(const periodic_metric_rep
   return session_id;
 }
 
-void metrics_handler_impl::request_session_reconfiguration(const periodic_metric_report_request& request) {}
+void metrics_handler_impl::request_session_reconfiguration(unsigned                              session_id,
+                                                           const periodic_metric_report_request& request)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  sessions[session_id].timer.set(request.period);
+}
 
 void metrics_handler_impl::request_session_deletion(unsigned session_id)
 {
