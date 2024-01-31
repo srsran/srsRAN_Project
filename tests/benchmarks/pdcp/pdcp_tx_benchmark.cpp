@@ -95,6 +95,7 @@ void benchmark_pdcp_tx(bench_params                  params,
   config.direction              = pdcp_security_direction::downlink;
   config.discard_timer          = pdcp_discard_timer::infinity;
   config.status_report_required = false;
+  config.custom.rlc_sdu_queue   = params.nof_repetitions;
 
   security::sec_128_as_config sec_cfg = {};
 

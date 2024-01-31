@@ -152,11 +152,13 @@ int main(int argc, char** argv)
   gw1_cfg.bind_address      = "127.0.0.1";
   gw1_cfg.bind_port         = 56701;
   gw1_cfg.non_blocking_mode = false;
+  gw1_cfg.rx_max_mmsg       = 256;
 
   udp_network_gateway_config gw2_cfg;
   gw2_cfg.bind_address      = "127.0.0.1";
   gw2_cfg.bind_port         = 56702;
   gw2_cfg.non_blocking_mode = false;
+  gw1_cfg.rx_max_mmsg       = 256;
 
   dummy_network_gateway_data_notifier_with_src_addr gw1_dn{params}, gw2_dn{params};
   std::unique_ptr<udp_network_gateway>              gw1, gw2;
@@ -185,7 +187,7 @@ int main(int argc, char** argv)
 
   unsigned nof_pdus = params.nof_pdus;
   for (unsigned n = 0; n < nof_pdus; n++) {
-    gw1->handle_pdu(std::move(pdu), gw2_addr);
+    gw1->handle_pdu(pdu.copy(), gw2_addr);
   }
   auto t_end    = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
