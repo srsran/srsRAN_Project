@@ -14,7 +14,7 @@
 #include "../adapters/ngap_adapters.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "../ue_manager_impl.h"
+#include "../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
 

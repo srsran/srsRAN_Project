@@ -10,17 +10,28 @@
 
 #pragma once
 
+#include "srsran/ran/rnti.h"
+#include "srsran/ran/pci.h"
 #include <chrono>
 #include <memory>
 
 namespace srsran {
 namespace srs_cu_cp {
 
+struct ue_metrics_report {
+  struct ue_context {
+    rnti_t rnti;
+    pci_t  pci;
+  };
+
+  std::vector<ue_context> ues;
+};
+
 /// CU-CP Metrics report.
 struct metrics_report {
-  unsigned nof_ues    = 0;
-  unsigned nof_dus    = 0;
-  unsigned nof_cu_ups = 0;
+  ue_metrics_report ue_metrics;
+  unsigned          nof_dus    = 0;
+  unsigned          nof_cu_ups = 0;
 };
 
 /// Interface used by the CU-CP to report metrics.

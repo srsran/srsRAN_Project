@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../../du_processor/du_processor_impl_interface.h"
-#include "../../ue_manager_impl.h"
+#include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
 

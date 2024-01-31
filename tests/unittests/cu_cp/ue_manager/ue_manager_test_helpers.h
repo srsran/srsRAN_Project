@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../test_helpers.h"
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 

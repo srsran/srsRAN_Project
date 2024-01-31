@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_asn1_packer.h"
 #include "tests/unittests/ngap/test_helpers.h"

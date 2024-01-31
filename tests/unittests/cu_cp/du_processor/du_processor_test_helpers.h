@@ -15,7 +15,7 @@
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"

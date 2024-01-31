@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "adapters/cu_cp_adapters.h"
-#include "adapters/ngap_adapters.h"
+#include "../adapters/cu_cp_adapters.h"
+#include "../adapters/ngap_adapters.h"
+#include "ue_metrics_handler.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/timers.h"
 #include <unordered_map>
@@ -194,7 +195,7 @@ private:
   cu_cp_rrc_ue_adapter cu_cp_rrc_ue_ev_notifier;
 };
 
-class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
+class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
 {
 public:
   explicit ue_manager(const ue_configuration& ue_config_, const up_resource_manager_cfg& up_config_);
@@ -308,6 +309,8 @@ public:
 
     return ues.at(ue_index).get_cu_cp_rrc_ue_adapter();
   }
+
+  ue_metrics_report handle_ue_metrics_report_request() override;
 
 private:
   /// \brief Get the next available UE index.

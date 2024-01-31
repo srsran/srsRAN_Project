@@ -40,7 +40,7 @@ set(SOURCES
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
-      ue_manager_impl.cpp
+        ue_manager/ue_manager_impl.cpp
 )
 
 add_library(srsran_cu_cp STATIC ${SOURCES})

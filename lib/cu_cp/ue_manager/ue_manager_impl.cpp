@@ -167,6 +167,22 @@ ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
   return nullptr;
 }
 
+ue_metrics_report ue_manager::handle_ue_metrics_report_request()
+{
+  ue_metrics_report report;
+  report.ues.reserve(ues.size());
+
+  for (auto& ue : ues) {
+    report.ues.emplace_back();
+    ue_metrics_report::ue_context& ue_report = report.ues.back();
+
+    ue_report.rnti = ue.second.get_c_rnti();
+    ue_report.pci  = ue.second.get_pci();
+  }
+
+  return report;
+}
+
 // private functions
 
 ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)

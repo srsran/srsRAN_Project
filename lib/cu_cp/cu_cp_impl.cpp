@@ -59,7 +59,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                 srslog::fetch_basic_logger("CU-CP")),
   routine_mng(ue_task_sched),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
-  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers))
+  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng))
 {
   assert_cu_cp_configuration_valid(cfg);
 
