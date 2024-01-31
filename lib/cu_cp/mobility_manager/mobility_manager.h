@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "du_repository.h"
-#include "mobility_manager_config.h"
-#include "ue_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/du_repository.h"
+#include "srsran/cu_cp/mobility_manager_config.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ran/pci.h"
 
 namespace srsran {

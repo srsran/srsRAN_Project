@@ -12,7 +12,6 @@
 
 #include "cell_meas_manager_config.h"
 #include "cu_cp_types.h"
-#include "mobility_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {
