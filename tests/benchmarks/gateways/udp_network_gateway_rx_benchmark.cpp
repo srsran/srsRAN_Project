@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/gateways/udp_network_gateway_factory.h"
+#include "udp_network_gateway_benchmark_helpers.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
@@ -55,56 +55,6 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway_data_notifier_with_src_addr
-{
-public:
-  dummy_network_gateway_data_notifier_with_src_addr(const bench_params& params_) : params(params_) {}
-
-  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
-  {
-    rx_bytes += pdu.length();
-    n_pdus++;
-
-    static bool first = true;
-    auto        t_now = std::chrono::high_resolution_clock::now();
-    if (!first) {
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_now - t_last);
-      if (duration < t_min) {
-        t_min = duration;
-      }
-      if (duration > t_max) {
-        t_max = duration;
-      }
-      t_sum += duration;
-      if (duration.count() > params.slow_inter_rx_us) {
-        fmt::print("Long inter Rx interval t={}us at n_pdus={}\n", duration.count(), n_pdus);
-      }
-    } else {
-      first = false;
-    }
-
-    t_last = t_now;
-  }
-
-  unsigned get_rx_bytes() const { return rx_bytes; }
-  unsigned get_n_pdus() const { return n_pdus; }
-
-  std::chrono::microseconds get_t_min() { return t_min; }
-  std::chrono::microseconds get_t_max() { return t_max; }
-  std::chrono::microseconds get_t_sum() { return t_sum; }
-
-private:
-  const bench_params& params;
-
-  unsigned rx_bytes = 0;
-  unsigned n_pdus   = 0;
-
-  std::chrono::high_resolution_clock::time_point t_last = std::chrono::high_resolution_clock::now();
-  std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();
-  std::chrono::microseconds                      t_max  = std::chrono::microseconds::min();
-  std::chrono::microseconds                      t_sum  = std::chrono::microseconds::zero();
-};
-
 int main(int argc, char** argv)
 {
   srslog::init();
@@ -122,7 +72,7 @@ int main(int argc, char** argv)
   gw_cfg.non_blocking_mode = false;
   gw_cfg.rx_max_mmsg       = 16;
 
-  dummy_network_gateway_data_notifier_with_src_addr gw_dn{params};
+  dummy_network_gateway_data_notifier_with_src_addr gw_dn{params.slow_inter_rx_us};
   std::unique_ptr<udp_network_gateway>              gw;
 
   manual_task_worker io_tx_executor{128};

@@ -22,6 +22,8 @@ struct bench_params {
   unsigned pdu_len          = 1400;
   unsigned nof_pdus         = 100000;
   unsigned slow_inter_rx_us = 500;
+  uint16_t rx_port          = 56701;
+  uint16_t tx_port          = 56702;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -31,13 +33,15 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-n Number of PDUs [Default {}]\n", params.nof_pdus);
   fmt::print("\t-u Notify large PDU inter arrival time longer than t microseconds [Default {}]\n",
              params.slow_inter_rx_us);
+  fmt::print("\t-p TX port [Default {}]\n", params.tx_port);
+  fmt::print("\t-P RX port [Default {}]\n", params.rx_port);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:n:u:p:P:h")) != -1) {
     switch (opt) {
       case 'l':
         params.pdu_len = std::strtol(optarg, nullptr, 10);
@@ -47,6 +51,13 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'u':
         params.slow_inter_rx_us = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'p':
+        params.tx_port = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'P':
+        params.rx_port = std::strtol(optarg, nullptr, 10);
+        break;
       case 'h':
       default:
         usage(argv[0], params);
@@ -150,13 +161,13 @@ int main(int argc, char** argv)
 
   udp_network_gateway_config gw1_cfg;
   gw1_cfg.bind_address      = "127.0.0.1";
-  gw1_cfg.bind_port         = 56701;
+  gw1_cfg.bind_port         = params.tx_port;
   gw1_cfg.non_blocking_mode = false;
   gw1_cfg.rx_max_mmsg       = 256;
 
   udp_network_gateway_config gw2_cfg;
   gw2_cfg.bind_address      = "127.0.0.1";
-  gw2_cfg.bind_port         = 56702;
+  gw2_cfg.bind_port         = params.rx_port;
   gw2_cfg.non_blocking_mode = false;
   gw1_cfg.rx_max_mmsg       = 256;
 
