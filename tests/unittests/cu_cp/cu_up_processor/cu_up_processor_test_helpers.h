@@ -40,7 +40,8 @@ protected:
   dummy_e1ap_cu_cp_notifier                       e1ap_cu_cp_notif;
   manual_task_worker                              ctrl_worker{128};
   std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor_obj;
-  cu_up_task_scheduler                            task_sched{timers, ctrl_worker, test_logger};
+  uint16_t                                        max_nof_cu_ups = 4;
+  cu_up_task_scheduler                            task_sched{timers, ctrl_worker, max_nof_cu_ups, test_logger};
 };
 
 } // namespace srs_cu_cp

@@ -51,7 +51,9 @@ private:
 } // namespace
 
 cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), cu_up_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, logger)
+  cfg(cfg_),
+  logger(cfg.logger),
+  cu_up_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.cu_cp.max_nof_cu_ups, logger)
 {
 }
 

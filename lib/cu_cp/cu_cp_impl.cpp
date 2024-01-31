@@ -53,7 +53,10 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
+  ue_task_sched(*cfg.timers,
+                *config_.cu_cp_executor,
+                cfg.max_nof_dus * MAX_NOF_UES_PER_DU,
+                srslog::fetch_basic_logger("CU-CP")),
   routine_mng(ue_task_sched),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db)
 {

@@ -24,7 +24,10 @@ namespace srs_cu_cp {
 class ue_task_scheduler
 {
 public:
-  explicit ue_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_);
+  explicit ue_task_scheduler(timer_manager&        timers_,
+                             task_executor&        exec_,
+                             unsigned              max_nof_supported_ues,
+                             srslog::basic_logger& logger_);
   ~ue_task_scheduler() = default;
 
   // UE task scheduler

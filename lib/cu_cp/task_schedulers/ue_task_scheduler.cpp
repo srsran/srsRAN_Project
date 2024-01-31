@@ -9,16 +9,20 @@
  */
 
 #include "ue_task_scheduler.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_task_scheduler::ue_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_) :
+ue_task_scheduler::ue_task_scheduler(timer_manager&        timers_,
+                                     task_executor&        exec_,
+                                     unsigned              max_nof_supported_ues,
+                                     srslog::basic_logger& logger_) :
   timers(timers_), exec(exec_), logger(logger_)
 {
   // init ue control loops
   const size_t number_of_pending_ue_procedures = 16;
-  for (size_t i = 0; i < MAX_NOF_CU_UES; ++i) {
+  for (size_t i = 0; i < max_nof_supported_ues; ++i) {
     ue_ctrl_loop.emplace(uint_to_ue_index(i), number_of_pending_ue_procedures);
   }
 }

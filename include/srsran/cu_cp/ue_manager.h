@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -84,6 +85,7 @@ public:
 /// UE configuration passed to CU-CP
 struct ue_configuration {
   std::chrono::seconds inactivity_timer;
+  unsigned             max_nof_supported_ues = MAX_NOF_CU_UES;
 };
 
 /// Common UE manager interface.
