@@ -77,7 +77,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
   // Add maximum number of supported UEs
   e1ap_logger.set_level(srslog::basic_levels::error);
   for (unsigned it = 0; it < MAX_NOF_CU_UES; ++it) {
-    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id();
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.allocate_gnb_cu_cp_ue_e1ap_id();
     ASSERT_NE(cu_cp_ue_e1ap_id, gnb_cu_cp_ue_e1ap_id_t::invalid);
     ue_index_t ue_index = uint_to_ue_index(it);
 
@@ -89,7 +89,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
   e1ap_logger.set_level(srslog::basic_levels::debug);
 
   // Try to get another cu_cp_ue_e1ap_id (should fail)
-  ASSERT_EQ(ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id(), gnb_cu_cp_ue_e1ap_id_t::invalid);
+  ASSERT_EQ(ue_ctxt_list.allocate_gnb_cu_cp_ue_e1ap_id(), gnb_cu_cp_ue_e1ap_id_t::invalid);
 }
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_removal_succeeds)

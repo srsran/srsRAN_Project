@@ -78,7 +78,7 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
 async_task<e1ap_bearer_context_setup_response>
 e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request)
 {
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id();
+  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.allocate_gnb_cu_cp_ue_e1ap_id();
   if (cu_cp_ue_e1ap_id == gnb_cu_cp_ue_e1ap_id_t::invalid) {
     logger.warning("No CU-CP-UE-E1AP-ID available");
     return launch_async([](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {

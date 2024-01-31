@@ -132,7 +132,7 @@ public:
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available GNB-CU-CP-E1AP-UE-ID.
-  gnb_cu_cp_ue_e1ap_id_t next_gnb_cu_cp_ue_e1ap_id()
+  gnb_cu_cp_ue_e1ap_id_t allocate_gnb_cu_cp_ue_e1ap_id()
   {
     if (ue_index_to_ue_e1ap_id.size() == MAX_NOF_CU_UES) {
       return gnb_cu_cp_ue_e1ap_id_t::invalid;
