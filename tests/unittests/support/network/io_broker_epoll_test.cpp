@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <functional> // for std::function/std::bind
 #include <gtest/gtest.h>
@@ -90,10 +91,35 @@ protected:
     ASSERT_NE(ret, -1);
   }
 
+  optional<uint16_t> get_bind_port(int sock_fd)
+  {
+    if (sock_fd == -1) {
+      return {};
+    }
+
+    sockaddr_storage gw_addr_storage;
+    sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
+    socklen_t        gw_addr_len = sizeof(gw_addr_storage);
+
+    int ret = getsockname(sock_fd, gw_addr, &gw_addr_len);
+    if (ret != 0) {
+      return {};
+    }
+
+    uint16_t bind_port;
+    if (gw_addr->sa_family == AF_INET) {
+      bind_port = ntohs(((sockaddr_in*)gw_addr)->sin_port);
+    } else if (gw_addr->sa_family == AF_INET6) {
+      bind_port = ntohs(((sockaddr_in6*)gw_addr)->sin6_port);
+    } else {
+      return {};
+    }
+
+    return bind_port;
+  }
+
   void create_af_init_sockets(int type)
   {
-    uint16_t port = 8888;
-
     // create server socket
     socket_fd   = socket(AF_INET, type, 0);
     socket_type = type;
@@ -107,18 +133,25 @@ protected:
     memset(&server_addr_in, 0, sizeof(struct sockaddr_in));
     server_addr_in.sin_family      = AF_INET;
     server_addr_in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    server_addr_in.sin_port        = htons(port);
+    server_addr_in.sin_port        = htons(0);
 
     // bind server
     int ret = bind(socket_fd, (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
     // perror("socket failed");
     ASSERT_NE(ret, -1);
 
+    // get bind port
+    optional<uint16_t> port = get_bind_port(socket_fd);
+    ASSERT_TRUE(port.has_value());
+    ASSERT_NE(port.value(), 0);
+    // update server address
+    server_addr_in.sin_port = htons(port.value());
+
     // prepare client address
     memset(&client_addr_in, 0, sizeof(struct sockaddr_in));
     client_addr_in.sin_family      = AF_INET;
     client_addr_in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    client_addr_in.sin_port        = htons(port);
+    client_addr_in.sin_port        = htons(port.value());
 
     // connect client to server
     ret = connect(socket_fd, (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
@@ -143,8 +176,9 @@ protected:
     int       run   = count;
     while (run-- > 0) {
       send_on_socket();
-      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
     ASSERT_EQ(total_rx_bytes, tx_buf.length() * count);
   }
 
