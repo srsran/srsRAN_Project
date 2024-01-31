@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/srslog/srslog.h"
 #include <string>
 

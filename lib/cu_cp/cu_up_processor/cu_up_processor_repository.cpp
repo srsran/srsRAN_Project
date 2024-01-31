@@ -9,10 +9,10 @@
  */
 
 #include "cu_up_processor_repository.h"
+#include "cu_up_processor_config.h"
 #include "cu_up_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_processor_config.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -93,11 +93,11 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   cu_up_processor_config_t cu_up_cfg = {};
   cu_up_cfg.cu_up_index              = cu_up_index;
 
-  std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
-                                                                            *cu_up_ctxt.e1ap_tx_pdu_notifier,
-                                                                            cfg.e1ap_ev_notifier,
-                                                                            cu_up_task_sched,
-                                                                            *cfg.cu_cp.cu_cp_executor);
+  std::unique_ptr<cu_up_processor_impl_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
+                                                                                 *cu_up_ctxt.e1ap_tx_pdu_notifier,
+                                                                                 cfg.e1ap_ev_notifier,
+                                                                                 cu_up_task_sched,
+                                                                                 *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
   cu_up_ctxt.cu_up_processor = std::move(cu_up);
@@ -151,7 +151,7 @@ void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
       }));
 }
 
-cu_up_processor_interface& cu_up_processor_repository::find_cu_up(cu_up_index_t cu_up_index)
+cu_up_processor_impl_interface& cu_up_processor_repository::find_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);

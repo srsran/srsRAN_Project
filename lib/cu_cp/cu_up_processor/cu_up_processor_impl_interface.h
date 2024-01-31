@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "cu_cp_types.h"
 #include "cu_up_processor_context.h"
 #include "srsran/adt/optional.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/support/timers.h"
 #include <string>
@@ -80,10 +80,10 @@ public:
   virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
-class cu_up_processor_interface : public cu_up_processor_e1ap_interface, public cu_up_ue_handler
+class cu_up_processor_impl_interface : public cu_up_processor_e1ap_interface, public cu_up_ue_handler
 {
 public:
-  virtual ~cu_up_processor_interface() = default;
+  virtual ~cu_up_processor_impl_interface() = default;
 };
 
 } // namespace srs_cu_cp

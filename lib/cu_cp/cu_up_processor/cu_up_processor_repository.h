@@ -44,7 +44,7 @@ public:
 
 private:
   struct cu_up_context final : public cu_up_handler {
-    std::unique_ptr<cu_up_processor_interface> cu_up_processor;
+    std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor;
 
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
@@ -58,7 +58,7 @@ private:
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
   /// \return The CU-UP processor object.
-  cu_up_processor_interface& find_cu_up(cu_up_index_t cu_up_index);
+  cu_up_processor_impl_interface& find_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Adds a CU-UP processor object to the CU-CP.
   /// \return The CU-UP index of the added CU-UP processor object.
