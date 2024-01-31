@@ -18,10 +18,10 @@ static constexpr unsigned OFH_MAX_NOF_SFN = 256U;
 rx_window_checker::rx_window_checker(srslog::basic_logger&                    logger_,
                                      const du_rx_window_timing_parameters&    params,
                                      std::chrono::duration<double, std::nano> symbol_duration) :
-  logger(logger_),
   timing_parameters(params, symbol_duration),
   nof_symbols_in_one_second(std::ceil(std::chrono::seconds(1) / symbol_duration)),
-  nof_symbols(0)
+  nof_symbols(0),
+  statistics(logger_)
 {
 }
 
@@ -36,7 +36,7 @@ static slot_symbol_point calculate_ofh_slot_symbol_point(slot_symbol_point symbo
   return {ofh_slot, symbol_point.get_symbol_index(), symbol_point.get_nof_symbols()};
 }
 
-// Calculate the distance between the given slot symbol points in symbols.
+/// Calculate the distance between the given slot symbol points in symbols.
 static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symbol_point rhs)
 {
   srsran_assert(rhs.get_numerology() == lhs.get_numerology(),
@@ -107,10 +107,10 @@ void rx_window_checker::print_statistics()
   }
 
   nof_symbols = 0U;
-  statistics.print_statistics(logger);
+  statistics.print_statistics();
 }
 
-void rx_window_checker::rx_window_checker_statistics::print_statistics(srslog::basic_logger& logger_)
+void rx_window_checker::rx_window_checker_statistics::print_statistics()
 {
   // Fetch the data.
   uint64_t current_nof_on_time = nof_on_time_messages();
@@ -122,11 +122,11 @@ void rx_window_checker::rx_window_checker_statistics::print_statistics(srslog::b
   uint64_t nof_early   = current_nof_early - last_early_value_printed;
   uint64_t nof_late    = current_nof_late - last_late_value_printed;
 
-  logger_.info("Received packets: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
-               nof_on_time + nof_late + nof_early,
-               nof_early,
-               nof_on_time,
-               nof_late);
+  logger.info("Received packets: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
+              nof_on_time + nof_late + nof_early,
+              nof_early,
+              nof_on_time,
+              nof_late);
 
   // Update last print.
   last_late_value_printed    = current_nof_late;

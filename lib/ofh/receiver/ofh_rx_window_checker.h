@@ -28,6 +28,7 @@ class rx_window_checker : public ota_symbol_boundary_notifier
   {
     static constexpr unsigned NOF_BITS_PER_COUNTER = 21U;
 
+    srslog::basic_logger& logger;
     std::atomic<uint64_t> on_time_counter{0};
     std::atomic<uint64_t> early_counter{0};
     std::atomic<uint64_t> late_counter{0};
@@ -36,8 +37,10 @@ class rx_window_checker : public ota_symbol_boundary_notifier
     uint64_t              last_late_value_printed    = 0U;
 
   public:
-    /// Prints the statistics using the given logger.
-    void print_statistics(srslog::basic_logger& logger);
+    explicit rx_window_checker_statistics(srslog::basic_logger& logger_) : logger(logger_) {}
+
+    /// Prints the statistics.
+    void print_statistics();
 
     /// Functions to increment the counters.
     void increment_on_time_counter() { on_time_counter.fetch_add(1, std::memory_order_relaxed); }
@@ -87,7 +90,6 @@ private:
   void print_statistics();
 
 private:
-  srslog::basic_logger&        logger;
   const rx_timing_parameters   timing_parameters;
   const unsigned               nof_symbols_in_one_second;
   unsigned                     nof_symbols;
