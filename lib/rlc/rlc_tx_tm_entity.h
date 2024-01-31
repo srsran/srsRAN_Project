@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rlc_sdu_queue.h"
+#include "rlc_sdu_queue_lockfree.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -22,7 +22,8 @@ private:
   // Config storage
   const rlc_tx_tm_config cfg;
 
-  rlc_sdu_queue sdu_queue;
+  rlc_sdu_queue_lockfree sdu_queue;
+  rlc_sdu                sdu;
 
   task_executor& pcell_executor;
 
