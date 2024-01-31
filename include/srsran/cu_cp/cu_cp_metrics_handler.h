@@ -53,8 +53,6 @@ struct periodic_metric_report_request {
   metrics_report_notifier* report_notifier = nullptr;
 };
 
-struct metric_report_request {};
-
 /// Metric Report session instance.
 class metrics_report_session
 {
@@ -83,9 +81,8 @@ public:
   /// \brief Synchronously request a new single metrics report. The call blocks until the report is ready.
   ///
   /// Note: Given its blocking nature, avoid calling this method in contexts other than unit tests.
-  /// \param request
   /// \return The metrics report.
-  virtual metrics_report handle_metrics_report_request(const metric_report_request& request) = 0;
+  virtual metrics_report handle_metrics_report_request() = 0;
 };
 
 } // namespace srs_cu_cp

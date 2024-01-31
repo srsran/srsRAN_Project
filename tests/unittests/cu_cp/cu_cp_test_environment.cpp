@@ -11,9 +11,15 @@
 #include "cu_cp_test_environment.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
+#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e1ap/common/e1ap_message.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/executors/task_worker.h"
 
 using namespace srsran;
@@ -160,6 +166,14 @@ bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
   return true;
 }
 
+bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
+{
+  get_du(du_idx).push_tx_pdu(generate_f1_setup_request());
+  f1ap_message f1ap_pdu;
+  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
+  return result;
+}
+
 optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
 {
   auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_connected_cu_ups());
@@ -180,5 +194,49 @@ bool cu_cp_test_environment::drop_cu_up_connection(unsigned cu_up_idx)
     return false;
   }
   cu_ups.erase(it);
+  return true;
+}
+
+bool cu_cp_test_environment::run_e1_setup(unsigned cu_up_idx)
+{
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_valid_cu_up_e1_setup_request());
+  e1ap_message e1ap_pdu;
+  bool         result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{1000});
+  return result;
+}
+
+bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+{
+  // Inject Initial UL RRC message
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  test_logger.info("Injecting Initial UL RRC message");
+  get_du(du_idx).push_tx_pdu(init_ul_rrc_msg);
+  f1ap_message f1ap_pdu;
+  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
+  if (not result) {
+    return false;
+  }
+  if (f1ap_pdu.pdu.type().value != asn1::f1ap::f1ap_pdu_c::types_opts::init_msg or
+      f1ap_pdu.pdu.init_msg().value.type().value !=
+          asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer) {
+    // CU-CP must send DL RRC message transfer.
+    return false;
+  }
+  if (f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_du_ue_f1ap_id != gnb_du_ue_f1ap_id_to_uint(du_ue_id) or
+      int_to_srb_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id) != srb_id_t::srb0) {
+    return false;
+  }
+
+  {
+    asn1::cbit_ref              bref{f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container};
+    asn1::rrc_nr::dl_ccch_msg_s ccch;
+    if (ccch.unpack(bref) != asn1::SRSASN_SUCCESS) {
+      return false;
+    }
+    if (ccch.msg.c1().type().value != asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_setup) {
+      return false;
+    }
+  }
+
   return true;
 }

@@ -42,11 +42,22 @@ public:
   mock_du&         get_du(size_t du_index) { return *dus.at(du_index); }
   mock_cu_up&      get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
 
+  /// Establish a TNL connection between a DU and the CU-CP.
   optional<unsigned> connect_new_du();
-  bool               drop_du_connection(unsigned du_idx);
+  /// Drop TNL connection between a DU and the CU-CP.
+  bool drop_du_connection(unsigned du_idx);
+  /// Run F1 setup procedure to completion.
+  bool run_f1_setup(unsigned du_idx);
 
+  /// Establish a TNL connection between a CU-UP and the CU-CP.
   optional<unsigned> connect_new_cu_up();
-  bool               drop_cu_up_connection(unsigned cu_up_idx);
+  /// Drop TNL connection between a CU-UP and the CU-CP.
+  bool drop_cu_up_connection(unsigned cu_up_idx);
+  /// Run E1 setup procedure to completion
+  bool run_e1_setup(unsigned cu_up_idx);
+
+  /// Connect a new UE to CU-CP through a provided DU.
+  bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
 
   /// Tick the CU-CP clock.
   void tick();

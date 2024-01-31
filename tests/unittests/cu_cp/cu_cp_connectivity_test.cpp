@@ -229,3 +229,37 @@ TEST_F(
   auto ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
 }
+
+//----------------------------------------------------------------------------------//
+//  UE connection handling                                                          //
+//----------------------------------------------------------------------------------//
+
+TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_be_created)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Setup CU-UP.
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
+
+  // Check no UEs.
+  auto report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  ASSERT_TRUE(report.ue_metrics.ues.empty());
+
+  // Create UE.
+  ASSERT_TRUE(this->connect_new_ue(du_idx, int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601)));
+
+  // Check UE has been added via metrics.
+  report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
+  ASSERT_EQ(report.ue_metrics.ues[0].rnti, to_rnti(0x4601));
+}

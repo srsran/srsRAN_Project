@@ -61,7 +61,7 @@ metrics_handler_impl::create_periodic_report_session(const periodic_metric_repor
   return std::make_unique<periodic_metrics_report_session_impl>(*this, session_id);
 }
 
-metrics_report metrics_handler_impl::handle_metrics_report_request(const metric_report_request& request)
+metrics_report metrics_handler_impl::handle_metrics_report_request()
 {
   metrics_report report;
 
