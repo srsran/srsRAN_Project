@@ -8,6 +8,10 @@
  *
  */
 
+/// To run this benchmark, you will need a separate traffic source.
+/// As an example, Iperf2 can be used, like so:
+/// iperf -c 127.0.0.1 -u -b 5G -p 56701  -P 2 -t 3600 --no-udp-fin
+
 #include "udp_network_gateway_benchmark_helpers.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -37,7 +41,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:m:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "n:m:u:h")) != -1) {
     switch (opt) {
       case 'n':
         params.nof_pdus = std::strtol(optarg, nullptr, 10);
@@ -59,6 +63,10 @@ int main(int argc, char** argv)
 {
   srslog::init();
 
+  fmt::print("To run this benchmark, you will need a separate traffic source.\n"
+             "As an example, Iperf2 can be used, like so:\n"
+             "iperf -c 127.0.0.1 -u -b 5G -p 56701  -P 2 -t 3600 --no-udp-fin\n");
+
   // init GW logger
   srslog::fetch_basic_logger("UDP-GW", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UDP-GW", true).set_hex_dump_max_size(100);
@@ -70,7 +78,7 @@ int main(int argc, char** argv)
   gw_cfg.bind_address      = "127.0.0.1";
   gw_cfg.bind_port         = 56701;
   gw_cfg.non_blocking_mode = false;
-  gw_cfg.rx_max_mmsg       = 16;
+  gw_cfg.rx_max_mmsg       = params.rx_mmsg;
 
   dummy_network_gateway_data_notifier_with_src_addr gw_dn{params.slow_inter_rx_us};
   std::unique_ptr<udp_network_gateway>              gw;

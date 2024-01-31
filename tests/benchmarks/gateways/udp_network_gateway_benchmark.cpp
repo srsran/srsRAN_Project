@@ -24,6 +24,7 @@ struct bench_params {
   unsigned slow_inter_rx_us = 500;
   uint16_t rx_port          = 56701;
   uint16_t tx_port          = 56702;
+  unsigned rx_mmsg          = 256;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -48,6 +49,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'n':
         params.nof_pdus = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'm':
+        params.rx_mmsg = std::strtol(optarg, nullptr, 10);
         break;
       case 'u':
         params.slow_inter_rx_us = std::strtol(optarg, nullptr, 10);
@@ -169,7 +173,7 @@ int main(int argc, char** argv)
   gw2_cfg.bind_address      = "127.0.0.1";
   gw2_cfg.bind_port         = params.rx_port;
   gw2_cfg.non_blocking_mode = false;
-  gw1_cfg.rx_max_mmsg       = 256;
+  gw1_cfg.rx_max_mmsg       = params.rx_mmsg;
 
   dummy_network_gateway_data_notifier_with_src_addr gw1_dn{params}, gw2_dn{params};
   std::unique_ptr<udp_network_gateway>              gw1, gw2;
