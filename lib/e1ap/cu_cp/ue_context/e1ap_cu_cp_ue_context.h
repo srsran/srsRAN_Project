@@ -44,7 +44,10 @@ struct e1ap_ue_context {
 class e1ap_ue_context_list
 {
 public:
-  e1ap_ue_context_list(timer_factory timers_, srslog::basic_logger& logger_) : timers(timers_), logger(logger_) {}
+  e1ap_ue_context_list(timer_factory timers_, unsigned max_nof_supported_ues_, srslog::basic_logger& logger_) :
+    timers(timers_), max_nof_supported_ues(max_nof_supported_ues_), logger(logger_)
+  {
+  }
 
   bool contains(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const { return ues.find(cu_cp_ue_e1ap_id) != ues.end(); }
 
@@ -134,7 +137,7 @@ public:
   /// \brief Get the next available GNB-CU-CP-E1AP-UE-ID.
   gnb_cu_cp_ue_e1ap_id_t allocate_gnb_cu_cp_ue_e1ap_id()
   {
-    if (ue_index_to_ue_e1ap_id.size() == MAX_NOF_CU_UES) {
+    if (ue_index_to_ue_e1ap_id.size() == max_nof_supported_ues) {
       return gnb_cu_cp_ue_e1ap_id_t::invalid;
     }
 
@@ -209,6 +212,7 @@ protected:
 
 private:
   timer_factory         timers;
+  unsigned              max_nof_supported_ues = MAX_NOF_CU_UES;
   srslog::basic_logger& logger;
 
   inline void increase_next_cu_cp_ue_e1ap_id()

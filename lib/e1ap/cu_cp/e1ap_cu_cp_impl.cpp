@@ -22,14 +22,15 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifie
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                  timer_manager&                 timers_,
-                                 task_executor&                 ctrl_exec_) :
+                                 task_executor&                 ctrl_exec_,
+                                 unsigned                       max_nof_supported_ues_) :
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
   pdu_notifier(e1ap_pdu_notifier_),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   ctrl_exec(ctrl_exec_),
   timers(timer_factory{timers_, ctrl_exec_}),
-  ue_ctxt_list(timers, logger),
+  ue_ctxt_list(timers, max_nof_supported_ues_, logger),
   ev_mng(timers)
 {
 }

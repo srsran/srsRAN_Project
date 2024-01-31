@@ -110,6 +110,7 @@ protected:
   dummy_e1ap_cu_cp_notifier           cu_cp_notifier;
   manual_task_worker                  ctrl_worker{128};
   std::unique_ptr<e1ap_interface>     e1ap;
+  unsigned                            max_nof_supported_ues = 1024 * 4;
 };
 
 } // namespace srs_cu_cp
