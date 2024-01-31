@@ -70,7 +70,7 @@ private:
 
   /// \brief Get the next available index from the CU-UP processor database.
   /// \return The CU-UP index.
-  cu_up_index_t get_next_cu_up_index();
+  cu_up_index_t allocate_cu_up_index();
 
   cu_up_repository_config cfg;
   srslog::basic_logger&   logger;

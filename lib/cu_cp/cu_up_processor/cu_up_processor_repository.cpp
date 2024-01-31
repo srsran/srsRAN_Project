@@ -77,7 +77,7 @@ void cu_up_processor_repository::handle_cu_up_remove_request(cu_up_index_t cu_up
 
 cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
 {
-  cu_up_index_t cu_up_index = get_next_cu_up_index();
+  cu_up_index_t cu_up_index = allocate_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
     logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
     return cu_up_index_t::invalid;
@@ -110,7 +110,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   return cu_up_index;
 }
 
-cu_up_index_t cu_up_processor_repository::get_next_cu_up_index()
+cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
 {
   for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < cfg.cu_cp.max_nof_cu_ups;
        cu_up_index_int++) {
