@@ -131,17 +131,6 @@ public:
   handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
-/// Interface for an RRC entity to communicate with the DU processor.
-class du_processor_rrc_interface
-{
-public:
-  virtual ~du_processor_rrc_interface() = default;
-
-  /// \brief Get the RRC AMF connection handler interface of the DU processor object.
-  /// \return The RRC AMF connection handler interface of the DU processor object.
-  virtual rrc_amf_connection_handler& get_rrc_amf_connection_handler() = 0;
-};
-
 /// Interface to notify RRC DU about UE management procedures.
 class du_processor_rrc_du_ue_notifier
 {
