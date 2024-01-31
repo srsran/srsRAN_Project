@@ -1753,22 +1753,23 @@ check-affinity-manager-nocpu:
       artifacts: true
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  timeout: 15 minutes
   script:
     - cd build/apps/gnb
-    - taskset -c 0-2 "./gnb" 2>&1 || true
     - |
       error_found=false
-      for (( i=1; i<=8; i++ ))
+      for (( i=3; i<=10; i++ ))
       do
-          echo "Checking for number of CPU = $i"
-          output=$(taskset -c 0-$i "./gnb" 2>&1 || true)
+          echo "Checking for number of CPU = $((i-2))"
+          output=$(taskset -c 2-$i "./gnb log --filename=stdout" 2>&1 || true)
+          echo "$output"
 
           if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
               error_found=true
               echo "**********************************************************************************"
               echo $output
               echo "**********************************************************************************"
-              echo "Error for number of CPU = $i"
+              echo "Error for number of CPU = $((i-2))"
               echo -e "\n\n\n\n\n" 
           fi
       done
