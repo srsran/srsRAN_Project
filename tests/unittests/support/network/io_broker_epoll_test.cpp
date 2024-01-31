@@ -44,8 +44,9 @@ protected:
 
     total_rx_bytes += bytes;
 
-    ASSERT_EQ(bytes, tx_buf.length());
-    // std::printf("received %d bytes\n", bytes);
+    if (socket_type == SOCK_DGRAM) {
+      ASSERT_EQ(bytes, tx_buf.length());
+    }
   }
 
   void create_unix_sockets()
@@ -62,7 +63,8 @@ protected:
     }
 
     // create server socket
-    socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+    socket_fd   = socket(AF_UNIX, SOCK_DGRAM, 0);
+    socket_type = SOCK_DGRAM;
     ASSERT_NE(socket_fd, -1);
 
     // prepare server address
@@ -93,7 +95,8 @@ protected:
     uint16_t port = 8888;
 
     // create server socket
-    socket_fd = socket(AF_INET, type, 0);
+    socket_fd   = socket(AF_INET, type, 0);
+    socket_type = type;
     ASSERT_NE(socket_fd, -1);
 
     // configure socket as reusable to allow multiple runs
@@ -147,7 +150,8 @@ protected:
 
 private:
   std::unique_ptr<io_broker> epoll_broker;
-  int                        socket_fd = 0;
+  int                        socket_fd   = 0;
+  int                        socket_type = 0;
 
   // unix domain socket addresses (used by unix sockets only)
   struct sockaddr_un server_addr_un = {};
