@@ -313,26 +313,30 @@ def iperf_sequentially(
     iperf_duration: int,
     bitrate: int,
     bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
-    max_retries: int = 3,
-    sleep_between_retries: int = 1,
+    max_retries: int = 5,
+    sleep_between_retries: int = 3,
 ) -> Tuple[bool, IPerfResponse]:
     """
     iperf command between an UE and a 5GC
     """
 
     for _ in range(max_retries):
-        task, iperf_request = iperf_start(
-            ue_stub,
-            ue_attached_info,
-            fivegc,
-            protocol,
-            direction,
-            iperf_duration,
-            bitrate,
-        )
-        sleep(iperf_duration)
         try:
-            return iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
+            task, iperf_request = iperf_start(
+                ue_stub,
+                ue_attached_info,
+                fivegc,
+                protocol,
+                direction,
+                iperf_duration,
+                bitrate,
+            )
+            sleep(iperf_duration)
+            iperf_success, iperf_data = iperf_wait_until_finish(
+                ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio
+            )
+            if iperf_success:
+                return iperf_success, iperf_data
         except grpc.RpcError as err:
             logging.warning(
                 "Iperf %s [%s %s] failed due to %s",
@@ -341,7 +345,7 @@ def iperf_sequentially(
                 _iperf_dir_to_str(iperf_request.direction),
                 ErrorReportedByAgent(err).details,
             )
-            sleep(sleep_between_retries)
+        sleep(sleep_between_retries)
 
     return False, IPerfResponse()
 
