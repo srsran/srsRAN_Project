@@ -145,7 +145,7 @@ public:
   using dimensions_size_type = std::array<unsigned, NDIMS>;
 
   /// Default constructor with all dimensions and elements to zero.
-  static_tensor() = default;
+  static_tensor() : dimensions_size{} {}
 
   /// Constructs a tensor with initial dimensions.
   explicit static_tensor(const dimensions_size_type& dimensions) { resize(dimensions); }
@@ -196,9 +196,9 @@ private:
   }
 
   /// Tensor actual dimensions.
-  dimensions_size_type dimensions_size = {};
+  dimensions_size_type dimensions_size;
   /// Tensor actual storage.
-  std::array<Type, MAX_ELEMENTS> elements = {};
+  std::array<Type, MAX_ELEMENTS> elements;
 };
 
 /// \brief Dynamic tensor - the dimensions can be resized dynamically.
