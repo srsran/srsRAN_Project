@@ -165,7 +165,7 @@ public:
   /// NOTE: Calling front on an empty span results in undefined behavior.
   reference front() const
   {
-    assert(!empty() && "called front with empty span");
+    srsran_assert(!empty(), "Called front() with empty span");
     return *data();
   }
 
@@ -173,7 +173,7 @@ public:
   /// NOTE: Calling back on an empty span results in undefined behavior.
   reference back() const
   {
-    assert(!empty() && "called back with empty span");
+    srsran_assert(!empty(), "called back with empty span");
     return *(data() + size() - 1);
   }
 
@@ -181,7 +181,7 @@ public:
   /// NOTE: The behavior is undefined if idx is out of range.
   reference operator[](size_type idx) const
   {
-    assert(idx < len && "index out of bounds!");
+    srsran_assert(idx < len, "Index out of bounds!");
     return ptr[idx];
   }
 
@@ -204,7 +204,7 @@ public:
   /// NOTE: The behavior is undefined if count > size().
   span<element_type> first(size_type count) const
   {
-    assert(count <= size() && "count is out of range");
+    srsran_assert(count <= size(), "Count is out of range");
     return subspan(0, count);
   }
 
@@ -212,19 +212,19 @@ public:
   /// NOTE: The behavior is undefined if count > size().
   span<element_type> last(size_type count) const
   {
-    assert(count <= size() && "count is out of range");
+    srsran_assert(count <= size(), "Count is out of range");
     return subspan(size() - count, count);
   }
 
   /// Obtains a span that is a view over the count elements of this span starting at offset offset.
   span<element_type> subspan(size_type offset, size_type count) const
   {
-    assert(count <= size() - offset && "size out of bounds!");
+    srsran_assert(count <= size() - offset, "Size out of bounds!");
     return {data() + offset, count};
   }
 
   /// Returns true if the input span has the same elements as this.
-  bool equals(span rhs) const { return (len == rhs.len) ? std::equal(begin(), end(), rhs.begin()) : false; }
+  bool equals(span rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
 
 private:
   pointer   ptr = nullptr;

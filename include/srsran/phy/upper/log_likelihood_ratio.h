@@ -284,7 +284,7 @@ V log_likelihood_ratio::dot_prod(const T& x, const U& y, V init)
   static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
   static_assert(srsvec::detail::is_arithmetic_span_compatible<U>::value,
                 "Template type is not compatible with a span of arithmetics");
-  assert(x.size() == y.size());
+  srsran_assert(x.size() == y.size(), "Input spans must have identical sizes: '{}' vs '{}'", x.size(), y.size());
   return std::inner_product(
       x.begin(), x.end(), y.begin(), init, std::plus<V>(), [](log_likelihood_ratio a, log_likelihood_ratio b) {
         return a.to_int() * b.to_int();

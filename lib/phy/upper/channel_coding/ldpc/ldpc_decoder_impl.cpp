@@ -28,14 +28,14 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   bg_M           = current_graph->get_nof_BG_check_nodes();
   bg_K           = current_graph->get_nof_BG_info_nodes();
   bg_N_high_rate = bg_K + 4;
-  assert(bg_K == bg_N_full - bg_M);
+  srsran_assert(bg_K == bg_N_full - bg_M, "Invalid bg_K value '{}'", bg_K);
   lifting_size = static_cast<uint16_t>(cfg.block_conf.tb_common.lifting_size);
 
   max_iterations = cfg.algorithm_conf.max_iterations;
-  assert(max_iterations > 0);
+  srsran_assert(max_iterations > 0, "Max iterations must be different to 0");
 
   scaling_factor = cfg.algorithm_conf.scaling_factor;
-  assert((scaling_factor > 0) && (scaling_factor < 1));
+  srsran_assert((scaling_factor > 0) && (scaling_factor < 1), "Scaling factor must be between 0 and 1 exclusively");
 
   unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
   srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");

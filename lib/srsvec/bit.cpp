@@ -57,7 +57,7 @@ RetType pack_8bit(span<const uint8_t> unpacked)
 
 span<uint8_t> srsran::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits)
 {
-  assert(bits.size() >= nof_bits);
+  srsran_assert(bits.size() >= nof_bits, "Input span size is too small");
 
   for (unsigned i = 0; i < nof_bits; i++) {
     bits[i] = (value >> (nof_bits - i - 1)) & 0x1;
