@@ -24,46 +24,6 @@ using namespace asn1::f1ap;
 /* AMF connection handling                                                          */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
-{
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
-
-  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
-
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
-
-  du_index_t du_index = uint_to_du_index(0);
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
-
-  // Attach UE
-  {
-    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
-    rnti_t              crnti    = to_rnti(0x4601);
-
-    attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-  }
-
-  // check that UE has been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
-
-  // check that the Initial UE Message was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
-            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id, 0);
-}
-
 /// Test the UE rejection if DU can't serve the UE
 TEST_F(cu_cp_test, when_du_sends_empty_du_to_cu_container_then_ue_is_rejected)
 {

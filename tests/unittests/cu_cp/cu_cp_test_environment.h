@@ -66,11 +66,16 @@ public:
   bool tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition);
 
   /// Tick CU-CP timer until a NGAP PDU is sent.
-  bool wait_for_ngap_tx_pdu(ngap_message& ngap_pdu, std::chrono::milliseconds timeout);
+  bool wait_for_ngap_tx_pdu(ngap_message&             ngap_pdu,
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
 
-  bool wait_for_e1ap_tx_pdu(unsigned cu_up_idx, e1ap_message& e1ap_pdu, std::chrono::milliseconds timeout);
+  bool wait_for_e1ap_tx_pdu(unsigned                  cu_up_idx,
+                            e1ap_message&             e1ap_pdu,
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
 
-  bool wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message& f1ap_pdu, std::chrono::milliseconds timeout);
+  bool wait_for_f1ap_tx_pdu(unsigned                  du_idx,
+                            f1ap_message&             f1ap_pdu,
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
 
   const cu_cp_test_env_params& get_test_env_params() const { return params; }
 

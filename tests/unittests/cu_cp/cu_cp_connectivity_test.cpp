@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/unittests/cu_cp/cu_cp_test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -32,6 +33,10 @@ public:
     ngap_message ng_setup_resp = generate_ng_setup_response();
     get_amf().enqueue_next_tx_pdu(ng_setup_resp);
     EXPECT_TRUE(get_cu_cp().start());
+    ngap_message ngap_pdu;
+    EXPECT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
+    EXPECT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request))
+        << "CU-CP did not setup the AMF connection";
   }
 };
 
@@ -236,7 +241,7 @@ TEST_F(
 //  UE connection handling                                                          //
 //----------------------------------------------------------------------------------//
 
-TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_be_created)
+TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
 {
   // Run NG setup to completion.
   run_ng_setup();
@@ -258,19 +263,20 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_be_created)
   ASSERT_TRUE(report.ue_metrics.ues.empty());
 
   // Create UE by sending Initial UL RRC Message.
-  gnb_du_ue_f1ap_id_t ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti      = to_rnti(0x4601);
-  get_du(du_idx).push_tx_pdu(generate_init_ul_rrc_message_transfer(ue_f1ap_id, crnti));
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  get_du(du_idx).push_tx_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
-  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
   ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
   const auto& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
-  ASSERT_EQ(dl_rrc_msg->gnb_du_ue_f1ap_id, gnb_du_ue_f1ap_id_to_uint(ue_f1ap_id));
+  ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(dl_rrc_msg->gnb_du_ue_f1ap_id), du_ue_f1ap_id);
   ASSERT_EQ(int_to_srb_id(dl_rrc_msg->srb_id), srb_id_t::srb0);
+  gnb_cu_ue_f1ap_id_t         cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(dl_rrc_msg->gnb_cu_ue_f1ap_id);
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   {
     asn1::cbit_ref bref{dl_rrc_msg->rrc_container};
@@ -282,6 +288,19 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_be_created)
   report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
   ASSERT_EQ(report.ue_metrics.ues.size(), 1);
   ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
+
+  // AMF still not notified of UE attach.
+  ngap_message ngap_pdu;
+  ASSERT_FALSE(this->get_amf().try_pop_rx_pdu(ngap_pdu));
+
+  // UE sends UL RRC Message with RRC Setup Complete.
+  f1ap_message ul_rrc_msg =
+      generate_ul_rrc_message_transfer(cu_ue_f1ap_id, du_ue_f1ap_id, srb_id_t::srb1, generate_rrc_setup_complete());
+  test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+  get_du(du_idx).push_tx_pdu(ul_rrc_msg);
+
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::types_opts::init_ue_msg));
 }
 
 TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
@@ -330,4 +349,8 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   // Verify UE is removed.
   report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
   ASSERT_TRUE(report.ue_metrics.ues.empty());
+
+  // Verify no NGAP PDU was sent when a UE is rejected.
+  ngap_message ngap_pdu;
+  ASSERT_FALSE(this->get_amf().try_pop_rx_pdu(ngap_pdu));
 }
