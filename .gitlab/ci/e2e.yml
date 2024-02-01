@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "15"
+    ref: "16"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -62,7 +62,7 @@ load retina variables:
     - if: $TESTBED == "none"
       when: never
     - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $ON_WEB
     - if: $ON_API
   script:
@@ -124,7 +124,7 @@ e2e request validation:
   extends:
     - .prepare_test
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   artifacts:
     paths:
       - tests/e2e/log
@@ -202,28 +202,24 @@ smoke-zmq:
 
 .zmq:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     TESTBED: "zmq"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
 
 zmq:
   extends: .zmq
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -233,23 +229,19 @@ zmq:
 
 zmq_srsue:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     TESTBED: "zmq_srsue"
     MARKERS: "zmq_srsue"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
 
 zmq-alternative-configs:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     TESTBED: "zmq_single_ue"
@@ -257,22 +249,20 @@ zmq-alternative-configs:
     E2E_LOG_LEVEL: "info"
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
 
 zmq_4x4_mimo:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     TESTBED: "zmq_4x4_mimo"
     MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -296,7 +286,7 @@ zmq-tsan:
     RETINA_ARGS: "gnb.all.pcap=True"
   interruptible: false
   needs:
-    - job: "smoke tsan update cache"
+    - job: "basic tsan"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -309,22 +299,20 @@ zmq-valgrind:
     RETINA_ARGS: "gnb.all.pcap=True"
   interruptible: false
   needs:
-    - job: "smoke valgrind update cache"
+    - job: "basic valgrind"
       artifacts: true
     - *txrx-lib
     - *retina-needs
 
 zmq_test_mode:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     TESTBED: "zmq_4x4_mimo"
     MARKERS: "testmode"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -335,8 +323,6 @@ zmq_test_mode:
 
 .rf:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
     GROUP: "rf"
@@ -344,7 +330,7 @@ zmq_test_mode:
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
 
@@ -374,8 +360,6 @@ rf-n300-config:
 
 android:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     GROUP: "rf"
     TESTBED: "android_b200"
@@ -383,14 +367,12 @@ android:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
 
 android-x300:
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     GROUP: "rf"
     TESTBED: "android_x300"
@@ -398,7 +380,7 @@ android-x300:
     E2E_LOG_LEVEL: "info"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
-    - job: "smoke relwithdeb update cache"
+    - job: "basic relwithdeb"
       artifacts: true
     - *retina-needs
 
@@ -414,7 +396,7 @@ android-n300:
 viavi:
   extends: .e2e-run
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
       start_in: 5 hours
   variables:
@@ -437,7 +419,7 @@ viavi:
   extends:
     - .prepare_test
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: always
   interruptible: false
   image:

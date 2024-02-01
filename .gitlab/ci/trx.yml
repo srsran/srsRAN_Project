@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "15"
+    ref: "16"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -74,7 +74,6 @@ build trx driver:
     - |
       mkdir ${CI_PROJECT_DIR}/build_trx_srsran
       mv ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so ${CI_PROJECT_DIR}/build_trx_srsran/
-
   after_script: []
   artifacts: &trx_artifacts
     paths:
@@ -84,7 +83,7 @@ build trx driver:
 build amariue zmq driver:
   extends: build trx driver
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   artifacts:
     <<: *trx_artifacts
     expire_in: 1 day

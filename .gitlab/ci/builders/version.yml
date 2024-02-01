@@ -13,7 +13,8 @@ builder version:
     - if: $ON_MR
     - if: $ON_WEB
     - if: $ON_API
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $CI_DESCRIPTION =~ /Weekly/
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   script:

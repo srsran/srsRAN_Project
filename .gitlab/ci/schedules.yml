@@ -19,14 +19,29 @@ Rebaser:
       key: NOTIFY_SLACK
       value: "false"
 
-Nightly:
+Nightly Build Unit Tests:
+  cron: "45 23 * * 0-5"
+  cron_timezone: "Europe/Madrid"
+  ref: dev
+  variables:
+    - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Nightly Build Unit Tests"
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "true"
+    - variable_type: env_var
+      key: SLACK_CHANNEL_OK
+      value: "#ci_gnb"
+
+Nightly E2E Tests:
   cron: "30 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
-      value: "Nightly"
+      value: "Nightly E2E Tests"
     - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"

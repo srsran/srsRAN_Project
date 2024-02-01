@@ -29,7 +29,7 @@
 push_src_cache amd:
   stage: .pre
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       allow_failure: true
   interruptible: false
   script:
@@ -45,7 +45,7 @@ push_src_cache arm:
 pull_src_cache amd:
   stage: .pre
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       allow_failure: true
   interruptible: false
   variables:
