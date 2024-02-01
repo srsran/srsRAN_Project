@@ -228,7 +228,7 @@ public:
   }
 
 private:
-  std::map<ue_index_t, std::unique_ptr<fifo_async_task_scheduler>> task_loop;
+  std::unordered_map<ue_index_t, std::unique_ptr<fifo_async_task_scheduler>> task_loop;
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
@@ -256,7 +256,7 @@ protected:
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  slotted_id_table<ue_index_t, test_ue, MAX_NOF_UES_PER_DU> test_ues;
+  std::unordered_map<ue_index_t, test_ue> test_ues;
 
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;

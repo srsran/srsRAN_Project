@@ -23,6 +23,7 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
 #include <string>
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -187,10 +188,10 @@ private:
   std::unique_ptr<rrc_du_interface> rrc;
 
   // F1AP to RRC UE adapters
-  std::map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
+  std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
 
   // RRC UE to F1AP adapters
-  std::map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
+  std::unordered_map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;
@@ -199,10 +200,10 @@ private:
   du_processor_rrc_du_adapter rrc_du_adapter;
 
   // RRC UE to DU processor task schedulers
-  std::map<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
+  std::unordered_map<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
 
   // DU processor to RRC UE adapters
-  std::map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
+  std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // DU processor routine manager
   std::unique_ptr<du_processor_routine_manager> routine_mng;

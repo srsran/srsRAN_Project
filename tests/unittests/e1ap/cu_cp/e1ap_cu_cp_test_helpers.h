@@ -19,6 +19,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -102,7 +103,7 @@ protected:
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  std::map<ue_index_t, test_ue> test_ues;
+  std::unordered_map<ue_index_t, test_ue> test_ues;
 
   timer_manager                       timers;
   dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;

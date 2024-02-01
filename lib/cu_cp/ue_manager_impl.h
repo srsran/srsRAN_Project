@@ -323,7 +323,7 @@ private:
   const ue_configuration        ue_config;
   const up_resource_manager_cfg up_config;
 
-  std::map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
+  std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 
   // ue index lookups
   std::map<std::tuple<pci_t, rnti_t>, ue_index_t> pci_rnti_to_ue_index; // ue_indexes indexed by pci and rnti

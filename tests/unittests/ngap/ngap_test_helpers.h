@@ -72,7 +72,7 @@ protected:
   srslog::basic_logger& ngap_logger = srslog::fetch_basic_logger("NGAP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  std::map<ue_index_t, test_ue> test_ues;
+  std::unordered_map<ue_index_t, test_ue> test_ues;
 
   ngap_configuration                                cfg;
   timer_manager                                     timers;
