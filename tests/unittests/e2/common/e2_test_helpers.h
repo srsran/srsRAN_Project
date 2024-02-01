@@ -781,7 +781,7 @@ public:
 };
 
 /// Fixture class for E2AP
-class e2_test_base : public ::testing::Test
+class e2_base
 {
 protected:
   void tick()
@@ -813,6 +813,12 @@ protected:
   std::unique_ptr<e2sm_manager>                       e2sm_mngr;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
+
+class e2_test_base : public e2_base, public ::testing::Test
+{};
+
+class e2_test_base_with_pcap : public e2_base, public testing::TestWithParam<dlt_pcap*>
+{};
 
 class e2_test : public e2_test_base
 {
