@@ -355,7 +355,7 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= du_index_to_uint(du_index_t::max); du_idx++) {
+  for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= max_nof_dus - 1; du_idx++) {
     unsigned du_offset = du_idx * MAX_NOF_UES_PER_DU;
 
     for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
@@ -380,7 +380,7 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
   test_logger.set_level(srslog::basic_levels::debug);
 
   // check that the maximum number of NGAP UEs has been reached
-  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), (du_index_to_uint(du_index_t::max) + 1) * MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), ue_config.max_nof_supported_ues);
 }
 
 /// Test creation of unsupported number of NGAP UEs
@@ -390,7 +390,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= du_index_to_uint(du_index_t::max); du_idx++) {
+  for (unsigned du_idx = du_index_to_uint(du_index_t::min); du_idx <= max_nof_dus - 1; du_idx++) {
     unsigned du_offset = du_idx * MAX_NOF_UES_PER_DU;
 
     for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
@@ -415,12 +415,12 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
   test_logger.set_level(srslog::basic_levels::debug);
 
   // check that the maximum number of NGAP UEs has been reached
-  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), (du_index_to_uint(du_index_t::max) + 1) * MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), ue_config.max_nof_supported_ues);
 
   // Try allocating an additional UE index
   ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index_t::max);
   ASSERT_EQ(ue_index, ue_index_t::invalid);
 
   // check that the UE has not been added
-  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), (du_index_to_uint(du_index_t::max) + 1) * MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), ue_config.max_nof_supported_ues);
 }

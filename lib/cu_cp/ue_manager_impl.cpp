@@ -65,10 +65,14 @@ void ue_manager::remove_ue(ue_index_t ue_index)
 
 ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
 {
+  if (ues.size() == ue_config.max_nof_supported_ues) {
+    return ue_index_t::invalid;
+  }
+
   ue_index_t new_ue_index = get_next_ue_index(du_index);
   if (new_ue_index == ue_index_t::invalid) {
     logger.warning("No free UE index available");
-    return new_ue_index;
+    return ue_index_t::invalid;
   }
 
   // Create UE object

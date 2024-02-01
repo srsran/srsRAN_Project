@@ -33,7 +33,8 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}),
+  ue_mng({config_.ue_config.inactivity_timer, cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU},
+         up_resource_manager_cfg{config_.rrc_config.drb_config}),
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, du_db, ue_mng)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   du_db(du_repository_config{cfg,
