@@ -66,8 +66,8 @@ public:
     const size_t       sdu_size = sdu.buf.length();
     if (pdcp_sn.has_value()) {
       const uint32_t pdcp_sn_value = sdu.pdcp_sn.value();
-      // load slot state (memory_order_relaxed, don't care about values of sdu_size)
-      uint32_t slot_state = sdu_states[pdcp_sn_value % capacity].load(std::memory_order_relaxed);
+      // load slot state (memory_order_acquire ensures sdu_size is written after this)
+      uint32_t slot_state = sdu_states[pdcp_sn_value % capacity].load(std::memory_order_acquire);
       if (slot_state != STATE_FREE) {
         logger.log_debug("SDU queue failed to enqueue pdcp_sn={}. Slot holds pdcp_sn={}", pdcp_sn_value, slot_state);
         return false;
@@ -76,8 +76,9 @@ public:
       // slot is free, we can safely store the SDU size
       sdu_sizes[pdcp_sn_value % capacity].store(sdu_size, std::memory_order_relaxed);
 
-      // allocate slot by writing the PDCP SN into it (memory_order_release ensures sdu_size becomes visible to others)
-      sdu_states[pdcp_sn_value % capacity].store(pdcp_sn_value, std::memory_order_release);
+      // allocate slot by writing the PDCP SN into it (memory_order_relaxed, don't care about order because of "release"
+      // semantics of the push to queue)
+      sdu_states[pdcp_sn_value % capacity].store(pdcp_sn_value, std::memory_order_relaxed);
     }
 
     // push SDU to queue
@@ -229,11 +230,9 @@ private:
   /// \return True if the RLC SDU with given PDCP SN is valid, otherwise false.
   bool check_and_release(uint32_t pdcp_sn)
   {
-    // load slot state and block it by setting it as "discarded" (memory_order_acquire ensures sdu_size is up to date)
-    uint32_t old_state = sdu_states[pdcp_sn % capacity].exchange(STATE_DISCARDED, std::memory_order_acquire);
-    uint32_t sdu_size  = sdu_sizes[pdcp_sn % capacity].load(std::memory_order_relaxed);
-    // free the slot (memory_order_relaxed, doesn't care about sdu_size)
-    sdu_states[pdcp_sn % capacity].store(STATE_FREE, std::memory_order_relaxed);
+    uint32_t sdu_size = sdu_sizes[pdcp_sn % capacity].load(std::memory_order_relaxed);
+    // free the slot (memory_order_release ensures sdu_size is read before the state is set to free)
+    uint32_t old_state = sdu_states[pdcp_sn % capacity].exchange(STATE_FREE, std::memory_order_release);
 
     bool sdu_is_valid;
     if (old_state == pdcp_sn) {
