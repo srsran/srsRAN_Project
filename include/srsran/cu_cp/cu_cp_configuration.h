@@ -35,9 +35,10 @@ struct cu_cp_configuration {
   ngap_message_notifier* ngap_notifier  = nullptr; ///> Callback for outgoing NGAP messages.
   timer_manager*         timers         = nullptr;
   /// Maximum number of DU connections that the CU-CP may accept.
-  unsigned max_nof_dus = 8;
+  unsigned max_nof_dus = 6;
   /// Maximum number of CU-UP connections that the CU-CP may accept.
-  unsigned               max_nof_cu_ups = 8;
+  unsigned max_nof_cu_ups = 6;
+  /// Maximum number of UEs that the CU-CP may accept.
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;

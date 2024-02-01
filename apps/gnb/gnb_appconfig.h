@@ -714,6 +714,8 @@ struct security_appconfig {
 };
 
 struct cu_cp_appconfig {
+  uint16_t           max_nof_dus                = 6;
+  uint16_t           max_nof_cu_ups             = 6;
   int                inactivity_timer           = 7200; // in seconds
   unsigned           ue_context_setup_timeout_s = 3;    // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;

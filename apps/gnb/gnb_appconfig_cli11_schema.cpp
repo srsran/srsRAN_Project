@@ -403,6 +403,12 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
+  app.add_option(
+      "--max_nof_dus", cu_cp_params.max_nof_dus, "Maximum number of DU connections that the CU-CP may accept");
+
+  app.add_option(
+      "--max_nof_cu_ups", cu_cp_params.max_nof_cu_ups, "Maximum number of CU-UP connections that the CU-CP may accept");
+
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));

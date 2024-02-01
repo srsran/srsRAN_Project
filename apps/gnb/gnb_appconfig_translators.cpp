@@ -125,6 +125,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   }
 
   out_cfg.ue_config.inactivity_timer             = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
+  out_cfg.ue_config.max_nof_supported_ues        = config.cu_cp_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
   out_cfg.ngap_config.ue_context_setup_timeout_s = std::chrono::seconds{config.cu_cp_cfg.ue_context_setup_timeout_s};
   out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
 

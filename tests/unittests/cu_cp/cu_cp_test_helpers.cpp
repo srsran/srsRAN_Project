@@ -11,6 +11,7 @@
 #include "cu_cp_test_helpers.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cu_types.h"
 #include <chrono>
 #include <utility>
@@ -74,7 +75,8 @@ cu_cp_test::cu_cp_test()
                                        security::ciphering_algorithm::nea3};
 
   // UE config
-  cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
+  cfg.ue_config.inactivity_timer      = std::chrono::seconds{7200};
+  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_dus * MAX_NOF_UES_PER_DU;
 
   // periodic statistic logging
   cfg.statistics_report_period = std::chrono::seconds(1);

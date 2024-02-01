@@ -13,6 +13,7 @@
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/executors/task_worker.h"
 
 using namespace srsran;
@@ -49,13 +50,14 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   srslog::init();
 
   // create CU-CP config
-  cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
-  cfg.cu_cp_executor      = cu_cp_workers->exec.get();
-  cfg.ngap_notifier       = &*amf_stub;
-  cfg.timers              = &timers;
-  cfg.ngap_config         = config_helpers::make_default_ngap_config();
-  cfg.max_nof_dus         = params.max_nof_dus;
-  cfg.max_nof_cu_ups      = params.max_nof_cu_ups;
+  cu_cp_configuration cfg             = config_helpers::make_default_cu_cp_config();
+  cfg.cu_cp_executor                  = cu_cp_workers->exec.get();
+  cfg.ngap_notifier                   = &*amf_stub;
+  cfg.timers                          = &timers;
+  cfg.ngap_config                     = config_helpers::make_default_ngap_config();
+  cfg.max_nof_dus                     = params.max_nof_dus;
+  cfg.max_nof_cu_ups                  = params.max_nof_cu_ups;
+  cfg.ue_config.max_nof_supported_ues = params.max_nof_dus * MAX_NOF_UES_PER_DU;
 
   // create CU-CP instance.
   cu_cp = create_cu_cp(cfg);
