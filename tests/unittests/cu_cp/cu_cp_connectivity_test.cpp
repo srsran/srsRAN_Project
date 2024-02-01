@@ -12,6 +12,8 @@
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
@@ -255,11 +257,77 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_be_created)
   auto report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
   ASSERT_TRUE(report.ue_metrics.ues.empty());
 
-  // Create UE.
-  ASSERT_TRUE(this->connect_new_ue(du_idx, int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601)));
+  // Create UE by sending Initial UL RRC Message.
+  gnb_du_ue_f1ap_id_t ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti      = to_rnti(0x4601);
+  get_du(du_idx).push_tx_pdu(generate_init_ul_rrc_message_transfer(ue_f1ap_id, crnti));
 
-  // Check UE has been added via metrics.
+  // Verify F1AP DL RRC Message is sent with RRC Setup.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
+  const auto& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
+  ASSERT_EQ(dl_rrc_msg->gnb_du_ue_f1ap_id, gnb_du_ue_f1ap_id_to_uint(ue_f1ap_id));
+  ASSERT_EQ(int_to_srb_id(dl_rrc_msg->srb_id), srb_id_t::srb0);
+  asn1::rrc_nr::dl_ccch_msg_s ccch;
+  {
+    asn1::cbit_ref bref{dl_rrc_msg->rrc_container};
+    ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+  }
+  ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_setup);
+
+  // Check UE is created.
   report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
   ASSERT_EQ(report.ue_metrics.ues.size(), 1);
-  ASSERT_EQ(report.ue_metrics.ues[0].rnti, to_rnti(0x4601));
+  ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
+}
+
+TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Send Initial UL RRC Message.
+  gnb_du_ue_f1ap_id_t ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti      = to_rnti(0x4601);
+  get_du(du_idx).push_tx_pdu(generate_init_ul_rrc_message_transfer(ue_f1ap_id, crnti));
+
+  // Verify F1AP DL RRC Message is sent with RRC Setup.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+  ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(ue_rel->gnb_du_ue_f1ap_id), ue_f1ap_id);
+  ASSERT_TRUE(ue_rel->srb_id_present);
+  ASSERT_EQ(int_to_srb_id(ue_rel->srb_id), srb_id_t::srb0);
+  asn1::rrc_nr::dl_ccch_msg_s ccch;
+  {
+    asn1::cbit_ref bref{ue_rel->rrc_container};
+    ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+  }
+  ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
+
+  // Check UE is created and is only destroyed when F1AP UE context release complete is received.
+  auto report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
+  ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
+
+  // Send F1AP UE Context Release Complete.
+  auto rel_complete =
+      generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), ue_f1ap_id);
+  get_du(du_idx).push_tx_pdu(rel_complete);
+
+  // Verify UE is removed.
+  report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  ASSERT_TRUE(report.ue_metrics.ues.empty());
 }

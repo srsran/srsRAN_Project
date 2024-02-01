@@ -275,9 +275,10 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 {
   du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
+  auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
   routine_mng.start_ue_removal_routine(ue_index,
                                        rrc_du_adapters.at(du_index),
-                                       e1ap_adapters.at(cu_up_index),
+                                       e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
                                        f1ap_adapters.at(du_index),
                                        ngap_adapter,
                                        ue_mng,

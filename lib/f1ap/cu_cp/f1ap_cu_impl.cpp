@@ -281,7 +281,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   // Remove the UE if the creation was not successful
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed");
+    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed", msg->gnb_du_ue_f1ap_id);
     cu_cp_notifier.on_ue_removal_required(ue_index);
     return;
   }
