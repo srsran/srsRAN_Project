@@ -9,7 +9,6 @@
  */
 
 #include "ue_creation_procedure.h"
-#include "../../ran/gnb_format.h"
 #include "proc_logger.h"
 
 using namespace srsran;
