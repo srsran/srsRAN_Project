@@ -8,6 +8,7 @@
  *
  */
 
+#include "udp_network_gateway_benchmark_helpers.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -42,7 +43,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:u:p:P:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:n:m:u:p:P:h")) != -1) {
     switch (opt) {
       case 'l':
         params.pdu_len = std::strtol(optarg, nullptr, 10);
@@ -70,88 +71,6 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway_data_notifier_with_src_addr
-{
-public:
-  dummy_network_gateway_data_notifier_with_src_addr(const bench_params& params_) : params(params_) {}
-
-  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
-  {
-    rx_bytes += pdu.length();
-    n_pdus++;
-
-    static bool first = true;
-    auto        t_now = std::chrono::high_resolution_clock::now();
-    if (!first) {
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_now - t_last);
-      if (duration < t_min) {
-        t_min = duration;
-      }
-      if (duration > t_max) {
-        t_max = duration;
-      }
-      t_sum += duration;
-      if (duration.count() > params.slow_inter_rx_us) {
-        fmt::print("Long inter Rx interval t={}us at n_pdus={}\n", duration.count(), n_pdus);
-      }
-    } else {
-      first = false;
-    }
-
-    t_last = t_now;
-  }
-
-  unsigned get_rx_bytes() { return rx_bytes; }
-  unsigned get_n_pdus() { return n_pdus; }
-
-  std::chrono::microseconds get_t_min() { return t_min; }
-  std::chrono::microseconds get_t_max() { return t_max; }
-  std::chrono::microseconds get_t_sum() { return t_sum; }
-
-private:
-  const bench_params& params;
-
-  unsigned rx_bytes = 0;
-  unsigned n_pdus   = 0;
-
-  std::chrono::high_resolution_clock::time_point t_last = std::chrono::high_resolution_clock::now();
-  std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();
-  std::chrono::microseconds                      t_max  = std::chrono::microseconds::min();
-  std::chrono::microseconds                      t_sum  = std::chrono::microseconds::zero();
-};
-
-byte_buffer make_tx_byte_buffer(uint32_t length)
-{
-  byte_buffer pdu{};
-  for (uint32_t i = 0; i < length; ++i) {
-    if (not pdu.append((uint8_t)i)) {
-      pdu.clear();
-      break;
-    }
-  }
-  return pdu;
-}
-
-sockaddr_storage to_sockaddr_storage(std::string dest_addr, uint16_t port)
-{
-  in_addr          inaddr_v4    = {};
-  in6_addr         inaddr_v6    = {};
-  sockaddr_storage addr_storage = {};
-
-  if (inet_pton(AF_INET, dest_addr.c_str(), &inaddr_v4) == 1) {
-    sockaddr_in* tmp = (sockaddr_in*)&addr_storage;
-    tmp->sin_family  = AF_INET;
-    tmp->sin_addr    = inaddr_v4;
-    tmp->sin_port    = htons(port);
-  } else if (inet_pton(AF_INET6, dest_addr.c_str(), &inaddr_v6) == 1) {
-    sockaddr_in6* tmp = (sockaddr_in6*)&addr_storage;
-    tmp->sin6_family  = AF_INET6;
-    tmp->sin6_addr    = inaddr_v6;
-    tmp->sin6_port    = htons(port);
-  }
-  return addr_storage;
-}
-
 int main(int argc, char** argv)
 {
   srslog::init();
@@ -167,16 +86,18 @@ int main(int argc, char** argv)
   gw1_cfg.bind_address      = "127.0.0.1";
   gw1_cfg.bind_port         = params.tx_port;
   gw1_cfg.non_blocking_mode = false;
-  gw1_cfg.rx_max_mmsg       = 256;
+  gw1_cfg.rx_max_mmsg       = params.rx_mmsg;
 
   udp_network_gateway_config gw2_cfg;
   gw2_cfg.bind_address      = "127.0.0.1";
   gw2_cfg.bind_port         = params.rx_port;
   gw2_cfg.non_blocking_mode = false;
-  gw1_cfg.rx_max_mmsg       = params.rx_mmsg;
+  gw2_cfg.rx_max_mmsg       = params.rx_mmsg;
 
-  dummy_network_gateway_data_notifier_with_src_addr gw1_dn{params}, gw2_dn{params};
-  std::unique_ptr<udp_network_gateway>              gw1, gw2;
+  dummy_network_gateway_data_notifier_with_src_addr gw1_dn{params.slow_inter_rx_us, params.nof_pdus};
+  dummy_network_gateway_data_notifier_with_src_addr gw2_dn{params.slow_inter_rx_us, params.nof_pdus};
+  std::unique_ptr<udp_network_gateway>              gw1;
+  std::unique_ptr<udp_network_gateway>              gw2;
 
   manual_task_worker io_tx_executor{128};
 

@@ -12,7 +12,6 @@
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <queue>
@@ -35,7 +34,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:n:h")) != -1) {
     switch (opt) {
       case 'l':
         params.pdu_len = std::strtol(optarg, nullptr, 10);
@@ -68,7 +67,7 @@ int main(int argc, char** argv)
   gw1_cfg.non_blocking_mode = false;
   gw1_cfg.rx_max_mmsg       = 256;
 
-  dummy_network_gateway_data_notifier_with_src_addr gw1_dn{0}; // no rx required
+  dummy_network_gateway_data_notifier_with_src_addr gw1_dn{0, params.nof_pdus}; // no rx required
   std::unique_ptr<udp_network_gateway>              gw1;
   std::unique_ptr<udp_network_gateway>              gw2;
 

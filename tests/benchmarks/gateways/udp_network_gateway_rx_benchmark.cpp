@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   gw_cfg.non_blocking_mode = false;
   gw_cfg.rx_max_mmsg       = params.rx_mmsg;
 
-  dummy_network_gateway_data_notifier_with_src_addr gw_dn{params.slow_inter_rx_us};
+  dummy_network_gateway_data_notifier_with_src_addr gw_dn{params.slow_inter_rx_us, params.nof_pdus};
   std::unique_ptr<udp_network_gateway>              gw;
 
   manual_task_worker io_tx_executor{128};
