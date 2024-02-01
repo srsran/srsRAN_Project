@@ -64,8 +64,7 @@ inline void security_nia2(sec_mac&           mac,
                           uint32_t           count,
                           uint8_t            bearer,
                           security_direction direction,
-                          byte_buffer_view&  msg,
-                          uint32_t           msg_len)
+                          byte_buffer_view&  msg)
 {
   int                          ret;
   mbedtls_cipher_context_t     ctx;
@@ -110,16 +109,6 @@ inline void security_nia2(sec_mac&           mac,
   for (int i = 0; i < 4; ++i) {
     mac[i] = tmp_mac[i];
   }
-}
-
-inline void security_nia2(sec_mac&           mac,
-                          const sec_128_key& key,
-                          uint32_t           count,
-                          uint8_t            bearer,
-                          security_direction direction,
-                          byte_buffer_view&  msg)
-{
-  security_nia2(mac, key, count, bearer, direction, msg, msg.length() * 8);
 }
 
 inline uint32_t GET_WORD(uint32_t* DATA, uint32_t i)
