@@ -111,7 +111,11 @@ unsigned metrics_handler_impl::create_periodic_session(const periodic_metric_rep
 
     // Notify report.
     sessions[session_id].report_notifier->notify_metrics_report_request(report);
+
+    // Auto-schedule new timer run.
+    sessions[session_id].timer.run();
   });
+  sessions[session_id].timer.run();
 
   return session_id;
 }

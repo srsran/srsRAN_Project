@@ -16,6 +16,7 @@ add_subdirectory(cu_up_processor)
 add_subdirectory(ue_manager)
 add_subdirectory(up_resource_manager)
 add_subdirectory(mobility)
+add_subdirectory(metrics_handler)
 
 add_library(cu_cp_test_helpers
         test_doubles/mock_cu_up.cpp
