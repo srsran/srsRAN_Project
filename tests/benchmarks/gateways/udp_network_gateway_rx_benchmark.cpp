@@ -23,14 +23,16 @@
 using namespace srsran;
 
 struct bench_params {
-  uint64_t nof_pdus         = 100000;
-  unsigned slow_inter_rx_us = 500;
-  unsigned rx_mmsg          = 256;
+  uint64_t    nof_pdus         = 100000;
+  unsigned    slow_inter_rx_us = 500;
+  unsigned    rx_mmsg          = 256;
+  std::string bind_addr        = "127.0.0.1";
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-n <nof PDUs>] [-l <PDU len>] [-u <t us>]\n", prog);
+  fmt::print("\t-b Bind address for socket [Default {}]\n", params.bind_addr);
   fmt::print("\t-n Number of PDUs [Default {}]\n", params.nof_pdus);
   fmt::print("\t-u Notify large PDU inter arrival time longer than t microseconds [Default {}]\n",
              params.slow_inter_rx_us);
@@ -41,8 +43,11 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "n:m:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "b:n:m:u:h")) != -1) {
     switch (opt) {
+      case 'b':
+        params.bind_addr = std::string(optarg);
+        break;
       case 'n':
         params.nof_pdus = std::strtol(optarg, nullptr, 10);
         break;
@@ -76,7 +81,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv, params);
 
   udp_network_gateway_config gw_cfg;
-  gw_cfg.bind_address      = "127.0.0.1";
+  gw_cfg.bind_address      = params.bind_addr;
   gw_cfg.bind_port         = 56701;
   gw_cfg.non_blocking_mode = false;
   gw_cfg.rx_max_mmsg       = params.rx_mmsg;

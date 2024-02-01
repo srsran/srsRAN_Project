@@ -97,10 +97,8 @@ int main(int argc, char** argv)
   uint64_t tx_bits        = tx_bytes * 8;
 
   fmt::print("Tx time: {} us\n", tx_duration_us);
-  fmt::print("Tx PDUs total: {:>7}\n\n", params.nof_pdus);
-
-  fmt::print("Tx Bytes: {} GB\n", tx_bytes);
-  fmt::print("Tx bits: {} b\n", tx_bits);
+  fmt::print("Tx PDUs total: {:>7}\n", params.nof_pdus);
+  fmt::print("Tx Bytes: {:.3f} GB\n\n", tx_bytes * 1e-9);
 
   fmt::print("Tx data rate: {:.2f} Mbit/s\n", (long double)(tx_bits) / tx_duration_us);
   fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (long double)params.nof_pdus / (duration.count() * 1e-6));
