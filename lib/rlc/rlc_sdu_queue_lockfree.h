@@ -198,8 +198,6 @@ public:
   /// \return The number of buffered SDU bytes that are not marked as discarded.
   uint32_t size_bytes() const { return n_bytes.load(std::memory_order_relaxed); }
 
-  // bool front_size_bytes(uint32_t& size) { return 0; }
-
   /// \brief Checks if the internal queue is empty.
   ///
   /// This function may be called by any thread.
