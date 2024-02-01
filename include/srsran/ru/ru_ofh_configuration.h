@@ -118,10 +118,10 @@ struct ru_ofh_sector_dependencies {
   task_executor* receiver_executor = nullptr;
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
-  /// Ethernet gateway.
-  std::unique_ptr<ether::gateway> eth_gateway;
-  /// Ethernet receiver.
-  std::unique_ptr<ether::receiver> eth_receiver;
+  /// Optional Ethernet gateway.
+  optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  /// Optional Ethernet receiver.
+  optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 /// Radio Unit dependencies for the Open Fronthaul implementation.
