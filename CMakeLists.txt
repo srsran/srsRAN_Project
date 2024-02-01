@@ -65,7 +65,7 @@ option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"      OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
-option(BUILD_TESTS           "Compile tests"                            ON)
+option(BUILD_TESTS           "Compile tests"                            OFF)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              OFF)
 
@@ -350,12 +350,12 @@ add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 # Add the subdirectories
 ########################################################################
 
-add_subdirectory(apps)
-add_subdirectory(configs)
-add_subdirectory(docs)
+# add_subdirectory(apps)
+# add_subdirectory(configs)
+# add_subdirectory(docs)
 add_subdirectory(external)
 add_subdirectory(lib)
-add_subdirectory(utils)
+# add_subdirectory(utils)
 
 if (BUILD_TESTS)
     add_subdirectory(tests/test_doubles)
