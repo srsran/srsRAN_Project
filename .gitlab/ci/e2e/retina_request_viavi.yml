@@ -46,7 +46,7 @@
       requests: "500Mi"
     ephemeral-storage:
       requests: "1G"
-  taints: ["manual-testing"]
+  taints: ["retina"]
   environment:
     - URL: ${RETINA_METRICS_SERVER_URL}
     - ORG: ${RETINA_METRICS_SERVER_ORG}
