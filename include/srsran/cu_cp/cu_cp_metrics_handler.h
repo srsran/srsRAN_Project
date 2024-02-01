@@ -30,8 +30,6 @@ struct ue_metrics_report {
 /// CU-CP Metrics report.
 struct metrics_report {
   ue_metrics_report ue_metrics;
-  unsigned          nof_dus    = 0;
-  unsigned          nof_cu_ups = 0;
 };
 
 /// Interface used by the CU-CP to report metrics.
