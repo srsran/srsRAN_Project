@@ -80,7 +80,7 @@ public:
   ///
   /// Note: Given its blocking nature, avoid calling this method in contexts other than unit tests.
   /// \return The metrics report.
-  virtual metrics_report handle_metrics_report_request() = 0;
+  virtual metrics_report request_metrics_report() = 0;
 };
 
 } // namespace srs_cu_cp

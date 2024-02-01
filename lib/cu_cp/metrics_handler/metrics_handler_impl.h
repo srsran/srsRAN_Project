@@ -27,7 +27,7 @@ public:
   std::unique_ptr<metrics_report_session>
   create_periodic_report_session(const periodic_metric_report_request& request) override;
 
-  metrics_report handle_metrics_report_request() override;
+  metrics_report request_metrics_report() override;
 
 private:
   /// Context of a periodic metric report session

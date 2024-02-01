@@ -61,7 +61,7 @@ metrics_handler_impl::create_periodic_report_session(const periodic_metric_repor
   return std::make_unique<periodic_metrics_report_session_impl>(*this, session_id);
 }
 
-metrics_report metrics_handler_impl::handle_metrics_report_request()
+metrics_report metrics_handler_impl::request_metrics_report()
 {
   metrics_report report;
 
@@ -112,9 +112,11 @@ unsigned metrics_handler_impl::create_periodic_session(const periodic_metric_rep
     // Notify report.
     sessions[session_id].report_notifier->notify_metrics_report_request(report);
 
-    // Auto-schedule new timer run.
+    // Auto-schedule new timer run, given that we are reporting metrics periodically.
     sessions[session_id].timer.run();
   });
+
+  // Start the first run of the timer.
   sessions[session_id].timer.run();
 
   return session_id;

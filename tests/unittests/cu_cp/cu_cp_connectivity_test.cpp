@@ -259,7 +259,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
 
   // Check no UEs.
-  auto report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_TRUE(report.ue_metrics.ues.empty());
 
   // Create UE by sending Initial UL RRC Message.
@@ -285,7 +285,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_setup);
 
   // Check UE is created.
-  report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ue_metrics.ues.size(), 1);
   ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
 
@@ -337,7 +337,7 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
 
   // Check UE is created and is only destroyed when F1AP UE context release complete is received.
-  auto report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ue_metrics.ues.size(), 1);
   ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
 
@@ -347,7 +347,7 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   get_du(du_idx).push_tx_pdu(rel_complete);
 
   // Verify UE is removed.
-  report = this->get_cu_cp().get_metrics_handler().handle_metrics_report_request();
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_TRUE(report.ue_metrics.ues.empty());
 
   // Verify no NGAP PDU was sent when a UE is rejected.
