@@ -2179,7 +2179,12 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
   app.add_option_function<std::vector<std::string>>(
       "--cell_affinities",
       [&config](const std::vector<std::string>& values) {
-        config.cell_affinities.resize(values.size());
+        if (values.size() > config.cell_affinities.size()) {
+          report_error("Number of cells to configure the CPU affinities '{}' is bigger than the number of cells '{}'",
+                       values.size(),
+                       config.cell_affinities.size());
+        }
+
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
           CLI::App subapp("Expert execution cell CPU affinities");
           subapp.config_formatter(create_yaml_config_parser());
@@ -2400,6 +2405,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   app.add_option_function<std::vector<std::string>>(
       "--cells",
       [&gnb_parsed_cfg](const std::vector<std::string>& values) {
+        // Resize the number of cells that controls the CPU affinites.
+        gnb_parsed_cfg.config.expert_execution_cfg.cell_affinities.resize(values.size());
         // Prepare the cells from the common cell.
         gnb_parsed_cfg.config.cells_cfg.resize(values.size());
         for (auto& cell : gnb_parsed_cfg.config.cells_cfg) {
