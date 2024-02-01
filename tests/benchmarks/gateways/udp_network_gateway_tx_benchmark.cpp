@@ -19,8 +19,8 @@
 using namespace srsran;
 
 struct bench_params {
-  unsigned pdu_len  = 1400;
-  uint32_t nof_pdus = 100000;
+  uint64_t pdu_len  = 1400;
+  uint64_t nof_pdus = 100000;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -79,8 +79,7 @@ int main(int argc, char** argv)
 
   sockaddr_storage gw2_addr = to_sockaddr_storage("127.0.0.1", 56702);
 
-  byte_buffer pdu     = make_tx_byte_buffer(params.pdu_len);
-  uint32_t    pdu_len = pdu.length();
+  byte_buffer pdu = make_tx_byte_buffer(params.pdu_len);
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -91,10 +90,18 @@ int main(int argc, char** argv)
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
   fmt::print("Tx done\n\n");
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  std::this_thread::sleep_for(std::chrono::milliseconds(750));
 
-  fmt::print("Tx time: {} us\n", duration.count());
-  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (double)pdu_len * params.nof_pdus * 8 * 1e-6 / (duration.count() * 1e-6));
-  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (double)params.nof_pdus / (duration.count() * 1e-6));
-  fmt::print("Tx PDUs total: {:>7}\n", params.nof_pdus);
+  uint64_t tx_duration_us = duration.count();
+  uint64_t tx_bytes       = params.pdu_len * params.nof_pdus;
+  uint64_t tx_bits        = tx_bytes * 8;
+
+  fmt::print("Tx time: {} us\n", tx_duration_us);
+  fmt::print("Tx PDUs total: {:>7}\n\n", params.nof_pdus);
+
+  fmt::print("Tx Bytes: {} GB\n", tx_bytes);
+  fmt::print("Tx bits: {} b\n", tx_bits);
+
+  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (long double)(tx_bits) / tx_duration_us);
+  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (long double)params.nof_pdus / (duration.count() * 1e-6));
 }

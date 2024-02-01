@@ -51,6 +51,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'u':
         params.slow_inter_rx_us = std::strtol(optarg, nullptr, 10);
+        break;
       case 'h':
       default:
         usage(argv[0], params);
