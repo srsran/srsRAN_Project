@@ -39,7 +39,6 @@ bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_it
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
       variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
 
-  logger.info("style type {}", e2sm_kpm_action_def.ric_style_type);
   switch (e2sm_kpm_action_def.ric_style_type) {
     case 1:
       return process_action_definition_format1(e2sm_kpm_action_def);
@@ -221,7 +220,7 @@ bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_def
 std::unique_ptr<e2sm_report_service>
 e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
 {
-  e2sm_action_definition         action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  e2sm_action_definition action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
   if (action_def.service_model != e2sm_service_model_t::KPM) {
     logger.info("Unknown service model {}", action_def.service_model);
     return nullptr;

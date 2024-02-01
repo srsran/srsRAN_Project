@@ -65,7 +65,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 {
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
-  size_t sdu_length = sdu.buf.length();
+  size_t sdu_length   = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(
         sdu.buf.begin(), sdu.buf.end(), "TX SDU. sdu_len={} pdcp_sn={} {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue);

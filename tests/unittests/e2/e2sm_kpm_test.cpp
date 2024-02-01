@@ -125,10 +125,10 @@ std::vector<uint32_t> get_reported_ues(const std::vector<std::vector<uint32_t>>&
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 {
   // Measurement values in 5 time slot.
-  std::vector<float>    meas_values   = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
-  uint32_t              nof_meas_data = meas_values.size();
-  uint32_t              nof_metrics   = 1;
-  uint32_t              nof_records   = nof_metrics;
+  std::vector<float> meas_values   = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
+  uint32_t           nof_meas_data = meas_values.size();
+  uint32_t           nof_metrics   = 1;
+  uint32_t           nof_records   = nof_metrics;
 
   // Define E2SM_KPM action format 1.
   e2_sm_kpm_action_definition_s action_def;

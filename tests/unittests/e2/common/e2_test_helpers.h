@@ -371,7 +371,7 @@ public:
     if (ues.size() == 0) {
       // E2 Node level measurements
       meas_record_item_c meas_record_item;
-      if (meas_type.meas_name().to_string().compare("DRB.RlcSduDelayDl")) {
+      if (meas_type.meas_name().to_string() == "DRB.RlcSduDelayDl") {
         if (meas_values_float.size()) {
           meas_record_item.set_real();
           meas_record_item.real().value = meas_values_float[0];
@@ -398,7 +398,7 @@ public:
       meas_record_item_c meas_record_item;
       if (ue_idx < presence.size()) {
         if (presence[ue_idx]) {
-          if (meas_type.meas_name().to_string().compare("DRB.RlcSduDelayDl")) {
+          if (meas_type.meas_name().to_string() == "DRB.RlcSduDelayDl") {
             if (meas_values_float.size()) {
               meas_record_item.set_real();
               meas_record_item.real().value = meas_values_float[ue_idx];
@@ -408,7 +408,7 @@ public:
             }
           } else {
             if (meas_values_int.size()) {
-              meas_record_item.integer() = meas_values_int[ue_idx];
+              meas_record_item.set_integer() = meas_values_int[ue_idx];
             } else {
               meas_record_item.set_integer() = 1;
             }
@@ -693,7 +693,7 @@ class dummy_e2sm_handler : public e2sm_handler
 {
   e2sm_action_definition handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) override
   {
-    e2sm_action_definition         action_def;
+    e2sm_action_definition action_def;
     action_def.service_model = e2sm_service_model_t::KPM;
     e2_sm_kpm_action_definition_s& e2_sm_kpm_action_definition =
         variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
