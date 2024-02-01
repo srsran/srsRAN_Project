@@ -655,29 +655,8 @@ TEST(security_nea2_test, testset6)
 
 /// 128-NIA2 Test Set 1
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
-TEST(security_nia2_test, testset1)
-{
-  // Testdata in plain format
-  uint32_t    count_i      = 0x38a6f056;
-  uint8_t     bearer       = 0x18;
-  uint8_t     direction    = 0;
-  const char* ik_cstr      = "2bd6459f82c5b300952c49104881ff48";
-  uint32_t    length       = 58;
-  const char* message_cstr = "3332346263393840";
-  const char* mact_cstr    = "118c6eb8";
-
-  // Pack hex strings into srsran types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
-
-  // Apply integrity check
-  byte_buffer_view message_view{message};
-  sec_mac          mact_out = {};
-  security_nia2(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
-}
+/// Test set 1 uses a bit length that is not a multiple of 8 bits
+/// This is not supported.
 
 /// 128-NIA2 Test Set 2
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
@@ -707,56 +686,13 @@ TEST(security_nia2_test, testset2)
 
 /// 128-NIA2 Test Set 3
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
-TEST(security_nia2_test, testset3)
-{
-  // Testdata in plain format
-  uint32_t    count_i      = 0x36af6144;
-  uint8_t     bearer       = 0x18;
-  uint8_t     direction    = 1;
-  const char* ik_cstr      = "7e5e94431e11d73828d739cc6ced4573";
-  uint32_t    length       = 254;
-  const char* message_cstr = "b3d3c9170a4e1632f60f861013d22d84b726b6a278d802d1eeaf1321ba5929dc";
-  const char* mact_cstr    = "1f60b01d";
-
-  // Pack hex strings into srsran types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
-
-  // Apply integrity check
-  byte_buffer_view message_view{message};
-  sec_mac          mact_out = {};
-  security_nia2(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
-}
+/// Test set 3 uses a bit length that is not a multiple of 8 bits
+/// This is not supported.
 
 /// 128-NIA2 Test Set 4
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
-TEST(security_nia2_test, testset4)
-{
-  // Testdata in plain format
-  uint32_t    count_i      = 0xc7590ea9;
-  uint8_t     bearer       = 0x17;
-  uint8_t     direction    = 0;
-  const char* ik_cstr      = "d3419be821087acd02123a9248033359";
-  uint32_t    length       = 511;
-  const char* message_cstr = "bbb057038809496bcff86d6fbc8ce5b135a06b166054f2d565be8ace75dc851e0bcdd8f07141c495872fb5d8c"
-                             "0c66a8b6da556663e4e461205d84580bee5bc7e";
-  const char* mact_cstr    = "6846a2f0";
-
-  // Pack hex strings into srsran types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
-
-  // Apply integrity check
-  byte_buffer_view message_view{message};
-  sec_mac          mact_out = {};
-  security_nia2(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
-}
+/// Test set 4 uses a bit length that is not a multiple of 8 bits
+/// This is not supported.
 
 /// 128-NIA2 Test Set 5
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
@@ -788,62 +724,13 @@ TEST(security_nia2_test, testset5)
 
 /// 128-NIA2 Test Set 6
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
-TEST(security_nia2_test, testset6)
-{
-  // Testdata in plain format
-  uint32_t    count_i   = 0x36af6144;
-  uint8_t     bearer    = 0x18;
-  uint8_t     direction = 0;
-  const char* ik_cstr   = "6832a65cff4473621ebdd4ba26a921fe";
-  uint32_t    length    = 383;
-  const char* message_cstr =
-      "d3c53839626820717765667620323837636240981ba6824c1bfb1ab485472029b71d808ce33e2cc3c0b5fc1f3de8a6dc";
-  const char* mact_cstr = "f0668c1e";
-
-  // Pack hex strings into srsran types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
-
-  // Apply integrity check
-  byte_buffer_view message_view{message};
-  sec_mac          mact_out = {};
-  security_nia2(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
-}
+/// Test set 6 uses a bit length that is not a multiple of 8 bits
+/// This is not supported.
 
 /// 128-NIA2 Test Set 7
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
-TEST(security_nia2_test, testset7)
-{
-  // Testdata in plain format
-  uint32_t    count_i   = 0x7827fab2;
-  uint8_t     bearer    = 0x05;
-  uint8_t     direction = 1;
-  const char* ik_cstr   = "5d0a80d8134ae19677824b671e838af4";
-  uint32_t    length    = 2558;
-  const char* message_cstr =
-      "70dedf2dc42c5cbd3a96f8a0b11418b3608d5733604a2cd36aabc70ce3193bb5153be2d3c06dfdb2d16e9c357158be6a41d6b861e491db3f"
-      "bfeb518efcf048d7d58953730ff30c9ec470ffcd663dc34201c36addc0111c35b38afee7cfdb582e3731f8b4baa8d1a89c06e81199a97162"
-      "27be344efcb436ddd0f096c064c3b5e2c399993fc77394f9e09720a811850ef23b2ee05d9e6173609d86e1c0c18ea51a012a00bb413b9cb8"
-      "188a703cd6bae31cc67b34b1b00019e6a2b2a690f02671fe7c9ef8dec0094e533763478d58d2c5f5b827a0148c5948a96931acf84f465a64"
-      "e62ce74007e991e37ea823fa0fb21923b79905b733b631e6c7d6860a3831ac351a9c730c52ff72d9d308eedbab21fde143a0ea17e23edc1f"
-      "74cbb3638a2033aaa15464eaa733385dbbeb6fd73509b857e6a419dca1d8907af977fbac4dfa35ec";
-  const char* mact_cstr = "f4cc8fa3";
-
-  // Pack hex strings into srsran types
-  sec_128_key        key      = make_sec_128_key(ik_cstr);
-  security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
-
-  // Apply integrity check
-  byte_buffer_view message_view{message};
-  sec_mac          mact_out = {};
-  security_nia2(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
-}
+/// Test set 7 uses a bit length that is not a multiple of 8 bits
+/// This is not supported.
 
 /// 128-NIA2 Test Set 8
 /// Ref: TS 33.501 Sec. D.4.5, TS 33.401 Sec. C.2 128-EIA2
