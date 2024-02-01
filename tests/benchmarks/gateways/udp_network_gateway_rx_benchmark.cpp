@@ -23,7 +23,7 @@
 using namespace srsran;
 
 struct bench_params {
-  unsigned nof_pdus         = 100000;
+  uint64_t nof_pdus         = 100000;
   unsigned slow_inter_rx_us = 500;
   unsigned rx_mmsg          = 256;
 };
@@ -105,11 +105,18 @@ int main(int argc, char** argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(750));
 
-  fmt::print("Test duration: {} us\n", duration.count());
-  fmt::print("RX time: {} us\n", gw_dn.get_t_rx().count());
+  uint64_t rx_duration_us = gw_dn.get_t_rx().count();
+  uint64_t rx_bytes       = gw_dn.get_rx_bytes();
+  uint64_t rx_bits        = rx_bytes * 8;
 
-  fmt::print("Rx data rate: {:.2f} Mbit/s\n\n", (double)gw_dn.get_rx_bytes() * 8 / (gw_dn.get_t_rx().count()));
-  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw_dn.get_n_pdus() / (gw_dn.get_t_rx().count() * 1e-6));
+  fmt::print("Test duration: {} us\n\n", duration.count());
+  fmt::print("Rx time: {} us\n\n", rx_duration_us);
+
+  fmt::print("Rx Bytes: {} GB\n", rx_bytes * 1e-9);
+  fmt::print("Rx bits: {} b\n\n", rx_bits);
+
+  fmt::print("Rx data rate: {:.2f} Mbit/s\n", (long double)(rx_bits / rx_duration_us));
+  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (long double)gw_dn.get_n_pdus() / (rx_duration_us * 1e-6));
 
   fmt::print("PDU inter arrival time (min/avg/max) [us]: {}/{}/{}\n",
              gw_dn.get_t_min().count(),

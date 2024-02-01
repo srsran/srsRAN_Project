@@ -17,13 +17,17 @@ namespace srsran {
 class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway_data_notifier_with_src_addr
 {
 public:
-  dummy_network_gateway_data_notifier_with_src_addr(unsigned slow_inter_rx_us_, unsigned max_pdus_) :
+  dummy_network_gateway_data_notifier_with_src_addr(unsigned slow_inter_rx_us_, uint64_t max_pdus_) :
     slow_inter_rx_us(slow_inter_rx_us_), max_pdus(max_pdus_)
   {
   }
 
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
   {
+    if (n_pdus > max_pdus) {
+      // test is finished stop counting
+      return;
+    }
     rx_bytes += pdu.length();
     n_pdus++;
 
@@ -47,13 +51,13 @@ public:
     }
 
     t_last = t_now;
-    if (n_pdus >= max_pdus) {
+    if (n_pdus == max_pdus) {
       t_end = std::chrono::high_resolution_clock::now();
     }
   }
 
-  unsigned get_rx_bytes() const { return rx_bytes; }
-  unsigned get_n_pdus() const { return n_pdus; }
+  uint64_t get_rx_bytes() const { return rx_bytes; }
+  uint64_t get_n_pdus() const { return n_pdus; }
 
   std::chrono::microseconds get_t_min() { return t_min; }
   std::chrono::microseconds get_t_max() { return t_max; }
@@ -62,17 +66,16 @@ public:
   {
     if (n_pdus >= max_pdus) {
       return std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
-    } else {
-      return std::chrono::duration_cast<std::chrono::microseconds>(t_last - t_start);
     }
+    return std::chrono::duration_cast<std::chrono::microseconds>(t_last - t_start);
   }
 
 private:
   unsigned slow_inter_rx_us;
 
-  unsigned rx_bytes = 0;
-  unsigned n_pdus   = 0;
-  uint32_t max_pdus;
+  uint64_t rx_bytes = 0;
+  uint64_t n_pdus   = 0;
+  uint64_t max_pdus;
 
   std::chrono::high_resolution_clock::time_point t_last = std::chrono::high_resolution_clock::now();
   std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();
