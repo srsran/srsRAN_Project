@@ -45,18 +45,18 @@ namespace detail {
                                                         const std::string& msg     = "") noexcept
 {
   fmt::basic_memory_buffer<char>   fmtbuf;
-//   fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
-//   if (condstr == nullptr) {
-//     fmt::format_to(fmtbuf, "Assertion failed");
-//   } else {
-//     fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
-//   }
-//   if (not msg.empty()) {
-//     fmt::format_to(fmtbuf, " - {}", msg);
-//   }
-//   if (msg.back() != '.') {
-//     fmt::format_to(fmtbuf, ".");
-//   }
+  fmt::format_to(std::back_inserter(fmtbuf), "{}:{}: {}: \n", filename, line, funcname);
+  if (condstr == nullptr) {
+    fmt::format_to(std::back_inserter(fmtbuf), "Assertion failed");
+  } else {
+    fmt::format_to(std::back_inserter(fmtbuf), "Assertion `{}' failed", condstr);
+  }
+  if (not msg.empty()) {
+    fmt::format_to(std::back_inserter(fmtbuf), " - {}", msg);
+  }
+  if (msg.back() != '.') {
+    fmt::format_to(std::back_inserter(fmtbuf), ".");
+  }
   fmt::format_to(std::back_inserter(fmtbuf), "\n");
   fmtbuf.push_back('\0'); // make it a c-string
 
