@@ -103,13 +103,13 @@ int main(int argc, char** argv)
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
   fmt::print("Rx done\n\n");
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  std::this_thread::sleep_for(std::chrono::milliseconds(750));
 
   fmt::print("Test duration: {} us\n", duration.count());
-  fmt::print("Rx data rate: {:.2f} Mbit/s\n\n",
-             (double)gw_dn.get_rx_bytes() * 8 * 1e-6 / (gw_dn.get_t_sum().count() * 1e-6));
+  fmt::print("RX time: {} us\n", gw_dn.get_t_rx().count());
 
-  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw_dn.get_n_pdus() / (gw_dn.get_t_sum().count() * 1e-6));
+  fmt::print("Rx data rate: {:.2f} Mbit/s\n\n", (double)gw_dn.get_rx_bytes() * 8 / (gw_dn.get_t_rx().count()));
+  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw_dn.get_n_pdus() / (gw_dn.get_t_rx().count() * 1e-6));
 
   fmt::print("PDU inter arrival time (min/avg/max) [us]: {}/{}/{}\n",
              gw_dn.get_t_min().count(),

@@ -60,7 +60,11 @@ public:
   std::chrono::microseconds get_t_sum() { return t_sum; }
   std::chrono::microseconds get_t_rx()
   {
-    return std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+    if (n_pdus >= max_pdus) {
+      return std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+    } else {
+      return std::chrono::duration_cast<std::chrono::microseconds>(t_last - t_start);
+    }
   }
 
 private:
@@ -68,7 +72,7 @@ private:
 
   unsigned rx_bytes = 0;
   unsigned n_pdus   = 0;
-  unsigned max_pdus;
+  uint32_t max_pdus;
 
   std::chrono::high_resolution_clock::time_point t_last = std::chrono::high_resolution_clock::now();
   std::chrono::microseconds                      t_min  = std::chrono::microseconds::max();

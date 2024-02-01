@@ -21,7 +21,7 @@ using namespace srsran;
 
 struct bench_params {
   unsigned pdu_len          = 1400;
-  unsigned nof_pdus         = 100000;
+  uint32_t nof_pdus         = 100000;
   unsigned slow_inter_rx_us = 500;
   uint16_t rx_port          = 56701;
   uint16_t tx_port          = 56702;
@@ -121,28 +121,26 @@ int main(int argc, char** argv)
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
-  unsigned nof_pdus = params.nof_pdus;
-  for (unsigned n = 0; n < nof_pdus; n++) {
+  for (unsigned n = 0; n < params.nof_pdus; n++) {
     gw1->handle_pdu(pdu.copy(), gw2_addr);
   }
   auto t_end    = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
   fmt::print("Tx done\n\n");
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  std::this_thread::sleep_for(std::chrono::milliseconds(750));
 
   fmt::print("Tx time: {} us\n", duration.count());
-  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (double)pdu_len * nof_pdus * 8 * 1e-6 / (duration.count() * 1e-6));
-  fmt::print("Rx data rate: {:.2f} Mbit/s\n\n",
-             (double)pdu_len * gw2_dn.get_n_pdus() * 8 * 1e-6 / (duration.count() * 1e-6));
+  fmt::print("Rx time: {} us\n", gw2_dn.get_t_rx().count());
+  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (double)pdu_len * params.nof_pdus * 8 / (duration.count()));
+  fmt::print("Rx data rate: {:.2f} Mbit/s\n\n", (double)gw2_dn.get_rx_bytes() * 8 / (gw2_dn.get_t_rx().count()));
+  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (double)params.nof_pdus / (duration.count() * 1e-6));
+  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw2_dn.get_n_pdus() / (gw2_dn.get_t_rx().count() * 1e-6));
 
-  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (double)nof_pdus / (duration.count() * 1e-6));
-  fmt::print("Rx PDU rate: {:.2f} PDU/s\n\n", (double)gw2_dn.get_n_pdus() / (duration.count() * 1e-6));
-
-  fmt::print("Tx PDUs total: {:>7}\n", nof_pdus);
+  fmt::print("Tx PDUs total: {:>7}\n", params.nof_pdus);
   fmt::print("Rx PDUs total: {:>7} ({:.2f}% lost)\n\n",
              gw2_dn.get_n_pdus(),
-             (1 - ((double)gw2_dn.get_n_pdus() / nof_pdus)) * 100);
+             (1 - ((double)gw2_dn.get_n_pdus() / params.nof_pdus)) * 100);
 
   fmt::print("PDU inter arrival time (min/avg/max) [us]: {}/{}/{}\n",
              gw2_dn.get_t_min().count(),

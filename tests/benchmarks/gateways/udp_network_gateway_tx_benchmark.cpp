@@ -20,7 +20,7 @@ using namespace srsran;
 
 struct bench_params {
   unsigned pdu_len  = 1400;
-  unsigned nof_pdus = 100000;
+  uint32_t nof_pdus = 100000;
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -84,8 +84,7 @@ int main(int argc, char** argv)
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
-  unsigned nof_pdus = params.nof_pdus;
-  for (unsigned n = 0; n < nof_pdus; n++) {
+  for (unsigned n = 0; n < params.nof_pdus; n++) {
     gw1->handle_pdu(pdu.copy(), gw2_addr);
   }
   auto t_end    = std::chrono::high_resolution_clock::now();
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
   fmt::print("Tx time: {} us\n", duration.count());
-  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (double)pdu_len * nof_pdus * 8 * 1e-6 / (duration.count() * 1e-6));
-  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (double)nof_pdus / (duration.count() * 1e-6));
-  fmt::print("Tx PDUs total: {:>7}\n", nof_pdus);
+  fmt::print("Tx data rate: {:.2f} Mbit/s\n", (double)pdu_len * params.nof_pdus * 8 * 1e-6 / (duration.count() * 1e-6));
+  fmt::print("Tx PDU rate: {:.2f} PDU/s\n", (double)params.nof_pdus / (duration.count() * 1e-6));
+  fmt::print("Tx PDUs total: {:>7}\n", params.nof_pdus);
 }
