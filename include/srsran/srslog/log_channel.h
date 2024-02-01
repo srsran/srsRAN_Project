@@ -26,6 +26,7 @@
 #include "srsran/srslog/detail/log_entry.h"
 #include "srsran/srslog/sink.h"
 #include <atomic>
+#include <vector>
 
 namespace srslog {
 

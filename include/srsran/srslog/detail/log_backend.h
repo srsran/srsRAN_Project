@@ -24,6 +24,7 @@
 
 #include "srsran/srslog/shared_types.h"
 #include "fmt/core.h"
+#include "fmt/args.h"
 
 namespace srslog {
 

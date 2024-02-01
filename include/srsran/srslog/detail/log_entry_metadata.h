@@ -22,8 +22,10 @@
 
 #pragma once
 
-#include "fmt/format.h"
 #include <chrono>
+#include <vector>
+#include "fmt/format.h"
+#include "fmt/args.h"
 
 namespace srslog {
 

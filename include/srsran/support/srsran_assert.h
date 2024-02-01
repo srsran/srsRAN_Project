@@ -25,6 +25,8 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
 #include <cstdio>
+#include "fmt/format.h"
+#include "fmt/args.h"
 
 namespace srsran {
 
@@ -42,20 +44,20 @@ namespace detail {
                                                         const char*        condstr = nullptr,
                                                         const std::string& msg     = "") noexcept
 {
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
-  if (condstr == nullptr) {
-    fmt::format_to(fmtbuf, "Assertion failed");
-  } else {
-    fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
-  }
-  if (not msg.empty()) {
-    fmt::format_to(fmtbuf, " - {}", msg);
-  }
-  if (msg.back() != '.') {
-    fmt::format_to(fmtbuf, ".");
-  }
-  fmt::format_to(fmtbuf, "\n");
+  fmt::basic_memory_buffer<char>   fmtbuf;
+//   fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
+//   if (condstr == nullptr) {
+//     fmt::format_to(fmtbuf, "Assertion failed");
+//   } else {
+//     fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
+//   }
+//   if (not msg.empty()) {
+//     fmt::format_to(fmtbuf, " - {}", msg);
+//   }
+//   if (msg.back() != '.') {
+//     fmt::format_to(fmtbuf, ".");
+//   }
+  fmt::format_to(std::back_inserter(fmtbuf), "\n");
   fmtbuf.push_back('\0'); // make it a c-string
 
   srslog::flush();

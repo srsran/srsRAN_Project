@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include "srsran/srslog/log_channel.h"
 
 namespace srslog {

@@ -24,6 +24,7 @@
 
 #include "srsran/srslog/detail/support/backend_capacity.h"
 #include "fmt/core.h"
+#include "fmt/args.h"
 
 namespace srslog {
 

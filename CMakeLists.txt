@@ -325,7 +325,7 @@ execute_process(COMMAND sed -i "s|MemoryCheckCommandOptions: |MemoryCheckCommand
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include_directories(include)
-include_directories(external/fmt/include)
+include_directories(BEFORE external/fmt/include)
 include_directories(external)
 
 ########################################################################

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <vector>
 #include "file_utils.h"
 #include "srsran/srslog/sink.h"
 

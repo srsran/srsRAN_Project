@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <vector>
 #include "srsran/srslog/formatter.h"
 
 namespace srslog {

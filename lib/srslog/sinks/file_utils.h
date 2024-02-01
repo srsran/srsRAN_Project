@@ -34,7 +34,7 @@ namespace file_utils {
 inline std::string format_error(const std::string& error, int error_code)
 {
   fmt::memory_buffer result;
-  fmt::format_system_error(result, error_code, error);
+  fmt::format_system_error(result, error_code, error.c_str());
 
   return fmt::to_string(result);
 }

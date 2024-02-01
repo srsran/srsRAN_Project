@@ -166,7 +166,7 @@ inline std::string get_cpu_feature_info()
   for (cpu_feature feature : cpu_features_included) {
 #ifdef __x86_64__
     format_to(
-        buffer, "{}{}{}", buffer.size() == 0 ? "" : " ", feature, cpu_supports_feature(feature) ? "(ok)" : "(na)");
+        std::back_inserter(buffer), "{}{}{}", buffer.size() == 0 ? "" : " ", feature, cpu_supports_feature(feature) ? "(ok)" : "(na)");
 #endif // __x86_64__
 #ifdef __aarch64__
     format_to(buffer, "{}{}", buffer.size() == 0 ? "" : " ", feature);

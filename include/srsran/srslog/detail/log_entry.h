@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <functional>
 #include "srsran/srslog/detail/log_entry_metadata.h"
 #include "srsran/srslog/detail/support/thread_utils.h"
 
