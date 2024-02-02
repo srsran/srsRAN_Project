@@ -121,7 +121,7 @@ private:
 
   ue_manager ue_mng;
 
-  std::unique_ptr<mobility_manager> mobility_mng;
+  mobility_manager mobility_mng;
 
   cell_meas_manager cell_meas_mng; // cell measurement manager
 

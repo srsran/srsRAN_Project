@@ -14,14 +14,14 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-mobility_manager_impl::mobility_manager_impl(const mobility_manager_cfg& cfg_,
-                                             du_repository&              du_db_,
-                                             du_processor_ue_manager&    ue_mng_) :
+mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_,
+                                   du_repository&              du_db_,
+                                   du_processor_ue_manager&    ue_mng_) :
   cfg(cfg_), du_db(du_db_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
-void mobility_manager_impl::handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci)
+void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci)
 {
   if (!cfg.trigger_handover_from_measurements) {
     logger.debug("ue={}: Ignoring better neighbor pci={}", ue_index, neighbor_pci);
@@ -47,10 +47,10 @@ void mobility_manager_impl::handle_neighbor_better_than_spcell(ue_index_t ue_ind
   }
 }
 
-void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
-                                                     pci_t      neighbor_pci,
-                                                     du_index_t source_du_index,
-                                                     du_index_t target_du_index)
+void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
+                                                pci_t      neighbor_pci,
+                                                du_index_t source_du_index,
+                                                du_index_t target_du_index)
 {
   // Lookup CGI at target DU.
   optional<nr_cell_global_id_t> cgi = du_db.get_du(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
@@ -87,12 +87,12 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
   ue_task.handle_ue_async_task(request.source_ue_index, launch_async(std::move(ho_trigger)));
 }
 
-void mobility_manager_impl::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
+void mobility_manager::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
 {
   // TODO: prepare call
 }
 
-void mobility_manager_impl::handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
+void mobility_manager::handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
 {
   // TODO: prepare NGAP call
 }
