@@ -51,7 +51,7 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   context.ran_node_name              = ngap_cfg_.ran_node_name;
   context.plmn                       = ngap_cfg_.plmn;
   context.tac                        = ngap_cfg_.tac;
-  context.ue_context_setup_timeout_s = ngap_cfg_.ue_context_setup_timeout_s;
+  context.ue_context_setup_timeout_s = ngap_cfg_.ue_context_setup_timeout;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.

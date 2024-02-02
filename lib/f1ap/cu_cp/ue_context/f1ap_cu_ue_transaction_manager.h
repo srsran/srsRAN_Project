@@ -12,7 +12,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/support/async/async_event_source.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/support/async/event_signal.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
 
@@ -26,7 +26,12 @@ public:
     context_setup_outcome(timers), context_modification_outcome(timers), context_release_complete(timers)
   {
   }
-  ~f1ap_ue_transaction_manager() {}
+  ~f1ap_ue_transaction_manager()
+  {
+    context_setup_outcome.set(protocol_transaction_failure::cancel);
+    context_modification_outcome.set(protocol_transaction_failure::cancel);
+    context_release_complete.set(protocol_transaction_failure::cancel);
+  }
 
   /// F1AP UE Context Setup Response/Failure Event Source.
   protocol_transaction_event_source<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>

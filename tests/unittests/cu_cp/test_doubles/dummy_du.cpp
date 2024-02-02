@@ -51,7 +51,7 @@ private:
 
   void handle_rx_pdu(const f1ap_message& msg)
   {
-    report_fatal_error_if_not(rx_pdus.push_blocking(msg), "queue is full");
+    report_fatal_error_if_not(rx_pdus.push_blocking(msg), ");
   }
 
   du_repository&                         cu_cp_f1c;

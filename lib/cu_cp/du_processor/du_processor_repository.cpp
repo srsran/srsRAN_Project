@@ -45,9 +45,7 @@ private:
 
 } // namespace
 
-du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_),
-  logger(cfg.logger)
+du_processor_repository::du_processor_repository(du_repository_config cfg_) : cfg(cfg_), logger(cfg.logger)
 {
   f1ap_ev_notifier.connect_du_repository(*this);
 }

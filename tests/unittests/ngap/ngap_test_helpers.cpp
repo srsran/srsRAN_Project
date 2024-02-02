@@ -34,7 +34,7 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
   cfg.slice_configurations.push_back(slice_cfg);
-  cfg.ue_context_setup_timeout_s = std::chrono::seconds(2);
+  cfg.ue_context_setup_timeout = std::chrono::seconds(2);
 
   ngap = create_ngap(
       cfg, ngap_ue_creation_notifier, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);

@@ -26,7 +26,7 @@ struct ngap_configuration {
   std::string            plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
   unsigned               tac;
   std::vector<s_nssai_t> slice_configurations;
-  std::chrono::seconds   ue_context_setup_timeout_s; // timeout for ue context setup in seconds
+  std::chrono::seconds   ue_context_setup_timeout; // timeout for ue context setup in seconds
 };
 
 } // namespace srs_cu_cp

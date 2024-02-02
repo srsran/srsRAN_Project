@@ -30,6 +30,7 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   slice_cfg.sst                  = 1;
   cfg.ue_context_setup_timeout_s = std::chrono::seconds{2};
   cfg.slice_configurations.push_back(slice_cfg);
+  cfg.ue_context_setup_timeout = std::chrono::seconds{2};
 
   return cfg;
 }

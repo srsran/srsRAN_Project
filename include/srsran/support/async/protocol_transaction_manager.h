@@ -290,21 +290,19 @@ constexpr std::chrono::milliseconds protocol_transaction_manager<T>::max_timeout
 
 struct no_fail_response_path {};
 
-/// \brief Type used to represent a transaction timeout.
-struct transaction_timeout {};
-
 /// \brief Publisher of application protocol transaction outcomes to which an observer can subscribe to.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
-using protocol_transaction_event_source = async_event_source<variant<SuccessResp, FailureResp, transaction_timeout>>;
+using protocol_transaction_event_source =
+    async_event_source<variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
 
 /// \brief Observer of application protocol transaction outcome.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
 class protocol_transaction_outcome_observer
 {
-  static_assert(not std::is_same<SuccessResp, transaction_timeout>::value, "Invalid Success Response");
-  static_assert(not std::is_same<FailureResp, transaction_timeout>::value, "Invalid Success Response");
+  static_assert(not std::is_same<SuccessResp, protocol_transaction_failure>::value, "Invalid Success Response");
+  static_assert(not std::is_same<FailureResp, protocol_transaction_failure>::value, "Invalid Success Response");
 
-  using observer_type = async_single_event_observer<variant<SuccessResp, FailureResp, transaction_timeout>>;
+  using observer_type = async_single_event_observer<variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
 
 public:
   using success_response_type = SuccessResp;
@@ -320,7 +318,7 @@ public:
   /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
   void subscribe_to(event_source_type& publisher, std::chrono::milliseconds time_to_cancel)
   {
-    observer.subscribe_to(publisher, time_to_cancel, transaction_timeout{});
+    observer.subscribe_to(publisher, time_to_cancel, protocol_transaction_failure::timeout);
   }
 
   /// \brief Checks whether this sink has been registered to an event source.
@@ -335,10 +333,18 @@ public:
   /// \brief Checks whether the result of the transaction was a failure message.
   bool failed() const { return complete() and variant_holds_alternative<failure_response_type>(observer.result()); }
 
+  /// \brief Checks if the protocol transaction could not be completed, due to abnormal conditions, cancellations or
+  /// timeout.
+  bool protocol_transaction_failed() const
+  {
+    return complete() and variant_holds_alternative<protocol_transaction_failure>(observer.result());
+  }
+
   /// \brief Checks whether there was a transaction timeout.
   bool timeout_expired() const
   {
-    return complete() and variant_holds_alternative<transaction_timeout>(observer.result());
+    return protocol_transaction_failed() and
+           variant_get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::timeout;
   }
 
   /// \brief Result set by event source.
