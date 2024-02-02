@@ -388,7 +388,7 @@ TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_b
   unsigned                     offset = 0;
   for (unsigned i = 0; i != 10; ++i) {
     run_slot();
-    ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
+    ASSERT_GE(pdsch_alloc.last_grants.size(), 1);
     if (i == 0) {
       offset = pdsch_alloc.last_grants[0].user->ue_index == u1.ue_index ? 0 : 1;
       ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, u2.ue_index);
