@@ -124,7 +124,7 @@ void detail::harq_process<IsDownlink>::reset()
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::cancel_harq(unsigned tb_idx)
+void detail::harq_process<IsDownlink>::cancel_harq_retxs(unsigned tb_idx)
 {
   if (empty(tb_idx)) {
     return;
@@ -347,9 +347,9 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.rbs          = pusch.rbs;
 }
 
-void ul_harq_process::cancel_harq()
+void ul_harq_process::cancel_harq_retxs()
 {
-  base_type::cancel_harq(0);
+  base_type::cancel_harq_retxs(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
