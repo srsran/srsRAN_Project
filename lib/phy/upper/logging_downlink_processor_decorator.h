@@ -48,7 +48,7 @@ public:
   {
     bool is_enqueued = downlink_proc->process_pdcch(pdu);
     if (!is_enqueued) {
-      logger.warning("Could not process PDCCH PDU: {:s}", pdu);
+      // logger.warning("Could not process PDCCH PDU: {:s}", pdu);
     }
     return is_enqueued;
   }
@@ -59,7 +59,7 @@ public:
   {
     bool is_enqueued = downlink_proc->process_pdsch(data, pdu);
     if (!is_enqueued) {
-      logger.warning("Could not process PDSCH PDU: {:s}", pdu);
+      // logger.warning("Could not process PDSCH PDU: {:s}", pdu);
     }
     return is_enqueued;
   }
@@ -69,7 +69,7 @@ public:
   {
     bool is_enqueued = downlink_proc->process_ssb(pdu);
     if (!is_enqueued) {
-      logger.warning("Could not process SSB PDU: {:s}", pdu);
+      // logger.warning("Could not process SSB PDU: {:s}", pdu);
     }
     return is_enqueued;
   }

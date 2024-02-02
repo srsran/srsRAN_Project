@@ -57,7 +57,7 @@ static cyclic_prefix get_cp(const uplink_processor::pucch_pdu& pdu)
     case pucch_format::FORMAT_4:
       return pdu.format4.cp;
     default:
-      srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      srsran_assert(0, "Invalid PUCCH format={}", (int)pdu.context.format);  // implicit enum cast to int is not done anymore by fmt
       break;
   }
 

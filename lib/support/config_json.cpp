@@ -130,7 +130,7 @@ std::vector<CLI::ConfigItem> json_config_parser::from_config_impl(const nlohmann
       res.inputs = {j.get<bool>() ? "true" : "false"};
     } else if (j.is_number()) {
       fmt::memory_buffer buffer;
-      fmt::format_to(buffer, "{}", j.get<double>());
+      fmt::format_to(std::back_inserter(buffer), "{}", j.get<double>());
       res.inputs = {to_string(buffer)};
     } else if (j.is_string()) {
       res.inputs = {j.get<std::string>()};

@@ -78,7 +78,7 @@ inline constexpr const char* to_string(prach_format_type format)
     case prach_format_type::C2:
       return "C2";
     default:
-      srsran_assert(0, "Invalid PRACH format={}", format);
+      srsran_assert(0, "Invalid PRACH format={}", (int)format);  // implicit enum cast to int is not done anymore by fmt
       break;
   }
   return "";

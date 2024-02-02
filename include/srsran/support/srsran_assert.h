@@ -27,6 +27,7 @@
 #include <cstdio>
 #include "fmt/format.h"
 #include "fmt/args.h"
+#include "fmt/std.h"  // needed to print std::thread::id
 
 namespace srsran {
 

@@ -198,7 +198,7 @@ private:
     if (!first) {
       // Buffer to hold the formatted string.
       fmt::memory_buffer temp_buffer;
-      fmt::format_to(temp_buffer, format, std::forward<Args>(args)...);
+      fmt::format_to(std::back_inserter(temp_buffer), format, std::forward<Args>(args)...);
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.
@@ -223,7 +223,7 @@ private:
       // Buffer to hold the formatted string.
       fmt::memory_buffer temp_buffer;
       fmt::format_to(
-          temp_buffer, fmt::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
+          std::back_inserter(temp_buffer), fmt::string_view(format_buffer.data(), format_buffer.size()), std::forward<Args>(args)...);
 
       if (temp_buffer.size() > 0) {
         // Prepend delimiter to the formatted output.

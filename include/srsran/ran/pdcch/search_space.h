@@ -248,7 +248,7 @@ struct search_space_configuration {
     srsran_assert(not is_search_space0(), "Invalid access to monitoring symbols within slot of SearchSpace#0");
     srsran_assert(not symbols_within_slot.none(),
                   "None of the symbols are set in monitoring symbols within a slot when configuring SearchSpace#{}",
-                  id);
+                  (int)id);  // implicit enum cast to int is not done anymore by fmt
     monitoring_symbols_within_slot.clear();
     monitoring_symbols_within_slot.push_back(symbols_within_slot);
   }
@@ -284,7 +284,7 @@ struct search_space_configuration {
         return n;
       }
     }
-    srsran_assertion_failure("Monitoring symbols within slot for SS id {} doesn't have any symbols set to 1", id);
+    srsran_assertion_failure("Monitoring symbols within slot for SS id {} doesn't have any symbols set to 1", (int)id);  // implicit enum cast to int is not done anymore by fmt
     return symbols_within_slot.size();
   }
 

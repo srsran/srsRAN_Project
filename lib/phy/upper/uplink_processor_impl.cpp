@@ -197,7 +197,7 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
       proc_result = pucch_proc->process(grid, pdu.format4);
       break;
     default:
-      srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      srsran_assert(0, "Invalid PUCCH format={}", (int)pdu.context.format);  // implicit enum cast to int is not done anymore by fmt
   }
 
   // Write the results.

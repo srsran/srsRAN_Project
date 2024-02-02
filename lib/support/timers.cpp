@@ -225,7 +225,7 @@ bool timer_manager::try_stop_timer_backend(timer_handle& timer, bool expiry_reas
     // When it was not possible to dispatch timeout callback to executor, postpone the dispatch.
     if (not success) {
       logger.warning("Failed to dispatch timeout handling for timer={}. Re-scheduling the handling to the next slot",
-                     timer.frontend->id);
+                     (int)timer.frontend->id);  // implicit enum cast to int is not done anymore by fmt
       failed_to_trigger_timers.push_back(std::make_pair(timer.frontend->id, timer.backend.cmd_id));
     }
   }

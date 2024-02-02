@@ -119,7 +119,7 @@ void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& inpu
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
                 input.size(),
                 symbols.size(),
-                scheme);
+                (int)scheme);  // implicit enum cast to int is not done anymore by fmt
 
   switch (scheme) {
     case modulation_scheme::PI_2_BPSK:

@@ -920,17 +920,17 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.get_buffer().data(),
-                   divide_ceil(data.size(), 8),
-                   "PDCCH: {:s} {}\n  {:n}\n  {}",
-                   pdu,
-                   time_ns,
-                   pdu,
-                   time_ns);
+      // logger.debug(data.get_buffer().data(),
+      //              divide_ceil(data.size(), 8),
+      //              "PDCCH: {:s} {}\n  {:n}\n  {}",
+      //              pdu,
+      //              time_ns,
+      //              pdu,
+      //              time_ns);
       return;
     }
     // Single line log entry.
-    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "PDCCH: {:s} {}", pdu, time_ns);
+    // logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "PDCCH: {:s} {}", pdu, time_ns);
   }
 
 private:
@@ -965,17 +965,17 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.front().data(),
-                   data.front().size(),
-                   "PDSCH: {:s} tbs={} {}\n  {:n}",
-                   pdu,
-                   data.front().size(),
-                   time_ns,
-                   pdu);
+      // logger.debug(data.front().data(),
+      //              data.front().size(),
+      //              "PDSCH: {:s} tbs={} {}\n  {:n}",
+      //              pdu,
+      //              data.front().size(),
+      //              time_ns,
+      //              pdu);
       return;
     }
     // Single line log entry.
-    logger.info(data.front().data(), data.front().size(), "PDSCH: {:s} tbs={} {}", pdu, data.front().size(), time_ns);
+    // logger.info(data.front().data(), data.front().size(), "PDSCH: {:s} tbs={} {}", pdu, data.front().size(), time_ns);
   }
 
 private:
@@ -1005,10 +1005,10 @@ public:
     if (log_all_opportunities || !result.preambles.empty()) {
       if (logger.debug.enabled()) {
         // Detailed log information, including a list of all PRACH config and result fields.
-        logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n", config, result, time_ns, config, result);
+        // logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n", config, result, time_ns, config, result);
       } else {
         // Single line log entry.
-        logger.info("PRACH: {:s} {:s} {}", config, result, time_ns);
+        // logger.info("PRACH: {:s} {:s} {}", config, result, time_ns);
       }
     }
 
@@ -1082,18 +1082,19 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.data(),
-                   data_size,
-                   "PUSCH: {:s} tbs={} {:s} {}\n  {:n}\n  {:n}",
-                   pdu,
-                   data.size(),
-                   results,
-                   time_ns,
-                   pdu,
-                   results);
+      // logger.debug(data.data(),
+      //              data_size,
+      //              "PUSCH: {:s} tbs={} {:s} {}\n  {:n}\n  {:n}",
+      //              pdu,
+      //              data.size(),
+      //              results,
+      //              time_ns,
+      //              pdu,
+      //              results);
     } else {
       // Single line log entry.
-      logger.info(data.data(), data_size, "PUSCH: {:s} tbs={} {:s} {}", pdu, data.size(), results, time_ns);
+      data_size = data_size;
+      // logger.info(data.data(), data_size, "PUSCH: {:s} tbs={} {:s} {}", pdu, data.size(), results, time_ns);
     }
   }
 
@@ -1112,10 +1113,10 @@ class logging_pucch_processor_decorator : public pucch_processor
     std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PUCCH configuration and result fields.
-      logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}", config, result, time_ns, config, result);
+      // logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}", config, result, time_ns, config, result);
     } else {
       // Single line log entry.
-      logger.info("PUCCH: {:s} {:s} {}", config, result, time_ns);
+      // logger.info("PUCCH: {:s} {:s} {}", config, result, time_ns);
     }
 
     return result;
@@ -1175,18 +1176,18 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all SSB PDU fields.
-      logger.debug(data.get_buffer().data(),
-                   divide_ceil(data.size(), 8),
-                   "SSB: {:s} {}\n  {:n}\n  {}",
-                   pdu,
-                   time_ns,
-                   pdu,
-                   time_ns);
+      // logger.debug(data.get_buffer().data(),
+      //              divide_ceil(data.size(), 8),
+      //              "SSB: {:s} {}\n  {:n}\n  {}",
+      //              pdu,
+      //              time_ns,
+      //              pdu,
+      //              time_ns);
 
       return;
     }
     // Single line log entry.
-    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "SSB: {:s} {}", pdu, time_ns);
+    // logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "SSB: {:s} {}", pdu, time_ns);
   }
 
 private:

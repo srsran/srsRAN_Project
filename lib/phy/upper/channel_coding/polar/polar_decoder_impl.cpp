@@ -326,7 +326,7 @@ void polar_decoder_impl::simplified_node(span<uint8_t> message)
       rate_r_node(message);
       break;
     default:
-      srsran_assertion_failure("ERROR: wrong node type {}.", param.node_type[stage][bit_pos]);
+      srsran_assertion_failure("ERROR: wrong node type {}.", (int)param.node_type[stage][bit_pos]);   // implicit enum cast to int is not done anymore by fmt
   }
   // Go back to the parent node.
   ++state.stage;
