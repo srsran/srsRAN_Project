@@ -290,10 +290,34 @@ constexpr std::chrono::milliseconds protocol_transaction_manager<T>::max_timeout
 
 struct no_fail_response_path {};
 
+template <typename SuccessResp, typename FailureResp>
+class protocol_transaction_outcome_observer;
+
 /// \brief Publisher of application protocol transaction outcomes to which an observer can subscribe to.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
-using protocol_transaction_event_source =
-    async_event_source<variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
+class protocol_transaction_event_source
+{
+public:
+  explicit protocol_transaction_event_source(timer_factory timer_db) : ev_source(timer_db) {}
+  ~protocol_transaction_event_source()
+  {
+    // Automatically cancels any pending transaction.
+    this->set(protocol_transaction_failure::cancel);
+  }
+
+  /// \brief Forwards a result to the registered listener/subscriber/observer.
+  /// \return If no subscriber is registered, returns false.
+  template <typename U>
+  bool set(U&& u)
+  {
+    return ev_source.set(std::forward<U>(u));
+  }
+
+private:
+  friend class protocol_transaction_outcome_observer<SuccessResp, FailureResp>;
+
+  async_event_source<variant<SuccessResp, FailureResp, protocol_transaction_failure>> ev_source;
+};
 
 /// \brief Observer of application protocol transaction outcome.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
@@ -312,13 +336,13 @@ public:
 
   /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source.
   /// Only one simultaneous subscriber is allowed.
-  void subscribe_to(event_source_type& publisher) { observer.subscribe_to(publisher); }
+  void subscribe_to(event_source_type& publisher) { observer.subscribe_to(publisher.ev_source); }
 
   /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and
   /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
   void subscribe_to(event_source_type& publisher, std::chrono::milliseconds time_to_cancel)
   {
-    observer.subscribe_to(publisher, time_to_cancel, protocol_transaction_failure::timeout);
+    observer.subscribe_to(publisher.ev_source, time_to_cancel, protocol_transaction_failure::timeout);
   }
 
   /// \brief Checks whether this sink has been registered to an event source.
