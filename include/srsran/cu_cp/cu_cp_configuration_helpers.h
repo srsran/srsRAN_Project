@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "cell_meas_manager_config.h"
 #include "cu_cp_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 

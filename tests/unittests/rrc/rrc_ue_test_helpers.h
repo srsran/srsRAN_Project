@@ -70,7 +70,9 @@ protected:
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
     rrc_ue_create_msg.du_to_cu_container.resize(1);
-    rrc_ue_create_msg.f1ap_pdu_notifier = &rrc_ue_f1ap_notifier;
+    rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_notifier;
+    rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &rrc_ue_cu_cp_notifier;
+    rrc_ue_create_msg.measurement_notifier  = &rrc_ue_cu_cp_notifier;
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
     ue_cfg.int_algo_pref_list = {security::integrity_algorithm::nia2,
@@ -96,8 +98,8 @@ protected:
                                            *rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
-                                           rrc_ue_cu_cp_notifier,
-                                           cell_meas_mng,
+                                           *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
+                                           *rrc_ue_create_msg.measurement_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -397,7 +399,6 @@ protected:
   dummy_rrc_ue_du_processor_adapter        rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter               rrc_ue_cu_cp_notifier;
-  dummy_cell_meas_manager                  cell_meas_mng;
   timer_manager                            timers;
   std::unique_ptr<dummy_ue_task_scheduler> task_sched_handle;
   std::unique_ptr<rrc_ue_interface>        rrc_ue;

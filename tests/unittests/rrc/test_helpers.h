@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/rrc/rrc_du.h"
+#include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
@@ -104,7 +105,7 @@ private:
   srslog::basic_logger& logger                     = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier
+class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public rrc_ue_measurement_notifier
 {
 public:
   void add_ue_context(rrc_reestablishment_ue_context_t context) { reest_context = context; }
@@ -132,31 +133,28 @@ public:
 
   void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
 
+  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+                                                       optional<rrc_meas_cfg> current_meas_config = {}) override
+  {
+    optional<rrc_meas_cfg> meas_cfg;
+    return meas_cfg;
+  }
+
+  void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
+
 private:
   rrc_reestablishment_ue_context_t reest_context = {};
   srslog::basic_logger&            logger        = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_cell_meas_manager : public cell_meas_manager
+class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
 {
 public:
-  optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t           nci,
-                                                optional<rrc_meas_cfg> current_meas_config = {}) override
-  {
-    optional<rrc_meas_cfg> meas_cfg;
-    return meas_cfg;
-  }
-  optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override
-  {
-    optional<cell_meas_config> meas_cfg;
-    return meas_cfg;
-  }
-  void update_cell_config(nr_cell_id_t                           nci,
-                          const serving_cell_meas_config&        serv_cell_cfg_,
-                          std::vector<neighbor_cell_meas_config> ncells_ = {}) override
+  void on_cell_config_update_request(nr_cell_id_t                           nci,
+                                     const serving_cell_meas_config&        serv_cell_cfg,
+                                     std::vector<neighbor_cell_meas_config> ncells = {}) override
   {
   }
-  void report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
 };
 
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {

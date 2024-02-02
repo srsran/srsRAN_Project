@@ -19,18 +19,16 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                cfg_,
-                         rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notif_,
-                         rrc_ue_nas_notifier&            nas_notif_,
-                         rrc_ue_control_notifier&        ngap_ctrl_notif_,
-                         rrc_ue_context_update_notifier& cu_cp_notif_,
-                         cell_meas_manager&              cell_meas_mng_) :
+rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                    cfg_,
+                         rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notif_,
+                         rrc_ue_nas_notifier&                nas_notif_,
+                         rrc_ue_control_notifier&            ngap_ctrl_notif_,
+                         rrc_du_measurement_config_notifier& meas_config_notifier_) :
   cfg(cfg_),
   rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),
-  cu_cp_notifier(cu_cp_notif_),
-  cell_meas_mng(cell_meas_mng_),
+  meas_config_notifier(meas_config_notifier_),
   logger(srslog::fetch_basic_logger("RRC", false))
 {
   for (const auto& qos : cfg.drb_config) {
@@ -89,7 +87,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
                  nr_band_to_uint(meas_cfg.band.value()),
                  meas_cfg.ssb_arfcn.value(),
                  to_string(meas_cfg.ssb_scs.value()));
-    cell_meas_mng.update_cell_config(served_cell.served_cell_info.nr_cgi.nci, meas_cfg);
+    meas_config_notifier.on_cell_config_update_request(served_cell.served_cell_info.nr_cgi.nci, meas_cfg);
   }
 
   return true;
@@ -134,8 +132,8 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          *msg.f1ap_pdu_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
-                                                         cu_cp_notifier,
-                                                         cell_meas_mng,
+                                                         *msg.rrc_ue_cu_cp_notifier,
+                                                         *msg.measurement_notifier,
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          rrc_cell,

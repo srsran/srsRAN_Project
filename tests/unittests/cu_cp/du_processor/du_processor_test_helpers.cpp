@@ -11,7 +11,6 @@
 #include "du_processor_test_helpers.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <memory>
 
@@ -43,10 +42,9 @@ du_processor_test::du_processor_test()
                                          f1ap_cu_cp_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
-                                         rrc_ue_cu_cp_notifier,
+                                         rrc_du_cu_cp_notifier,
                                          *ue_task_sched,
                                          ue_mng,
-                                         cell_meas_mng,
                                          ctrl_worker);
 }
 

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -213,6 +214,37 @@ public:
   virtual rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() = 0;
 };
 
+/// Interface to handle measurement requests
+class cu_cp_measurement_handler
+{
+public:
+  virtual ~cu_cp_measurement_handler() = default;
+
+  /// \brief Handle a measurement config request (for any UE) connected to the given serving cell.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] current_meas_config The current meas config of the UE (if applicable).
+  virtual optional<rrc_meas_cfg> handle_measurement_config_request(nr_cell_id_t           nci,
+                                                                   optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+
+  /// \brief Handle a measurement report for given UE.
+  virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
+};
+
+/// Interface to handle measurement config update requests
+class cu_cp_measurement_config_handler
+{
+public:
+  virtual ~cu_cp_measurement_config_handler() = default;
+
+  /// \brief Handle a request to update the measurement related parameters for the given cell id.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
+  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
+  virtual void handle_cell_config_update_request(nr_cell_id_t                           nci,
+                                                 const serving_cell_meas_config&        serv_cell_cfg,
+                                                 std::vector<neighbor_cell_meas_config> ncells = {}) = 0;
+};
+
 /// Interface to request handover.
 class cu_cp_mobility_manager_handler
 {
@@ -239,6 +271,8 @@ public:
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
+                             public cu_cp_measurement_handler,
+                             public cu_cp_measurement_config_handler,
                              public cu_cp_ngap_ue_creation_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_ue_removal_handler
@@ -246,10 +280,12 @@ class cu_cp_impl_interface : public cu_cp_e1ap_handler,
 public:
   virtual ~cu_cp_impl_interface() = default;
 
-  virtual cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler()       = 0;
-  virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()   = 0;
-  virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() = 0;
-  virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() = 0;
+  virtual cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler()               = 0;
+  virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
+  virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
+  virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;
+  virtual cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() = 0;
+  virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler()         = 0;
 };
 
 } // namespace srs_cu_cp

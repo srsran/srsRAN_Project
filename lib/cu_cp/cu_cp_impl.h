@@ -16,6 +16,7 @@
 #include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
+#include "adapters/rrc_du_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_cp_controller/cu_cp_controller.h"
 #include "cu_cp_impl_interface.h"
@@ -24,7 +25,6 @@
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager/ue_manager_impl.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -67,6 +67,16 @@ public:
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
+  // cu_cp_measurement_handler
+  optional<rrc_meas_cfg> handle_measurement_config_request(nr_cell_id_t           nci,
+                                                           optional<rrc_meas_cfg> current_meas_config = {}) override;
+  void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
+
+  // cu_cp_measurement_config_handler
+  void handle_cell_config_update_request(nr_cell_id_t                           nci,
+                                         const serving_cell_meas_config&        serv_cell_cfg,
+                                         std::vector<neighbor_cell_meas_config> ncells = {}) override;
+
   // cu_cp_ue_removal_interface
   void handle_ue_removal_request(ue_index_t ue_index) override;
 
@@ -79,6 +89,8 @@ public:
   cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ngap_connection_interface&       get_cu_cp_ngap_connection_interface() override { return *this; }
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
+  cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
 
@@ -111,7 +123,7 @@ private:
 
   std::unique_ptr<mobility_manager> mobility_mng;
 
-  std::unique_ptr<cell_meas_manager> cell_meas_mng; // cell measurement manager
+  cell_meas_manager cell_meas_mng; // cell measurement manager
 
   // CU-CP to NGAP adapter
   cu_cp_ngap_adapter ngap_adapter;
@@ -150,8 +162,8 @@ private:
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_cu_cp_notifier;
 
-  // RRC UE to CU-CP adapter
-  rrc_ue_cu_cp_adapter rrc_ue_cu_cp_notifier;
+  // RRC DU to CU-CP adapters
+  rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;
 
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;

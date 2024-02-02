@@ -14,7 +14,6 @@
 #include "rrc_ue_context.h"
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -30,7 +29,7 @@ public:
               rrc_ue_nas_notifier&              nas_notif_,
               rrc_ue_control_notifier&          ngap_ctrl_notif_,
               rrc_ue_context_update_notifier&   cu_cp_notif_,
-              cell_meas_manager&                cell_meas_mng_,
+              rrc_ue_measurement_notifier&      measurement_notifier_,
               const ue_index_t                  ue_index_,
               const rnti_t                      c_rnti_,
               const rrc_cell_context            cell_,
@@ -116,7 +115,7 @@ private:
   rrc_ue_nas_notifier&            nas_notifier;          // PDU notifier to the NGAP
   rrc_ue_control_notifier&        ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_context_update_notifier& cu_cp_notifier;        // notifier to the CU-CP
-  cell_meas_manager&              cell_meas_mng;         // cell measurement manager
+  rrc_ue_measurement_notifier&    measurement_notifier;  // cell measurement notifier
   byte_buffer                     du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&          task_sched;
   rrc_ue_logger                   logger;

@@ -50,6 +50,12 @@ public:
   /// \brief Get the RRC UE SRB control notifier of the UE.
   virtual du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() = 0;
 
+  /// \brief Get the RRC UE context update notifier of the UE.
+  virtual rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() = 0;
+
+  /// \brief Get the RRC UE measurement notifier of the UE.
+  virtual rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() = 0;
+
   /// \brief Get the PCI of the UE.
   virtual pci_t get_pci() = 0;
 

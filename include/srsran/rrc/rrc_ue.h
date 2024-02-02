@@ -322,6 +322,22 @@ public:
   virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
 };
 
+/// Interface to notify about measurements
+class rrc_ue_measurement_notifier
+{
+public:
+  virtual ~rrc_ue_measurement_notifier() = default;
+
+  /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] current_meas_config The current meas config of the UE (if applicable).
+  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+                                                               optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+
+  /// \brief Submit measurement report for given UE to cell manager.
+  virtual void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
+};
+
 class rrc_ue_context_handler
 {
 public:

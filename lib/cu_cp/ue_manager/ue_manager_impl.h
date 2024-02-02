@@ -12,9 +12,9 @@
 
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../adapters/rrc_ue_adapters.h"
 #include "ue_metrics_handler.h"
 #include "srsran/cu_cp/ue_manager.h"
-#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -82,6 +82,11 @@ public:
     srsran_assert(rrc_ue_srb_notifier != nullptr, "ue={}: RRC UE SRB notifier was not set", ue_index);
     return *rrc_ue_srb_notifier;
   }
+
+  rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
+
+  /// \brief Get the RRC UE measurement notifier of the UE.
+  rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the PCI of the UE.
   pci_t get_pci() override { return pci; };
@@ -172,6 +177,9 @@ public:
   /// \brief Get the CU-CP to RRC UE adapter of the UE.
   cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter() { return cu_cp_rrc_ue_ev_notifier; }
 
+  /// \brief Get the RRC to CU-CP adapter of the UE.
+  rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
+
 private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
@@ -193,6 +201,7 @@ private:
   // cu-cp ue context
   ngap_rrc_ue_adapter  ngap_rrc_ue_ev_notifier;
   cu_cp_rrc_ue_adapter cu_cp_rrc_ue_ev_notifier;
+  rrc_ue_cu_cp_adapter rrc_ue_cu_cp_ev_notifier;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
@@ -308,6 +317,14 @@ public:
     srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
 
     return ues.at(ue_index).get_cu_cp_rrc_ue_adapter();
+  }
+
+  rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
   }
 
   ue_metrics_report handle_ue_metrics_report_request() override;
