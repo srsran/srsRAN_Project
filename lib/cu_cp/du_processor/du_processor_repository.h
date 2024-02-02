@@ -115,8 +115,6 @@ private:
   // F1AP to DU repository adapter.
   f1ap_du_repository_adapter f1ap_ev_notifier;
 
-  du_task_scheduler du_task_sched;
-
   std::map<du_index_t, du_context> du_db;
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
