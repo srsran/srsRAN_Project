@@ -71,9 +71,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
   if (not ngu_gw->create_and_bind()) {
-    logger.error("Failed to create and connect NG-U gateway");
+    logger.error("Failed to create and connect N3 gateway");
   }
-  cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  bool success = cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  if (!success) {
+    logger.error("Failed to register N3 (GTP-U) network gateway at IO broker. socket_fd={}", ngu_gw->get_socket_fd());
+  }
 
   // Create TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};

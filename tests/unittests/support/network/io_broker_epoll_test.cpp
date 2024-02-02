@@ -30,7 +30,7 @@ protected:
 
   void TearDown() override
   {
-    epoll_broker->unregister_fd(socket_fd);
+    EXPECT_TRUE(epoll_broker->unregister_fd(socket_fd));
     if (socket_fd > 0) {
       close(socket_fd);
     }

@@ -144,7 +144,11 @@ public:
       return;
     }
     logger.info("TNL connection to AMF ({}:{}) established", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    broker.register_fd(sctp_gateway->get_socket_fd(), [this](int fd) { sctp_gateway->receive(); });
+    bool success = broker.register_fd(sctp_gateway->get_socket_fd(), [this](int fd) { sctp_gateway->receive(); });
+    if (!success) {
+      report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
+                         sctp_gateway->get_socket_fd());
+    }
   }
 
   // Called by CU-CP for each new Tx PDU.

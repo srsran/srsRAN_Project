@@ -38,7 +38,12 @@ public:
     if (!gateway_ctrl_handler->create_and_connect()) {
       report_error("Failed to create SCTP gateway.\n");
     }
-    broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    bool success =
+        broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    if (!success) {
+      report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
+                         gateway_ctrl_handler->get_socket_fd());
+    }
   }
 
   void bind_and_listen(std::unique_ptr<sctp_network_gateway> gateway_)
@@ -57,7 +62,12 @@ public:
       report_error("Failed to listen SCTP gateway.\n");
     }
 
-    broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    bool success =
+        broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    if (!success) {
+      report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
+                         gateway_ctrl_handler->get_socket_fd());
+    }
   }
 
   /// \brief Return the port on which the gateway is listening.
@@ -81,7 +91,11 @@ public:
   void disconnect_gateway()
   {
     srsran_assert(gateway_ctrl_handler, "Gateway handler not set.");
-    broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
+    bool success = broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
+    if (!success) {
+      report_fatal_error("Failed to unregister E2 (SCTP) network gateway at IO broker. socket_fd={}",
+                         gateway_ctrl_handler->get_socket_fd());
+    }
 
     gateway_ctrl_handler = nullptr;
     gateway_data_handler = nullptr;

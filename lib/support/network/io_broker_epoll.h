@@ -25,8 +25,8 @@ public:
   explicit io_broker_epoll(io_broker_config config);
   ~io_broker_epoll();
 
-  bool register_fd(int fd, recv_callback_t handler) override;
-  bool unregister_fd(int fd) override;
+  SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler) override;
+  SRSRAN_NODISCARD bool unregister_fd(int fd) override;
 
 private:
   void thread_loop();

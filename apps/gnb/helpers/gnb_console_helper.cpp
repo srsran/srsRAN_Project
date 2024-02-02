@@ -42,7 +42,10 @@ gnb_console_helper::gnb_console_helper(io_broker&           io_broker_,
 
 gnb_console_helper::~gnb_console_helper()
 {
-  io_broker_handle.unregister_fd(STDIN_FILENO);
+  bool success = io_broker_handle.unregister_fd(STDIN_FILENO);
+  if (!success) {
+    report_fatal_error("Failed to unregister stdin file descriptor at IO broker. fd={}", STDIN_FILENO);
+  }
 }
 
 void gnb_console_helper::stdin_handler(int fd)
