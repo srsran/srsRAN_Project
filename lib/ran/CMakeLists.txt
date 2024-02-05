@@ -30,6 +30,7 @@ add_library(srsran_ran
         prach/prach_helper.cpp
         precoding/precoding_codebooks.cpp
         pusch/pusch_mcs.cpp
+        pusch/pusch_tpmi_select.cpp
         pusch/pusch_uci_beta_offset.cpp
         pusch/ulsch_info.cpp
         uci/uci_part2_size_calculator.cpp
