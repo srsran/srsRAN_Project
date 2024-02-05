@@ -120,6 +120,16 @@ bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_res
     if (!decode_section(results, deserializer)) {
       break;
     }
+
+    if (results.sections.full()) {
+      logger.info("Dropped received Open Fronthaul message as this deserializer only supports '{}' section for slot "
+                  "'{}' and symbol '{}'",
+                  MAX_NOF_SUPPORTED_SECTIONS,
+                  results.params.slot,
+                  results.params.symbol_id);
+
+      return false;
+    }
   }
 
   bool is_result_valid = !results.sections.empty();
