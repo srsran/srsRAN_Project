@@ -14,6 +14,7 @@
 #include "srsran/ran/precoding/precoding_constants.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/zero.h"
 
 namespace srsran {
 
@@ -28,6 +29,9 @@ public:
   precoding_weight_matrix() = default;
 
   /// \brief Constructs a weight matrix with the desired number of layers and ports.
+  ///
+  /// The coefficients are set to zero.
+  ///
   /// \param[in] nof_layers Number of layers.
   /// \param[in] nof_ports  Number of ports.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
@@ -42,6 +46,9 @@ public:
                   "The number of ports (i.e., {}) exceeds the maximum (i.e., {}).",
                   nof_ports,
                   precoding_constants::MAX_NOF_PORTS);
+
+    // Zero all data.
+    srsvec::zero(data.get_data());
   }
 
   /// \brief Constructs a weight matrix with the desired number of layers and ports.
