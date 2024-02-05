@@ -15,6 +15,7 @@
 #include "ofh_tx_window_checker.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
@@ -47,6 +48,8 @@ struct downlink_handler_broadcast_impl_dependencies {
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   /// Data flow for User-Plane.
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
+  /// Ethernet frame pool.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool_ptr;
 };
 
 /// \brief Open Fronthaul downlink broadcast handler implementation.
@@ -72,6 +75,8 @@ private:
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
   tx_window_checker                                     window_checker;
+  std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;
+  ether::eth_frame_pool&                                frame_pool;
 };
 
 } // namespace ofh

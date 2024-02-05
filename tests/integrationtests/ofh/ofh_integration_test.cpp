@@ -1104,11 +1104,9 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   sector_deps.eth_gateway = std::move(gateway);
 
   // Configure Ethernet receiver.
-  if (!test_params.use_loopback_receiver) {
-    auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, *workers.ru_rx_exec);
-    eth_receiver             = dummy_receiver.get();
-    sector_deps.eth_receiver = std::move(dummy_receiver);
-  }
+  auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, *workers.ru_rx_exec);
+  eth_receiver             = dummy_receiver.get();
+  sector_deps.eth_receiver = std::move(dummy_receiver);
 
   return dependencies;
 }
@@ -1138,19 +1136,25 @@ int main(int argc, char** argv)
   test_gateway*            tx_gateway;
   test_ether_receiver*     eth_receiver;
 
-  if (test_params.use_loopback_receiver) {
-    eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
-    eth_receiver     = eth_receiver_ptr.get();
-  }
-
   ru_ofh_configuration ru_cfg = generate_ru_config();
   ru_ofh_dependencies  ru_deps =
       generate_ru_dependencies(logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver);
+
+  if (test_params.use_loopback_receiver) {
+    ru_deps.sector_dependencies[0].eth_receiver.reset();
+    eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
+    eth_receiver     = eth_receiver_ptr.get();
+  }
   std::unique_ptr<radio_unit> ru_object = create_ofh_ru(ru_cfg, std::move(ru_deps));
 
   // Get RU downlink plane handler.
   auto& ru_dl_handler = ru_object->get_downlink_plane_handler();
   auto& ru_ul_handler = ru_object->get_uplink_plane_handler();
+
+  if (test_params.use_loopback_receiver) {
+    eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
+    eth_receiver     = eth_receiver_ptr.get();
+  }
 
   // Create RU emulator instance.
   ru_compression_params ul_compression_params{to_compression_type(test_params.data_compr_method),

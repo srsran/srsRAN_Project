@@ -109,9 +109,9 @@ class frame_buffer_array
 
 public:
   // Constructor receives number of buffers stored/read at a time, reserves storage for all eAxCs.
-  frame_buffer_array(unsigned nof_buffers, unsigned buffer_size) :
-    increment_quant(nof_buffers),
-    storage_nof_buffers(ofh::MAX_NOF_SUPPORTED_EAXC * nof_buffers * NUM_OF_ENTRIES),
+  frame_buffer_array(unsigned nof_buffers_to_return, unsigned buffer_size, unsigned nof_antennas) :
+    increment_quant(nof_buffers_to_return),
+    storage_nof_buffers(nof_buffers_to_return * nof_antennas * NUM_OF_ENTRIES),
     buffers_array(storage_nof_buffers, frame_buffer{buffer_size}),
     write_position(storage_nof_buffers)
   {
@@ -157,6 +157,16 @@ public:
   {
     for (auto& buffer : buffers_array) {
       if (buffer.status == frame_buffer::frame_buffer_status::marked_to_send) {
+        buffer.status = frame_buffer::frame_buffer_status::free;
+      }
+    }
+  }
+
+  // Changed state of all 'used' buffers to 'free'.
+  void reset_buffers()
+  {
+    for (auto& buffer : buffers_array) {
+      if (buffer.status != frame_buffer::frame_buffer_status::marked_to_send) {
         buffer.status = frame_buffer::frame_buffer_status::free;
       }
     }
@@ -209,11 +219,11 @@ class eth_frame_pool
     pool_entry(units::bytes mtu, unsigned num_of_frames)
     {
       // DL C-Plane storage.
-      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value());
+      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC);
       // UL C-Plane storage.
-      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value());
+      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC * 2);
       // U-Plane storage.
-      buffers.emplace_back(num_of_frames, mtu.value());
+      buffers.emplace_back(num_of_frames, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC);
     }
 
     /// Returns frame buffers for the given OFH type and given direction.
@@ -259,6 +269,12 @@ class eth_frame_pool
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.clear_buffers();
+    }
+
+    void reset_buffers(const ofh_pool_message_type& context)
+    {
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
+      entry_buf.reset_buffers();
     }
 
     /// Returns a view over a next stored frame buffer for a given OFH type.
@@ -378,17 +394,17 @@ public:
     pool_entry& cp_entry = get_pool_entry(slot_point, 0);
     // Clear buffers with DL Control-Plane messages.
     ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::downlink};
-    cp_entry.clear_buffers(msg_type);
+    cp_entry.reset_buffers(msg_type);
     // Clear buffers with UL Control-Plane messages.
     msg_type.direction = ofh::data_direction::uplink;
-    cp_entry.clear_buffers(msg_type);
+    cp_entry.reset_buffers(msg_type);
 
     // Clear buffers with User-Plane messages.
     msg_type.type      = ofh::message_type::user_plane;
     msg_type.direction = ofh::data_direction::downlink;
     for (unsigned symbol = 0; symbol != 14; ++symbol) {
       pool_entry& up_entry = get_pool_entry(slot_point, symbol);
-      up_entry.clear_buffers(msg_type);
+      up_entry.reset_buffers(msg_type);
     }
   }
 
