@@ -13,8 +13,8 @@
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
 #include "../cu_cp_impl_interface.h"
-#include "../task_schedulers/ue_task_scheduler.h"
 #include "../ue_manager/ue_manager_impl.h"
+#include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
@@ -28,7 +28,7 @@ namespace srs_cu_cp {
 class cu_cp_routine_manager
 {
 public:
-  explicit cu_cp_routine_manager(ue_task_scheduler& ue_task_sched_);
+  explicit cu_cp_routine_manager(ue_task_scheduler_manager& ue_task_sched_);
   ~cu_cp_routine_manager() = default;
 
   bool schedule_async_task(async_task<void> task);
@@ -44,7 +44,7 @@ public:
                                 srslog::basic_logger&           logger);
 
 private:
-  ue_task_scheduler& ue_task_sched;
+  ue_task_scheduler_manager& ue_task_sched;
 
   // cu-cp task event loop
   fifo_async_task_scheduler main_ctrl_loop;

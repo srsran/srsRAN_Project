@@ -41,7 +41,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
-  ctrl_exec(ctrl_exec_),
   f1ap_ev_notifier(*this)
 {
   context.du_index = cfg.du_index;
@@ -210,17 +209,10 @@ bool du_processor_impl::create_rrc_ue(du_ue&                            ue,
                                       byte_buffer                       du_to_cu_rrc_container,
                                       optional<rrc_ue_transfer_context> rrc_context)
 {
-  // Create and connect RRC UE task schedulers
-  rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
-  rrc_ue_task_scheds.at(ue.get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
-
   // Create RRC UE to F1AP adapter
   rrc_ue_f1ap_adapters.emplace(std::piecewise_construct,
                                std::forward_as_tuple(ue.get_ue_index()),
                                std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue.get_ue_index()));
-
-  // Set task schedulers
-  ue.set_task_sched(rrc_ue_task_scheds.at(ue.get_ue_index()));
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};

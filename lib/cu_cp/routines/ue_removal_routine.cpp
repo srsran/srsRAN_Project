@@ -19,7 +19,6 @@ ue_removal_routine::ue_removal_routine(ue_index_t                      ue_index_
                                        cu_cp_f1ap_ue_removal_notifier& f1ap_notifier_,
                                        cu_cp_ngap_control_notifier&    ngap_notifier_,
                                        ue_manager&                     ue_mng_,
-                                       ue_task_scheduler&              task_scheduler_,
                                        srslog::basic_logger&           logger_) :
   ue_index(ue_index_),
   rrc_du_notifier(rrc_du_notifier_),
@@ -27,7 +26,6 @@ ue_removal_routine::ue_removal_routine(ue_index_t                      ue_index_
   f1ap_notifier(f1ap_notifier_),
   ngap_notifier(ngap_notifier_),
   ue_mng(ue_mng_),
-  task_scheduler(task_scheduler_),
   logger(logger_)
 {
 }
@@ -54,9 +52,6 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
 
   // Remove UE from UE manager
   ue_mng.remove_ue(ue_index);
-
-  // Remove pending UE tasks
-  task_scheduler.clear_pending_tasks(ue_index);
 
   logger.info("ue={}: \"{}\" finalized", ue_index, name());
 

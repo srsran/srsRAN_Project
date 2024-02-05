@@ -75,10 +75,6 @@ public:
   /// \param[in] pcell_index PCell index of the UE.
   virtual void set_pcell_index(du_cell_index_t pcell_index) = 0;
 
-  /// \brief Set the task scheduler of the UE.
-  /// \param[in] task_sched_ Task scheduler of the UE.
-  virtual void set_task_sched(rrc_ue_task_scheduler& task_sched_) = 0;
-
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
   virtual void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) = 0;

@@ -13,7 +13,7 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor_impl_interface.h"
-#include "../task_schedulers/ue_task_scheduler.h"
+#include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
@@ -29,7 +29,7 @@ class du_processor_to_cu_cp_task_scheduler : public du_processor_ue_task_schedul
 public:
   du_processor_to_cu_cp_task_scheduler() {}
 
-  void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
+  void connect_cu_cp(ue_task_scheduler_manager& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -55,7 +55,7 @@ public:
   }
 
 private:
-  ue_task_scheduler* cu_cp_task_sched = nullptr;
+  ue_task_scheduler_manager* cu_cp_task_sched = nullptr;
 };
 
 /// Adapter between DU processor and CU-CP

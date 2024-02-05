@@ -44,9 +44,10 @@ protected:
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
   timer_manager                                         timers;
+  manual_task_worker                                    ctrl_worker{128};
   ue_configuration                                      ue_config;
   up_resource_manager_cfg                               up_config;
-  ue_manager                                            ue_mng{ue_config, up_config};
+  ue_manager                                            ue_mng{ue_config, up_config, timers, ctrl_worker};
   dummy_ngap_ue_context_removal_handler                 ngap_ue_removal_handler;
   std::unique_ptr<dummy_du_processor_cu_cp_notifier>    cu_cp_notifier;
   dummy_du_connection_notifier                          du_conn_notifier;
@@ -59,7 +60,6 @@ protected:
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter                            rrc_du_cu_cp_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
-  manual_task_worker                                    ctrl_worker{128};
   std::unique_ptr<du_processor_impl_interface>          du_processor_obj;
 
   async_task<cu_cp_ue_context_release_complete>                   t;

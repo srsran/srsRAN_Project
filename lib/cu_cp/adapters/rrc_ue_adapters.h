@@ -84,7 +84,7 @@ public:
     timers                    = timer_factory{du_processor_task_handler->get_timer_manager(), *ue_exec};
   }
 
-  void schedule_async_task(async_task<void>&& task) override
+  void schedule_async_task(async_task<void> task) override
   {
     srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));

@@ -13,9 +13,22 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager(const ue_configuration& ue_config_, const up_resource_manager_cfg& up_config_) :
-  ue_config(ue_config_), up_config(up_config_)
+void cu_cp_ue::stop()
 {
+  task_sched.stop();
+}
+
+ue_manager::ue_manager(const ue_configuration&        ue_config_,
+                       const up_resource_manager_cfg& up_config_,
+                       timer_manager&                 timers,
+                       task_executor&                 cu_cp_exec) :
+  ue_config(ue_config_), up_config(up_config_), ue_task_scheds(timers, cu_cp_exec, logger)
+{
+}
+
+void ue_manager::stop()
+{
+  ue_task_scheds.stop();
 }
 
 // generic_ue_manager
@@ -58,7 +71,6 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   ues.erase(ue_index);
 
   logger.debug("ue={}: Removed", ue_index);
-  return;
 }
 
 // du_processor_ue_manager
@@ -75,9 +87,13 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
     return ue_index_t::invalid;
   }
 
+  // Create a dedicated task scheduler for the UE.
+  ue_task_scheduler ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
+
   // Create UE object
-  ues.emplace(
-      std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, up_config));
+  ues.emplace(std::piecewise_construct,
+              std::forward_as_tuple(new_ue_index),
+              std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
 
   logger.debug("ue={}: Allocated new UE index", new_ue_index);
 

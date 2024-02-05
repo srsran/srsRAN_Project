@@ -166,7 +166,6 @@ private:
   du_processor_ue_manager&             ue_manager;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
-  task_executor&                       ctrl_exec;
 
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;
@@ -195,9 +194,6 @@ private:
 
   // DU processor to RRC DU adapter
   du_processor_rrc_du_adapter rrc_du_adapter;
-
-  // RRC UE to DU processor task schedulers
-  std::unordered_map<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
 
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;

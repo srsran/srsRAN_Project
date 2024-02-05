@@ -23,8 +23,8 @@
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
-#include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager/ue_manager_impl.h"
+#include "ue_manager/ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -176,9 +176,6 @@ private:
 
   // CU-UP connections being managed by the CU-CP.
   cu_up_processor_repository cu_up_db;
-
-  // UE task scheduler
-  ue_task_scheduler ue_task_sched;
 
   cu_cp_routine_manager routine_mng;
 

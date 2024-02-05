@@ -12,7 +12,7 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor_impl_interface.h"
-#include "../task_schedulers/ue_task_scheduler.h"
+#include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
@@ -27,7 +27,7 @@ class ngap_to_cu_cp_task_scheduler : public ngap_ue_task_scheduler
 public:
   ngap_to_cu_cp_task_scheduler() = default;
 
-  void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
+  void connect_cu_cp(ue_task_scheduler_manager& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -48,8 +48,8 @@ public:
   }
 
 private:
-  ue_task_scheduler*    cu_cp_task_sched = nullptr;
-  srslog::basic_logger& logger           = srslog::fetch_basic_logger("NGAP");
+  ue_task_scheduler_manager* cu_cp_task_sched = nullptr;
+  srslog::basic_logger&      logger           = srslog::fetch_basic_logger("NGAP");
 };
 
 /// Adapter between NGAP and CU-CP
