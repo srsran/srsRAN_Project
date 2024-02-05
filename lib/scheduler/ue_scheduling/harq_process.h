@@ -27,7 +27,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"
@@ -214,9 +214,7 @@ public:
   void reset();
 
   /// \brief Cancels the HARQ process by stopping retransmissions of the currently held TB.
-  ///
-  /// Cancelled HARQ processes do not require the HARQ-ACK to be received to get flushed.
-  void cancel_harq(unsigned tb_idx);
+  void cancel_harq_retxs(unsigned tb_idx);
 
   /// \brief Getter of the slot when the HARQ process will assume that the ACK/CRC went missing.
   slot_point get_slot_ack_timeout() const { return slot_ack_timeout; }
@@ -416,7 +414,7 @@ public:
   void save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch);
 
   /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
-  void cancel_harq();
+  void cancel_harq_retxs();
 
   /// \brief Getter of the number of bytes of the last transmitted TB.
   int get_tbs_bytes() const { return prev_tx_params.tbs_bytes; }

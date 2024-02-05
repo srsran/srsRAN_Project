@@ -21,25 +21,29 @@
  */
 
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
 using namespace srsran;
 
-#define JSON_OUTPUT 0
+#define JSON_OUTPUT 1
 
 class asn1_e1ap_test : public ::testing::Test
 {
 protected:
   asn1_e1ap_test()
   {
-    logger.set_level(srslog::basic_levels::debug);
-    logger.set_hex_dump_max_size(-1);
+    srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("ASN1").set_hex_dump_max_size(-1);
 
     test_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_hex_dump_max_size(-1);
+
+    srslog::init();
 
     // Start the log backend.
     srslog::init();
@@ -51,15 +55,19 @@ protected:
     srslog::flush();
   }
 
-  task_worker           pcap_worker{"pcap_worker", 128};
-  task_worker_executor  pcap_exec{pcap_worker};
+#if JSON_OUTPUT
+  task_worker                    worker{"pcap_worker", 128};
+  std::unique_ptr<task_executor> pcap_exec   = make_task_executor_ptr(worker);
+  std::unique_ptr<dlt_pcap>      pcap_writer = create_e1ap_pcap("/tmp/e1ap.pcap", *pcap_exec);
+#endif
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  srslog::basic_logger& logger      = srslog::fetch_basic_logger("ASN1");
 };
 
 TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 {
-  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_setup.pcap", pcap_exec) : create_null_dlt_pcap();
+  auto& logger = srslog::fetch_basic_logger("ASN1", false);
+  logger.set_level(srslog::basic_levels::debug);
+  logger.set_hex_dump_max_size(-1);
 
   asn1::e1ap::e1ap_pdu_c pdu;
   pdu.set_init_msg();
@@ -84,8 +92,9 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
-
+#if JSON_OUTPUT
   pcap_writer->push_pdu(bytes);
+#endif
 
   logger.info(bytes.data(), bytes.size(), "Packed PDU ({} bytes):", bref.distance_bytes());
 
@@ -100,9 +109,6 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_successful)
 {
-  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_bearer_context_setup_request.pcap", pcap_exec)
-                                 : create_null_dlt_pcap();
-
   uint8_t rx_msg[] = {0x00, 0x08, 0x00, 0x69, 0x00, 0x00, 0x07, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x0d, 0x00,
                       0x13, 0x00, 0x00, 0x10, 0xa6, 0xae, 0x39, 0xef, 0xbe, 0x0d, 0x42, 0x4c, 0xd8, 0x5f, 0x4a, 0x9c,
                       0x3a, 0xee, 0x04, 0x14, 0x00, 0x0e, 0x00, 0x05, 0x30, 0x3b, 0x9a, 0xca, 0x00, 0x00, 0x3a, 0x40,
@@ -112,7 +118,9 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
                       0x00, 0x00, 0x00, 0x80, 0x00, 0x09, 0x7a, 0x00, 0x4d, 0x40, 0x02, 0x00, 0x00};
   srsran::byte_buffer rx_pdu{rx_msg};
 
+#if JSON_OUTPUT
   pcap_writer->push_pdu(rx_msg);
+#endif
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
@@ -165,16 +173,15 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking_successful)
 {
-  auto pcap_writer = JSON_OUTPUT ? create_e1ap_pcap("/tmp/e1ap_e1_bearer_context_setup_response.pcap", pcap_exec)
-                                 : create_null_dlt_pcap();
-
   uint8_t rx_msg[] = {0x20, 0x08, 0x00, 0x37, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x03,
                       0x00, 0x03, 0x40, 0x02, 0x80, 0x00, 0x10, 0x40, 0x23, 0x40, 0x00, 0x01, 0x00, 0x2e, 0x40,
                       0x1c, 0x00, 0x00, 0x01, 0x01, 0xf0, 0xac, 0x15, 0x06, 0x09, 0x00, 0x00, 0x02, 0x83, 0x00,
                       0x06, 0x00, 0x1f, 0xac, 0x15, 0x06, 0x09, 0x80, 0x00, 0x02, 0x83, 0x00, 0x00, 0x80};
   srsran::byte_buffer rx_pdu{rx_msg};
 
+#if JSON_OUTPUT
   pcap_writer->push_pdu(rx_msg);
+#endif
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;

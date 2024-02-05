@@ -65,10 +65,10 @@ public:
   io_broker& operator=(io_broker&&) = delete;
 
   /// \brief Register a file descriptor to be handled by the IO interface.
-  virtual bool register_fd(int fd, recv_callback_t handler) = 0;
+  SRSRAN_NODISCARD virtual bool register_fd(int fd, recv_callback_t handler) = 0;
 
   /// \brief Unregister a file descriptor from the IO interface.
-  virtual bool unregister_fd(int fd) = 0;
+  SRSRAN_NODISCARD virtual bool unregister_fd(int fd) = 0;
 };
 
 } // namespace srsran

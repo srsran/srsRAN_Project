@@ -99,8 +99,10 @@ private:
   /// Manager of execution contexts and respective executors instantiated by the gNB application.
   task_execution_manager exec_mng;
 
-  /// CPU affinity bitmask manager.
-  gnb_os_sched_affinity_manager affinity_mng;
+  gnb_os_sched_affinity_manager low_prio_affinity_mng;
+
+  /// CPU affinity bitmask manager per cell.
+  std::vector<gnb_os_sched_affinity_manager> affinity_mng;
 
   /// Helper method to create workers with non zero priority.
   void create_prio_worker(const std::string&                                    name,

@@ -35,7 +35,8 @@ std::unique_ptr<e1ap_interface> create_e1ap(e1ap_message_notifier&         e1ap_
                                             e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                             e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                             timer_manager&                 timers_,
-                                            task_executor&                 ctrl_exec_);
+                                            task_executor&                 ctrl_exec_,
+                                            unsigned                       max_nof_supported_ues_);
 
 } // namespace srs_cu_cp
 } // namespace srsran

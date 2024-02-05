@@ -22,13 +22,17 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Forward declared classes.
+class du_processor_rrc_ue_control_message_notifier;
+class du_processor_rrc_ue_srb_control_notifier;
 
 /// Common UE interface.
 class ue_base
@@ -93,6 +97,7 @@ public:
 /// UE configuration passed to CU-CP
 struct ue_configuration {
   std::chrono::seconds inactivity_timer;
+  unsigned             max_nof_supported_ues = MAX_NOF_CU_UES;
 };
 
 /// Common UE manager interface.

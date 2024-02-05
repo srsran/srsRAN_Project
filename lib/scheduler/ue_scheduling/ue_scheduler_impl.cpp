@@ -272,4 +272,28 @@ void ue_scheduler_impl::handle_error_indication(slot_point                      
       }
     }
   }
+
+  if (event.pdsch_discarded) {
+    for (const dl_msg_alloc& grant : prev_slot_result->result.dl.ue_grants) {
+      // Given that the PDSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+      // and the DL buffer was not reset. To avoid mixing different TBs in the buffer, it is important to
+      // reset the DL HARQ process.
+      ue* u = ue_db.find_by_rnti(grant.pdsch_cfg.rnti);
+      if (u == nullptr) {
+        // UE has been removed.
+        continue;
+      }
+      ue_cell* ucell = u->find_cell(cell_index);
+      if (ucell == nullptr) {
+        // UE cell does not exist.
+        continue;
+      }
+      dl_harq_process& h_dl = ucell->harqs.dl_harq(grant.pdsch_cfg.harq_id);
+      for (unsigned cw = 0; cw != grant.pdsch_cfg.codewords.size(); ++cw) {
+        if (h_dl.is_waiting_ack(cw)) {
+          h_dl.cancel_harq_retxs(cw);
+        }
+      }
+    }
+  }
 }

@@ -30,13 +30,15 @@ namespace srsran {
 namespace config_helpers {
 
 /// Generates default QoS configuration used by gNB CU-UP.
-inline std::map<five_qi_t, srs_cu_up::cu_up_qos_config> make_default_cu_up_qos_config_list(bool warn_on_drop)
+inline std::map<five_qi_t, srs_cu_up::cu_up_qos_config>
+make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_period)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_list = {};
   {
     // 5QI=7
     srs_cu_up::cu_up_qos_config cfg{};
     cfg.pdcp_custom = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom.metrics_period  = metrics_period;
     cfg.pdcp_custom.tx.warn_on_drop = warn_on_drop;
 
     qos_list[uint_to_five_qi(7)] = cfg;
@@ -45,6 +47,7 @@ inline std::map<five_qi_t, srs_cu_up::cu_up_qos_config> make_default_cu_up_qos_c
     // 5QI=9
     srs_cu_up::cu_up_qos_config cfg{};
     cfg.pdcp_custom = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom.metrics_period  = metrics_period;
     cfg.pdcp_custom.tx.warn_on_drop = warn_on_drop;
 
     qos_list[uint_to_five_qi(9)] = cfg;

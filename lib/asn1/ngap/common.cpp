@@ -21,8 +21,6 @@
  */
 
 #include "srsran/asn1/ngap/common.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::ngap;
 
@@ -91,6 +89,12 @@ SRSASN_CODE private_ie_id_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* private_ie_id_c::types_opts::to_string() const
+{
+  static const char* names[] = {"local", "global"};
+  return convert_enum_idx(names, 2, value, "private_ie_id_c::types");
+}
+
 // PrivateIE-Field{NGAP-PRIVATE-IES : IEsSetParam} ::= SEQUENCE{{NGAP-PRIVATE-IES}}
 template <class ies_set_paramT_>
 SRSASN_CODE private_ie_field_s<ies_set_paramT_>::pack(bit_ref& bref) const
@@ -118,23 +122,6 @@ void private_ie_field_s<ies_set_paramT_>::to_json(json_writer& j) const
   id.to_json(j);
   j.write_str("criticality", crit.to_string());
   j.end_obj();
-}
-
-// Value ::= OPEN TYPE
-void ngap_private_ies_empty_o::value_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.end_obj();
-}
-SRSASN_CODE ngap_private_ies_empty_o::value_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ngap_private_ies_empty_o::value_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  return SRSASN_SUCCESS;
 }
 
 template <class valueT_>

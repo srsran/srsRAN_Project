@@ -59,18 +59,27 @@ public:
   /// - a buffer reservation is performed with the same identifier but different number of codeblocks, or
   /// - buffer reservation expires (by means run_slot()).
   ///
-  /// The buffer CRC are reset if one of the conditions above is satisfied.
-  ///
   /// The pool does not initialize or modify the codeblock contents of the buffers. The modules that use the buffers are
   /// responsible for initializing and modifying their contents upon new transmissions.
   ///
-  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation.
+  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation. Possible
+  /// reservation failures are:
+  /// - Insufficient number of buffers, \ref rx_buffer_pool_config::nof_buffers buffers are reserved with different
+  ///   identifiers;
+  /// - Insufficient number of codeblocks, \ref rx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
+  ///   assigned to buffers;
+  /// - A buffer with the same identifier is locked;
+  /// - No buffer is found with the same identifier while the reservation is not marked as new data;
+  /// - The number of codeblocks for a retransmission is different than the previous reservation; or
+  /// - The pool operation has stopped.
   ///
-  /// \param[in] slot Indicates the slot context in which the reservation occurs.
-  /// \param[in] id Identifies the buffer.
+  /// \param[in] slot           Slot context in which the reservation occurs.
+  /// \param[in] id             Buffer identifier.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
+  /// \param[in] new_data       Set to true if the transmission is for new data.
   /// \return A valid unique buffer if the reservation was successful. Otherwise, an invalid unique buffer.
-  virtual unique_rx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) = 0;
+  virtual unique_rx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
 
   /// \brief Runs pool housekeeping tasks.
   /// \param[in] slot Indicates the current slot.
@@ -86,13 +95,33 @@ struct rx_buffer_pool_config {
   /// Number of buffers available in the pool.
   unsigned nof_buffers;
   /// Number of codeblocks available in the pool for all the buffers.
-  unsigned max_nof_codeblocks;
+  unsigned nof_codeblocks;
   /// buffer lifetime as a number of slots.
   unsigned expire_timeout_slots;
   /// Set to true to indicate that soft bits are not stored in the buffer.
   bool external_soft_bits;
 };
 
-std::unique_ptr<rx_buffer_pool> create_rx_buffer_pool(const rx_buffer_pool_config& config);
+/// Receive buffer pool controller interface.
+class rx_buffer_pool_controller
+{
+public:
+  /// \brief Default destructor.
+  ///
+  /// An assertion is triggered if any buffer is still locked. This prevents that unique buffers lose the reference to
+  /// the actual buffers.
+  virtual ~rx_buffer_pool_controller() = default;
+
+  /// Gets the actual buffer pool.
+  virtual rx_buffer_pool& get_pool() = 0;
+
+  /// \brief Stops the buffer pool.
+  ///
+  /// It waits for all buffers to be unlocked.
+  virtual void stop() = 0;
+};
+
+/// Creates a receive buffer pool.
+std::unique_ptr<rx_buffer_pool_controller> create_rx_buffer_pool(const rx_buffer_pool_config& config);
 
 } // namespace srsran

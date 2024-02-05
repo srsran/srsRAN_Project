@@ -55,7 +55,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
   ASSERT_EQ(harq_ent.find_empty_ul_harq(), nullptr);
 }
 
-TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
+TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_newtx)
 {
   unsigned    nof_harqs = 8, max_ack_wait_slots = 4;
   harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, {}, 0, max_ack_wait_slots);
@@ -70,9 +70,8 @@ TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
     ASSERT_EQ(harq_ent.find_pending_dl_retx(), nullptr);
     harq_ent.slot_indication(++sl_tx);
   }
-  ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);
-  ASSERT_NE(harq_ent.find_pending_dl_retx(), nullptr);
-  ASSERT_TRUE(harq_ent.find_pending_dl_retx()->has_pending_retx());
+  ASSERT_EQ(harq_ent.find_pending_dl_retx(), nullptr);
+  ASSERT_NE(harq_ent.find_empty_dl_harq(), nullptr);
 }
 
 class harq_entity_harq_1bit_tester : public ::testing::Test

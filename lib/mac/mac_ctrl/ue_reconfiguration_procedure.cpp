@@ -21,9 +21,9 @@
  */
 
 #include "ue_reconfiguration_procedure.h"
-#include "../../ran/gnb_format.h"
 #include "mac_config.h"
 #include "mac_scheduler_configurator.h"
+#include "proc_logger.h"
 
 using namespace srsran;
 
@@ -39,7 +39,7 @@ mac_ue_reconfiguration_procedure::mac_ue_reconfiguration_procedure(const mac_ue_
 void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue_reconfiguration_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  log_proc_started(logger, req.ue_index, req.crnti, "UE Reconfiguration Request");
+  logger.debug("{}: started...", mac_log_prefix(req.ue_index, req.crnti, name()));
 
   // If there are bearers to add or modify.
   if (not req.bearers_to_addmod.empty()) {
@@ -57,9 +57,9 @@ void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue
   }
 
   // > Reconfigure UE in Scheduler.
-  log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
+  logger.debug("{}: started...", mac_log_prefix(req.ue_index, req.crnti, "Sched UE Config"));
   CORO_AWAIT_VALUE(sched_conf_res, sched_cfg.handle_ue_reconfiguration_request(req));
-  log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
+  logger.info("{}: successfully finished", mac_log_prefix(req.ue_index, req.crnti, "Sched UE Config"));
   if (not sched_conf_res) {
     CORO_EARLY_RETURN(handle_result(false));
   }
@@ -86,9 +86,9 @@ void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue
 mac_ue_reconfiguration_response mac_ue_reconfiguration_procedure::handle_result(bool result)
 {
   if (result) {
-    log_proc_completed(logger, req.ue_index, req.crnti, name());
+    logger.info("{}: finished successfully", mac_log_prefix(req.ue_index, req.crnti, name()));
   } else {
-    log_proc_failure(logger, req.ue_index, req.crnti, name());
+    logger.warning("{}: failed", mac_log_prefix(req.ue_index, req.crnti, name()));
   }
 
   // Respond back to DU manager with result

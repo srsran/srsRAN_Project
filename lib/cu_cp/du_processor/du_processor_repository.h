@@ -25,11 +25,11 @@
 #include "../adapters/du_processor_adapters.h"
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
 #include <unordered_map>
@@ -38,6 +38,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_cp_configuration;
+class cu_cp_controller;
 
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
@@ -49,18 +50,20 @@ struct du_repository_config {
   f1ap_ue_removal_notifier&              f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
-  rrc_ue_reestablishment_notifier&       rrc_ue_cu_cp_notifier;
+  rrc_ue_context_update_notifier&        rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   cell_meas_manager&                     cell_meas_mng;
-  const std::atomic<bool>&               amf_connected;
+  du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler
+class du_processor_repository : public du_repository, public du_repository_ngap_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
+
+  void stop();
 
   // DU interface
   std::unique_ptr<f1ap_message_notifier>
@@ -78,9 +81,6 @@ public:
   async_task<ngap_handover_resource_allocation_response>
   handle_ngap_handover_request(const ngap_handover_request& request) override;
 
-  void handle_amf_connection();
-  void handle_amf_connection_drop();
-
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
 private:
@@ -91,7 +91,7 @@ private:
     // NGAP to DU processor notifier;
     ngap_du_processor_adapter ngap_du_processor_notifier;
 
-    std::unique_ptr<du_processor_interface> du_processor;
+    std::unique_ptr<du_processor_impl_interface> du_processor;
 
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
@@ -107,15 +107,17 @@ private:
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The DU processor object.
-  du_processor_interface& find_du(du_index_t du_index);
+  du_processor_impl_interface& find_du(du_index_t du_index);
 
   /// \brief Adds a DU processor object to the CU-CP.
   /// \return The DU index of the added DU processor object.
   du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
   /// \brief Removes the specified DU processor object from the CU-CP.
+  ///
+  /// Note: This function assumes that the caller is in the CU-CP execution context.
   /// \param[in] du_index The index of the DU processor to delete.
-  void remove_du(du_index_t du_index);
+  void remove_du_impl(du_index_t du_index);
 
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
@@ -129,10 +131,12 @@ private:
 
   du_task_scheduler du_task_sched;
 
-  std::unordered_map<du_index_t, du_context> du_db;
+  std::map<du_index_t, du_context> du_db;
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
-  std::unordered_map<du_index_t, du_context> removed_du_db;
+  std::map<du_index_t, du_context> removed_du_db;
+
+  std::atomic<bool> running{true};
 };
 
 } // namespace srs_cu_cp

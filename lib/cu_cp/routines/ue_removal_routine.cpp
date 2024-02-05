@@ -27,7 +27,7 @@ using namespace srsran::srs_cu_cp;
 
 ue_removal_routine::ue_removal_routine(ue_index_t                      ue_index_,
                                        cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier_,
-                                       cu_cp_e1ap_ue_removal_notifier& e1ap_notifier_,
+                                       cu_cp_e1ap_ue_removal_notifier* e1ap_notifier_,
                                        cu_cp_f1ap_ue_removal_notifier& f1ap_notifier_,
                                        cu_cp_ngap_control_notifier&    ngap_notifier_,
                                        ue_manager&                     ue_mng_,
@@ -54,7 +54,9 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
   rrc_du_notifier.remove_ue(ue_index);
 
   // Remove Bearer Context from E1AP
-  e1ap_notifier.remove_ue(ue_index);
+  if (e1ap_notifier != nullptr) {
+    e1ap_notifier->remove_ue(ue_index);
+  }
 
   // Remove UE Context from F1AP
   f1ap_notifier.remove_ue(ue_index);

@@ -83,7 +83,7 @@ public:
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) = 0;
 
   /// \brief Forward to scheduler any notification of a received MAC CRNTI CE.
-  virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index) = 0;
+  virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran

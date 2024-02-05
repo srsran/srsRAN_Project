@@ -23,23 +23,9 @@
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/phy/constants.h"
 #include "srsran/ran/sch/sch_segmentation.h"
+#include "srsran/ran/uci/uci_info.h"
 
 using namespace srsran;
-
-static constexpr units::bits get_crc_size_uci(units::bits nof_bits)
-{
-  using namespace units::literals;
-
-  if (nof_bits < 12_bits) {
-    return 0_bits;
-  }
-
-  if (nof_bits < 20_bits) {
-    return 6_bits;
-  }
-
-  return 11_bits;
-}
 
 static constexpr unsigned calculate_nof_re_harq_ack(units::bits nof_harq_ack_bits,
                                                     float       beta_offset_pusch,
@@ -54,9 +40,9 @@ static constexpr unsigned calculate_nof_re_harq_ack(units::bits nof_harq_ack_bit
     return 0;
   }
 
-  units::bits nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
+  unsigned nof_bits_crc = get_uci_crc_size(nof_harq_ack_bits.value());
 
-  unsigned left  = std::ceil(static_cast<float>((nof_harq_ack_bits + nof_bits_crc).value()) * beta_offset_pusch *
+  unsigned left  = std::ceil(static_cast<float>(nof_harq_ack_bits.value() + nof_bits_crc) * beta_offset_pusch *
                             static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
@@ -76,9 +62,9 @@ static constexpr unsigned calculate_nof_re_harq_ack_without_sch(units::bits nof_
     return 0;
   }
 
-  units::bits nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
+  unsigned nof_bits_crc = get_uci_crc_size(nof_harq_ack_bits.value());
 
-  unsigned left  = std::ceil(static_cast<float>((nof_harq_ack_bits + nof_bits_crc).value()) * beta_offset_pusch /
+  unsigned left  = std::ceil(static_cast<float>(nof_harq_ack_bits.value() + nof_bits_crc) * beta_offset_pusch /
                             (target_code_rate * static_cast<float>(modulation_order)));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
@@ -98,9 +84,9 @@ static constexpr unsigned calculate_nof_re_csi_part1(units::bits nof_csi_part1_b
     return 0;
   }
 
-  units::bits nof_bits_crc = get_crc_size_uci(nof_csi_part1_bits);
+  unsigned nof_bits_crc = get_uci_crc_size(nof_csi_part1_bits.value());
 
-  unsigned left  = std::ceil(static_cast<float>((nof_csi_part1_bits + nof_bits_crc).value()) * beta_offset_pusch *
+  unsigned left  = std::ceil(static_cast<float>(nof_csi_part1_bits.value() + nof_bits_crc) * beta_offset_pusch *
                             static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
   unsigned right = static_cast<unsigned>(std::ceil(alpha_scaling * static_cast<float>(nof_re_uci))) - nof_re_harq_ack;
 
@@ -127,9 +113,9 @@ static constexpr unsigned calculate_nof_re_csi_part1_without_sch(units::bits nof
   }
 
   // CSI Part 2 is multiplexed over PUSCH.
-  units::bits nof_bits_crc = get_crc_size_uci(nof_csi_part1_bits);
+  unsigned nof_bits_crc = get_uci_crc_size(nof_csi_part1_bits.value());
 
-  unsigned left  = std::ceil(static_cast<float>((nof_csi_part1_bits + nof_bits_crc).value()) * beta_offset_pusch /
+  unsigned left  = std::ceil(static_cast<float>(nof_csi_part1_bits.value() + nof_bits_crc) * beta_offset_pusch /
                             (pusch_code_rate * static_cast<float>(pusch_mod_order)));
   unsigned right = nof_re_uci - nof_re_harq_ack;
 
@@ -150,9 +136,9 @@ static constexpr unsigned calculate_nof_re_csi_part2(units::bits nof_csi_part2_b
     return 0;
   }
 
-  units::bits nof_bits_crc = get_crc_size_uci(nof_csi_part2_bits);
+  unsigned nof_bits_crc = get_uci_crc_size(nof_csi_part2_bits.value());
 
-  unsigned left  = std::ceil(static_cast<float>((nof_csi_part2_bits + nof_bits_crc).value()) * beta_offset_pusch *
+  unsigned left  = std::ceil(static_cast<float>(nof_csi_part2_bits.value() + nof_bits_crc) * beta_offset_pusch *
                             static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
   unsigned right = static_cast<unsigned>(std::ceil(alpha_scaling * static_cast<float>(nof_re_uci))) - nof_re_harq_ack -
                    nof_re_csi_part1;

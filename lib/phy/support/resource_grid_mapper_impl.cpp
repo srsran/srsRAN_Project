@@ -29,9 +29,6 @@ using namespace srsran;
 
 using precoding_buffer_type = static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB>;
 
-static concurrent_thread_local_object_pool<precoding_buffer_type>
-    precoding_buffers(std::thread::hardware_concurrency());
-
 // Resource element allocation patterns within a resource block for PDSCH DM-RS type 1.
 static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
 {
@@ -48,7 +45,6 @@ static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
 // Optimized mapping for PDSCH DM-RS Type 1 mapped on contiguous RBs. It derives the CDM group ID of the input symbols
 // from the RE allocation pattern.
 static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
-                                      precoding_buffer_type&         precoding_buffer,
                                       const re_buffer_reader&        input,
                                       const re_pattern&              pattern,
                                       const precoding_configuration& precoding,
@@ -74,10 +70,9 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
 
   unsigned nof_re_symbol = nof_dmrs_re_prb * pattern.prb_mask.count();
 
-  if ((nof_re_symbol != precoding_buffer.get_nof_re()) || (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
-    // Resize the output buffer if the input dimensions don't match.
-    precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
-  }
+  // Temporary intermediate buffer for storing precoded symbols.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB> precoding_buffer(nof_precoding_ports,
+                                                                                      nof_re_symbol);
 
   unsigned first_prb = pattern.prb_mask.find_lowest(true);
   unsigned prb_end   = pattern.prb_mask.find_highest(true) + 1;
@@ -182,14 +177,12 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                 precoding.get_nof_ports(),
                 nof_ports);
 
-  precoding_buffer_type& precoding_buffer = precoding_buffers.get();
-
   bool is_dmrs_type1 = pattern.prb_mask.is_contiguous(true) &&
                        (pattern.re_mask == get_re_mask_type_1(0) || pattern.re_mask == get_re_mask_type_1(1));
 
   if (is_dmrs_type1) {
     // Optimized contiguous DM-RS Type 1 mapping.
-    map_dmrs_type1_contiguous(writer, precoding_buffer, input, pattern, precoding, *precoder);
+    map_dmrs_type1_contiguous(writer, input, pattern, precoding, *precoder);
     return;
   }
 
@@ -215,10 +208,9 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
   // Number of RE to be allocated for each OFDM symbol in the pattern.
   unsigned nof_re_symbol = symbol_re_mask.count();
 
-  if ((nof_re_symbol != precoding_buffer.get_nof_re()) || (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
-    // Resize the output buffer if the input dimensions don't match.
-    precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
-  }
+  // Temporary intermediate buffer for storing precoded symbols.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB> precoding_buffer(nof_precoding_ports,
+                                                                                      nof_re_symbol);
 
   // Counter for the number of RE read from the input and mapped to the grid.
   unsigned i_re_buffer = 0;
@@ -298,8 +290,6 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                                     const precoding_configuration& precoding,
                                     unsigned                       re_skip)
 {
-  precoding_buffer_type& precoding_buffer = precoding_buffers.get();
-
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
 
@@ -412,8 +402,8 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
           // Prepare destination of the modulation buffer.
           span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
-          // Prepare buffers.
-          precoding_buffer.resize(nof_antennas, nof_re_block);
+          // Prepare precoding result buffer.
+          precoding_buffer_type precoding_buffer(nof_antennas, nof_re_block);
 
           // Layer map and precoding.
           precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);

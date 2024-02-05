@@ -108,6 +108,12 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
     pdu.harq_id     = fapi_pdu.harq_id;
     pdu.rnti        = fapi_pdu.rnti;
     pdu.pdu         = span<const uint8_t>(fapi_pdu.data, fapi_pdu.pdu_length);
+    if (pdu.pdu.empty()) {
+      srslog::fetch_basic_logger("FAPI").warning("Unable to allocate memory for MAC RX PDU");
+      indication.pdus.pop_back();
+      // Avoid new buffer allocations for the same FAPI PDU.
+      break;
+    }
   }
 
   // Only invoke the MAC when there are successfully decoded PDUs available.

@@ -21,8 +21,8 @@
  */
 
 #include "lib/scheduler/support/prbs_calculator.h"
-#include "lib/scheduler/support/tbs_calculator.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 

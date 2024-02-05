@@ -216,6 +216,7 @@ void du_impl::start()
 void du_impl::stop()
 {
   logger.info("Stopping DU...");
+  du_lo->stop();
   du_hi->stop();
   logger.info("DU stopped successfully");
 }

@@ -233,6 +233,9 @@ public:
   /// Returns true if the buffer is free.
   bool is_free() const { return current_state == state::available; }
 
+  /// Returns true if the buffer is locked.
+  bool is_locked() const { return current_state == state::locked; }
+
   /// \brief Expires the buffer.
   ///
   /// The buffer pool shall use this method when the buffer expires. The buffer frees the reserved codeblocks if it is

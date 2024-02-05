@@ -115,9 +115,8 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
   }
 
   for (const auto& mod_session : result.pdu_sessions_modified_list) {
-    srsran_assert(context.pdu_sessions.find(mod_session.id) != context.pdu_sessions.end(),
-                  "PDU session {} not allocated",
-                  mod_session.id);
+    srsran_assert(
+        context.pdu_sessions.find(mod_session.id) != context.pdu_sessions.end(), "{} not allocated", mod_session.id);
     auto& session_context = context.pdu_sessions.at(mod_session.id);
 
     // Add new DRBs.
@@ -128,9 +127,8 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
   }
 
   for (const auto& rem_session : result.pdu_sessions_removed_list) {
-    srsran_assert(context.pdu_sessions.find(rem_session) != context.pdu_sessions.end(),
-                  "PDU session {} not allocated",
-                  rem_session);
+    srsran_assert(
+        context.pdu_sessions.find(rem_session) != context.pdu_sessions.end(), "{} not allocated", rem_session);
 
     auto& session_context = context.pdu_sessions.at(rem_session);
 
@@ -151,7 +149,7 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
 
 const up_pdu_session_context& up_resource_manager_impl::get_pdu_session_context(pdu_session_id_t psi)
 {
-  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "PDU session {} not allocated", psi);
+  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "{} not allocated", psi);
   return context.pdu_sessions.at(psi);
 }
 
@@ -162,11 +160,11 @@ bool up_resource_manager_impl::has_pdu_session(pdu_session_id_t pdu_session_id)
 
 const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
 {
-  srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "DRB ID {} not allocated", drb_id);
+  srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "{} not allocated", drb_id);
   const auto& psi = context.drb_map.at(drb_id);
-  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "Couldn't find PDU session ID {}", psi);
+  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "Couldn't find {}", psi);
   srsran_assert(context.pdu_sessions.at(psi).drbs.find(drb_id) != context.pdu_sessions.at(psi).drbs.end(),
-                "Couldn't find DRB id {} in PDU session {}",
+                "Couldn't find {} in {}",
                 drb_id,
                 psi);
   return context.pdu_sessions.at(psi).drbs.at(drb_id);
@@ -188,7 +186,7 @@ size_t up_resource_manager_impl::get_nof_qos_flows(pdu_session_id_t psi)
 
   // Look up specified session
   if (!has_pdu_session(psi)) {
-    logger.error("PDU session {} not allocated", psi);
+    logger.warning("{} not allocated", psi);
   } else {
     // Return number of active flows for specified session only.
     const auto& session = get_pdu_session_context(psi);

@@ -113,48 +113,50 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
 {
   sctp_network_gateway_config config;
   config.bind_address = "1.1.1.1";
-  config.bind_port    = get_unused_sctp_port("0.0.0.0");
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   create_server(config);
-  create_client(config);
   ASSERT_FALSE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_FALSE(server_port.has_value());
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
 {
   sctp_network_gateway_config config;
   config.bind_address = "1:1::";
-  config.bind_port    = get_unused_sctp_port("::1");
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   create_server(config);
-  create_client(config);
   ASSERT_FALSE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_FALSE(server_port.has_value());
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
 {
   sctp_network_gateway_config config;
   config.bind_address = "127.0.0.1";
-  config.bind_port    = get_unused_sctp_port(config.bind_address);
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   create_server(config);
-  create_client(config);
   ASSERT_TRUE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
 {
   sctp_network_gateway_config config;
   config.bind_address = "::1";
-  config.bind_port    = get_unused_sctp_port(config.bind_address);
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   create_server(config);
-  create_client(config);
   ASSERT_TRUE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
@@ -164,13 +166,10 @@ TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
   sctp_network_gateway_config config;
   config.connection_name   = "TEST";
   config.connect_address   = "127.0.0.1";
-  config.connect_port      = get_unused_sctp_port(config.connect_address);
+  config.connect_port      = 0; // attempt to connect to port 0 which should always fail
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
-  ASSERT_NE(config.connect_port, 0);
-  create_server(config);
   create_client(config);
-
   ASSERT_FALSE(connect());
 }
 
@@ -181,13 +180,10 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
   sctp_network_gateway_config config;
   config.connection_name   = "TEST";
   config.connect_address   = "::1";
-  config.connect_port      = get_unused_sctp_port(config.connect_address);
+  config.connect_port      = 0; // attempt to connect to port 0 which should always fail
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
-  ASSERT_NE(config.connect_port, 0);
-  create_server(config);
   create_client(config);
-
   ASSERT_FALSE(connect());
 }
 
@@ -195,19 +191,22 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
+  server_config.bind_port    = 0;
   server_config.reuse_addr   = true;
-  ASSERT_NE(server_config.bind_port, 0);
+
+  create_server(server_config);
+  ASSERT_TRUE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_config.bind_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
-  create_server(server_config);
-  create_client(client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  create_client(client_config);
   start_receive_thread();
   ASSERT_TRUE(connect());
 
@@ -237,19 +236,22 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
   server_config.bind_address = "::1";
-  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
+  server_config.bind_port    = 0;
   server_config.reuse_addr   = true;
-  ASSERT_NE(server_config.bind_port, 0);
+
+  create_server(server_config);
+  ASSERT_TRUE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_config.bind_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
-  create_server(server_config);
-  create_client(client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  create_client(client_config);
   start_receive_thread();
   ASSERT_TRUE(connect());
 
@@ -279,19 +281,22 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
   server_config.bind_address = "localhost";
-  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
+  server_config.bind_port    = 0;
   server_config.reuse_addr   = true;
-  ASSERT_NE(server_config.bind_port, 0);
+
+  create_server(server_config);
+  ASSERT_TRUE(bind_and_listen());
+  optional<uint16_t> server_port = server->get_listen_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 
   sctp_network_gateway_config client_config;
   client_config.connection_name   = "TEST";
   client_config.connect_address   = server_config.bind_address;
-  client_config.connect_port      = server_config.bind_port;
+  client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
-  create_server(server_config);
-  create_client(client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  create_client(client_config);
   start_receive_thread();
   ASSERT_TRUE(connect());
 
@@ -326,12 +331,11 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
 
   sctp_network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
+  server_config.bind_port    = 0;
   server_config.reuse_addr   = true;
   server_config.rto_initial  = rto_init;
   server_config.rto_min      = rto_min;
   server_config.rto_max      = rto_max;
-  ASSERT_NE(server_config.bind_port, 0);
 
   create_server(server_config);
 
@@ -357,11 +361,10 @@ TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
 
   sctp_network_gateway_config server_config;
   server_config.bind_address      = "127.0.0.1";
-  server_config.bind_port         = get_unused_sctp_port(server_config.bind_address);
+  server_config.bind_port         = 0;
   server_config.reuse_addr        = true;
   server_config.init_max_attempts = init_max_attempts;
   server_config.max_init_timeo    = max_init_timeo;
-  ASSERT_NE(server_config.bind_port, 0);
 
   create_server(server_config);
 

@@ -63,14 +63,20 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pusch_demodulator_vectortest pusch_demodulator_test_data.tar.gz "")
 
     add_executable(pusch_processor_vectortest pusch_processor_vectortest.cpp)
-    target_link_libraries(pusch_processor_vectortest
-            srsran_channel_equalizer
+    set(PUSCH_PROCESSOR_LIBRARIES srsran_channel_equalizer
             srsran_channel_processors
             srsran_phy_support
             srslog
             srsran_upper_phy_support
             gtest
             gtest_main)
+
+    if (ENABLE_PUSCH_HWACC)
+        set_source_files_properties(pusch_processor_vectortest.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
+        list(APPEND PUSCH_PROCESSOR_LIBRARIES hal_hwacc_pusch)
+    endif (ENABLE_PUSCH_HWACC)
+
+    target_link_libraries(pusch_processor_vectortest ${PUSCH_PROCESSOR_LIBRARIES})
     add_test_vector(pusch_processor_vectortest pusch_processor_test_data.tar.gz "")
 
     add_executable(ulsch_demultiplex_test ulsch_demultiplex_test.cpp)

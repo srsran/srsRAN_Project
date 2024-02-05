@@ -29,8 +29,8 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/ran/modulation_scheme.h"
 #include "srsran/ran/pdsch/pdsch_context.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

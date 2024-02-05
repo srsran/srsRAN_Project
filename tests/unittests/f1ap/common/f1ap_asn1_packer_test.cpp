@@ -24,6 +24,7 @@
 #include "test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

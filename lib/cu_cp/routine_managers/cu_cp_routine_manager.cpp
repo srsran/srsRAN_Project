@@ -21,32 +21,26 @@
  */
 
 #include "cu_cp_routine_manager.h"
-#include "../routines/initial_cu_cp_setup_routine.h"
+#include "../routines/amf_connection_setup_routine.h"
 #include "../routines/ue_removal_routine.h"
 #include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_routine_manager::cu_cp_routine_manager(cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                             ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_,
-                                             ue_task_scheduler&              ue_task_sched_) :
-  ngap_ctrl_notifier(ngap_ctrl_notifier_),
-  cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_),
-  ue_task_sched(ue_task_sched_),
-  main_ctrl_loop(128)
+cu_cp_routine_manager::cu_cp_routine_manager(ue_task_scheduler& ue_task_sched_) :
+  ue_task_sched(ue_task_sched_), main_ctrl_loop(128)
 {
 }
 
-void cu_cp_routine_manager::start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg)
+bool cu_cp_routine_manager::schedule_async_task(async_task<void> task)
 {
-  main_ctrl_loop.schedule(
-      launch_async<initial_cu_cp_setup_routine>(ngap_cfg, ngap_ctrl_notifier, cu_cp_ngap_ev_notifier));
+  return main_ctrl_loop.schedule(std::move(task));
 }
 
 void cu_cp_routine_manager::start_ue_removal_routine(ue_index_t                      ue_index,
                                                      cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier,
-                                                     cu_cp_e1ap_ue_removal_notifier& e1ap_notifier,
+                                                     cu_cp_e1ap_ue_removal_notifier* e1ap_notifier,
                                                      cu_cp_f1ap_ue_removal_notifier& f1ap_notifier,
                                                      cu_cp_ngap_control_notifier&    ngap_notifier,
                                                      ue_manager&                     ue_mng,

@@ -52,7 +52,7 @@ public:
 
   void operator()(coro_context<async_task<mac_ue_create_response>>& ctx);
 
-  static const char* name() { return "UE Create Request"; }
+  static const char* name() { return "MAC UE Creation"; }
 
 private:
   mac_ue_create_response handle_mac_ue_create_result(bool result);

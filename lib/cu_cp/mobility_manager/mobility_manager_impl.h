@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/mobility_manager.h"
+#include "mobility_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {

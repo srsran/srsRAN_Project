@@ -65,7 +65,6 @@ public:
 class rrc_ue_setup_proc_notifier
 {
 public:
-  rrc_ue_setup_proc_notifier()          = default;
   virtual ~rrc_ue_setup_proc_notifier() = default;
 
   /// \brief Notify about a DL CCCH message.
@@ -205,7 +204,7 @@ class rrc_ue_control_notifier
 public:
   virtual ~rrc_ue_control_notifier() = default;
 
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
@@ -244,7 +243,9 @@ public:
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
-  /// \returns The release context of the UE.
+  /// \returns The release context of the UE.  If SRB1 is not created yet, a RrcReject message is contained in the
+  /// release context, see section 5.3.15 in TS 38.331. Otherwise, a RrcRelease message is contained in the release
+  /// context.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 
   /// \brief Retrieve RRC context of a UE to perform mobility (handover, reestablishment).
@@ -305,11 +306,15 @@ struct rrc_reestablishment_ue_context_t {
   bool                                old_ue_fully_attached = false;
 };
 
-/// Interface to notify about RRC Reestablishment Requests.
-class rrc_ue_reestablishment_notifier
+/// Interface to notify about UE context updates.
+class rrc_ue_context_update_notifier
 {
 public:
-  virtual ~rrc_ue_reestablishment_notifier() = default;
+  virtual ~rrc_ue_context_update_notifier() = default;
+
+  /// \brief Notifies that a new RRC UE needs to be setup.
+  /// \return True if the UE is accepted.
+  virtual bool on_ue_setup_request() = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

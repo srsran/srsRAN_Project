@@ -206,7 +206,7 @@ TEST_F(cu_up_test, dl_data_flow)
 
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
-  cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port());
+  cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port().value());
   cu_up_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.n3_bind_addr.c_str());
 
   // teid=2, qfi=1
@@ -223,12 +223,12 @@ TEST_F(cu_up_test, dl_data_flow)
   // send message 1
   ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to `" << cfg.net_cfg.n3_bind_addr << ":"
-                    << cu_up->get_n3_bind_port() << "` - " << strerror(errno);
+                    << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
 
   // send message 2
   ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to `" << cfg.net_cfg.n3_bind_addr << ":"
-                    << cu_up->get_n3_bind_port() << "` - " << strerror(errno);
+                    << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
 
   close(sock_fd);
 

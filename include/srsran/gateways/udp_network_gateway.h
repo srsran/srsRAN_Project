@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
 #include <netdb.h>
 #include <sys/types.h>
@@ -65,7 +66,7 @@ public:
   ///
   /// In case the gateway was configured to bind to port 0, i.e. the operating system shall pick a random free port,
   /// this function can be used to get the actual port number.
-  virtual bool get_bind_port(uint16_t& port) = 0;
+  virtual optional<uint16_t> get_bind_port() = 0;
 
   /// \brief Return the address to which the socket is bound.
   ///

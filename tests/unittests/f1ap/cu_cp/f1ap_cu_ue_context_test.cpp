@@ -42,7 +42,7 @@ public:
   {
   }
 
-  gnb_cu_ue_f1ap_id_t get_next_cu_ue_f1ap_id() { return next_cu_ue_f1ap_id; }
+  gnb_cu_ue_f1ap_id_t allocate_cu_ue_f1ap_id() { return next_cu_ue_f1ap_id; }
 
   void set_next_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_t next_id) { next_cu_ue_f1ap_id = next_id; }
 };
@@ -178,7 +178,7 @@ TEST_F(f1ap_cu_ue_context_test, when_next_ue_id_reaches_max_then_unused_values_a
 
   // set next cu ue f1ap id to maximum value
   ue_ctxt_list.set_next_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_t::max);
-  ASSERT_EQ((uint64_t)ue_ctxt_list.get_next_cu_ue_f1ap_id(), (uint64_t)gnb_cu_ue_f1ap_id_t::max);
+  ASSERT_EQ((uint64_t)ue_ctxt_list.allocate_cu_ue_f1ap_id(), (uint64_t)gnb_cu_ue_f1ap_id_t::max);
 
   // Add ue with max cu ue f1ap id to let next cu ue f1ap id overflow
   ue_ctxt_list.add_ue(ue_index_t::max, gnb_cu_ue_f1ap_id_t::max);

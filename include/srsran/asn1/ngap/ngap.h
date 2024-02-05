@@ -28,11 +28,260 @@
 
 #pragma once
 
-#include "common.h"
-#include "ngap_pdu_contents.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 namespace asn1 {
 namespace ngap {
+
+struct amf_cfg_upd_ies_container;
+using amf_cfg_upd_s = elementary_procedure_option<amf_cfg_upd_ies_container>;
+struct broadcast_session_mod_request_ies_container;
+using broadcast_session_mod_request_s = elementary_procedure_option<broadcast_session_mod_request_ies_container>;
+struct broadcast_session_release_request_ies_container;
+using broadcast_session_release_request_s =
+    elementary_procedure_option<broadcast_session_release_request_ies_container>;
+struct broadcast_session_setup_request_ies_container;
+using broadcast_session_setup_request_s = elementary_procedure_option<broadcast_session_setup_request_ies_container>;
+struct distribution_setup_request_ies_container;
+using distribution_setup_request_s = elementary_procedure_option<distribution_setup_request_ies_container>;
+struct distribution_release_request_ies_container;
+using distribution_release_request_s = elementary_procedure_option<distribution_release_request_ies_container>;
+struct ho_cancel_ies_container;
+using ho_cancel_s = elementary_procedure_option<ho_cancel_ies_container>;
+struct ho_required_ies_container;
+using ho_required_s = elementary_procedure_option<ho_required_ies_container>;
+struct ho_request_ies_container;
+using ho_request_s = elementary_procedure_option<ho_request_ies_container>;
+struct init_context_setup_request_ies_container;
+using init_context_setup_request_s = elementary_procedure_option<init_context_setup_request_ies_container>;
+struct multicast_session_activation_request_ies_container;
+using multicast_session_activation_request_s =
+    elementary_procedure_option<multicast_session_activation_request_ies_container>;
+struct multicast_session_deactivation_request_ies_container;
+using multicast_session_deactivation_request_s =
+    elementary_procedure_option<multicast_session_deactivation_request_ies_container>;
+struct multicast_session_upd_request_ies_container;
+using multicast_session_upd_request_s = elementary_procedure_option<multicast_session_upd_request_ies_container>;
+struct ng_reset_ies_container;
+using ng_reset_s = elementary_procedure_option<ng_reset_ies_container>;
+struct ng_setup_request_ies_container;
+using ng_setup_request_s = elementary_procedure_option<ng_setup_request_ies_container>;
+struct path_switch_request_ies_container;
+using path_switch_request_s = elementary_procedure_option<path_switch_request_ies_container>;
+struct pdu_session_res_modify_request_ies_container;
+using pdu_session_res_modify_request_s = elementary_procedure_option<pdu_session_res_modify_request_ies_container>;
+struct pdu_session_res_modify_ind_ies_container;
+using pdu_session_res_modify_ind_s = elementary_procedure_option<pdu_session_res_modify_ind_ies_container>;
+struct pdu_session_res_release_cmd_ies_container;
+using pdu_session_res_release_cmd_s = elementary_procedure_option<pdu_session_res_release_cmd_ies_container>;
+struct pdu_session_res_setup_request_ies_container;
+using pdu_session_res_setup_request_s = elementary_procedure_option<pdu_session_res_setup_request_ies_container>;
+struct pws_cancel_request_ies_container;
+using pws_cancel_request_s = elementary_procedure_option<pws_cancel_request_ies_container>;
+struct ran_cfg_upd_ies_container;
+using ran_cfg_upd_s = elementary_procedure_option<ran_cfg_upd_ies_container>;
+struct ue_context_mod_request_ies_container;
+using ue_context_mod_request_s = elementary_procedure_option<ue_context_mod_request_ies_container>;
+struct ue_context_release_cmd_ies_container;
+using ue_context_release_cmd_s = elementary_procedure_option<ue_context_release_cmd_ies_container>;
+struct ue_context_resume_request_ies_container;
+using ue_context_resume_request_s = elementary_procedure_option<ue_context_resume_request_ies_container>;
+struct ue_context_suspend_request_ies_container;
+using ue_context_suspend_request_s = elementary_procedure_option<ue_context_suspend_request_ies_container>;
+struct ue_radio_cap_check_request_ies_container;
+using ue_radio_cap_check_request_s = elementary_procedure_option<ue_radio_cap_check_request_ies_container>;
+struct ue_radio_cap_id_map_request_ies_o;
+using ue_radio_cap_id_map_request_s =
+    elementary_procedure_option<protocol_ie_container_l<ue_radio_cap_id_map_request_ies_o>>;
+struct write_replace_warning_request_ies_container;
+using write_replace_warning_request_s = elementary_procedure_option<write_replace_warning_request_ies_container>;
+struct amf_cp_relocation_ind_ies_container;
+using amf_cp_relocation_ind_s = elementary_procedure_option<amf_cp_relocation_ind_ies_container>;
+struct amf_status_ind_ies_o;
+using amf_status_ind_s = elementary_procedure_option<protocol_ie_container_l<amf_status_ind_ies_o>>;
+struct broadcast_session_release_required_ies_container;
+using broadcast_session_release_required_s =
+    elementary_procedure_option<broadcast_session_release_required_ies_container>;
+struct cell_traffic_trace_ies_container;
+using cell_traffic_trace_s = elementary_procedure_option<cell_traffic_trace_ies_container>;
+struct conn_establishment_ind_ies_container;
+using conn_establishment_ind_s = elementary_procedure_option<conn_establishment_ind_ies_container>;
+struct deactiv_trace_ies_container;
+using deactiv_trace_s = elementary_procedure_option<deactiv_trace_ies_container>;
+struct dl_nas_transport_ies_container;
+using dl_nas_transport_s = elementary_procedure_option<dl_nas_transport_ies_container>;
+struct dl_non_ue_associated_nrppa_transport_ies_container;
+using dl_non_ue_associated_nrppa_transport_s =
+    elementary_procedure_option<dl_non_ue_associated_nrppa_transport_ies_container>;
+struct dl_ran_cfg_transfer_ies_container;
+using dl_ran_cfg_transfer_s = elementary_procedure_option<dl_ran_cfg_transfer_ies_container>;
+struct dl_ran_early_status_transfer_ies_container;
+using dl_ran_early_status_transfer_s = elementary_procedure_option<dl_ran_early_status_transfer_ies_container>;
+struct dl_ran_status_transfer_ies_container;
+using dl_ran_status_transfer_s = elementary_procedure_option<dl_ran_status_transfer_ies_container>;
+struct dl_rim_info_transfer_ies_o;
+using dl_rim_info_transfer_s = elementary_procedure_option<protocol_ie_container_l<dl_rim_info_transfer_ies_o>>;
+struct dl_ue_associated_nrppa_transport_ies_container;
+using dl_ue_associated_nrppa_transport_s = elementary_procedure_option<dl_ue_associated_nrppa_transport_ies_container>;
+struct error_ind_ies_container;
+using error_ind_s = elementary_procedure_option<error_ind_ies_container>;
+struct ho_notify_ies_container;
+using ho_notify_s = elementary_procedure_option<ho_notify_ies_container>;
+struct ho_success_ies_container;
+using ho_success_s = elementary_procedure_option<ho_success_ies_container>;
+struct init_ue_msg_ies_container;
+using init_ue_msg_s = elementary_procedure_option<init_ue_msg_ies_container>;
+struct location_report_ies_container;
+using location_report_s = elementary_procedure_option<location_report_ies_container>;
+struct location_report_ctrl_ies_container;
+using location_report_ctrl_s = elementary_procedure_option<location_report_ctrl_ies_container>;
+struct location_report_fail_ind_ies_container;
+using location_report_fail_ind_s = elementary_procedure_option<location_report_fail_ind_ies_container>;
+struct multicast_group_paging_ies_container;
+using multicast_group_paging_s = elementary_procedure_option<multicast_group_paging_ies_container>;
+struct nas_non_delivery_ind_ies_container;
+using nas_non_delivery_ind_s = elementary_procedure_option<nas_non_delivery_ind_ies_container>;
+struct overload_start_ies_container;
+using overload_start_s            = elementary_procedure_option<overload_start_ies_container>;
+using overload_stop_ies_container = protocol_ie_container_empty_l;
+using overload_stop_s             = elementary_procedure_option<overload_stop_ies_container>;
+struct paging_ies_container;
+using paging_s = elementary_procedure_option<paging_ies_container>;
+struct pdu_session_res_notify_ies_container;
+using pdu_session_res_notify_s = elementary_procedure_option<pdu_session_res_notify_ies_container>;
+struct private_msg_s;
+struct pws_fail_ind_ies_container;
+using pws_fail_ind_s = elementary_procedure_option<pws_fail_ind_ies_container>;
+struct pws_restart_ind_ies_container;
+using pws_restart_ind_s = elementary_procedure_option<pws_restart_ind_ies_container>;
+struct ran_cp_relocation_ind_ies_container;
+using ran_cp_relocation_ind_s = elementary_procedure_option<ran_cp_relocation_ind_ies_container>;
+struct reroute_nas_request_ies_container;
+using reroute_nas_request_s = elementary_procedure_option<reroute_nas_request_ies_container>;
+struct retrieve_ue_info_ies_o;
+using retrieve_ue_info_s = elementary_procedure_option<protocol_ie_container_l<retrieve_ue_info_ies_o>>;
+struct rrc_inactive_transition_report_ies_container;
+using rrc_inactive_transition_report_s = elementary_procedure_option<rrc_inactive_transition_report_ies_container>;
+struct secondary_rat_data_usage_report_ies_container;
+using secondary_rat_data_usage_report_s = elementary_procedure_option<secondary_rat_data_usage_report_ies_container>;
+struct trace_fail_ind_ies_container;
+using trace_fail_ind_s = elementary_procedure_option<trace_fail_ind_ies_container>;
+struct trace_start_ies_container;
+using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
+struct ue_context_release_request_ies_container;
+using ue_context_release_request_s = elementary_procedure_option<ue_context_release_request_ies_container>;
+struct ue_info_transfer_ies_container;
+using ue_info_transfer_s = elementary_procedure_option<ue_info_transfer_ies_container>;
+struct ue_radio_cap_info_ind_ies_container;
+using ue_radio_cap_info_ind_s = elementary_procedure_option<ue_radio_cap_info_ind_ies_container>;
+struct ue_tnla_binding_release_request_ies_container;
+using ue_tnla_binding_release_request_s = elementary_procedure_option<ue_tnla_binding_release_request_ies_container>;
+struct ul_nas_transport_ies_container;
+using ul_nas_transport_s = elementary_procedure_option<ul_nas_transport_ies_container>;
+struct ul_non_ue_associated_nrppa_transport_ies_container;
+using ul_non_ue_associated_nrppa_transport_s =
+    elementary_procedure_option<ul_non_ue_associated_nrppa_transport_ies_container>;
+struct ul_ran_cfg_transfer_ies_container;
+using ul_ran_cfg_transfer_s = elementary_procedure_option<ul_ran_cfg_transfer_ies_container>;
+struct ul_ran_early_status_transfer_ies_container;
+using ul_ran_early_status_transfer_s = elementary_procedure_option<ul_ran_early_status_transfer_ies_container>;
+struct ul_ran_status_transfer_ies_container;
+using ul_ran_status_transfer_s = elementary_procedure_option<ul_ran_status_transfer_ies_container>;
+struct ul_rim_info_transfer_ies_o;
+using ul_rim_info_transfer_s = elementary_procedure_option<protocol_ie_container_l<ul_rim_info_transfer_ies_o>>;
+struct ul_ue_associated_nrppa_transport_ies_container;
+using ul_ue_associated_nrppa_transport_s = elementary_procedure_option<ul_ue_associated_nrppa_transport_ies_container>;
+struct amf_cfg_upd_ack_ies_container;
+using amf_cfg_upd_ack_s = elementary_procedure_option<amf_cfg_upd_ack_ies_container>;
+struct broadcast_session_mod_resp_ies_container;
+using broadcast_session_mod_resp_s = elementary_procedure_option<broadcast_session_mod_resp_ies_container>;
+struct broadcast_session_release_resp_ies_container;
+using broadcast_session_release_resp_s = elementary_procedure_option<broadcast_session_release_resp_ies_container>;
+struct broadcast_session_setup_resp_ies_container;
+using broadcast_session_setup_resp_s = elementary_procedure_option<broadcast_session_setup_resp_ies_container>;
+struct distribution_setup_resp_ies_container;
+using distribution_setup_resp_s = elementary_procedure_option<distribution_setup_resp_ies_container>;
+struct distribution_release_resp_ies_container;
+using distribution_release_resp_s = elementary_procedure_option<distribution_release_resp_ies_container>;
+struct ho_cancel_ack_ies_container;
+using ho_cancel_ack_s = elementary_procedure_option<ho_cancel_ack_ies_container>;
+struct ho_cmd_ies_container;
+using ho_cmd_s = elementary_procedure_option<ho_cmd_ies_container>;
+struct ho_request_ack_ies_container;
+using ho_request_ack_s = elementary_procedure_option<ho_request_ack_ies_container>;
+struct init_context_setup_resp_ies_container;
+using init_context_setup_resp_s = elementary_procedure_option<init_context_setup_resp_ies_container>;
+struct multicast_session_activation_resp_ies_container;
+using multicast_session_activation_resp_s =
+    elementary_procedure_option<multicast_session_activation_resp_ies_container>;
+struct multicast_session_deactivation_resp_ies_container;
+using multicast_session_deactivation_resp_s =
+    elementary_procedure_option<multicast_session_deactivation_resp_ies_container>;
+struct multicast_session_upd_resp_ies_container;
+using multicast_session_upd_resp_s = elementary_procedure_option<multicast_session_upd_resp_ies_container>;
+struct ng_reset_ack_ies_container;
+using ng_reset_ack_s = elementary_procedure_option<ng_reset_ack_ies_container>;
+struct ng_setup_resp_ies_container;
+using ng_setup_resp_s = elementary_procedure_option<ng_setup_resp_ies_container>;
+struct path_switch_request_ack_ies_container;
+using path_switch_request_ack_s = elementary_procedure_option<path_switch_request_ack_ies_container>;
+struct pdu_session_res_modify_resp_ies_container;
+using pdu_session_res_modify_resp_s = elementary_procedure_option<pdu_session_res_modify_resp_ies_container>;
+struct pdu_session_res_modify_confirm_ies_container;
+using pdu_session_res_modify_confirm_s = elementary_procedure_option<pdu_session_res_modify_confirm_ies_container>;
+struct pdu_session_res_release_resp_ies_container;
+using pdu_session_res_release_resp_s = elementary_procedure_option<pdu_session_res_release_resp_ies_container>;
+struct pdu_session_res_setup_resp_ies_container;
+using pdu_session_res_setup_resp_s = elementary_procedure_option<pdu_session_res_setup_resp_ies_container>;
+struct pws_cancel_resp_ies_container;
+using pws_cancel_resp_s = elementary_procedure_option<pws_cancel_resp_ies_container>;
+struct ran_cfg_upd_ack_ies_o;
+using ran_cfg_upd_ack_s = elementary_procedure_option<protocol_ie_container_l<ran_cfg_upd_ack_ies_o>>;
+struct ue_context_mod_resp_ies_container;
+using ue_context_mod_resp_s = elementary_procedure_option<ue_context_mod_resp_ies_container>;
+struct ue_context_release_complete_ies_container;
+using ue_context_release_complete_s = elementary_procedure_option<ue_context_release_complete_ies_container>;
+struct ue_context_resume_resp_ies_container;
+using ue_context_resume_resp_s = elementary_procedure_option<ue_context_resume_resp_ies_container>;
+struct ue_context_suspend_resp_ies_container;
+using ue_context_suspend_resp_s = elementary_procedure_option<ue_context_suspend_resp_ies_container>;
+struct ue_radio_cap_check_resp_ies_container;
+using ue_radio_cap_check_resp_s = elementary_procedure_option<ue_radio_cap_check_resp_ies_container>;
+struct ue_radio_cap_id_map_resp_ies_container;
+using ue_radio_cap_id_map_resp_s = elementary_procedure_option<ue_radio_cap_id_map_resp_ies_container>;
+struct write_replace_warning_resp_ies_container;
+using write_replace_warning_resp_s = elementary_procedure_option<write_replace_warning_resp_ies_container>;
+struct amf_cfg_upd_fail_ies_container;
+using amf_cfg_upd_fail_s = elementary_procedure_option<amf_cfg_upd_fail_ies_container>;
+struct broadcast_session_mod_fail_ies_container;
+using broadcast_session_mod_fail_s = elementary_procedure_option<broadcast_session_mod_fail_ies_container>;
+struct broadcast_session_setup_fail_ies_container;
+using broadcast_session_setup_fail_s = elementary_procedure_option<broadcast_session_setup_fail_ies_container>;
+struct distribution_setup_fail_ies_container;
+using distribution_setup_fail_s = elementary_procedure_option<distribution_setup_fail_ies_container>;
+struct ho_prep_fail_ies_container;
+using ho_prep_fail_s = elementary_procedure_option<ho_prep_fail_ies_container>;
+struct ho_fail_ies_container;
+using ho_fail_s = elementary_procedure_option<ho_fail_ies_container>;
+struct init_context_setup_fail_ies_container;
+using init_context_setup_fail_s = elementary_procedure_option<init_context_setup_fail_ies_container>;
+struct multicast_session_activation_fail_ies_container;
+using multicast_session_activation_fail_s =
+    elementary_procedure_option<multicast_session_activation_fail_ies_container>;
+struct multicast_session_upd_fail_ies_container;
+using multicast_session_upd_fail_s = elementary_procedure_option<multicast_session_upd_fail_ies_container>;
+struct ng_setup_fail_ies_container;
+using ng_setup_fail_s = elementary_procedure_option<ng_setup_fail_ies_container>;
+struct path_switch_request_fail_ies_container;
+using path_switch_request_fail_s = elementary_procedure_option<path_switch_request_fail_ies_container>;
+struct ran_cfg_upd_fail_ies_container;
+using ran_cfg_upd_fail_s = elementary_procedure_option<ran_cfg_upd_fail_ies_container>;
+struct ue_context_mod_fail_ies_container;
+using ue_context_mod_fail_s = elementary_procedure_option<ue_context_mod_fail_ies_container>;
+struct ue_context_resume_fail_ies_container;
+using ue_context_resume_fail_s = elementary_procedure_option<ue_context_resume_fail_ies_container>;
+struct ue_context_suspend_fail_ies_container;
+using ue_context_suspend_fail_s = elementary_procedure_option<ue_context_suspend_fail_ies_container>;
 
 /*******************************************************************************
  *                              Struct Definitions
@@ -129,9 +378,6 @@ struct ngap_elem_procs_o {
 
     // choice methods
     init_msg_c() = default;
-    init_msg_c(const init_msg_c& other);
-    init_msg_c& operator=(const init_msg_c& other);
-    ~init_msg_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -292,86 +538,8 @@ struct ngap_elem_procs_o {
     const ul_ue_associated_nrppa_transport_s&       ul_ue_associated_nrppa_transport() const;
 
   private:
-    types type_;
-    choice_buffer_t<amf_cfg_upd_s,
-                    amf_cp_relocation_ind_s,
-                    amf_status_ind_s,
-                    broadcast_session_mod_request_s,
-                    broadcast_session_release_request_s,
-                    broadcast_session_release_required_s,
-                    broadcast_session_setup_request_s,
-                    cell_traffic_trace_s,
-                    conn_establishment_ind_s,
-                    deactiv_trace_s,
-                    distribution_release_request_s,
-                    distribution_setup_request_s,
-                    dl_nas_transport_s,
-                    dl_non_ue_associated_nrppa_transport_s,
-                    dl_ran_cfg_transfer_s,
-                    dl_ran_early_status_transfer_s,
-                    dl_ran_status_transfer_s,
-                    dl_rim_info_transfer_s,
-                    dl_ue_associated_nrppa_transport_s,
-                    error_ind_s,
-                    ho_cancel_s,
-                    ho_notify_s,
-                    ho_request_s,
-                    ho_required_s,
-                    ho_success_s,
-                    init_context_setup_request_s,
-                    init_ue_msg_s,
-                    location_report_ctrl_s,
-                    location_report_fail_ind_s,
-                    location_report_s,
-                    multicast_group_paging_s,
-                    multicast_session_activation_request_s,
-                    multicast_session_deactivation_request_s,
-                    multicast_session_upd_request_s,
-                    nas_non_delivery_ind_s,
-                    ng_reset_s,
-                    ng_setup_request_s,
-                    overload_start_s,
-                    overload_stop_s,
-                    paging_s,
-                    path_switch_request_s,
-                    pdu_session_res_modify_ind_s,
-                    pdu_session_res_modify_request_s,
-                    pdu_session_res_notify_s,
-                    pdu_session_res_release_cmd_s,
-                    pdu_session_res_setup_request_s,
-                    private_msg_s,
-                    pws_cancel_request_s,
-                    pws_fail_ind_s,
-                    pws_restart_ind_s,
-                    ran_cfg_upd_s,
-                    ran_cp_relocation_ind_s,
-                    reroute_nas_request_s,
-                    retrieve_ue_info_s,
-                    rrc_inactive_transition_report_s,
-                    secondary_rat_data_usage_report_s,
-                    trace_fail_ind_s,
-                    trace_start_s,
-                    ue_context_mod_request_s,
-                    ue_context_release_cmd_s,
-                    ue_context_release_request_s,
-                    ue_context_resume_request_s,
-                    ue_context_suspend_request_s,
-                    ue_info_transfer_s,
-                    ue_radio_cap_check_request_s,
-                    ue_radio_cap_id_map_request_s,
-                    ue_radio_cap_info_ind_s,
-                    ue_tnla_binding_release_request_s,
-                    ul_nas_transport_s,
-                    ul_non_ue_associated_nrppa_transport_s,
-                    ul_ran_cfg_transfer_s,
-                    ul_ran_early_status_transfer_s,
-                    ul_ran_status_transfer_s,
-                    ul_rim_info_transfer_s,
-                    ul_ue_associated_nrppa_transport_s,
-                    write_replace_warning_request_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
   // SuccessfulOutcome ::= OPEN TYPE
   struct successful_outcome_c {
@@ -415,9 +583,6 @@ struct ngap_elem_procs_o {
 
     // choice methods
     successful_outcome_c() = default;
-    successful_outcome_c(const successful_outcome_c& other);
-    successful_outcome_c& operator=(const successful_outcome_c& other);
-    ~successful_outcome_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -484,39 +649,8 @@ struct ngap_elem_procs_o {
     const write_replace_warning_resp_s&          write_replace_warning_resp() const;
 
   private:
-    types type_;
-    choice_buffer_t<amf_cfg_upd_ack_s,
-                    broadcast_session_mod_resp_s,
-                    broadcast_session_release_resp_s,
-                    broadcast_session_setup_resp_s,
-                    distribution_release_resp_s,
-                    distribution_setup_resp_s,
-                    ho_cancel_ack_s,
-                    ho_cmd_s,
-                    ho_request_ack_s,
-                    init_context_setup_resp_s,
-                    multicast_session_activation_resp_s,
-                    multicast_session_deactivation_resp_s,
-                    multicast_session_upd_resp_s,
-                    ng_reset_ack_s,
-                    ng_setup_resp_s,
-                    path_switch_request_ack_s,
-                    pdu_session_res_modify_confirm_s,
-                    pdu_session_res_modify_resp_s,
-                    pdu_session_res_release_resp_s,
-                    pdu_session_res_setup_resp_s,
-                    pws_cancel_resp_s,
-                    ran_cfg_upd_ack_s,
-                    ue_context_mod_resp_s,
-                    ue_context_release_complete_s,
-                    ue_context_resume_resp_s,
-                    ue_context_suspend_resp_s,
-                    ue_radio_cap_check_resp_s,
-                    ue_radio_cap_id_map_resp_s,
-                    write_replace_warning_resp_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
   // UnsuccessfulOutcome ::= OPEN TYPE
   struct unsuccessful_outcome_c {
@@ -546,9 +680,6 @@ struct ngap_elem_procs_o {
 
     // choice methods
     unsuccessful_outcome_c() = default;
-    unsuccessful_outcome_c(const unsuccessful_outcome_c& other);
-    unsuccessful_outcome_c& operator=(const unsuccessful_outcome_c& other);
-    ~unsuccessful_outcome_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -587,25 +718,8 @@ struct ngap_elem_procs_o {
     const ue_context_suspend_fail_s&           ue_context_suspend_fail() const;
 
   private:
-    types type_;
-    choice_buffer_t<amf_cfg_upd_fail_s,
-                    broadcast_session_mod_fail_s,
-                    broadcast_session_setup_fail_s,
-                    distribution_setup_fail_s,
-                    ho_fail_s,
-                    ho_prep_fail_s,
-                    init_context_setup_fail_s,
-                    multicast_session_activation_fail_s,
-                    multicast_session_upd_fail_s,
-                    ng_setup_fail_s,
-                    path_switch_request_fail_s,
-                    ran_cfg_upd_fail_s,
-                    ue_context_mod_fail_s,
-                    ue_context_resume_fail_s,
-                    ue_context_suspend_fail_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -735,153 +849,3 @@ using protocol_ie_container_pair_l = dyn_seq_of<protocol_ie_field_pair_s<ies_set
 
 } // namespace ngap
 } // namespace asn1
-
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::amf_cp_relocation_ind_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::plmn_support_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::amf_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::amf_cfg_upd_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::amf_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::assist_data_for_paging_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::broadcast_plmn_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_mod_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_mod_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_mod_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_release_required_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_release_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::broadcast_session_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::cell_traffic_trace_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::conn_establishment_ind_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::core_network_assist_info_for_inactive_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::deactiv_trace_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::distribution_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::distribution_release_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::distribution_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::distribution_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::distribution_setup_resp_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::mob_restrict_list_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_nas_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_non_ue_associated_nrppa_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ran_cfg_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ran_early_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ran_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ue_associated_nrppa_transport_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::dyn_5qi_descriptor_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::erab_info_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::error_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_cancel_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_cancel_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_cmd_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::ho_cmd_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_fail_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::user_location_info_nr_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_notify_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_prep_fail_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::m1_cfg_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::m6_cfg_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::trace_activation_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_request_ack_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::ho_request_ack_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_required_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_success_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::init_context_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::init_context_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::init_context_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::init_ue_msg_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_item_mod_req_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::supported_ta_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::location_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::location_report_ctrl_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::location_report_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_group_paging_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_activation_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_activation_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_activation_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_deactivation_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_deactivation_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_upd_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_upd_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::nas_non_delivery_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ng_reset_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ng_reset_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ng_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ng_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ng_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::overload_start_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_confirm_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_notify_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_release_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pws_cancel_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pws_cancel_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pws_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pws_restart_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::paging_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::path_switch_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::path_switch_request_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::path_switch_request_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ran_cp_relocation_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ran_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ran_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::rrc_inactive_transition_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::reroute_nas_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::secondary_rat_data_usage_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::trace_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::trace_start_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_mod_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_mod_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_mod_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_release_complete_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_resume_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_resume_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_resume_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_suspend_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_suspend_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_suspend_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_info_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_check_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_check_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_id_map_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_info_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_tnla_binding_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_nas_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_non_ue_associated_nrppa_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ran_cfg_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ran_early_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ran_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ue_associated_nrppa_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::write_replace_warning_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::write_replace_warning_resp_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::non_dyn_5qi_descriptor_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_level_qos_params_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::mbs_session_setup_or_mod_request_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::multicast_session_upd_request_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_info_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_confirm_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_ind_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_add_or_modify_request_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::ul_ngu_up_tnl_modify_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_modify_request_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_resp_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_notify_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_setup_request_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::pdu_session_res_setup_request_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_setup_resp_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::qos_flow_params_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::path_switch_request_ack_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::ngap::path_switch_request_transfer_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<
-    asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<
-    asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o>;

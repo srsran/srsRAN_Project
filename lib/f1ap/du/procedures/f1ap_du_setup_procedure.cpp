@@ -22,6 +22,7 @@
 
 #include "f1ap_du_setup_procedure.h"
 #include "../f1ap_du_context.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/async/async_timer.h"
@@ -178,7 +179,7 @@ bool f1ap_du_setup_procedure::retry_required()
   const f1_setup_fail_ies_container& f1_setup_fail = *cu_pdu_response.error().value.f1_setup_fail();
   if (not f1_setup_fail.time_to_wait_present) {
     // CU didn't command a waiting time.
-    logger.error("CU-CP did not set any retry waiting time");
+    logger.debug("CU-CP did not set any retry waiting time");
     return false;
   }
   if (f1_setup_retry_no++ >= request.max_setup_retries) {

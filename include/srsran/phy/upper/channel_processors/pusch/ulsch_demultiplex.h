@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 
 /// \file
 /// \brief Uplink Shared Channel demultiplexer interface declaration.

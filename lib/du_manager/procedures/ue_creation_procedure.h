@@ -72,7 +72,7 @@ public:
 
 private:
   /// Creates a UE object in the DU UE manager.
-  du_ue* create_du_ue_context();
+  expected<du_ue*, std::string> create_du_ue_context();
 
   /// Remove UE from DU Manager UE repository.
   async_task<void> clear_ue();
@@ -96,9 +96,10 @@ private:
   du_ran_resource_manager&     du_res_alloc;
   ue_procedure_logger          proc_logger;
 
-  du_ue*                    ue_ctx = nullptr;
-  mac_ue_create_response    mac_resp{};
-  f1ap_ue_creation_response f1ap_resp{};
+  du_ue*                        ue_ctx                  = nullptr;
+  expected<du_ue*, std::string> ue_ctx_creation_outcome = nullptr;
+  mac_ue_create_response        mac_resp{};
+  f1ap_ue_creation_response     f1ap_resp{};
 };
 
 } // namespace srs_du

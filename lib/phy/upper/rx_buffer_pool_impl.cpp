@@ -23,21 +23,39 @@
 #include "rx_buffer_pool_impl.h"
 #include "rx_buffer_impl.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
+#include "srsran/phy/upper/trx_buffer_identifier.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/slot_point.h"
 #include <algorithm>
+#include <chrono>
 #include <memory>
+#include <thread>
 
 using namespace srsran;
 
-unique_rx_buffer rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks)
+unique_rx_buffer
+rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data)
 {
+  // No more reservations are allowed if the pool is stopped.
+  if (stopped.load(std::memory_order_acquire)) {
+    return unique_rx_buffer();
+  }
+
   // Try to find the HARQ identifier.
   auto id_found = std::find(identifiers.begin(), identifiers.end(), id);
 
-  // Find an available buffer if no buffer was found with the same identifier.
+  // Find an available buffer if no buffer was found with the same identifier if new data is true, otherwise return an
+  // invalid buffer.
   if (id_found == identifiers.end()) {
-    id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
+    if (new_data) {
+      id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
+    } else {
+      logger.warning(slot.sfn(),
+                     slot.slot_index(),
+                     "UL HARQ {}: failed to reserve, identifier for retransmissions not found.",
+                     id);
+      return unique_rx_buffer();
+    }
   }
 
   // Report warning and return invalid buffer if no available buffer has been found.
@@ -53,14 +71,17 @@ unique_rx_buffer rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer
   // Get reference to the buffer.
   rx_buffer_impl& buffer = buffers[i_buffer];
 
-  // Reset CRCs if one of the following conditions holds:
-  // - The reservation identifier changed;
-  // - The buffer is available; or
-  // - The number of codeblocks changed.
-  bool reset_crc = (identifiers[i_buffer] != id) || buffer.is_free() || (buffer.get_nof_codeblocks() != nof_codeblocks);
+  // Make sure that the number codeblocks do not change for retransmissions.
+  if (!new_data && nof_codeblocks != buffer.get_nof_codeblocks()) {
+    logger.warning(slot.sfn(),
+                   slot.slot_index(),
+                   "UL HARQ {}: failed to reserve, number of codeblocks for retransmission do not match.",
+                   id);
+    return unique_rx_buffer();
+  }
 
   // Reserve codeblocks.
-  rx_buffer_status status = buffer.reserve(nof_codeblocks, reset_crc);
+  rx_buffer_status status = buffer.reserve(nof_codeblocks, new_data);
 
   // Report warning and return invalid buffer if the reservation is not successful.
   if (status != rx_buffer_status::successful) {
@@ -120,7 +141,25 @@ void rx_buffer_pool_impl::run_slot(const slot_point& slot)
   }
 }
 
-std::unique_ptr<rx_buffer_pool> srsran::create_rx_buffer_pool(const rx_buffer_pool_config& config)
+rx_buffer_pool& rx_buffer_pool_impl::get_pool()
+{
+  return *this;
+}
+
+void rx_buffer_pool_impl::stop()
+{
+  // Signals the stop of the pool. No more reservation are allowed after this point.
+  stopped.store(true, std::memory_order_release);
+
+  // Makes sure all buffers are unlocked.
+  for (const auto& buffer : buffers) {
+    while (buffer.is_locked()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+}
+
+std::unique_ptr<rx_buffer_pool_controller> srsran::create_rx_buffer_pool(const rx_buffer_pool_config& config)
 {
   return std::make_unique<rx_buffer_pool_impl>(config);
 }

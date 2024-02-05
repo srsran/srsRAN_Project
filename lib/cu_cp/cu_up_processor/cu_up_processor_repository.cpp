@@ -21,10 +21,10 @@
  */
 
 #include "cu_up_processor_repository.h"
+#include "cu_up_processor_config.h"
 #include "cu_up_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_processor_config.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -63,7 +63,9 @@ private:
 } // namespace
 
 cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), cu_up_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, logger)
+  cfg(cfg_),
+  logger(cfg.logger),
+  cu_up_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.cu_cp.max_nof_cu_ups, logger)
 {
 }
 
@@ -89,7 +91,7 @@ void cu_up_processor_repository::handle_cu_up_remove_request(cu_up_index_t cu_up
 
 cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
 {
-  cu_up_index_t cu_up_index = get_next_cu_up_index();
+  cu_up_index_t cu_up_index = allocate_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
     logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
     return cu_up_index_t::invalid;
@@ -104,12 +106,13 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   // TODO: use real config
   cu_up_processor_config_t cu_up_cfg = {};
   cu_up_cfg.cu_up_index              = cu_up_index;
+  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.max_nof_dus * MAX_NOF_UES_PER_DU;
 
-  std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
-                                                                            *cu_up_ctxt.e1ap_tx_pdu_notifier,
-                                                                            cfg.e1ap_ev_notifier,
-                                                                            cu_up_task_sched,
-                                                                            *cfg.cu_cp.cu_cp_executor);
+  std::unique_ptr<cu_up_processor_impl_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
+                                                                                 *cu_up_ctxt.e1ap_tx_pdu_notifier,
+                                                                                 cfg.e1ap_ev_notifier,
+                                                                                 cu_up_task_sched,
+                                                                                 *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
   cu_up_ctxt.cu_up_processor = std::move(cu_up);
@@ -122,9 +125,9 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   return cu_up_index;
 }
 
-cu_up_index_t cu_up_processor_repository::get_next_cu_up_index()
+cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
 {
-  for (int cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < MAX_NOF_CU_UPS;
+  for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < cfg.cu_cp.max_nof_cu_ups;
        cu_up_index_int++) {
     cu_up_index_t cu_up_index = uint_to_cu_up_index(cu_up_index_int);
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
@@ -163,7 +166,7 @@ void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
       }));
 }
 
-cu_up_processor_interface& cu_up_processor_repository::find_cu_up(cu_up_index_t cu_up_index)
+cu_up_processor_impl_interface& cu_up_processor_repository::find_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);

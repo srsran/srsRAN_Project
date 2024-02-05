@@ -35,7 +35,7 @@ public:
   virtual ~sched_metrics_ue_configurator() = default;
 
   /// Adds a new UE to the reported metrics.
-  virtual void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) = 0;
+  virtual void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) = 0;
 
   /// Removes a UE from the reported metrics.
   virtual void handle_ue_deletion(du_ue_index_t ue_index) = 0;

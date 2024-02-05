@@ -41,7 +41,7 @@ protected:
     ASSERT_EQ(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
               e1ap_elem_procs_o::init_msg_c::types::bearer_context_setup_request);
 
-    test_ues.emplace(req.ue_index);
+    test_ues.emplace(req.ue_index, test_ue{req.ue_index});
     test_ue& u         = test_ues[req.ue_index];
     u.ue_index         = req.ue_index;
     u.cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg()

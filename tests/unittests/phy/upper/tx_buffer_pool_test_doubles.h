@@ -32,16 +32,19 @@ class tx_buffer_pool_spy : public tx_buffer_pool
     slot_point            slot;
     trx_buffer_identifier id;
     unsigned              nof_codeblocks;
+    optional<bool>        new_data;
   };
 
 public:
-  unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override
+  unique_tx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) override
   {
     reserve_entries.emplace_back();
     reserve_entry& entry = reserve_entries.back();
     entry.slot           = slot;
     entry.id             = id;
     entry.nof_codeblocks = nof_codeblocks;
+    entry.new_data       = new_data;
     return unique_tx_buffer(rm_buffer_spy);
   }
 
@@ -52,6 +55,7 @@ public:
     entry.slot           = slot;
     entry.id             = trx_buffer_identifier::invalid();
     entry.nof_codeblocks = nof_codeblocks;
+    entry.new_data       = nullopt;
     return unique_tx_buffer(rm_buffer_spy);
   }
 

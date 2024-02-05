@@ -33,6 +33,9 @@ namespace srsran {
 /// Computes the number of threads that are usable in the given host.
 size_t compute_host_nof_hardware_threads();
 
+/// Get maximum CPU ID available to the application.
+size_t get_host_max_cpu_id();
+
 /// OS thread RT scheduling priority.
 /// Note: posix defines a minimum spread between sched_get_priority_max() and sched_get_priority_min() of 32.
 struct os_thread_realtime_priority_tag {};
@@ -107,9 +110,14 @@ private:
 /// CPU affinity bitmap.
 struct os_sched_affinity_bitmask {
 public:
-  os_sched_affinity_bitmask() : cpu_bitset(compute_host_nof_hardware_threads()) {}
+  static constexpr size_t MAX_CPUS = 1024;
 
-  explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(compute_host_nof_hardware_threads()) { set(cpu_idx); }
+  /// Bitmap of the total CPUs available to the application.
+  const static os_sched_affinity_bitmask available_cpus;
+
+  os_sched_affinity_bitmask() : cpu_bitset(get_host_max_cpu_id() + 1) {}
+
+  explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(get_host_max_cpu_id() + 1) { set(cpu_idx); }
 
   os_sched_affinity_bitmask(size_t bitset_size, size_t cpu_idx) : cpu_bitset(bitset_size) { set(cpu_idx); }
 
@@ -138,13 +146,24 @@ public:
 
   bool any() const { return cpu_bitset.any(); }
 
+  bool all() const { return cpu_bitset.all(); }
+
   uint64_t to_uint64() const { return cpu_bitset.to_uint64(); }
 
   /// \brief Number of CPUs enabled in the bitmask.
   size_t count() const { return cpu_bitset.count(); }
 
+  /// \brief Returns the list of CPU Ids contained in \c this bitmask but not in the \c rhs bitmask.
+  static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS> subtract(const os_sched_affinity_bitmask& rhs) const;
+
+  /// \brief Get CPU ids of the affinity mask.
+  static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS> get_cpu_ids() const
+  {
+    return cpu_bitset.get_bit_positions();
+  }
+
 private:
-  bounded_bitset<1024> cpu_bitset;
+  bounded_bitset<MAX_CPUS> cpu_bitset;
 };
 
 /// Unique thread wrapper that ensures the thread is joined on destruction and provides an interface to set/get

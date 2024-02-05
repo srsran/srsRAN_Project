@@ -25,6 +25,7 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/rlc/rlc_factory.h"
 #include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
@@ -49,12 +50,14 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // > Check if UE context was created in the DU manager.
-  ue_ctx = create_du_ue_context();
-  if (ue_ctx == nullptr) {
-    proc_logger.log_proc_failure("Failed to create DU UE context");
+  ue_ctx_creation_outcome = create_du_ue_context();
+  if (ue_ctx_creation_outcome.is_error()) {
+    proc_logger.log_proc_failure("Failed to create DU UE context. Cause: {}", ue_ctx_creation_outcome.error().data());
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
+
+  ue_ctx = ue_ctx_creation_outcome.value();
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
@@ -100,12 +103,12 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-du_ue* ue_creation_procedure::create_du_ue_context()
+expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
 {
   // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
   ue_ran_resource_configurator ue_res = du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index);
   if (ue_res.empty()) {
-    return nullptr;
+    return ue_res.get_error();
   }
 
   // Create the DU UE context.
@@ -148,15 +151,14 @@ bool ue_creation_procedure::setup_du_ue_resources()
   f1_req.srbs_to_setup.resize(1);
   f1_req.srbs_to_setup[0]             = srb_id_t::srb1;
   du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
-  if (resp.release_required) {
-    proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources");
+  if (resp.release_required()) {
+    proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources. Cause: {}",
+                                 resp.procedure_error.error().data());
     return false;
   }
 
   // Create DU UE SRB0 and SRB1.
-  rlc_config tm_rlc_cfg{};
-  tm_rlc_cfg.mode = rlc_mode::tm;
-  ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
+  ue_ctx->bearers.add_srb(srb_id_t::srb0, make_default_srb0_rlc_config());
   ue_ctx->bearers.add_srb(
       srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg, ue_ctx->resources->rlc_bearers[0].mac_cfg);
 

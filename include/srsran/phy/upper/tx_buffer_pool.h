@@ -60,12 +60,25 @@ public:
   /// The transmit buffer pool neither initializes nor modifies the contents of the reserved transmit buffer. The
   /// modules using the buffer are responsible for initializing and modifying its contents before new transmissions.
   ///
+  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation. Possible
+  /// reservation failures are:
+  /// - Insufficient number of buffers, \ref tx_buffer_pool_config::nof_buffers buffers are reserved with different
+  ///   identifiers;
+  /// - Insufficient number of codeblocks, \ref tx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
+  ///   assigned to buffers;
+  /// - A buffer with the same identifier is locked;
+  /// - No buffer is found with the same identifier while the reservation is not marked as new data;
+  /// - The number of codeblocks for a retransmission is different than the previous reservation; or
+  /// - The pool operation has stopped.
+  ///
   /// \param[in] slot           Slot context in which the reservation takes place.
   /// \param[in] id             Identifier for the buffer transmission.
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
+  /// \param[in] new_data       Set to true if the transmission is for new data.
   /// \return A valid unique transmit buffer if the reservation was successful; otherwise, an invalid unique transmit
   ///         buffer.
-  virtual unique_tx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) = 0;
+  virtual unique_tx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
 
   /// \brief Reserves and retrieves a transmit buffer without an identifier.
   ///
@@ -75,6 +88,14 @@ public:
   /// The transmit buffer pool does not initialize or modify the contents of the transmit buffers. Modules using these
   /// transmit buffers are responsible for initializing and modifying their contents before new transmissions.
   ///
+  /// It is expected that the pool logs in \c PHY channel the context and the reason of a failed reservation. Possible
+  /// reservation failures are:
+  /// - Insufficient number of buffers, \ref tx_buffer_pool_config::nof_buffers buffers are reserved with different
+  ///   identifiers;
+  /// - Insufficient number of codeblocks, \ref tx_buffer_pool_config::max_nof_codeblocks codeblocks are currently
+  ///   assigned to buffers; or
+  /// - The pool operation has stopped.
+  ///
   /// \param[in] slot           Slot context.
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
   /// \return A valid unique transmit buffer if the reservation was successful; otherwise, an invalid unique buffer.
@@ -83,6 +104,25 @@ public:
   /// \brief Runs internal state machines and releases expired buffers.
   /// \param[in] slot Current slot.
   virtual void run_slot(const slot_point& slot) = 0;
+};
+
+/// Transmit buffer pool controller interface.
+class tx_buffer_pool_controller
+{
+public:
+  /// \brief Default destructor.
+  ///
+  /// An assertion is triggered if any buffer is still locked. This prevents that unique buffers lose the reference to
+  /// the actual buffers.
+  virtual ~tx_buffer_pool_controller() = default;
+
+  /// Gets the actual buffer pool.
+  virtual tx_buffer_pool& get_pool() = 0;
+
+  /// \brief Stops the buffer pool.
+  ///
+  /// It waits for all buffers to be unlocked.
+  virtual void stop() = 0;
 };
 
 /// Buffer pool configuration.
@@ -102,6 +142,6 @@ struct tx_buffer_pool_config {
 };
 
 /// Creates a transmit buffer pool.
-std::unique_ptr<tx_buffer_pool> create_tx_buffer_pool(const tx_buffer_pool_config& config);
+std::unique_ptr<tx_buffer_pool_controller> create_tx_buffer_pool(const tx_buffer_pool_config& config);
 
 } // namespace srsran

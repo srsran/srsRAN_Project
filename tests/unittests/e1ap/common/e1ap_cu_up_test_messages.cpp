@@ -21,6 +21,7 @@
  */
 
 #include "e1ap_cu_up_test_messages.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 
 using namespace srsran;

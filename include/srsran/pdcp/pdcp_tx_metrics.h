@@ -57,7 +57,6 @@ public:
   virtual pdcp_tx_metrics_container get_metrics_and_reset() = 0;
   virtual void                      reset_metrics()         = 0;
 };
-
 } // namespace srsran
 
 namespace fmt {

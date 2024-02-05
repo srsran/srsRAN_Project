@@ -28,6 +28,7 @@
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"

@@ -105,6 +105,14 @@ public:
   bool has_decode_function_been_called() const { return decode_function_called; }
 };
 
+/// Dummy Ethernet receiver class.
+class dummy_eth_receiver : public ether::receiver
+{
+  void start(ether::frame_notifier& notifier) override{};
+
+  void stop() override{};
+};
+
 } // namespace
 
 class ofh_message_receiver_fixture : public ::testing::Test
@@ -180,6 +188,7 @@ public:
       ecpri_decoder              = temp.get();
       dependencies.ecpri_decoder = std::move(temp);
     }
+    dependencies.eth_receiver   = std::make_unique<dummy_eth_receiver>();
     dependencies.seq_id_checker = std::make_unique<sequence_id_checker_dummy_impl>();
 
     return dependencies;

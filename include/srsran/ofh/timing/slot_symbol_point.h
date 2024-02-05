@@ -140,5 +140,29 @@ inline slot_symbol_point operator-(int jump, slot_symbol_point symbol_point)
   return symbol_point;
 }
 
+/// Implementation of subtraction operation.
+/// Returns difference between two slot_symbol_point objects in number of symbols.
+inline int operator-(slot_symbol_point lhs, slot_symbol_point rhs)
+{
+  srsran_assert(rhs.get_numerology() == lhs.get_numerology(),
+                "Cannot calculate the distance of two slot symbol points that have different numerologies");
+  srsran_assert(rhs.get_nof_symbols() == lhs.get_nof_symbols(),
+                "Cannot calculate the distance of two slot symbol points that have a different number of symbols");
+
+  const int nof_symbols_per_slot_wrap = NOF_SFNS * NOF_SUBFRAMES_PER_FRAME *
+                                        get_nof_slots_per_subframe(to_subcarrier_spacing(lhs.get_numerology())) *
+                                        lhs.get_nof_symbols();
+
+  int tmp = static_cast<int>(lhs.system_slot()) - static_cast<int>(rhs.system_slot());
+  if (tmp > (nof_symbols_per_slot_wrap / 2)) {
+    return (tmp - nof_symbols_per_slot_wrap);
+  }
+
+  if (tmp < -(nof_symbols_per_slot_wrap / 2)) {
+    return tmp + nof_symbols_per_slot_wrap;
+  }
+  return tmp;
+}
+
 } // namespace ofh
 } // namespace srsran

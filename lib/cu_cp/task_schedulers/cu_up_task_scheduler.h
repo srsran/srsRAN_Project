@@ -35,7 +35,10 @@ namespace srs_cu_cp {
 class cu_up_task_scheduler
 {
 public:
-  explicit cu_up_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_);
+  explicit cu_up_task_scheduler(timer_manager&        timers_,
+                                task_executor&        exec_,
+                                uint16_t              max_nof_cu_ups,
+                                srslog::basic_logger& logger_);
   ~cu_up_task_scheduler() = default;
 
   // CU-UP task scheduler

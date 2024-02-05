@@ -68,15 +68,8 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
         in_size,
         out_size);
   } else {
-    unsigned min_in_length = 0;
-    if (out_size == 1) {
-      // Input length must be no less than the number of bits per symbol of the block modulation.
-      min_in_length = bits_per_symbol;
-    } else {
-      // Input length must be no less than three times the number of bits per symbol of the block modulation.
-      min_in_length = 3 * bits_per_symbol;
-    }
-    srsran_assert(in_size >= min_in_length, "Invalid input length.");
+    // Input length must be no less than the number of bits per symbol of the block modulation.
+    srsran_assert(in_size >= bits_per_symbol, "Invalid input length.");
   }
 }
 

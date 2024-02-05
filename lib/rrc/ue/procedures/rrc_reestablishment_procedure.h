@@ -43,7 +43,7 @@ public:
                                 rrc_ue_reestablishment_proc_notifier&    rrc_ue_notifier_,
                                 rrc_ue_srb_handler&                      srb_notifier_,
                                 rrc_ue_du_processor_notifier&            du_processor_notifier_,
-                                rrc_ue_reestablishment_notifier&         cu_cp_notifier_,
+                                rrc_ue_context_update_notifier&          cu_cp_notifier_,
                                 rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
                                 rrc_ue_nas_notifier&                     nas_notifier_,
                                 rrc_ue_event_manager&                    event_mng_,
@@ -72,9 +72,6 @@ private:
   /// \remark Send RRC Reestablishment, see section 5.3.7 in TS 36.331.
   void send_rrc_reestablishment();
 
-  /// \brief Send UE Context Release Request.
-  void send_ue_context_release_request(ue_index_t ue_index);
-
   async_task<void> handle_rrc_reestablishment_fallback();
 
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
@@ -85,7 +82,7 @@ private:
   rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier; // handler to the parent RRC UE object
   rrc_ue_srb_handler&                      srb_notifier;          // for creating SRBs
   rrc_ue_du_processor_notifier&            du_processor_notifier; // notifier to the DU processor
-  rrc_ue_reestablishment_notifier&         cu_cp_notifier;        // notifier to the CU-CP
+  rrc_ue_context_update_notifier&          cu_cp_notifier;        // notifier to the CU-CP
   rrc_ue_control_notifier&                 ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_nas_notifier&                     nas_notifier;          // notifier to the NGAP
   rrc_ue_event_manager&                    event_mng;             // event manager for the RRC UE entity

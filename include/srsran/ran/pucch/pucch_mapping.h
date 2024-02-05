@@ -43,4 +43,19 @@ enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
+/// \brief Defines a couple of PUCCH resource IDs, the cell's and UE's resource PUCCH resource ID, respectively.
+struct pucch_res_id_t {
+  /// This is the PUCCH cell resource ID and is used by the DU and by the scheduler to identify the PUCCH resource.
+  unsigned cell_res_id;
+  /// Corresponds to \c pucch-ResourceId, as part of \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
+  /// Used by the DU only to populate the ASN1 message, while it's not used by the scheduler.
+  unsigned ue_res_id;
+
+  bool operator==(const pucch_res_id_t& rhs) const
+  {
+    return cell_res_id == rhs.cell_res_id && ue_res_id == rhs.ue_res_id;
+  }
+  bool operator!=(const pucch_res_id_t& rhs) const { return !(rhs == *this); }
+};
+
 } // namespace srsran

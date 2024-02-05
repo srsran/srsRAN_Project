@@ -25,6 +25,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
+#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -41,7 +42,7 @@ namespace ofh {
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
-  /// Ethernet interface name.
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
@@ -87,6 +88,8 @@ struct sector_configuration {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
+  /// If set to true, warn of unreceived Radio Unit frames.
+  bool warn_unreceived_ru_frames = true;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
@@ -126,8 +129,10 @@ struct sector_dependencies {
   task_executor* receiver_executor = nullptr;
   /// User-Plane received symbol notifier.
   std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
-  /// Ethernet gateway.
-  std::unique_ptr<ether::gateway> eth_gateway;
+  /// Optional Ethernet gateway.
+  optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  /// Optional  Ethernet receiver.
+  optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 } // namespace ofh

@@ -103,7 +103,7 @@ public:
         du_cell_cfgs[0].pucch_cfg, cell_cfg_msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     sch->handle_cell_configuration_request(cell_cfg_msg);
 
-    pucch_res_mng.emplace(du_cell_cfgs);
+    pucch_res_mng.emplace(du_cell_cfgs, expert_cfg_.ue.max_pucchs_per_slot);
 
     logger.set_context(next_sl_tx.sfn(), next_sl_tx.slot_index());
   }

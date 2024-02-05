@@ -27,6 +27,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"

@@ -266,7 +266,7 @@ namespace moodycamel { namespace details {
 // See https://clang.llvm.org/docs/ThreadSanitizer.html#has-feature-thread-sanitizer
 #define MOODYCAMEL_NO_TSAN
 #if defined(__has_feature)
- #if __has_feature(thread_sanitizer)
+ #if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
   #undef MOODYCAMEL_NO_TSAN
   #define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
  #endif // TSAN
@@ -1567,7 +1567,7 @@ private:
 		}
 
 		template<InnerQueueContext context>
-		inline bool is_empty() const
+		inline bool MOODYCAMEL_NO_TSAN is_empty() const
 		{
 			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Check flags
@@ -1613,7 +1613,7 @@ private:
 		// Sets multiple contiguous item statuses to 'empty' (assumes no wrapping and count > 0).
 		// Returns true if the block is now empty (does not apply in explicit context).
 		template<InnerQueueContext context>
-		inline bool set_many_empty(MOODYCAMEL_MAYBE_UNUSED index_t i, size_t count)
+		inline bool MOODYCAMEL_NO_TSAN set_many_empty(MOODYCAMEL_MAYBE_UNUSED index_t i, size_t count)
 		{
 			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Set flags
@@ -1952,7 +1952,7 @@ private:
 		}
 
 		template<typename U>
-		bool dequeue(U& element)
+		bool MOODYCAMEL_NO_TSAN dequeue(U& element)
 		{
 			auto tail = this->tailIndex.load(std::memory_order_relaxed);
 			auto overcommit = this->dequeueOvercommit.load(std::memory_order_relaxed);
@@ -2245,7 +2245,7 @@ private:
 		}
 
 		template<typename It>
-		size_t dequeue_bulk(It& itemFirst, size_t max)
+		size_t MOODYCAMEL_NO_TSAN dequeue_bulk(It& itemFirst, size_t max)
 		{
 			auto tail = this->tailIndex.load(std::memory_order_relaxed);
 			auto overcommit = this->dequeueOvercommit.load(std::memory_order_relaxed);
@@ -2548,7 +2548,7 @@ private:
 		}
 
 		template<typename U>
-		bool dequeue(U& element)
+		bool MOODYCAMEL_NO_TSAN dequeue(U& element)
 		{
 			// See ExplicitProducer::dequeue for rationale and explanation
 			index_t tail = this->tailIndex.load(std::memory_order_relaxed);
@@ -2777,7 +2777,7 @@ private:
 #endif
 
 		template<typename It>
-		size_t dequeue_bulk(It& itemFirst, size_t max)
+		size_t MOODYCAMEL_NO_TSAN dequeue_bulk(It& itemFirst, size_t max)
 		{
 			auto tail = this->tailIndex.load(std::memory_order_relaxed);
 			auto overcommit = this->dequeueOvercommit.load(std::memory_order_relaxed);

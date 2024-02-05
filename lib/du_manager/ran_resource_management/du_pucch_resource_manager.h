@@ -24,6 +24,7 @@
 
 #include "cell_group_config.h"
 #include "pucch_resource_generator.h"
+#include <set>
 
 namespace srsran {
 namespace srs_du {
@@ -34,7 +35,7 @@ namespace srs_du {
 class du_pucch_resource_manager
 {
 public:
-  explicit du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_);
+  explicit du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_, unsigned max_pucch_grants_per_slot_);
   du_pucch_resource_manager(const du_pucch_resource_manager&)            = delete;
   du_pucch_resource_manager(du_pucch_resource_manager&&)                 = delete;
   du_pucch_resource_manager& operator=(const du_pucch_resource_manager&) = delete;
@@ -64,11 +65,32 @@ private:
   /// index and the UE's PUCCH-Config for CSI PUCCH resources is defined in \ref srs_du::ue_pucch_config_builder.
   unsigned pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx) const;
 
+  std::vector<std::pair<unsigned, unsigned>>::const_iterator
+  find_optimal_csi_report_slot_offset(const std::vector<std::pair<unsigned, unsigned>>& available_csi_slot_offsets,
+                                      unsigned                                          candidate_sr_offset,
+                                      const csi_meas_config&                            csi_meas_cfg);
+
+  /// Computes the CSI resource ID and offset, under the following constraints: (i) the PUCCH grants counter doesn't
+  /// exceed the max_pucch_grants_per_slot; (ii) the SR and CSI offsets will result in the PUCCH resource not exceeding
+  /// the maximum PUCCH F2 payload.
+  std::vector<std::pair<unsigned, unsigned>>::const_iterator
+  get_csi_resource_offset(const csi_meas_config&                            csi_meas_cfg,
+                          unsigned                                          candidate_sr_offset,
+                          const std::vector<std::pair<unsigned, unsigned>>& free_csi_list);
+
+  /// Computes the SR and CSI PUCCH offsets and their repetitions within a given period, which is the Least Common
+  /// Multiple of SR and CSI periods. If SR and CSI results in having common offsets, this will be counted only once.
+  std::set<unsigned> compute_sr_csi_pucch_offsets(unsigned sr_offset, unsigned csi_offset = 0);
+
   // Parameters for PUCCH configuration passed by the user.
   const pucch_builder_params        user_defined_pucch_cfg;
   const std::vector<pucch_resource> default_pucch_res_list;
   const pucch_config                default_pucch_cfg;
   const optional<csi_report_config> default_csi_report_cfg;
+  const unsigned                    max_pucch_grants_per_slot;
+  unsigned                          lcm_csi_sr_period;
+  unsigned                          sr_period_slots  = 0;
+  unsigned                          csi_period_slots = 0;
 
   struct cell_resource_context {
     /// \brief Pool of PUCCH SR offsets currently available to be allocated to UEs. Each element is represented by a
@@ -77,7 +99,8 @@ private:
     /// Pool of PUCCH CSI offsets currently available to be allocated to UEs.
     std::vector<std::pair<unsigned, unsigned>> csi_res_offset_free_list;
     /// UE index for randomization of resources.
-    unsigned ue_idx = 0;
+    unsigned              ue_idx = 0;
+    std::vector<unsigned> pucch_grants_per_slot_cnt;
   };
 
   /// Resources for the different cells of the DU.

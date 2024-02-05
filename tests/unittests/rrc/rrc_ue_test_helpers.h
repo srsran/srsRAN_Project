@@ -28,6 +28,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/rrc_config.h"
+#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -115,7 +116,6 @@ protected:
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
-                                           reject_users,
                                            optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
@@ -176,12 +176,6 @@ protected:
     return &rrc_ue->get_rrc_ue_control_message_handler();
   }
 
-  void connect_amf()
-  {
-    // Notify RRC about successful AMF connection
-    reject_users = false;
-  }
-
   void init_security_context()
   {
     // setup security
@@ -213,6 +207,12 @@ protected:
   {
     // inject RRC setup into UE object
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
+  }
+
+  void receive_invalid_setup_request()
+  {
+    // inject corrupted RRC setup into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{{0x9d, 0xec, 0x89, 0xde, 0x57, 0x66}});
   }
 
   void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
@@ -271,6 +271,8 @@ protected:
       ctrl_worker.run_pending_tasks();
     }
   }
+
+  void set_ue_context_release_outcome(bool outcome) { rrc_ue_ngap_notifier.set_ue_context_release_outcome(outcome); }
 
   void check_ue_release_not_requested()
   {
@@ -398,7 +400,6 @@ protected:
               92);
   }
 
-private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
@@ -413,8 +414,6 @@ private:
   std::unique_ptr<dummy_ue_task_scheduler> task_sched_handle;
   std::unique_ptr<rrc_ue_interface>        rrc_ue;
   manual_task_worker                       ctrl_worker{64};
-
-  bool reject_users = true;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

@@ -1,0 +1,89 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * This file is part of srsRAN.
+ *
+ * srsRAN is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * srsRAN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * A copy of the GNU Affero General Public License can be found in
+ * the LICENSE file in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/.
+ *
+ */
+
+#include "lib/cu_cp/metrics_handler/metrics_handler_impl.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include <gtest/gtest.h>
+
+using namespace srsran;
+using namespace srs_cu_cp;
+
+class dummy_ue_metrics_handler : public ue_metrics_handler
+{
+public:
+  ue_metrics_report next_metrics;
+
+  ue_metrics_report handle_ue_metrics_report_request() override { return next_metrics; }
+};
+
+class dummy_metrics_notifier : public metrics_report_notifier
+{
+public:
+  optional<metrics_report> last_metrics_report;
+
+  void notify_metrics_report_request(const metrics_report& report) override { last_metrics_report = report; }
+};
+
+TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
+{
+  manual_task_worker       worker{16};
+  timer_manager            timers{2};
+  dummy_ue_metrics_handler ue_metrics;
+  metrics_handler_impl     metrics{worker, timers, ue_metrics};
+
+  std::chrono::milliseconds period{5};
+  dummy_metrics_notifier    metrics_notifier;
+  auto session = metrics.create_periodic_report_session(periodic_metric_report_request{period, &metrics_notifier});
+
+  // First report.
+  ue_metrics.next_metrics.ues.emplace_back(ue_metrics_report::ue_context{to_rnti(1), pci_t{2}});
+  for (unsigned i = 0; i != period.count(); ++i) {
+    ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
+    timers.tick();
+    worker.run_pending_tasks();
+  }
+  ASSERT_TRUE(metrics_notifier.last_metrics_report.has_value());
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ue_metrics.ues.size(), 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ue_metrics.ues[0].rnti, ue_metrics.next_metrics.ues[0].rnti);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ue_metrics.ues[0].pci, ue_metrics.next_metrics.ues[0].pci);
+
+  // Second report.
+  metrics_notifier.last_metrics_report.reset();
+  ue_metrics.next_metrics.ues.emplace_back(ue_metrics_report::ue_context{to_rnti(2), pci_t{3}});
+  for (unsigned i = 0; i != period.count(); ++i) {
+    ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
+    timers.tick();
+    worker.run_pending_tasks();
+  }
+  ASSERT_TRUE(metrics_notifier.last_metrics_report.has_value());
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ue_metrics.ues.size(), 2);
+
+  // Destroy session.
+  metrics_notifier.last_metrics_report.reset();
+  session.reset();
+  for (unsigned i = 0; i != period.count(); ++i) {
+    ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
+    timers.tick();
+    worker.run_pending_tasks();
+  }
+  ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
+}

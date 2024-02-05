@@ -73,11 +73,11 @@ void pdu_session_resource_modification_routine::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", modify_request.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", modify_request.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
   if (!rrc_ue_up_resource_manager.validate_request(modify_request)) {
-    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Modification", modify_request.ue_index, name());
+    logger.warning("ue={}: \"{}\" Invalid PduSessionResourceModification", modify_request.ue_index, name());
     CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
   }
 
@@ -102,7 +102,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", modify_request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
@@ -121,7 +121,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   ue_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modify UE context at DU.", modify_request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify UE context at DU", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
@@ -142,7 +142,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", modify_request.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
@@ -168,7 +168,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   false,
                                   false,
                                   logger)) {
-        logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration", modify_request.ue_index, name());
+        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", modify_request.ue_index, name());
         CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
       }
     }
@@ -177,7 +177,7 @@ void pdu_session_resource_modification_routine::operator()(
 
     // Handle RRC Reconfiguration result.
     if (handle_procedure_response(response_msg, modify_request, rrc_reconfig_result, logger) == false) {
-      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", modify_request.ue_index, name());
+      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
@@ -195,7 +195,7 @@ void fill_e1ap_pdu_session_res_to_modify_list(
   for (const auto& modify_item : next_config.pdu_sessions_to_modify_list) {
     const auto& session = modify_item.second;
     srsran_assert(modify_request.pdu_session_res_modify_items.contains(session.id),
-                  "Modify request doesn't contain config for PDU session id={}",
+                  "Modify request doesn't contain config for {}",
                   session.id);
 
     // Obtain PDU session config from original resource modify request.
@@ -327,7 +327,7 @@ cu_cp_pdu_session_resource_modify_response
 pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_response(bool success)
 {
   if (success) {
-    logger.debug("ue={}: \"{}\" finalized.", modify_request.ue_index, name());
+    logger.debug("ue={}: \"{}\" finalized", modify_request.ue_index, name());
 
     // Prepare update for UP resource manager.
     up_config_update_result result;
@@ -343,7 +343,7 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
       response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
     }
   } else {
-    logger.error("ue={}: \"{}\" failed.", modify_request.ue_index, name());
+    logger.warning("ue={}: \"{}\" failed", modify_request.ue_index, name());
     mark_all_sessions_as_failed(response_msg, modify_request);
   }
   return response_msg;

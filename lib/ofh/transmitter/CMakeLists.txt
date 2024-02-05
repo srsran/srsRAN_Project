@@ -36,7 +36,3 @@ target_link_libraries(srsran_ofh_transmitter
         srsran_ran
         srsran_instrumentation
         srslog)
-
-if (DPDK_FOUND)
-    add_definitions(-DDPDK_FOUND)
-endif (DPDK_FOUND)

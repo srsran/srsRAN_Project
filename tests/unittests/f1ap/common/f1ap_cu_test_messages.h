@@ -36,6 +36,10 @@ asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcel
 /// \brief Generates dummy F1AP SETUP REQUEST message.
 f1ap_message generate_f1_setup_request(unsigned gnb_du_id = 0x11, unsigned nrcell_id = 6576, pci_t pci = 0);
 
+/// \brief Generates dummy F1AP Initial UL RRC Transfer message without DU to CU container.
+f1ap_message generate_init_ul_rrc_message_transfer_without_du_to_cu_container(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                              rnti_t              crnti);
+
 /// \brief Generates dummy F1AP Initial UL RRC TRANSFER message.
 f1ap_message generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                    rnti_t              crnti           = to_rnti(0x4601),

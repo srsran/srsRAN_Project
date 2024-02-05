@@ -21,6 +21,7 @@
  */
 
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 using srsran::byte_buffer;
 using srsran::span;

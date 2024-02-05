@@ -1,9 +1,17 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "15"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "15"
     file: .gitlab/ci-shared/tools/docker.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -27,20 +35,22 @@ stages:
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - ${AMD64_LIB_BUILDER_TAG}
   variables:
     os_version: ""
     uhd_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
     # Download existing package in the registry, if exists
     - |
       download_from_registry() {
-        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
         
         cd ${CI_PROJECT_DIR}
         http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${uhd_version}/uhd.tar.gz" -o output.tar.gz)
@@ -56,6 +66,7 @@ stages:
     - |
       build_uhd() {
         DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          curl apt-transport-https ca-certificates xz-utils \
           cmake build-essential pkg-config \
           libboost-all-dev libusb-1.0-0-dev doxygen \
           python3-docutils python3-mako python3-numpy python3-setuptools python3-requests
@@ -94,7 +105,7 @@ stages:
     expire_in: 30 minutes
   parallel:
     matrix:
-      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
+      - uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 ubuntu-23.10-uhd:
   extends: .ubuntu-uhd-builder
@@ -102,7 +113,7 @@ ubuntu-23.10-uhd:
     os_version: "23.10"
   parallel:
     matrix:
-      - uhd_version: ["4.5.0.0"]
+      - uhd_version: ["4.6.0.0"] # "4.4.0.0" default
 
 ubuntu-23.04-uhd:
   extends: .ubuntu-uhd-builder
@@ -110,17 +121,21 @@ ubuntu-23.04-uhd:
     os_version: "23.04"
   parallel:
     matrix:
-      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
+      - uhd_version: ["4.6.0.0", "4.4.0.0"] # "4.3.0.0" default
 
 ubuntu-22.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "22.04"
+  parallel:
+    matrix:
+      - uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
 
 ubuntu-20.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "20.04"
+    # uhd 3.15.0.0 default
 
 ################################################################################
 # DPDK builder
@@ -131,13 +146,15 @@ ubuntu-20.04-uhd:
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - ${AMD64_LIB_BUILDER_TAG}
   variables:
     os_version: ""
     dpdk_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -160,6 +177,7 @@ ubuntu-20.04-uhd:
     - |
       build_dpdk() {
         DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          curl apt-transport-https ca-certificates xz-utils \
           python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
         
         export PIP_EXTRA_INDEX_URL=""
@@ -197,7 +215,7 @@ ubuntu-20.04-uhd:
     expire_in: 30 minutes
   parallel:
     matrix:
-      - dpdk_version: ["21.08", "22.11.2", "23.07"]
+      - dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 ubuntu-23.10-dpdk:
   extends: .ubuntu-dpdk-builder
@@ -205,7 +223,7 @@ ubuntu-23.10-dpdk:
     os_version: "23.10"
   parallel:
     matrix:
-      - dpdk_version: ["22.11.2", "23.07"]
+      - dpdk_version: ["22.11.3", "23.11"]
 
 ubuntu-23.04-dpdk:
   extends: .ubuntu-dpdk-builder
@@ -248,7 +266,9 @@ ubuntu-20.04-dpdk:
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
+    - |
       mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
+      ls -lah $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
   cache:

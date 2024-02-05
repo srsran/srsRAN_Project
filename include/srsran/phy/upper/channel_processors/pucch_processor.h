@@ -28,8 +28,8 @@
 #include "srsran/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsran/phy/upper/channel_processors/pucch_uci_message.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/modulation_scheme.h"
 #include "srsran/ran/pucch/pucch_context.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

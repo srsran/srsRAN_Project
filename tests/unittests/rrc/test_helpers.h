@@ -51,9 +51,8 @@ public:
   on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_cu_cp_ue_context_release_command.ue_index        = msg.ue_index;
-    last_cu_cp_ue_context_release_command.cause           = msg.cause;
-    last_cu_cp_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+    last_cu_cp_ue_context_release_command.ue_index = msg.ue_index;
+    last_cu_cp_ue_context_release_command.cause    = msg.cause;
 
     return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -81,6 +80,8 @@ private:
 class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
+  void set_ue_context_release_outcome(bool outcome) { ue_context_release_outcome = outcome; }
+
   void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
     logger.info("Received Initial UE Message");
@@ -92,9 +93,13 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
-    logger.info("Received UE Context Release Request");
+    logger.info("Received a UE Context Release Request");
+    return launch_async([this](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ue_context_release_outcome);
+    });
   }
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
@@ -107,18 +112,23 @@ public:
   bool initial_ue_msg_received = false;
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  bool                  ue_context_release_outcome = false;
+  srslog::basic_logger& logger                     = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier
 {
 public:
   void add_ue_context(rrc_reestablishment_ue_context_t context) { reest_context = context; }
 
+  bool next_ue_setup_response = true;
+
+  bool on_ue_setup_request() override { return next_ue_setup_response; }
+
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info("ue={} old_pci={} old_c_rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
+    logger.info("ue={} old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
 
     return reest_context;
   }

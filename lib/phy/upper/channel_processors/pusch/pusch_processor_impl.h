@@ -85,9 +85,13 @@ public:
       demultiplex(std::move(demultiplex_)),
       uci_dec(std::move(uci_dec_)),
       ch_estimate(ce_dims),
-      harq_ack_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value()),
-      csi_part1_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value()),
-      csi_part2_decoder(*uci_dec, pusch_constants::CODEWORD_MAX_SIZE.value())
+      harq_ack_decoder(*uci_dec,
+                       pusch_constants::get_max_codeword_size(ce_dims.nof_prb, ce_dims.nof_tx_layers).value()),
+      csi_part1_decoder(*uci_dec,
+                        pusch_constants::get_max_codeword_size(ce_dims.nof_prb, ce_dims.nof_tx_layers).value()),
+      csi_part2_decoder(*uci_dec,
+                        pusch_constants::get_max_codeword_size(ce_dims.nof_prb, ce_dims.nof_tx_layers).value())
+
     {
       srsran_assert(estimator, "Invalid channel estimator.");
       srsran_assert(demodulator, "Invalid demodulator.");

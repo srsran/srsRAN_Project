@@ -25,23 +25,26 @@
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/sch/sch_mcs.h"
 
 namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
   pci_t         pci;
+  unsigned      nof_prbs;
   rnti_t        rnti;
   uint8_t       cqi;
   uint8_t       ri;
   sch_mcs_index dl_mcs;
+  double        dl_prbs_used;
   double        dl_brate_kbps;
   unsigned      dl_nof_ok;
   unsigned      dl_nof_nok;
   float         pusch_snr_db;
   float         pucch_snr_db;
   sch_mcs_index ul_mcs;
+  double        ul_prbs_used;
   double        ul_brate_kbps;
   unsigned      ul_nof_ok;
   unsigned      ul_nof_nok;

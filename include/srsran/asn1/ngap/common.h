@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 namespace asn1 {
 namespace ngap {
@@ -613,26 +613,6 @@ struct private_ie_field_s {
 // PrivateIE-Container{NGAP-PRIVATE-IES : IEsSetParam} ::= SEQUENCE (SIZE (1..65535)) OF PrivateIE-Field
 template <class ies_set_paramT_>
 using private_ie_container_l = dyn_seq_of<private_ie_field_s<ies_set_paramT_>, 1, 65535, true>;
-
-struct ngap_private_ies_empty_o {
-  // Value ::= OPEN TYPE
-  struct value_c {
-    struct types_opts {
-      enum options { nulltype } value;
-
-      const char* to_string() const;
-    };
-    using types = enumerated<types_opts>;
-
-    // choice methods
-    types       type() const { return types::nulltype; }
-    SRSASN_CODE pack(bit_ref& bref) const;
-    SRSASN_CODE unpack(cbit_ref& bref);
-    void        to_json(json_writer& j) const;
-  };
-};
-// PrivateMessageIEs ::= OBJECT SET OF NGAP-PRIVATE-IES
-using private_msg_ies_o = ngap_private_ies_empty_o;
 
 template <class valueT_>
 struct private_ie_container_item_s {

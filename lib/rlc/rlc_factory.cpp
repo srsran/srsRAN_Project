@@ -34,6 +34,7 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
       return std::make_unique<rlc_tm_entity>(msg.du_index,
                                              msg.ue_index,
                                              msg.rb_id,
+                                             msg.config.tm,
                                              msg.config.metrics_period,
                                              msg.rlc_metrics_notif,
                                              *msg.rx_upper_dn,

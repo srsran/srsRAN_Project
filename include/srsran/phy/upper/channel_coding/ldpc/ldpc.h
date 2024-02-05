@@ -27,7 +27,7 @@
 /// according to TS38.212 Section 5.3.2.
 #pragma once
 
-#include "srsran/ran/ldpc_base_graph.h"
+#include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/units.h"
 #include <array>

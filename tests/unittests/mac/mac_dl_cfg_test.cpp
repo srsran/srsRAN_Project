@@ -117,7 +117,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
                     dl_exec_mapper,
                     ctrl_worker,
                     phy_notifier,
-                    mac_expert_config{10000, 10000},
+                    mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};
@@ -170,7 +170,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
                     dl_exec_mapper,
                     ctrl_worker,
                     phy_notifier,
-                    mac_expert_config{10000, 10000},
+                    mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};

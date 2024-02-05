@@ -24,7 +24,7 @@
 
 #include "../test_helpers.h"
 #include "lib/cu_cp/routine_managers/du_processor_routine_manager.h"
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/cu_cp/up_resource_manager/up_resource_manager_impl.h"
 #include <gtest/gtest.h>
 

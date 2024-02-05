@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/rnti.h"
 

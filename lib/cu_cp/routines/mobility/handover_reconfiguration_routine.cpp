@@ -21,6 +21,7 @@
  */
 
 #include "handover_reconfiguration_routine.h"
+#include "../../du_processor/du_processor_impl_interface.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

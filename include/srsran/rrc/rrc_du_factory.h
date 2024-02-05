@@ -39,12 +39,12 @@ namespace srs_cu_cp {
 struct ue_context;
 
 struct rrc_du_creation_message {
-  rrc_du_creation_message(const rrc_cfg_t&                 cfg_,
-                          rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notif_,
-                          rrc_ue_nas_notifier&             nas_notif_,
-                          rrc_ue_control_notifier&         ngap_ctrl_notif_,
-                          rrc_ue_reestablishment_notifier& cu_cp_notif_,
-                          cell_meas_manager&               cell_meas_mng_) :
+  rrc_du_creation_message(const rrc_cfg_t&                cfg_,
+                          rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notif_,
+                          rrc_ue_nas_notifier&            nas_notif_,
+                          rrc_ue_control_notifier&        ngap_ctrl_notif_,
+                          rrc_ue_context_update_notifier& cu_cp_notif_,
+                          cell_meas_manager&              cell_meas_mng_) :
     cfg(cfg_),
     rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
     nas_notifier(nas_notif_),
@@ -53,12 +53,12 @@ struct rrc_du_creation_message {
     cell_meas_mng(cell_meas_mng_)
   {
   }
-  const rrc_cfg_t&                 cfg;
-  rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notifier;
-  rrc_ue_nas_notifier&             nas_notifier;
-  rrc_ue_control_notifier&         ngap_ctrl_notifier;
-  rrc_ue_reestablishment_notifier& cu_cp_notifier;
-  cell_meas_manager&               cell_meas_mng; // cell measurement manager
+  const rrc_cfg_t&                cfg;
+  rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notifier;
+  rrc_ue_nas_notifier&            nas_notifier;
+  rrc_ue_control_notifier&        ngap_ctrl_notifier;
+  rrc_ue_context_update_notifier& cu_cp_notifier;
+  cell_meas_manager&              cell_meas_mng; // cell measurement manager
 };
 
 /// Create an instance of an RRC entity

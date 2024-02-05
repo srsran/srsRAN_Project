@@ -29,6 +29,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
+#include "srsran/ran/dmrs.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
@@ -77,6 +78,14 @@ struct prach_appconfig {
   uint8_t power_ramping_step_db = 4;
   /// Ports list for PRACH reception.
   std::vector<uint8_t> ports = {0};
+  /// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
+  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
+  /// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.
+  float nof_ssb_per_ro = 1;
+  /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
+  /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
+  /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
+  uint8_t nof_cb_preambles_per_ssb = 4;
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
@@ -200,6 +209,8 @@ struct pdsch_appconfig {
   /// Link Adaptation (LA) threshold for drop in nof. layers of the first HARQ transmission above which HARQ
   /// retransmission is cancelled.
   uint8_t harq_la_ri_drop_threshold{1};
+  /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211.
+  uint8_t dmrs_add_pos{1};
 };
 
 /// PUSCH application configuration.
@@ -256,6 +267,8 @@ struct pusch_appconfig {
   float olla_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_snr_offset{5.0};
+  /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3).
+  uint8_t dmrs_add_pos{2};
 };
 
 struct pucch_appconfig {
@@ -713,6 +726,8 @@ struct security_appconfig {
 };
 
 struct cu_cp_appconfig {
+  uint16_t           max_nof_dus                = 6;
+  uint16_t           max_nof_cu_ups             = 6;
   int                inactivity_timer           = 7200; // in seconds
   unsigned           ue_context_setup_timeout_s = 3;    // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;
@@ -804,6 +819,9 @@ struct metrics_appconfig {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
+  struct {
+    unsigned report_period = 0; // PDCP report period in ms
+  } pdcp;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
   unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.
@@ -855,6 +873,8 @@ struct expert_upper_phy_appconfig {
 struct test_mode_ue_appconfig {
   /// C-RNTI to assign to the test UE.
   rnti_t rnti = rnti_t::INVALID_RNTI;
+  /// Number of test UE(s) to create.
+  uint16_t nof_ues = 1;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
@@ -979,6 +999,8 @@ struct ru_ofh_base_cell_appconfig {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
+  /// If set to true, warn of unreceived Radio Unit frames.
+  bool warn_unreceived_ru_frames = true;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
   /// Uplink compression bitwidth.
@@ -1003,7 +1025,7 @@ struct ru_ofh_base_cell_appconfig {
 struct ru_ofh_cell_appconfig {
   /// Base cell configuration.
   ru_ofh_base_cell_appconfig cell;
-  /// Ethernet network interface name.
+  /// Ethernet network interface name or identifier.
   std::string network_interface = "enp1s0f0";
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = true;
@@ -1037,33 +1059,50 @@ struct ru_ofh_appconfig {
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
 
+/// gNB app dummy Radio Unit configuration.
+struct ru_dummy_appconfig {
+  /// \brief DL processing delay in slots.
+  ///
+  /// It is the number of slots that the RU expects the downlink resource grid in advance for having enough time margin
+  /// for processing.
+  unsigned dl_processing_delay = 1;
+};
+
 struct buffer_pool_appconfig {
   std::size_t nof_segments = 1048576;
   std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
 };
 
-/// CPU isolation configuration in the gNB app.
-struct cpu_isolation_config {
-  /// Set of CPUs exclusively used by the gNB app.
-  std::string isolated_cpus;
-  /// Set of CPUs dedicated to other operating system processes.
-  std::string os_tasks_cpus;
+/// CPU affinities configuration for the cell.
+struct cpu_affinities_cell_appconfig {
+  /// L1 uplink CPU affinity mask.
+  gnb_os_sched_affinity_config l1_ul_cpu_cfg = {gnb_sched_affinity_mask_types::l1_ul,
+                                                {},
+                                                gnb_sched_affinity_mask_policy::mask};
+  /// L1 downlink workers CPU affinity mask.
+  gnb_os_sched_affinity_config l1_dl_cpu_cfg = {gnb_sched_affinity_mask_types::l1_dl,
+                                                {},
+                                                gnb_sched_affinity_mask_policy::mask};
+
+  /// L2 workers CPU affinity mask.
+  gnb_os_sched_affinity_config l2_cell_cpu_cfg = {gnb_sched_affinity_mask_types::l2_cell,
+                                                  {},
+                                                  gnb_sched_affinity_mask_policy::mask};
+
+  /// Radio Unit workers CPU affinity mask.
+  gnb_os_sched_affinity_config ru_cpu_cfg = {gnb_sched_affinity_mask_types::ru,
+                                             {},
+                                             gnb_sched_affinity_mask_policy::mask};
 };
 
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
-  /// L1 uplink CPU affinity mask.
-  gnb_os_sched_affinity_config l1_ul_cpu_cfg;
-  /// L1 downlink workers CPU affinity mask.
-  gnb_os_sched_affinity_config l1_dl_cpu_cfg;
-  /// L2 workers CPU affinity mask.
-  gnb_os_sched_affinity_config l2_cell_cpu_cfg;
-  /// Radio Unit workers CPU affinity mask.
-  gnb_os_sched_affinity_config ru_cpu_cfg;
-  /// Low priority workers CPU affinity mask.
-  gnb_os_sched_affinity_config low_priority_cpu_cfg;
   /// CPUs isolation.
-  optional<cpu_isolation_config> isol_cpus;
+  optional<os_sched_affinity_bitmask> isolated_cpus;
+  /// Low priority workers CPU affinity mask.
+  gnb_os_sched_affinity_config low_priority_cpu_cfg = {gnb_sched_affinity_mask_types::low_priority,
+                                                       {},
+                                                       gnb_sched_affinity_mask_policy::mask};
 };
 
 /// Upper PHY thread configuration for the gNB.
@@ -1146,10 +1185,12 @@ struct expert_threads_appconfig {
 
 /// Expert configuration of the gNB app.
 struct expert_execution_appconfig {
-  /// CPU affinities of the gNB app.
+  /// gNB CPU affinities.
   cpu_affinities_appconfig affinities;
   /// Expert thread configuration of the gNB app.
   expert_threads_appconfig threads;
+  /// CPU affinities per cell of the gNB app.
+  std::vector<cpu_affinities_cell_appconfig> cell_affinities = {{}};
 };
 
 /// HAL configuration of the gNB app.
@@ -1181,7 +1222,7 @@ struct gnb_appconfig {
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
-  variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
+  variant<ru_sdr_appconfig, ru_ofh_appconfig, ru_dummy_appconfig> ru_cfg = {ru_sdr_appconfig{}};
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.

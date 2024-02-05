@@ -471,6 +471,9 @@ static void trx_srsran_end(TRXState* s1)
   // Select session and stop.
   srsran_assert(context.session, "Invalid session.");
   context.session->stop();
+
+  // Stop asynchronous worker.
+  context.async_task_worker->stop();
 }
 
 static int

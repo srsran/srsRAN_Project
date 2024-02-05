@@ -49,7 +49,6 @@ struct downlink_handler_broadcast_impl_config {
   std::chrono::microseconds dl_processing_time;
   /// Transmission window timing parameters for delay management.
   du_tx_window_timing_parameters tx_timing_params;
-  ///
 };
 
 /// Downlink handler broadcast implementation dependencies.

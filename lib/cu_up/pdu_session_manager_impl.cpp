@@ -122,7 +122,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   // If no flow could be created, we remove the rest of the dangling DRB again
   if (nof_flow_success == 0) {
     logger.log_error(
-        "Failed to create {} for psi={}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
+        "Failed to create {} for {}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
     new_session.drbs.erase(drb_to_setup.drb_id);
     drb_result.cause   = cause_radio_network_t::unspecified;
     drb_result.success = false;
@@ -131,10 +131,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // If 5QI is not configured in CU-UP, we remove the rest of the dangling DRB again
   if (qos_cfg.find(five_qi) == qos_cfg.end()) {
-    logger.log_error("Failed to create {} for psi={}: Could not find 5QI. {}",
-                     drb_to_setup.drb_id,
-                     new_session.pdu_session_id,
-                     five_qi);
+    logger.log_error(
+        "Failed to create {} for {}: Could not find 5QI. {}", drb_to_setup.drb_id, new_session.pdu_session_id, five_qi);
     new_session.drbs.erase(drb_to_setup.drb_id);
     drb_result.cause   = cause_radio_network_t::not_supported_5qi_value;
     drb_result.success = false;
@@ -227,12 +225,12 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.cause                    = cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
-    logger.log_error("PDU Session with psi={} already exists", session.pdu_session_id);
+    logger.log_error("PDU Session with {} already exists", session.pdu_session_id);
     return pdu_session_result;
   }
 
   if (pdu_sessions.size() >= MAX_NUM_PDU_SESSIONS_PER_UE) {
-    logger.log_error("PDU Session for psi={} cannot be created. Max number of PDU sessions reached",
+    logger.log_error("PDU Session for {} cannot be created. Max number of PDU sessions reached",
                      session.pdu_session_id);
     return pdu_session_result;
   }
@@ -242,7 +240,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
 
   // Get uplink transport address
-  logger.log_debug("PDU session uplink tunnel info: psi={} teid={} addr={}",
+  logger.log_debug("PDU session uplink tunnel info: {} teid={} addr={}",
                    session.pdu_session_id,
                    ul_tunnel_info.gtp_teid.value(),
                    ul_tunnel_info.tp_address);
@@ -348,12 +346,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
     if (drb_iter == pdu_session->drbs.end()) {
-      logger.log_warning("Cannot modify {} not found in psi={}", drb_to_mod.drb_id, session.pdu_session_id);
+      logger.log_warning("Cannot modify {} not found in {}", drb_to_mod.drb_id, session.pdu_session_id);
       pdu_session_result.drb_setup_results.push_back(drb_result);
       continue;
     }
     srsran_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
-                  "Query for {} in psi={} provided different drb_id={}",
+                  "Query for {} in {} provided {}",
                   drb_to_mod.drb_id,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
@@ -423,7 +421,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                      : security::ciphering_enabled::on);
     }
 
-    logger.log_info("Modified {}. psi={} f1u_teid={}", drb_to_mod.drb_id, session.pdu_session_id, drb->f1u_ul_teid);
+    logger.log_info("Modified {}. {} f1u_teid={}", drb_to_mod.drb_id, session.pdu_session_id, drb->f1u_ul_teid);
 
     // Apply QoS flows
     for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
@@ -444,22 +442,22 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_rem);
     if (drb_iter == pdu_session->drbs.end()) {
-      logger.log_warning("Cannot remove {}. DRB not found in psi={}", drb_to_rem, session.pdu_session_id);
+      logger.log_warning("Cannot remove {}. DRB not found in {}", drb_to_rem, session.pdu_session_id);
       continue;
     }
     srsran_assert(drb_to_rem == drb_iter->second->drb_id,
-                  "Query for {} in psi={} provided different drb_id={}",
+                  "Query for {} in {} provided different drb_id={}",
                   drb_to_rem,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
     // remove DRB (this will automatically disconnect from F1-U gateway)
     if (not f1u_teid_allocator.release_teid(drb_iter->second->f1u_ul_teid)) {
-      logger.log_error("psi={} drb_id={} could not free ul_teid={}", session.pdu_session_id, drb_to_rem);
+      logger.log_error("{} drb_id={} could not free ul_teid={}", session.pdu_session_id, drb_to_rem);
     }
     pdu_session->drbs.erase(drb_iter);
 
-    logger.log_info("Removed {} for psi={}", drb_to_rem, session.pdu_session_id);
+    logger.log_info("Removed {} for {}", drb_to_rem, session.pdu_session_id);
   }
 
   pdu_session_result.success = true;
@@ -482,14 +480,13 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
     f1u_ul_tunnel_addr.gtp_teid = drb.second->f1u_ul_teid;
     f1u_gw.disconnect_cu_bearer(f1u_ul_tunnel_addr);
     if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
-      logger.log_error("psi={} could not remove ul_teid at session termination. ul_teid={}",
-                       pdu_session_id,
-                       drb.second->f1u_ul_teid);
+      logger.log_error(
+          "{} could not remove ul_teid at session termination. ul_teid={}", pdu_session_id, drb.second->f1u_ul_teid);
     }
   }
 
   pdu_sessions.erase(pdu_session_id);
-  logger.log_info("Removing PDU session with psi={}", pdu_session_id);
+  logger.log_info("Removing PDU session with {}", pdu_session_id);
 }
 
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()

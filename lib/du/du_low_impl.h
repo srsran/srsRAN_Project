@@ -56,6 +56,7 @@ public:
   {
     return phy_up->set_rx_results_notifier(notifier);
   }
+  void stop() override { phy_up->stop(); }
 
 private:
   srslog::basic_logger& logger;

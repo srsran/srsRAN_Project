@@ -21,7 +21,7 @@
  */
 
 #include "prbs_calculator.h"
-#include "tbs_calculator.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 
 using namespace srsran;
 

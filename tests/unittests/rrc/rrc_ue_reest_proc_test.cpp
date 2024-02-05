@@ -45,7 +45,6 @@ protected:
 /// Test the RRC Reestablishment
 TEST_F(rrc_ue_reest, when_invalid_reestablishment_request_received_then_rrc_setup_sent)
 {
-  connect_amf();
   receive_invalid_reestablishment_request(0, to_rnti(0x4601));
 
   // check if the RRC Setup Request was generated
@@ -62,7 +61,6 @@ TEST_F(rrc_ue_reest, when_invalid_reestablishment_request_received_then_rrc_setu
 /// Test the RRC Reestablishment
 TEST_F(rrc_ue_reest, when_valid_reestablishment_request_received_but_security_context_not_found_then_rrc_setup_sent)
 {
-  connect_amf();
   receive_valid_reestablishment_request(1, to_rnti(0x4601));
 
   // check if the RRC Setup Request was generated
@@ -79,7 +77,6 @@ TEST_F(rrc_ue_reest, when_valid_reestablishment_request_received_but_security_co
 /// Test the RRC Reestablishment
 TEST_F(rrc_ue_reest, when_reestablishment_request_with_cause_recfg_fail_received_then_rrc_setup_sent)
 {
-  connect_amf();
   ue_index_t old_ue_index = uint_to_ue_index(0);
   add_ue_reestablishment_context(old_ue_index);
   receive_valid_reestablishment_request_with_cause_recfg_fail(1, to_rnti(0x4601));
@@ -99,7 +96,6 @@ TEST_F(rrc_ue_reest, when_reestablishment_request_with_cause_recfg_fail_received
 TEST_F(rrc_ue_reest,
        when_valid_reestablishment_request_for_same_du_received_then_rrc_reestablishment_with_old_ue_index_sent)
 {
-  connect_amf();
   ue_index_t old_ue_index = uint_to_ue_index(0);
   add_ue_reestablishment_context(old_ue_index);
   receive_valid_reestablishment_request(1, to_rnti(0x4601));

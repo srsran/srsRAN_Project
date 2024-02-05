@@ -668,6 +668,7 @@ constexpr uint16_t to_number(rlc_control_pdu_type type)
 }
 
 /// \brief Configurable Rx parameters for RLC AM
+///
 /// Ref: 3GPP TS 38.322 Section 7
 struct rlc_rx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
@@ -682,6 +683,7 @@ struct rlc_rx_am_config {
 };
 
 /// \brief Configurable Tx parameters for RLC AM
+///
 /// Ref: 3GPP TS 38.322 Section 7
 struct rlc_tx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
@@ -694,12 +696,13 @@ struct rlc_tx_am_config {
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
 
-  // Custom non-standard parameters
+  // Implementation-specific parameters that are not specified by 3GPP
   uint32_t queue_size; ///< SDU queue size
   uint32_t max_window; ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
 };
 
 /// \brief Configurable parameters for RLC AM
+///
 /// Ref: 3GPP TS 38.322 Section 7
 struct rlc_am_config {
   rlc_rx_am_config rx; ///< Rx configuration
@@ -707,6 +710,7 @@ struct rlc_am_config {
 };
 
 /// \brief Configurable Rx parameters for RLC UM
+///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_rx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
@@ -714,22 +718,51 @@ struct rlc_rx_um_config {
 };
 
 /// \brief Configurable Tx parameters for RLC UM
+///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_tx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
-  uint32_t       queue_size;      ///< SDU queue size
+
+  // Implementation-specific parameters that are not specified by 3GPP
+  uint32_t queue_size; ///< SDU queue size
 };
 
 /// \brief Configurable parameters for RLC UM
+///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_um_config {
   rlc_rx_um_config rx; ///< Rx configuration
   rlc_tx_um_config tx; ///< Tx configuration
 };
 
+/// \brief Configurable Rx parameters for RLC TM
+///
+/// This is a dummy class for consistency with other RLC modes.
+/// It may include implementation-specific parameters that are not specified by 3GPP.
+struct rlc_rx_tm_config {
+  // No members needed here yet
+};
+
+/// \brief Configurable Tx parameters for RLC TM
+///
+/// This includes only implementation-specific parameters that are not specified by 3GPP
+struct rlc_tx_tm_config {
+  // Implementation-specific parameters that are not specified by 3GPP
+  uint32_t queue_size; ///< SDU queue size
+};
+
+/// \brief Configurable parameters for RLC TM
+///
+/// This includes only implementation-specific parameters that are not specified by 3GPP
+struct rlc_tm_config {
+  rlc_rx_tm_config rx; ///< Rx configuration
+  rlc_tx_tm_config tx; ///< Tx configuration
+};
+
 /// Configuration of RLC bearer.
 struct rlc_config {
   rlc_mode       mode;
+  rlc_tm_config  tm;
   rlc_um_config  um;
   rlc_am_config  am;
   timer_duration metrics_period;
@@ -832,6 +865,54 @@ struct formatter<srsran::rlc_control_pdu_type> {
   }
 };
 
+// RLC TM TX config formatter
+template <>
+struct formatter<srsran::rlc_tx_tm_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::rlc_tx_tm_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "queue_size={}", cfg.queue_size);
+  }
+};
+
+// RLC TM RX config formatter
+template <>
+struct formatter<srsran::rlc_rx_tm_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::rlc_rx_tm_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "");
+  }
+};
+
+// RLC TM config formatter
+template <>
+struct formatter<srsran::rlc_tm_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::rlc_tm_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
+  }
+};
+
 // RLC UM TX config formatter
 template <>
 struct formatter<srsran::rlc_tx_um_config> {
@@ -844,7 +925,7 @@ struct formatter<srsran::rlc_tx_um_config> {
   template <typename FormatContext>
   auto format(srsran::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "tx_sn_size={}, queue_size={}", cfg.sn_field_length, cfg.queue_size);
+    return format_to(ctx.out(), "tx_sn_size={} queue_size={}", cfg.sn_field_length, cfg.queue_size);
   }
 };
 
@@ -953,6 +1034,9 @@ struct formatter<srsran::rlc_config> {
   template <typename FormatContext>
   auto format(srsran::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    if (cfg.mode == srsran::rlc_mode::tm) {
+      return format_to(ctx.out(), "{} {}", cfg.mode, cfg.tm);
+    }
     if (cfg.mode == srsran::rlc_mode::um_bidir) {
       return format_to(ctx.out(), "{} {}", cfg.mode, cfg.um);
     }

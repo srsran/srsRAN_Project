@@ -124,7 +124,7 @@ class uplink_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  srslog::basic_logger&                                       logger;
+  srslog::basic_logger*                                       logger;
   std::vector<std::array<uplink_context, MAX_NSYMB_PER_SLOT>> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -132,7 +132,7 @@ class uplink_context_repository
   /// Returns the entry of the repository for the given slot and symbol.
   uplink_context& entry(slot_point slot, unsigned symbol)
   {
-    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index={}", symbol);
+    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % buffer.size();
@@ -142,7 +142,7 @@ class uplink_context_repository
   /// Returns the entry of the repository for the given slot and symbol.
   const uplink_context& entry(slot_point slot, unsigned symbol) const
   {
-    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index={}", symbol);
+    srsran_assert(symbol < MAX_NSYMB_PER_SLOT, "Invalid symbol index '{}'", symbol);
 
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % buffer.size();
@@ -150,7 +150,10 @@ class uplink_context_repository
   }
 
 public:
-  uplink_context_repository(unsigned size_, srslog::basic_logger& logger_) : logger(logger_), buffer(size_) {}
+  explicit uplink_context_repository(unsigned size_, srslog::basic_logger* logger_ = nullptr) :
+    logger(logger_), buffer(size_)
+  {
+  }
 
   /// Adds the given entry to the repository at slot.
   void add(const resource_grid_context& context, resource_grid& grid)
@@ -158,12 +161,14 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     for (unsigned symbol_id = 0, symbol_end = grid.get_reader().get_nof_symbols(); symbol_id != symbol_end;
          ++symbol_id) {
-      if (!entry(context.slot, symbol_id).empty()) {
-        const resource_grid_context& previous_context = entry(context.slot, symbol_id).get_grid_context();
-        logger.warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
-                       previous_context.slot,
-                       symbol_id,
-                       previous_context.sector);
+      if (logger) {
+        if (!entry(context.slot, symbol_id).empty()) {
+          const resource_grid_context& previous_context = entry(context.slot, symbol_id).get_grid_context();
+          logger->warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
+                          previous_context.slot,
+                          symbol_id,
+                          previous_context.sector);
+        }
       }
 
       entry(context.slot, symbol_id) = uplink_context(symbol_id, context, grid);

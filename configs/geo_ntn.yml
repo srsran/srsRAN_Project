@@ -1,10 +1,11 @@
 # This file contains the configuration for the geo_ntn scenario
 ntn:
-  cell_specific_koffset: 260 # sets the maximum possible channel delay
-  ephemeris_info: # ephemeris information for the satellite
-    pos_x: 4819456 #23508375
-    pos_y: 453281 #2211019
-    pos_z: 7183667 #22224489
+  cell_specific_koffset: 150 # sets the maximum possible channel delay
+  ta_common: 0
+  ephemeris_info: # ecef ephemeris information for the satellite
+    pos_x: 20922195
+    pos_y: 1967783
+    pos_z: 19770302
     vel_x: 0
     vel_y: 0
     vel_z: 0

@@ -108,6 +108,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 static receiver_impl_dependencies
 resolve_receiver_dependencies(const receiver_config&                            receiver_cfg,
                               srslog::basic_logger&                             logger,
+                              std::unique_ptr<ether::receiver>                  eth_receiver,
                               std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
                               std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
@@ -135,19 +136,22 @@ resolve_receiver_dependencies(const receiver_config&                            
           ? static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_dummy_impl>())
           : static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_impl>());
 
+  dependencies.eth_receiver = std::move(eth_receiver);
+
   return dependencies;
 }
 
-std::unique_ptr<receiver_impl>
+std::unique_ptr<receiver>
 srsran::ofh::create_receiver(const receiver_config&                            receiver_cfg,
                              srslog::basic_logger&                             logger,
+                             std::unique_ptr<ether::receiver>                  eth_rx,
                              std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                              std::shared_ptr<prach_context_repository>         prach_context_repo,
                              std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
 {
   auto rx_depen = resolve_receiver_dependencies(
-      receiver_cfg, logger, notifier, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo);
+      receiver_cfg, logger, std::move(eth_rx), notifier, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo);
 
   return std::make_unique<receiver_impl>(receiver_cfg, std::move(rx_depen));
 }

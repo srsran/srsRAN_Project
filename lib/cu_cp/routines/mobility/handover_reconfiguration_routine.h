@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../../ue_manager_impl.h"
+#include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

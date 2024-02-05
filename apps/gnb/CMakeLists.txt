@@ -34,6 +34,7 @@ add_executable(gnb
         adapters/e1ap_gateway_local_connector.cpp
         adapters/f1c_gateway_local_connector.cpp
         adapters/e2_gateway_remote_connector.cpp
+        adapters/ngap_adapter.cpp
         )
 
 install(TARGETS gnb
@@ -61,6 +62,7 @@ target_link_libraries(gnb
         srsran_channel_processors
         srsran_channel_equalizer
         srsran_channel_precoder
+        srsran_ru_dummy
         srsran_ru_generic
         srsran_ru_ofh
         srsran_pcap

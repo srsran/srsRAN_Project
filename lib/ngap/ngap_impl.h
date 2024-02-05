@@ -40,18 +40,13 @@ class ngap_impl final : public ngap_interface
 {
 public:
   ngap_impl(ngap_configuration&                ngap_cfg_,
+            ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
             ngap_ue_task_scheduler&            task_sched_,
             ngap_ue_manager&                   ue_manager_,
             ngap_message_notifier&             ngap_notifier_,
             task_executor&                     ctrl_exec_);
   ~ngap_impl();
-
-  // ngap ue control manager functions
-  void create_ngap_ue(ue_index_t                          ue_index,
-                      ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                      ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                      ngap_du_processor_control_notifier& du_processor_ctrl_notifier) override;
 
   bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
 
@@ -67,7 +62,7 @@ public:
   void handle_connection_loss() override {}
 
   // ngap control message handler functions
-  bool handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+  async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
   void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
@@ -138,14 +133,6 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Send an Error Indication message to the core.
-  /// \param[in] ue_index The index of the related UE.
-  /// \param[in] cause The cause of the Error Indication.
-  /// \param[in] amf_ue_id The AMF UE ID.
-  void send_error_indication(ue_index_t            ue_index  = ue_index_t::invalid,
-                             optional<cause_t>     cause     = {},
-                             optional<amf_ue_id_t> amf_ue_id = {});
-
   /// \brief Schedule the transmission of an Error Indication message on the UE task executor.
   /// \param[in] ue_index The index of the related UE.
   /// \param[in] cause The cause of the Error Indication.
@@ -161,6 +148,7 @@ private:
   /// Repository of UE Contexts.
   ngap_ue_context_list ue_ctxt_list;
 
+  ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;

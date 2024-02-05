@@ -35,22 +35,22 @@ bool verify_ho_command(const cu_cp_inter_du_handover_request& command,
                        const srslog::basic_logger&            logger)
 {
   if (command.target_pci == INVALID_PCI) {
-    logger.error("Target PCI must not be invalid");
+    logger.warning("Target PCI must not be invalid");
     return false;
   }
 
   if (command.target_du_index == du_index_t::invalid) {
-    logger.error("Target DU index must not be invalid");
+    logger.warning("Target DU index must not be invalid");
     return false;
   }
 
   if (command.source_ue_index == ue_index_t::invalid) {
-    logger.error("Source UE index must not be invalid");
+    logger.warning("Source UE index must not be invalid");
     return false;
   }
 
   if (!ue_manager.find_du_ue(command.source_ue_index)) {
-    logger.error("Can't find source UE index {}");
+    logger.warning("Can't find source ue={}");
     return false;
   }
 
@@ -84,7 +84,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   {
     // Verify input.
     if (!verify_ho_command(command, ue_manager, logger)) {
-      logger.error("ue={}: \"{}\" - invalid input parameters", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" - invalid input parameters", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
@@ -100,14 +100,14 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     // Allocate UE index at target DU
     target_ue_context_setup_request.ue_index = ue_manager.allocate_new_ue_index(command.target_du_index);
     if (target_ue_context_setup_request.ue_index == ue_index_t::invalid) {
-      logger.error("ue={}: \"{}\" failed to allocate UE index at target DU", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to allocate UE index at target DU", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
     if (!generate_ue_context_setup_request(
             target_ue_context_setup_request, source_ue->get_rrc_ue_srb_notifier().get_srbs(), source_rrc_context)) {
-      logger.error("ue={}: \"{}\" failed to generate UE context setup request", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
@@ -122,7 +122,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                        next_config,
                                        logger,
                                        false)) {
-      logger.error("ue={}: \"{}\" failed to create UE context at target DU", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to create UE context at target DU", command.source_ue_index, name());
       cu_cp_notifier.on_ue_removal_required(target_ue_context_setup_request.ue_index);
       CORO_EARLY_RETURN(response_msg);
     }
@@ -130,8 +130,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   // Target UE object exists from this point on.
   target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
-  srsran_assert(
-      target_ue != nullptr, "Couldn't find UE with index {} in target DU", target_ue_context_setup_response.ue_index);
+  srsran_assert(target_ue != nullptr, "Couldn't find ue={} in target DU", target_ue_context_setup_response.ue_index);
 
   // Setup SRB1 and initialize security context in RRC
   {
@@ -152,7 +151,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     // Handle Bearer Context Modification Response
     if (!handle_bearer_context_modification_response(
             response_msg, source_ue_context_mod_request, bearer_context_modification_response, next_config, logger)) {
-      logger.error("ue={}: \"{}\" failed to modify bearer context at target CU-UP", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer context at target CU-UP", command.source_ue_index, name());
 
       {
         // Remove target UE context if Bearer Context Modification failed.
@@ -183,7 +182,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                   false /* do not reestablish DRBs */,
                                   true, /* Update keys */
                                   logger)) {
-        logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration", command.source_ue_index, name());
+        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", command.source_ue_index, name());
         CORO_EARLY_RETURN(response_msg);
       }
     }
@@ -194,7 +193,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                      launch_async<handover_reconfiguration_routine>(rrc_reconfig_args, *source_ue, *target_ue, logger));
 
     if (!reconf_result) {
-      logger.error("ue={}: \"{}\" RRC Reconfiguration failed", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
   }
@@ -212,7 +211,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   CORO_AWAIT_VALUE(context_transfer_success,
                    cu_cp_notifier.on_ue_transfer_required(target_ue->get_ue_index(), command.source_ue_index));
   if (not context_transfer_success) {
-    logger.error("ue={}: \"{}\" failed to transfer UE context", command.source_ue_index, name());
+    logger.warning("ue={}: \"{}\" failed to transfer UE context", command.source_ue_index, name());
     CORO_EARLY_RETURN(response_msg);
   }
 

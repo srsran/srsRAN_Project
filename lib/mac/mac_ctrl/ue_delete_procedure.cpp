@@ -21,7 +21,7 @@
  */
 
 #include "ue_delete_procedure.h"
-#include "../../ran/gnb_format.h"
+#include "proc_logger.h"
 
 using namespace srsran;
 
@@ -29,23 +29,23 @@ void mac_ue_delete_procedure::operator()(coro_context<async_task<mac_ue_delete_r
 {
   CORO_BEGIN(ctx);
 
-  log_proc_started(logger, req.ue_index, req.rnti, name());
+  logger.debug("{}: started...", mac_log_prefix(req.ue_index, req.rnti, name()));
 
-  // 1. Remove UE from scheduler.
+  // > Remove UE from scheduler.
   // Note: Removing the UE from the scheduler before the MAC avoids potential race conditions (assuming the scheduler
   // doesn't allocate UEs after being removed).
   CORO_AWAIT(sched_configurator.handle_ue_removal_request(req));
 
-  // 2. Remove UE and associated DL channels from the MAC DL.
+  // > Remove UE and associated DL channels from the MAC DL.
   CORO_AWAIT(dl_mac.remove_ue(req));
 
-  // 3. Remove UE associated UL channels from the MAC UL.
+  // > Remove UE associated UL channels from the MAC UL.
   CORO_AWAIT(ul_mac.remove_ue(req));
 
-  // 4. Enqueue UE deletion
+  // > Enqueue UE deletion
   ctrl_mac.remove_ue(req.ue_index);
 
-  log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
+  logger.info("{}: finished successfully", mac_log_prefix(req.ue_index, req.rnti, name()));
 
   // 4. Signal end of procedure and pass response
   CORO_RETURN(mac_ue_delete_response{true});

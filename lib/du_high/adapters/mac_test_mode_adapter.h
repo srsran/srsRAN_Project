@@ -25,6 +25,7 @@
 #include "srsran/du/du_test_config.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
+#include <unordered_map>
 
 namespace srsran {
 
@@ -56,6 +57,75 @@ private:
   std::vector<phy_cell> cells;
 };
 
+/// \brief Handles information related to the test UE(s).
+class test_ue_info_manager
+{
+public:
+  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_) : rnti_start(rnti_start_), nof_ues(nof_ues_) {}
+
+  du_ue_index_t rnti_to_du_ue_idx(rnti_t rnti) const
+  {
+    if (rnti_to_ue_info_lookup.count(rnti) == 0) {
+      return INVALID_DU_UE_INDEX;
+    }
+    return rnti_to_ue_info_lookup.at(rnti).ue_idx;
+  }
+
+  bool is_test_ue(du_ue_index_t ue_idx) const { return ue_idx < nof_ues; }
+
+  bool is_test_ue(rnti_t rnti) const
+  {
+    return (rnti >= rnti_start) and (rnti < to_rnti(to_value(rnti_start) + nof_ues));
+  }
+
+  void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_)
+  {
+    rnti_to_ue_info_lookup[rnti] =
+        test_ue_info{.ue_idx = ue_idx_, .sched_ue_cfg_req = sched_ue_cfg_req_, .msg4_rx_flag = false};
+  }
+
+  void remove_ue(rnti_t rnti)
+  {
+    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
+      rnti_to_ue_info_lookup.erase(rnti);
+    }
+  }
+
+  sched_ue_config_request get_sched_ue_cfg_request(rnti_t rnti) const
+  {
+    return rnti_to_ue_info_lookup.at(rnti).sched_ue_cfg_req;
+  }
+
+  bool is_msg4_rxed(rnti_t rnti) const
+  {
+    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
+      return rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag;
+    }
+    return false;
+  }
+
+  void msg4_rxed(rnti_t rnti, bool msg4_rx_flag_)
+  {
+    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
+      rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag = msg4_rx_flag_;
+    }
+  }
+
+private:
+  struct test_ue_info {
+    du_ue_index_t           ue_idx;
+    sched_ue_config_request sched_ue_cfg_req;
+    bool                    msg4_rx_flag;
+  };
+
+  /// Parameters received from configuration.
+  rnti_t   rnti_start;
+  uint16_t nof_ues;
+
+  /// Mapping between UE RNTI and test UE information.
+  std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
+};
+
 /// \brief Adapter of MAC cell for testing purposes. It automatically forces ACK/CRC=OK for the test UE.
 class mac_test_mode_cell_adapter : public mac_cell_control_information_handler,
                                    public mac_cell_result_notifier,
@@ -70,8 +140,8 @@ public:
                              mac_pdu_handler&                              pdu_handler_,
                              mac_cell_slot_handler&                        slot_handler_,
                              mac_cell_result_notifier&                     result_notifier_,
-                             std::function<void()>                         dl_bs_notifier_,
-                             const sched_ue_config_request&                ue_cfg_req_);
+                             std::function<void(rnti_t)>                   dl_bs_notifier_,
+                             test_ue_info_manager&                         ue_info_mgr_);
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
   {
@@ -97,22 +167,22 @@ public:
 
 private:
   struct slot_descision_history {
-    std::vector<pucch_info> pucchs;
-    optional<ul_sched_info> pusch;
+    std::vector<pucch_info>    pucchs;
+    std::vector<ul_sched_info> puschs;
   };
 
-  void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
+  void fill_csi_bits(rnti_t rnti, bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
 
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;
   mac_cell_control_information_handler&         adapted;
   mac_pdu_handler&                              pdu_handler;
   mac_cell_slot_handler&                        slot_handler;
   mac_cell_result_notifier&                     result_notifier;
-  std::function<void()>                         dl_bs_notifier;
-  const sched_ue_config_request&                ue_cfg_req;
-  bool                                          msg4_rx_flag = false;
+  std::function<void(rnti_t)>                   dl_bs_notifier;
 
   std::vector<slot_descision_history> sched_decision_history;
+
+  test_ue_info_manager& ue_info_mgr;
 };
 
 class mac_test_mode_adapter final : public mac_interface,
@@ -178,9 +248,7 @@ private:
 
   std::vector<std::unique_ptr<mac_test_mode_cell_adapter>> cell_info_handler;
 
-  du_ue_index_t test_ue_index = INVALID_DU_UE_INDEX;
-
-  sched_ue_config_request test_ue_cfg;
+  test_ue_info_manager ue_info_mgr;
 };
 
 } // namespace srsran

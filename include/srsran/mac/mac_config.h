@@ -34,12 +34,16 @@ namespace srsran {
 
 /// \brief Implementation-specific parameters used to tune MAC operation.
 struct mac_expert_config {
-  /// \brief Maximum number of consecutive DL KOs before an RLF is reported.
-  unsigned max_consecutive_dl_kos = 100;
-  /// \brief Maximum number of consecutive UL KOs before an RLF is reported.
-  unsigned max_consecutive_ul_kos = 100;
-  /// \brief Maximum number of consecutive non-decoded CSI before an RLF is reported.
-  unsigned max_consecutive_csi_dtx = 100;
+  /// \brief Implementation-specific parameters used to tune MAC operation per cell.
+  struct mac_expert_cell_config {
+    /// \brief Maximum number of consecutive DL KOs before an RLF is reported.
+    unsigned max_consecutive_dl_kos = 100;
+    /// \brief Maximum number of consecutive UL KOs before an RLF is reported.
+    unsigned max_consecutive_ul_kos = 100;
+    /// \brief Maximum number of consecutive non-decoded CSI before an RLF is reported.
+    unsigned max_consecutive_csi_dtx = 100;
+  };
+  std::vector<mac_expert_cell_config> configs;
 };
 
 /// \brief Configuration passed to MAC during its instantiation.

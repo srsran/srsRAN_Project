@@ -45,13 +45,11 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool            ack_value
                                                        sch_mcs_index   used_mcs,
                                                        pdsch_mcs_table mcs_table)
 {
-  static constexpr unsigned MAX_CQI = 15;
-
   if (not dl_olla.has_value()) {
     return;
   }
 
-  const sch_mcs_index                 max_mcs = map_cqi_to_mcs(MAX_CQI, mcs_table).value();
+  const sch_mcs_index                 max_mcs = map_cqi_to_mcs(cqi_value::max(), mcs_table).value();
   const interval<sch_mcs_index, true> mcs_bounds{cell_cfg.expert_cfg.ue.dl_mcs.start(),
                                                  std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
 
@@ -65,7 +63,7 @@ void ue_link_adaptation_controller::handle_ul_crc_info(bool crc, sch_mcs_index u
   }
 
   const interval<sch_mcs_index, true> mcs_bounds{
-      cell_cfg.expert_cfg.ue.dl_mcs.start(), std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), get_max_mcs_ul(mcs_table))};
+      cell_cfg.expert_cfg.ue.ul_mcs.start(), std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table))};
   ul_olla->update(crc, used_mcs, mcs_bounds);
 }
 
@@ -106,11 +104,11 @@ optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mc
   }
 
   // There are fewer CQIs than MCS values, so we perform a linear interpolation.
-  const float   cqi_lb = floorf(eff_cqi), cqi_ub = ceilf(eff_cqi);
+  const float   cqi_lb = std::floor(eff_cqi), cqi_ub = std::ceil(eff_cqi);
   const float   coeff  = eff_cqi - cqi_lb;
   const float   mcs_lb = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_lb), mcs_table).value().value());
   const float   mcs_ub = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_ub), mcs_table).value().value());
-  sch_mcs_index mcs{static_cast<uint8_t>(floorf(mcs_lb * (1 - coeff) + mcs_ub * coeff))};
+  sch_mcs_index mcs{static_cast<uint8_t>(std::floor(mcs_lb * (1 - coeff) + mcs_ub * coeff))};
 
   // Ensures that the MCS is within the configured range.
   mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.dl_mcs.start()), cell_cfg.expert_cfg.ue.dl_mcs.stop());

@@ -44,9 +44,9 @@ public:
   {
     window_checker.on_new_symbol(symbol_point);
 
-    if (not executor.execute([&, symbol_point]() { symbol_handler.on_new_symbol(symbol_point); })) {
+    if (!executor.execute([&, symbol_point]() { symbol_handler.on_new_symbol(symbol_point); })) {
       srslog::fetch_basic_logger("OFH").warning(
-          "Failed to dispatch new symbol task in the message transmitter for slot={} and symbol={}",
+          "Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
           symbol_point.get_slot(),
           symbol_point.get_symbol_index());
     }

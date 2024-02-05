@@ -33,7 +33,8 @@ e1ap_cu_cp_test::e1ap_cu_cp_test()
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1ap(e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, timers, ctrl_worker);
+  e1ap = create_e1ap(
+      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, timers, ctrl_worker, max_nof_supported_ues);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()
@@ -52,7 +53,7 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
 
   ASSERT_FALSE(t.ready());
 
-  test_ues.emplace(ue_index);
+  test_ues.emplace(ue_index, test_ue{ue_index});
   test_ue& u         = test_ues[ue_index];
   u.ue_index         = ue_index;
   u.cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(

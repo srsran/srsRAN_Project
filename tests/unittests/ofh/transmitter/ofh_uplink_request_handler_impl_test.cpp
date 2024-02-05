@@ -179,8 +179,8 @@ protected:
   uplink_request_handler_impl                handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
-    ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE, srslog::fetch_basic_logger("TEST"))),
-    ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE, srslog::fetch_basic_logger("TEST"))),
+    ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE)),
+    ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE)),
     handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
     handler_prach_cp_en(get_config_prach_cp_enabled(), get_dependencies_prach_cp_enabled())
   {

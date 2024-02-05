@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "../mobility_manager/mobility_manager.h"
 #include "measurement_context.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/cu_cp/mobility_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {

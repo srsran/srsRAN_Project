@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Software Radio Systems Limited
+# Copyright 2013-2024 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -12,8 +12,7 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 22
-      limits: 22
+      requests: 18
     memory:
       requests: "64G"
       limits: "64G"
@@ -21,8 +20,8 @@
       requests: 2Gi
       limits: 2Gi
     ephemeral-storage:
-      requests: "9G"
-      limits: "9G"
+      requests: "20G"
+      limits: "20G"
   taints: ["ci-amd64-avx512-onprem"]
   resources:
     - type: emulator
@@ -47,6 +46,7 @@
       requests: "500Mi"
     ephemeral-storage:
       requests: "1G"
+  taints: ["retina"]
   environment:
     - URL: ${RETINA_METRICS_SERVER_URL}
     - ORG: ${RETINA_METRICS_SERVER_ORG}

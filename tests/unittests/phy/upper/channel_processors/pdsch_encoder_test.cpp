@@ -25,12 +25,103 @@
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
+#ifdef HWACC_PDSCH_ENABLED
+#include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
+#include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
+#endif // HWACC_PDSCH_ENABLED
+#include <getopt.h>
 
 using namespace srsran;
 using namespace srsran::ldpc;
 
-int main()
+static std::string encoder_type = "generic";
+
+#ifdef HWACC_PDSCH_ENABLED
+static bool        cb_mode       = false;
+static std::string hal_log_level = "ERROR";
+static bool        std_out_sink  = true;
+static std::string eal_arguments = "";
+#endif // HWACC_PDSCH_ENABLED
+
+static void usage(const char* prog)
+{
+  fmt::print("Usage: {} [-T X] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
+  fmt::print("\t-T       PDSCH encoder type [generic,acc100][Default {}]\n", encoder_type);
+#ifdef HWACC_PDSCH_ENABLED
+  fmt::print("\t-x       Force TB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
+  fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
+  fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
+  fmt::print("\teal_args EAL arguments\n");
+#endif // HWACC_PDSCH_ENABLED
+  fmt::print("\t-h       This help\n");
+}
+
+#ifdef HWACC_PDSCH_ENABLED
+// Separates EAL and non-EAL arguments.
+// The function assumes that 'eal_arg' flags the start of the EAL arguments and that no more non-EAL arguments follow.
+static std::string capture_eal_args(int* argc, char*** argv)
+{
+  // Searchs for the EAL args (if any), flagged by 'eal_args', while removing all the rest (except argv[0]).
+  bool        eal_found = false;
+  char**      mod_argv  = *argv;
+  std::string eal_argv  = {mod_argv[0]};
+  int         opt_ind   = *argc;
+  for (int j = 1; j < opt_ind; ++j) {
+    // Search for the 'eal_args' flag (if any).
+    if (!eal_found) {
+      if (strcmp(mod_argv[j], "eal_args") == 0) {
+        // 'eal_args' flag found.
+        eal_found = true;
+        // Remove all main app arguments starting from that point, while copying them to the EAL argument string.
+        mod_argv[j] = NULL;
+        for (int k = j + 1; k < opt_ind; ++k) {
+          eal_argv += " ";
+          eal_argv += mod_argv[k];
+          mod_argv[k] = NULL;
+        }
+        *argc = j;
+      }
+    }
+  }
+  *argv = mod_argv;
+
+  return eal_argv;
+}
+#endif // HWACC_PDSCH_ENABLED
+
+static void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "T:xyz:h")) != -1) {
+    switch (opt) {
+      case 'T':
+        encoder_type = std::string(optarg);
+        break;
+#ifdef HWACC_PDSCH_ENABLED
+      case 'x':
+        cb_mode = true;
+        break;
+      case 'y':
+        std_out_sink = false;
+        break;
+      case 'z':
+        hal_log_level = std::string(optarg);
+        break;
+#endif // HWACC_PDSCH_ENABLED
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(-1);
+    }
+  }
+}
+
+static std::shared_ptr<pdsch_encoder_factory> create_generic_pdsch_encoder_factory()
 {
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
@@ -45,22 +136,110 @@ int main()
   TESTASSERT(segmenter_factory);
 
   pdsch_encoder_factory_sw_configuration encoder_factory_config;
-  encoder_factory_config.encoder_factory                 = ldpc_encoder_factory;
-  encoder_factory_config.rate_matcher_factory            = ldpc_rate_matcher_factory;
-  encoder_factory_config.segmenter_factory               = segmenter_factory;
-  std::shared_ptr<pdsch_encoder_factory> encoder_factory = create_pdsch_encoder_factory_sw(encoder_factory_config);
-  TESTASSERT(encoder_factory);
+  encoder_factory_config.encoder_factory      = ldpc_encoder_factory;
+  encoder_factory_config.rate_matcher_factory = ldpc_rate_matcher_factory;
+  encoder_factory_config.segmenter_factory    = segmenter_factory;
+  return create_pdsch_encoder_factory_sw(encoder_factory_config);
+}
 
-  std::shared_ptr<pdsch_encoder> pdsch_encoder = encoder_factory->create();
+static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelerator_pdsch_enc_factory()
+{
+#ifdef HWACC_PDSCH_ENABLED
+  srslog::sink* log_sink =
+      std_out_sink ? srslog::create_stdout_sink() : srslog::create_file_sink("pdsch_encoder_vectortest.log");
+  srslog::set_default_sink(*log_sink);
+  srslog::init();
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
+  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+
+  // Pointer to a dpdk-based hardware-accelerator interface.
+  static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
+  if (!dpdk_interface) {
+    dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
+    TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
+  }
+
+  // Intefacing to the bbdev-based hardware-accelerator.
+  dpdk::bbdev_acc_configuration bbdev_config;
+  bbdev_config.id                                    = 0;
+  bbdev_config.nof_ldpc_enc_lcores                   = 1;
+  bbdev_config.nof_ldpc_dec_lcores                   = 0;
+  bbdev_config.nof_fft_lcores                        = 0;
+  bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
+  std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
+  TESTASSERT(bbdev_accelerator);
+
+  // Set the hardware-accelerator configuration.
+  hw_accelerator_pdsch_enc_configuration hw_encoder_config;
+  hw_encoder_config.acc_type          = "acc100";
+  hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
+
+  // ACC100 hardware-accelerator implementation.
+  return create_hw_accelerator_pdsch_enc_factory(hw_encoder_config);
+#else  // HWACC_PDSCH_ENABLED
+  return nullptr;
+#endif // HWACC_PDSCH_ENABLED
+}
+
+static std::shared_ptr<pdsch_encoder_factory> create_acc100_pdsch_encoder_factory()
+{
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+  TESTASSERT(crc_calc_factory);
+
+  std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory = create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
+  TESTASSERT(segmenter_factory);
+
+  std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory = create_hw_accelerator_pdsch_enc_factory();
+  TESTASSERT(hw_encoder_factory, "Failed to create a HW acceleration encoder factory.");
+
+  // Set the hardware-accelerated PDSCH encoder configuration.
+  pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
+#ifdef HWACC_PDSCH_ENABLED
+  encoder_hw_factory_config.cb_mode     = cb_mode;
+  encoder_hw_factory_config.max_tb_size = RTE_BBDEV_LDPC_E_MAX_MBUF;
+#endif // HWACC_PDSCH_ENABLED
+  encoder_hw_factory_config.crc_factory        = crc_calc_factory;
+  encoder_hw_factory_config.segmenter_factory  = segmenter_factory;
+  encoder_hw_factory_config.hw_encoder_factory = hw_encoder_factory;
+  return create_pdsch_encoder_factory_hw(encoder_hw_factory_config);
+}
+
+static std::shared_ptr<pdsch_encoder_factory> create_pdsch_encoder_factory()
+{
+  if (encoder_type == "generic") {
+    return create_generic_pdsch_encoder_factory();
+  }
+
+  if (encoder_type == "acc100") {
+    return create_acc100_pdsch_encoder_factory();
+  }
+
+  return nullptr;
+}
+
+int main(int argc, char** argv)
+{
+#ifdef HWACC_PDSCH_ENABLED
+  // Separate EAL and non-EAL arguments.
+  eal_arguments = capture_eal_args(&argc, &argv);
+#endif // HWACC_PDSCH_ENABLED
+
+  // Parse generic arguments.
+  parse_args(argc, argv);
+
+  std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = create_pdsch_encoder_factory();
+  TESTASSERT(pdsch_enc_factory, "Failed to create PDSCH encoder factory of type {}.", encoder_type);
+
+  std::unique_ptr<pdsch_encoder> pdsch_encoder = pdsch_enc_factory->create();
   TESTASSERT(pdsch_encoder);
 
   tx_buffer_pool_config buffer_pool_config;
-  buffer_pool_config.max_codeblock_size          = ldpc::MAX_CODEBLOCK_SIZE;
-  buffer_pool_config.nof_buffers                 = 1;
-  buffer_pool_config.nof_codeblocks              = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  buffer_pool_config.expire_timeout_slots        = 0;
-  buffer_pool_config.external_soft_bits          = false;
-  std::shared_ptr<tx_buffer_pool> rm_buffer_pool = create_tx_buffer_pool(buffer_pool_config);
+  buffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+  buffer_pool_config.nof_buffers          = 1;
+  buffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  buffer_pool_config.expire_timeout_slots = 0;
+  buffer_pool_config.external_soft_bits   = false;
+  std::shared_ptr<tx_buffer_pool_controller> rm_buffer_pool = create_tx_buffer_pool(buffer_pool_config);
 
   trx_buffer_identifier buffer_id(0, 0);
 
@@ -81,7 +260,7 @@ int main()
     unsigned nof_codeblocks =
         ldpc::compute_nof_codeblocks(units::bits(transport_block.size() * 8), test_case.config.base_graph);
 
-    unique_tx_buffer rm_buffer = rm_buffer_pool->reserve(slot_point(), buffer_id, nof_codeblocks);
+    unique_tx_buffer rm_buffer = rm_buffer_pool->get_pool().reserve(slot_point(), buffer_id, nof_codeblocks, true);
 
     pdsch_encoder::configuration config;
     config.new_data       = true;

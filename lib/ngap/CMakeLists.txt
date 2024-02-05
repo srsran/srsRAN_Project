@@ -22,6 +22,7 @@ set(SOURCES
         ngap_factory.cpp
         ngap_impl.cpp
         ngap_asn1_packer.cpp
+        ngap_validators/ngap_validators.cpp
         procedures/ng_setup_procedure.cpp
         procedures/ngap_initial_context_setup_procedure.cpp
         procedures/ngap_dl_nas_message_transfer_procedure.cpp

@@ -60,6 +60,8 @@ struct ru_ofh_sector_configuration {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
+  /// If set to true, warn of unreceived Radio Unit frames.
+  bool warn_unreceived_ru_frames = true;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
@@ -73,7 +75,7 @@ struct ru_ofh_sector_configuration {
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
 
-  /// Ethernet interface name.
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
@@ -128,8 +130,10 @@ struct ru_ofh_sector_dependencies {
   task_executor* receiver_executor = nullptr;
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
-  /// Ethernet gateway.
-  std::unique_ptr<ether::gateway> eth_gateway;
+  /// Optional Ethernet gateway.
+  optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  /// Optional Ethernet receiver.
+  optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 /// Radio Unit dependencies for the Open Fronthaul implementation.

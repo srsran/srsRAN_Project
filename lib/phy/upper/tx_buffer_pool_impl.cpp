@@ -27,18 +27,35 @@
 #include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/slot_point.h"
 #include <algorithm>
+#include <chrono>
 #include <memory>
+#include <thread>
 
 using namespace srsran;
 
-unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks)
+unique_tx_buffer
+tx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data)
 {
+  // No more reservations are allowed if the pool is stopped.
+  if (stopped.load(std::memory_order_acquire)) {
+    return unique_tx_buffer();
+  }
+
   // Try to find the HARQ identifier.
   auto id_found = std::find(identifiers.begin(), identifiers.end(), id);
 
-  // Find an available buffer if no buffer was found with the same identifier.
+  // Find an available buffer if no buffer was found with the same identifier if new data is true, otherwise return an
+  // invalid buffer.
   if (id_found == identifiers.end()) {
-    id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
+    if (new_data) {
+      id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
+    } else {
+      logger.warning(slot.sfn(),
+                     slot.slot_index(),
+                     "DL HARQ {}: failed to reserve, identifier for retransmissions not found.",
+                     id);
+      return unique_tx_buffer();
+    }
   }
 
   // Report warning and return invalid buffer if no available buffer has been found.
@@ -53,6 +70,15 @@ unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer
 
   // Get reference to the buffer.
   tx_buffer_impl& buffer = buffers[i_buffer];
+
+  // Make sure that the codeblocks do not change for retransmissions.
+  if (!new_data && nof_codeblocks != buffer.get_nof_codeblocks()) {
+    logger.warning(slot.sfn(),
+                   slot.slot_index(),
+                   "DL HARQ {}: failed to reserve, number of codeblocks for retransmissions do not match.",
+                   id);
+    return unique_tx_buffer();
+  }
 
   // Reserve codeblocks.
   tx_buffer_status status = buffer.reserve(nof_codeblocks);
@@ -77,6 +103,11 @@ unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer
 
 unique_tx_buffer tx_buffer_pool_impl::reserve(const slot_point& slot, unsigned nof_codeblocks)
 {
+  // No more reservations are allowed if the pool is stopped.
+  if (stopped) {
+    return unique_tx_buffer();
+  }
+
   // Find an available buffer if no buffer was found with the same identifier.
   auto id_found = std::find(identifiers.begin(), identifiers.end(), trx_buffer_identifier::invalid());
 
@@ -148,8 +179,25 @@ void tx_buffer_pool_impl::run_slot(const slot_point& slot)
     }
   }
 }
+tx_buffer_pool& tx_buffer_pool_impl::get_pool()
+{
+  return *this;
+}
 
-std::unique_ptr<tx_buffer_pool> srsran::create_tx_buffer_pool(const tx_buffer_pool_config& config)
+void tx_buffer_pool_impl::stop()
+{
+  // Signals the stop of the pool. No more reservation are allowed after this point.
+  stopped.store(true, std::memory_order_release);
+
+  // Makes sure all buffers are unlocked.
+  for (const auto& buffer : buffers) {
+    while (buffer.is_locked()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+}
+
+std::unique_ptr<tx_buffer_pool_controller> srsran::create_tx_buffer_pool(const tx_buffer_pool_config& config)
 {
   return std::make_unique<tx_buffer_pool_impl>(config);
 }

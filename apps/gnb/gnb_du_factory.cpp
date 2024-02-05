@@ -196,6 +196,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     // Configure test mode
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
+                                                                          gnb_cfg.test_mode_cfg.test_ue.nof_ues,
                                                                           gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
                                                                           gnb_cfg.test_mode_cfg.test_ue.pusch_active,
                                                                           gnb_cfg.test_mode_cfg.test_ue.cqi,

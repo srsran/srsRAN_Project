@@ -34,12 +34,13 @@ namespace srsran {
 namespace ofh {
 
 /// Creates a receiver with the given configuration and dependencies.
-std::unique_ptr<receiver_impl> create_receiver(const receiver_config&                            receiver_cfg,
-                                               srslog::basic_logger&                             logger,
-                                               std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
-                                               std::shared_ptr<prach_context_repository>         prach_context_repo,
-                                               std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                                               std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo);
+std::unique_ptr<receiver> create_receiver(const receiver_config&                            receiver_cfg,
+                                          srslog::basic_logger&                             logger,
+                                          std::unique_ptr<ether::receiver>                  eth_receiver,
+                                          std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
+                                          std::shared_ptr<prach_context_repository>         prach_context_repo,
+                                          std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
+                                          std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo);
 
 } // namespace ofh
 } // namespace srsran

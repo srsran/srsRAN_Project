@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_processor.h"
+#include "../du_processor/du_processor_impl_interface.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
 

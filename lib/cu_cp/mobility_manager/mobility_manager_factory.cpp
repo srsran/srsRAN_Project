@@ -20,8 +20,8 @@
  *
  */
 
+#include "mobility_manager.h"
 #include "mobility_manager_impl.h"
-#include "srsran/cu_cp/mobility_manager.h"
 
 using namespace srsran;
 

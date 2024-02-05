@@ -21,6 +21,7 @@
  */
 
 #include "mobility_manager_impl.h"
+#include "../du_processor/du_processor_impl_interface.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -35,26 +36,25 @@ mobility_manager_impl::mobility_manager_impl(const mobility_manager_cfg& cfg_,
 void mobility_manager_impl::handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci)
 {
   if (!cfg.trigger_handover_from_measurements) {
-    logger.debug("ue_index={} - Ignoring better neighbor pci={}", ue_index, neighbor_pci);
+    logger.debug("ue={}: Ignoring better neighbor pci={}", ue_index, neighbor_pci);
     return;
   }
 
   // Try to find target DU.
   du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == du_index_t::invalid) {
-    logger.debug("No local DU/cell with pci={} found. Requesting Inter CU handover.");
+    logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);
     handle_inter_cu_handover(ue_index, neighbor_pci);
     return;
   }
 
   du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
   if (target_du == source_du) {
-    logger.info("Trigger IntraDU handover.");
+    logger.info("Trigger intra DU handover");
     // TODO: Prepare request and call notifier.
     return;
   } else {
-    logger.info(
-        "Trigger Inter DU handover for ue_index={} from source_du={} to target_du={}", ue_index, source_du, target_du);
+    logger.info("ue={}: Trigger inter DU handover from source_du={} to target_du={}", ue_index, source_du, target_du);
     handle_inter_du_handover(ue_index, neighbor_pci, source_du, target_du);
   }
 }
@@ -67,10 +67,8 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
   // Lookup CGI at target DU.
   optional<nr_cell_global_id_t> cgi = du_db.get_du(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
   if (!cgi.has_value()) {
-    logger.error("ue_index={} - Couldn't retrieve CGI for pci={} at du_index={}",
-                 source_ue_index,
-                 neighbor_pci,
-                 target_du_index);
+    logger.warning(
+        "ue={}: Couldn't retrieve CGI for pci={} at du_index={}", source_ue_index, neighbor_pci, target_du_index);
     return;
   }
 

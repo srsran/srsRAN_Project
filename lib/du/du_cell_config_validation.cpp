@@ -229,6 +229,12 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
     }
   }
 
+  if (bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value() and
+      bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions == dmrs_additional_positions::pos3) {
+    CHECK_TRUE(cell_cfg.dmrs_typeA_pos == dmrs_typeA_position::pos2,
+               "PDSCH dmrs-Additional-Position of pos3 is only supported when dmrs-TypeA-Position is equal to pos2");
+  }
+
   return {};
 }
 
@@ -350,6 +356,11 @@ static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
     if (fallback_dci_format_in_ss2) {
       CHECK_TRUE(bwp.pusch_cfg->mcs_table != pusch_mcs_table::qam256,
                  "256QAM MCS table cannot be used for PUSCH with fallback DCI format in SearchSpace#2");
+    }
+    if (bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value() and
+        bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions == dmrs_additional_positions::pos3) {
+      CHECK_TRUE(cell_cfg.dmrs_typeA_pos == dmrs_typeA_position::pos2,
+                 "PUSCH dmrs-Additional-Position of pos3 is only supported when dmrs-TypeA-Position is equal to pos2");
     }
   }
   if (bwp.pucch_cfg.has_value()) {

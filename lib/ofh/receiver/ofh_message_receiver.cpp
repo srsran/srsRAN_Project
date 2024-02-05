@@ -38,7 +38,8 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
-  data_flow_prach(std::move(dependencies.data_flow_prach))
+  data_flow_prach(std::move(dependencies.data_flow_prach)),
+  eth_receiver(std::move(dependencies.eth_receiver))
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -46,6 +47,7 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   srsran_assert(data_flow_uplink, "Invalid uplink IQ data flow");
   srsran_assert(data_flow_prach, "Invalid uplink PRACH IQ data flow");
   srsran_assert(seq_id_checker, "Invalid sequence id checker");
+  srsran_assert(eth_receiver, "Invalid Ethernet receiver");
 }
 
 void message_receiver::on_new_frame(span<const uint8_t> payload)
@@ -104,8 +106,9 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
       (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured",
-                ecpri_iq_params.pc_id);
+    logger.info(
+        "Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured in reception",
+        ecpri_iq_params.pc_id);
 
     return true;
   }
@@ -116,16 +119,17 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
 bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
-    logger.debug("Dropped received Ethernet frame as source MAC addresses do not match (detected={:x}, expected={:x})",
-                 span<const uint8_t>(eth_params.mac_src_address),
-                 span<const uint8_t>(vlan_params.mac_src_address));
+    logger.debug(
+        "Dropped received Ethernet frame as source MAC addresses do not match (detected={:02X}, expected={:02X})",
+        span<const uint8_t>(eth_params.mac_src_address),
+        span<const uint8_t>(vlan_params.mac_src_address));
 
     return true;
   }
 
   if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
-    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:x}, "
-                 "expected={:x})",
+    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:02X}, "
+                 "expected={:02X})",
                  span<const uint8_t>(eth_params.mac_dst_address),
                  span<const uint8_t>(vlan_params.mac_dst_address));
 

@@ -22,6 +22,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "../common/f1ap_cu_test_messages.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;

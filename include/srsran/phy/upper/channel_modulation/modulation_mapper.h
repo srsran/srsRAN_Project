@@ -25,7 +25,7 @@
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
-#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 
 namespace srsran {
 

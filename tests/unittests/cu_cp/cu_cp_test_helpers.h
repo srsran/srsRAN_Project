@@ -91,6 +91,8 @@ protected:
 
   dummy_cu_cp_f1c_gateway  f1c_gw;
   dummy_cu_cp_e1ap_gateway e1ap_gw;
+
+  std::unique_ptr<ngap_message_handler> dummy_amf;
 };
 
 } // namespace srs_cu_cp

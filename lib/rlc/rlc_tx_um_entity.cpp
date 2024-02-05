@@ -38,7 +38,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
                                    rlc_pcap&                            pcap_) :
   rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled, pcap_),
   cfg(config),
-  sdu_queue(cfg.queue_size),
+  sdu_queue(cfg.queue_size, logger),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
@@ -73,7 +73,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
 // TS 38.322 v16.2.0 Sec. 5.4
 void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
 {
-  if (sdu_queue.discard(pdcp_sn)) {
+  if (sdu_queue.try_discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard(1);
     handle_changed_buffer_state();

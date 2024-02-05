@@ -66,7 +66,7 @@ public:
 
   void handle_ul_phr_indication(const mac_phr_ce_info& phr) override;
 
-  void handle_crnti_ce_indication(du_ue_index_t old_ue_index) override;
+  void handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index) override;
 
   void handle_paging_information(const paging_information& msg) override;
 

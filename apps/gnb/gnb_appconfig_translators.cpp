@@ -137,6 +137,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   }
 
   out_cfg.ue_config.inactivity_timer             = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
+  out_cfg.ue_config.max_nof_supported_ues        = config.cu_cp_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
   out_cfg.ngap_config.ue_context_setup_timeout_s = std::chrono::seconds{config.cu_cp_cfg.ue_context_setup_timeout_s};
   out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
 
@@ -432,12 +433,19 @@ static sib19_info create_sib19_info(const gnb_appconfig& config)
   sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
 
-  // These values are provided to the config in ECEF coordinates, but the scheduler expects them in WGS84 with a step
-  // level of 1.3m.
-  sib19.ephemeris_info.value().position_x /= 1.3;
-  sib19.ephemeris_info.value().position_y /= 1.3;
-  sib19.ephemeris_info.value().position_z /= 1.3;
-
+  // These ephemeris parameters are all scaled in accordance with NIMA TR 8350.2.
+  if (variant_holds_alternative<ecef_coordinates_t>(sib19.ephemeris_info.value())) {
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
+  } else if (variant_holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).longitude /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).inclination /= 0.00000002341;
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).mean_anomaly /= 0.00000002341;
+  }
   if (config.ntn_cfg.value().distance_threshold.has_value()) {
     sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
   }
@@ -625,7 +633,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       // Set manually.
       rach_cfg.rach_cfg_generic.msg1_frequency_start = base_cell.prach_cfg.prach_frequency_start.value();
     }
-    rach_cfg.total_nof_ra_preambles = base_cell.prach_cfg.total_nof_ra_preambles;
+    rach_cfg.total_nof_ra_preambles   = base_cell.prach_cfg.total_nof_ra_preambles;
+    rach_cfg.nof_ssb_per_ro           = base_cell.prach_cfg.nof_ssb_per_ro;
+    rach_cfg.nof_cb_preambles_per_ssb = base_cell.prach_cfg.nof_cb_preambles_per_ssb;
 
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
@@ -735,6 +745,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
+    // Set DMRS additional position.
+    out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
+        uint_to_dmrs_additional_positions(base_cell.pdsch_cfg.dmrs_add_pos);
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
@@ -766,6 +779,10 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
     }
+    // Set DMRS additional position.
+    out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+        .init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions =
+        uint_to_dmrs_additional_positions(base_cell.pusch_cfg.dmrs_add_pos);
     // Set UL MCS table.
     out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
@@ -822,6 +839,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
                                                         base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
+    config_helpers::compute_nof_sr_csi_pucch_res(
+        du_pucch_cfg,
+        base_cell.ul_common_cfg.max_pucchs_per_slot,
+        base_cell.pucch_cfg.sr_period_msec,
+        base_cell.csi_cfg.csi_rs_enabled ? optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec} : nullopt);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
@@ -1005,7 +1027,8 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop);
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop,
+                                                                 timer_duration(config.metrics_cfg.pdcp.report_period));
     return out_cfg;
   }
 
@@ -1022,6 +1045,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
     out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
+    out_pdcp_custom.metrics_period      = timer_duration(config.metrics_cfg.pdcp.report_period);
 
     // Obtain RLC config parameters from the respective RLC mode
     const auto& du_five_qi = du_qos[qos.five_qi];
@@ -1465,6 +1489,7 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
     sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ignore_ecpri_seq_id_field           = cell_cfg.cell.ignore_ecpri_seq_id_field;
+    sector_cfg.warn_unreceived_ru_frames           = cell_cfg.cell.warn_unreceived_ru_frames;
     sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                       cell_cfg.cell.compression_bitwidth_ul};
     sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
@@ -1487,6 +1512,29 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
   }
 }
 
+static void generate_ru_dummy_config(ru_dummy_configuration&    out_cfg,
+                                     const gnb_appconfig&       config,
+                                     span<const du_cell_config> du_cells)
+{
+  // Select reference to the RU dummy configuration.
+  const ru_dummy_appconfig& ru_cfg = variant_get<ru_dummy_appconfig>(config.ru_cfg);
+
+  // Select common cell configuration.
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+
+  // Derive parameters.
+  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+
+  // Fill configuration parameters.
+  out_cfg.scs                        = cell.common_scs;
+  out_cfg.nof_sectors                = config.cells_cfg.size();
+  out_cfg.rx_rg_nof_prb              = channel_bw_prb;
+  out_cfg.rx_rg_nof_ports            = cell.nof_antennas_ul;
+  out_cfg.rx_prach_nof_ports         = cell.prach_cfg.ports.size();
+  out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
+  out_cfg.dl_processing_delay        = ru_cfg.dl_processing_delay;
+}
+
 ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<const du_cell_config> cells)
 {
   ru_configuration out_cfg;
@@ -1494,9 +1542,12 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<co
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     ru_generic_configuration& cfg = out_cfg.config.emplace<ru_generic_configuration>();
     generate_ru_generic_config(cfg, config);
-  } else {
+  } else if (variant_holds_alternative<ru_ofh_appconfig>(config.ru_cfg)) {
     ru_ofh_configuration& cfg = out_cfg.config.emplace<ru_ofh_configuration>();
     generate_ru_ofh_config(cfg, config, cells);
+  } else {
+    ru_dummy_configuration& cfg = out_cfg.config.emplace<ru_dummy_configuration>();
+    generate_ru_dummy_config(cfg, config, cells);
   }
 
   return out_cfg;
@@ -1631,7 +1682,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.tx_buffer_config.external_soft_bits   = false;
 
     cfg.rx_buffer_config.nof_buffers          = nof_buffers;
-    cfg.rx_buffer_config.max_nof_codeblocks   = max_rx_nof_codeblocks;
+    cfg.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;
     cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
     cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
     cfg.rx_buffer_config.external_soft_bits   = false;
@@ -1650,10 +1701,9 @@ mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config
 {
   mac_expert_config          out_cfg = {};
   const base_cell_appconfig& cell    = config.cells_cfg.front().cell;
-
-  out_cfg.max_consecutive_dl_kos  = cell.pdsch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_ul_kos  = cell.pusch_cfg.max_consecutive_kos;
-  out_cfg.max_consecutive_csi_dtx = cell.pucch_cfg.max_consecutive_kos;
+  out_cfg.configs.push_back({.max_consecutive_dl_kos  = cell.pdsch_cfg.max_consecutive_kos,
+                             .max_consecutive_ul_kos  = cell.pusch_cfg.max_consecutive_kos,
+                             .max_consecutive_csi_dtx = cell.pucch_cfg.max_consecutive_kos});
 
   return out_cfg;
 }

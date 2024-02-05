@@ -90,11 +90,11 @@ void pdu_session_resource_setup_routine::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", setup_msg.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
   if (!rrc_ue_up_resource_manager.validate_request(setup_msg.pdu_session_res_setup_items)) {
-    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", setup_msg.ue_index, name());
+    logger.warning("ue={}: \"{}\" Invalid PduSessionResourceSetup", setup_msg.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
 
@@ -104,7 +104,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle UE Capability Transfer result
     if (not ue_capability_transfer_result) {
-      logger.error("ue={}: \"{}\" UE capability transfer failed", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" UE capability transfer failed", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -132,7 +132,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    rrc_ue_up_resource_manager,
                                    default_security_indication,
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to setup bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   } else {
@@ -153,7 +153,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    rrc_ue_up_resource_manager,
                                    default_security_indication,
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -174,7 +174,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    ue_context_modification_response,
                                    next_config,
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify UE context at DU", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -197,7 +197,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    rrc_ue_up_resource_manager,
                                    default_security_indication,
                                    logger)) {
-      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -225,7 +225,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   false,
                                   false,
                                   logger)) {
-        logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration.", setup_msg.ue_index, name());
+        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
       }
     }
@@ -234,7 +234,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle UE Context Modification Response
     if (!handle_procedure_response(response_msg, setup_msg, rrc_reconfig_result, logger)) {
-      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", setup_msg.ue_index, name());
+      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -273,12 +273,12 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
     // modified list
-    logger.info("Implement handling of resource modified item {}.", e1ap_item.pdu_session_id);
+    logger.info("Implement handling of resource modified item with {}", e1ap_item.pdu_session_id);
   }
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
-    // modified list
-    logger.info("Implement handling of resource failed to modify item {}.", e1ap_item.pdu_session_id);
+    // failed to modify list
+    logger.info("Implement handling of resource failed to modify item with {}", e1ap_item.pdu_session_id);
   }
 
   return bearer_context_modification_response.success;
@@ -338,8 +338,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
-    logger.error("Couldn't setup {} DRBs at DU.",
-                 ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
+    logger.warning("Couldn't setup {} DRBs at DU",
+                   ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
     return false;
   }
 
@@ -392,7 +392,7 @@ cu_cp_pdu_session_resource_setup_response
 pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success)
 {
   if (success) {
-    logger.debug("ue={}: \"{}\" finalized.", setup_msg.ue_index, name());
+    logger.debug("ue={}: \"{}\" finalized", setup_msg.ue_index, name());
 
     // Prepare update for UP resource manager.
     up_config_update_result result;
@@ -401,7 +401,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
     }
     rrc_ue_up_resource_manager.apply_config_update(result);
   } else {
-    logger.error("ue={}: \"{}\" failed.", setup_msg.ue_index, name());
+    logger.warning("ue={}: \"{}\" failed", setup_msg.ue_index, name());
 
     mark_all_sessions_as_failed(response_msg, setup_msg, cause_radio_network_t::unspecified);
   }

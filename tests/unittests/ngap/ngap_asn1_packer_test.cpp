@@ -26,6 +26,7 @@
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
+#include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
@@ -51,10 +52,11 @@ protected:
     srslog::fetch_basic_logger("NGAP").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
-    ngap = std::make_unique<dummy_ngap_message_handler>();
+    gw           = std::make_unique<dummy_network_gateway_data_handler>();
+    amf_notifier = std::make_unique<dummy_ngap_message_notifier>();
+    ngap         = std::make_unique<dummy_ngap_message_handler>();
 
-    packer = std::make_unique<srsran::srs_cu_cp::ngap_asn1_packer>(*gw, *ngap, pcap);
+    packer = std::make_unique<srsran::srs_cu_cp::ngap_asn1_packer>(*gw, *amf_notifier, *ngap, pcap);
   }
 
   void TearDown() override
@@ -64,6 +66,7 @@ protected:
   }
 
   std::unique_ptr<dummy_network_gateway_data_handler>  gw;
+  std::unique_ptr<dummy_ngap_message_notifier>         amf_notifier;
   std::unique_ptr<dummy_ngap_message_handler>          ngap;
   std::unique_ptr<srsran::srs_cu_cp::ngap_asn1_packer> packer;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST");
@@ -213,4 +216,16 @@ TEST_F(ngap_asn1_packer_test, when_ul_nas_message_packing_successful_then_unpack
   // Assert that the AMF UE ID of the originally created message is equal to the one of the unpacked message
   ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id,
             amf_ue_id_to_uint(amf_ue_id_t::max));
+}
+
+// test unsuccessful unpacking
+TEST_F(ngap_asn1_packer_test, when_unpack_unsuccessful_then_error_indication_is_send)
+{
+  byte_buffer ngap_pdu = make_byte_buffer("deadbeef");
+  // Unpack message and forward to ngap
+  packer->handle_packed_pdu(ngap_pdu);
+
+  ASSERT_EQ(amf_notifier->last_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types::init_msg);
+  ASSERT_EQ(amf_notifier->last_msg.pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind);
 }

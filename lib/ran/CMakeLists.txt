@@ -46,8 +46,10 @@ add_library(srsran_ran
         pusch/ulsch_info.cpp
         uci/uci_part2_size_calculator.cpp
         band_helper.cpp
+        sch/tbs_calculator.cpp
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
+        srs/srs_bandwidth_configuration.cpp
         ssb_freq_position_generator.cpp
         ssb_gscn.cpp
         ssb_mapping.cpp

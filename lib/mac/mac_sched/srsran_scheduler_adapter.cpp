@@ -51,9 +51,7 @@ make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& 
 
 srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_) :
   rnti_mng(rnti_mng_),
-  rlf_handler(params.mac_cfg.max_consecutive_dl_kos,
-              params.mac_cfg.max_consecutive_ul_kos,
-              params.mac_cfg.max_consecutive_csi_dtx),
+  rlf_handler(params.mac_cfg),
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
@@ -118,7 +116,7 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_removal_request(const mac_u
     sched_cfg_notif_map[msg.ue_index].ue_config_ready.reset();
 
     // Remove UE from RLF handler.
-    rlf_handler.rem_ue(msg.ue_index);
+    rlf_handler.rem_ue(msg.ue_index, msg.cell_index);
 
     CORO_RETURN(true);
   });
@@ -202,7 +200,7 @@ void srsran_scheduler_adapter::handle_ul_phr_indication(const mac_phr_ce_info& p
   sched_impl->handle_ul_phr_indication(ind);
 }
 
-void srsran_scheduler_adapter::handle_crnti_ce_indication(du_ue_index_t old_ue_index)
+void srsran_scheduler_adapter::handle_crnti_ce_indication(du_ue_index_t old_ue_index, du_cell_index_t cell_index)
 {
   rlf_handler.handle_crnti_ce(old_ue_index);
 }
@@ -213,7 +211,7 @@ const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx
 
   if (res.success) {
     // Store UCI PDUs for later decoding.
-    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx, res.ul.pucchs);
+    cell_handlers[cell_idx].uci_decoder.store_uci(slot_tx, res.ul.pucchs, res.ul.puschs);
   }
 
   return res;
@@ -326,7 +324,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     // If Msg3, ignore the CRC result.
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
     if (ind.crcs[i].ue_index != INVALID_DU_UE_INDEX) {
-      parent->rlf_handler.handle_crc(ind.crcs[i].ue_index, ind.crcs[i].tb_crc_success);
+      parent->rlf_handler.handle_crc(ind.crcs[i].ue_index, cell_idx, ind.crcs[i].tb_crc_success);
     }
   }
 }

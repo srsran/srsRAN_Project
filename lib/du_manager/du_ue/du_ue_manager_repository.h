@@ -35,7 +35,8 @@ public:
   virtual ~du_ue_manager_repository() = default;
 
   /// \brief Adds a new UE context in the DU UE manager repository.
-  virtual du_ue* add_ue(const du_ue_context& ue_ctx, ue_ran_resource_configurator ue_ran_res) = 0;
+  virtual expected<du_ue*, std::string> add_ue(const du_ue_context&         ue_ctx,
+                                               ue_ran_resource_configurator ue_ran_res) = 0;
 
   /// \brief removes an existing ue context from the du ue manager repository.
   virtual void remove_ue(du_ue_index_t ue_index) = 0;

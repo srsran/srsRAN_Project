@@ -44,7 +44,7 @@ protected:
       std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(1, 100)}) :
     report_period(period), metrics(period, metrics_notif)
   {
-    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
+    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs);
   }
 
   void run_slot(const sched_result& sched_res)
@@ -70,6 +70,7 @@ protected:
 
   slot_point next_sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
   unsigned   slot_count = 0;
+  unsigned   nof_prbs   = 100;
 };
 
 TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)

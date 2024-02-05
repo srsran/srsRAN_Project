@@ -45,7 +45,8 @@ public:
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
                   timer_manager&                 timers_,
-                  task_executor&                 ctrl_exec_);
+                  task_executor&                 ctrl_exec_,
+                  unsigned                       max_nof_supported_ues_);
   ~e1ap_cu_cp_impl();
 
   // e1ap_connection_manager functions

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/variant.h"
+#include "srsran/ru/ru_dummy_configuration.h"
 #include "srsran/ru/ru_generic_configuration.h"
 #include "srsran/ru/ru_ofh_configuration.h"
 
@@ -30,7 +31,7 @@ namespace srsran {
 
 /// Radio Unit configuration.
 struct ru_configuration {
-  variant<ru_generic_configuration, ru_ofh_configuration> config;
+  variant<ru_generic_configuration, ru_ofh_configuration, ru_dummy_configuration> config;
 };
 
 } // namespace srsran

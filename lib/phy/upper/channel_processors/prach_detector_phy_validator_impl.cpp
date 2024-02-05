@@ -30,6 +30,7 @@
 
 #include "prach_detector_generic_thresholds.h"
 #include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
+#include <set>
 
 using namespace srsran;
 
@@ -58,13 +59,19 @@ bool srsran::validate_prach_detector_phy(prach_format_type        format,
   }
 
   if (flag == detail::threshold_and_margin_finder::threshold_flag::orange) {
-    fmt::print(
-        "\nThe PRACH detector will not meet the performance requirements with the configuration {{Format {}, ZCZ "
-        "{}, SCS {}, Rx ports {}}}.\n",
-        to_string(format),
-        zero_correlation_zone,
-        to_string(scs),
-        nof_rx_ports);
+    // Contains the PRACH threshold parameters that have already reported orange.
+    static std::set<detail::threshold_params> prach_detector_phy_validator_orange_set;
+
+    // Print message only once.
+    if (prach_detector_phy_validator_orange_set.count(th_params) == 0) {
+      fmt::print("\nThe PRACH detector will not meet the performance requirements with the configuration {{Format {}, "
+                 "ZCZ {}, SCS {}, Rx ports {}}}.\n",
+                 to_string(format),
+                 zero_correlation_zone,
+                 to_string(scs),
+                 nof_rx_ports);
+      prach_detector_phy_validator_orange_set.emplace(th_params);
+    }
   }
   return true;
 }

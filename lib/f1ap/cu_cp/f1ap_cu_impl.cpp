@@ -23,6 +23,7 @@
 #include "f1ap_cu_impl.h"
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "procedures/f1_setup_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
@@ -53,47 +54,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
-
-void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
-{
-  // Pack message into PDU
-  f1ap_message f1ap_msg;
-  if (msg.success) {
-    f1ap_msg.pdu.set_successful_outcome();
-    f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    fill_asn1_f1_setup_response(f1ap_msg.pdu.successful_outcome().value.f1_setup_resp(), msg);
-
-    // set values handled by F1
-    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id = current_transaction_id;
-
-    // send response
-    logger.debug("Sending F1SetupResponse");
-    if (logger.debug.enabled()) {
-      asn1::json_writer js;
-      f1ap_msg.pdu.to_json(js);
-      logger.debug("Containerized F1SetupResponse: {}", js.to_string());
-    }
-    pdu_notifier.on_new_message(f1ap_msg);
-  } else {
-    logger.debug("Sending F1SetupFailure");
-    f1ap_msg.pdu.set_unsuccessful_outcome();
-    f1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    fill_asn1_f1_setup_failure(f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail(), msg);
-    auto& setup_fail = f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
-
-    // set values handled by F1
-    setup_fail->transaction_id = current_transaction_id;
-    setup_fail->cause.set_radio_network();
-    setup_fail->cause.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
-
-    // send response
-    pdu_notifier.on_new_message(f1ap_msg);
-
-    // send DU remove request
-    du_index_t du_index = du_processor_notifier.get_du_index();
-    du_management_notifier.on_du_remove_request_received(du_index);
-  }
-}
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
@@ -271,22 +231,11 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 {
   current_transaction_id = request->transaction_id;
 
-  f1ap_f1_setup_request req_msg = {};
-  fill_f1_setup_request(req_msg, request);
-
-  du_processor_notifier.on_f1_setup_request_received(req_msg);
+  handle_f1_setup_procedure(request, pdu_notifier, du_processor_notifier, logger);
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
 {
-  // Reject request without served cells
-  if (not msg->du_to_cu_rrc_container_present) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Missing DU to CU container",
-                   msg->gnb_du_ue_f1ap_id);
-    /// Assume the DU can't serve the UE. Ignoring the message.
-    return;
-  }
-
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
   if (not srsran::config_helpers::is_valid(cgi)) {
     logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
@@ -331,13 +280,20 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   ue_creation_msg.cgi                       = cgi_from_asn1(msg->nr_cgi);
   if (msg->du_to_cu_rrc_container_present) {
     ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
+  } else {
+    // Assume the DU can't serve the UE, so the CU-CP should reject the UE, see TS 38.473 section 8.4.1.2.
+    // We will forward an empty container to the RRC UE, that will trigger an RRC Reject
+    logger.debug("du_ue_f1ap_id={}: Forwarding InitialUlRrcMessageTransfer to RRC to reject the UE. Cause: Missing DU "
+                 "to CU container",
+                 msg->gnb_du_ue_f1ap_id);
+    ue_creation_msg.du_to_cu_rrc_container = byte_buffer{};
   }
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
 
   // Remove the UE if the creation was not successful
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed");
+    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed", msg->gnb_du_ue_f1ap_id);
     cu_cp_notifier.on_ue_removal_required(ue_index);
     return;
   }

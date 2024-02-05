@@ -27,6 +27,7 @@
 #include "pdcch_modulator_impl.h"
 #include "pdcch_processor_impl.h"
 #include "pdcch_processor_pool.h"
+#include "pdsch_encoder_hw_impl.h"
 #include "pdsch_encoder_impl.h"
 #include "pdsch_modulator_impl.h"
 #include "pdsch_processor_concurrent_impl.h"
@@ -256,6 +257,41 @@ public:
   {
     return std::make_unique<pdsch_encoder_impl>(
         segmenter_factory->create(), encoder_factory->create(), rate_matcher_factory->create());
+  }
+};
+
+/// HW-accelerated PDSCH encoder factory.
+class pdsch_encoder_factory_hw : public pdsch_encoder_factory
+{
+private:
+  bool                                                   cb_mode;
+  unsigned                                               max_tb_size;
+  std::shared_ptr<crc_calculator_factory>                crc_factory;
+  std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
+  std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory;
+
+public:
+  explicit pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configuration& config) :
+    cb_mode(config.cb_mode),
+    max_tb_size(config.max_tb_size),
+    crc_factory(std::move(config.crc_factory)),
+    segmenter_factory(std::move(config.segmenter_factory)),
+    hw_encoder_factory(std::move(config.hw_encoder_factory))
+  {
+    srsran_assert(crc_factory, "Invalid CRC factory.");
+    srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsran_assert(hw_encoder_factory, "Invalid hardware accelerator factory.");
+  }
+
+  std::unique_ptr<pdsch_encoder> create() override
+  {
+    pdsch_encoder_hw_impl::sch_crc crc = {
+        crc_factory->create(crc_generator_poly::CRC16),
+        crc_factory->create(crc_generator_poly::CRC24A),
+        crc_factory->create(crc_generator_poly::CRC24B),
+    };
+    return std::make_unique<pdsch_encoder_hw_impl>(
+        cb_mode, max_tb_size, crc, segmenter_factory->create(), hw_encoder_factory->create());
   }
 };
 
@@ -857,6 +893,12 @@ std::shared_ptr<pdsch_encoder_factory>
 srsran::create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config)
 {
   return std::make_shared<pdsch_encoder_factory_sw>(config);
+}
+
+std::shared_ptr<pdsch_encoder_factory>
+srsran::create_pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configuration& config)
+{
+  return std::make_shared<pdsch_encoder_factory_hw>(config);
 }
 
 std::shared_ptr<pdsch_modulator_factory>

@@ -60,7 +60,7 @@ struct nr_band_raster {
 
 // From Table 5.4.2.3-1 in TS 38.104, this is the number of NR FR1 bands that has a DL allocated band (FDD, TDD or SDL).
 // NOTE: Band 41 has two different Freq raster, we only consider raster 15kHz.
-const uint32_t nof_nr_DL_bands_fr1 = 69;
+const uint32_t nof_nr_DL_bands_fr1 = 71;
 
 // Table with NR operating FR1 band and related ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 // NOTE: It only includes FDD, TDD, and SDL bands.
@@ -135,7 +135,9 @@ static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1> nr_band_table_f
     {nr_band::n101,  delta_freq_raster::kHz100, 380000, 20, 382000, 380000, 20, 382000},
     {nr_band::n102,  delta_freq_raster::kHz15,  796334, 1 , 828333, 796334,  1, 828333},
     {nr_band::n104,  delta_freq_raster::kHz15,  828334, 1 , 875000, 828334,  1, 875000},
-    {nr_band::n104,  delta_freq_raster::kHz30,  828334, 2 , 875000, 828334,  2, 875000}
+    {nr_band::n104,  delta_freq_raster::kHz30,  828334, 2 , 875000, 828334,  2, 875000},
+    {nr_band::n255,  delta_freq_raster::kHz100, 305000, 20, 311800, 305000, 20, 311800},
+    {nr_band::n256,  delta_freq_raster::kHz100, 434000, 20, 440000, 434000, 20, 440000}
     // clang-format on
 }};
 
@@ -144,7 +146,7 @@ struct nr_operating_band {
   nr_band     band;
   duplex_mode duplex;
 };
-static const uint32_t                                                     nof_nr_operating_band_fr1 = 60;
+static const uint32_t                                                     nof_nr_operating_band_fr1 = 62;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
        // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
@@ -206,7 +208,9 @@ static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_ope
     {nr_band::n100, duplex_mode::FDD},
     {nr_band::n101, duplex_mode::TDD},
     {nr_band::n102, duplex_mode::TDD},
-    {nr_band::n104, duplex_mode::TDD}
+    {nr_band::n104, duplex_mode::TDD},
+    {nr_band::n255, duplex_mode::FDD},
+    {nr_band::n256, duplex_mode::FDD}
     // clang-format on
 }};
 
@@ -219,7 +223,7 @@ struct nr_band_ssb_scs_case {
 };
 // NR FR1 operating bands with corresponding SSB Subcarrier Spacing and SSB pattern case, as per Table 5.4.3.3-1,
 // TS 38.104, Rel. 17, version 17.8.0.
-static const uint32_t                                                   nof_nr_ssb_bands_fr1           = 58;
+static const uint32_t                                                   nof_nr_ssb_bands_fr1           = 60;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_band_scs_case_table_fr1 = {{
     // clang-format off
     {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -280,6 +284,8 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_b
     {nr_band::n101, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n102, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n104, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n255, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n256, subcarrier_spacing::kHz15, ssb_pattern_case::A},
     // clang-format on
 }};
 
@@ -894,7 +900,8 @@ bool srsran::band_helper::is_paired_spectrum(nr_band band)
 frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
   srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
-  return band <= nr_band::n104 ? frequency_range::FR1 : frequency_range::FR2;
+  return (band <= nr_band::n104 || band == nr_band::n255 || band == nr_band::n256) ? frequency_range::FR1
+                                                                                   : frequency_range::FR2;
 }
 
 double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
@@ -1066,6 +1073,16 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
     case nr_band::n104: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz20;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    case nr_band::n255:
+    case nr_band::n256: {
+      if (scs == subcarrier_spacing::kHz15) {
+        return min_channel_bandwidth::MHz5;
+      } else if (scs == subcarrier_spacing::kHz30) {
+        return min_channel_bandwidth::MHz10;
       } else {
         return min_channel_bandwidth::invalid;
       }

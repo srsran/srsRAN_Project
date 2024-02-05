@@ -24,6 +24,7 @@ set(SOURCES
   bbdev.cpp
   bbdev_op_pool_factory.cpp
   ldpc/bbdev_ldpc_decoder.cpp
+  ldpc/bbdev_ldpc_encoder.cpp
 )
 
 add_library(hal_bbdev STATIC ${SOURCES})

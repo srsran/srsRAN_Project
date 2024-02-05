@@ -59,22 +59,16 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-/// Interface for the NGAP to interface with the DU repository
-/// Useful for paging and handover
-class cu_cp_du_repository_ngap_handler
+/// Interface for the NGAP notifier to communicate with the CU-CP.
+class cu_cp_ngap_ue_creation_handler
 {
 public:
-  virtual ~cu_cp_du_repository_ngap_handler() = default;
+  virtual ~cu_cp_ngap_ue_creation_handler() = default;
 
-  /// \brief Handles a Paging message notification.
-  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-
-  /// \brief Handles UE index allocation request for N2 handover at target gNB
-  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
-
-  /// \brief Handles a handover request to start the ngap handover routine at the target CU
-  virtual async_task<ngap_handover_resource_allocation_response>
-  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
+  /// \brief Handle the creation of a new NGAP UE. This will add the NGAP adapters to the UE manager.
+  /// \param[in] ue_index The index of the new NGAP UE.
+  /// \returns True if the UE was successfully created, false otherwise.
+  virtual bool handle_new_ngap_ue(ue_index_t ue_index) = 0;
 };
 
 /// Interface for an E1AP notifier to communicate with the CU-CP.
@@ -257,6 +251,7 @@ public:
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
+                             public cu_cp_ngap_ue_creation_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_ue_removal_handler
 {
@@ -267,8 +262,6 @@ public:
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()   = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() = 0;
   virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() = 0;
-
-  virtual void start() = 0;
 };
 
 } // namespace srs_cu_cp

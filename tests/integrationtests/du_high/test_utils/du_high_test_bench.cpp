@@ -24,6 +24,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
@@ -177,6 +178,7 @@ du_high_test_bench::du_high_test_bench() :
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
     cfg.qos          = config_helpers::make_default_du_qos_config_list(0);
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
+    cfg.mac_cfg      = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.mac_p        = &mac_pcap;
     cfg.rlc_p        = &rlc_pcap;
 
@@ -219,7 +221,8 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
-  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 100);
+  bool ret =
+      run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 1000 * (next_slot.numerology() + 1));
   return ret and test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 

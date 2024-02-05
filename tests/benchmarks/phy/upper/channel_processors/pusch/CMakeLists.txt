@@ -26,7 +26,6 @@ if (ENABLE_PUSCH_HWACC)
     add_executable(pusch_decoder_hwacc_benchmark pusch_decoder_hwacc_benchmark.cpp)
     set(PUSCH_DECODER_HWACC_BENCHMARK_LIBRARIES srsran_phy_support 
             srsran_channel_processors
-            srsran_sched
             srslog
             srsvec)
     if (DPDK_FOUND)
@@ -37,13 +36,18 @@ if (ENABLE_PUSCH_HWACC)
 endif (ENABLE_PUSCH_HWACC)
 
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
-target_link_libraries(pusch_processor_benchmark
-        srsran_phy_support
+set(PUSCH_PROCESSOR_LIBRARIES srsran_phy_support
         srsran_pusch_processor
         srsran_channel_equalizer
         srsran_channel_precoder
         srsran_channel_processors
-        srsran_sched
         srslog
         srsvec)
+
+if (ENABLE_PUSCH_HWACC)
+    set_source_files_properties(pusch_processor_benchmark.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PUSCH_ENABLED")
+    list(APPEND PUSCH_PROCESSOR_LIBRARIES hal_hwacc_pusch)
+endif (ENABLE_PUSCH_HWACC)
+
+target_link_libraries(pusch_processor_benchmark ${PUSCH_PROCESSOR_LIBRARIES})
 add_test(pusch_processor_benchmark pusch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)

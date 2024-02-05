@@ -21,6 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -319,8 +320,15 @@ TEST_F(ngap_ue_context_management_procedure_test,
   // Trigger UE context release request.
   cu_cp_ue_context_release_request release_request;
   release_request.ue_index = ue_index;
-  ngap->handle_ue_context_release_request(release_request);
 
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  // Status: should have failed already, as there is no UE.
+  ASSERT_TRUE(t.ready());
+
+  // Procedure should have failed.
+  ASSERT_FALSE(t.get());
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
 
@@ -343,13 +351,27 @@ TEST_F(ngap_ue_context_management_procedure_test,
   // Trigger UE context release request.
   cu_cp_ue_context_release_request release_request;
   release_request.ue_index = ue_index;
-  ngap->handle_ue_context_release_request(release_request);
 
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  // Status: should have succeeded already
+  ASSERT_TRUE(t.ready());
+
+  // Procedure should have succeeded.
+  ASSERT_TRUE(t.get());
   ASSERT_TRUE(was_ue_context_release_request_sent());
 
   // Trigger 2nd UE context release request.
   clear_last_received_msg();
-  ngap->handle_ue_context_release_request(release_request);
+  async_task<bool>         t2 = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher2(t2);
+
+  // Status: should have succeeded already, as a release request is already pending.
+  ASSERT_TRUE(t2.ready());
+
+  // Procedure should have succeeded.
+  ASSERT_TRUE(t2.get());
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
 
@@ -383,8 +405,9 @@ TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_is_tranfered_a
   ue.rrc_ue_notifier.last_nas_pdu.clear();
 
   // Create new UE object (with own RRC UE notifier).
-  ue_index_t target_ue_index = create_ue(rnti_t::MAX_CRNTI);
+  ue_index_t target_ue_index = create_ue_without_init_ue_message(rnti_t::MAX_CRNTI);
   ASSERT_NE(target_ue_index, ue_index_t::invalid);
+  ASSERT_NE(target_ue_index, ue_index);
   auto& target_ue = test_ues.at(target_ue_index);
   ASSERT_TRUE(target_ue.rrc_ue_notifier.last_nas_pdu.empty());
 
