@@ -17,7 +17,7 @@
 namespace srsran {
 namespace security {
 
-typedef mbedtls_aes_context aes_context;
+using aes_context = mbedtls_aes_context;
 
 constexpr int aes_encrypt = 1;
 constexpr int aes_decrypt = 0;
