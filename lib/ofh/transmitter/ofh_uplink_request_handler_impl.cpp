@@ -81,10 +81,10 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
         static_cast<double>(get_nof_slots_per_subframe(context.pusch_scs) * nof_symbols_per_slot);
 
     double   len_msecs   = (preamble_info.cp_length.to_seconds() + preamble_info.symbol_length.to_seconds()) * 1000;
-    unsigned nof_symbols = ceil(len_msecs / symbol_duration_msec);
+    unsigned nof_symbols = std::ceil(len_msecs / symbol_duration_msec);
 
-    unsigned prach_length_slots = static_cast<unsigned>(std::ceil(
-        static_cast<double>(context.start_symbol + nof_symbols) / (static_cast<double>(nof_symbols_per_slot))));
+    unsigned prach_length_slots =
+        std::ceil(static_cast<double>(context.start_symbol + nof_symbols) / static_cast<double>(nof_symbols_per_slot));
 
     // Subtract one to account for the current slot.
     slot_point slot = context.slot + (prach_length_slots - 1);

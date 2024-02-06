@@ -335,7 +335,7 @@ filter_index_type uplane_message_decoder_impl::peek_filter_index(span<const uint
   }
 
   // Filter index is codified in the first byte, the 4 LSB.
-  return to_filter_index_type((message[0] & 0xf));
+  return to_filter_index_type(message[0] & 0xf);
 }
 
 slot_symbol_point uplane_message_decoder_impl::peek_slot_symbol_point(span<const uint8_t> message) const

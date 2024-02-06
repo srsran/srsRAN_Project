@@ -54,11 +54,12 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
 
   // Verify the sequence identifier.
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
-  int                              nof_skipped_seq_id =
-      seq_id_checker->update_and_compare_seq_id(ecpri_iq_params.pc_id, (ecpri_iq_params.seq_id >> 8));
+  unsigned                         eaxc            = ecpri_iq_params.pc_id;
+  int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (nof_skipped_seq_id < 0) {
     logger.info("Dropped received Open Fronthaul User-Plane packet as sequence identifier field is from the past");
+
     return;
   }
   if (nof_skipped_seq_id > 0) {
@@ -67,13 +68,14 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
 
   slot_symbol_point slot_point = uplane_decoder->peek_slot_symbol_point(ofh_pdu);
   if (!slot_point.get_slot().valid()) {
+    logger.info("Dropped received Open Fronthaul User-Plane packet as the slot field is invalid");
+
     return;
   }
 
   // Fill the reception window statistics.
   window_checker.update_rx_window_statistics(slot_point);
 
-  unsigned eaxc = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id;
   if (is_a_prach_message(uplane_decoder->peek_filter_index(ofh_pdu))) {
     data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
 
