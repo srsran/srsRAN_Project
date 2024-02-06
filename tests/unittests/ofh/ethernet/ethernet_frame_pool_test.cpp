@@ -424,6 +424,113 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
   pool.clear_sent_frame_buffers(interval);
 }
 
+// Pool should have enough space to store C-Plane and U-Plane packets for all antennas.
+TEST_P(EthFramePoolFixture, pool_should_have_enough_space)
+{
+  slot_point slot(to_numerology_value(scs), 0);
+  for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
+    for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
+      ofh::slot_symbol_point    symbol_point(slot, symbol, nof_symbols);
+      ether::frame_pool_context ctx{{ofh_type, ofh::data_direction::downlink}, symbol_point};
+      unsigned                  nof_requested_buffers = ofh::MAX_NOF_SUPPORTED_EAXC;
+      // DL C-Plane and U-Plane
+      for (unsigned i = 0; i != nof_requested_buffers; ++i) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+        for (auto& buffer : frame_buffers) {
+          buffer.set_size(64);
+        }
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      pool.read_frame_buffers(ctx);
+      pool.clear_sent_frame_buffers(ctx);
+
+      if (ofh_type == ofh::message_type::user_plane) {
+        continue;
+      }
+      // UL C-Plane
+      // We may need to write Type 1 and Type 3 C-Plane messages in the same slot and symbol.
+      nof_requested_buffers *= 2;
+      ctx = {{ofh_type, ofh::data_direction::uplink}, symbol_point};
+      for (unsigned i = 0; i != nof_requested_buffers; ++i) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+        for (auto& buffer : frame_buffers) {
+          buffer.set_size(64);
+        }
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      pool.read_frame_buffers(ctx);
+      pool.clear_sent_frame_buffers(ctx);
+    }
+    ++slot;
+  }
+}
+
+TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
+{
+  slot_point slot(to_numerology_value(scs), 0);
+  for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
+    for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
+      ofh::slot_symbol_point symbol_point(slot, symbol, nof_symbols);
+
+      if (ofh_type == ofh::message_type::control_plane && symbol != 0) {
+        continue;
+      }
+
+      // DL C-Plane and U-Plane
+      bool                      pool_has_space = true;
+      ether::frame_pool_context ctx{{ofh_type, ofh::data_direction::downlink}, symbol_point};
+      unsigned                  nof_requested_buffers = ofh::MAX_NOF_SUPPORTED_EAXC;
+      while (pool_has_space) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        pool_has_space                   = !frame_buffers.empty();
+        for (auto& buffer : frame_buffers) {
+          buffer.set_size(64);
+        }
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      // Clear full slot in the pool and try to get buffers again.
+      pool.clear_slot(slot);
+      for (unsigned i = 0; i != nof_requested_buffers; ++i) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      pool.read_frame_buffers(ctx);
+      pool.clear_sent_frame_buffers(ctx);
+
+      if (ofh_type == ofh::message_type::user_plane) {
+        continue;
+      }
+
+      // UL C-Plane
+      // We may need to write Type 1 and Type 3 C-Plane messages in the same slot and symbol.
+      nof_requested_buffers *= 2;
+      ctx            = {{ofh_type, ofh::data_direction::uplink}, symbol_point};
+      pool_has_space = true;
+      while (pool_has_space) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        pool_has_space                   = !frame_buffers.empty();
+        for (auto& buffer : frame_buffers) {
+          buffer.set_size(64);
+        }
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      // Clear full slot in the pool and try to get buffers again.
+      pool.clear_slot(slot);
+      for (unsigned i = 0; i != nof_requested_buffers; ++i) {
+        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+        pool.push_frame_buffers(ctx, frame_buffers);
+      }
+      pool.read_frame_buffers(ctx);
+      pool.clear_sent_frame_buffers(ctx);
+    }
+    ++slot;
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(EthFramePoolTestSuite,
                          EthFramePoolFixture,
                          ::testing::Combine(::testing::Values(mtu::MTU_9000, mtu::MTU_5000, mtu::MTU_1500),

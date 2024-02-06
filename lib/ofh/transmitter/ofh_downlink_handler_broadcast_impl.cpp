@@ -41,15 +41,21 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
       *dependencies.logger,
       calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
       get_nsymb_per_slot(config.cp),
-      to_numerology_value(config.scs))
+      to_numerology_value(config.scs)),
+  frame_pool_ptr(dependencies.frame_pool_ptr),
+  frame_pool(*frame_pool_ptr)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
                                                      const resource_grid_reader&  grid)
 {
+  // Clear any stale buffers associated with the context slot.
+  frame_pool.clear_slot(context.slot);
+
   if (window_checker.is_late(context.slot)) {
     logger.warning(
         "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",

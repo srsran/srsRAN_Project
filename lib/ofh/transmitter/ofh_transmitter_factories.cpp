@@ -133,6 +133,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
     dl_dependencies.logger           = &logger;
     dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
     dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
+    dl_dependencies.frame_pool_ptr   = frame_pool;
 
     return std::make_unique<downlink_manager_broadcast_impl>(dl_config, std::move(dl_dependencies));
   }
