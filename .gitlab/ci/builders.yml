@@ -124,16 +124,16 @@ ubuntu-uhd-builder:
   parallel:
     matrix:
       - os_version: "20.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"] # uhd 3.15.0.0 default
       - os_version: "22.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
       - os_version: "23.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0", "4.4.0.0"] # "4.3.0.0" default
       - os_version: "23.10"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0"] # "4.4.0.0" default
 
 ################################################################################
@@ -216,16 +216,16 @@ ubuntu-dpdk-builder:
   parallel:
     matrix:
       - os_version: "20.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         dpdk_version: ["21.08", "22.11.3", "23.11"]
       - os_version: "22.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         dpdk_version: ["21.08", "22.11.3", "23.11"]
       - os_version: "23.04"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         dpdk_version: ["21.08", "22.11.3", "23.11"]
       - os_version: "23.10"
-        arch_name: ["amd64", "arm64"]
+        arch_name: [amd64, arm64]
         dpdk_version: ["22.11.3", "23.11"]
 
 ################################################################################
@@ -334,20 +334,20 @@ image-build-publish [ubuntu, 20.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "20.04"
-    PLATFORM: "amd64"
+    PLATFORM: amd64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: "amd64"
+            arch_name: amd64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: "amd64"
+            arch_name: amd64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 20.04, amd64]:
@@ -368,20 +368,20 @@ image-build-publish [ubuntu, 20.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "20.04"
-    PLATFORM: "arm64"
+    PLATFORM: arm64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: "arm64"
+            arch_name: arm64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: "arm64"
+            arch_name: arm64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 20.04, arm64]:
@@ -420,20 +420,20 @@ image-build-publish [ubuntu, 22.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
-    PLATFORM: "amd64"
+    PLATFORM: amd64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: "amd64"
+            arch_name: amd64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: "amd64"
+            arch_name: amd64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 22.04, amd64]:
@@ -454,20 +454,20 @@ image-build-publish [ubuntu, 22.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
-    PLATFORM: "arm64"
+    PLATFORM: arm64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: "arm64"
+            arch_name: arm64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: "arm64"
+            arch_name: arm64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 22.04, arm64]:
@@ -506,20 +506,20 @@ image-build-publish [ubuntu, 23.04, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.04"
-    PLATFORM: "amd64"
+    PLATFORM: amd64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "23.04"
-            arch_name: "amd64"
+            arch_name: amd64
             uhd_version: ["4.6.0.0", "4.4.0.0"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "23.04"
-            arch_name: "amd64"
+            arch_name: amd64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.04, amd64]:
@@ -540,20 +540,20 @@ image-build-publish [ubuntu, 23.04, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.04"
-    PLATFORM: "arm64"
+    PLATFORM: arm64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "23.04"
-            arch_name: "arm64"
+            arch_name: arm64
             uhd_version: ["4.6.0.0", "4.4.0.0"]
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "23.04"
-            arch_name: "arm64"
+            arch_name: arm64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.04, arm64]:
@@ -592,20 +592,20 @@ image-build-publish [ubuntu, 23.10, amd64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.10"
-    PLATFORM: "amd64"
+    PLATFORM: amd64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: "amd64"
+            arch_name: amd64
             uhd_version: ["4.6.0.0"] # "4.4.0.0" default
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: "amd64"
+            arch_name: amd64
             dpdk_version: ["22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.10, amd64]:
@@ -626,20 +626,20 @@ image-build-publish [ubuntu, 23.10, arm64]:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.10"
-    PLATFORM: "arm64"
+    PLATFORM: arm64
   needs:
     - builder version
     - job: ubuntu-uhd-builder
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: "arm64"
+            arch_name: arm64
             uhd_version: ["4.6.0.0"] # "4.4.0.0" default
     - job: ubuntu-dpdk-builder
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: "arm64"
+            arch_name: arm64
             dpdk_version: ["22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.10, arm64]:
@@ -681,62 +681,99 @@ image-build-publish [debian]:
   parallel:
     matrix:
       - OS_VERSION: ["11", "12"]
+        PLATFORM: [amd64, arm64]
   needs:
     - builder version
 
-alternative-tag [debian, 11]:
+alternative-tag [debian, 11, amd64]:
   extends:
     - .alternative-tag
   variables:
     OS_NAME: debian
-  parallel:
-    matrix:
-      - OS_VERSION: "11"
+    OS_VERSION: "11"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
     - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
           - OS_VERSION: "11"
+            PLATFORM: amd64
 
-alternative-tag [debian, 12]:
+alternative-tag [debian, 11, arm64]:
   extends:
     - .alternative-tag
   variables:
     OS_NAME: debian
+    OS_VERSION: "11"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "11"
+            PLATFORM: arm64
+
+manifest [debian, 11]:
+  extends: .manifest
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "11"
+  needs:
+    - builder version
+    - job: alternative-tag [debian, 11, amd64]
+      optional: false
+    - job: alternative-tag [debian, 11, arm64]
+      optional: false
   parallel:
     matrix:
-      - OS_VERSION: "12"
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+alternative-tag [debian, 12, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "12"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
     - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
           - OS_VERSION: "12"
+            PLATFORM: amd64
 
-################################################################################
-# Archlinux
-################################################################################
-image-build-publish [archlinux, latest]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: archlinux
-    OS_NAME: archlinux
-    OS_VERSION: latest
-    PLATFORM: amd64
-  needs:
-    - builder version
-
-alternative-tag [archlinux, latest]:
+alternative-tag [debian, 12, arm64]:
   extends:
     - .alternative-tag
   variables:
-    OS_NAME: archlinux
-    OS_VERSION: latest
+    OS_NAME: debian
+    OS_VERSION: "12"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
     - builder version
-    - image-build-publish [archlinux, latest]
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "12"
+            PLATFORM: arm64
+
+manifest [debian, 12]:
+  extends: .manifest
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "12"
+  needs:
+    - builder version
+    - job: alternative-tag [debian, 12, amd64]
+      optional: false
+    - job: alternative-tag [debian, 12, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Rhel 8
@@ -749,7 +786,7 @@ image-build-publish [rhel, 8, amd64]:
     OS_NAME: rhel
     OS_VERSION: "8"
     RHEL_CT_VERSION: "2023.5_1.0.3"
-    PLATFORM: "amd64"
+    PLATFORM: amd64
   needs:
     - builder version
 
@@ -772,7 +809,7 @@ image-build-publish [rhel, 8, arm64]:
     OS_NAME: rhel
     OS_VERSION: "8"
     RHEL_CT_VERSION: "2023.5_1.0.3"
-    PLATFORM: "amd64"
+    PLATFORM: arm64
   needs:
     - builder version
 
@@ -801,3 +838,50 @@ manifest [rhel, 8]:
   parallel:
     matrix:
       - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
+# Archlinux
+################################################################################
+image-build-publish [archlinux, latest, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: archlinux
+    OS_NAME: archlinux
+    OS_VERSION: latest
+    PLATFORM: amd64
+  needs:
+    - builder version
+
+alternative-tag [archlinux, latest, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: archlinux
+    OS_VERSION: latest
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [archlinux, latest, amd64]
+
+manifest [archlinux, latest]:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    OS_NAME: archlinux
+    OS_VERSION: latest
+  script:
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get update && \
+        apt-get install -y --no-install-recommends skopeo
+    - |
+      skopeo copy \
+        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}-amd64 \
+        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+  needs:
+    - builder version
+    - job: alternative-tag [archlinux, latest, amd64]
+      optional: false

@@ -33,7 +33,7 @@ builder version:
       } 
     - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders)
     - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
-    - echo $DOCKER_BUILDER_VERSION
+    - echo ${DOCKER_BUILDER_VERSION}
   artifacts:
     reports:
       dotenv: builder.env
