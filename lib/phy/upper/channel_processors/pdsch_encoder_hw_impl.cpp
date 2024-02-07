@@ -20,7 +20,6 @@ using namespace srsran::ldpc;
 static constexpr units::bits SEG_CRC_LENGTH{24};
 
 void pdsch_encoder_hw_impl::encode(span<uint8_t>        codeword,
-                                   tx_buffer&           softbuffer,
                                    span<const uint8_t>  transport_block,
                                    const configuration& config)
 {

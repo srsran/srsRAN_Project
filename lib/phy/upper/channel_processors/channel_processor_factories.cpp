@@ -1100,7 +1100,6 @@ public:
   }
 
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier_,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                const pdu_t&                                                 pdu_) override
@@ -1110,7 +1109,7 @@ public:
     pdu      = pdu_;
 
     start = std::chrono::steady_clock::now();
-    processor->process(mapper, std::move(rm_buffer), *this, data_, pdu);
+    processor->process(mapper, *this, data_, pdu);
   }
 
 private:

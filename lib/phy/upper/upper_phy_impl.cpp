@@ -30,7 +30,6 @@ static upper_phy_timing_notifier_dummy notifier_dummy;
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   logger(srslog::fetch_basic_logger("Upper PHY", true)),
   sector_id(config.sector_id),
-  tx_buf_pool(std::move(config.tx_buf_pool)),
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
   ul_rg_pool(std::move(config.ul_rg_pool)),
@@ -53,7 +52,6 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   srsran_assert(ul_rg_pool, "Invalid uplink resource grid pool");
   srsran_assert(ul_processor_pool, "Invalid uplink processor pool");
   srsran_assert(prach_pool, "Invalid PRACH buffer pool");
-  srsran_assert(tx_buf_pool, "Invalid transmit buffer pool");
   srsran_assert(rx_buf_pool, "Invalid receive buffer pool");
   srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
   srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");
@@ -134,13 +132,7 @@ const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
   return *dl_pdu_validator;
 }
 
-tx_buffer_pool& upper_phy_impl::get_tx_buffer_pool()
-{
-  return tx_buf_pool->get_pool();
-}
-
 void upper_phy_impl::stop()
 {
-  tx_buf_pool->stop();
   rx_buf_pool->stop();
 }

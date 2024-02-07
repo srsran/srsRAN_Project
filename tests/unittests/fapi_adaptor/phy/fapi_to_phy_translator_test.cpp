@@ -12,7 +12,6 @@
 #include "../../fapi/validators/helpers.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
-#include "../../phy/upper/tx_buffer_pool_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
@@ -117,14 +116,12 @@ protected:
   uplink_pdu_validator_dummy          ul_pdu_validator;
   slot_error_message_notifier_spy     error_notifier_spy;
   manual_task_worker                  worker;
-  tx_buffer_pool_spy                  buffer_pool_spy;
   fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, &prach_cfg, &carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
       &rg_pool,
       &dl_pdu_validator,
-      &buffer_pool_spy,
       &ul_request_processor,
       &rg_pool,
       &pdu_repo,
@@ -146,14 +143,6 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_not_configured_on_n
 {
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
-
-  // Assert that the transmit buffer pool did not run the slot.
-  auto& run_slot_entries = buffer_pool_spy.get_run_slot_entries();
-  ASSERT_TRUE(run_slot_entries.empty());
-
-  // Assert that no buffer reservation was done.
-  auto& reserve_buffer_entries = buffer_pool_spy.get_reserve_entries();
-  ASSERT_TRUE(reserve_buffer_entries.empty());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 
@@ -172,12 +161,6 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
-  // Assert that the transmit buffer pool did not run the slot.
-  auto& run_slot_entries = buffer_pool_spy.get_run_slot_entries();
-  ASSERT_TRUE(run_slot_entries.empty());
-
-  // Assert that the resource grid has not been set to zero.
-  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
 

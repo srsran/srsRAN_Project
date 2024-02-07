@@ -21,7 +21,6 @@
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 
@@ -37,8 +36,7 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDCCH PDU in the downlink processor");
   }
-  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
-                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDSCH PDU in the downlink processor");
@@ -77,7 +75,6 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   nof_slots_request_headroom(config.nof_slots_request_headroom),
   logger(*dependencies.logger),
   dl_pdu_validator(*dependencies.dl_pdu_validator),
-  buffer_pool(*dependencies.buffer_pool),
   ul_request_processor(*dependencies.ul_request_processor),
   ul_rg_pool(*dependencies.ul_rg_pool),
   ul_pdu_validator(*dependencies.ul_pdu_validator),
@@ -612,41 +609,14 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     const fapi::tx_data_req_pdu&                                                  pdu = msg.pdus[i];
     data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length.value());
 
-    // Get PDSCH transmission configuration.
-    const pdsch_processor::pdu_t& pdsch_config = pdsch_repository.pdus[i];
-
-    // Calculate number of codeblocks.
-    unsigned nof_cb = ldpc::compute_nof_codeblocks(pdu.tlv_custom.length.to_bits(), pdsch_config.ldpc_base_graph);
-
-    // Prepare buffer identifier.
-    trx_buffer_identifier id(pdsch_config.rnti,
-                             (pdsch_config.context.has_value()) ? pdsch_config.context->get_h_id() : 0);
-
-    // Extract new data flag.
-    bool new_data = pdsch_config.codewords.front().new_data;
-
-    // Get transmit buffer.
-    unique_tx_buffer buffer = (pdsch_config.context.has_value())
-                                  ? buffer_pool.reserve(pdsch_config.slot, id, nof_cb, new_data)
-                                  : buffer_pool.reserve(pdsch_config.slot, nof_cb);
-
-    // Check the soft buffer is valid.
-    if (!buffer.is_valid()) {
-      logger.warning("No PDSCH buffer available for {}.", id);
-      return;
-    }
-
     // Process PDSCH.
-    controller->process_pdsch(std::move(buffer), data, pdsch_repository.pdus[i]);
+    controller->process_pdsch(data, pdsch_repository.pdus[i]);
   }
 
   slot_controller_mngr.release_controller(slot);
 
   // All the PDSCH PDUs have been processed. Clear the repository.
   pdsch_repository.clear();
-
-  // Run PDSCH buffer housekeeping.
-  buffer_pool.run_slot(slot);
 
   l1_tracer << trace_event("tx_data_request", tp);
 }

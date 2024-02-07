@@ -1571,8 +1571,6 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
     // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
     const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
-    // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
-    const unsigned expire_pdsch_harq_timeout_slots = 2 * max_harq_process;
     // Assume the maximum number of active PUSCH and PDSCH HARQ processes is twice the maximum number of users per slot
     // for the maximum number of HARQ processes.
     const unsigned nof_buffers = 2 * max_nof_users_slot * max_harq_process;
@@ -1580,20 +1578,12 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
-    // Deduce the maximum number of codeblocks that can be scheduled for PDSCH in one slot.
-    const unsigned max_nof_pdsch_cb_slot = (pusch_constants::MAX_NRE_PER_RB * bw_rb *
-                                            get_bits_per_symbol(modulation_scheme::QAM256) * cell.nof_antennas_dl) /
-                                           ldpc::MAX_MESSAGE_SIZE;
     // Assume the minimum number of codeblocks per softbuffer.
     const unsigned min_cb_softbuffer = 2;
     // Assume that the maximum number of receive codeblocks is equal to the number of HARQ processes times the maximum
     // number of codeblocks per slot.
     const unsigned max_rx_nof_codeblocks =
         std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * nof_buffers);
-    // Assume that the maximum number of transmit codeblocks is equal to the number of HARQ processes times the maximum
-    // number of codeblocks per slot.
-    const unsigned max_tx_nof_codeblocks =
-        std::max(expire_pdsch_harq_timeout_slots * max_nof_pdsch_cb_slot, min_cb_softbuffer * nof_buffers);
 
     // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
     // depths.
@@ -1662,12 +1652,6 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
 
     cfg.dl_bw_rb = bw_rb;
     cfg.ul_bw_rb = bw_rb;
-
-    cfg.tx_buffer_config.nof_buffers          = nof_buffers;
-    cfg.tx_buffer_config.nof_codeblocks       = max_tx_nof_codeblocks;
-    cfg.tx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.tx_buffer_config.expire_timeout_slots = expire_pdsch_harq_timeout_slots;
-    cfg.tx_buffer_config.external_soft_bits   = false;
 
     cfg.rx_buffer_config.nof_buffers          = nof_buffers;
     cfg.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;

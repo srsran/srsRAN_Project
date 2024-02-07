@@ -19,7 +19,6 @@
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
@@ -47,8 +46,6 @@ struct upper_phy_impl_config {
   std::unique_ptr<resource_grid_pool> ul_rg_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Symbol request notifier.
@@ -115,9 +112,6 @@ public:
   resource_grid_pool& get_downlink_resource_grid_pool() override;
 
   // See interface for documentation.
-  tx_buffer_pool& get_tx_buffer_pool() override;
-
-  // See interface for documentation.
   resource_grid_pool& get_uplink_resource_grid_pool() override;
 
   // See interface for documentation.
@@ -145,8 +139,6 @@ private:
   srslog::basic_logger& logger;
   /// Base station sector identifier.
   const unsigned sector_id;
-  /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.

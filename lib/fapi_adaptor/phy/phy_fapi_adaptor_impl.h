@@ -53,8 +53,6 @@ struct phy_fapi_adaptor_impl_dependencies {
   resource_grid_pool* dl_rg_pool;
   /// Downlink PDU validator.
   const downlink_pdu_validator* dl_pdu_validator;
-  /// Transmit buffer pool.
-  tx_buffer_pool* buffer_pool;
   /// Uplink request processor.
   uplink_request_processor* ul_request_processor;
   /// Uplink resource grid pool.
