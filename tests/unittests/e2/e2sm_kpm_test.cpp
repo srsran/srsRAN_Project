@@ -24,6 +24,45 @@ using namespace srsran;
 bool      g_enable_pcap = false;
 dlt_pcap* g_pcap        = nullptr;
 
+class e2_entity_test_with_pcap : public e2_test_base_with_pcap
+{
+protected:
+  dlt_pcap* external_pcap_writer;
+
+  void SetUp() override
+  {
+    external_pcap_writer = GetParam();
+
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
+
+    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap = std::make_unique<dummy_e2ap_pcap>();
+    if (external_pcap_writer) {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+    } else {
+      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    }
+    e2_client             = std::make_unique<dummy_e2_connection_client>(*packer);
+    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
+    factory               = timer_factory{timers, task_worker};
+    rc_param_configurator = std::make_unique<dummy_du_configurator>();
+    e2                    = create_e2_entity(
+        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, task_worker);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+    pcap->close();
+  }
+};
+
 class e2sm_kpm_indication : public e2_test_base_with_pcap
 {
 protected:
@@ -116,22 +155,12 @@ std::vector<uint32_t> get_reported_ues(const std::vector<std::vector<uint32_t>>&
 }
 
 // E2 Setup Request is needed for Wireshark to correctly decode the subsequent Subscription Requests
-TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
+TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 {
-  if (!g_enable_pcap) {
-    return;
-  }
-
   dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
   // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
-
-  if (g_pcap) {
-    if (g_pcap->is_write_enabled()) {
-      g_pcap->push_pdu(gw->last_pdu.copy());
-    }
-  }
 
   // Need to send setup response, so the transaction can be completed.
   unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
@@ -148,10 +177,11 @@ TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
 TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 {
   // Measurement values in 5 time slot.
-  std::vector<float> meas_values   = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
-  uint32_t           nof_meas_data = meas_values.size();
-  uint32_t           nof_metrics   = 1;
-  uint32_t           nof_records   = nof_metrics;
+  std::vector<float>    meas_real_values = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
+  std::vector<uint32_t> meas_int_values  = {1, 2, 3, 4, 5};
+  uint32_t              nof_meas_data    = meas_real_values.size();
+  uint32_t              nof_metrics      = 2;
+  uint32_t              nof_records      = nof_metrics;
 
   // Define E2SM_KPM action format 1.
   e2_sm_kpm_action_definition_s action_def;
@@ -172,8 +202,10 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
-  action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string(
-      "DRB.RlcSduDelayDl"); // Change to a valid metric.
+  action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpUl"); // Change to a valid metric.
+
+  action_def_f1.meas_info_list.push_back(meas_info_item); // Add a second metric.
+  action_def_f1.meas_info_list[1].meas_type.set_meas_name().from_string("DRB.RlcSduDelayDl");
   ric_action = generate_e2sm_kpm_ric_action(action_def);
 
   if (g_enable_pcap) {
@@ -191,7 +223,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements_float({1}, {1}, {meas_values[i]});
+    du_meas_provider->push_measurements_int({1}, {1}, {meas_int_values[i]});
+    du_meas_provider->push_measurements_float({1}, {1}, {meas_real_values[i]});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -212,8 +245,10 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
-    TESTASSERT_EQ(meas_values[i],
-                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].real().value);
+    TESTASSERT_EQ(meas_int_values[i],
+                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
+    TESTASSERT_EQ(meas_real_values[i],
+                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[1].real().value);
   }
 
   if (g_enable_pcap) {
@@ -748,6 +783,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   }
 }
 
+INSTANTIATE_TEST_SUITE_P(e2sm_kpm_tests, e2_entity_test_with_pcap, testing::Values(g_pcap));
 INSTANTIATE_TEST_SUITE_P(e2sm_kpm_tests, e2sm_kpm_indication, testing::Values(g_pcap));
 
 int main(int argc, char** argv)

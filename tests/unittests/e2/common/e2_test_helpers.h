@@ -385,7 +385,7 @@ public:
         }
       } else {
         if (meas_values_int.size()) {
-          meas_record_item.integer() = meas_values_int[0];
+          meas_record_item.set_integer() = meas_values_int[0];
         } else {
           meas_record_item.set_integer() = 1;
         }
@@ -473,12 +473,13 @@ private:
     return false;
   };
 
-  std::vector<std::string> supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl", "DRB.RlcSduDelayDl"};
-  std::vector<uint32_t>    presence          = {1};
-  std::vector<uint32_t>    cond_satisfied    = {1};
-  std::vector<float>       meas_values_float = {0.15625};
-  std::vector<uint32_t>    meas_values_int   = {1};
-  std::vector<uint32_t>    ue_ids            = {0};
+  std::vector<std::string> supported_metrics =
+      {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl", "DRB.UEThpUl", "DRB.RlcSduDelayDl"};
+  std::vector<uint32_t> presence          = {1};
+  std::vector<uint32_t> cond_satisfied    = {1};
+  std::vector<float>    meas_values_float = {0.15625};
+  std::vector<uint32_t> meas_values_int   = {1};
+  std::vector<uint32_t> ue_ids            = {0};
 };
 
 class dummy_e2_subscription_mngr : public e2_subscription_manager
