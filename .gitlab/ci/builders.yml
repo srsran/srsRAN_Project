@@ -120,7 +120,7 @@ ubuntu-uhd-builder:
   artifacts:
     paths:
       - .gitlab/ci/builders/uhd
-    expire_in: 30 minutes
+    expire_in: 8 hours
   parallel:
     matrix:
       - os_version: "20.04"
@@ -212,7 +212,7 @@ ubuntu-dpdk-builder:
   artifacts:
     paths:
       - .gitlab/ci/builders/dpdk
-    expire_in: 30 minutes
+    expire_in: 8 hours
   parallel:
     matrix:
       - os_version: "20.04"

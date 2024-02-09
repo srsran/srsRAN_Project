@@ -625,9 +625,14 @@ smoke release update cache:
       start_in: 30 minutes
   retry: 2
   interruptible: false
+  variables:
+    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 smoke relwithdeb update cache:
   extends: .smoke relwithdeb
