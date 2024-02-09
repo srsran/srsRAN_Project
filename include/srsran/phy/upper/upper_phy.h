@@ -22,7 +22,6 @@ class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
 class uplink_slot_pdu_repository;
-class tx_buffer_pool;
 
 /// \brief Upper PHY interface.
 ///

@@ -15,8 +15,6 @@
 /// one.
 
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/srsran_test.h"
@@ -258,7 +256,6 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 
       // Build the PDSCH encoder configuration.
       pdsch_encoder::configuration config;
-      config.new_data       = true;
       config.base_graph     = get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs));
       config.rv             = 0;
       config.mod            = mcs.modulation;
@@ -329,16 +326,6 @@ int main(int argc, char** argv)
   std::unique_ptr<pdsch_encoder> hwacc_encoder = hwacc_pdsch_enc_factory->create();
   TESTASSERT(hwacc_encoder);
 
-  tx_buffer_pool_config softbuffer_pool_config;
-  softbuffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-  softbuffer_pool_config.nof_buffers          = 1;
-  softbuffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  softbuffer_pool_config.expire_timeout_slots = 0;
-  softbuffer_pool_config.external_soft_bits   = false;
-  std::shared_ptr<tx_buffer_pool_controller> softbuffer_pool = create_tx_buffer_pool(softbuffer_pool_config);
-
-  trx_buffer_identifier softbuffer_id(0, 0);
-
   // Generate the test cases.
   std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);
 
@@ -354,8 +341,6 @@ int main(int argc, char** argv)
     // Get the number of PRB.
     unsigned nof_prb = std::get<3>(test_case);
 
-    unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), cfg.base_graph);
-
     // Create transport block.
     std::vector<uint8_t> data(tbs / 8);
     std::generate(data.begin(), data.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
@@ -366,14 +351,9 @@ int main(int argc, char** argv)
     // Call the hardware-accelerator PDSCH encoder function.
     uint64_t total_hwacc_time = 0;
 
-    // Reserve softbuffer.
-    unique_tx_buffer softbuffer =
-        softbuffer_pool->get_pool().reserve(slot_point(), softbuffer_id, nof_codeblocks, true);
-    TESTASSERT(softbuffer.is_valid());
-
     // Encode the TB.
     uint64_t hwacc_start_time = get_current_time();
-    hwacc_encoder->encode(codeword, softbuffer.get(), data, cfg);
+    hwacc_encoder->encode(codeword, data, cfg);
     uint64_t hwacc_op_time = get_current_time() - hwacc_start_time;
     total_hwacc_time += hwacc_op_time;
 
@@ -384,7 +364,7 @@ int main(int argc, char** argv)
 
     // Encode the TB.
     uint64_t gen_start_time = get_current_time();
-    gen_encoder->encode(codeword, softbuffer.get(), data, cfg);
+    gen_encoder->encode(codeword, data, cfg);
     uint64_t gen_op_time = get_current_time() - gen_start_time;
     total_gen_time += gen_op_time;
 
