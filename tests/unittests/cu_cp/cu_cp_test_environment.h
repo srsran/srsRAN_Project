@@ -42,6 +42,9 @@ public:
   mock_du&         get_du(size_t du_index) { return *dus.at(du_index); }
   mock_cu_up&      get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
 
+  /// Start CU-CP connection to AMF and run NG setup procedure to completion.
+  void run_ng_setup();
+
   /// Establish a TNL connection between a DU and the CU-CP.
   optional<unsigned> connect_new_du();
   /// Drop TNL connection between a DU and the CU-CP.

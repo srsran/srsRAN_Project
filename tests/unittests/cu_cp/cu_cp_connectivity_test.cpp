@@ -27,17 +27,6 @@ class cu_cp_connectivity_test : public cu_cp_test_environment, public ::testing:
 {
 public:
   cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, create_mock_amf()}) {}
-
-  void run_ng_setup()
-  {
-    ngap_message ng_setup_resp = generate_ng_setup_response();
-    get_amf().enqueue_next_tx_pdu(ng_setup_resp);
-    EXPECT_TRUE(get_cu_cp().start());
-    ngap_message ngap_pdu;
-    EXPECT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
-    EXPECT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request))
-        << "CU-CP did not setup the AMF connection";
-  }
 };
 
 //----------------------------------------------------------------------------------//
@@ -353,4 +342,63 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   // Verify no NGAP PDU was sent when a UE is rejected.
   ngap_message ngap_pdu;
   ASSERT_FALSE(this->get_amf().try_pop_rx_pdu(ngap_pdu));
+}
+
+TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container_then_ue_is_rejected)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Setup CU-UP.
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
+
+  // Send Initial UL RRC Message without DU-to-CU-RRC container.
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  f1ap_message        init_rrc_msg  = generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti);
+  init_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
+  get_du(du_idx).push_tx_pdu(init_rrc_msg);
+
+  // Verify CU-CP sends a UE Context Release command over SRB0.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_EQ(f1ap_pdu.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+  ASSERT_TRUE(ue_rel->rrc_container_present);
+  // check that the SRB ID is set if the RRC Container is included
+  ASSERT_TRUE(ue_rel->srb_id_present);
+  ASSERT_EQ(ue_rel->srb_id, 0);
+
+  // Verify that the UE Context Release command contains an RRC Reject.
+  asn1::rrc_nr::dl_ccch_msg_s ccch;
+  {
+    asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
+    ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+  }
+  ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
+
+  // Verify UE is not removed until UE Context Release Complete.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
+  ASSERT_EQ(report.ue_metrics.ues[0].rnti, to_rnti(0x4601));
+
+  // Send F1AP UE Context Release Complete.
+  auto rel_complete =
+      generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
+  get_du(du_idx).push_tx_pdu(rel_complete);
+
+  // Verify UE is removed.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ue_metrics.ues.empty());
 }

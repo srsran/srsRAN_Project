@@ -21,64 +21,6 @@ using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* AMF connection handling                                                          */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the UE rejection if DU can't serve the UE
-TEST_F(cu_cp_test, when_du_sends_empty_du_to_cu_container_then_ue_is_rejected)
-{
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
-
-  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
-
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
-
-  du_index_t du_index = uint_to_du_index(0);
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
-
-  {
-    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
-    rnti_t              crnti    = to_rnti(0x4601);
-
-    // Inject Initial UL RRC message with empty DU-to-CU container
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer_without_du_to_cu_container(du_ue_id, crnti);
-    test_logger.info("Injecting Initial UL RRC message without DU to CU container");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
-
-    // check that the UE Context Release Command with RRC Container was sent to the DU
-    span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
-    ASSERT_FALSE(last_f1ap_msgs.empty());
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.type().value,
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
-    ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
-    // check that the SRB ID is set if the RRC Container is included
-    ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id, 0);
-
-    // Inject UE Context Release Complete message
-    f1ap_message ue_context_release_complete_msg = generate_ue_context_release_complete(cu_ue_id, du_ue_id);
-    test_logger.info("Injecting UE Context Release Complete message");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(
-        ue_context_release_complete_msg);
-  }
-
-  // check that UE has not been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0U);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 /* Paging handling                                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 

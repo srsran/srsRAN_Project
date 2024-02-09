@@ -12,6 +12,7 @@
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
@@ -19,6 +20,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/ngap/ngap_message.h"
 #include "srsran/support/executors/task_worker.h"
 
 using namespace srsran;
@@ -140,6 +142,18 @@ bool cu_cp_test_environment::wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message&
     }
     return dus[du_idx]->try_pop_rx_pdu(pdu);
   });
+}
+
+void cu_cp_test_environment::run_ng_setup()
+{
+  ngap_message ng_setup_resp = srs_cu_cp::generate_ng_setup_response();
+  get_amf().enqueue_next_tx_pdu(ng_setup_resp);
+  report_fatal_error_if_not(get_cu_cp().start(), "Failed to start CU-CP");
+
+  ngap_message ngap_pdu;
+  report_fatal_error_if_not(get_amf().try_pop_rx_pdu(ngap_pdu), "CU-CP did not send the NG Setup Request to the AMF");
+  report_fatal_error_if_not(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request),
+                            "CU-CP did not setup the AMF connection");
 }
 
 optional<unsigned> cu_cp_test_environment::connect_new_du()
