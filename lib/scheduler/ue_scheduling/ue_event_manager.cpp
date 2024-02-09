@@ -424,6 +424,114 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
+static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
+{
+  for (const ul_sched_info& grant : prev_slot_result.result.ul.puschs) {
+    ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+
+    // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
+    ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
+    if (not h_ul.empty()) {
+      if (h_ul.tb().nof_retxs == 0) {
+        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
+        // reset the UL HARQ process.
+        h_ul.reset();
+      } else {
+        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK
+        // in the UL HARQ process.
+        h_ul.crc_info(false);
+      }
+    }
+
+    // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.
+    if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
+      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
+      // DL HARQ processes with UCI falling in this slot.
+      u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
+    }
+  }
+}
+
+static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
+{
+  for (const auto& pucch : prev_slot_result.result.ul.pucchs) {
+    ue* u = ue_db.find_by_rnti(pucch.crnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+    bool has_harq_ack = false;
+    switch (pucch.format) {
+      case pucch_format::FORMAT_1:
+        has_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
+        break;
+      case pucch_format::FORMAT_2:
+        has_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
+        break;
+      default:
+        break;
+    }
+
+    // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
+    if (has_harq_ack) {
+      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK in
+      // the DL HARQ processes with UCI falling in this slot.
+      u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
+    }
+  }
+}
+
+void ue_event_manager::handle_error_indication(slot_point                            sl_tx,
+                                               du_cell_index_t                       cell_index,
+                                               scheduler_slot_handler::error_outcome event)
+{
+  common_events.emplace(INVALID_DU_UE_INDEX, [this, sl_tx, cell_index, event]() {
+    // Handle Error Indication.
+
+    const cell_slot_resource_allocator* prev_slot_result = du_cells[cell_index].res_grid->get_history(sl_tx);
+    if (prev_slot_result == nullptr) {
+      logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
+                     "of the error indication have already been erased",
+                     cell_index,
+                     sl_tx);
+      return;
+    }
+
+    // In case DL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PDSCH and will not send the respective UCI.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
+    // In case UL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PUSCH.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The CRC indication coming from the lower layers will likely be CRC=KO.
+    // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
+    // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the lower
+    // layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important that
+    // the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to be reset or
+    // not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI ambiguity.
+
+    // In case of PDSCH grants being discarded, there will be the following consequences:
+    // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
+    // scheduler will retransmit the respective DL HARQ. No actions required.
+
+    // In case of PUCCH and PUSCH grants being discarded.
+    if (event.pusch_and_pucch_discarded) {
+      handle_discarded_pusch(*prev_slot_result, ue_db);
+
+      handle_discarded_pucch(*prev_slot_result, ue_db);
+    }
+
+    // Log event.
+    ev_logger.enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
+  });
+}
+
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 {
   bool new_slot_detected = last_sl != sl;
@@ -495,12 +603,14 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
   process_cell_specific(cell_index);
 }
 
-void ue_event_manager::add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched)
+void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid, ue_srb0_scheduler& srb0_sched)
 {
-  srsran_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
+  const du_cell_index_t cell_index = cell_res_grid.cell_index();
+  srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  du_cells[cell_cfg_.cell_index].cfg        = &cell_cfg_;
-  du_cells[cell_cfg_.cell_index].srb0_sched = &srb0_sched;
+  du_cells[cell_index].cfg        = &cell_res_grid.cfg;
+  du_cells[cell_index].res_grid   = &cell_res_grid;
+  du_cells[cell_index].srb0_sched = &srb0_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

@@ -35,7 +35,7 @@ public:
   ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
   ~ue_event_manager();
 
-  void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
+  void add_cell(cell_resource_allocator& cell_res_grid, ue_srb0_scheduler& srb0_sched);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -51,6 +51,9 @@ public:
 
   /// Scheduler DL buffer state indication handler interface.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
+
+  void
+  handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, scheduler_slot_handler::error_outcome event);
 
   /// Process events for a given slot and cell index.
   void run(slot_point sl, du_cell_index_t cell_index);
@@ -105,6 +108,8 @@ private:
   /// List of added and configured cells.
   struct du_cell {
     const cell_configuration* cfg = nullptr;
+
+    cell_resource_allocator* res_grid = nullptr;
 
     /// Reference to SRB0 and other bearers scheduler
     ue_srb0_scheduler* srb0_sched = nullptr;
