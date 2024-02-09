@@ -2061,6 +2061,15 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "Policy used for assigning CPU cores to the Radio Unit tasks");
 }
 
+static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_appconfig& config)
+{
+  app.add_option("--nof_non_rt_threads",
+                 config.nof_non_rt_threads,
+                 "Number of non real time threads for processing of CP and UP data in upper layers.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+}
+
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
 {
   auto pdsch_processor_check = [](const std::string& value) -> std::string {
@@ -2162,6 +2171,11 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
 
   // Threads section.
   CLI::App* threads_subcmd = app.add_subcommand("threads", "Threads configuration")->configurable();
+
+  // Non real time threads.
+  CLI::App* non_rt_threads_subcmd =
+      threads_subcmd->add_subcommand("non_rt", "Non real time thread configuration")->configurable();
+  configure_cli11_non_rt_threads_args(*non_rt_threads_subcmd, config.threads.non_rt_threads);
 
   // Upper PHY threads.
   CLI::App* upper_phy_threads_subcmd =
