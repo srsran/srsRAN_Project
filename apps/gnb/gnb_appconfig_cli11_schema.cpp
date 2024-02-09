@@ -1603,6 +1603,11 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
   app.add_option("--nof_ues", test_params.nof_ues, "Number of test UE(s) to create.")
       ->capture_default_str()
       ->check(CLI::Range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES));
+  app.add_option("--auto_ack_indication_delay",
+                 test_params.auto_ack_indication_delay,
+                 "Delay before the UL and DL HARQs are automatically ACKed. This feature should only be used if the UL "
+                 "PHY is not operational")
+      ->capture_default_str();
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")

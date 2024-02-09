@@ -863,6 +863,10 @@ struct test_mode_ue_appconfig {
   rnti_t rnti = rnti_t::INVALID_RNTI;
   /// Number of test UE(s) to create.
   uint16_t nof_ues = 1;
+  /// \brief Delay, in slots, before the MAC test mode auto-generates the UCI/CRC indication to pass to the scheduler.
+  /// This feature should be avoided if the OFH/UL PHY are operational, otherwise the auto-generated indications
+  /// may interfere with the UL PHY HARQ handling.
+  optional<unsigned> auto_ack_indication_delay;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
