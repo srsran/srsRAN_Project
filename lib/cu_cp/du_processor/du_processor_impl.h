@@ -27,7 +27,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor_impl_interface, public du_setup_handler
+class du_processor_impl : public du_processor_impl_interface, public du_setup_handler, public du_metrics_handler
 {
 public:
   du_processor_impl(const du_processor_config_t&        du_processor_config_,
@@ -102,6 +102,8 @@ public:
     task_sched.schedule_async_task(ue_index, std::move(task));
   }
 
+  metrics_report::du_info handle_du_metrics_report_request() const override;
+
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
@@ -121,6 +123,7 @@ public:
   {
     return f1ap_ue_context_notifier;
   }
+  du_metrics_handler& get_metrics_handler() override { return *this; }
 
 private:
   /// \brief Create RRC UE object for given UE.

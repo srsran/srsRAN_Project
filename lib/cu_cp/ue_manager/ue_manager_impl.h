@@ -99,10 +99,10 @@ public:
   rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the PCI of the UE.
-  pci_t get_pci() override { return pci; };
+  pci_t get_pci() const override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() override { return c_rnti; }
+  rnti_t get_c_rnti() const override { return c_rnti; }
 
   /// \brief Get the DU index of the UE.
   du_index_t get_du_index() override { return du_index; }
@@ -338,7 +338,7 @@ public:
     return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
   }
 
-  ue_metrics_report handle_ue_metrics_report_request() override;
+  std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override;
 
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 

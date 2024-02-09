@@ -249,7 +249,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
 
   // Check no UEs.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_TRUE(report.ue_metrics.ues.empty());
+  ASSERT_TRUE(report.ues.empty());
 
   // Create UE by sending Initial UL RRC Message.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
@@ -275,8 +275,8 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
 
   // Check UE is created.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
-  ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
+  ASSERT_EQ(report.ues.size(), 1);
+  ASSERT_EQ(report.ues[0].rnti, crnti);
 
   // AMF still not notified of UE attach.
   ngap_message ngap_pdu;
@@ -327,8 +327,8 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
 
   // Check UE is created and is only destroyed when F1AP UE context release complete is received.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
-  ASSERT_EQ(report.ue_metrics.ues[0].rnti, crnti);
+  ASSERT_EQ(report.ues.size(), 1);
+  ASSERT_EQ(report.ues[0].rnti, crnti);
 
   // Send F1AP UE Context Release Complete.
   auto rel_complete =
@@ -337,7 +337,7 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
 
   // Verify UE is removed.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_TRUE(report.ue_metrics.ues.empty());
+  ASSERT_TRUE(report.ues.empty());
 
   // Verify no NGAP PDU was sent when a UE is rejected.
   ngap_message ngap_pdu;
@@ -390,8 +390,8 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
 
   // Verify UE is not removed until UE Context Release Complete.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ue_metrics.ues.size(), 1);
-  ASSERT_EQ(report.ue_metrics.ues[0].rnti, to_rnti(0x4601));
+  ASSERT_EQ(report.ues.size(), 1);
+  ASSERT_EQ(report.ues[0].rnti, to_rnti(0x4601));
 
   // Send F1AP UE Context Release Complete.
   auto rel_complete =
@@ -400,5 +400,5 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
 
   // Verify UE is removed.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_TRUE(report.ue_metrics.ues.empty());
+  ASSERT_TRUE(report.ues.empty());
 }

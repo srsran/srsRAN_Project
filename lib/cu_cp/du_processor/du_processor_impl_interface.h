@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_metrics_handler.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -445,6 +446,7 @@ public:
   virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
   virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
   virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
+  virtual du_metrics_handler&                    get_metrics_handler()                       = 0;
 };
 
 } // namespace srs_cu_cp

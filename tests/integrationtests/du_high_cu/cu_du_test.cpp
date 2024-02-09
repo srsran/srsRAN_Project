@@ -102,5 +102,7 @@ public:
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
   // check that DU has been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1);
+  auto report = cu_cp_obj->get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus.size(), 1);
+  ASSERT_EQ(report.dus[0].cells.size(), 1);
 }

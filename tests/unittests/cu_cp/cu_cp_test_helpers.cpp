@@ -239,14 +239,13 @@ void cu_cp_test::test_e1ap_attach()
 void cu_cp_test::test_du_attach(du_index_t du_index, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci)
 {
   // Store current number of DUs.
-  size_t nof_dus = cu_cp_obj->get_connected_dus().get_nof_dus();
+  size_t nof_dus = f1c_gw.nof_connections();
 
   // Create a new DU connection to the CU-CP, creating a new DU processor in the CU-CP in the process.
   f1c_gw.request_new_du_connection();
 
   size_t expected_nof_dus = nof_dus + 1;
   ASSERT_EQ(f1c_gw.nof_connections(), expected_nof_dus);
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), expected_nof_dus);
 
   // Pass F1SetupRequest to the CU-CP
   f1ap_message f1setup_msg = generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
@@ -275,7 +274,7 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 1);
 
   authenticate_ue(amf_ue_id, ran_ue_id, du_index, du_ue_id, cu_ue_id);
 

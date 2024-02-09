@@ -347,7 +347,7 @@ TEST_F(
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 1);
 
   // Inject UE Context Release Request
   cu_cp_obj->get_connected_dus()
@@ -371,7 +371,7 @@ TEST_F(
       .handle_message(generate_ue_context_release_complete(cu_ue_id, du_ue_id));
 
   // Check that the UE was removed
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -424,7 +424,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   }
 
   // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 2U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
 }
 
 TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
@@ -472,7 +472,7 @@ TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
   }
 
   // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 2U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
 }
 
 TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)

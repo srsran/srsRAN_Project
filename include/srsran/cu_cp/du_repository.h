@@ -54,14 +54,6 @@ class du_repository
 public:
   virtual ~du_repository() = default;
 
-  /// \brief Get the number of DUs connected to the CU-CP.
-  /// \return The number of DUs.
-  virtual size_t get_nof_dus() const = 0;
-
-  /// \brief Get the number of UEs connected to the all DUs of the CU-CP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
-
   /// \brief Handles the start of a new DU connection.
   ///
   /// \param f1ap_tx_pdu_notifier Notifier that the CU-CP will use to push F1AP Tx messages to the DU. Once this

@@ -183,14 +183,14 @@ ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-ue_metrics_report ue_manager::handle_ue_metrics_report_request()
+std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
-  ue_metrics_report report;
-  report.ues.reserve(ues.size());
+  std::vector<metrics_report::ue_info> report;
+  report.reserve(ues.size());
 
-  for (auto& ue : ues) {
-    report.ues.emplace_back();
-    ue_metrics_report::ue_context& ue_report = report.ues.back();
+  for (const auto& ue : ues) {
+    report.emplace_back();
+    metrics_report::ue_info& ue_report = report.back();
 
     ue_report.rnti = ue.second.get_c_rnti();
     ue_report.pci  = ue.second.get_pci();

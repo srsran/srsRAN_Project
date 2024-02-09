@@ -47,7 +47,6 @@ public:
   void stop() override;
 
   // CU-CP CU-UP interface
-  size_t                get_nof_cu_ups() const override;
   e1ap_message_handler& get_e1ap_message_handler(cu_up_index_t cu_up_index) override;
 
   // NGAP interface

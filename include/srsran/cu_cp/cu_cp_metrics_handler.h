@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include <chrono>
@@ -18,18 +19,22 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct ue_metrics_report {
-  struct ue_context {
+/// CU-CP Metrics report.
+struct metrics_report {
+  struct ue_info {
     rnti_t rnti;
     pci_t  pci;
   };
+  struct cell_info {
+    nr_cell_global_id_t cgi;
+    pci_t               pci;
+  };
+  struct du_info {
+    std::vector<cell_info> cells;
+  };
 
-  std::vector<ue_context> ues;
-};
-
-/// CU-CP Metrics report.
-struct metrics_report {
-  ue_metrics_report ue_metrics;
+  std::vector<ue_info> ues;
+  std::vector<du_info> dus;
 };
 
 /// Interface used by the CU-CP to report metrics.

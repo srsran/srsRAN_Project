@@ -54,7 +54,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   routine_mng(ue_mng.get_task_sched()),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
-  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng))
+  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -140,11 +140,6 @@ void cu_cp_impl::stop()
       });
 
   logger.info("CU-CP stopped successfully.");
-}
-
-size_t cu_cp_impl::get_nof_cu_ups() const
-{
-  return cu_up_db.get_nof_cu_ups();
 }
 
 e1ap_message_handler& cu_cp_impl::get_e1ap_message_handler(cu_up_index_t cu_up_index)

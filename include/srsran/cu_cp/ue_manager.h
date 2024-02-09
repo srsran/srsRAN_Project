@@ -57,10 +57,10 @@ public:
   virtual rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() = 0;
 
   /// \brief Get the PCI of the UE.
-  virtual pci_t get_pci() = 0;
+  virtual pci_t get_pci() const = 0;
 
   /// \brief Get the C-RNTI of the UE.
-  virtual rnti_t get_c_rnti() = 0;
+  virtual rnti_t get_c_rnti() const = 0;
 
   /// \brief Get the DU index of the UE.
   virtual du_index_t get_du_index() = 0;

@@ -16,10 +16,15 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-metrics_handler_impl::metrics_handler_impl(task_executor&      cu_cp_exec_,
-                                           timer_manager&      timers_,
-                                           ue_metrics_handler& ue_handler_) :
-  cu_cp_exec(cu_cp_exec_), timers(timers_), ue_handler(ue_handler_), logger(srslog::fetch_basic_logger("CU-CP"))
+metrics_handler_impl::metrics_handler_impl(task_executor&                 cu_cp_exec_,
+                                           timer_manager&                 timers_,
+                                           ue_metrics_handler&            ue_handler_,
+                                           du_repository_metrics_handler& du_handler_) :
+  cu_cp_exec(cu_cp_exec_),
+  timers(timers_),
+  ue_handler(ue_handler_),
+  du_handler(du_handler_),
+  logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -80,9 +85,10 @@ metrics_report metrics_handler_impl::create_report()
 {
   metrics_report report;
 
-  report.ue_metrics = ue_handler.handle_ue_metrics_report_request();
+  report.ues = ue_handler.handle_ue_metrics_report_request();
+  report.dus = du_handler.handle_du_metrics_report_request();
 
-  // TODO: Get metrics of connected remote nodes.
+  // TODO: Get metrics of connected CU-CP/AMF nodes.
 
   return report;
 }

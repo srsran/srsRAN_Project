@@ -43,10 +43,6 @@ class cu_cp_cu_up_connection_interface
 public:
   virtual ~cu_cp_cu_up_connection_interface() = default;
 
-  /// \brief Get the number of CU-UPs connected to the CU-CP.
-  /// \return The number of CU-UPs.
-  virtual size_t get_nof_cu_ups() const = 0;
-
   /// \brief Get the E1AP message handler interface of the CU-UP processor object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
   /// \return The E1AP message handler interface of the CU-UP processor object.

@@ -590,3 +590,14 @@ du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& req
 {
   return routine_mng->start_inter_cu_handover_target_routine(request, cu_cp_notifier);
 }
+
+metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
+{
+  metrics_report::du_info report;
+  for (const auto& cell : cell_db) {
+    report.cells.emplace_back();
+    report.cells.back().cgi = cell.second.cgi;
+    report.cells.back().pci = cell.second.pci;
+  }
+  return report;
+}

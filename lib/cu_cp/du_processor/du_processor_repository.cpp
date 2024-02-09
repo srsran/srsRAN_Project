@@ -180,20 +180,6 @@ du_index_t du_processor_repository::find_du(pci_t pci)
   return index;
 }
 
-size_t du_processor_repository::get_nof_dus() const
-{
-  return du_db.size();
-}
-
-size_t du_processor_repository::get_nof_ues() const
-{
-  size_t nof_ues = 0;
-  for (auto& du : du_db) {
-    nof_ues += du.second.du_processor->get_nof_ues();
-  }
-  return nof_ues;
-}
-
 du_handler& du_processor_repository::get_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
@@ -265,4 +251,13 @@ void du_processor_repository::handle_inactivity_notification(du_index_t         
 {
   // Forward message to DU processor
   du_db.at(du_index).du_processor->handle_inactivity_notification(msg);
+}
+
+std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
+{
+  std::vector<metrics_report::du_info> du_reports;
+  for (auto& du : du_db) {
+    du_reports.emplace_back(du.second.du_processor->get_metrics_handler().handle_du_metrics_report_request());
+  }
+  return du_reports;
 }
