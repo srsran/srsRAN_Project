@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/unique_thread.h"
+#include "srsran/support/sysinfo.h"
 #include "fmt/ostream.h"
 #include <cstdio>
 #include <pthread.h>
@@ -27,6 +28,9 @@ struct cpu_description {
 /// \brief  Compute the CPU set of the caller thread.
 cpu_description compute_machine_desc()
 {
+  // Clean-up cgroups possibly left from a previous run.
+  cleanup_cgroups();
+
   cpu_description desc;
   cpu_set_t&      cpuset = desc.cpuset;
 
