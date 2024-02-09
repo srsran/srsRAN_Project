@@ -49,6 +49,7 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
     nof_ues_to_be_scheduled_per_slot = 8;
   }
 
+  // NOTE: All UEs use the same dedicated SearchSpace configuration.
   const ue&                    u      = **ues.begin();
   const ue_cell_configuration& ue_cfg = u.get_pcell().cfg();
   const auto*                  ss_info =
