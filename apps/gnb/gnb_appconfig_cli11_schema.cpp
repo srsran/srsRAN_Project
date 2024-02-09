@@ -1920,10 +1920,10 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
   os_sched_affinity_bitmask one_cpu_mask(cpu_idx);
-  if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus).empty()) {
+  if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus()).empty()) {
     return fmt::format("Invalid CPU core selected '{}'. Valid CPU ids: {}",
                        cpu_idx,
-                       os_sched_affinity_bitmask::available_cpus.get_cpu_ids());
+                       os_sched_affinity_bitmask::available_cpus().get_cpu_ids());
   }
   return default_success_t();
 }

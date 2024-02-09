@@ -88,7 +88,7 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 
 static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap, const std::string& name)
 {
-  auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus);
+  auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus());
   if (invalid_ids.size() > 0) {
     fmt::print(
         "Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n", name, invalid_ids);
@@ -170,15 +170,19 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
   fmt::print("Thread [{}:{}]: Sched policy is \"{}\". Priority is {}.\n", tname, tid, p, param.sched_priority);
 }
 
-const os_sched_affinity_bitmask os_sched_affinity_bitmask::available_cpus = []() {
-  os_sched_affinity_bitmask bitmask;
-  for (size_t i = 0; i < bitmask.size(); ++i) {
-    if (CPU_ISSET(i, &host_desc.cpuset)) {
-      bitmask.cpu_bitset.set(i);
+const os_sched_affinity_bitmask& os_sched_affinity_bitmask::available_cpus()
+{
+  static os_sched_affinity_bitmask available_cpus_mask = []() {
+    os_sched_affinity_bitmask bitmask;
+    for (size_t i = 0; i < bitmask.size(); ++i) {
+      if (CPU_ISSET(i, &host_desc.cpuset)) {
+        bitmask.cpu_bitset.set(i);
+      }
     }
-  }
-  return bitmask;
-}();
+    return bitmask;
+  }();
+  return available_cpus_mask;
+}
 
 static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS>
 os_sched_affinity_bitmask::subtract(const os_sched_affinity_bitmask& rhs) const
