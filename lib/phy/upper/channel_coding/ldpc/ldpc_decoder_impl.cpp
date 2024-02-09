@@ -162,7 +162,17 @@ void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
 
 void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
 {
-  for (unsigned i_node = 0; i_node != bg_N_high_rate; ++i_node) {
+  // Retrieve list of variable nodes connected to this check node.
+  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
+
+  // Find first NO_EDGE in current_var_indices.
+  const auto* this_var_index_end = std::find(current_var_indices.begin(), current_var_indices.end(), NO_EDGE);
+
+  // Iterate all variable nodes connected to this check node.
+  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin();
+       this_var_index != this_var_index_end;
+       ++this_var_index) {
+    unsigned                         i_node   = std::min(*this_var_index, bg_N_high_rate);
     span<const log_likelihood_ratio> soft     = get_soft_bits(i_node);
     span<const log_likelihood_ratio> c2v      = get_check_to_var(check_node, i_node);
     span<log_likelihood_ratio>       v2c      = get_var_to_check(i_node, 0);
