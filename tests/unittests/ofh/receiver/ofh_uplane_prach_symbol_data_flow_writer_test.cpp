@@ -46,6 +46,7 @@ public:
     buffer_context.nof_td_occasions = 1;
     buffer_context.nof_fd_occasions = 1;
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
+    buffer_context.start_symbol     = 0;
 
     repo->add(buffer_context, buffer);
 
@@ -202,6 +203,32 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_in_one_pac
     results.params.symbol_id = symbol_id;
     writer.write_to_prach_buffer(prach_eaxc[0], results);
   }
+
+  prach_context context = repo->get(slot);
+  ASSERT_FALSE(context.empty());
+
+  for (unsigned i = 0; i != nof_symbols; ++i) {
+    const auto& sym_data = context.get_symbol_re_written(i);
+    ASSERT_TRUE(std::all_of(sym_data.begin(), sym_data.end(), [](const auto& port) { return port.all(); }));
+  }
+}
+
+TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_with_start_symbol_offset_passes)
+{
+  buffer = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
+  // Offset the start symbol.
+  buffer_context.start_symbol = 2;
+  repo->add(buffer_context, buffer);
+
+  auto& section     = results.sections.back();
+  section.nof_prbs  = (format == prach_format_type::zero) ? 72 : 12;
+  section.start_prb = 0;
+
+  for (unsigned symbol_id = 0; symbol_id != nof_symbols; ++symbol_id) {
+    results.params.symbol_id = symbol_id + buffer_context.start_symbol;
+    writer.write_to_prach_buffer(prach_eaxc[0], results);
+  }
+  ASSERT_TRUE(buffer.correct_symbols_requested());
 
   prach_context context = repo->get(slot);
   ASSERT_FALSE(context.empty());

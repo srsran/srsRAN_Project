@@ -105,6 +105,8 @@ public:
   /// Writes the given IQ buffer corresponding to the given symbol and port.
   void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
   {
+    symbol -= context_info.context.start_symbol;
+
     srsran_assert(context_info.buffer, "No valid PRACH buffer in the context");
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
 
