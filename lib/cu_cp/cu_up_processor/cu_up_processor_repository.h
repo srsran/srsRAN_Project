@@ -36,9 +36,10 @@ public:
 
   // CU-UP interface
   std::unique_ptr<e1ap_message_notifier>
-         handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) override;
-  void   handle_cu_up_remove_request(cu_up_index_t cu_up_index) override;
-  size_t get_nof_cu_ups() const override;
+       handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) override;
+  void handle_cu_up_remove_request(cu_up_index_t cu_up_index) override;
+
+  size_t get_nof_cu_ups() const { return cu_up_db.size(); }
 
   cu_up_handler& get_cu_up(cu_up_index_t cu_up_index) override;
 
@@ -49,10 +50,8 @@ private:
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
 
-    e1ap_message_handler&                get_e1ap_message_handler() override;
-    e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager() override;
-    e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() override;
-    void                                 update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
+    e1ap_message_handler& get_e1ap_message_handler() override;
+    void                  update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
   };
 
   /// \brief Find a CU-UP object.

@@ -18,6 +18,8 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+class cu_up_processor_repository;
+
 /// \brief Entity responsible for managing the CU-CP connections to remote nodes and determining whether the CU-CP
 /// is in a state to accept new connections.
 ///
@@ -29,10 +31,10 @@ namespace srs_cu_cp {
 class cu_cp_controller
 {
 public:
-  cu_cp_controller(cu_cp_routine_manager&       routine_manager_,
-                   const ngap_configuration&    ngap_cfg_,
-                   cu_cp_ngap_control_notifier& ngap_ctrl_notif_,
-                   const cu_up_repository&      cu_ups_);
+  cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
+                   const ngap_configuration&         ngap_cfg_,
+                   cu_cp_ngap_control_notifier&      ngap_ctrl_notif_,
+                   const cu_up_processor_repository& cu_ups_);
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
@@ -42,8 +44,8 @@ public:
   bool request_ue_setup() const;
 
 private:
-  amf_connection_manager  amf_mng;
-  const cu_up_repository& cu_ups;
+  amf_connection_manager            amf_mng;
+  const cu_up_processor_repository& cu_ups;
 };
 
 } // namespace srs_cu_cp

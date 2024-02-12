@@ -34,10 +34,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp_impl final : public cu_cp_interface,
-                         public cu_cp_impl_interface,
-                         public cu_cp_ngap_connection_interface,
-                         public cu_cp_cu_up_connection_interface
+class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface, public cu_cp_ng_interface
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
@@ -45,9 +42,6 @@ public:
 
   bool start() override;
   void stop() override;
-
-  // CU-CP CU-UP interface
-  e1ap_message_handler& get_e1ap_message_handler(cu_up_index_t cu_up_index) override;
 
   // NGAP interface
   ngap_message_handler& get_ngap_message_handler() override;
@@ -82,11 +76,10 @@ public:
   metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp interface
-  du_repository&                         get_connected_dus() override { return du_db; }
-  cu_up_repository&                      get_connected_cu_ups() override { return cu_up_db; }
-  cu_cp_cu_up_connection_interface&      get_cu_cp_cu_up_connection_interface() override { return *this; }
+  du_repository&                         get_dus() override { return du_db; }
+  cu_up_repository&                      get_cu_ups() override { return cu_up_db; }
   cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ngap_connection_interface&       get_cu_cp_ngap_connection_interface() override { return *this; }
+  cu_cp_ng_interface&                    get_ng_interface() override { return *this; }
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
   cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }

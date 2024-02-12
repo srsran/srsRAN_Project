@@ -70,7 +70,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp = create_cu_cp(cfg);
 
   // Pass CU-CP PDU handler to AMF.
-  amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
+  amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_ng_interface().get_ngap_message_handler());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()
@@ -158,7 +158,7 @@ void cu_cp_test_environment::run_ng_setup()
 
 optional<unsigned> cu_cp_test_environment::connect_new_du()
 {
-  auto du_stub = create_mock_du({get_cu_cp().get_connected_dus()});
+  auto du_stub = create_mock_du({get_cu_cp().get_dus()});
   if (not du_stub) {
     return nullopt;
   }
@@ -189,7 +189,7 @@ bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
 
 optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
 {
-  auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_connected_cu_ups());
+  auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_cu_ups());
   if (not cu_up_obj) {
     return nullopt;
   }

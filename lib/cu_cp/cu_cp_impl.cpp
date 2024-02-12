@@ -142,11 +142,6 @@ void cu_cp_impl::stop()
   logger.info("CU-CP stopped successfully.");
 }
 
-e1ap_message_handler& cu_cp_impl::get_e1ap_message_handler(cu_up_index_t cu_up_index)
-{
-  return cu_up_db.get_cu_up(cu_up_index).get_e1ap_message_handler();
-}
-
 ngap_message_handler& cu_cp_impl::get_ngap_message_handler()
 {
   return *ngap_entity;

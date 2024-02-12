@@ -161,11 +161,6 @@ cu_up_processor_impl_interface& cu_up_processor_repository::find_cu_up(cu_up_ind
   return *cu_up_db.at(cu_up_index).cu_up_processor;
 }
 
-size_t cu_up_processor_repository::get_nof_cu_ups() const
-{
-  return cu_up_db.size();
-}
-
 cu_up_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
@@ -176,17 +171,6 @@ cu_up_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
 e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_e1ap_message_handler()
 {
   return cu_up_processor->get_e1ap_message_handler();
-}
-
-e1ap_bearer_context_manager& cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_manager()
-{
-  return cu_up_processor->get_e1ap_bearer_context_manager();
-}
-
-e1ap_bearer_context_removal_handler&
-cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_removal_handler()
-{
-  return cu_up_processor->get_e1ap_bearer_context_removal_handler();
 }
 
 void cu_up_processor_repository::cu_up_context::update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)

@@ -20,10 +20,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp_ngap_connection_interface
+/// \brief Component of the CU-CP responsible for handling events and messages going through the NG interface.
+class cu_cp_ng_interface
 {
 public:
-  virtual ~cu_cp_ngap_connection_interface() = default;
+  virtual ~cu_cp_ng_interface() = default;
 
   /// \brief Get the NG message handler interface.
   /// \return The NG message handler interface.
@@ -38,39 +39,27 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
-class cu_cp_cu_up_connection_interface
-{
-public:
-  virtual ~cu_cp_cu_up_connection_interface() = default;
-
-  /// \brief Get the E1AP message handler interface of the CU-UP processor object.
-  /// \param[in] cu_up_index The index of the CU-UP processor object.
-  /// \return The E1AP message handler interface of the CU-UP processor object.
-  virtual e1ap_message_handler& get_e1ap_message_handler(const cu_up_index_t cu_up_index) = 0;
-};
-
 class cu_cp_interface
 {
 public:
   virtual ~cu_cp_interface() = default;
 
   /// \brief Get repository of handlers for the DUs currently connected to the CU-CP.
-  virtual du_repository& get_connected_dus() = 0;
+  virtual du_repository& get_dus() = 0;
 
   /// \brief Get repository of handlers for the CU-UPs currently connected to the CU-CP.
-  virtual cu_up_repository& get_connected_cu_ups() = 0;
+  virtual cu_up_repository& get_cu_ups() = 0;
 
   /// \brief Get handler of the NG interface of the CU-CP.
-  virtual cu_cp_ngap_connection_interface& get_cu_cp_ngap_connection_interface() = 0;
-
-  /// \brief Get handler of the E1 interface of the CU-CP.
-  virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
+  virtual cu_cp_ng_interface& get_ng_interface() = 0;
 
   /// \brief Get the metrics handler interface of the CU-CP.
   virtual metrics_handler& get_metrics_handler() = 0;
 
-  /// \brief Initiate NG Setup Procedure and wait for AMF response.
-  /// \return Returns true if the connection to the AMF was successful. False, otherwise.
+  /// \brief Initiate AMF TNL connection and run NG Setup Procedure.
+  ///
+  /// This function blocks until the procedure is complete.
+  /// \return Returns true if the connection to the AMF and NG setup procedure were successful. False, otherwise.
   virtual bool start() = 0;
 
   /// \brief Stop the CU-CP operation.

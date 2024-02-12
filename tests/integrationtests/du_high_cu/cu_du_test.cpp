@@ -59,14 +59,14 @@ protected:
     cu_cp_obj = create_cu_cp(cu_cfg);
 
     // Create AMF response to NG Setup.
-    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
+    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_ng_interface().get_ngap_message_handler());
     amf->enqueue_next_tx_pdu(srs_cu_cp::generate_ng_setup_response());
 
     // Start CU-CP.
     cu_cp_obj->start();
 
     // Attach F1-C gateway to CU-CP.
-    f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
+    f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_dus());
 
     // create and start DU
     phy_dummy phy;

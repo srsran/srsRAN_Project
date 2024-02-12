@@ -443,21 +443,21 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_cu_cp(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
-                              cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
+  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_interface().get_ngap_message_handler(),
+                              cu_cp_obj->get_ng_interface().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
-  e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
+  e1ap_gw.attach_cu_cp(cu_cp_obj->get_cu_ups());
 
   // Connect F1-C to CU-CP.
-  f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
+  f1c_gw.attach_cu_cp(cu_cp_obj->get_dus());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->get_cu_cp_ngap_connection_interface().amf_is_connected()) {
+  if (not cu_cp_obj->get_ng_interface().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 
