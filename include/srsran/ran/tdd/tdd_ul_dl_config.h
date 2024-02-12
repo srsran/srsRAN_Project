@@ -47,6 +47,18 @@ inline unsigned nof_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
          (cfg.pattern2.has_value() ? cfg.pattern2->dl_ul_tx_period_nof_slots : 0U);
 }
 
+/// \brief Calculates number of slots with all DL symbols in the TDD UL-DL configuration.
+inline unsigned nof_full_dl_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
+{
+  return cfg.pattern1.nof_dl_slots + (cfg.pattern2.has_value() ? cfg.pattern2->nof_dl_slots : 0U);
+}
+
+/// \brief Calculates number of slots with all UL symbols in the TDD UL-DL configuration.
+inline unsigned nof_full_ul_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
+{
+  return cfg.pattern1.nof_ul_slots + (cfg.pattern2.has_value() ? cfg.pattern2->nof_ul_slots : 0U);
+}
+
 /// \brief Calculates whether there are symbols for DL in the current slot index.
 bool has_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index);
 
