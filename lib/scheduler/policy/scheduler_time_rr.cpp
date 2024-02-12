@@ -115,10 +115,77 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&        
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
 /// \param[in] ue_db map of "slot_ue"
 /// \param[in] next_ue_index UE index with the highest priority to be allocated.
+/// \param[in] alloc_ue callable with signature "alloc_outcome(ue&, pusch_time_domain_resource_index)" that returns the
+/// UE allocation outcome.
+/// \return Index of next UE to allocate.
+template <typename AllocUEFunc>
+du_ue_index_t round_robin_ul_apply(const ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
+{
+  if (ue_db.empty()) {
+    return next_ue_index;
+  }
+  auto it          = ue_db.lower_bound(next_ue_index);
+  bool first_alloc = true;
+
+  // NOTE: All UEs use the same PUSCH Time Domain Resource configuration.
+  const ue& ref_u = **ue_db.begin();
+
+  unsigned max_pusch_time_domain_resource_index = 1;
+  if (ref_u.nof_cells() > 0) {
+    const ue_cell_configuration& ue_cfg = ref_u.get_pcell().cfg();
+    const auto*                  ss_info =
+        ue_cfg.find_search_space(ue_cfg.cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
+    if (ss_info == nullptr) {
+      return next_ue_index;
+    }
+
+    // [Implementation-defined] For UL heavy TDD configuration we allow multiple UL PDCCH allocations in the same slot
+    // for same UE but with different k2 values. In other cases (DL heavy) k2 value which is less than or equal to
+    // minimum value of k1(s) is used. Assumes that first entry in the PUSCH Time Domain resource list contains the k2
+    // value which is less than or equal to minimum value of k1(s).
+    if (ue_cfg.cell_cfg_common.is_tdd() and
+        (nof_full_ul_slots_per_tdd_period(ue_cfg.cell_cfg_common.tdd_cfg_common.value()) >
+         nof_full_dl_slots_per_tdd_period(ue_cfg.cell_cfg_common.tdd_cfg_common.value()))) {
+      max_pusch_time_domain_resource_index = ss_info->pusch_time_domain_list.size();
+    }
+  }
+
+  for (unsigned pusch_td_res_idx = 0; pusch_td_res_idx < max_pusch_time_domain_resource_index; ++pusch_td_res_idx) {
+    for (unsigned count = 0; count < ue_db.size(); ++count, ++it) {
+      if (it == ue_db.end()) {
+        // wrap-around
+        it = ue_db.begin();
+      }
+      const ue&           u            = **it;
+      const alloc_outcome alloc_result = alloc_ue(u, pusch_td_res_idx);
+      if (alloc_result == alloc_outcome::skip_slot) {
+        // Grid allocator directed policy to stop allocations for this slot.
+        return next_ue_index;
+      }
+
+      if (alloc_result == alloc_outcome::success) {
+        if (first_alloc) {
+          // Mark the next UE to be the first UE to get allocated in the following slot.
+          // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
+          // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
+          // can only use the RBs that were left from the previous UE allocations.
+          next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
+          first_alloc   = false;
+        }
+      }
+    }
+  }
+
+  return next_ue_index;
+}
+
+/// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
+/// \param[in] ue_db map of "slot_ue"
+/// \param[in] next_ue_index UE index with the highest priority to be allocated.
 /// \param[in] alloc_ue callable with signature "bool(ue&)" that returns true if UE allocation was successful.
 /// \return Index of next UE to allocate.
 template <typename AllocUEFunc>
-du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
+du_ue_index_t round_robin_dl_apply(const ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
 {
   if (ue_db.empty()) {
     return next_ue_index;
@@ -252,7 +319,15 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
                                  bool                         is_retx,
                                  bool                         schedule_sr_only,
                                  srslog::basic_logger&        logger,
+                                 unsigned                     pusch_td_res_idx,
                                  optional<unsigned>           ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
+// static alloc_outcome alloc_ul_ue(const ue&                    u,
+//                                  const ue_resource_grid_view& res_grid,
+//                                  ue_pusch_allocator&          pusch_alloc,
+//                                  bool                         is_retx,
+//                                  bool                         schedule_sr_only,
+//                                  srslog::basic_logger&        logger,
+//                                  optional<unsigned>           ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
@@ -269,11 +344,6 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
     const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
-
-    // UE is already allocated resources.
-    if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti)) {
-      return alloc_outcome::skip_ue;
-    }
 
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
     const ul_harq_process*    h = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
@@ -308,12 +378,14 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
-      // Assumes that first entry in the PUSCH Time Domain resource list contains the k2 value which is less than or
-      // equal to minimum value of k1(s).
-      const unsigned                               time_res = 0;
-      const pusch_time_domain_resource_allocation& pusch_td = ss->pusch_time_domain_list[time_res];
-      const slot_point pusch_slot                           = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
+      const pusch_time_domain_resource_allocation& pusch_td = ss->pusch_time_domain_list[pusch_td_res_idx];
+
+      // UE is already allocated PUSCH.
+      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, u.crnti, pusch_td.k2)) {
+        return alloc_outcome::skip_ue;
+      }
+
+      const slot_point pusch_slot = pdcch_slot + pusch_td.k2 + cell_cfg_common.ntn_cs_koffset;
       const unsigned   start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
@@ -401,7 +473,7 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
                                                                                   h->id,
                                                                                   ue_grant_crbs,
                                                                                   pusch_td.symbols,
-                                                                                  time_res,
+                                                                                  pusch_td_res_idx,
                                                                                   ss->cfg->get_id(),
                                                                                   aggr_lvl,
                                                                                   mcs_prbs.mcs});
@@ -433,7 +505,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger);
   };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
+  next_dl_ue_index = round_robin_dl_apply(ues, next_dl_ue_index, retx_ue_function);
 
   // Then, schedule new transmissions.
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
@@ -442,7 +514,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };
-    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
+    next_dl_ue_index = round_robin_dl_apply(ues, next_dl_ue_index, tx_ue_function);
   }
 }
 
@@ -451,24 +523,26 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_repository&         ues)
 {
   // First schedule UL data re-transmissions.
-  auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, logger);
+  auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u, unsigned pusch_td_res_idx) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, logger, pusch_td_res_idx);
   };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
+  next_ul_ue_index = round_robin_ul_apply(ues, next_ul_ue_index, data_retx_ue_function);
 
   // Then, schedule all pending SR.
-  auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger);
+  auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u, unsigned pusch_td_res_idx) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger, pusch_td_res_idx);
   };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
+  next_ul_ue_index = round_robin_ul_apply(ues, next_ul_ue_index, sr_ue_function);
 
   // Finally, schedule UL data new transmissions.
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
-    auto data_tx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-      return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
-    };
-    next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+    auto data_tx_ue_function =
+        [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u, unsigned pusch_td_res_idx) {
+          return alloc_ul_ue(
+              u, res_grid, pusch_alloc, false, false, logger, pusch_td_res_idx, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+        };
+    next_ul_ue_index = round_robin_ul_apply(ues, next_ul_ue_index, data_tx_ue_function);
   }
 }
