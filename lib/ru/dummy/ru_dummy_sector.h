@@ -167,14 +167,8 @@ public:
     // Check if the UL context from the request list is valid.
     if (prach_context.slot.valid()) {
       if (prach_context.slot == slot) {
-        // Prepare receive symbol context.
-        ru_uplink_rx_symbol_context rx_context;
-        rx_context.slot      = prach_context.slot;
-        rx_context.sector    = prach_context.sector;
-        rx_context.symbol_id = MAX_NSYMB_PER_SLOT - 1;
-
-        // Notify received resource grid.
-        symbol_notifier.on_new_uplink_symbol(rx_context, rx_symbols_resource_grid);
+        // Notify received PRACH buffer.
+        symbol_notifier.on_new_prach_window_data(prach_context, rx_symbols_prach_buffer.get_buffer(prach_context));
       } else {
         // Notify with a warning message if the UL previous saved context do not match with the current slot.
         logger.warning(slot.sfn(),
