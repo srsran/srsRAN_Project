@@ -157,13 +157,6 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
     return nullptr;
   }
 
-  // Verify RNTI is unique.
-  for (const pdcch_ul_information& pdcch : slot_alloc.result.dl.ul_pdcchs) {
-    if (pdcch.ctx.rnti == rnti) {
-      return nullptr;
-    }
-  }
-
   // Create PDCCH list element.
   pdcch_ul_information& pdcch = slot_alloc.result.dl.ul_pdcchs.emplace_back();
   pdcch.ctx.bwp_cfg           = &bwp_cfg;
@@ -205,13 +198,6 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
     return nullptr;
-  }
-
-  // Verify RNTI is unique.
-  for (const pdcch_dl_information& pdcch : slot_alloc.result.dl.dl_pdcchs) {
-    if (pdcch.ctx.rnti == rnti) {
-      return nullptr;
-    }
   }
 
   // Create PDCCH list element.
