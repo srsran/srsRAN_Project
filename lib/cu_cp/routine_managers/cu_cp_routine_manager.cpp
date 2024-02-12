@@ -28,7 +28,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_routine_manager::cu_cp_routine_manager(ue_task_scheduler& ue_task_sched_) :
+cu_cp_routine_manager::cu_cp_routine_manager(ue_task_scheduler_manager& ue_task_sched_) :
   ue_task_sched(ue_task_sched_), main_ctrl_loop(128)
 {
 }
@@ -49,5 +49,5 @@ void cu_cp_routine_manager::start_ue_removal_routine(ue_index_t                 
   ue_task_sched.handle_ue_async_task(
       ue_index,
       launch_async<ue_removal_routine>(
-          ue_index, rrc_du_notifier, e1ap_notifier, f1ap_notifier, ngap_notifier, ue_mng, ue_task_sched, logger));
+          ue_index, rrc_du_notifier, e1ap_notifier, f1ap_notifier, ngap_notifier, ue_mng, logger));
 }

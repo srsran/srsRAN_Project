@@ -22,8 +22,10 @@
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -33,6 +35,18 @@ using namespace srsran;
 
 class e2sm_kpm_indication : public e2_test_base
 {
+public:
+#if PCAP_OUTPUT
+  void save_msg_pcap(const byte_buffer& last_pdu)
+  {
+    if (not g_pcap->is_write_enabled()) {
+      return;
+    }
+    g_pcap->push_pdu(last_pdu.copy());
+    usleep(200);
+  }
+#endif
+private:
   void SetUp() override
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -48,14 +62,21 @@ class e2sm_kpm_indication : public e2_test_base
     gw               = std::make_unique<dummy_network_gateway_data_handler>();
     pcap             = std::make_unique<dummy_e2ap_pcap>();
     packer           = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+#if PCAP_OUTPUT
+    g_pcap = std::make_unique<dlt_pcap_impl>(155, "E2AP", "/tmp/e2sm_kpm_test.pcap", pcap_exec);
+#endif
   }
-
   void TearDown() override
   {
     // Flush logger after each test.
     srslog::flush();
     pcap->close();
   }
+#if PCAP_OUTPUT
+  srsran::task_worker       worker{"pcap_worker", 1024};
+  task_worker_executor      pcap_exec{worker};
+  std::unique_ptr<dlt_pcap> g_pcap;
+#endif
 };
 
 void get_presence_starting_with_cond_satisfied(const std::vector<uint32_t>& presence,
@@ -113,49 +134,13 @@ std::vector<uint32_t> get_reported_ues(const std::vector<std::vector<uint32_t>>&
   return reported_ues;
 }
 
-#if PCAP_OUTPUT
-std::unique_ptr<dlt_pcap> g_pcap = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP");
-
-inline void save_msg_pcap(const byte_buffer& last_pdu)
-{
-  if (not g_pcap->is_write_enabled()) {
-    g_pcap->open("e2sm_kpm_test.pcap");
-  }
-  g_pcap->push_pdu(last_pdu.copy());
-  usleep(200);
-}
-#endif
-
-#if PCAP_OUTPUT
-TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
-{
-  dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
-  // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
-  test_logger.info("Launch e2 setup request procedure with task worker...");
-  e2->start();
-
-  save_msg_pcap(gw->last_pdu);
-
-  // Need to send setup response, so the transaction can be completed.
-  unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
-  e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
-  e2_setup_response.pdu.successful_outcome()
-      .value.e2setup_resp()
-      ->ra_nfunctions_accepted.value[0]
-      ->ra_nfunction_id_item()
-      .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
-  test_logger.info("Injecting E2SetupResponse");
-  e2->handle_message(e2_setup_response);
-}
-#endif
-
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 {
   // Measurement values in 5 time slot.
-  std::vector<uint32_t> meas_values   = {1, 2, 3, 4, 5};
-  uint32_t              nof_meas_data = meas_values.size();
-  uint32_t              nof_metrics   = 1;
-  uint32_t              nof_records   = nof_metrics;
+  std::vector<float> meas_values   = {0.15625, 0.15625, 0.15625, 0.15625, 0.15625};
+  uint32_t           nof_meas_data = meas_values.size();
+  uint32_t           nof_metrics   = 1;
+  uint32_t           nof_records   = nof_metrics;
 
   // Define E2SM_KPM action format 1.
   e2_sm_kpm_action_definition_s action_def;
@@ -176,7 +161,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
-  action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
+  action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string(
+      "DRB.RlcSduDelayDl"); // Change to a valid metric.
   ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
@@ -195,7 +181,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({1}, {1}, {meas_values[i]});
+    du_meas_provider->push_measurements_float({1}, {1}, {meas_values[i]});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -216,7 +202,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   TESTASSERT_EQ(nof_meas_data, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record.size());
-    TESTASSERT_EQ(meas_values[i], ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].integer());
+    TESTASSERT_EQ(meas_values[i],
+                  ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record[0].real().value);
   }
 
 #if PCAP_OUTPUT
@@ -283,7 +270,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    du_meas_provider->push_measurements_int({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -291,7 +278,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({presence[i]}, {1}, {meas_values[i]});
+    du_meas_provider->push_measurements_int({presence[i]}, {1}, {meas_values[i]});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -433,7 +420,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    du_meas_provider->push_measurements_int({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -441,7 +428,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements
-    du_meas_provider->push_measurements(presence[i], cond_satisfied[i], meas_values[i]);
+    du_meas_provider->push_measurements_int(presence[i], cond_satisfied[i], meas_values[i]);
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -580,7 +567,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    du_meas_provider->push_measurements_int({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -588,7 +575,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements(presence[i], cond_satisfied[i], meas_values[i]);
+    du_meas_provider->push_measurements_int(presence[i], cond_satisfied[i], meas_values[i]);
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -707,7 +694,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   // Fill only with no_values and check if indication is ready.
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    du_meas_provider->push_measurements_int({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
     // Trigger measurement collection.
     report_service->collect_measurements();
   }
@@ -715,7 +702,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
 
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
-    du_meas_provider->push_measurements(presence[i], cond_satisfied, meas_values[i]);
+    du_meas_provider->push_measurements_int(presence[i], cond_satisfied, meas_values[i]);
     // Trigger measurement collection.
     report_service->collect_measurements();
   }

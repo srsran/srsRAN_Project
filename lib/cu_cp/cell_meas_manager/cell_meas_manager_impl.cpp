@@ -26,8 +26,8 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg&         cfg_,
-                                               cell_meas_mobility_manager_notifier& mobility_mng_notifier_) :
+cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
+                                     cell_meas_mobility_manager_notifier& mobility_mng_notifier_) :
   cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
   srsran_assert(is_valid_configuration(cfg), "Invalid cell measurement configuration");
@@ -38,8 +38,8 @@ cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg&     
   meas_obj_ids.emplace(0);
 }
 
-optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id_t           serving_nci,
-                                                                      optional<rrc_meas_cfg> current_meas_config)
+optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(nr_cell_id_t           serving_nci,
+                                                                 optional<rrc_meas_cfg> current_meas_config)
 {
   optional<rrc_meas_cfg> meas_cfg;
 
@@ -197,7 +197,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   return meas_cfg;
 }
 
-optional<cell_meas_config> cell_meas_manager_impl::get_cell_config(nr_cell_id_t nci)
+optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
 {
   optional<cell_meas_config> cell_cfg;
   if (cfg.cells.find(nci) != cfg.cells.end()) {
@@ -206,9 +206,9 @@ optional<cell_meas_config> cell_meas_manager_impl::get_cell_config(nr_cell_id_t 
   return cell_cfg;
 }
 
-void cell_meas_manager_impl::update_cell_config(nr_cell_id_t                           nci,
-                                                const serving_cell_meas_config&        serv_cell_cfg_,
-                                                std::vector<neighbor_cell_meas_config> ncells_)
+void cell_meas_manager::update_cell_config(nr_cell_id_t                           nci,
+                                           const serving_cell_meas_config&        serv_cell_cfg_,
+                                           std::vector<neighbor_cell_meas_config> ncells_)
 {
   if (!is_complete(serv_cell_cfg_)) {
     logger.debug("Updating incomplete cell measurement configuration for nci={}", nci);
@@ -248,7 +248,7 @@ optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
   return rsrp;
 }
 
-void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results)
+void cell_meas_manager::report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
   logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
 
@@ -313,7 +313,7 @@ void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const
 }
 
 /// \brief Get the next available meas id.
-meas_id_t cell_meas_manager_impl::get_next_meas_id()
+meas_id_t cell_meas_manager::get_next_meas_id()
 {
   // return invalid when no meas id is available
   if (meas_id_to_meas_context.size() == MAX_NOF_MEAS) {
@@ -329,7 +329,7 @@ meas_id_t cell_meas_manager_impl::get_next_meas_id()
 }
 
 /// \brief Get the next available meas obj id.
-meas_obj_id_t cell_meas_manager_impl::get_next_meas_obj_id()
+meas_obj_id_t cell_meas_manager::get_next_meas_obj_id()
 {
   // return invalid when no meas obj id is available
   if (meas_obj_id_to_nci.size() == MAX_NOF_MEAS_OBJ) {

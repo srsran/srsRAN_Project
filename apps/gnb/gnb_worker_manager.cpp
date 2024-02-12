@@ -113,7 +113,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // Configure non-RT worker pool.
   worker_pool non_rt_pool{
       "non_rt_pool",
-      std::max(3U, (unsigned)appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask.count()),
+      appcfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads,
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
       {{"low_prio_exec", task_priority::max - 1}, // used for pcap writing.

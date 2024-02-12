@@ -83,7 +83,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   if (not ue_cc->is_active() and h_dl.empty()) {
     // newTxs are not allowed for inactive UEs.
-    logger.warning("PDSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
+    logger.warning("PDSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive. New DL Tx "
+                   "transmissions are not allowed.",
                    u.ue_index,
                    grant.cell_index);
     return alloc_outcome::skip_ue;

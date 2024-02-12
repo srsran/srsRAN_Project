@@ -38,10 +38,9 @@ srsran::srs_cu_cp::create_du_processor(const du_processor_config_t&        du_pr
                                        f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                                        rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                        rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
-                                       rrc_ue_context_update_notifier&     rrc_ue_cu_cp_notifier_,
+                                       rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                        du_processor_ue_task_scheduler&     task_sched_,
                                        du_processor_ue_manager&            ue_manager_,
-                                       cell_meas_manager&                  cell_meas_mng_,
                                        task_executor&                      ctrl_exec_)
 {
   auto du_processor = std::make_unique<du_processor_impl>(du_processor_config_,
@@ -53,10 +52,9 @@ srsran::srs_cu_cp::create_du_processor(const du_processor_config_t&        du_pr
                                                           f1ap_cu_cp_notifier_,
                                                           rrc_ue_nas_pdu_notifier_,
                                                           rrc_ue_ngap_ctrl_notifier_,
-                                                          rrc_ue_cu_cp_notifier_,
+                                                          rrc_du_cu_cp_notifier,
                                                           task_sched_,
                                                           ue_manager_,
-                                                          cell_meas_mng_,
                                                           ctrl_exec_);
   return du_processor;
 }

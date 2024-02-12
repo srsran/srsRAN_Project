@@ -37,10 +37,11 @@ namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  byte_buffer        sdu = {};
-  optional<uint32_t> pdcp_sn;
-  uint32_t           next_so    = 0;
-  uint32_t           retx_count = RETX_COUNT_NOT_STARTED;
+  byte_buffer                           sdu = {};
+  std::chrono::system_clock::time_point time_of_arrival;
+  optional<uint32_t>                    pdcp_sn;
+  uint32_t                              next_so    = 0;
+  uint32_t                              retx_count = RETX_COUNT_NOT_STARTED;
 };
 
 /// \brief TX state variables

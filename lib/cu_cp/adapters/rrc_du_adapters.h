@@ -22,28 +22,31 @@
 
 #pragma once
 
-#include "../cell_meas_manager/cell_meas_manager_impl.h"
-#include "../mobility_manager/mobility_manager_impl.h"
+#include "../cu_cp_impl_interface.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between cell measurement and mobility manager to trigger handover.
-class cell_meas_mobility_manager_adapter : public cell_meas_mobility_manager_notifier
+/// Adapter between RRC DU and CU-CP
+class rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
 {
 public:
-  cell_meas_mobility_manager_adapter() = default;
-
-  void connect_mobility_manager(mobility_manager_measurement_handler& handler_) { handler = &handler_; }
-
-  void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override
+  void connect_cu_cp(cu_cp_measurement_config_handler& meas_config_handler_)
   {
-    srsran_assert(handler != nullptr, "Mobility manager handler must not be nullptr");
-    handler->handle_neighbor_better_than_spcell(ue_index, neighbor_pci);
+    meas_config_handler = &meas_config_handler_;
+  }
+
+  void on_cell_config_update_request(nr_cell_id_t                           nci,
+                                     const serving_cell_meas_config&        serv_cell_cfg,
+                                     std::vector<neighbor_cell_meas_config> ncells = {}) override
+  {
+    srsran_assert(meas_config_handler != nullptr, "Measurement config handler must not be nullptr");
+    return meas_config_handler->handle_cell_config_update_request(nci, serv_cell_cfg, ncells);
   }
 
 private:
-  mobility_manager_measurement_handler* handler = nullptr;
+  cu_cp_measurement_config_handler* meas_config_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

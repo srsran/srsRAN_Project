@@ -187,7 +187,7 @@ inline unsigned compute_lifting_size(units::bits tbs, ldpc_base_graph_type base_
       break;
     }
   }
-  assert(lifting_size != 0);
+  srsran_assert(lifting_size != 0, "Lifting size cannot be 0");
 
   return lifting_size;
 }

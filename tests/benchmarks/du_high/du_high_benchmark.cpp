@@ -791,7 +791,7 @@ public:
                (sim_phy.metrics.nof_ul_grants ==
                 sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f1.sr_info.emplace();
-            f1.sr_info->sr_detected = true;
+            f1.sr_info->detected = true;
           }
           uci_pdu.pdu = f1;
         } break;
@@ -799,7 +799,7 @@ public:
           mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
           if (pucch.format_2.harq_ack_nof_bits > 0) {
             f2.harq_info.emplace();
-            f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+            f2.harq_info->is_valid = true;
             f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
             f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
           }
@@ -814,12 +814,10 @@ public:
             f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
           }
           if (pucch.csi_rep_cfg.has_value()) {
-            f2.uci_part1_or_csi_part1_info.emplace();
-            f2.uci_part1_or_csi_part1_info->status       = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-            f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
-                uci_payload_or_csi_information::payload_type_t::csi_part_payload;
-            f2.uci_part1_or_csi_part1_info->payload.resize(4);
-            f2.uci_part1_or_csi_part1_info->payload.fill(0, 4, true);
+            f2.csi_part1_info.emplace();
+            f2.csi_part1_info->is_valid = true;
+            f2.csi_part1_info->payload.resize(4);
+            f2.csi_part1_info->payload.fill(0, 4, true);
           }
           uci_pdu.pdu = f2;
         } break;
@@ -913,13 +911,13 @@ public:
         mac_uci_pdu::pusch_type push_uci{};
         if (pusch.uci->harq->harq_ack_nof_bits > 0) {
           push_uci.harq_info.emplace();
-          push_uci.harq_info->harq_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          push_uci.harq_info->is_valid = true;
           push_uci.harq_info->payload.resize(pusch.uci->harq->harq_ack_nof_bits);
           push_uci.harq_info->payload.fill(0, pusch.uci->harq->harq_ack_nof_bits, true);
         }
         if (pusch.uci->csi->csi_part1_nof_bits > 0) {
           push_uci.csi_part1_info.emplace();
-          push_uci.csi_part1_info->csi_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          push_uci.csi_part1_info->is_valid = true;
           push_uci.csi_part1_info->payload.resize(pusch.uci->csi->csi_part1_nof_bits);
           push_uci.csi_part1_info->payload.fill(0, pusch.uci->csi->csi_part1_nof_bits, true);
         }
@@ -952,7 +950,6 @@ public:
     for (const ul_sched_info& pusch : sim_phy.slot_ul_result.ul_res->puschs) {
       mac_crc_pdu& crc_pdu   = crc.crcs.emplace_back();
       crc_pdu.rnti           = pusch.pusch_cfg.rnti;
-      crc_pdu.rapid          = 0;
       crc_pdu.harq_id        = pusch.pusch_cfg.harq_id;
       crc_pdu.tb_crc_success = true;
       crc_pdu.ul_sinr_metric = 21.0;

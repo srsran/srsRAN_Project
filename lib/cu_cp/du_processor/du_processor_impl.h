@@ -28,7 +28,6 @@
 #include "../routine_managers/du_processor_routine_manager.h"
 #include "du_processor_config.h"
 #include "du_processor_impl_interface.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -52,10 +51,9 @@ public:
                     f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
-                    rrc_ue_context_update_notifier&     rrc_ue_cu_cp_notifier_,
+                    rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                     du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
-                    cell_meas_manager&                  cell_meas_mng_,
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
@@ -176,12 +174,10 @@ private:
   f1ap_ue_removal_notifier&            f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
-  rrc_ue_context_update_notifier&      rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&      task_sched;
   du_processor_ue_manager&             ue_manager;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
-  task_executor&                       ctrl_exec;
 
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;
@@ -210,9 +206,6 @@ private:
 
   // DU processor to RRC DU adapter
   du_processor_rrc_du_adapter rrc_du_adapter;
-
-  // RRC UE to DU processor task schedulers
-  std::unordered_map<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
 
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;

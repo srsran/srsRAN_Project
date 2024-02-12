@@ -39,8 +39,8 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   cfg.plmn          = "00101";
   cfg.tac           = 7;
   s_nssai_t slice_cfg;
-  slice_cfg.sst                  = 1;
-  cfg.ue_context_setup_timeout_s = std::chrono::seconds{2};
+  slice_cfg.sst                = 1;
+  cfg.ue_context_setup_timeout = std::chrono::seconds{2};
   cfg.slice_configurations.push_back(slice_cfg);
 
   return cfg;

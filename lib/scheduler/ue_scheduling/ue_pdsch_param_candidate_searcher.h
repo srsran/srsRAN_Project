@@ -156,7 +156,7 @@ public:
           dl_harq_candidates.begin(),
           dl_harq_candidates.end(),
           [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-    } else {
+    } else if (ue_ref.get_cell(cell_index).is_active()) {
       // If there are no pending new Tx bytes, return.
       if (not ue_ref.has_pending_dl_newtx_bytes()) {
         return;

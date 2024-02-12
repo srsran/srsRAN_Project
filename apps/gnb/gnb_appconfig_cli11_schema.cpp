@@ -1615,6 +1615,11 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
   app.add_option("--nof_ues", test_params.nof_ues, "Number of test UE(s) to create.")
       ->capture_default_str()
       ->check(CLI::Range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES));
+  app.add_option("--auto_ack_indication_delay",
+                 test_params.auto_ack_indication_delay,
+                 "Delay before the UL and DL HARQs are automatically ACKed. This feature should only be used if the UL "
+                 "PHY is not operational")
+      ->capture_default_str();
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
@@ -1932,10 +1937,10 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
   os_sched_affinity_bitmask one_cpu_mask(cpu_idx);
-  if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus).empty()) {
+  if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus()).empty()) {
     return fmt::format("Invalid CPU core selected '{}'. Valid CPU ids: {}",
                        cpu_idx,
-                       os_sched_affinity_bitmask::available_cpus.get_cpu_ids());
+                       os_sched_affinity_bitmask::available_cpus().get_cpu_ids());
   }
   return default_success_t();
 }
@@ -2073,6 +2078,15 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "Policy used for assigning CPU cores to the Radio Unit tasks");
 }
 
+static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_appconfig& config)
+{
+  app.add_option("--nof_non_rt_threads",
+                 config.nof_non_rt_threads,
+                 "Number of non real time threads for processing of CP and UP data in upper layers.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+}
+
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
 {
   auto pdsch_processor_check = [](const std::string& value) -> std::string {
@@ -2174,6 +2188,11 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
 
   // Threads section.
   CLI::App* threads_subcmd = app.add_subcommand("threads", "Threads configuration")->configurable();
+
+  // Non real time threads.
+  CLI::App* non_rt_threads_subcmd =
+      threads_subcmd->add_subcommand("non_rt", "Non real time thread configuration")->configurable();
+  configure_cli11_non_rt_threads_args(*non_rt_threads_subcmd, config.threads.non_rt_threads);
 
   // Upper PHY threads.
   CLI::App* upper_phy_threads_subcmd =

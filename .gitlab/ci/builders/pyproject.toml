@@ -1,0 +1,74 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+atomic = true
+combine_as_imports = true
+float_to_top = true
+force_alphabetical_sort_within_sections = true
+include_trailing_comma = true
+line_length = 120
+profile = "black"
+remove_redundant_aliases = true
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pylint]
+disable = ["import-error"]
+ignore-signatures = true
+max-line-length = 120
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 4.4.0
+envlist = 
+  format
+  lint
+  type
+
+[testenv:format]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black --check --diff --color .
+  isort --check .
+
+[testenv:format_apply]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black .
+  isort .
+
+[testenv:lint]
+skip_install = true
+deps =
+  pylint
+commands =
+  pylint *.py
+
+[testenv:type]
+skip_install = true
+deps = 
+  mypy
+commands = 
+  mypy .
+"""

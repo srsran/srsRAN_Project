@@ -165,7 +165,7 @@ void low_papr_sequence_generator_impl::r_uv_arg_mprb(span<float> tmp_arg, uint32
   unsigned N_sz = prime_lower_than(M_zc);
 
   float n_sz = (float)N_sz;
-  assert(std::isnormal(n_sz));
+  srsran_assert(std::isnormal(n_sz), "Invalid n_sz value");
 
   float q = zc_sequence_q(u, v, N_sz);
   for (unsigned n = 0; n != M_zc; ++n) {

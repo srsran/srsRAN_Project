@@ -875,6 +875,10 @@ struct test_mode_ue_appconfig {
   rnti_t rnti = rnti_t::INVALID_RNTI;
   /// Number of test UE(s) to create.
   uint16_t nof_ues = 1;
+  /// \brief Delay, in slots, before the MAC test mode auto-generates the UCI/CRC indication to pass to the scheduler.
+  /// This feature should be avoided if the OFH/UL PHY are operational, otherwise the auto-generated indications
+  /// may interfere with the UL PHY HARQ handling.
+  optional<unsigned> auto_ack_indication_delay;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
@@ -1105,6 +1109,12 @@ struct cpu_affinities_appconfig {
                                                        gnb_sched_affinity_mask_policy::mask};
 };
 
+/// Non real time thread configuration for the gNB.
+struct non_rt_threads_appconfig {
+  /// Number of non real time threads for processing of CP and UP data in the upper layers
+  unsigned nof_non_rt_threads = 4;
+};
+
 /// Upper PHY thread configuration for the gNB.
 struct upper_phy_threads_appconfig {
   /// \brief PDSCH processor type.
@@ -1175,6 +1185,8 @@ struct expert_threads_appconfig {
     }
   }
 
+  /// Non real time thread configuration of the gNB app.
+  non_rt_threads_appconfig non_rt_threads;
   /// Upper PHY thread configuration of the gNB app.
   upper_phy_threads_appconfig upper_threads;
   /// Lower PHY thread configuration of the gNB app.

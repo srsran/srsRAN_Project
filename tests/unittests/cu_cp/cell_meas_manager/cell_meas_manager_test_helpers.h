@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cell_meas_manager.h"
+#include "lib/cu_cp/cell_meas_manager/cell_meas_manager_impl.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

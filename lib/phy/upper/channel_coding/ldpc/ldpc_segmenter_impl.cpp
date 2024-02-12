@@ -302,7 +302,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
     cw_offset += rm_length;
   }
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
-  assert(cw_length.value() == cw_offset);
+  srsran_assert(cw_length.value() == cw_offset, "Cw offset must be equal to the cw length");
 }
 
 codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,

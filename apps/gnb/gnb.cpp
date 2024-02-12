@@ -185,9 +185,6 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
-  // Clean cgroups from a previous run.
-  cleanup_cgroups();
-
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());

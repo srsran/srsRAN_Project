@@ -28,18 +28,22 @@ namespace srsran {
 
 struct rlc_tx_metrics_atomic_higher {
   std::atomic<uint32_t> num_sdus;             ///< Number of SDUs
+  std::atomic<uint32_t> num_of_pulled_sdus;   ///< Number of pulled SDUs
   std::atomic<size_t>   num_sdu_bytes;        ///< Number of SDU bytes
   std::atomic<uint32_t> num_dropped_sdus;     ///< Number of dropped SDUs (due to full queue)
   std::atomic<uint32_t> num_discarded_sdus;   ///< Number of discarded SDUs (instructed from higher layer)
   std::atomic<uint32_t> num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
+  std::atomic<uint32_t> sum_sdu_latency_us;   ///< total SDU latency (in us)>
 
   void reset()
   {
     num_sdus.store(0, std::memory_order_relaxed);
+    num_of_pulled_sdus.store(0, std::memory_order_relaxed);
     num_sdu_bytes.store(0, std::memory_order_relaxed);
     num_dropped_sdus.store(0, std::memory_order_relaxed);
     num_discarded_sdus.store(0, std::memory_order_relaxed);
     num_discard_failures.store(0, std::memory_order_relaxed);
+    sum_sdu_latency_us.store(0, std::memory_order_relaxed);
   }
 };
 
@@ -146,6 +150,14 @@ public:
     metrics_hi.num_sdu_bytes.fetch_add(num_sdu_bytes, std::memory_order_relaxed);
   }
 
+  void metrics_add_pulled_sdus(uint32_t num_sdus)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.num_of_pulled_sdus.fetch_add(num_sdus, std::memory_order_relaxed);
+  }
+
   void metrics_add_lost_sdus(uint32_t num_sdus)
   {
     if (not enabled) {
@@ -177,6 +189,13 @@ public:
     }
     metrics_lo.num_pdus_no_segmentation.fetch_add(num_pdus, std::memory_order_relaxed);
     metrics_lo.num_pdu_bytes_no_segmentation.fetch_add(num_pdu_bytes, std::memory_order_relaxed);
+  }
+  void metrics_add_sdu_latency_us(uint32_t sdu_latency)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_hi.sum_sdu_latency_us.fetch_add(sdu_latency, std::memory_order_relaxed);
   }
 
   // TM specific metrics
@@ -243,10 +262,12 @@ public:
 
     // Metrics accessed from higher layer
     ret.num_sdus             = metrics_hi.num_sdus.load(std::memory_order_relaxed);
+    ret.num_of_pulled_sdus   = metrics_hi.num_of_pulled_sdus.load(std::memory_order_relaxed);
     ret.num_sdu_bytes        = metrics_hi.num_sdu_bytes.load(std::memory_order_relaxed);
     ret.num_dropped_sdus     = metrics_hi.num_dropped_sdus.load(std::memory_order_relaxed);
     ret.num_discarded_sdus   = metrics_hi.num_discarded_sdus.load(std::memory_order_relaxed);
     ret.num_discard_failures = metrics_hi.num_discard_failures.load(std::memory_order_relaxed);
+    ret.sum_sdu_latency_us   = metrics_hi.sum_sdu_latency_us.load(std::memory_order_relaxed);
 
     // Metrics accessed from lower layer
     ret.num_pdus_no_segmentation      = metrics_lo.num_pdus_no_segmentation.load(std::memory_order_relaxed);

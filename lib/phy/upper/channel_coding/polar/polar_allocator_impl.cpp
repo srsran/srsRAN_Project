@@ -32,7 +32,7 @@ void polar_allocator_impl::allocate(span<uint8_t> input_encoder, span<const uint
   span<const uint16_t>                    PC_set     = code.get_PC_set();
   const bounded_bitset<polar_code::NMAX>& K_set_mask = code.get_K_set();
 
-  assert(input_encoder.size() == N);
+  srsran_assert(input_encoder.size() == N, "Invalid input span size");
   srsvec::zero(input_encoder);
 
   if (nPC == 0) {

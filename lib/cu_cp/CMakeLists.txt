@@ -49,7 +49,7 @@ set(SOURCES
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
       metrics_handler/metrics_handler_impl.cpp
-      task_schedulers/ue_task_scheduler.cpp
+        ue_manager/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
         ue_manager/ue_manager_impl.cpp

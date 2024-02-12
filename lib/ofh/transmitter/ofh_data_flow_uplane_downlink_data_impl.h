@@ -74,7 +74,7 @@ public:
   explicit data_flow_uplane_downlink_data_impl(const data_flow_uplane_downlink_data_impl_config&  config,
                                                data_flow_uplane_downlink_data_impl_dependencies&& dependencies);
 
-  /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
+  // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
                                       const resource_grid_reader&                   grid) override;
 
@@ -88,9 +88,6 @@ private:
                                                  const uplane_message_params& params,
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);
-
-  /// Reads the contents of the resource grid.
-  span<const cf_t> read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid) const;
 
 private:
   srslog::basic_logger&                      logger;

@@ -112,9 +112,6 @@ struct os_sched_affinity_bitmask {
 public:
   static constexpr size_t MAX_CPUS = 1024;
 
-  /// Bitmap of the total CPUs available to the application.
-  const static os_sched_affinity_bitmask available_cpus;
-
   os_sched_affinity_bitmask() : cpu_bitset(get_host_max_cpu_id() + 1) {}
 
   explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(get_host_max_cpu_id() + 1) { set(cpu_idx); }
@@ -124,6 +121,9 @@ public:
   size_t size() const { return cpu_bitset.size(); }
 
   void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }
+
+  /// Returns a bitmap of the CPUs available to the application.
+  static const os_sched_affinity_bitmask& available_cpus();
 
   /// \brief Finds, within a range of CPU indexes, the lowest CPU enabled.
   /// \param[in] start_cpu_index Starting CPU index for the search.

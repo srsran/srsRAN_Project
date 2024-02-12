@@ -36,12 +36,11 @@ namespace srs_cu_cp {
 class rrc_du_impl : public rrc_du_interface
 {
 public:
-  rrc_du_impl(const rrc_cfg_t&                cfg_,
-              rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notif_,
-              rrc_ue_nas_notifier&            nas_notif_,
-              rrc_ue_control_notifier&        ngap_ctrl_notif_,
-              rrc_ue_context_update_notifier& cu_cp_notif_,
-              cell_meas_manager&              cell_meas_mng_);
+  rrc_du_impl(const rrc_cfg_t&                    cfg_,
+              rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notif_,
+              rrc_ue_nas_notifier&                nas_notif_,
+              rrc_ue_control_notifier&            ngap_ctrl_notif_,
+              rrc_du_measurement_config_notifier& meas_config_notifier_);
   ~rrc_du_impl() = default;
 
   // rrc_du_cell_manager
@@ -72,12 +71,11 @@ private:
   // helpers
   const rrc_cfg_t& cfg;
 
-  rrc_ue_du_processor_notifier&   rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&            nas_notifier;            // PDU notifier to the NGAP
-  rrc_ue_control_notifier&        ngap_ctrl_notifier;      // Control notifier to the NGAP
-  rrc_ue_context_update_notifier& cu_cp_notifier;          // notifier to the CU-CP
-  cell_meas_manager&              cell_meas_mng;           // cell measurement manager
-  srslog::basic_logger&           logger;
+  rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notifier; // notifier to the DU processor
+  rrc_ue_nas_notifier&                nas_notifier;            // PDU notifier to the NGAP
+  rrc_ue_control_notifier&            ngap_ctrl_notifier;      // Control notifier to the NGAP
+  rrc_du_measurement_config_notifier& meas_config_notifier;    // notifier to the CU-CP
+  srslog::basic_logger&               logger;
 
   // RRC-internal user database indexed by ue_index
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;

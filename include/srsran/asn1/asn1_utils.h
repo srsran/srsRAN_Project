@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/any.h"
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
@@ -1502,6 +1503,8 @@ public:
   void        write_int(int64_t value);
   void        write_bool(const char* fieldname, bool value);
   void        write_bool(bool value);
+  void        write_float(const char* fieldname, float value);
+  void        write_float(float value);
   void        write_null(const char* fieldname);
   void        write_null();
   void        start_obj(const char* fieldname = "");
@@ -1554,18 +1557,22 @@ inline void to_json(json_writer& j, int64_t number)
   j.write_int(number);
 }
 
-struct real_s {
-  SRSASN_CODE pack(bit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL packing function\n");
-    return SRSASN_SUCCESS;
-  };
-  SRSASN_CODE unpack(cbit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL unpacking function\n");
-    return SRSASN_SUCCESS;
-  };
-  void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
+/****************
+ REAL type
+***************/
+
+SRSASN_CODE pack_unconstrained_real(bit_ref& bref, float n, bool aligned = false);
+
+SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned = false);
+
+class real_s
+{
+public:
+  float value;
+  real_s() = default;
+  SRSASN_CODE pack(bit_ref& bref) const { return pack_unconstrained_real(bref, value, true); };
+  SRSASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); };
+  void        to_json(json_writer& j) const { j.write_float(value); };
 };
 
 /*******************

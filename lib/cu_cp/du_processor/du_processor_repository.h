@@ -28,7 +28,6 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
@@ -50,10 +49,9 @@ struct du_repository_config {
   f1ap_ue_removal_notifier&              f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
-  rrc_ue_context_update_notifier&        rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
-  cell_meas_manager&                     cell_meas_mng;
+  rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;
 };
@@ -128,8 +126,6 @@ private:
 
   // F1AP to DU repository adapter.
   f1ap_du_repository_adapter f1ap_ev_notifier;
-
-  du_task_scheduler du_task_sched;
 
   std::map<du_index_t, du_context> du_db;
 

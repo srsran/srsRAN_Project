@@ -93,12 +93,14 @@ struct base_coro_frame<void> {
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_nonvoid<EventType> on_await_resume()
   {
+    using ForwardedAwaitable =
+        std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
     // Extract result from awaiter and clear awaiter from memory buffer
-    auto&     awaiter = mem_buffer.get_awaiter<Awaitable>();
+    auto&     awaiter = mem_buffer.get_awaiter<ForwardedAwaitable>();
     EventType ev      = awaiter.await_resume();
-    mem_buffer.clear<Awaitable>();
+    mem_buffer.clear<ForwardedAwaitable>();
     return ev;
   }
 
@@ -106,19 +108,23 @@ struct base_coro_frame<void> {
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_void<EventType> on_await_resume()
   {
+    using ForwardedAwaitable =
+        std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
     // Clear awaiter from memory buffer
-    auto& a = mem_buffer.get_awaiter<Awaitable>();
+    auto& a = mem_buffer.get_awaiter<ForwardedAwaitable>();
     a.await_resume();
-    mem_buffer.clear<Awaitable>();
+    mem_buffer.clear<ForwardedAwaitable>();
   }
 
   template <typename Awaitable>
   void on_await_cancel()
   {
+    using ForwardedAwaitable =
+        std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(is_suspended(), "Trying to cancel non-suspended coroutine");
-    mem_buffer.clear<Awaitable>();
+    mem_buffer.clear<ForwardedAwaitable>();
   }
 };
 
@@ -141,20 +147,22 @@ struct base_coro_frame : public base_coro_frame<void>, private Promise {
   template <typename Awaitable>
   bool on_await_call(Awaitable&& awaitable_obj)
   {
+    using ForwardedAwaitable =
+        std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(not is_suspended(), "Trying to suspend already suspended coroutine");
 
     // store awaitable/awaiter in memory buffer
     mem_buffer.emplace(std::forward<Awaitable>(awaitable_obj));
 
     // check if awaiter is ready. If not, suspend coroutine
-    awaiter_t<Awaitable>& awaiter_obj = mem_buffer.get_awaiter<Awaitable>();
+    awaiter_t<ForwardedAwaitable>& awaiter_obj = mem_buffer.get_awaiter<ForwardedAwaitable>();
     if (not awaiter_obj.await_ready()) {
       // Tag-based dispatch - Check whether awaiter uses symmetric transfer / tail-resume on await_suspend.
-      using suspend_sig        = decltype(&std::decay_t<awaiter_t<Awaitable>>::await_suspend);
+      using suspend_sig        = decltype(&std::decay_t<awaiter_t<ForwardedAwaitable>>::await_suspend);
       using suspend_return_t   = function_return_t<suspend_sig>;
       using no_tail_resume_tag = std::is_same<void, suspend_return_t>;
 
-      on_await_suspend<awaiter_t<Awaitable>>(awaiter_obj, no_tail_resume_tag{});
+      on_await_suspend<awaiter_t<ForwardedAwaitable>>(awaiter_obj, no_tail_resume_tag{});
       return false;
     }
     return true;

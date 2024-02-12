@@ -96,7 +96,7 @@ public:
     timers                    = timer_factory{du_processor_task_handler->get_timer_manager(), *ue_exec};
   }
 
-  void schedule_async_task(async_task<void>&& task) override
+  void schedule_async_task(async_task<void> task) override
   {
     srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));
@@ -165,16 +165,18 @@ private:
 };
 
 /// Adapter between RRC UE and CU-CP
-class rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier
+class rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public rrc_ue_measurement_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_rrc_ue_interface&   cu_cp_rrc_ue_,
-                     cu_cp_ue_removal_handler& ue_removal_handler_,
-                     cu_cp_controller&         ctrl_)
+  void connect_cu_cp(cu_cp_rrc_ue_interface&    cu_cp_rrc_ue_,
+                     cu_cp_ue_removal_handler&  ue_removal_handler_,
+                     cu_cp_controller&          ctrl_,
+                     cu_cp_measurement_handler& meas_handler_)
   {
     cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_;
     ue_removal_handler   = &ue_removal_handler_;
     controller           = &ctrl_;
+    meas_handler         = &meas_handler_;
   }
 
   bool on_ue_setup_request() override
@@ -202,10 +204,24 @@ public:
     return ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
+  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+                                                       optional<rrc_meas_cfg> current_meas_config = {}) override
+  {
+    srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
+    return meas_handler->handle_measurement_config_request(nci, current_meas_config);
+  }
+
+  void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override
+  {
+    srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
+    meas_handler->handle_measurement_report(ue_index, meas_results);
+  }
+
 private:
-  cu_cp_rrc_ue_interface*   cu_cp_rrc_ue_handler = nullptr;
-  cu_cp_ue_removal_handler* ue_removal_handler   = nullptr;
-  cu_cp_controller*         controller           = nullptr;
+  cu_cp_rrc_ue_interface*    cu_cp_rrc_ue_handler = nullptr;
+  cu_cp_ue_removal_handler*  ue_removal_handler   = nullptr;
+  cu_cp_controller*          controller           = nullptr;
+  cu_cp_measurement_handler* meas_handler         = nullptr;
 };
 
 } // namespace srs_cu_cp

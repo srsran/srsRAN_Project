@@ -24,9 +24,10 @@
 
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../adapters/rrc_ue_adapters.h"
 #include "ue_metrics_handler.h"
+#include "ue_task_scheduler.h"
 #include "srsran/cu_cp/ue_manager.h"
-#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -48,14 +49,15 @@ struct ngap_ue_t {
   }
 };
 
-class cu_cp_ue : public du_ue, public ngap_ue
+class cu_cp_ue : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
 {
 public:
   cu_cp_ue(const ue_index_t              ue_index_,
            const up_resource_manager_cfg up_cfg,
+           ue_task_scheduler             task_sched_,
            const pci_t                   pci_    = INVALID_PCI,
            const rnti_t                  c_rnti_ = rnti_t::INVALID_RNTI) :
-    ue_index(ue_index_), up_mng(create_up_resource_manager(up_cfg))
+    ue_index(ue_index_), task_sched(std::move(task_sched_)), up_mng(create_up_resource_manager(up_cfg))
   {
     if (pci_ != INVALID_PCI) {
       pci = pci_;
@@ -68,6 +70,9 @@ public:
     du_index = get_du_index_from_ue_index(ue_index);
   }
 
+  /// \brief Cancel all pending UE tasks.
+  void stop();
+
   // generic_ue
 
   /// \brief Get the UE index of the UE.
@@ -76,10 +81,15 @@ public:
   /// \brief Get the UP resource manager of the UE.
   up_resource_manager& get_up_resource_manager() override { return *up_mng; }
 
+  // rrc ue task scheduler.
+  void          schedule_async_task(async_task<void> task) override { task_sched.schedule_async_task(std::move(task)); }
+  unique_timer  make_unique_timer() override { return task_sched.create_timer(); }
+  timer_factory get_timer_factory() override { return task_sched.get_timer_factory(); }
+
   // du_ue
 
   /// \brief Get the task scheduler of the UE.
-  rrc_ue_task_scheduler& get_task_sched() override { return *task_sched; }
+  rrc_ue_task_scheduler& get_task_sched() override { return *this; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override
@@ -94,6 +104,11 @@ public:
     srsran_assert(rrc_ue_srb_notifier != nullptr, "ue={}: RRC UE SRB notifier was not set", ue_index);
     return *rrc_ue_srb_notifier;
   }
+
+  rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
+
+  /// \brief Get the RRC UE measurement notifier of the UE.
+  rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the PCI of the UE.
   pci_t get_pci() override { return pci; };
@@ -122,10 +137,6 @@ public:
   /// \brief Set the DU and PCell index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
   void set_pcell_index(du_cell_index_t pcell_index_) override { pcell_index = pcell_index_; }
-
-  /// \brief Set the task scheduler of the UE.
-  /// \param[in] task_sched_ Task scheduler of the UE.
-  void set_task_sched(rrc_ue_task_scheduler& task_sched_) override { task_sched = &task_sched_; }
 
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
@@ -184,9 +195,13 @@ public:
   /// \brief Get the CU-CP to RRC UE adapter of the UE.
   cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter() { return cu_cp_rrc_ue_ev_notifier; }
 
+  /// \brief Get the RRC to CU-CP adapter of the UE.
+  rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
+
 private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
+  ue_task_scheduler                    task_sched;
   std::unique_ptr<up_resource_manager> up_mng;
 
   // du ue context
@@ -195,7 +210,6 @@ private:
   pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
 
-  rrc_ue_task_scheduler*                        task_sched          = nullptr;
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
@@ -205,13 +219,19 @@ private:
   // cu-cp ue context
   ngap_rrc_ue_adapter  ngap_rrc_ue_ev_notifier;
   cu_cp_rrc_ue_adapter cu_cp_rrc_ue_ev_notifier;
+  rrc_ue_cu_cp_adapter rrc_ue_cu_cp_ev_notifier;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
 {
 public:
-  explicit ue_manager(const ue_configuration& ue_config_, const up_resource_manager_cfg& up_config_);
-  ~ue_manager() = default;
+  explicit ue_manager(const ue_configuration&        ue_config_,
+                      const up_resource_manager_cfg& up_config_,
+                      timer_manager&                 timers,
+                      task_executor&                 cu_cp_exec);
+
+  /// Stop UE activity.
+  void stop();
 
   // common
 
@@ -322,23 +342,32 @@ public:
     return ues.at(ue_index).get_cu_cp_rrc_ue_adapter();
   }
 
+  rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
+  }
+
   ue_metrics_report handle_ue_metrics_report_request() override;
+
+  ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
   ue_index_t get_next_ue_index(du_index_t du_index);
 
-  void clear_ue()
-  {
-    // TODO
-  }
-
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
   const ue_configuration        ue_config;
   const up_resource_manager_cfg up_config;
 
-  std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
+  // Manager of UE task schedulers.
+  ue_task_scheduler_manager ue_task_scheds;
+
+  // Container of UE contexts handled by the CU-CP.
+  std::unordered_map<ue_index_t, cu_cp_ue> ues;
 
   // ue index lookups
   std::map<std::tuple<pci_t, rnti_t>, ue_index_t> pci_rnti_to_ue_index; // ue_indexes indexed by pci and rnti

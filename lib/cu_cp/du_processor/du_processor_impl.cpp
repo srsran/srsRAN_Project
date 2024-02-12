@@ -24,7 +24,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/nr_cgi_helpers.h"
-#include "srsran/ran/pci_helpers.h"
 #include "srsran/rrc/rrc_du_factory.h"
 
 using namespace srsran;
@@ -39,10 +38,9 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
-                                     rrc_ue_context_update_notifier&     rrc_ue_cu_cp_notifier_,
+                                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
-                                     cell_meas_manager&                  cell_meas_mng_,
                                      task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
@@ -53,10 +51,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   f1ap_cu_cp_notifier(f1ap_cu_cp_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
-  rrc_ue_cu_cp_notifier(rrc_ue_cu_cp_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
-  ctrl_exec(ctrl_exec_),
   f1ap_ev_notifier(*this)
 {
   context.du_index = cfg.du_index;
@@ -73,12 +69,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg,
-                                           rrc_ue_ev_notifier,
-                                           rrc_ue_nas_pdu_notifier,
-                                           rrc_ue_ngap_ctrl_notifier,
-                                           rrc_ue_cu_cp_notifier,
-                                           cell_meas_mng_);
+  rrc_du_creation_message rrc_creation_msg(
+      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 
@@ -229,30 +221,25 @@ bool du_processor_impl::create_rrc_ue(du_ue&                            ue,
                                       byte_buffer                       du_to_cu_rrc_container,
                                       optional<rrc_ue_transfer_context> rrc_context)
 {
-  // Create and connect RRC UE task schedulers
-  rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
-  rrc_ue_task_scheds.at(ue.get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
-
   // Create RRC UE to F1AP adapter
   rrc_ue_f1ap_adapters.emplace(std::piecewise_construct,
                                std::forward_as_tuple(ue.get_ue_index()),
                                std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue.get_ue_index()));
 
-  // Set task schedulers
-  ue.set_task_sched(rrc_ue_task_scheds.at(ue.get_ue_index()));
-
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index           = ue.get_ue_index();
-  rrc_ue_create_msg.c_rnti             = c_rnti;
-  rrc_ue_create_msg.cell.cgi           = cgi;
-  rrc_ue_create_msg.cell.tac           = cell_db.at(ue.get_pcell_index()).tac;
-  rrc_ue_create_msg.cell.pci           = cell_db.at(ue.get_pcell_index()).pci;
-  rrc_ue_create_msg.cell.bands         = cell_db.at(ue.get_pcell_index()).bands;
-  rrc_ue_create_msg.f1ap_pdu_notifier  = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
-  rrc_ue_create_msg.du_to_cu_container = std::move(du_to_cu_rrc_container);
-  rrc_ue_create_msg.ue_task_sched      = &ue.get_task_sched();
-  rrc_ue_create_msg.rrc_context        = std::move(rrc_context);
+  rrc_ue_create_msg.ue_index              = ue.get_ue_index();
+  rrc_ue_create_msg.c_rnti                = c_rnti;
+  rrc_ue_create_msg.cell.cgi              = cgi;
+  rrc_ue_create_msg.cell.tac              = cell_db.at(ue.get_pcell_index()).tac;
+  rrc_ue_create_msg.cell.pci              = cell_db.at(ue.get_pcell_index()).pci;
+  rrc_ue_create_msg.cell.bands            = cell_db.at(ue.get_pcell_index()).bands;
+  rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
+  rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
+  rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
+  rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
+  rrc_ue_create_msg.ue_task_sched         = &ue.get_task_sched();
+  rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
   auto* rrc_ue = rrc_du_adapter.on_ue_creation_request(ue.get_up_resource_manager(), std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");

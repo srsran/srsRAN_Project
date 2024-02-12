@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-  mobility_manager_factory.cpp
   mobility_manager_impl.cpp
 )
 

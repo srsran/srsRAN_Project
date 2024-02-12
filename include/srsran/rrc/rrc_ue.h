@@ -172,10 +172,16 @@ public:
 class rrc_ue_task_scheduler
 {
 public:
-  virtual ~rrc_ue_task_scheduler()                                   = default;
-  virtual void          schedule_async_task(async_task<void>&& task) = 0;
-  virtual unique_timer  make_unique_timer()                          = 0;
-  virtual timer_factory get_timer_factory()                          = 0;
+  virtual ~rrc_ue_task_scheduler() = default;
+
+  /// \brief Schedule an asynchronous task for the UE.
+  virtual void schedule_async_task(async_task<void> task) = 0;
+
+  /// \brief Create a new timer for the UE.
+  virtual unique_timer make_unique_timer() = 0;
+
+  /// \brief Get UE timer factory.
+  virtual timer_factory get_timer_factory() = 0;
 };
 
 /// Interface to notify about NAS messages.
@@ -332,6 +338,22 @@ public:
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+};
+
+/// Interface to notify about measurements
+class rrc_ue_measurement_notifier
+{
+public:
+  virtual ~rrc_ue_measurement_notifier() = default;
+
+  /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] current_meas_config The current meas config of the UE (if applicable).
+  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+                                                               optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+
+  /// \brief Submit measurement report for given UE to cell manager.
+  virtual void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
 };
 
 class rrc_ue_context_handler

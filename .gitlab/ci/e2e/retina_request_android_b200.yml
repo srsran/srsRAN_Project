@@ -22,7 +22,7 @@
       limits: "6G"
   resources:
     - type: android
-      model: one-plus-9-pro
+      model: xiaomi-12-lite
 
 - name: srs-gnb
   type: gnb

@@ -46,9 +46,9 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}),
-  mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, du_db, ue_mng)),
-  cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
+  ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
+  mobility_mng(config_.mobility_config.mobility_manager_config, du_db, ue_mng),
+  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -58,18 +58,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              f1ap_cu_cp_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
-                             rrc_ue_cu_cp_notifier,
                              du_processor_task_sched,
                              ue_mng,
-                             *cell_meas_mng,
+                             rrc_du_cu_cp_notifier,
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(*cfg.timers,
-                *config_.cu_cp_executor,
-                cfg.ue_config.max_nof_supported_ues,
-                srslog::fetch_basic_logger("CU-CP")),
-  routine_mng(ue_task_sched),
+  routine_mng(ue_mng.get_task_sched()),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng))
 {
@@ -79,13 +74,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, *this);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
-  cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
-  rrc_ue_cu_cp_notifier.connect_cu_cp(get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), controller);
+  cell_meas_ev_notifier.connect_mobility_manager(mobility_mng);
+  rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   conn_notifier.connect_node_connection_handler(controller);
 
   // connect task schedulers
-  ngap_task_sched.connect_cu_cp(ue_task_sched);
-  du_processor_task_sched.connect_cu_cp(ue_task_sched);
+  ngap_task_sched.connect_cu_cp(ue_mng.get_task_sched());
+  du_processor_task_sched.connect_cu_cp(ue_mng.get_task_sched());
 
   // Create NGAP.
   ngap_entity = create_ngap(cfg.ngap_config,
@@ -138,10 +133,12 @@ void cu_cp_impl::stop()
   }
   logger.info("Stopping CU-CP...");
 
+  // Shut down components from within CU-CP executor.
   force_blocking_execute(
       *cfg.cu_cp_executor,
       [this]() {
-        // Shut down components from within CU-CP executor.
+        // Stop the activity of UEs that are currently attached.
+        ue_mng.stop();
 
         // Stop DU repository.
         du_db.stop();
@@ -267,8 +264,9 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     {
       CORO_BEGIN(ctx);
 
-      CORO_AWAIT_VALUE(const bool task_run,
-                       parent.ue_task_sched.dispatch_and_await_task_completion(old_ue_index, std::move(task)));
+      CORO_AWAIT_VALUE(
+          const bool task_run,
+          parent.ue_mng.get_task_sched().dispatch_and_await_task_completion(old_ue_index, std::move(task)));
 
       CORO_RETURN(task_run and transfer_successful);
     }
@@ -281,6 +279,24 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   };
 
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
+}
+
+optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(nr_cell_id_t           nci,
+                                                                     optional<rrc_meas_cfg> current_meas_config)
+{
+  return cell_meas_mng.get_measurement_config(nci, current_meas_config);
+}
+
+void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results)
+{
+  cell_meas_mng.report_measurement(ue_index, meas_results);
+}
+
+void cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t                           nci,
+                                                   const serving_cell_meas_config&        serv_cell_cfg,
+                                                   std::vector<neighbor_cell_meas_config> ncells)
+{
+  cell_meas_mng.update_cell_config(nci, serv_cell_cfg, ncells);
 }
 
 void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
@@ -323,8 +339,10 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
                                                           &rrc_ue.get_rrc_ue_init_security_context_handler(),
                                                           &rrc_ue.get_rrc_ue_handover_preparation_handler());
 
-  // Connect cu-cp to rrc ue adapter
+  // Connect cu-cp to rrc ue adapters
   ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
+  ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(
+      get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), controller, get_cu_cp_measurement_handler());
 }
 
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)

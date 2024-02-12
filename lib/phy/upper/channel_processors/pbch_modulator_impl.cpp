@@ -100,7 +100,7 @@ void pbch_modulator_impl::put(span<const uint8_t>             bits,
                               resource_grid_writer&           grid,
                               const pbch_modulator::config_t& args)
 {
-  assert(bits.size() == M_bit);
+  srsran_assert(bits.size() == M_bit, "Input span size must equal M_bit");
 
   // Scramble
   std::array<uint8_t, M_bit> b_hat;

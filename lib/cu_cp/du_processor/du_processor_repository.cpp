@@ -57,10 +57,7 @@ private:
 
 } // namespace
 
-du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_),
-  logger(cfg.logger),
-  du_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.cu_cp.max_nof_dus, cfg.logger)
+du_processor_repository::du_processor_repository(du_repository_config cfg_) : cfg(cfg_), logger(cfg.logger)
 {
   f1ap_ev_notifier.connect_du_repository(*this);
 }
@@ -135,10 +132,9 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                                         cfg.f1ap_cu_cp_notifier,
                                                                         cfg.ue_nas_pdu_notifier,
                                                                         cfg.ue_ngap_ctrl_notifier,
-                                                                        cfg.rrc_ue_cu_cp_notifier,
+                                                                        cfg.meas_config_notifier,
                                                                         cfg.ue_task_sched,
                                                                         cfg.ue_manager,
-                                                                        cfg.cell_meas_mng,
                                                                         *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
@@ -163,32 +159,19 @@ du_index_t du_processor_repository::get_next_du_index()
 
 void du_processor_repository::remove_du_impl(du_index_t du_index)
 {
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Removing DU {}...", du_index);
 
-  // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
-  // before safely removing the DU. This is achieved via a scheduled async task
+  // Remove DU
+  auto du_it = du_db.find(du_index);
+  if (du_it == du_db.end()) {
+    logger.warning("Remove DU called for inexistent du_index={}", du_index);
+    return;
+  }
 
-  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  logger.debug("Scheduling du_index={} deletion", du_index);
-
-  // Schedule DU removal task
-  du_task_sched.handle_du_async_task(du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
-                                       CORO_BEGIN(ctx);
-                                       auto du_it = du_db.find(du_index);
-                                       if (du_it == du_db.end()) {
-                                         logger.warning("Remove DU called for inexistent du_index={}", du_index);
-                                         CORO_EARLY_RETURN();
-                                       }
-
-                                       // Remove DU
-                                       // TODO
-                                       removed_du_db.insert(std::make_pair(du_index, std::move(du_db.at(du_index))));
-                                       du_db.erase(du_index);
-
-                                       logger.info("Removed DU {}", du_index);
-
-                                       CORO_RETURN();
-                                     }));
+  // Remove DU
+  du_db.erase(du_index);
+  logger.info("Removed DU {}", du_index);
 }
 
 du_processor_impl_interface& du_processor_repository::find_du(du_index_t du_index)

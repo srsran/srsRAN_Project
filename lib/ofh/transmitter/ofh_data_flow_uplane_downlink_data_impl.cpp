@@ -68,13 +68,6 @@ static ecpri::iq_data_parameters generate_ecpri_data_parameters(uint16_t seq_id,
   return params;
 }
 
-/// Returns buffer for reading IQ data of a resource grid.
-static span<cf_t> get_temp_iq_data_buffer(unsigned nof_subcarriers)
-{
-  thread_local std::array<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> buffer;
-  return {buffer.data(), nof_subcarriers};
-}
-
 data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
     const data_flow_uplane_downlink_data_impl_config&  config,
     data_flow_uplane_downlink_data_impl_dependencies&& dependencies) :
@@ -104,24 +97,17 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
   enqueue_section_type_1_message_symbol_burst(context, grid);
 }
 
-span<const cf_t>
-data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid) const
-{
-  if (ru_nof_prbs == grid.get_nof_subc()) {
-    return grid.get_view(port, symbol);
-  }
-
-  // The DU grid is copied at the beginning (lowest frequencies) of the RU grid.
-  span<cf_t> grid_data = get_temp_iq_data_buffer(grid.get_nof_subc());
-  grid.get(grid_data, port, symbol, 0);
-
-  return grid_data;
-}
-
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
     const data_flow_uplane_resource_grid_context& context,
     const resource_grid_reader&                   grid)
 {
+  // Temporary buffer used to store IQ data when the RU operating bandwidth is not the same to the cell bandwidth.
+  std::array<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> temp_buffer;
+  if (SRSRAN_UNLIKELY(ru_nof_prbs != grid.get_nof_subc())) {
+    // Zero out the elements that won't be filled after reading the resource grid.
+    std::fill(temp_buffer.begin() + grid.get_nof_subc(), temp_buffer.end(), 0);
+  }
+
   units::bytes headers_size = eth_builder->get_header_size() +
                               ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
                               up_builder->get_header_size(compr_params);
@@ -140,13 +126,21 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
                      symbol_id);
       return;
     }
-    ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
-    span<const cf_t>                    iq_data = read_grid(symbol_id, context.port, grid);
-    // Split the data into multiple messages when it does not fit into a single one.
-    bool     is_last_fragment   = false;
-    unsigned fragment_start_prb = 0U;
-    unsigned fragment_nof_prbs  = 0U;
 
+    span<const cf_t> iq_data;
+    if (SRSRAN_LIKELY(ru_nof_prbs == grid.get_nof_subc())) {
+      iq_data = grid.get_view(context.port, symbol_id);
+    } else {
+      span<cf_t> temp_iq_data(temp_buffer.data(), ru_nof_prbs * NOF_SUBCARRIERS_PER_RB);
+      grid.get(temp_iq_data.first(grid.get_nof_subc()), context.port, symbol_id, 0);
+      iq_data = temp_iq_data;
+    }
+
+    // Split the data into multiple messages when it does not fit into a single one.
+    ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
+    bool                                is_last_fragment   = false;
+    unsigned                            fragment_start_prb = 0U;
+    unsigned                            fragment_nof_prbs  = 0U;
     do {
       ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
       span<uint8_t>        data         = frame_buffer.data();

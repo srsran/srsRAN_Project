@@ -92,8 +92,6 @@ envlist =
   format
   lint
   type
-  unittest
-  build
 
 [testenv:format]
 skip_install = true

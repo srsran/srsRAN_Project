@@ -114,7 +114,11 @@ public:
     unsigned start_mod  = startpos % bits_per_word;
     word_t   value      = static_cast<word_t>(value_);
 
-    assert(value_ <= mask_lsb_ones<word_t>(count));
+    srsran_assert(
+        value_ <= mask_lsb_ones<word_t>(count),
+        "The value (i.e., {}) number of bits exceeds the number of bits that can be fitted inside a word (i.e., {}).",
+        value,
+        mask_lsb_ones<word_t>(count));
 
     // If the start bit is aligned with the beginning of the word.
     if (start_mod == 0) {

@@ -40,7 +40,7 @@ static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 
 
 void pbch_encoder_impl::payload_generate(span<uint8_t> a, const srsran::pbch_encoder::pbch_msg_t& msg)
 {
-  assert(a.size() == A);
+  srsran_assert(a.size() == A, "Input span size must equal A");
 
   // Extract actual payload size
   uint32_t A_hat = 24;
@@ -120,8 +120,8 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
 
 void pbch_encoder_impl::crc_attach(span<uint8_t> b, span<const uint8_t> a_prime)
 {
-  assert(a_prime.size() == A);
-  assert(b.size() == B);
+  srsran_assert(a_prime.size() == A, "Input span size must equal A");
+  srsran_assert(b.size() == B, "Output span size must equal B");
 
   // Copy data if pointers do not match.
   if (b.data() != a_prime.data()) {
@@ -137,8 +137,8 @@ void pbch_encoder_impl::crc_attach(span<uint8_t> b, span<const uint8_t> a_prime)
 
 void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 {
-  assert(c.size() == B);
-  assert(d.size() == POLAR_N_MAX);
+  srsran_assert(c.size() == B, "Input span size must equal B");
+  srsran_assert(d.size() == POLAR_N_MAX, "Output span size must equal POLAR_N_MAX");
 
   // 5.3.1.1 Interleaving.
   std::array<uint8_t, B> c_prime;
@@ -154,8 +154,8 @@ void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
 void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 {
-  assert(d.size() == POLAR_N_MAX);
-  assert(f.size() == E);
+  srsran_assert(d.size() == POLAR_N_MAX, "Input span size must equal POLAR_N_MAX");
+  srsran_assert(f.size() == E, "Output span size must equal B");
 
   rm->rate_match(f, d, *code);
 }

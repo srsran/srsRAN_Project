@@ -7,10 +7,15 @@
 # the distribution.
 #
 
+"""
+Calculate fingerprint of binaries (tests) and compare between two fingerprints to find which tests have changed.
+"""
+
 import json
 import os
 from argparse import ArgumentParser
 from csv import QUOTE_ALL
+
 import pandas as pd
 
 KEY_TYPES = ["md5", "mtime", "skip"]
@@ -57,7 +62,7 @@ def _ctest_dict_to_df(data):
     return df
 
 
-def main():
+def _main():
     parser = ArgumentParser()
     parser.add_argument(
         "-b", "--build-dir", required=True, metavar="BUILD_DIR", help="build directory from which ctest will be run"
@@ -104,4 +109,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()

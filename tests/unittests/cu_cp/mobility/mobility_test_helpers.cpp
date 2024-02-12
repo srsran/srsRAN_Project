@@ -21,10 +21,6 @@
  */
 
 #include "mobility_test_helpers.h"
-#include "../../rrc/rrc_ue_test_helpers.h" // security helpers
-#include "lib/cu_cp/du_processor/du_processor_factory.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/support/async/async_test_utils.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
