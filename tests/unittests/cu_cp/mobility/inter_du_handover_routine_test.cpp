@@ -181,7 +181,7 @@ private:
 
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
-  unsigned            target_du_id     = 0x22;
+  gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
   nr_cell_id_t        target_nrcell_id = 34;
   nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x22};
   unsigned            target_pci       = 2;

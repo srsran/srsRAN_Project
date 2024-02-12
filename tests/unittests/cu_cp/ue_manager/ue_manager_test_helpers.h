@@ -28,7 +28,7 @@ protected:
   ue_manager_test();
   ~ue_manager_test() override;
 
-  ue_index_t create_ue(du_index_t du_index, pci_t pci, rnti_t rnti);
+  ue_index_t create_ue(du_index_t du_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti);
 
   srslog::basic_logger& test_logger   = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& ue_mng_logger = srslog::fetch_basic_logger("CU-UEMNG");

@@ -8,7 +8,18 @@
  *
  */
 
-#ifndef SRSRAN_GNB_DU_ID_H
-#define SRSRAN_GNB_DU_ID_H
+#pragma once
 
-#endif // SRSRAN_GNB_DU_ID_H
+#include <cstdint>
+
+namespace srsran {
+
+/// Global NodeB DU ID as per TS 38.473.
+enum class gnb_du_id_t : uint64_t { min = 0, max = 68719476735, invalid = max + 1 };
+
+inline gnb_du_id_t int_to_gnb_du_id(uint64_t id)
+{
+  return static_cast<gnb_du_id_t>(id);
+}
+
+} // namespace srsran

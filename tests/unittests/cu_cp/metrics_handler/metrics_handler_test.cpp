@@ -45,8 +45,9 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   auto session = metrics.create_periodic_report_session(periodic_metric_report_request{period, &metrics_notifier});
 
   // First report.
-  metrics_hdlr.next_metrics.ues.emplace_back(metrics_report::ue_info{to_rnti(1), pci_t{2}});
+  metrics_hdlr.next_metrics.ues.emplace_back(metrics_report::ue_info{to_rnti(1), int_to_gnb_du_id(0), pci_t{2}});
   metrics_hdlr.next_metrics.dus.emplace_back(metrics_report::du_info{
+      int_to_gnb_du_id(0),
       {metrics_report::cell_info{nr_cell_global_id_t{001, 01, "00101", "00f110", 0x22}, pci_t{2}}}});
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
@@ -60,7 +61,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
 
   // Second report.
   metrics_notifier.last_metrics_report.reset();
-  metrics_hdlr.next_metrics.ues.emplace_back(metrics_report::ue_info{to_rnti(2), pci_t{3}});
+  metrics_hdlr.next_metrics.ues.emplace_back(metrics_report::ue_info{to_rnti(2), int_to_gnb_du_id(0), pci_t{3}});
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();

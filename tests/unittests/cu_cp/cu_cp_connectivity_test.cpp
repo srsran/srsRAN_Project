@@ -85,13 +85,24 @@ TEST_F(cu_cp_connectivity_test, when_new_f1_setup_request_is_received_and_ng_is_
   // Run NG setup to completion.
   run_ng_setup();
 
+  // Verify no DUs detected.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.dus.empty());
+
   // Establish TNL connection between DU and CU-CP.
   auto ret = connect_new_du();
   ASSERT_TRUE(ret.has_value());
   unsigned du_idx = *ret;
 
+  // Verify that DU was created but without gNB-DU-Id yet, as that value will come in the F1 Setup Request.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus.size(), 1);
+  ASSERT_EQ(report.dus[0].id, gnb_du_id_t::invalid);
+  ASSERT_TRUE(report.dus[0].cells.empty());
+
   // Send F1 Setup Request.
-  get_du(du_idx).push_tx_pdu(generate_f1_setup_request());
+  gnb_du_id_t du_id = int_to_gnb_du_id(0x55);
+  get_du(du_idx).push_tx_pdu(generate_f1_setup_request(du_id));
 
   // Ensure the F1 Setup Response is received and correct.
   f1ap_message f1ap_pdu;
@@ -100,6 +111,12 @@ TEST_F(cu_cp_connectivity_test, when_new_f1_setup_request_is_received_and_ng_is_
   ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(f1ap_pdu.pdu.successful_outcome().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp);
+
+  // Verify DU has assigned DU id.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus.size(), 1);
+  ASSERT_EQ(report.dus[0].id, du_id);
+  ASSERT_EQ(report.dus[0].cells.size(), 1);
 }
 
 TEST_F(cu_cp_connectivity_test, when_max_nof_dus_connected_reached_then_cu_cp_rejects_new_du_connections)
@@ -111,6 +128,10 @@ TEST_F(cu_cp_connectivity_test, when_max_nof_dus_connected_reached_then_cu_cp_re
 
   auto ret = connect_new_du();
   ASSERT_FALSE(ret.has_value());
+
+  // Verify that no DUs are created.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus.size(), this->get_test_env_params().max_nof_dus);
 }
 
 TEST_F(
@@ -277,6 +298,8 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1);
   ASSERT_EQ(report.ues[0].rnti, crnti);
+  ASSERT_EQ(report.ues[0].du_id, report.dus[0].id);
+  ASSERT_EQ(report.ues[0].pci, report.dus[0].cells[0].pci);
 
   // AMF still not notified of UE attach.
   ngap_message ngap_pdu;
@@ -288,6 +311,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
   get_du(du_idx).push_tx_pdu(ul_rrc_msg);
 
+  // Verify AMF is notified of UE attach.
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::types_opts::init_ue_msg));
 }

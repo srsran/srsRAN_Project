@@ -22,7 +22,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 void srsran::srs_cu_cp::generate_valid_f1_setup_request(du_setup_request& setup_request,
-                                                        unsigned          gnb_du_id,
+                                                        gnb_du_id_t       gnb_du_id,
                                                         unsigned          nrcell_id,
                                                         pci_t             pci)
 {
@@ -32,7 +32,7 @@ void srsran::srs_cu_cp::generate_valid_f1_setup_request(du_setup_request& setup_
 
 void srsran::srs_cu_cp::generate_f1_setup_request_base(du_setup_request& setup_request)
 {
-  f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, 0);
+  f1ap_message f1setup_msg = generate_f1_setup_request(int_to_gnb_du_id(0x11), 6576, 0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
   setup_request = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
@@ -56,7 +56,7 @@ f1ap_message srsran::srs_cu_cp::create_f1_setup_request_with_too_many_cells(cons
 
 void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(du_setup_request& setup_request)
 {
-  f1ap_message f1setup_msg  = generate_f1_setup_request(0x11, 6576, 0);
+  f1ap_message f1setup_msg  = generate_f1_setup_request(int_to_gnb_du_id(0x11), 6576, 0);
   auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   f1_setup_req->gnb_du_served_cells_list.clear();
 

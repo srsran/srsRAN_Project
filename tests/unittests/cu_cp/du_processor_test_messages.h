@@ -20,7 +20,7 @@ namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
 void generate_valid_f1_setup_request(du_setup_request& setup_request,
-                                     unsigned          gnb_du_id = 0x11,
+                                     gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
                                      unsigned          nrcell_id = 6576,
                                      pci_t             pci       = 0);
 

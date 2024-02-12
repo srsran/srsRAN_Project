@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
@@ -22,14 +23,20 @@ namespace srs_cu_cp {
 /// CU-CP Metrics report.
 struct metrics_report {
   struct ue_info {
+    /// Current C-RNTI of the UE.
     rnti_t rnti;
-    pci_t  pci;
+    /// ID of the DU the UE is connected to.
+    gnb_du_id_t du_id;
+    /// PCI of the UE's PCell.
+    pci_t pci;
   };
   struct cell_info {
     nr_cell_global_id_t cgi;
     pci_t               pci;
   };
   struct du_info {
+    /// ID of the DU the UE is connected to.
+    gnb_du_id_t            id;
     std::vector<cell_info> cells;
   };
 

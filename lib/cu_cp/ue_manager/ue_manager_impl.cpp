@@ -108,7 +108,7 @@ du_ue* ue_manager::find_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
+du_ue* ue_manager::add_ue(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
@@ -127,7 +127,7 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
   }
 
   auto& ue = ues.at(ue_index);
-  ue.update_du_ue(pci, rnti);
+  ue.update_du_ue(du_id, pci, rnti);
 
   // Add PCI and RNTI to lookup.
   pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), ue_index);
@@ -192,8 +192,9 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
     report.emplace_back();
     metrics_report::ue_info& ue_report = report.back();
 
-    ue_report.rnti = ue.second.get_c_rnti();
-    ue_report.pci  = ue.second.get_pci();
+    ue_report.rnti  = ue.second.get_c_rnti();
+    ue_report.du_id = ue.second.get_du_id();
+    ue_report.pci   = ue.second.get_pci();
   }
 
   return report;

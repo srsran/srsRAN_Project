@@ -37,7 +37,7 @@ struct ngap_ue_t {
   }
 };
 
-class cu_cp_ue : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
+class cu_cp_ue final : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
 {
 public:
   cu_cp_ue(const ue_index_t              ue_index_,
@@ -104,6 +104,8 @@ public:
   /// \brief Get the C-RNTI of the UE.
   rnti_t get_c_rnti() const override { return c_rnti; }
 
+  gnb_du_id_t get_du_id() const { return du_id; }
+
   /// \brief Get the DU index of the UE.
   du_index_t get_du_index() override { return du_index; }
 
@@ -111,8 +113,14 @@ public:
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(pci_t pci_ = INVALID_PCI, rnti_t c_rnti_ = rnti_t::INVALID_RNTI) override
+  void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
+                    pci_t       pci_    = INVALID_PCI,
+                    rnti_t      c_rnti_ = rnti_t::INVALID_RNTI) override
   {
+    if (du_id_ != gnb_du_id_t::invalid) {
+      du_id = du_id_;
+    }
+
     if (pci_ != INVALID_PCI) {
       pci = pci_;
     }
@@ -194,6 +202,7 @@ private:
 
   // du ue context
   du_index_t      du_index    = du_index_t::invalid;
+  gnb_du_id_t     du_id       = gnb_du_id_t::invalid;
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
@@ -250,13 +259,7 @@ public:
   /// \return Pointer to the UE if found, nullptr otherwise.
   du_ue* find_ue(ue_index_t ue_index) override;
 
-  /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE
-  /// index was already setup, nulltpr is returned.
-  /// \param[in] ue_index Index of the UE to add the notifiers to.
-  /// \param[in] pci PCI of the cell that the UE is connected to.
-  /// \param[in] rnti RNTI of the UE to be added.
-  /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) override;
+  du_ue* add_ue(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti) override;
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.

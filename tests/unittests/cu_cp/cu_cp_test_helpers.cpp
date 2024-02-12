@@ -232,7 +232,7 @@ void cu_cp_test::test_e1ap_attach()
   cu_cp_obj->get_cu_ups().get_cu_up(uint_to_cu_up_index(0)).get_e1ap_message_handler().handle_message(e1setup_msg);
 }
 
-void cu_cp_test::test_du_attach(du_index_t du_index, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci)
+void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci)
 {
   // Store current number of DUs.
   size_t nof_dus = f1c_gw.nof_connections();
@@ -254,7 +254,7 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
 
   test_e1ap_attach();
 
-  test_du_attach(du_index, 0x11, 6576, pci);
+  test_du_attach(du_index, int_to_gnb_du_id(0x11), 6576, pci);
 }
 
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,

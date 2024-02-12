@@ -79,10 +79,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   du_setup_result res;
 
   // Set DU context
-  context.id = request.gnb_du_id;
-  if (request.gnb_du_name.has_value()) {
-    context.name = request.gnb_du_name.value();
-  }
+  context.id   = request.gnb_du_id;
+  context.name = request.gnb_du_name;
 
   // Check if CU-CP is in a state to accept a new DU connection.
   if (not cfg.du_setup_notif->on_du_setup_request(request)) {
@@ -271,7 +269,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(msg.ue_index, pci, msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(msg.ue_index, context.id, pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.warning("ue={}: Could not create UE context", msg.ue_index);
     return ue_creation_complete_msg;
@@ -594,6 +592,7 @@ du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& req
 metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
 {
   metrics_report::du_info report;
+  report.id = context.id;
   for (const auto& cell : cell_db) {
     report.cells.emplace_back();
     report.cells.back().cgi = cell.second.cgi;
