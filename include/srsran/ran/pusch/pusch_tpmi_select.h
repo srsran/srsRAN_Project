@@ -26,7 +26,7 @@ public:
   struct tpmi_info {
     /// Most suitable Transmit Precoding Matrix Indicator.
     unsigned tpmi;
-    /// Average Signal to Interference Noise Ratio (SINR) in decibels.
+    /// Average Signal-to-Interference-plus-Noise Ratio (SINR) in decibels.
     float sinr_dB;
   };
 
@@ -36,9 +36,9 @@ public:
   /// Determines if the information is valid.
   bool is_valid() const { return !info.empty(); }
 
-  /// \brief Get TPMI information for a number of layers.
+  /// \brief Gets the TPMI information for a number of layers.
   ///
-  /// \remark An assertion is triggered if the number of layers is out-of-range.
+  /// \remark An assertion is triggered if the number of layers is out of range.
   const tpmi_info& get_tpmi_select(unsigned nof_layers) const
   {
     interval<unsigned, true> nof_layers_range(1, get_max_nof_layers());
@@ -62,7 +62,7 @@ private:
 /// channel topology.
 ///
 /// \param[in] channel        Channel coefficient matrix.
-/// \param[in] noise_variance Noise variance.
+/// \param[in] noise_variance Linear noise variance.
 /// \return The TPMI information given the channel coefficients and noise variance.
 pusch_tpmi_select_info get_tpmi_select_info(const srs_channel_matrix& channel, float noise_variance);
 

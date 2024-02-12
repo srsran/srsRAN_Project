@@ -14,7 +14,7 @@ namespace srsran {
 
 namespace srs_constants {
 
-/// Maximum number of transmit ports that be transmitted Sounding Reference Signals (SRS).
+/// Maximum number of transmit ports that can transmit Sounding Reference Signals (SRS).
 static constexpr unsigned max_nof_tx_ports = 4;
 
 /// Maximum number of receive ports that can be used to receive Sounding Reference Signals (SRS).

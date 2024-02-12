@@ -11,21 +11,26 @@
 #pragma once
 
 #include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/ran/srs/srs_constants.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/srsran_assert.h"
+#include <cstdint>
 #include <initializer_list>
 
 namespace srsran {
 
-/// Sounding Reference Signals (SRS) channel matrix, consisting of complex coefficients arranged by i) receive ports and
-/// ii) transmit ports.
+/// \brief SRS-based estimated channel matrix.
+///
+/// Wideband channel matrix estimated from the Sounding Reference Signals (SRS). The complex channel coefficients are
+/// arranged by i) receive ports and ii) transmit ports.
 class srs_channel_matrix
 {
 public:
   /// Channel matrix dimensions.
-  enum class dims : unsigned { rx_port = 0, tx_port, all };
+  enum class dims : uint8_t { rx_port = 0, tx_port, all };
 
   /// Default constructor - constructs a channel matrix with no coefficients.
   srs_channel_matrix() = default;
@@ -47,7 +52,7 @@ public:
                   srs_constants::max_nof_rx_ports);
   }
 
-  /// \brief Constructs a channel matrix with the desired number of layers and ports.
+  /// \brief Constructs a channel matrix with the desired number of receive and transmit ports.
   ///
   /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients
   /// values.
@@ -62,7 +67,7 @@ public:
   {
   }
 
-  /// \brief Constructs a channel matrix with the desired number of layers and ports.
+  /// \brief Constructs a channel matrix with the desired number of receive and transmit ports.
   ///
   /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients
   /// values.
@@ -103,8 +108,8 @@ public:
                  other.data.get_view<static_cast<unsigned>(dims::all)>({}));
   }
 
-  /// \brief Overload assigment operator.
-  /// \param[in] other channel matrix to copy.
+  /// \brief Overload assignment operator.
+  /// \param[in] other Channel matrix to copy.
   srs_channel_matrix& operator=(const srs_channel_matrix& other)
   {
     if (this == &other) {
@@ -120,7 +125,7 @@ public:
   }
 
   /// \brief Overload equality comparison operator.
-  /// \param[in] other channel matrix to compare against.
+  /// \param[in] other Channel matrix to compare against.
   /// \return \c true if both channel matrices are exactly the same, \c false otherwise.
   bool operator==(const srs_channel_matrix& other) const
   {
@@ -156,17 +161,17 @@ public:
 
   /// \brief Gets a channel coefficient from the matrix.
   ///
-  /// \param[in] i_rx_port Receive port identifier.
-  /// \param[in] i_tx_port Transmit port identifier.
-  /// \return The channel coefficient for the given transmit and receive port.
+  /// \param[in] i_rx_port Receive port index.
+  /// \param[in] i_tx_port Transmit port index.
+  /// \return The channel coefficient for the given transmit and receive ports.
   cf_t get_coefficient(unsigned i_rx_port, unsigned i_tx_port) const
   {
     srsran_assert(i_rx_port < get_nof_rx_ports(),
-                  "The receive port identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  "The receive port index (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_rx_port,
                   get_nof_rx_ports() - 1);
     srsran_assert(i_tx_port < get_nof_tx_ports(),
-                  "The transmit port identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  "The transmit port index (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_tx_port,
                   get_nof_tx_ports() - 1);
     return data[{i_rx_port, i_tx_port}];
@@ -175,16 +180,16 @@ public:
   /// \brief Sets a channel coefficient in the matrix to a specified value.
   ///
   /// \param[in] coefficient Channel coefficient to set.
-  /// \param[in] i_rx_port   Receive port identifier.
-  /// \param[in] i_tx_port   Transmit port identifier.
+  /// \param[in] i_rx_port   Receive port index.
+  /// \param[in] i_tx_port   Transmit port index.
   void set_coefficient(cf_t coefficient, unsigned i_rx_port, unsigned i_tx_port)
   {
     srsran_assert(i_rx_port < get_nof_rx_ports(),
-                  "The receive port identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  "The receive port index (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_rx_port,
                   get_nof_rx_ports() - 1);
     srsran_assert(i_tx_port < get_nof_tx_ports(),
-                  "The transmit port identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  "The transmit port index (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_tx_port,
                   get_nof_tx_ports() - 1);
     data[{i_rx_port, i_tx_port}] = coefficient;
@@ -198,9 +203,9 @@ public:
   }
 
 private:
-  /// \brief Resizes the number of coefficients to a desired number of layers and ports.
+  /// \brief Resizes the number of coefficients to a desired number of receive and transmit ports.
   /// \param[in] nof_rx_ports Number of receive ports.
-  /// \param[in] nof_tx_ports  Number of transmit ports.
+  /// \param[in] nof_tx_ports Number of transmit ports.
   /// \remark An assertion is triggered if the number of receive ports exceeds \ref srs_constants::max_nof_rx_ports.
   /// \remark An assertion is triggered if the number of transmit ports exceeds \ref srs_constants::max_nof_tx_ports.
   void resize(unsigned nof_rx_ports, unsigned nof_tx_ports)

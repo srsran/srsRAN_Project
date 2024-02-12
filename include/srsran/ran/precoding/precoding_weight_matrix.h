@@ -51,7 +51,7 @@ public:
     srsvec::zero(data.get_data());
   }
 
-  /// \brief Constructs a weight matrix with the desired number of layers and ports.
+  /// \brief Constructs a precoding weight matrix with the desired number of layers and ports.
   ///
   /// Creates a precoding weight matrix with the specified dimensions, and sets its contents to the provided weight
   /// values.

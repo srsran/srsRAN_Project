@@ -9,14 +9,18 @@
  */
 
 #include "srsran/ran/pusch/pusch_tpmi_select.h"
+#include "srsran/adt/complex.h"
 #include "srsran/ran/precoding/precoding_weight_matrix.h"
+#include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/support/math_utils.h"
+#include <array>
+#include <cmath>
 
 using namespace srsran;
 
-static constexpr cf_t sqrt1_2 = M_SQRT1_2;
+static constexpr cf_t sqrt1_2(M_SQRT1_2, 0);
 
-static constexpr cf_t sqrt1_2j = 1I * M_SQRT1_2;
+static constexpr cf_t sqrt1_2j(0, M_SQRT1_2);
 
 static std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
     {precoding_weight_matrix({sqrt1_2, 0}, 1, 2),
@@ -28,10 +32,10 @@ static std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
 
 static pusch_tpmi_select_info get_tpmi_select_info_1x2(const srs_channel_matrix& channel, float noise_variance)
 {
-  float    best_sinr = -INFINITY;
+  float    best_sinr = -std::numeric_limits<float>::infinity();
   unsigned best_tpmi = 0;
 
-  // Iterate possible TPMI.
+  // Iterate possible TPMIs.
   for (unsigned tpmi = 0, tpmi_end = codebook_1layer_2port.size(); tpmi != tpmi_end; ++tpmi) {
     // Select precoding matrix.
     const precoding_weight_matrix& w    = codebook_1layer_2port[tpmi];
@@ -42,9 +46,7 @@ static pusch_tpmi_select_info get_tpmi_select_info_1x2(const srs_channel_matrix&
     cf_t h_01 = channel.get_coefficient(0, 1);
 
     cf_t  wh   = w_p0 * h_00 + w_p1 * h_01;
-    float whhw = wh.real() * wh.real() + wh.imag() * wh.imag();
-
-    // den = NoiseVar * inv((W' * H')* H * W + (NoiseVar * eye(NLayers))); %#ok<MINV>
+    float whhw = abs_sq(wh);
 
     float sinr = whhw / noise_variance;
     if (sinr > best_sinr) {
