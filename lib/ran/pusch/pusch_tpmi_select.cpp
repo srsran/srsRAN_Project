@@ -22,7 +22,7 @@ static constexpr cf_t sqrt1_2(M_SQRT1_2, 0);
 
 static constexpr cf_t sqrt1_2j(0, M_SQRT1_2);
 
-static std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
+static const std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
     {precoding_weight_matrix({sqrt1_2, 0}, 1, 2),
      precoding_weight_matrix({0, sqrt1_2}, 1, 2),
      precoding_weight_matrix({sqrt1_2, sqrt1_2}, 1, 2),
