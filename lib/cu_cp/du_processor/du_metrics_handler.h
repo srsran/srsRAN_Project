@@ -21,7 +21,7 @@ class du_metrics_handler
 public:
   virtual ~du_metrics_handler() = default;
 
-  /// \brief Handle new request for UE metrics.
+  /// \brief Handle new request for metrics relative to a connected DU.
   virtual metrics_report::du_info handle_du_metrics_report_request() const = 0;
 };
 
@@ -31,7 +31,7 @@ class du_repository_metrics_handler
 public:
   virtual ~du_repository_metrics_handler() = default;
 
-  /// \brief Handle new request for UE metrics.
+  /// \brief Handle new metrics request for all the DU nodes connected to the CU-CP.
   virtual std::vector<metrics_report::du_info> handle_du_metrics_report_request() const = 0;
 };
 

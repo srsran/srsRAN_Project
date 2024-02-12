@@ -35,7 +35,7 @@ struct metrics_report {
     pci_t               pci;
   };
   struct du_info {
-    /// ID of the DU the UE is connected to.
+    /// ID of the DU connected to the CU-CP.
     gnb_du_id_t            id;
     std::vector<cell_info> cells;
   };
