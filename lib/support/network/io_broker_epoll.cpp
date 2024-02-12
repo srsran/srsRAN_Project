@@ -96,7 +96,6 @@ void io_broker_epoll::thread_loop()
       ///< An error has occured on this fd, or the socket is not ready for reading
       /// TODO: add notifier for events
       logger.error("IO broker: epoll error event. fd={} events={}", fd, uint32_t(events[i].events));
-      close(fd);
       bool success = unregister_fd(fd);
       if (!success) {
         logger.error("IO broker: failed to unregister file descriptor. fd={}", fd);
