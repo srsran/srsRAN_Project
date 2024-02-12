@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "../asn1_utils.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 #include <cstdio>
 #include <stdarg.h>
 

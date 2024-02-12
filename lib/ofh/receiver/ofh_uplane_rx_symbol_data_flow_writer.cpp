@@ -44,7 +44,7 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
 
   // Find resource grid port with eAxC.
   unsigned rg_port = std::distance(ul_eaxc.begin(), std::find(ul_eaxc.begin(), ul_eaxc.end(), eaxc));
-  srsran_assert(rg_port < ul_eaxc.size(), "Invalid resource grid port={}", rg_port);
+  srsran_assert(rg_port < ul_eaxc.size(), "Invalid resource grid port value '{}'", rg_port);
 
   unsigned du_ul_nof_prbs = ul_context.get_grid_nof_prbs();
   for (const auto& sect : results.sections) {

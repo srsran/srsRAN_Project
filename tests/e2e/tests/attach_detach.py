@@ -1,16 +1,28 @@
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
-# By using this file, you agree to the terms and conditions set
-# forth in the LICENSE file which can be found at the top level of
-# the distribution.
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
 #
 
 """
 Attach / Detach Tests
 """
 import logging
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -55,10 +67,7 @@ BITRATE_THRESHOLD: float = 0.1
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -75,7 +84,7 @@ def test_zmq(
     _attach_and_detach_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -112,10 +121,7 @@ def test_zmq(
 def test_rf_udp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -131,7 +137,7 @@ def test_rf_udp(
     _attach_and_detach_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,

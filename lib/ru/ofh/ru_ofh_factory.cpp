@@ -28,7 +28,7 @@
 
 using namespace srsran;
 
-/// Generates the OFH sector configuration from the common Open FrontHaul configuration.
+/// Generates the OFH sector configuration from the common Open Fronthaul configuration.
 static ofh::sector_configuration generate_sector_configuration(const ru_ofh_configuration&        config,
                                                                const ru_ofh_sector_configuration& sector_cfg)
 {
@@ -55,6 +55,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.is_downlink_broadcast_enabled        = sector_cfg.is_downlink_broadcast_enabled;
   ofh_sector_config.ignore_ecpri_payload_size_field      = sector_cfg.ignore_ecpri_payload_size_field;
   ofh_sector_config.ignore_ecpri_seq_id_field            = sector_cfg.ignore_ecpri_seq_id_field;
+  ofh_sector_config.warn_unreceived_ru_frames            = sector_cfg.warn_unreceived_ru_frames;
   ofh_sector_config.ul_compression_params                = sector_cfg.ul_compression_params;
   ofh_sector_config.dl_compression_params                = sector_cfg.dl_compression_params;
   ofh_sector_config.prach_compression_params             = sector_cfg.prach_compression_params;
@@ -69,7 +70,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   return ofh_sector_config;
 }
 
-/// Generates the OFH sector dependencies from the common Open FrontHaul dependencies.
+/// Generates the OFH sector dependencies from the common Open Fronthaul dependencies.
 static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_dependencies&& dependencies,
                                                              std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier)
 {
@@ -81,6 +82,7 @@ static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_depen
   ofh_sector_dependencies.downlink_executor    = dependencies.downlink_executor;
   ofh_sector_dependencies.notifier             = notifier;
   ofh_sector_dependencies.eth_gateway          = std::move(dependencies.eth_gateway);
+  ofh_sector_dependencies.eth_receiver         = std::move(dependencies.eth_receiver);
 
   return ofh_sector_dependencies;
 }
@@ -121,8 +123,8 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_dependencies.sectors.emplace_back(std::move(sector));
 
-    fmt::print("Initializing the Open FrontHaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
-               "prach_compr=[{},{}] prach_cp_enabled={}, downlink_broadcast={}.{}\n",
+    fmt::print("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
+               "prach_compr=[{},{}], prach_cp_enabled={}, downlink_broadcast={}{}\n",
                i,
                to_string(sector_cfg.ul_compression_params.type),
                sector_cfg.ul_compression_params.data_width,
@@ -133,7 +135,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                sector_cfg.is_prach_control_plane_enabled,
                sector_cfg.is_downlink_broadcast_enabled,
                (sector_cfg.ru_operating_bw && sector_cfg.bw != *sector_cfg.ru_operating_bw)
-                   ? fmt::format("\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz.",
+                   ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
                                  sector_cfg.bw,
                                  *sector_cfg.ru_operating_bw)
                    : fmt::format(""));

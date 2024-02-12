@@ -46,13 +46,17 @@ static constexpr unsigned MAX_MODULATION_ORDER = 8;
 /// As per TS38.211 Section 6.3.1.3.
 static constexpr unsigned MAX_NOF_LAYERS = 4;
 
-/// Maximum number of REs per codeword in a single transmission.
-static constexpr unsigned CODEWORD_MAX_SYMBOLS =
-    MAX_RB * pusch_constants::MAX_NRE_PER_RB * pusch_constants::MAX_NOF_LAYERS;
+/// Returns number of REs per codeword in a single transmission.
+inline constexpr unsigned get_codeword_max_symbols(unsigned nof_prb, unsigned nof_layers)
+{
+  return nof_prb * pusch_constants::MAX_NRE_PER_RB * nof_layers;
+}
 
-/// Maximum number of encoded bits per codeword in a single transmission.
-static constexpr units::bits CODEWORD_MAX_SIZE =
-    units::bits{CODEWORD_MAX_SYMBOLS * pusch_constants::MAX_MODULATION_ORDER};
+/// Returns number of encoded bits per codeword in a single transmission.
+inline constexpr units::bits get_max_codeword_size(unsigned nof_prb, unsigned nof_layers)
+{
+  return units::bits{get_codeword_max_symbols(nof_prb, nof_layers) * pusch_constants::MAX_MODULATION_ORDER};
+}
 
 /// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
 /// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.

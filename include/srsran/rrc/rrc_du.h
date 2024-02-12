@@ -24,10 +24,10 @@
 
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
+#include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/ran/band_helper.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 struct rrc_cell_info {
@@ -49,26 +49,16 @@ struct rrc_ue_creation_message {
   rnti_t                            c_rnti;
   rrc_cell_context                  cell;
   rrc_pdu_f1ap_notifier*            f1ap_pdu_notifier;
+  rrc_ue_context_update_notifier*   rrc_ue_cu_cp_notifier;
+  rrc_ue_measurement_notifier*      measurement_notifier;
   byte_buffer                       du_to_cu_container;
   rrc_ue_task_scheduler*            ue_task_sched;
   optional<rrc_ue_transfer_context> rrc_context;
 };
 
-/// \brief Interface class for the main RRC DU object used by the RRC UE objects.
-/// This interface provides the RRC connection permission.
-class rrc_du_ue_manager
-{
-public:
-  rrc_du_ue_manager()          = default;
-  virtual ~rrc_du_ue_manager() = default;
-
-  /// Check if the parent allows RRC connections.
-  virtual bool is_rrc_connect_allowed() = 0;
-};
-
 /// \brief Interface class to the main RRC DU object to manage RRC UEs.
 /// This interface provides functions to add, remove and release UEs.
-class rrc_du_ue_repository : public rrc_amf_connection_handler
+class rrc_du_ue_repository
 {
 public:
   rrc_du_ue_repository()          = default;
@@ -82,6 +72,21 @@ public:
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;
+};
+
+/// Interface to notify about measurement config updates
+class rrc_du_measurement_config_notifier
+{
+public:
+  virtual ~rrc_du_measurement_config_notifier() = default;
+
+  /// \brief Request to update the measurement related parameters for the given cell id.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
+  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
+  virtual void on_cell_config_update_request(nr_cell_id_t                           nci,
+                                             const serving_cell_meas_config&        serv_cell_cfg_,
+                                             std::vector<neighbor_cell_meas_config> ncells_ = {}) = 0;
 };
 
 /// Handle RRC UE removal
@@ -108,7 +113,6 @@ public:
 
 /// Combined entry point for the RRC DU handling.
 class rrc_du_interface : public rrc_du_cell_manager,
-                         public rrc_du_ue_manager,
                          public rrc_du_ue_repository,
                          public rrc_ue_removal_handler,
                          public rrc_du_statistics_handler
@@ -117,7 +121,6 @@ public:
   virtual ~rrc_du_interface() = default;
 
   virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
-  virtual rrc_du_ue_manager&         get_rrc_du_ue_manager()         = 0;
   virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
   virtual rrc_ue_removal_handler&    get_rrc_ue_removal_handler()    = 0;
   virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;

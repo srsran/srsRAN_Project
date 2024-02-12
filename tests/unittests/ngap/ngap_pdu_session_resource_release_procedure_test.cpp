@@ -21,7 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
-#include "srsran/support/async/async_test_utils.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -42,7 +42,7 @@ protected:
     run_ul_nas_transport(ue_index);
 
     // Inject Initial Context Setup request
-    run_inital_context_setup(ue_index);
+    run_initial_context_setup(ue_index);
 
     // Inject PDU Session Resource Setup request
     run_pdu_session_resource_setup(ue_index, pdu_session_id);

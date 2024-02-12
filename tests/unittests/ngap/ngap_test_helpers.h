@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -54,8 +54,11 @@ protected:
   ngap_test();
   ~ngap_test() override;
 
-  /// \brief Helper method to successfully create UE instance in NGAP.
+  /// \brief Helper method to successfully create UE instance in NGAP and inject an InitialUeMessage.
   ue_index_t create_ue(rnti_t rnti = rnti_t::MIN_CRNTI);
+
+  /// \brief Helper method to successfully create UE instance in NGAP.
+  ue_index_t create_ue_without_init_ue_message(rnti_t rnti);
 
   /// \brief Helper method to successfully run DL NAS transport in NGAP.
   void run_dl_nas_transport(ue_index_t ue_index);
@@ -64,7 +67,7 @@ protected:
   void run_ul_nas_transport(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run Initial Context Setup in NGAP.
-  void run_inital_context_setup(ue_index_t ue_index);
+  void run_initial_context_setup(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run PDU Session Resource Setup in NGAP
   void run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t pdu_session_id);
@@ -85,12 +88,13 @@ protected:
 
   ngap_configuration                                cfg;
   timer_manager                                     timers;
-  ue_manager                                        ue_mng{{}, {}};
+  manual_task_worker                                ctrl_worker{128};
+  ue_manager                                        ue_mng{{}, {}, timers, ctrl_worker};
   dummy_ngap_amf_notifier                           msg_notifier;
   std::unique_ptr<dummy_ngap_du_processor_notifier> du_processor_notifier;
+  dummy_ngap_cu_cp_ue_creation_notifier             ngap_ue_creation_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier                  cu_cp_paging_notifier;
   dummy_ngap_ue_task_scheduler                      ngap_ue_task_scheduler;
-  manual_task_worker                                ctrl_worker{128};
   std::unique_ptr<ngap_interface>                   ngap;
 };
 

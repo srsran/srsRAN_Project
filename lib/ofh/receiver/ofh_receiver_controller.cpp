@@ -27,7 +27,7 @@ using namespace ofh;
 
 void receiver_controller::start()
 {
-  msg_receiver.get_ethernet_receiver().start();
+  msg_receiver.get_ethernet_receiver().start(msg_receiver);
 }
 
 void receiver_controller::stop()

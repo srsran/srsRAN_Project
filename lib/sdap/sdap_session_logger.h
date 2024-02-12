@@ -40,9 +40,9 @@ public:
   {
     fmt::memory_buffer buffer;
     if (qfi.has_value()) {
-      fmt::format_to(buffer, "ue={} psi={} {} {} {}: ", ue_index, psi, qfi.value(), drb_id, dir);
+      fmt::format_to(buffer, "ue={} {} {} {} {}: ", ue_index, psi, qfi.value(), drb_id, dir);
     } else {
-      fmt::format_to(buffer, "ue={} psi={} {} {}: ", ue_index, psi, drb_id, dir);
+      fmt::format_to(buffer, "ue={} {} {} {}: ", ue_index, psi, drb_id, dir);
     }
     prefix = srsran::to_c_str(buffer);
   }
@@ -60,7 +60,7 @@ public:
   sdap_session_log_prefix(uint32_t ue_index, pdu_session_id_t psi)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} psi={}: ", ue_index, psi);
+    fmt::format_to(buffer, "ue={} {}: ", ue_index, psi);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }

@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_asn1_packer.h"
 #include "tests/unittests/ngap/test_helpers.h"
@@ -51,10 +51,14 @@ public:
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
-    packer(*gw, *this, pcap)
+    packer(*gw, *this, *this, pcap)
   {
     gw->create_and_connect();
-    epoll_broker->register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
+    bool success = epoll_broker->register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
+    if (!success) {
+      report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
+                         gw->get_socket_fd());
+    }
   }
 
   ~ngap_network_adapter() {}
@@ -113,7 +117,8 @@ protected:
 
     ngap_ue_task_scheduler = std::make_unique<dummy_ngap_ue_task_scheduler>(timers, ctrl_worker);
 
-    ngap = create_ngap(cfg, cu_cp_paging_notifier, *ngap_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
+    ngap = create_ngap(
+        cfg, ngap_ue_creation_notifier, cu_cp_paging_notifier, *ngap_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
     adapter->connect_ngap(ngap.get());
   }
 
@@ -121,11 +126,12 @@ protected:
   ue_configuration                              ue_config;
   up_resource_manager_cfg                       up_config;
   timer_manager                                 timers;
-  ue_manager                                    ue_mng{ue_config, up_config};
+  manual_task_worker                            ctrl_worker{128};
+  ue_manager                                    ue_mng{ue_config, up_config, timers, ctrl_worker};
+  dummy_ngap_cu_cp_ue_creation_notifier         ngap_ue_creation_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
   std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;
   std::unique_ptr<ngap_network_adapter>         adapter;
-  manual_task_worker                            ctrl_worker{128};
   std::unique_ptr<ngap_interface>               ngap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");

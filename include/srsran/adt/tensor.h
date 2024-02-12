@@ -157,7 +157,7 @@ public:
   using dimensions_size_type = std::array<unsigned, NDIMS>;
 
   /// Default constructor with all dimensions and elements to zero.
-  static_tensor() = default;
+  static_tensor() : dimensions_size{} {}
 
   /// Constructs a tensor with initial dimensions.
   explicit static_tensor(const dimensions_size_type& dimensions) { resize(dimensions); }
@@ -195,10 +195,17 @@ public:
   const dimensions_size_type& get_dimensions_size() const override { return dimensions_size; }
 
   // See interface for documentation.
-  span<Type> get_data() override { return span<Type>(elements).first(to_size(dimensions_size)); }
+  span<Type> get_data() override
+  {
+    return span<Type>(reinterpret_cast<Type*>(elements.data()), MAX_ELEMENTS).first(to_size(dimensions_size));
+  }
 
   // See interface for documentation.
-  span<const Type> get_data() const override { return span<const Type>(elements).first(to_size(dimensions_size)); }
+  span<const Type> get_data() const override
+  {
+    return span<const Type>(reinterpret_cast<const Type*>(elements.data()), MAX_ELEMENTS)
+        .first(to_size(dimensions_size));
+  }
 
 private:
   /// Converts a dimension size type to size.
@@ -208,9 +215,9 @@ private:
   }
 
   /// Tensor actual dimensions.
-  dimensions_size_type dimensions_size = {};
+  dimensions_size_type dimensions_size;
   /// Tensor actual storage.
-  std::array<Type, MAX_ELEMENTS> elements = {};
+  std::array<uint8_t, sizeof(Type) * MAX_ELEMENTS> elements;
 };
 
 /// \brief Dynamic tensor - the dimensions can be resized dynamically.

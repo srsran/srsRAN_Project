@@ -24,11 +24,13 @@ target_link_libraries(ngap_test_helpers srsran_support ngap_asn1 srslog)
 
 set(SOURCES
         ngap_asn1_packer_test.cpp
+        ngap_validators_test.cpp
         ng_setup_procedure_test.cpp
         ngap_nas_message_test.cpp
         ngap_ue_context_management_procedure_test.cpp
         ngap_pdu_session_resource_setup_procedure_test.cpp
         ngap_pdu_session_resource_release_procedure_test.cpp
+        ngap_pdu_session_resource_modify_procedure_test.cpp
         ngap_paging_test.cpp
         ngap_error_indication_test.cpp
         ngap_handover_test.cpp

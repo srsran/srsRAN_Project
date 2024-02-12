@@ -21,6 +21,8 @@
  */
 
 #include "f1ap_cu_test_messages.h"
+#include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 
@@ -82,6 +84,16 @@ f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(unsigned gnb_du_id, un
       generate_served_cells_item(nrcell_id, pci);
 
   return msg;
+}
+
+f1ap_message
+srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer_without_du_to_cu_container(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                                    rnti_t              crnti)
+{
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
+
+  return init_ul_rrc_msg;
 }
 
 f1ap_message srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,

@@ -21,14 +21,34 @@
  */
 
 #include "cu_cp_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
-#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cu_types.h"
 #include <chrono>
 #include <utility>
 
 using namespace srsran;
 using namespace srs_cu_cp;
+
+namespace {
+
+struct amf_test_stub final : public ngap_message_handler {
+  amf_test_stub(ngap_message_handler& cu_cp_) : cu_cp(cu_cp_) {}
+
+  void handle_message(const ngap_message& msg) override
+  {
+    if (is_pdu_type(msg, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request)) {
+      // Generate fake NG Setup Response.
+      cu_cp.handle_message(generate_ng_setup_response());
+    }
+  }
+
+private:
+  ngap_message_handler& cu_cp;
+};
+
+} // namespace
 
 cu_cp_test::cu_cp_test()
 {
@@ -67,7 +87,8 @@ cu_cp_test::cu_cp_test()
                                        security::ciphering_algorithm::nea3};
 
   // UE config
-  cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
+  cfg.ue_config.inactivity_timer      = std::chrono::seconds{7200};
+  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_dus * MAX_NOF_UES_PER_DU;
 
   // periodic statistic logging
   cfg.statistics_report_period = std::chrono::seconds(1);
@@ -76,7 +97,8 @@ cu_cp_test::cu_cp_test()
   cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
   rrc_report_cfg_nr periodic_rep_cfg                                             = {};
   periodic_rep_cfg.periodical.emplace();
-  periodic_rep_cfg.periodical.value().report_interv = 1024;
+  periodic_rep_cfg.periodical.value().report_interv    = 1024;
+  periodic_rep_cfg.periodical.value().max_report_cells = 4;
   cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_rep_cfg);
   rrc_report_cfg_nr ev_triggered_rep_cfg = {};
   ev_triggered_rep_cfg.event_triggered.emplace();
@@ -85,6 +107,7 @@ cu_cp_test::cu_cp_test()
   ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().hysteresis      = 0;
   ev_triggered_rep_cfg.event_triggered.value().event_id.event_a3.value().time_to_trigger = 100;
   ev_triggered_rep_cfg.event_triggered.value().report_interv                             = 1024;
+  ev_triggered_rep_cfg.event_triggered.value().max_report_cells                          = 4;
   cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(2), ev_triggered_rep_cfg);
 
   cell_meas_config cell_cfg_1;
@@ -112,9 +135,14 @@ cu_cp_test::cu_cp_test()
   cell_cfg_2.serving_cell_cfg.ssb_mtc.value().dur = 5;
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_2);
 
-  // create and start CU-CP.
+  // create CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
-  cu_cp_obj->handle_amf_connection();
+
+  // Connect CU-CP to AMF stub.
+  dummy_amf = std::make_unique<amf_test_stub>(cu_cp_obj->get_ngap_message_handler());
+  ngap_amf_notifier.attach_handler(dummy_amf.get());
+
+  // Start CU-CP.
   cu_cp_obj->start();
 
   // Attach F1-C gateway to CU-CP

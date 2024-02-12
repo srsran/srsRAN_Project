@@ -30,12 +30,16 @@ scheduler_metrics_handler::scheduler_metrics_handler(msecs                      
 {
 }
 
-void scheduler_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
+void scheduler_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
+                                                   rnti_t        rnti,
+                                                   pci_t         pcell_pci,
+                                                   unsigned      num_prbs)
 {
   ues.emplace(ue_index);
   ues[ue_index].rnti     = rnti;
   ues[ue_index].ue_index = ue_index;
   ues[ue_index].pci      = pcell_pci;
+  ues[ue_index].nof_prbs = num_prbs;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 }
 
@@ -171,6 +175,13 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
       u.data.dl_mcs += cw.mcs_index.to_uint();
       u.data.nof_dl_cws++;
     }
+    if (dl_grant.pdsch_cfg.rbs.is_type0()) {
+      u.data.dl_prbs_used +=
+          convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(), {0, u.nof_prbs}, get_nominal_rbg_size(u.nof_prbs, true))
+              .count();
+    } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
+      u.data.dl_prbs_used += (dl_grant.pdsch_cfg.rbs.type1().length());
+    }
   }
 
   for (const ul_sched_info& ul_grant : slot_result.ul.puschs) {
@@ -178,6 +189,14 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     if (it == rnti_to_ue_index_lookup.end()) {
       // UE not found.
       continue;
+    }
+    if (ul_grant.pusch_cfg.rbs.is_type0()) {
+      ues[it->second].data.ul_prbs_used += convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
+                                                                {0, ues[it->second].nof_prbs},
+                                                                get_nominal_rbg_size(ues[it->second].nof_prbs, true))
+                                               .count();
+    } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
+      ues[it->second].data.ul_prbs_used += (ul_grant.pusch_cfg.rbs.type1().length());
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
@@ -214,6 +233,8 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs        = sch_mcs_index{mcs};
+  ret.dl_prbs_used  = data.nof_dl_cws > 0 ? static_cast<double>(data.dl_prbs_used / data.nof_dl_cws) : 0;
+  ret.ul_prbs_used  = data.nof_puschs > 0 ? static_cast<double>(data.ul_prbs_used / data.nof_puschs) : 0;
   ret.dl_brate_kbps = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
   ret.ul_brate_kbps = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
   ret.dl_nof_ok     = data.count_uci_harq_acks;

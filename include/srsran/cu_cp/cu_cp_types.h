@@ -48,11 +48,11 @@ namespace srs_cu_cp {
 /// Maximum number of UEs per DU (implementation-defined).
 const uint16_t MAX_NOF_UES_PER_DU = 1024;
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_DUS = 2;
+const uint16_t MAX_NOF_DUS = 65535;
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
 #define MAX_NOF_CU_UES (MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_CU_UPS = 2;
+const uint16_t MAX_NOF_CU_UPS = 65535;
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_DU_CELLS = 16;
 
@@ -222,11 +222,47 @@ struct cu_cp_served_cell_info {
   std::vector<std::string> served_plmns;
   cu_cp_nr_mode_info       nr_mode_info;
   byte_buffer              meas_timing_cfg;
+
+  cu_cp_served_cell_info() = default;
+  cu_cp_served_cell_info(const cu_cp_served_cell_info& other) :
+    nr_cgi(other.nr_cgi),
+    nr_pci(other.nr_pci),
+    five_gs_tac(other.five_gs_tac),
+    cfg_eps_tac(other.cfg_eps_tac),
+    served_plmns(other.served_plmns),
+    nr_mode_info(other.nr_mode_info),
+    meas_timing_cfg(other.meas_timing_cfg.copy())
+  {
+  }
+  cu_cp_served_cell_info& operator=(const cu_cp_served_cell_info& other)
+  {
+    if (this != &other) {
+      nr_cgi          = other.nr_cgi;
+      nr_pci          = other.nr_pci;
+      five_gs_tac     = other.five_gs_tac;
+      cfg_eps_tac     = other.cfg_eps_tac;
+      served_plmns    = other.served_plmns;
+      nr_mode_info    = other.nr_mode_info;
+      meas_timing_cfg = other.meas_timing_cfg.copy();
+    }
+    return *this;
+  }
 };
 
 struct cu_cp_gnb_du_sys_info {
   byte_buffer mib_msg;
   byte_buffer sib1_msg;
+
+  cu_cp_gnb_du_sys_info() = default;
+  cu_cp_gnb_du_sys_info(const cu_cp_gnb_du_sys_info& other) : mib_msg(other.mib_msg), sib1_msg(other.sib1_msg) {}
+  cu_cp_gnb_du_sys_info& operator=(const cu_cp_gnb_du_sys_info& other)
+  {
+    if (this != &other) {
+      mib_msg  = other.mib_msg.copy();
+      sib1_msg = other.sib1_msg.copy();
+    }
+    return *this;
+  }
 };
 
 struct cu_cp_du_served_cells_item {
@@ -441,7 +477,7 @@ struct cu_cp_pdu_session_resource_modify_response {
   // id-CriticalityDiagnostics
 };
 
-struct cu_cp_ngap_ue_context_release_command {
+struct cu_cp_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
   cause_t    cause;
 };
@@ -459,13 +495,6 @@ struct cu_cp_recommended_cell_item {
 
 struct cu_cp_recommended_cells_for_paging {
   std::vector<cu_cp_recommended_cell_item> recommended_cell_list;
-};
-
-struct cu_cp_ue_context_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  cause_t            cause;
-  byte_buffer        rrc_release_pdu;
-  optional<srb_id_t> srb_id;
 };
 
 struct cu_cp_global_gnb_id {

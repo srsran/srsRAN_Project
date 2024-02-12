@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-  cell_meas_manager_factory.cpp
   cell_meas_manager_impl.cpp
   cell_meas_manager_helpers.cpp
 )

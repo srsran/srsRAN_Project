@@ -30,7 +30,7 @@ namespace ether {
 
 /// Configuration for the Ethernet gateway.
 struct gw_config {
-  /// Interface name.
+  /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;

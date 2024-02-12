@@ -32,11 +32,11 @@ namespace srs_cu_cp {
 class ngap_ue_context_release_procedure
 {
 public:
-  ngap_ue_context_release_procedure(const cu_cp_ngap_ue_context_release_command& command_,
-                                    const ngap_ue_ids&                           ue_ids_,
-                                    ngap_du_processor_control_notifier&          du_processor_ctrl_notifier_,
-                                    ngap_message_notifier&                       amf_notifier_,
-                                    ngap_ue_logger&                              logger_);
+  ngap_ue_context_release_procedure(const cu_cp_ue_context_release_command& command_,
+                                    const ngap_ue_ids&                      ue_ids_,
+                                    ngap_du_processor_control_notifier&     du_processor_ctrl_notifier_,
+                                    ngap_message_notifier&                  amf_notifier_,
+                                    ngap_ue_logger&                         logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -46,12 +46,12 @@ private:
   // results senders
   void send_ue_context_release_complete();
 
-  cu_cp_ngap_ue_context_release_command command;
-  const ngap_ue_ids                     ue_ids;
-  cu_cp_ue_context_release_complete     ue_context_release_complete;
-  ngap_du_processor_control_notifier&   du_processor_ctrl_notifier;
-  ngap_message_notifier&                amf_notifier;
-  ngap_ue_logger                        logger;
+  cu_cp_ue_context_release_command    command;
+  const ngap_ue_ids                   ue_ids;
+  cu_cp_ue_context_release_complete   ue_context_release_complete;
+  ngap_du_processor_control_notifier& du_processor_ctrl_notifier;
+  ngap_message_notifier&              amf_notifier;
+  ngap_ue_logger                      logger;
 };
 
 } // namespace srs_cu_cp

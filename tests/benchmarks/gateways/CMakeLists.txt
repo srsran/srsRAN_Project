@@ -24,3 +24,9 @@ include_directories(../../..)
 
 add_executable(udp_network_gateway_benchmark udp_network_gateway_benchmark.cpp)
 target_link_libraries(udp_network_gateway_benchmark srsran_network srsran_gateway srsran_support srslog)
+
+add_executable(udp_network_gateway_tx_benchmark udp_network_gateway_tx_benchmark.cpp)
+target_link_libraries(udp_network_gateway_tx_benchmark srsran_network srsran_gateway srsran_support srslog)
+
+add_executable(udp_network_gateway_rx_benchmark udp_network_gateway_rx_benchmark.cpp)
+target_link_libraries(udp_network_gateway_rx_benchmark srsran_network srsran_gateway srsran_support srslog)

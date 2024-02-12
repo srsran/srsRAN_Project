@@ -331,22 +331,22 @@ void srsran::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
   E = E_;
 
   // include here also npc and nwmPC computatoins
-  assert(E <= EMAX);
+  srsran_assert(E <= EMAX, "Invalid E value '{}'", E);
   switch (nMax) {
     case 9: // downlink
       // iil = true
       // Codeblock length (K=%d) not supported for downlink transmission, choose 165 > K > 35
-      assert(not(K < 36 || K > 164));
+      srsran_assert(!(K < 36 || K > 164), "Invalid K range");
       break;
     case 10:
       // iil = false
       // Codeblock length (K=%d) not supported for uplink transmission, choose K > 17 and K < 1024, excluding 31 > K >
       // 25
-      assert(not(K < 18 || (K > 25 && K < 31) || K > 1023));
+      srsran_assert(!(K < 18 || (K > 25 && K < 31) || K > 1023), "Invalid K range");
       break;
     default:
       // nMax not supported choose 9 for downlink  and 10 for uplink transmissions
-      assert(false);
+      srsran_assert(false, "Unreachable code");
   }
 
   // number of parity check bits (nPC) and parity check bits of minimum bandwidth nWmPC
@@ -360,7 +360,7 @@ void srsran::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
   }
 
   // Rate-matched codeword length (E) not supported, choose E > K + nPC
-  assert(K + nPC < E);
+  srsran_assert(K + nPC < E, "Invalid K + nPC values");
 
   // determination of the codeword size (N)
   // ceil(log2(E))
@@ -404,7 +404,7 @@ void srsran::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
   N = (1U << n);
 
   // Codeblock length (K) not supported, choose K < N
-  assert(K < N);
+  srsran_assert(K < N, "Invalid K value");
 }
 
 srsran::polar_code_impl::polar_code_impl()

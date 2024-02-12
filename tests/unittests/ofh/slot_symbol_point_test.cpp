@@ -124,3 +124,30 @@ TEST(slot_symbol_point_test, smaller_slot_symbol_point_same_slot_different_symbo
 
   ASSERT_TRUE(symbol_point < symbol_point2);
 }
+
+TEST(slot_symbol_point_test, symbols_subtraction_should_pass)
+{
+  const unsigned nof_symbols    = 14;
+  const unsigned numerology     = 1;
+  const unsigned initial_symbol = 7;
+  slot_point     slot(numerology, 20, 0, 0);
+
+  int               distance = 10;
+  slot_symbol_point symbol_point_0(slot, initial_symbol, nof_symbols);
+  slot_symbol_point symbol_point_1 = symbol_point_0 + distance;
+
+  int calculated_distance = symbol_point_1 - symbol_point_0;
+  ASSERT_EQ(calculated_distance, distance);
+  calculated_distance = symbol_point_0 - symbol_point_1;
+  ASSERT_EQ(-calculated_distance, distance);
+
+  // Test wrap around.
+  distance            = -21;
+  slot                = slot_point(numerology, 0);
+  symbol_point_0      = slot_symbol_point(slot, 0, nof_symbols);
+  symbol_point_1      = symbol_point_0 + distance;
+  calculated_distance = symbol_point_1 - symbol_point_0;
+  ASSERT_EQ(calculated_distance, distance);
+  calculated_distance = symbol_point_0 - symbol_point_1;
+  ASSERT_EQ(-calculated_distance, distance);
+}

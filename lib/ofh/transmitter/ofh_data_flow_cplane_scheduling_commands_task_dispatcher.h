@@ -45,7 +45,7 @@ public:
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     if (!executor.execute([this, context]() { data_flow_cplane->enqueue_section_type_1_message(context); })) {
-      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 1 message for slot={}",
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 1 message for slot '{}'",
                                                 context.slot);
     }
   }
@@ -54,7 +54,7 @@ public:
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
     if (!executor.execute([this, context]() { data_flow_cplane->enqueue_section_type_3_prach_message(context); })) {
-      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 3 message for slot={}",
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch Control-Plane type 3 message for slot '{}'",
                                                 context.slot);
     }
   }

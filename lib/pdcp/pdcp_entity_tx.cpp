@@ -320,13 +320,13 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
       std::fill(mac.begin(), mac.end(), 0);
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf);
       break;
     default:
       break;

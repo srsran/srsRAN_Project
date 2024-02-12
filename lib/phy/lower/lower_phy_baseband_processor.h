@@ -30,8 +30,6 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/lower/sampling_rate.h"
-#include <condition_variable>
-#include <mutex>
 
 namespace srsran {
 
@@ -201,9 +199,7 @@ private:
   baseband_gateway_timestamp                                            rx_to_tx_max_delay;
   internal_fsm                                                          tx_state;
   internal_fsm                                                          rx_state;
-  baseband_gateway_timestamp                                            last_rx_timestamp;
-  std::mutex                                                            last_rx_mutex;
-  std::condition_variable                                               last_rx_cvar;
+  std::atomic<baseband_gateway_timestamp>                               last_rx_timestamp;
   optional<std::chrono::time_point<std::chrono::high_resolution_clock>> last_tx_time;
 };
 

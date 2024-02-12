@@ -38,7 +38,7 @@ void polar_interleaver_impl::interleave(span<uint8_t>               out,
                                         span<const uint8_t>         in,
                                         polar_interleaver_direction direction)
 {
-  assert(in.size() == out.size());
+  srsran_assert(in.size() == out.size(), "Input and output span sizes must be identical");
   unsigned K = in.size();
 
   uint32_t k = 0;

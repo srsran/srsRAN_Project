@@ -28,11 +28,291 @@
 
 #pragma once
 
-#include "common.h"
-#include "f1ap_pdu_contents.h"
+#include "srsran/asn1/asn1_ap_utils.h"
 
 namespace asn1 {
 namespace f1ap {
+
+struct reset_ies_container;
+using reset_s = elementary_procedure_option<reset_ies_container>;
+struct f1_setup_request_ies_container;
+using f1_setup_request_s = elementary_procedure_option<f1_setup_request_ies_container>;
+struct gnb_du_cfg_upd_ies_container;
+using gnb_du_cfg_upd_s = elementary_procedure_option<gnb_du_cfg_upd_ies_container>;
+struct gnb_cu_cfg_upd_ies_container;
+using gnb_cu_cfg_upd_s = elementary_procedure_option<gnb_cu_cfg_upd_ies_container>;
+struct ue_context_setup_request_ies_container;
+using ue_context_setup_request_s = elementary_procedure_option<ue_context_setup_request_ies_container>;
+struct ue_context_release_cmd_ies_container;
+using ue_context_release_cmd_s = elementary_procedure_option<ue_context_release_cmd_ies_container>;
+struct ue_context_mod_request_ies_container;
+using ue_context_mod_request_s = elementary_procedure_option<ue_context_mod_request_ies_container>;
+struct ue_context_mod_required_ies_container;
+using ue_context_mod_required_s = elementary_procedure_option<ue_context_mod_required_ies_container>;
+struct write_replace_warning_request_ies_container;
+using write_replace_warning_request_s = elementary_procedure_option<write_replace_warning_request_ies_container>;
+struct pws_cancel_request_ies_container;
+using pws_cancel_request_s = elementary_procedure_option<pws_cancel_request_ies_container>;
+struct gnb_du_res_coordination_request_ies_container;
+using gnb_du_res_coordination_request_s = elementary_procedure_option<gnb_du_res_coordination_request_ies_container>;
+struct f1_removal_request_ies_o;
+using f1_removal_request_s = elementary_procedure_option<protocol_ie_container_l<f1_removal_request_ies_o>>;
+struct bap_map_cfg_ies_container;
+using bap_map_cfg_s = elementary_procedure_option<bap_map_cfg_ies_container>;
+struct gnb_du_res_cfg_ies_container;
+using gnb_du_res_cfg_s = elementary_procedure_option<gnb_du_res_cfg_ies_container>;
+struct iab_tnl_address_request_ies_container;
+using iab_tnl_address_request_s = elementary_procedure_option<iab_tnl_address_request_ies_container>;
+struct iab_up_cfg_upd_request_ies_container;
+using iab_up_cfg_upd_request_s = elementary_procedure_option<iab_up_cfg_upd_request_ies_container>;
+struct res_status_request_ies_container;
+using res_status_request_s = elementary_procedure_option<res_status_request_ies_container>;
+struct positioning_meas_request_ies_container;
+using positioning_meas_request_s = elementary_procedure_option<positioning_meas_request_ies_container>;
+struct trp_info_request_ies_container;
+using trp_info_request_s = elementary_procedure_option<trp_info_request_ies_container>;
+struct positioning_info_request_ies_container;
+using positioning_info_request_s = elementary_procedure_option<positioning_info_request_ies_container>;
+struct positioning_activation_request_ies_container;
+using positioning_activation_request_s = elementary_procedure_option<positioning_activation_request_ies_container>;
+struct e_c_id_meas_initiation_request_ies_container;
+using e_c_id_meas_initiation_request_s = elementary_procedure_option<e_c_id_meas_initiation_request_ies_container>;
+struct broadcast_context_setup_request_ies_container;
+using broadcast_context_setup_request_s = elementary_procedure_option<broadcast_context_setup_request_ies_container>;
+struct broadcast_context_release_cmd_ies_container;
+using broadcast_context_release_cmd_s = elementary_procedure_option<broadcast_context_release_cmd_ies_container>;
+struct broadcast_context_mod_request_ies_container;
+using broadcast_context_mod_request_s = elementary_procedure_option<broadcast_context_mod_request_ies_container>;
+struct multicast_context_setup_request_ies_container;
+using multicast_context_setup_request_s = elementary_procedure_option<multicast_context_setup_request_ies_container>;
+struct multicast_context_release_cmd_ies_container;
+using multicast_context_release_cmd_s = elementary_procedure_option<multicast_context_release_cmd_ies_container>;
+struct multicast_context_mod_request_ies_container;
+using multicast_context_mod_request_s = elementary_procedure_option<multicast_context_mod_request_ies_container>;
+struct multicast_distribution_setup_request_ies_container;
+using multicast_distribution_setup_request_s =
+    elementary_procedure_option<multicast_distribution_setup_request_ies_container>;
+struct multicast_distribution_release_cmd_ies_container;
+using multicast_distribution_release_cmd_s =
+    elementary_procedure_option<multicast_distribution_release_cmd_ies_container>;
+struct pdc_meas_initiation_request_ies_container;
+using pdc_meas_initiation_request_s = elementary_procedure_option<pdc_meas_initiation_request_ies_container>;
+struct prs_cfg_request_ies_container;
+using prs_cfg_request_s = elementary_procedure_option<prs_cfg_request_ies_container>;
+struct meas_precfg_required_ies_container;
+using meas_precfg_required_s = elementary_procedure_option<meas_precfg_required_ies_container>;
+struct error_ind_ies_container;
+using error_ind_s = elementary_procedure_option<error_ind_ies_container>;
+struct ue_context_release_request_ies_container;
+using ue_context_release_request_s = elementary_procedure_option<ue_context_release_request_ies_container>;
+struct dl_rrc_msg_transfer_ies_container;
+using dl_rrc_msg_transfer_s = elementary_procedure_option<dl_rrc_msg_transfer_ies_container>;
+struct ul_rrc_msg_transfer_ies_container;
+using ul_rrc_msg_transfer_s = elementary_procedure_option<ul_rrc_msg_transfer_ies_container>;
+struct ue_inactivity_notif_ies_container;
+using ue_inactivity_notif_s = elementary_procedure_option<ue_inactivity_notif_ies_container>;
+struct private_msg_s;
+struct init_ul_rrc_msg_transfer_ies_container;
+using init_ul_rrc_msg_transfer_s = elementary_procedure_option<init_ul_rrc_msg_transfer_ies_container>;
+struct sys_info_delivery_cmd_ies_container;
+using sys_info_delivery_cmd_s = elementary_procedure_option<sys_info_delivery_cmd_ies_container>;
+struct paging_ies_container;
+using paging_s = elementary_procedure_option<paging_ies_container>;
+struct notify_ies_container;
+using notify_s = elementary_procedure_option<notify_ies_container>;
+struct pws_restart_ind_ies_container;
+using pws_restart_ind_s = elementary_procedure_option<pws_restart_ind_ies_container>;
+struct pws_fail_ind_ies_container;
+using pws_fail_ind_s = elementary_procedure_option<pws_fail_ind_ies_container>;
+struct gnb_du_status_ind_ies_container;
+using gnb_du_status_ind_s = elementary_procedure_option<gnb_du_status_ind_ies_container>;
+struct rrc_delivery_report_ies_container;
+using rrc_delivery_report_s = elementary_procedure_option<rrc_delivery_report_ies_container>;
+struct network_access_rate_reduction_ies_container;
+using network_access_rate_reduction_s = elementary_procedure_option<network_access_rate_reduction_ies_container>;
+struct trace_start_ies_container;
+using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
+struct deactiv_trace_ies_container;
+using deactiv_trace_s = elementary_procedure_option<deactiv_trace_ies_container>;
+struct du_cu_radio_info_transfer_ies_container;
+using du_cu_radio_info_transfer_s = elementary_procedure_option<du_cu_radio_info_transfer_ies_container>;
+struct cu_du_radio_info_transfer_ies_container;
+using cu_du_radio_info_transfer_s = elementary_procedure_option<cu_du_radio_info_transfer_ies_container>;
+struct res_status_upd_ies_container;
+using res_status_upd_s = elementary_procedure_option<res_status_upd_ies_container>;
+struct access_and_mob_ind_ies_container;
+using access_and_mob_ind_s = elementary_procedure_option<access_and_mob_ind_ies_container>;
+struct ref_time_info_report_ctrl_ies_container;
+using ref_time_info_report_ctrl_s = elementary_procedure_option<ref_time_info_report_ctrl_ies_container>;
+struct ref_time_info_report_ies_container;
+using ref_time_info_report_s = elementary_procedure_option<ref_time_info_report_ies_container>;
+struct access_success_ies_container;
+using access_success_s = elementary_procedure_option<access_success_ies_container>;
+struct cell_traffic_trace_ies_container;
+using cell_traffic_trace_s = elementary_procedure_option<cell_traffic_trace_ies_container>;
+struct positioning_assist_info_ctrl_ies_container;
+using positioning_assist_info_ctrl_s = elementary_procedure_option<positioning_assist_info_ctrl_ies_container>;
+struct positioning_assist_info_feedback_ies_container;
+using positioning_assist_info_feedback_s = elementary_procedure_option<positioning_assist_info_feedback_ies_container>;
+struct positioning_meas_report_ies_container;
+using positioning_meas_report_s = elementary_procedure_option<positioning_meas_report_ies_container>;
+struct positioning_meas_abort_ies_container;
+using positioning_meas_abort_s = elementary_procedure_option<positioning_meas_abort_ies_container>;
+struct positioning_meas_fail_ind_ies_container;
+using positioning_meas_fail_ind_s = elementary_procedure_option<positioning_meas_fail_ind_ies_container>;
+struct positioning_meas_upd_ies_container;
+using positioning_meas_upd_s = elementary_procedure_option<positioning_meas_upd_ies_container>;
+struct positioning_deactivation_ies_container;
+using positioning_deactivation_s = elementary_procedure_option<positioning_deactivation_ies_container>;
+struct e_c_id_meas_fail_ind_ies_container;
+using e_c_id_meas_fail_ind_s = elementary_procedure_option<e_c_id_meas_fail_ind_ies_container>;
+struct e_c_id_meas_report_ies_container;
+using e_c_id_meas_report_s = elementary_procedure_option<e_c_id_meas_report_ies_container>;
+struct e_c_id_meas_termination_cmd_ies_container;
+using e_c_id_meas_termination_cmd_s = elementary_procedure_option<e_c_id_meas_termination_cmd_ies_container>;
+struct positioning_info_upd_ies_container;
+using positioning_info_upd_s = elementary_procedure_option<positioning_info_upd_ies_container>;
+struct multicast_group_paging_ies_container;
+using multicast_group_paging_s = elementary_procedure_option<multicast_group_paging_ies_container>;
+struct broadcast_context_release_request_ies_container;
+using broadcast_context_release_request_s =
+    elementary_procedure_option<broadcast_context_release_request_ies_container>;
+struct multicast_context_release_request_ies_container;
+using multicast_context_release_request_s =
+    elementary_procedure_option<multicast_context_release_request_ies_container>;
+struct pdc_meas_report_ies_container;
+using pdc_meas_report_s = elementary_procedure_option<pdc_meas_report_ies_container>;
+struct pdc_meas_termination_cmd_ies_container;
+using pdc_meas_termination_cmd_s = elementary_procedure_option<pdc_meas_termination_cmd_ies_container>;
+struct pdc_meas_fail_ind_ies_container;
+using pdc_meas_fail_ind_s = elementary_procedure_option<pdc_meas_fail_ind_ies_container>;
+struct meas_activation_ies_container;
+using meas_activation_s = elementary_procedure_option<meas_activation_ies_container>;
+struct qo_e_info_transfer_ies_container;
+using qo_e_info_transfer_s = elementary_procedure_option<qo_e_info_transfer_ies_container>;
+struct pos_sys_info_delivery_cmd_ies_container;
+using pos_sys_info_delivery_cmd_s = elementary_procedure_option<pos_sys_info_delivery_cmd_ies_container>;
+struct reset_ack_ies_container;
+using reset_ack_s = elementary_procedure_option<reset_ack_ies_container>;
+struct f1_setup_resp_ies_container;
+using f1_setup_resp_s = elementary_procedure_option<f1_setup_resp_ies_container>;
+struct gnb_du_cfg_upd_ack_ies_container;
+using gnb_du_cfg_upd_ack_s = elementary_procedure_option<gnb_du_cfg_upd_ack_ies_container>;
+struct gnb_cu_cfg_upd_ack_ies_container;
+using gnb_cu_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_cfg_upd_ack_ies_container>;
+struct ue_context_setup_resp_ies_container;
+using ue_context_setup_resp_s = elementary_procedure_option<ue_context_setup_resp_ies_container>;
+struct ue_context_release_complete_ies_container;
+using ue_context_release_complete_s = elementary_procedure_option<ue_context_release_complete_ies_container>;
+struct ue_context_mod_resp_ies_container;
+using ue_context_mod_resp_s = elementary_procedure_option<ue_context_mod_resp_ies_container>;
+struct ue_context_mod_confirm_ies_container;
+using ue_context_mod_confirm_s = elementary_procedure_option<ue_context_mod_confirm_ies_container>;
+struct write_replace_warning_resp_ies_container;
+using write_replace_warning_resp_s = elementary_procedure_option<write_replace_warning_resp_ies_container>;
+struct pws_cancel_resp_ies_container;
+using pws_cancel_resp_s = elementary_procedure_option<pws_cancel_resp_ies_container>;
+struct gnb_du_res_coordination_resp_ies_container;
+using gnb_du_res_coordination_resp_s = elementary_procedure_option<gnb_du_res_coordination_resp_ies_container>;
+struct f1_removal_resp_ies_container;
+using f1_removal_resp_s = elementary_procedure_option<f1_removal_resp_ies_container>;
+struct bap_map_cfg_ack_ies_container;
+using bap_map_cfg_ack_s = elementary_procedure_option<bap_map_cfg_ack_ies_container>;
+struct gnb_du_res_cfg_ack_ies_container;
+using gnb_du_res_cfg_ack_s = elementary_procedure_option<gnb_du_res_cfg_ack_ies_container>;
+struct iab_tnl_address_resp_ies_container;
+using iab_tnl_address_resp_s = elementary_procedure_option<iab_tnl_address_resp_ies_container>;
+struct iab_up_cfg_upd_resp_ies_container;
+using iab_up_cfg_upd_resp_s = elementary_procedure_option<iab_up_cfg_upd_resp_ies_container>;
+struct res_status_resp_ies_container;
+using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
+struct positioning_meas_resp_ies_container;
+using positioning_meas_resp_s = elementary_procedure_option<positioning_meas_resp_ies_container>;
+struct trp_info_resp_ies_container;
+using trp_info_resp_s = elementary_procedure_option<trp_info_resp_ies_container>;
+struct positioning_info_resp_ies_container;
+using positioning_info_resp_s = elementary_procedure_option<positioning_info_resp_ies_container>;
+struct positioning_activation_resp_ies_container;
+using positioning_activation_resp_s = elementary_procedure_option<positioning_activation_resp_ies_container>;
+struct e_c_id_meas_initiation_resp_ies_container;
+using e_c_id_meas_initiation_resp_s = elementary_procedure_option<e_c_id_meas_initiation_resp_ies_container>;
+struct broadcast_context_setup_resp_ies_container;
+using broadcast_context_setup_resp_s = elementary_procedure_option<broadcast_context_setup_resp_ies_container>;
+struct broadcast_context_release_complete_ies_container;
+using broadcast_context_release_complete_s =
+    elementary_procedure_option<broadcast_context_release_complete_ies_container>;
+struct broadcast_context_mod_resp_ies_container;
+using broadcast_context_mod_resp_s = elementary_procedure_option<broadcast_context_mod_resp_ies_container>;
+struct multicast_context_setup_resp_ies_container;
+using multicast_context_setup_resp_s = elementary_procedure_option<multicast_context_setup_resp_ies_container>;
+struct multicast_context_release_complete_ies_container;
+using multicast_context_release_complete_s =
+    elementary_procedure_option<multicast_context_release_complete_ies_container>;
+struct multicast_context_mod_resp_ies_container;
+using multicast_context_mod_resp_s = elementary_procedure_option<multicast_context_mod_resp_ies_container>;
+struct multicast_distribution_setup_resp_ies_container;
+using multicast_distribution_setup_resp_s =
+    elementary_procedure_option<multicast_distribution_setup_resp_ies_container>;
+struct multicast_distribution_release_complete_ies_container;
+using multicast_distribution_release_complete_s =
+    elementary_procedure_option<multicast_distribution_release_complete_ies_container>;
+struct pdc_meas_initiation_resp_ies_container;
+using pdc_meas_initiation_resp_s = elementary_procedure_option<pdc_meas_initiation_resp_ies_container>;
+struct prs_cfg_resp_ies_container;
+using prs_cfg_resp_s = elementary_procedure_option<prs_cfg_resp_ies_container>;
+struct meas_precfg_confirm_ies_container;
+using meas_precfg_confirm_s = elementary_procedure_option<meas_precfg_confirm_ies_container>;
+struct f1_setup_fail_ies_container;
+using f1_setup_fail_s = elementary_procedure_option<f1_setup_fail_ies_container>;
+struct gnb_du_cfg_upd_fail_ies_container;
+using gnb_du_cfg_upd_fail_s = elementary_procedure_option<gnb_du_cfg_upd_fail_ies_container>;
+struct gnb_cu_cfg_upd_fail_ies_container;
+using gnb_cu_cfg_upd_fail_s = elementary_procedure_option<gnb_cu_cfg_upd_fail_ies_container>;
+struct ue_context_setup_fail_ies_container;
+using ue_context_setup_fail_s = elementary_procedure_option<ue_context_setup_fail_ies_container>;
+struct ue_context_mod_fail_ies_container;
+using ue_context_mod_fail_s = elementary_procedure_option<ue_context_mod_fail_ies_container>;
+struct ue_context_mod_refuse_ies_container;
+using ue_context_mod_refuse_s = elementary_procedure_option<ue_context_mod_refuse_ies_container>;
+struct f1_removal_fail_ies_container;
+using f1_removal_fail_s = elementary_procedure_option<f1_removal_fail_ies_container>;
+struct bap_map_cfg_fail_ies_container;
+using bap_map_cfg_fail_s = elementary_procedure_option<bap_map_cfg_fail_ies_container>;
+struct gnb_du_res_cfg_fail_ies_container;
+using gnb_du_res_cfg_fail_s = elementary_procedure_option<gnb_du_res_cfg_fail_ies_container>;
+struct iab_tnl_address_fail_ies_container;
+using iab_tnl_address_fail_s = elementary_procedure_option<iab_tnl_address_fail_ies_container>;
+struct iab_up_cfg_upd_fail_ies_container;
+using iab_up_cfg_upd_fail_s = elementary_procedure_option<iab_up_cfg_upd_fail_ies_container>;
+struct res_status_fail_ies_container;
+using res_status_fail_s = elementary_procedure_option<res_status_fail_ies_container>;
+struct positioning_meas_fail_ies_container;
+using positioning_meas_fail_s = elementary_procedure_option<positioning_meas_fail_ies_container>;
+struct trp_info_fail_ies_container;
+using trp_info_fail_s = elementary_procedure_option<trp_info_fail_ies_container>;
+struct positioning_info_fail_ies_container;
+using positioning_info_fail_s = elementary_procedure_option<positioning_info_fail_ies_container>;
+struct positioning_activation_fail_ies_container;
+using positioning_activation_fail_s = elementary_procedure_option<positioning_activation_fail_ies_container>;
+struct e_c_id_meas_initiation_fail_ies_container;
+using e_c_id_meas_initiation_fail_s = elementary_procedure_option<e_c_id_meas_initiation_fail_ies_container>;
+struct broadcast_context_setup_fail_ies_container;
+using broadcast_context_setup_fail_s = elementary_procedure_option<broadcast_context_setup_fail_ies_container>;
+struct broadcast_context_mod_fail_ies_container;
+using broadcast_context_mod_fail_s = elementary_procedure_option<broadcast_context_mod_fail_ies_container>;
+struct multicast_context_setup_fail_ies_container;
+using multicast_context_setup_fail_s = elementary_procedure_option<multicast_context_setup_fail_ies_container>;
+struct multicast_context_mod_fail_ies_container;
+using multicast_context_mod_fail_s = elementary_procedure_option<multicast_context_mod_fail_ies_container>;
+struct multicast_distribution_setup_fail_ies_container;
+using multicast_distribution_setup_fail_s =
+    elementary_procedure_option<multicast_distribution_setup_fail_ies_container>;
+struct pdc_meas_initiation_fail_ies_container;
+using pdc_meas_initiation_fail_s = elementary_procedure_option<pdc_meas_initiation_fail_ies_container>;
+struct prs_cfg_fail_ies_container;
+using prs_cfg_fail_s = elementary_procedure_option<prs_cfg_fail_ies_container>;
+struct meas_precfg_refuse_ies_container;
+using meas_precfg_refuse_s = elementary_procedure_option<meas_precfg_refuse_ies_container>;
 
 /*******************************************************************************
  *                              Struct Definitions
@@ -131,9 +411,6 @@ struct f1ap_elem_procs_o {
 
     // choice methods
     init_msg_c() = default;
-    init_msg_c(const init_msg_c& other);
-    init_msg_c& operator=(const init_msg_c& other);
-    ~init_msg_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -298,88 +575,8 @@ struct f1ap_elem_procs_o {
     const pos_sys_info_delivery_cmd_s&            pos_sys_info_delivery_cmd() const;
 
   private:
-    types type_;
-    choice_buffer_t<access_and_mob_ind_s,
-                    access_success_s,
-                    bap_map_cfg_s,
-                    broadcast_context_mod_request_s,
-                    broadcast_context_release_cmd_s,
-                    broadcast_context_release_request_s,
-                    broadcast_context_setup_request_s,
-                    cell_traffic_trace_s,
-                    cu_du_radio_info_transfer_s,
-                    deactiv_trace_s,
-                    dl_rrc_msg_transfer_s,
-                    du_cu_radio_info_transfer_s,
-                    e_c_id_meas_fail_ind_s,
-                    e_c_id_meas_initiation_request_s,
-                    e_c_id_meas_report_s,
-                    e_c_id_meas_termination_cmd_s,
-                    error_ind_s,
-                    f1_removal_request_s,
-                    f1_setup_request_s,
-                    gnb_cu_cfg_upd_s,
-                    gnb_du_cfg_upd_s,
-                    gnb_du_res_cfg_s,
-                    gnb_du_res_coordination_request_s,
-                    gnb_du_status_ind_s,
-                    iab_tnl_address_request_s,
-                    iab_up_cfg_upd_request_s,
-                    init_ul_rrc_msg_transfer_s,
-                    meas_activation_s,
-                    meas_precfg_required_s,
-                    multicast_context_mod_request_s,
-                    multicast_context_release_cmd_s,
-                    multicast_context_release_request_s,
-                    multicast_context_setup_request_s,
-                    multicast_distribution_release_cmd_s,
-                    multicast_distribution_setup_request_s,
-                    multicast_group_paging_s,
-                    network_access_rate_reduction_s,
-                    notify_s,
-                    paging_s,
-                    pdc_meas_fail_ind_s,
-                    pdc_meas_initiation_request_s,
-                    pdc_meas_report_s,
-                    pdc_meas_termination_cmd_s,
-                    pos_sys_info_delivery_cmd_s,
-                    positioning_activation_request_s,
-                    positioning_assist_info_ctrl_s,
-                    positioning_assist_info_feedback_s,
-                    positioning_deactivation_s,
-                    positioning_info_request_s,
-                    positioning_info_upd_s,
-                    positioning_meas_abort_s,
-                    positioning_meas_fail_ind_s,
-                    positioning_meas_report_s,
-                    positioning_meas_request_s,
-                    positioning_meas_upd_s,
-                    private_msg_s,
-                    prs_cfg_request_s,
-                    pws_cancel_request_s,
-                    pws_fail_ind_s,
-                    pws_restart_ind_s,
-                    qo_e_info_transfer_s,
-                    ref_time_info_report_ctrl_s,
-                    ref_time_info_report_s,
-                    res_status_request_s,
-                    res_status_upd_s,
-                    reset_s,
-                    rrc_delivery_report_s,
-                    sys_info_delivery_cmd_s,
-                    trace_start_s,
-                    trp_info_request_s,
-                    ue_context_mod_request_s,
-                    ue_context_mod_required_s,
-                    ue_context_release_cmd_s,
-                    ue_context_release_request_s,
-                    ue_context_setup_request_s,
-                    ue_inactivity_notif_s,
-                    ul_rrc_msg_transfer_s,
-                    write_replace_warning_request_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
   // SuccessfulOutcome ::= OPEN TYPE
   struct successful_outcome_c {
@@ -427,9 +624,6 @@ struct f1ap_elem_procs_o {
 
     // choice methods
     successful_outcome_c() = default;
-    successful_outcome_c(const successful_outcome_c& other);
-    successful_outcome_c& operator=(const successful_outcome_c& other);
-    ~successful_outcome_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -504,43 +698,8 @@ struct f1ap_elem_procs_o {
     const meas_precfg_confirm_s&                     meas_precfg_confirm() const;
 
   private:
-    types type_;
-    choice_buffer_t<bap_map_cfg_ack_s,
-                    broadcast_context_mod_resp_s,
-                    broadcast_context_release_complete_s,
-                    broadcast_context_setup_resp_s,
-                    e_c_id_meas_initiation_resp_s,
-                    f1_removal_resp_s,
-                    f1_setup_resp_s,
-                    gnb_cu_cfg_upd_ack_s,
-                    gnb_du_cfg_upd_ack_s,
-                    gnb_du_res_cfg_ack_s,
-                    gnb_du_res_coordination_resp_s,
-                    iab_tnl_address_resp_s,
-                    iab_up_cfg_upd_resp_s,
-                    meas_precfg_confirm_s,
-                    multicast_context_mod_resp_s,
-                    multicast_context_release_complete_s,
-                    multicast_context_setup_resp_s,
-                    multicast_distribution_release_complete_s,
-                    multicast_distribution_setup_resp_s,
-                    pdc_meas_initiation_resp_s,
-                    positioning_activation_resp_s,
-                    positioning_info_resp_s,
-                    positioning_meas_resp_s,
-                    prs_cfg_resp_s,
-                    pws_cancel_resp_s,
-                    res_status_resp_s,
-                    reset_ack_s,
-                    trp_info_resp_s,
-                    ue_context_mod_confirm_s,
-                    ue_context_mod_resp_s,
-                    ue_context_release_complete_s,
-                    ue_context_setup_resp_s,
-                    write_replace_warning_resp_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
   // UnsuccessfulOutcome ::= OPEN TYPE
   struct unsuccessful_outcome_c {
@@ -580,9 +739,6 @@ struct f1ap_elem_procs_o {
 
     // choice methods
     unsuccessful_outcome_c() = default;
-    unsuccessful_outcome_c(const unsuccessful_outcome_c& other);
-    unsuccessful_outcome_c& operator=(const unsuccessful_outcome_c& other);
-    ~unsuccessful_outcome_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -641,35 +797,8 @@ struct f1ap_elem_procs_o {
     const meas_precfg_refuse_s&                meas_precfg_refuse() const;
 
   private:
-    types type_;
-    choice_buffer_t<bap_map_cfg_fail_s,
-                    broadcast_context_mod_fail_s,
-                    broadcast_context_setup_fail_s,
-                    e_c_id_meas_initiation_fail_s,
-                    f1_removal_fail_s,
-                    f1_setup_fail_s,
-                    gnb_cu_cfg_upd_fail_s,
-                    gnb_du_cfg_upd_fail_s,
-                    gnb_du_res_cfg_fail_s,
-                    iab_tnl_address_fail_s,
-                    iab_up_cfg_upd_fail_s,
-                    meas_precfg_refuse_s,
-                    multicast_context_mod_fail_s,
-                    multicast_context_setup_fail_s,
-                    multicast_distribution_setup_fail_s,
-                    pdc_meas_initiation_fail_s,
-                    positioning_activation_fail_s,
-                    positioning_info_fail_s,
-                    positioning_meas_fail_s,
-                    prs_cfg_fail_s,
-                    res_status_fail_s,
-                    trp_info_fail_s,
-                    ue_context_mod_fail_s,
-                    ue_context_mod_refuse_s,
-                    ue_context_setup_fail_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -817,178 +946,3 @@ using protocol_ie_container_pair_l = dyn_seq_of<protocol_ie_field_pair_s<ies_set
 
 } // namespace f1ap
 } // namespace asn1
-
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::access_and_mob_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::access_success_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::sul_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::gnb_du_cell_res_cfg_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::iab_du_cell_res_cfg_fdd_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::iab_du_cell_res_cfg_tdd_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::add_path_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::ba_player_bh_rlc_ch_map_info_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_fail_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::dyn_5qi_descriptor_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::non_dyn_5qi_descriptor_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::qos_flow_level_qos_params_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::bplmn_id_info_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_complete_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::cu_du_radio_info_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::cu_to_du_rrc_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::rr_status_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::cell_traffic_trace_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::cells_to_be_activ_list_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::iab_mt_cell_list_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::dl_rrc_msg_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::flows_mapped_to_drb_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_modified_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::ul_up_tnl_info_to_be_setup_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_required_to_be_modified_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_setup_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_setup_mod_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_modified_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_setup_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::du_cu_radio_info_transfer_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::du_to_cu_rrc_info_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::deactiv_trace_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_termination_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::error_ind_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::extended_served_plmns_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::fdd_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::gnb_rx_tx_time_diff_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::tdd_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::ul_rtoa_meas_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::gnb_du_sys_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::pos_meas_result_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::served_cell_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::paging_cell_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::srbs_to_be_setup_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::srbs_to_be_setup_mod_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::trp_meas_request_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::trp_meas_upd_item_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::pws_sys_info_ext_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::trace_activation_ext_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_removal_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_removal_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_status_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::init_ul_rrc_msg_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_activation_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_confirm_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_refuse_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_required_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_complete_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_release_complete_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_group_paging_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::network_access_rate_reduction_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::notify_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_termination_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_cancel_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_cancel_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_restart_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::paging_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pos_sys_info_delivery_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_assist_info_ctrl_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_assist_info_feedback_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_deactivation_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_abort_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_fail_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::qo_e_info_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::rrc_delivery_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ref_time_info_report_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ref_time_info_report_ctrl_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::reset_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::reset_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::sys_info_delivery_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trace_start_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_confirm_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_refuse_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_required_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_cmd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_complete_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_inactivity_notif_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ul_rrc_msg_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_resp_ies_o>;

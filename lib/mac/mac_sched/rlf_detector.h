@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/mac/mac_config.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/support/srsran_assert.h"
@@ -31,14 +32,26 @@
 
 namespace srsran {
 
+/// \brief Metrics used as reference to detect/trigger RLF.
+struct rlf_metrics {
+  unsigned max_consecutive_dl_kos;
+  unsigned max_consecutive_ul_kos;
+  unsigned max_consecutive_csi_dtx;
+};
+
 /// \brief Detector of RLFs in the MAC, based on HARQ-ACK and CRC indications.
 class rlf_detector
 {
 public:
-  rlf_detector(unsigned max_consecutive_dl_kos, unsigned max_consecutive_ul_kos, unsigned max_consecutive_csi_dtx) :
-    max_consecutive_kos({max_consecutive_dl_kos, max_consecutive_ul_kos, max_consecutive_csi_dtx}),
-    logger(srslog::fetch_basic_logger("MAC"))
+  rlf_detector(const mac_expert_config& expert_cfg) : logger(srslog::fetch_basic_logger("MAC"))
   {
+    max_consecutive_kos.resize(expert_cfg.configs.size());
+    for (auto mac_cfg_it = expert_cfg.configs.begin(); mac_cfg_it != expert_cfg.configs.end(); ++mac_cfg_it) {
+      max_consecutive_kos[std::distance(expert_cfg.configs.begin(), mac_cfg_it)] =
+          rlf_metrics{.max_consecutive_dl_kos  = mac_cfg_it->max_consecutive_dl_kos,
+                      .max_consecutive_ul_kos  = mac_cfg_it->max_consecutive_ul_kos,
+                      .max_consecutive_csi_dtx = mac_cfg_it->max_consecutive_csi_dtx};
+    }
   }
 
   void add_ue(du_ue_index_t ue_index, mac_ue_radio_link_notifier& notifier)
@@ -52,22 +65,28 @@ public:
     ues[ue_index].notifier = &notifier;
   }
 
-  void rem_ue(du_ue_index_t ue_index)
+  void rem_ue(du_ue_index_t ue_index, du_cell_index_t cell_index)
   {
     srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
 
-    ues[ue_index].ko_counters[0] = max_consecutive_kos[0] + 1;
-    ues[ue_index].ko_counters[1] = max_consecutive_kos[1] + 1;
-    ues[ue_index].ko_counters[2] = max_consecutive_kos[2] + 1;
+    ues[ue_index].ko_counters[0] = max_consecutive_kos[cell_index].max_consecutive_dl_kos + 1;
+    ues[ue_index].ko_counters[1] = max_consecutive_kos[cell_index].max_consecutive_ul_kos + 1;
+    ues[ue_index].ko_counters[2] = max_consecutive_kos[cell_index].max_consecutive_csi_dtx + 1;
     std::lock_guard<std::mutex> lock(ues[ue_index].notifier_mutex);
     ues[ue_index].notifier = nullptr;
   }
 
-  void handle_ack(du_ue_index_t ue_index, bool ack) { handle_ack_common(ue_index, ack, 0); }
+  void handle_ack(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack)
+  {
+    handle_ack_common(ue_index, cell_index, ack, 0);
+  }
 
-  void handle_crc(du_ue_index_t ue_index, bool crc) { handle_ack_common(ue_index, crc, 1); }
+  void handle_crc(du_ue_index_t ue_index, du_cell_index_t cell_index, bool crc)
+  {
+    handle_ack_common(ue_index, cell_index, crc, 1);
+  }
 
-  void handle_csi(du_ue_index_t ue_index, bool csi_decoded)
+  void handle_csi(du_ue_index_t ue_index, du_cell_index_t cell_index, bool csi_decoded)
   {
     srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
     auto& u = ues[ue_index];
@@ -79,7 +98,7 @@ public:
     } else {
       unsigned current_count = u.ko_counters[csi_index].fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
       // Note: We use == instead of <= to ensure only one notification is sent.
-      if (current_count == max_consecutive_kos[csi_index]) {
+      if (current_count == max_consecutive_kos[cell_index].max_consecutive_csi_dtx) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
           logger.info("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
@@ -103,7 +122,7 @@ public:
   }
 
 private:
-  void handle_ack_common(du_ue_index_t ue_index, bool ack, unsigned count_index)
+  void handle_ack_common(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack, unsigned count_index)
   {
     srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
     auto& u = ues[ue_index];
@@ -113,7 +132,9 @@ private:
     } else {
       unsigned current_count = u.ko_counters[count_index].fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
       // Note: We use == instead of <= to ensure only one notification is sent.
-      if (current_count == max_consecutive_kos[count_index]) {
+      const unsigned max_counter = count_index == 0 ? max_consecutive_kos[cell_index].max_consecutive_dl_kos
+                                                    : max_consecutive_kos[cell_index].max_consecutive_csi_dtx;
+      if (current_count == max_counter) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
           logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
@@ -128,9 +149,9 @@ private:
     }
   }
 
-  // DL for index 0, UL for index 1, CSI for index 2.
-  std::array<const unsigned, 3> max_consecutive_kos;
-  srslog::basic_logger&         logger;
+  // DL for index 0, UL for index 1, CSI for index 2 in each cell.
+  static_vector<rlf_metrics, MAX_NOF_DU_CELLS> max_consecutive_kos;
+  srslog::basic_logger&                        logger;
 
   struct ue_context {
     // DL for index 0, UL for index 1, CSI for index 2.

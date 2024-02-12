@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/unique_thread.h"
+#include "srsran/support/sysinfo.h"
 #include "fmt/ostream.h"
 #include <cstdio>
 #include <pthread.h>
@@ -28,18 +29,62 @@
 
 using namespace srsran;
 
-// Compute number of host CPUs, statically, before any framework (e.g. DPDK) affects the affinities of the main thread.
-static const size_t nof_host_cpus = []() -> size_t {
+namespace {
+
+struct cpu_description {
   cpu_set_t cpuset;
-  if (sched_getaffinity(0, sizeof(cpuset), &cpuset) == 0) {
-    return std::max(1, CPU_COUNT(&cpuset));
+  size_t    nof_cores;
+  size_t    max_cpu_id;
+};
+
+/// \brief  Compute the CPU set of the caller thread.
+cpu_description compute_machine_desc()
+{
+  // Clean-up cgroups possibly left from a previous run.
+  cleanup_cgroups();
+
+  cpu_description desc;
+  cpu_set_t&      cpuset = desc.cpuset;
+
+  // Compute the CPU bitmask.
+  CPU_ZERO(&cpuset);
+  if (sched_getaffinity(0, sizeof(cpuset), &cpuset) != 0) {
+    printf("Warning: Could not get CPU affinity of main thread. Cause: %s\n", strerror(errno));
+    // In failure case, we set all CPUs as available.
+    unsigned nof_cores = std::max(1U, std::thread::hardware_concurrency());
+    for (size_t i = 0; i < nof_cores; ++i) {
+      CPU_SET(i, &cpuset);
+    }
   }
-  return std::max(1U, std::thread::hardware_concurrency());
-}();
+
+  // Compute the number of cores.
+  desc.nof_cores = std::max(1, CPU_COUNT(&cpuset));
+
+  // Compute max CPU id.
+  for (unsigned i = 0; i < CPU_SETSIZE; ++i) {
+    if (CPU_ISSET(i, &cpuset)) {
+      desc.max_cpu_id = i;
+    }
+  }
+
+  return desc;
+}
+
+// Obtain CPU description at the start of the application. This value is affected by commands or tools like taskset,
+// which limit the number of cores available to the application. However, frameworks (e.g. DPDK) that affect the
+// affinities of the main thread in the main() function will not affect this value.
+const cpu_description host_desc = compute_machine_desc();
+
+} // namespace
 
 size_t srsran::compute_host_nof_hardware_threads()
 {
-  return nof_host_cpus;
+  return host_desc.nof_cores;
+}
+
+size_t srsran::get_host_max_cpu_id()
+{
+  return host_desc.max_cpu_id;
 }
 
 /// Sets thread OS scheduling real-time priority.
@@ -59,6 +104,12 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 
 static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap, const std::string& name)
 {
+  auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus());
+  if (invalid_ids.size() > 0) {
+    fmt::print(
+        "Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n", name, invalid_ids);
+  }
+
   cpu_set_t* cpusetp     = CPU_ALLOC(bitmap.size());
   size_t     cpuset_size = CPU_ALLOC_SIZE(bitmap.size());
   CPU_ZERO_S(cpuset_size, cpusetp);
@@ -135,9 +186,25 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
   fmt::print("Thread [{}:{}]: Sched policy is \"{}\". Priority is {}.\n", tname, tid, p, param.sched_priority);
 }
 
-void unique_thread::print_priority()
+const os_sched_affinity_bitmask& os_sched_affinity_bitmask::available_cpus()
 {
-  print_thread_priority(thread_handle.native_handle(), name.c_str(), thread_handle.get_id());
+  static os_sched_affinity_bitmask available_cpus_mask = []() {
+    os_sched_affinity_bitmask bitmask;
+    for (size_t i = 0; i < bitmask.size(); ++i) {
+      if (CPU_ISSET(i, &host_desc.cpuset)) {
+        bitmask.cpu_bitset.set(i);
+      }
+    }
+    return bitmask;
+  }();
+  return available_cpus_mask;
+}
+
+static_vector<size_t, os_sched_affinity_bitmask::MAX_CPUS>
+os_sched_affinity_bitmask::subtract(const os_sched_affinity_bitmask& rhs) const
+{
+  auto invalid_bitmap = (~rhs.cpu_bitset) & cpu_bitset;
+  return invalid_bitmap.get_bit_positions();
 }
 
 ///////////////////////////////////////
@@ -194,4 +261,9 @@ const char* srsran::this_thread_name()
 void srsran::print_this_thread_priority()
 {
   return print_thread_priority(pthread_self(), this_thread_name(), std::this_thread::get_id());
+}
+
+void unique_thread::print_priority()
+{
+  print_thread_priority(thread_handle.native_handle(), name.c_str(), thread_handle.get_id());
 }

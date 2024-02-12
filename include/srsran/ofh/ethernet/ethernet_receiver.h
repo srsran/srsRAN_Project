@@ -25,6 +25,8 @@
 namespace srsran {
 namespace ether {
 
+class frame_notifier;
+
 /// \brief Describes an Ethernet receiver.
 ///
 /// The receiver notifies incoming Ethernet frames through the \c frame_notifier interface.
@@ -35,9 +37,13 @@ public:
   virtual ~receiver() = default;
 
   /// \brief Starts the Ethernet receiver operation.
-  virtual void start() = 0;
+  ///
+  /// \param[in] notifier Ethernet frames reception notifier.
+  /// \note Caller will be blocked until the receiver is fully started.
+  virtual void start(frame_notifier& notifier) = 0;
 
-  /// Stops the Ethernet receiver operation.
+  /// \brief Stops the Ethernet receiver operation.
+  /// \note Caller will be blocked until the receiver is fully stopped.
   virtual void stop() = 0;
 };
 

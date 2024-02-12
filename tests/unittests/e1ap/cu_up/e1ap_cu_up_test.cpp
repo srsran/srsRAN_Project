@@ -22,9 +22,7 @@
 
 #include "../common/test_helpers.h"
 #include "e1ap_cu_up_test_helpers.h"
-#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

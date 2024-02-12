@@ -50,9 +50,6 @@ srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& 
   };
 
   for (const auto& pucch_res : res_list) {
-    sched_grid_resource res_0, res_1;
-    res_0.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + 1);
-
     srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
                       variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
                   "Only PUCCH format 1 and 2 are currently supported");
@@ -62,20 +59,30 @@ srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& 
     const unsigned nof_symbols  = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
                                       ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).nof_symbols
                                       : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_symbols;
+    // For PUCCH format 1, the resource has 1 PRB only.
+    const unsigned nof_prbs = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+                                  ? 1U
+                                  : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs;
+
+    // In the following, \c res_no_freq_hop contains the PRBs/symbols of the PUCCH resource with no frequency hopping,
+    // or, if frequency hopping is enabled, the PRBs/symbols of the first hop.
+    // \c res_freq_hop is only used if frequency hopping is enabled and contains the PRBs/symbols of the second hop.
+    sched_grid_resource res_no_freq_hop, res_freq_hop;
+    res_no_freq_hop.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs);
 
     if (pucch_res.second_hop_prb.has_value()) {
-      res_1.prbs.set(pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + 1);
-      res_0.symbols.set(starting_sym, starting_sym + nof_symbols / 2);
-      res_1.symbols.set(starting_sym + nof_symbols / 2, starting_sym + nof_symbols);
+      res_freq_hop.prbs.set(pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + nof_prbs);
+      res_no_freq_hop.symbols.set(starting_sym, starting_sym + nof_symbols / 2);
+      res_freq_hop.symbols.set(starting_sym + nof_symbols / 2, starting_sym + nof_symbols);
     } else {
-      res_0.symbols.set(starting_sym, starting_sym + nof_symbols);
+      res_no_freq_hop.symbols.set(starting_sym, starting_sym + nof_symbols);
     }
 
-    if (not res_0.is_empty() and not list_contains_resource(res_0)) {
-      pucch_guardbands.emplace_back(res_0);
+    if (not res_no_freq_hop.is_empty() and not list_contains_resource(res_no_freq_hop)) {
+      pucch_guardbands.emplace_back(res_no_freq_hop);
     }
-    if (not res_1.is_empty() and not list_contains_resource(res_1)) {
-      pucch_guardbands.emplace_back(res_1);
+    if (not res_freq_hop.is_empty() and not list_contains_resource(res_freq_hop)) {
+      pucch_guardbands.emplace_back(res_freq_hop);
     }
   }
   return pucch_guardbands;

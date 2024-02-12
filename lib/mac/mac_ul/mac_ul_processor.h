@@ -105,6 +105,14 @@ public:
   void handle_rx_data_indication(mac_rx_data_indication msg) override
   {
     for (mac_rx_pdu& pdu : msg.pdus) {
+      if (pdu.pdu.empty()) {
+        logger.error("cell={} slot_rx={} rnti={}: Received empty MAC RX PDU from lower layers",
+                     msg.cell_index,
+                     msg.sl_rx,
+                     pdu.rnti);
+        continue;
+      }
+
       // > Convert C-RNTI to DU-specific UE index.
       // Note: for Msg3, the UE context is not yet created, and ue_index will be an invalid index. This situation is
       // handled inside the pdu_handler.

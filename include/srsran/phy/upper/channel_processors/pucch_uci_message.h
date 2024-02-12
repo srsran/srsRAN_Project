@@ -90,6 +90,12 @@ public:
     return span<const uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
 
+  /// Returns the number of expected information bits for the full UCI payload.
+  unsigned get_expected_nof_bits_full_payload() const
+  {
+    return nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits;
+  }
+
   /// Returns the number of expected Scheduling Request (SR) information bits.
   unsigned get_expected_nof_sr_bits() const { return nof_sr_bits; }
 

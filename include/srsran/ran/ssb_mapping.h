@@ -74,7 +74,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   if (pattern_case == ssb_pattern_case::D) {
     constexpr std::array<unsigned, 4>  first_symbols = {4, 8, 16, 20};
     constexpr std::array<unsigned, 16> n             = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
-    assert(ssb_idx < first_symbols.size() * n.size());
+    srsran_assert(ssb_idx < first_symbols.size() * n.size(), "SSB index out of range.");
     return first_symbols[ssb_idx % first_symbols.size()] + 28 * n[ssb_idx / first_symbols.size()];
   }
 
@@ -84,7 +84,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   if (pattern_case == ssb_pattern_case::E) {
     constexpr std::array<unsigned, 8>  first_symbols = {8, 12, 16, 20, 32, 36, 40, 44};
     constexpr std::array<unsigned, 16> n             = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
-    assert(ssb_idx < first_symbols.size() * n.size());
+    srsran_assert(ssb_idx < first_symbols.size() * n.size(), "SSB index out of range.");
     return first_symbols[ssb_idx % first_symbols.size()] + 56 * n[ssb_idx / first_symbols.size()];
   }
 

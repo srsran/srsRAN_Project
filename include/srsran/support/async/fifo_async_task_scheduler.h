@@ -62,6 +62,7 @@ public:
   {
     // Enqueue task in case main loop is waiting for new procedure
     running = false;
+    queue.clear();
     queue.try_push(launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -87,7 +88,7 @@ private:
         CORO_AWAIT_VALUE(next_task, queue);
 
         // Await for popped task to complete
-        CORO_AWAIT(next_task);
+        CORO_AWAIT(std::move(next_task));
       }
 
       CORO_RETURN();

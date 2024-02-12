@@ -26,13 +26,22 @@
 
 namespace srsran {
 
-struct position_velocity_t {
+struct ecef_coordinates_t {
   int position_x;
   int position_y;
   int position_z;
   int velocity_vx;
   int velocity_vy;
   int velocity_vz;
+};
+
+struct orbital_coordinates_t {
+  uint64_t semi_major_axis;
+  double   eccentricity;
+  double   periapsis;
+  double   longitude;
+  double   mean_anomaly;
+  double   inclination;
 };
 
 struct ta_common_t {
@@ -62,7 +71,7 @@ struct ntn_config {
   optional<unsigned> k_mac;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  position_velocity_t ephemeris_info;
+  srsran::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   optional<ta_common_t> ta_info;

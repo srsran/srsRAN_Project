@@ -35,28 +35,50 @@ class uplink_processor;
 class uplink_processor_pool;
 class upper_phy_rx_results_notifier;
 
-/// Payload buffer pool for received data.
+/// \brief Represents a pool of payload buffers.
+///
+/// The pool comprises a circular byte array, and this class provides functionality
+/// to assign a specified number of bytes from the pool. When the array is exhausted,
+/// the payload view is started from the beginning again.
 class rx_payload_buffer_pool
 {
-  /// Maximum number of payloads contained by the pool.
-  static constexpr size_t      MAX_NUM_PAYLOAD = 4096U;
-  static constexpr units::bits MAX_BUFFER_SIZE = units::bits(MAX_RB * 156 * 8);
+  /// Maximum number of slots to store.
+  static constexpr size_t nof_slots = 40U;
+  /// Maximum number of bits that could potentially be allocated in a slot.
+  static constexpr units::bits max_buffer_size = units::bits(MAX_RB * 156 * 8);
+  /// Minimum block size. It ensures that the payload offsets are selected using multiples of blocks.
+  static constexpr unsigned min_block_size = 64;
 
 public:
-  /// Returns the next available buffer from the pool.
+  /// Returns the next available portion of the pool.
   span<uint8_t> acquire_payload_buffer(units::bytes size)
   {
-    srsran_assert(
-        size.value() <= pool[index].size(), "Buffer size (i.e., {}) exceeds maximum {}.", size, pool[index].size());
-    unsigned i = index++ % MAX_NUM_PAYLOAD;
-    return span<uint8_t>(pool[i]).first(size.value());
+    // Convert the maximum buffer size from bits to bytes for comparison and allocation.
+    static constexpr units::bytes max_buffer_size_bytes = max_buffer_size.truncate_to_bytes();
+
+    srsran_assert(size <= max_buffer_size_bytes, "Buffer size (i.e., {}) exceeds maximum {}.", size, pool.size());
+
+    // Round the number of consumed bytes to the next block.
+    size_t count = divide_ceil(size.value(), min_block_size) * min_block_size;
+
+    // Reset the available bytes if the pool is exhausted.
+    if (available.size() < count) {
+      available = pool;
+    }
+
+    // Select the first bytes as the payload for the transmission.
+    span<uint8_t> payload = available.first(size.value());
+
+    // Advance available bytes.
+    available = available.last(available.size() - count);
+    return payload;
   }
 
 private:
-  /// Buffer pool.
-  circular_array<std::array<uint8_t, MAX_BUFFER_SIZE.truncate_to_bytes().value()>, MAX_NUM_PAYLOAD> pool;
-  /// Index used to retrieve the next container.
-  unsigned index = 0;
+  /// Pool.
+  std::array<uint8_t, max_buffer_size.truncate_to_bytes().value() * nof_slots> pool;
+  /// Span that points to the unused portion of the pool.
+  span<uint8_t> available;
 };
 
 /// \brief Implementation of the upper PHY handler of receive symbols events.

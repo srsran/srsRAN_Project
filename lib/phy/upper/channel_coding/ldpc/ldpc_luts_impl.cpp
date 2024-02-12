@@ -4521,7 +4521,7 @@ static const BG_adjacency_matrix_t BG2_adjacency_matrix = {
 BG_matrix_t srsran::ldpc::get_graph(ldpc_base_graph_type bg, lifting_size_t ls)
 {
   int ls_index = LSindex[ls].index;
-  assert(ls_index != VOID_LIFTSIZE);
+  srsran_assert(ls_index != VOID_LIFTSIZE, "Invalid ls_index value '{}'", ls_index);
 
   BG_matrix_t graph_matrix = (bg == ldpc_base_graph_type::BG1) ? BG1_matrices[ls_index] : BG2_matrices[ls_index];
 

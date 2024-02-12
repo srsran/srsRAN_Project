@@ -21,8 +21,6 @@
  */
 
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::f1ap;
 
@@ -101,93 +99,27 @@ presence_e access_and_mob_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void access_and_mob_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::rach_report_info_list:
-      c.destroy<rach_report_info_list_l>();
-      break;
-    case types::rlf_report_info_list:
-      c.destroy<rlf_report_info_list_l>();
-      break;
-    case types::successful_ho_report_info_list:
-      c.destroy<successful_ho_report_info_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void access_and_mob_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::rach_report_info_list:
-      c.init<rach_report_info_list_l>();
+      c = rach_report_info_list_l{};
       break;
     case types::rlf_report_info_list:
-      c.init<rlf_report_info_list_l>();
+      c = rlf_report_info_list_l{};
       break;
     case types::successful_ho_report_info_list:
-      c.init<successful_ho_report_info_list_l>();
+      c = successful_ho_report_info_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "access_and_mob_ind_ies_o::value_c");
   }
-}
-access_and_mob_ind_ies_o::value_c::value_c(const access_and_mob_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::rach_report_info_list:
-      c.init(other.c.get<rach_report_info_list_l>());
-      break;
-    case types::rlf_report_info_list:
-      c.init(other.c.get<rlf_report_info_list_l>());
-      break;
-    case types::successful_ho_report_info_list:
-      c.init(other.c.get<successful_ho_report_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "access_and_mob_ind_ies_o::value_c");
-  }
-}
-access_and_mob_ind_ies_o::value_c&
-access_and_mob_ind_ies_o::value_c::operator=(const access_and_mob_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::rach_report_info_list:
-      c.set(other.c.get<rach_report_info_list_l>());
-      break;
-    case types::rlf_report_info_list:
-      c.set(other.c.get<rlf_report_info_list_l>());
-      break;
-    case types::successful_ho_report_info_list:
-      c.set(other.c.get<successful_ho_report_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "access_and_mob_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& access_and_mob_ind_ies_o::value_c::transaction_id()
 {
@@ -306,6 +238,22 @@ SRSASN_CODE access_and_mob_ind_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* access_and_mob_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "RACHReportInformationList",
+                                "RLFReportInformationList",
+                                "SuccessfulHOReportInformationList"};
+  return convert_enum_idx(names, 4, value, "access_and_mob_ind_ies_o::value_c::types");
+}
+uint8_t access_and_mob_ind_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "access_and_mob_ind_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<access_and_mob_ind_ies_o>;
 
 SRSASN_CODE access_and_mob_ind_ies_container::pack(bit_ref& bref) const
 {
@@ -492,76 +440,24 @@ presence_e access_success_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void access_success_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    default:
-      break;
-  }
-}
 void access_success_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::nr_cgi:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "access_success_ies_o::value_c");
   }
-}
-access_success_ies_o::value_c::value_c(const access_success_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "access_success_ies_o::value_c");
-  }
-}
-access_success_ies_o::value_c& access_success_ies_o::value_c::operator=(const access_success_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "access_success_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& access_success_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -650,6 +546,14 @@ SRSASN_CODE access_success_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* access_success_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "NRCGI"};
+  return convert_enum_idx(names, 3, value, "access_success_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<access_success_ies_o>;
 
 SRSASN_CODE access_success_ies_container::pack(bit_ref& bref) const
 {
@@ -889,132 +793,39 @@ presence_e bap_map_cfg_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void bap_map_cfg_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::bh_routing_info_added_list:
-      c.destroy<bh_routing_info_added_list_l>();
-      break;
-    case types::bh_routing_info_remd_list:
-      c.destroy<bh_routing_info_remd_list_l>();
-      break;
-    case types::traffic_map_info:
-      c.destroy<traffic_map_info_c>();
-      break;
-    case types::bap_hdr_rewriting_added_list:
-      c.destroy<bap_hdr_rewriting_added_list_l>();
-      break;
-    case types::bap_hdr_rewriting_remd_list:
-      c.destroy<bap_hdr_rewriting_remd_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void bap_map_cfg_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::bh_routing_info_added_list:
-      c.init<bh_routing_info_added_list_l>();
+      c = bh_routing_info_added_list_l{};
       break;
     case types::bh_routing_info_remd_list:
-      c.init<bh_routing_info_remd_list_l>();
+      c = bh_routing_info_remd_list_l{};
       break;
     case types::traffic_map_info:
-      c.init<traffic_map_info_c>();
+      c = traffic_map_info_c{};
       break;
     case types::buffer_size_thresh:
+      c = uint32_t{};
       break;
     case types::bap_hdr_rewriting_added_list:
-      c.init<bap_hdr_rewriting_added_list_l>();
+      c = bap_hdr_rewriting_added_list_l{};
       break;
     case types::re_routing_enable_ind:
+      c = re_routing_enable_ind_e{};
       break;
     case types::bap_hdr_rewriting_remd_list:
-      c.init<bap_hdr_rewriting_remd_list_l>();
+      c = bap_hdr_rewriting_remd_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "bap_map_cfg_ies_o::value_c");
   }
-}
-bap_map_cfg_ies_o::value_c::value_c(const bap_map_cfg_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::bh_routing_info_added_list:
-      c.init(other.c.get<bh_routing_info_added_list_l>());
-      break;
-    case types::bh_routing_info_remd_list:
-      c.init(other.c.get<bh_routing_info_remd_list_l>());
-      break;
-    case types::traffic_map_info:
-      c.init(other.c.get<traffic_map_info_c>());
-      break;
-    case types::buffer_size_thresh:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::bap_hdr_rewriting_added_list:
-      c.init(other.c.get<bap_hdr_rewriting_added_list_l>());
-      break;
-    case types::re_routing_enable_ind:
-      c.init(other.c.get<re_routing_enable_ind_e>());
-      break;
-    case types::bap_hdr_rewriting_remd_list:
-      c.init(other.c.get<bap_hdr_rewriting_remd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_ies_o::value_c");
-  }
-}
-bap_map_cfg_ies_o::value_c& bap_map_cfg_ies_o::value_c::operator=(const bap_map_cfg_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::bh_routing_info_added_list:
-      c.set(other.c.get<bh_routing_info_added_list_l>());
-      break;
-    case types::bh_routing_info_remd_list:
-      c.set(other.c.get<bh_routing_info_remd_list_l>());
-      break;
-    case types::traffic_map_info:
-      c.set(other.c.get<traffic_map_info_c>());
-      break;
-    case types::buffer_size_thresh:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::bap_hdr_rewriting_added_list:
-      c.set(other.c.get<bap_hdr_rewriting_added_list_l>());
-      break;
-    case types::re_routing_enable_ind:
-      c.set(other.c.get<re_routing_enable_ind_e>());
-      break;
-    case types::bap_hdr_rewriting_remd_list:
-      c.set(other.c.get<bap_hdr_rewriting_remd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& bap_map_cfg_ies_o::value_c::transaction_id()
 {
@@ -1214,6 +1025,21 @@ SRSASN_CODE bap_map_cfg_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* bap_map_cfg_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "BH-Routing-Information-Added-List",
+                                "BH-Routing-Information-Removed-List",
+                                "TrafficMappingInfo",
+                                "INTEGER (0..16777215)",
+                                "BAP-Header-Rewriting-Added-List",
+                                "Re-routingEnableIndicator",
+                                "BAP-Header-Rewriting-Removed-List"};
+  return convert_enum_idx(names, 8, value, "bap_map_cfg_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<bap_map_cfg_ies_o>;
 
 SRSASN_CODE bap_map_cfg_ies_container::pack(bit_ref& bref) const
 {
@@ -1469,68 +1295,21 @@ presence_e bap_map_cfg_ack_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void bap_map_cfg_ack_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void bap_map_cfg_ack_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "bap_map_cfg_ack_ies_o::value_c");
   }
-}
-bap_map_cfg_ack_ies_o::value_c::value_c(const bap_map_cfg_ack_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_ack_ies_o::value_c");
-  }
-}
-bap_map_cfg_ack_ies_o::value_c& bap_map_cfg_ack_ies_o::value_c::operator=(const bap_map_cfg_ack_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_ack_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& bap_map_cfg_ack_ies_o::value_c::transaction_id()
 {
@@ -1600,6 +1379,19 @@ SRSASN_CODE bap_map_cfg_ack_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* bap_map_cfg_ack_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 2, value, "bap_map_cfg_ack_ies_o::value_c::types");
+}
+uint8_t bap_map_cfg_ack_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "bap_map_cfg_ack_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<bap_map_cfg_ack_ies_o>;
 
 SRSASN_CODE bap_map_cfg_ack_ies_container::pack(bit_ref& bref) const
 {
@@ -1745,89 +1537,27 @@ presence_e bap_map_cfg_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void bap_map_cfg_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void bap_map_cfg_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "bap_map_cfg_fail_ies_o::value_c");
   }
-}
-bap_map_cfg_fail_ies_o::value_c::value_c(const bap_map_cfg_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_fail_ies_o::value_c");
-  }
-}
-bap_map_cfg_fail_ies_o::value_c&
-bap_map_cfg_fail_ies_o::value_c::operator=(const bap_map_cfg_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bap_map_cfg_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& bap_map_cfg_fail_ies_o::value_c::transaction_id()
 {
@@ -1936,6 +1666,19 @@ SRSASN_CODE bap_map_cfg_fail_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* bap_map_cfg_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "bap_map_cfg_fail_ies_o::value_c::types");
+}
+uint8_t bap_map_cfg_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "bap_map_cfg_fail_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<bap_map_cfg_fail_ies_o>;
 
 SRSASN_CODE bap_map_cfg_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -2114,89 +1857,27 @@ presence_e broadcast_context_mod_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_mod_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_mod_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_mod_fail_ies_o::value_c");
   }
-}
-broadcast_context_mod_fail_ies_o::value_c::value_c(const broadcast_context_mod_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_fail_ies_o::value_c");
-  }
-}
-broadcast_context_mod_fail_ies_o::value_c&
-broadcast_context_mod_fail_ies_o::value_c::operator=(const broadcast_context_mod_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_mod_fail_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -2305,6 +1986,15 @@ SRSASN_CODE broadcast_context_mod_fail_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_mod_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "broadcast_context_mod_fail_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_mod_fail_ies_o>;
 
 SRSASN_CODE broadcast_context_mod_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -2501,125 +2191,36 @@ presence_e broadcast_context_mod_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_mod_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_service_area:
-      c.destroy<mbs_service_area_c>();
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.destroy<mbs_cu_to_du_rrc_info_s>();
-      break;
-    case types::broadcast_m_rbs_to_be_setup_mod_list:
-      c.destroy<broadcast_m_rbs_to_be_setup_mod_list_l>();
-      break;
-    case types::broadcast_m_rbs_to_be_modified_list:
-      c.destroy<broadcast_m_rbs_to_be_modified_list_l>();
-      break;
-    case types::broadcast_m_rbs_to_be_released_list:
-      c.destroy<broadcast_m_rbs_to_be_released_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_mod_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_service_area:
-      c.init<mbs_service_area_c>();
+      c = mbs_service_area_c{};
       break;
     case types::mbs_cu_to_du_rrc_info:
-      c.init<mbs_cu_to_du_rrc_info_s>();
+      c = mbs_cu_to_du_rrc_info_s{};
       break;
     case types::broadcast_m_rbs_to_be_setup_mod_list:
-      c.init<broadcast_m_rbs_to_be_setup_mod_list_l>();
+      c = broadcast_m_rbs_to_be_setup_mod_list_l{};
       break;
     case types::broadcast_m_rbs_to_be_modified_list:
-      c.init<broadcast_m_rbs_to_be_modified_list_l>();
+      c = broadcast_m_rbs_to_be_modified_list_l{};
       break;
     case types::broadcast_m_rbs_to_be_released_list:
-      c.init<broadcast_m_rbs_to_be_released_list_l>();
+      c = broadcast_m_rbs_to_be_released_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_mod_request_ies_o::value_c");
   }
-}
-broadcast_context_mod_request_ies_o::value_c::value_c(const broadcast_context_mod_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_service_area:
-      c.init(other.c.get<mbs_service_area_c>());
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.init(other.c.get<mbs_cu_to_du_rrc_info_s>());
-      break;
-    case types::broadcast_m_rbs_to_be_setup_mod_list:
-      c.init(other.c.get<broadcast_m_rbs_to_be_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_to_be_modified_list:
-      c.init(other.c.get<broadcast_m_rbs_to_be_modified_list_l>());
-      break;
-    case types::broadcast_m_rbs_to_be_released_list:
-      c.init(other.c.get<broadcast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_request_ies_o::value_c");
-  }
-}
-broadcast_context_mod_request_ies_o::value_c&
-broadcast_context_mod_request_ies_o::value_c::operator=(const broadcast_context_mod_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_service_area:
-      c.set(other.c.get<mbs_service_area_c>());
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.set(other.c.get<mbs_cu_to_du_rrc_info_s>());
-      break;
-    case types::broadcast_m_rbs_to_be_setup_mod_list:
-      c.set(other.c.get<broadcast_m_rbs_to_be_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_to_be_modified_list:
-      c.set(other.c.get<broadcast_m_rbs_to_be_modified_list_l>());
-      break;
-    case types::broadcast_m_rbs_to_be_released_list:
-      c.set(other.c.get<broadcast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_mod_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -2803,6 +2404,20 @@ SRSASN_CODE broadcast_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_mod_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBS-ServiceArea",
+                                "MBS-CUtoDURRCInformation",
+                                "BroadcastMRBs-ToBeSetupMod-List",
+                                "BroadcastMRBs-ToBeModified-List",
+                                "BroadcastMRBs-ToBeReleased-List"};
+  return convert_enum_idx(names, 7, value, "broadcast_context_mod_request_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_mod_request_ies_o>;
 
 SRSASN_CODE broadcast_context_mod_request_ies_container::pack(bit_ref& bref) const
 {
@@ -3065,125 +2680,36 @@ presence_e broadcast_context_mod_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_mod_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::broadcast_m_rbs_setup_mod_list:
-      c.destroy<broadcast_m_rbs_setup_mod_list_l>();
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_mod_list:
-      c.destroy<broadcast_m_rbs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::broadcast_m_rbs_modified_list:
-      c.destroy<broadcast_m_rbs_modified_list_l>();
-      break;
-    case types::broadcast_m_rbs_failed_to_be_modified_list:
-      c.destroy<broadcast_m_rbs_failed_to_be_modified_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_mod_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::broadcast_m_rbs_setup_mod_list:
-      c.init<broadcast_m_rbs_setup_mod_list_l>();
+      c = broadcast_m_rbs_setup_mod_list_l{};
       break;
     case types::broadcast_m_rbs_failed_to_be_setup_mod_list:
-      c.init<broadcast_m_rbs_failed_to_be_setup_mod_list_l>();
+      c = broadcast_m_rbs_failed_to_be_setup_mod_list_l{};
       break;
     case types::broadcast_m_rbs_modified_list:
-      c.init<broadcast_m_rbs_modified_list_l>();
+      c = broadcast_m_rbs_modified_list_l{};
       break;
     case types::broadcast_m_rbs_failed_to_be_modified_list:
-      c.init<broadcast_m_rbs_failed_to_be_modified_list_l>();
+      c = broadcast_m_rbs_failed_to_be_modified_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_mod_resp_ies_o::value_c");
   }
-}
-broadcast_context_mod_resp_ies_o::value_c::value_c(const broadcast_context_mod_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::broadcast_m_rbs_setup_mod_list:
-      c.init(other.c.get<broadcast_m_rbs_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<broadcast_m_rbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_modified_list:
-      c.init(other.c.get<broadcast_m_rbs_modified_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_modified_list:
-      c.init(other.c.get<broadcast_m_rbs_failed_to_be_modified_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_resp_ies_o::value_c");
-  }
-}
-broadcast_context_mod_resp_ies_o::value_c&
-broadcast_context_mod_resp_ies_o::value_c::operator=(const broadcast_context_mod_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::broadcast_m_rbs_setup_mod_list:
-      c.set(other.c.get<broadcast_m_rbs_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<broadcast_m_rbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::broadcast_m_rbs_modified_list:
-      c.set(other.c.get<broadcast_m_rbs_modified_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_modified_list:
-      c.set(other.c.get<broadcast_m_rbs_failed_to_be_modified_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_mod_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_mod_resp_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -3369,6 +2895,20 @@ SRSASN_CODE broadcast_context_mod_resp_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_mod_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "BroadcastMRBs-SetupMod-List",
+                                "BroadcastMRBs-FailedToBeSetupMod-List",
+                                "BroadcastMRBs-Modified-List",
+                                "BroadcastMRBs-FailedToBeModified-List",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 7, value, "broadcast_context_mod_resp_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_mod_resp_ies_o>;
 
 SRSASN_CODE broadcast_context_mod_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -3610,77 +3150,24 @@ presence_e broadcast_context_release_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_release_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_release_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_release_cmd_ies_o::value_c");
   }
-}
-broadcast_context_release_cmd_ies_o::value_c::value_c(const broadcast_context_release_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_cmd_ies_o::value_c");
-  }
-}
-broadcast_context_release_cmd_ies_o::value_c&
-broadcast_context_release_cmd_ies_o::value_c::operator=(const broadcast_context_release_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_release_cmd_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -3769,6 +3256,14 @@ SRSASN_CODE broadcast_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_release_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "broadcast_context_release_cmd_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_release_cmd_ies_o>;
 
 SRSASN_CODE broadcast_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
@@ -3920,78 +3415,24 @@ presence_e broadcast_context_release_complete_ies_o::get_presence(const uint32_t
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_release_complete_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_release_complete_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_release_complete_ies_o::value_c");
   }
-}
-broadcast_context_release_complete_ies_o::value_c::value_c(
-    const broadcast_context_release_complete_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_complete_ies_o::value_c");
-  }
-}
-broadcast_context_release_complete_ies_o::value_c& broadcast_context_release_complete_ies_o::value_c::operator=(
-    const broadcast_context_release_complete_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_complete_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_release_complete_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -4080,6 +3521,14 @@ SRSASN_CODE broadcast_context_release_complete_ies_o::value_c::unpack(cbit_ref& 
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_release_complete_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "broadcast_context_release_complete_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_release_complete_ies_o>;
 
 SRSASN_CODE broadcast_context_release_complete_ies_container::pack(bit_ref& bref) const
 {
@@ -4233,77 +3682,24 @@ presence_e broadcast_context_release_request_ies_o::get_presence(const uint32_t&
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_release_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_release_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_release_request_ies_o::value_c");
   }
-}
-broadcast_context_release_request_ies_o::value_c::value_c(const broadcast_context_release_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_request_ies_o::value_c");
-  }
-}
-broadcast_context_release_request_ies_o::value_c& broadcast_context_release_request_ies_o::value_c::operator=(
-    const broadcast_context_release_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_release_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_release_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -4392,6 +3788,14 @@ SRSASN_CODE broadcast_context_release_request_ies_o::value_c::unpack(cbit_ref& b
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_release_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "broadcast_context_release_request_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_release_request_ies_o>;
 
 SRSASN_CODE broadcast_context_release_request_ies_container::pack(bit_ref& bref) const
 {
@@ -4549,89 +3953,27 @@ presence_e broadcast_context_setup_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_setup_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_setup_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_setup_fail_ies_o::value_c");
   }
-}
-broadcast_context_setup_fail_ies_o::value_c::value_c(const broadcast_context_setup_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_fail_ies_o::value_c");
-  }
-}
-broadcast_context_setup_fail_ies_o::value_c&
-broadcast_context_setup_fail_ies_o::value_c::operator=(const broadcast_context_setup_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_setup_fail_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -4740,6 +4082,15 @@ SRSASN_CODE broadcast_context_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_setup_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "broadcast_context_setup_fail_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_setup_fail_ies_o>;
 
 SRSASN_CODE broadcast_context_setup_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -4932,117 +4283,33 @@ presence_e broadcast_context_setup_request_ies_o::get_presence(const uint32_t& i
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_setup_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_session_id:
-      c.destroy<mbs_session_id_s>();
-      break;
-    case types::mbs_service_area:
-      c.destroy<mbs_service_area_c>();
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.destroy<mbs_cu_to_du_rrc_info_s>();
-      break;
-    case types::snssai:
-      c.destroy<snssai_s>();
-      break;
-    case types::broadcast_m_rbs_to_be_setup_list:
-      c.destroy<broadcast_m_rbs_to_be_setup_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_setup_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_session_id:
-      c.init<mbs_session_id_s>();
+      c = mbs_session_id_s{};
       break;
     case types::mbs_service_area:
-      c.init<mbs_service_area_c>();
+      c = mbs_service_area_c{};
       break;
     case types::mbs_cu_to_du_rrc_info:
-      c.init<mbs_cu_to_du_rrc_info_s>();
+      c = mbs_cu_to_du_rrc_info_s{};
       break;
     case types::snssai:
-      c.init<snssai_s>();
+      c = snssai_s{};
       break;
     case types::broadcast_m_rbs_to_be_setup_list:
-      c.init<broadcast_m_rbs_to_be_setup_list_l>();
+      c = broadcast_m_rbs_to_be_setup_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_setup_request_ies_o::value_c");
   }
-}
-broadcast_context_setup_request_ies_o::value_c::value_c(const broadcast_context_setup_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_session_id:
-      c.init(other.c.get<mbs_session_id_s>());
-      break;
-    case types::mbs_service_area:
-      c.init(other.c.get<mbs_service_area_c>());
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.init(other.c.get<mbs_cu_to_du_rrc_info_s>());
-      break;
-    case types::snssai:
-      c.init(other.c.get<snssai_s>());
-      break;
-    case types::broadcast_m_rbs_to_be_setup_list:
-      c.init(other.c.get<broadcast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_request_ies_o::value_c");
-  }
-}
-broadcast_context_setup_request_ies_o::value_c&
-broadcast_context_setup_request_ies_o::value_c::operator=(const broadcast_context_setup_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_session_id:
-      c.set(other.c.get<mbs_session_id_s>());
-      break;
-    case types::mbs_service_area:
-      c.set(other.c.get<mbs_service_area_c>());
-      break;
-    case types::mbs_cu_to_du_rrc_info:
-      c.set(other.c.get<mbs_cu_to_du_rrc_info_s>());
-      break;
-    case types::snssai:
-      c.set(other.c.get<snssai_s>());
-      break;
-    case types::broadcast_m_rbs_to_be_setup_list:
-      c.set(other.c.get<broadcast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_setup_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -5196,6 +4463,24 @@ SRSASN_CODE broadcast_context_setup_request_ies_o::value_c::unpack(cbit_ref& bre
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_setup_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "MBS-Session-ID",
+                                "MBS-ServiceArea",
+                                "MBS-CUtoDURRCInformation",
+                                "SNSSAI",
+                                "BroadcastMRBs-ToBeSetup-List"};
+  return convert_enum_idx(names, 6, value, "broadcast_context_setup_request_ies_o::value_c::types");
+}
+uint8_t broadcast_context_setup_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "broadcast_context_setup_request_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_setup_request_ies_o>;
 
 SRSASN_CODE broadcast_context_setup_request_ies_container::pack(bit_ref& bref) const
 {
@@ -5419,113 +4704,33 @@ presence_e broadcast_context_setup_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void broadcast_context_setup_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::broadcast_m_rbs_setup_list:
-      c.destroy<broadcast_m_rbs_setup_list_l>();
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_list:
-      c.destroy<broadcast_m_rbs_failed_to_be_setup_list_l>();
-      break;
-    case types::broadcast_area_scope:
-      c.destroy<broadcast_area_scope_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void broadcast_context_setup_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::broadcast_m_rbs_setup_list:
-      c.init<broadcast_m_rbs_setup_list_l>();
+      c = broadcast_m_rbs_setup_list_l{};
       break;
     case types::broadcast_m_rbs_failed_to_be_setup_list:
-      c.init<broadcast_m_rbs_failed_to_be_setup_list_l>();
+      c = broadcast_m_rbs_failed_to_be_setup_list_l{};
       break;
     case types::broadcast_area_scope:
-      c.init<broadcast_area_scope_c>();
+      c = broadcast_area_scope_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "broadcast_context_setup_resp_ies_o::value_c");
   }
-}
-broadcast_context_setup_resp_ies_o::value_c::value_c(const broadcast_context_setup_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::broadcast_m_rbs_setup_list:
-      c.init(other.c.get<broadcast_m_rbs_setup_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_list:
-      c.init(other.c.get<broadcast_m_rbs_failed_to_be_setup_list_l>());
-      break;
-    case types::broadcast_area_scope:
-      c.init(other.c.get<broadcast_area_scope_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_resp_ies_o::value_c");
-  }
-}
-broadcast_context_setup_resp_ies_o::value_c&
-broadcast_context_setup_resp_ies_o::value_c::operator=(const broadcast_context_setup_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::broadcast_m_rbs_setup_list:
-      c.set(other.c.get<broadcast_m_rbs_setup_list_l>());
-      break;
-    case types::broadcast_m_rbs_failed_to_be_setup_list:
-      c.set(other.c.get<broadcast_m_rbs_failed_to_be_setup_list_l>());
-      break;
-    case types::broadcast_area_scope:
-      c.set(other.c.get<broadcast_area_scope_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "broadcast_context_setup_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& broadcast_context_setup_resp_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -5682,6 +4887,19 @@ SRSASN_CODE broadcast_context_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* broadcast_context_setup_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "BroadcastMRBs-Setup-List",
+                                "BroadcastMRBs-FailedToBeSetup-List",
+                                "BroadcastAreaScope",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 6, value, "broadcast_context_setup_resp_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<broadcast_context_setup_resp_ies_o>;
 
 SRSASN_CODE broadcast_context_setup_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -5887,69 +5105,21 @@ presence_e cu_du_radio_info_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void cu_du_radio_info_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cu_du_radio_info_type:
-      c.destroy<cu_du_radio_info_type_c>();
-      break;
-    default:
-      break;
-  }
-}
 void cu_du_radio_info_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cu_du_radio_info_type:
-      c.init<cu_du_radio_info_type_c>();
+      c = cu_du_radio_info_type_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "cu_du_radio_info_transfer_ies_o::value_c");
   }
-}
-cu_du_radio_info_transfer_ies_o::value_c::value_c(const cu_du_radio_info_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cu_du_radio_info_type:
-      c.init(other.c.get<cu_du_radio_info_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cu_du_radio_info_transfer_ies_o::value_c");
-  }
-}
-cu_du_radio_info_transfer_ies_o::value_c&
-cu_du_radio_info_transfer_ies_o::value_c::operator=(const cu_du_radio_info_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cu_du_radio_info_type:
-      c.set(other.c.get<cu_du_radio_info_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cu_du_radio_info_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& cu_du_radio_info_transfer_ies_o::value_c::transaction_id()
 {
@@ -6019,6 +5189,19 @@ SRSASN_CODE cu_du_radio_info_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* cu_du_radio_info_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "CUDURadioInformationType"};
+  return convert_enum_idx(names, 2, value, "cu_du_radio_info_transfer_ies_o::value_c::types");
+}
+uint8_t cu_du_radio_info_transfer_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "cu_du_radio_info_transfer_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<cu_du_radio_info_transfer_ies_o>;
 
 SRSASN_CODE cu_du_radio_info_transfer_ies_container::pack(bit_ref& bref) const
 {
@@ -6175,109 +5358,33 @@ presence_e cell_traffic_trace_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void cell_traffic_trace_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trace_id:
-      c.destroy<fixed_octstring<8, true>>();
-      break;
-    case types::trace_collection_entity_ip_address:
-      c.destroy<bounded_bitstring<1, 160, true, true>>();
-      break;
-    case types::trace_collection_entity_uri:
-      c.destroy<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void cell_traffic_trace_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::trace_id:
-      c.init<fixed_octstring<8, true>>();
+      c = fixed_octstring<8, true>{};
       break;
     case types::trace_collection_entity_ip_address:
-      c.init<bounded_bitstring<1, 160, true, true>>();
+      c = bounded_bitstring<1, 160, true, true>{};
       break;
     case types::privacy_ind:
+      c = privacy_ind_e{};
       break;
     case types::trace_collection_entity_uri:
-      c.init<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+      c = visible_string<0, MAX_ASN_STRING_LENGTH, false, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "cell_traffic_trace_ies_o::value_c");
   }
-}
-cell_traffic_trace_ies_o::value_c::value_c(const cell_traffic_trace_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::trace_id:
-      c.init(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::trace_collection_entity_ip_address:
-      c.init(other.c.get<bounded_bitstring<1, 160, true, true>>());
-      break;
-    case types::privacy_ind:
-      c.init(other.c.get<privacy_ind_e>());
-      break;
-    case types::trace_collection_entity_uri:
-      c.init(other.c.get<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cell_traffic_trace_ies_o::value_c");
-  }
-}
-cell_traffic_trace_ies_o::value_c&
-cell_traffic_trace_ies_o::value_c::operator=(const cell_traffic_trace_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::trace_id:
-      c.set(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::trace_collection_entity_ip_address:
-      c.set(other.c.get<bounded_bitstring<1, 160, true, true>>());
-      break;
-    case types::privacy_ind:
-      c.set(other.c.get<privacy_ind_e>());
-      break;
-    case types::trace_collection_entity_uri:
-      c.set(other.c.get<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cell_traffic_trace_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& cell_traffic_trace_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -6424,6 +5531,19 @@ SRSASN_CODE cell_traffic_trace_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* cell_traffic_trace_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "BIT STRING",
+                                "PrivacyIndicator",
+                                "VisibleString"};
+  return convert_enum_idx(names, 6, value, "cell_traffic_trace_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<cell_traffic_trace_ies_o>;
 
 SRSASN_CODE cell_traffic_trace_ies_container::pack(bit_ref& bref) const
 {
@@ -6618,69 +5738,21 @@ presence_e du_cu_radio_info_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void du_cu_radio_info_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::du_cu_radio_info_type:
-      c.destroy<du_cu_radio_info_type_c>();
-      break;
-    default:
-      break;
-  }
-}
 void du_cu_radio_info_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::du_cu_radio_info_type:
-      c.init<du_cu_radio_info_type_c>();
+      c = du_cu_radio_info_type_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "du_cu_radio_info_transfer_ies_o::value_c");
   }
-}
-du_cu_radio_info_transfer_ies_o::value_c::value_c(const du_cu_radio_info_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::du_cu_radio_info_type:
-      c.init(other.c.get<du_cu_radio_info_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "du_cu_radio_info_transfer_ies_o::value_c");
-  }
-}
-du_cu_radio_info_transfer_ies_o::value_c&
-du_cu_radio_info_transfer_ies_o::value_c::operator=(const du_cu_radio_info_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::du_cu_radio_info_type:
-      c.set(other.c.get<du_cu_radio_info_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "du_cu_radio_info_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& du_cu_radio_info_transfer_ies_o::value_c::transaction_id()
 {
@@ -6750,6 +5822,19 @@ SRSASN_CODE du_cu_radio_info_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* du_cu_radio_info_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "DUCURadioInformationType"};
+  return convert_enum_idx(names, 2, value, "du_cu_radio_info_transfer_ies_o::value_c::types");
+}
+uint8_t du_cu_radio_info_transfer_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "du_cu_radio_info_transfer_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<du_cu_radio_info_transfer_ies_o>;
 
 SRSASN_CODE du_cu_radio_info_transfer_ies_container::pack(bit_ref& bref) const
 {
@@ -6885,76 +5970,24 @@ presence_e deactiv_trace_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void deactiv_trace_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trace_id:
-      c.destroy<fixed_octstring<8, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void deactiv_trace_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::trace_id:
-      c.init<fixed_octstring<8, true>>();
+      c = fixed_octstring<8, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "deactiv_trace_ies_o::value_c");
   }
-}
-deactiv_trace_ies_o::value_c::value_c(const deactiv_trace_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::trace_id:
-      c.init(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "deactiv_trace_ies_o::value_c");
-  }
-}
-deactiv_trace_ies_o::value_c& deactiv_trace_ies_o::value_c::operator=(const deactiv_trace_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::trace_id:
-      c.set(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "deactiv_trace_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& deactiv_trace_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -7042,6 +6075,14 @@ SRSASN_CODE deactiv_trace_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* deactiv_trace_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "OCTET STRING"};
+  return convert_enum_idx(names, 3, value, "deactiv_trace_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<deactiv_trace_ies_o>;
 
 SRSASN_CODE deactiv_trace_ies_container::pack(bit_ref& bref) const
 {
@@ -7206,93 +6247,30 @@ presence_e e_c_id_meas_fail_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_fail_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void e_c_id_meas_fail_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_fail_ind_ies_o::value_c");
   }
-}
-e_c_id_meas_fail_ind_ies_o::value_c::value_c(const e_c_id_meas_fail_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_fail_ind_ies_o::value_c");
-  }
-}
-e_c_id_meas_fail_ind_ies_o::value_c&
-e_c_id_meas_fail_ind_ies_o::value_c::operator=(const e_c_id_meas_fail_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_fail_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_fail_ind_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -7419,6 +6397,15 @@ SRSASN_CODE e_c_id_meas_fail_ind_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_fail_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..256,...)", "INTEGER (1..256,...)", "Cause"};
+  return convert_enum_idx(names, 5, value, "e_c_id_meas_fail_ind_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_fail_ind_ies_o>;
 
 SRSASN_CODE e_c_id_meas_fail_ind_ies_container::pack(bit_ref& bref) const
 {
@@ -7620,105 +6607,33 @@ presence_e e_c_id_meas_initiation_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_initiation_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void e_c_id_meas_initiation_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_initiation_fail_ies_o::value_c");
   }
-}
-e_c_id_meas_initiation_fail_ies_o::value_c::value_c(const e_c_id_meas_initiation_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_fail_ies_o::value_c");
-  }
-}
-e_c_id_meas_initiation_fail_ies_o::value_c&
-e_c_id_meas_initiation_fail_ies_o::value_c::operator=(const e_c_id_meas_initiation_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_initiation_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -7865,6 +6780,19 @@ SRSASN_CODE e_c_id_meas_initiation_fail_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_initiation_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..256,...)",
+                                "INTEGER (1..256,...)",
+                                "Cause",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 6, value, "e_c_id_meas_initiation_fail_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_initiation_fail_ies_o>;
 
 SRSASN_CODE e_c_id_meas_initiation_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -8098,117 +7026,39 @@ presence_e e_c_id_meas_initiation_request_ies_o::get_presence(const uint32_t& id
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_initiation_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::e_c_id_meas_quantities:
-      c.destroy<e_c_id_meas_quantities_l>();
-      break;
-    default:
-      break;
-  }
-}
 void e_c_id_meas_initiation_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::e_c_id_report_characteristics:
+      c = e_c_id_report_characteristics_e{};
       break;
     case types::e_c_id_meas_periodicity:
+      c = meas_periodicity_e{};
       break;
     case types::e_c_id_meas_quantities:
-      c.init<e_c_id_meas_quantities_l>();
+      c = e_c_id_meas_quantities_l{};
       break;
     case types::pos_meas_periodicity_nr_ao_a:
+      c = pos_meas_periodicity_nr_ao_a_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_initiation_request_ies_o::value_c");
   }
-}
-e_c_id_meas_initiation_request_ies_o::value_c::value_c(const e_c_id_meas_initiation_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_report_characteristics:
-      c.init(other.c.get<e_c_id_report_characteristics_e>());
-      break;
-    case types::e_c_id_meas_periodicity:
-      c.init(other.c.get<meas_periodicity_e>());
-      break;
-    case types::e_c_id_meas_quantities:
-      c.init(other.c.get<e_c_id_meas_quantities_l>());
-      break;
-    case types::pos_meas_periodicity_nr_ao_a:
-      c.init(other.c.get<pos_meas_periodicity_nr_ao_a_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_request_ies_o::value_c");
-  }
-}
-e_c_id_meas_initiation_request_ies_o::value_c&
-e_c_id_meas_initiation_request_ies_o::value_c::operator=(const e_c_id_meas_initiation_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_report_characteristics:
-      c.set(other.c.get<e_c_id_report_characteristics_e>());
-      break;
-    case types::e_c_id_meas_periodicity:
-      c.set(other.c.get<meas_periodicity_e>());
-      break;
-    case types::e_c_id_meas_quantities:
-      c.set(other.c.get<e_c_id_meas_quantities_l>());
-      break;
-    case types::pos_meas_periodicity_nr_ao_a:
-      c.set(other.c.get<pos_meas_periodicity_nr_ao_a_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_initiation_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -8397,6 +7247,21 @@ SRSASN_CODE e_c_id_meas_initiation_request_ies_o::value_c::unpack(cbit_ref& bref
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_initiation_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..256,...)",
+                                "INTEGER (1..256,...)",
+                                "E-CID-ReportCharacteristics",
+                                "MeasurementPeriodicity",
+                                "E-CID-MeasurementQuantities",
+                                "PosMeasurementPeriodicityNR-AoA"};
+  return convert_enum_idx(names, 8, value, "e_c_id_meas_initiation_request_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_initiation_request_ies_o>;
 
 SRSASN_CODE e_c_id_meas_initiation_request_ies_container::pack(bit_ref& bref) const
 {
@@ -8660,113 +7525,36 @@ presence_e e_c_id_meas_initiation_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_initiation_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::e_c_id_meas_result:
-      c.destroy<e_c_id_meas_result_s>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void e_c_id_meas_initiation_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::e_c_id_meas_result:
-      c.init<e_c_id_meas_result_s>();
+      c = e_c_id_meas_result_s{};
       break;
     case types::cell_portion_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_initiation_resp_ies_o::value_c");
   }
-}
-e_c_id_meas_initiation_resp_ies_o::value_c::value_c(const e_c_id_meas_initiation_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_meas_result:
-      c.init(other.c.get<e_c_id_meas_result_s>());
-      break;
-    case types::cell_portion_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_resp_ies_o::value_c");
-  }
-}
-e_c_id_meas_initiation_resp_ies_o::value_c&
-e_c_id_meas_initiation_resp_ies_o::value_c::operator=(const e_c_id_meas_initiation_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_meas_result:
-      c.set(other.c.get<e_c_id_meas_result_s>());
-      break;
-    case types::cell_portion_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_initiation_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_initiation_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -8932,6 +7720,20 @@ SRSASN_CODE e_c_id_meas_initiation_resp_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_initiation_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..256,...)",
+                                "INTEGER (1..256,...)",
+                                "E-CID-MeasurementResult",
+                                "INTEGER (0..4095,...)",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 7, value, "e_c_id_meas_initiation_resp_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_initiation_resp_ies_o>;
 
 SRSASN_CODE e_c_id_meas_initiation_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -9172,101 +7974,33 @@ presence_e e_c_id_meas_report_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_report_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::e_c_id_meas_result:
-      c.destroy<e_c_id_meas_result_s>();
-      break;
-    default:
-      break;
-  }
-}
 void e_c_id_meas_report_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
+      c = uint16_t{};
       break;
     case types::e_c_id_meas_result:
-      c.init<e_c_id_meas_result_s>();
+      c = e_c_id_meas_result_s{};
       break;
     case types::cell_portion_id:
+      c = uint16_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_report_ies_o::value_c");
   }
-}
-e_c_id_meas_report_ies_o::value_c::value_c(const e_c_id_meas_report_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_meas_result:
-      c.init(other.c.get<e_c_id_meas_result_s>());
-      break;
-    case types::cell_portion_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_report_ies_o::value_c");
-  }
-}
-e_c_id_meas_report_ies_o::value_c&
-e_c_id_meas_report_ies_o::value_c::operator=(const e_c_id_meas_report_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::e_c_id_meas_result:
-      c.set(other.c.get<e_c_id_meas_result_s>());
-      break;
-    case types::cell_portion_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_report_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_report_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -9412,6 +8146,19 @@ SRSASN_CODE e_c_id_meas_report_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_report_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..256,...)",
+                                "INTEGER (1..256,...)",
+                                "E-CID-MeasurementResult",
+                                "INTEGER (0..4095,...)"};
+  return convert_enum_idx(names, 6, value, "e_c_id_meas_report_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_report_ies_o>;
 
 SRSASN_CODE e_c_id_meas_report_ies_container::pack(bit_ref& bref) const
 {
@@ -9617,61 +8364,27 @@ presence_e e_c_id_meas_termination_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void e_c_id_meas_termination_cmd_ies_o::value_c::destroy_() {}
 void e_c_id_meas_termination_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
-}
-e_c_id_meas_termination_cmd_ies_o::value_c::value_c(const e_c_id_meas_termination_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
+      c = uint64_t{};
       break;
     case types::lmf_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
+      c = uint16_t{};
       break;
     case types::ran_ue_meas_id:
-      c.init(other.c.get<uint16_t>());
+      c = uint16_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "e_c_id_meas_termination_cmd_ies_o::value_c");
   }
-}
-e_c_id_meas_termination_cmd_ies_o::value_c&
-e_c_id_meas_termination_cmd_ies_o::value_c::operator=(const e_c_id_meas_termination_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::lmf_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e_c_id_meas_termination_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& e_c_id_meas_termination_cmd_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -9778,6 +8491,15 @@ SRSASN_CODE e_c_id_meas_termination_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* e_c_id_meas_termination_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..256,...)", "INTEGER (1..256,...)"};
+  return convert_enum_idx(names, 4, value, "e_c_id_meas_termination_cmd_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<e_c_id_meas_termination_cmd_ies_o>;
 
 SRSASN_CODE e_c_id_meas_termination_cmd_ies_container::pack(bit_ref& bref) const
 {
@@ -9957,96 +8679,30 @@ presence_e error_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void error_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void error_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "error_ind_ies_o::value_c");
   }
-}
-error_ind_ies_o::value_c::value_c(const error_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "error_ind_ies_o::value_c");
-  }
-}
-error_ind_ies_o::value_c& error_ind_ies_o::value_c::operator=(const error_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "error_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& error_ind_ies_o::value_c::transaction_id()
 {
@@ -10174,6 +8830,15 @@ SRSASN_CODE error_ind_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* error_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "error_ind_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<error_ind_ies_o>;
 
 SRSASN_CODE error_ind_ies_container::pack(bit_ref& bref) const
 {
@@ -10358,6 +9023,12 @@ SRSASN_CODE semipersistent_srs_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* semipersistent_srs_ext_ies_o::ext_c::types_opts::to_string() const
+{
+  static const char* names[] = {"SpatialRelationPerSRSResource"};
+  return convert_enum_idx(names, 1, value, "semipersistent_srs_ext_ies_o::ext_c::types");
+}
+
 // UE-associatedLogicalF1-ConnectionItemRes ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_associated_lc_f1_conn_item_res_o::idx_to_id(uint32_t idx)
 {
@@ -10412,6 +9083,17 @@ SRSASN_CODE ue_associated_lc_f1_conn_item_res_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_associated_lc_f1_conn_item_res_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-associatedLogicalF1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
+}
+uint8_t ue_associated_lc_f1_conn_item_res_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
 }
 
 // ResetAll ::= ENUMERATED
@@ -10525,6 +9207,12 @@ SRSASN_CODE trp_info_item_trp_resp_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* trp_info_item_trp_resp_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"TRPInformationItem"};
+  return convert_enum_idx(names, 1, value, "trp_info_item_trp_resp_o::value_c::types");
+}
+
 // TRPInformationTypeItemTRPReq ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t trp_info_type_item_trp_req_o::idx_to_id(uint32_t idx)
 {
@@ -10578,6 +9266,12 @@ SRSASN_CODE trp_info_type_item_trp_req_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* trp_info_type_item_trp_req_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"TRPInformationTypeItem"};
+  return convert_enum_idx(names, 1, value, "trp_info_type_item_trp_req_o::value_c::types");
 }
 
 // UE-associatedLogicalF1-ConnectionItemResAck ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -10634,6 +9328,17 @@ SRSASN_CODE ue_associated_lc_f1_conn_item_res_ack_o::value_c::unpack(cbit_ref& b
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
+}
+
+const char* ue_associated_lc_f1_conn_item_res_ack_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UE-associatedLogicalF1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
+}
+uint8_t ue_associated_lc_f1_conn_item_res_ack_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_o>;
@@ -11036,80 +9741,24 @@ presence_e f1_removal_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void f1_removal_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void f1_removal_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "f1_removal_fail_ies_o::value_c");
   }
-}
-f1_removal_fail_ies_o::value_c::value_c(const f1_removal_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_removal_fail_ies_o::value_c");
-  }
-}
-f1_removal_fail_ies_o::value_c& f1_removal_fail_ies_o::value_c::operator=(const f1_removal_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_removal_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& f1_removal_fail_ies_o::value_c::transaction_id()
 {
@@ -11200,6 +9849,17 @@ SRSASN_CODE f1_removal_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* f1_removal_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "f1_removal_fail_ies_o::value_c::types");
+}
+uint8_t f1_removal_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_fail_ies_o::value_c::types");
+}
+
 // F1RemovalRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_removal_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -11253,6 +9913,17 @@ SRSASN_CODE f1_removal_request_ies_o::value_c::unpack(cbit_ref& bref)
   varlength_field_unpack_guard varlen_scope(bref, true);
   HANDLE_CODE(unpack_integer(c, bref, (uint16_t)0u, (uint16_t)255u, true, true));
   return SRSASN_SUCCESS;
+}
+
+const char* f1_removal_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)"};
+  return convert_enum_idx(names, 1, value, "f1_removal_request_ies_o::value_c::types");
+}
+uint8_t f1_removal_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_request_ies_o::value_c::types");
 }
 
 // F1RemovalResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -11312,68 +9983,21 @@ presence_e f1_removal_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void f1_removal_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void f1_removal_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "f1_removal_resp_ies_o::value_c");
   }
-}
-f1_removal_resp_ies_o::value_c::value_c(const f1_removal_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_removal_resp_ies_o::value_c");
-  }
-}
-f1_removal_resp_ies_o::value_c& f1_removal_resp_ies_o::value_c::operator=(const f1_removal_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_removal_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& f1_removal_resp_ies_o::value_c::transaction_id()
 {
@@ -11442,6 +10066,17 @@ SRSASN_CODE f1_removal_resp_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* f1_removal_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 2, value, "f1_removal_resp_ies_o::value_c::types");
+}
+uint8_t f1_removal_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_resp_ies_o::value_c::types");
 }
 
 // F1SetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -11515,88 +10150,27 @@ presence_e f1_setup_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void f1_setup_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void f1_setup_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "f1_setup_fail_ies_o::value_c");
   }
-}
-f1_setup_fail_ies_o::value_c::value_c(const f1_setup_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_fail_ies_o::value_c");
-  }
-}
-f1_setup_fail_ies_o::value_c& f1_setup_fail_ies_o::value_c::operator=(const f1_setup_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& f1_setup_fail_ies_o::value_c::transaction_id()
 {
@@ -11706,6 +10280,17 @@ SRSASN_CODE f1_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* f1_setup_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "f1_setup_fail_ies_o::value_c::types");
+}
+uint8_t f1_setup_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_setup_fail_ies_o::value_c::types");
+}
+
 // F1SetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -11805,137 +10390,39 @@ presence_e f1_setup_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void f1_setup_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb_du_name:
-      c.destroy<printable_string<1, 150, true, true>>();
-      break;
-    case types::gnb_du_served_cells_list:
-      c.destroy<gnb_du_served_cells_list_l>();
-      break;
-    case types::gnb_du_rrc_version:
-      c.destroy<rrc_version_s>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    case types::bap_address:
-      c.destroy<fixed_bitstring<10, false, true>>();
-      break;
-    case types::extended_gnb_du_name:
-      c.destroy<extended_gnb_du_name_s>();
-      break;
-    default:
-      break;
-  }
-}
 void f1_setup_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_name:
-      c.init<printable_string<1, 150, true, true>>();
+      c = printable_string<1, 150, true, true>{};
       break;
     case types::gnb_du_served_cells_list:
-      c.init<gnb_du_served_cells_list_l>();
+      c = gnb_du_served_cells_list_l{};
       break;
     case types::gnb_du_rrc_version:
-      c.init<rrc_version_s>();
+      c = rrc_version_s{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::bap_address:
-      c.init<fixed_bitstring<10, false, true>>();
+      c = fixed_bitstring<10, false, true>{};
       break;
     case types::extended_gnb_du_name:
-      c.init<extended_gnb_du_name_s>();
+      c = extended_gnb_du_name_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "f1_setup_request_ies_o::value_c");
   }
-}
-f1_setup_request_ies_o::value_c::value_c(const f1_setup_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_name:
-      c.init(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::gnb_du_served_cells_list:
-      c.init(other.c.get<gnb_du_served_cells_list_l>());
-      break;
-    case types::gnb_du_rrc_version:
-      c.init(other.c.get<rrc_version_s>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::bap_address:
-      c.init(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::extended_gnb_du_name:
-      c.init(other.c.get<extended_gnb_du_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_request_ies_o::value_c");
-  }
-}
-f1_setup_request_ies_o::value_c&
-f1_setup_request_ies_o::value_c::operator=(const f1_setup_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_name:
-      c.set(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::gnb_du_served_cells_list:
-      c.set(other.c.get<gnb_du_served_cells_list_l>());
-      break;
-    case types::gnb_du_rrc_version:
-      c.set(other.c.get<rrc_version_s>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::bap_address:
-      c.set(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::extended_gnb_du_name:
-      c.set(other.c.get<extended_gnb_du_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& f1_setup_request_ies_o::value_c::transaction_id()
 {
@@ -12126,6 +10613,19 @@ SRSASN_CODE f1_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* f1_setup_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..68719476735)",
+                                "PrintableString",
+                                "GNB-DU-Served-Cells-List",
+                                "RRC-Version",
+                                "Transport-Layer-Address-Info",
+                                "BIT STRING",
+                                "Extended-GNB-DU-Name"};
+  return convert_enum_idx(names, 8, value, "f1_setup_request_ies_o::value_c::types");
+}
+
 // F1SetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -12225,140 +10725,39 @@ presence_e f1_setup_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void f1_setup_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb_cu_name:
-      c.destroy<printable_string<1, 150, true, true>>();
-      break;
-    case types::cells_to_be_activ_list:
-      c.destroy<cells_to_be_activ_list_l>();
-      break;
-    case types::gnb_cu_rrc_version:
-      c.destroy<rrc_version_s>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.destroy<ul_bh_non_up_traffic_map_s>();
-      break;
-    case types::bap_address:
-      c.destroy<fixed_bitstring<10, false, true>>();
-      break;
-    case types::extended_gnb_cu_name:
-      c.destroy<extended_gnb_cu_name_s>();
-      break;
-    default:
-      break;
-  }
-}
 void f1_setup_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_name:
-      c.init<printable_string<1, 150, true, true>>();
+      c = printable_string<1, 150, true, true>{};
       break;
     case types::cells_to_be_activ_list:
-      c.init<cells_to_be_activ_list_l>();
+      c = cells_to_be_activ_list_l{};
       break;
     case types::gnb_cu_rrc_version:
-      c.init<rrc_version_s>();
+      c = rrc_version_s{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::ul_bh_non_up_traffic_map:
-      c.init<ul_bh_non_up_traffic_map_s>();
+      c = ul_bh_non_up_traffic_map_s{};
       break;
     case types::bap_address:
-      c.init<fixed_bitstring<10, false, true>>();
+      c = fixed_bitstring<10, false, true>{};
       break;
     case types::extended_gnb_cu_name:
-      c.init<extended_gnb_cu_name_s>();
+      c = extended_gnb_cu_name_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "f1_setup_resp_ies_o::value_c");
   }
-}
-f1_setup_resp_ies_o::value_c::value_c(const f1_setup_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_name:
-      c.init(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.init(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::gnb_cu_rrc_version:
-      c.init(other.c.get<rrc_version_s>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.init(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.init(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::extended_gnb_cu_name:
-      c.init(other.c.get<extended_gnb_cu_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_resp_ies_o::value_c");
-  }
-}
-f1_setup_resp_ies_o::value_c& f1_setup_resp_ies_o::value_c::operator=(const f1_setup_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_name:
-      c.set(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.set(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::gnb_cu_rrc_version:
-      c.set(other.c.get<rrc_version_s>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.set(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.set(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::extended_gnb_cu_name:
-      c.set(other.c.get<extended_gnb_cu_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "f1_setup_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& f1_setup_resp_ies_o::value_c::transaction_id()
 {
@@ -12550,6 +10949,24 @@ SRSASN_CODE f1_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* f1_setup_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "PrintableString",
+                                "Cells-to-be-Activated-List",
+                                "RRC-Version",
+                                "Transport-Layer-Address-Info",
+                                "UL-BH-Non-UP-Traffic-Mapping",
+                                "BIT STRING",
+                                "Extended-GNB-CU-Name"};
+  return convert_enum_idx(names, 8, value, "f1_setup_resp_ies_o::value_c::types");
+}
+uint8_t f1_setup_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_setup_resp_ies_o::value_c::types");
+}
+
 // GNBCUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
@@ -12642,129 +11059,36 @@ presence_e gnb_cu_cfg_upd_ack_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_cu_cfg_upd_ack_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cells_failed_to_be_activ_list:
-      c.destroy<cells_failed_to_be_activ_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::gnb_cu_tnl_assoc_setup_list:
-      c.destroy<gnb_cu_tnl_assoc_setup_list_l>();
-      break;
-    case types::gnb_cu_tnl_assoc_failed_to_setup_list:
-      c.destroy<gnb_cu_tnl_assoc_failed_to_setup_list_l>();
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.destroy<ded_si_delivery_needed_ue_list_l>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_cu_cfg_upd_ack_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cells_failed_to_be_activ_list:
-      c.init<cells_failed_to_be_activ_list_l>();
+      c = cells_failed_to_be_activ_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::gnb_cu_tnl_assoc_setup_list:
-      c.init<gnb_cu_tnl_assoc_setup_list_l>();
+      c = gnb_cu_tnl_assoc_setup_list_l{};
       break;
     case types::gnb_cu_tnl_assoc_failed_to_setup_list:
-      c.init<gnb_cu_tnl_assoc_failed_to_setup_list_l>();
+      c = gnb_cu_tnl_assoc_failed_to_setup_list_l{};
       break;
     case types::ded_si_delivery_needed_ue_list:
-      c.init<ded_si_delivery_needed_ue_list_l>();
+      c = ded_si_delivery_needed_ue_list_l{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ack_ies_o::value_c");
   }
-}
-gnb_cu_cfg_upd_ack_ies_o::value_c::value_c(const gnb_cu_cfg_upd_ack_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cells_failed_to_be_activ_list:
-      c.init(other.c.get<cells_failed_to_be_activ_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::gnb_cu_tnl_assoc_setup_list:
-      c.init(other.c.get<gnb_cu_tnl_assoc_setup_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_failed_to_setup_list:
-      c.init(other.c.get<gnb_cu_tnl_assoc_failed_to_setup_list_l>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.init(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ack_ies_o::value_c");
-  }
-}
-gnb_cu_cfg_upd_ack_ies_o::value_c&
-gnb_cu_cfg_upd_ack_ies_o::value_c::operator=(const gnb_cu_cfg_upd_ack_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cells_failed_to_be_activ_list:
-      c.set(other.c.get<cells_failed_to_be_activ_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::gnb_cu_tnl_assoc_setup_list:
-      c.set(other.c.get<gnb_cu_tnl_assoc_setup_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_failed_to_setup_list:
-      c.set(other.c.get<gnb_cu_tnl_assoc_failed_to_setup_list_l>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.set(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ack_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_cu_cfg_upd_ack_ies_o::value_c::transaction_id()
 {
@@ -12948,6 +11272,23 @@ SRSASN_CODE gnb_cu_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_cu_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-Failed-to-be-Activated-List",
+                                "CriticalityDiagnostics",
+                                "GNB-CU-TNL-Association-Setup-List",
+                                "GNB-CU-TNL-Association-Failed-To-Setup-List",
+                                "Dedicated-SIDelivery-NeededUE-List",
+                                "Transport-Layer-Address-Info"};
+  return convert_enum_idx(names, 7, value, "gnb_cu_cfg_upd_ack_ies_o::value_c::types");
+}
+uint8_t gnb_cu_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cfg_upd_ack_ies_o::value_c::types");
+}
+
 // GNBCUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -13019,89 +11360,27 @@ presence_e gnb_cu_cfg_upd_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_cu_cfg_upd_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_cu_cfg_upd_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_cu_cfg_upd_fail_ies_o::value_c");
   }
-}
-gnb_cu_cfg_upd_fail_ies_o::value_c::value_c(const gnb_cu_cfg_upd_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_fail_ies_o::value_c");
-  }
-}
-gnb_cu_cfg_upd_fail_ies_o::value_c&
-gnb_cu_cfg_upd_fail_ies_o::value_c::operator=(const gnb_cu_cfg_upd_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_cu_cfg_upd_fail_ies_o::value_c::transaction_id()
 {
@@ -13209,6 +11488,17 @@ SRSASN_CODE gnb_cu_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_cu_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_cfg_upd_fail_ies_o::value_c::types");
+}
+uint8_t gnb_cu_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNBCUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -13366,236 +11656,63 @@ presence_e gnb_cu_cfg_upd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_cu_cfg_upd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cells_to_be_activ_list:
-      c.destroy<cells_to_be_activ_list_l>();
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.destroy<cells_to_be_deactiv_list_l>();
-      break;
-    case types::gnb_cu_tnl_assoc_to_add_list:
-      c.destroy<gnb_cu_tnl_assoc_to_add_list_l>();
-      break;
-    case types::gnb_cu_tnl_assoc_to_rem_list:
-      c.destroy<gnb_cu_tnl_assoc_to_rem_list_l>();
-      break;
-    case types::gnb_cu_tnl_assoc_to_upd_list:
-      c.destroy<gnb_cu_tnl_assoc_to_upd_list_l>();
-      break;
-    case types::cells_to_be_barred_list:
-      c.destroy<cells_to_be_barred_list_l>();
-      break;
-    case types::protected_eutra_res_list:
-      c.destroy<protected_eutra_res_list_l>();
-      break;
-    case types::neighbour_cell_info_list:
-      c.destroy<neighbour_cell_info_list_l>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.destroy<ul_bh_non_up_traffic_map_s>();
-      break;
-    case types::bap_address:
-      c.destroy<fixed_bitstring<10, false, true>>();
-      break;
-    case types::cco_assist_info:
-      c.destroy<cco_assist_info_s>();
-      break;
-    case types::cells_for_son_list:
-      c.destroy<cells_for_son_list_l>();
-      break;
-    case types::gnb_cu_name:
-      c.destroy<printable_string<1, 150, true, true>>();
-      break;
-    case types::extended_gnb_cu_name:
-      c.destroy<extended_gnb_cu_name_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_cu_cfg_upd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cells_to_be_activ_list:
-      c.init<cells_to_be_activ_list_l>();
+      c = cells_to_be_activ_list_l{};
       break;
     case types::cells_to_be_deactiv_list:
-      c.init<cells_to_be_deactiv_list_l>();
+      c = cells_to_be_deactiv_list_l{};
       break;
     case types::gnb_cu_tnl_assoc_to_add_list:
-      c.init<gnb_cu_tnl_assoc_to_add_list_l>();
+      c = gnb_cu_tnl_assoc_to_add_list_l{};
       break;
     case types::gnb_cu_tnl_assoc_to_rem_list:
-      c.init<gnb_cu_tnl_assoc_to_rem_list_l>();
+      c = gnb_cu_tnl_assoc_to_rem_list_l{};
       break;
     case types::gnb_cu_tnl_assoc_to_upd_list:
-      c.init<gnb_cu_tnl_assoc_to_upd_list_l>();
+      c = gnb_cu_tnl_assoc_to_upd_list_l{};
       break;
     case types::cells_to_be_barred_list:
-      c.init<cells_to_be_barred_list_l>();
+      c = cells_to_be_barred_list_l{};
       break;
     case types::protected_eutra_res_list:
-      c.init<protected_eutra_res_list_l>();
+      c = protected_eutra_res_list_l{};
       break;
     case types::neighbour_cell_info_list:
-      c.init<neighbour_cell_info_list_l>();
+      c = neighbour_cell_info_list_l{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::ul_bh_non_up_traffic_map:
-      c.init<ul_bh_non_up_traffic_map_s>();
+      c = ul_bh_non_up_traffic_map_s{};
       break;
     case types::bap_address:
-      c.init<fixed_bitstring<10, false, true>>();
+      c = fixed_bitstring<10, false, true>{};
       break;
     case types::cco_assist_info:
-      c.init<cco_assist_info_s>();
+      c = cco_assist_info_s{};
       break;
     case types::cells_for_son_list:
-      c.init<cells_for_son_list_l>();
+      c = cells_for_son_list_l{};
       break;
     case types::gnb_cu_name:
-      c.init<printable_string<1, 150, true, true>>();
+      c = printable_string<1, 150, true, true>{};
       break;
     case types::extended_gnb_cu_name:
-      c.init<extended_gnb_cu_name_s>();
+      c = extended_gnb_cu_name_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ies_o::value_c");
   }
-}
-gnb_cu_cfg_upd_ies_o::value_c::value_c(const gnb_cu_cfg_upd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.init(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.init(other.c.get<cells_to_be_deactiv_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_add_list:
-      c.init(other.c.get<gnb_cu_tnl_assoc_to_add_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_rem_list:
-      c.init(other.c.get<gnb_cu_tnl_assoc_to_rem_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_upd_list:
-      c.init(other.c.get<gnb_cu_tnl_assoc_to_upd_list_l>());
-      break;
-    case types::cells_to_be_barred_list:
-      c.init(other.c.get<cells_to_be_barred_list_l>());
-      break;
-    case types::protected_eutra_res_list:
-      c.init(other.c.get<protected_eutra_res_list_l>());
-      break;
-    case types::neighbour_cell_info_list:
-      c.init(other.c.get<neighbour_cell_info_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.init(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.init(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::cco_assist_info:
-      c.init(other.c.get<cco_assist_info_s>());
-      break;
-    case types::cells_for_son_list:
-      c.init(other.c.get<cells_for_son_list_l>());
-      break;
-    case types::gnb_cu_name:
-      c.init(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::extended_gnb_cu_name:
-      c.init(other.c.get<extended_gnb_cu_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ies_o::value_c");
-  }
-}
-gnb_cu_cfg_upd_ies_o::value_c& gnb_cu_cfg_upd_ies_o::value_c::operator=(const gnb_cu_cfg_upd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.set(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.set(other.c.get<cells_to_be_deactiv_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_add_list:
-      c.set(other.c.get<gnb_cu_tnl_assoc_to_add_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_rem_list:
-      c.set(other.c.get<gnb_cu_tnl_assoc_to_rem_list_l>());
-      break;
-    case types::gnb_cu_tnl_assoc_to_upd_list:
-      c.set(other.c.get<gnb_cu_tnl_assoc_to_upd_list_l>());
-      break;
-    case types::cells_to_be_barred_list:
-      c.set(other.c.get<cells_to_be_barred_list_l>());
-      break;
-    case types::protected_eutra_res_list:
-      c.set(other.c.get<protected_eutra_res_list_l>());
-      break;
-    case types::neighbour_cell_info_list:
-      c.set(other.c.get<neighbour_cell_info_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.set(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.set(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::cco_assist_info:
-      c.set(other.c.get<cco_assist_info_s>());
-      break;
-    case types::cells_for_son_list:
-      c.set(other.c.get<cells_for_son_list_l>());
-      break;
-    case types::gnb_cu_name:
-      c.set(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::extended_gnb_cu_name:
-      c.set(other.c.get<extended_gnb_cu_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_cu_cfg_upd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_cu_cfg_upd_ies_o::value_c::transaction_id()
 {
@@ -13971,6 +12088,32 @@ SRSASN_CODE gnb_cu_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_cu_cfg_upd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-to-be-Activated-List",
+                                "Cells-to-be-Deactivated-List",
+                                "GNB-CU-TNL-Association-To-Add-List",
+                                "GNB-CU-TNL-Association-To-Remove-List",
+                                "GNB-CU-TNL-Association-To-Update-List",
+                                "Cells-to-be-Barred-List",
+                                "Protected-EUTRA-Resources-List",
+                                "Neighbour-Cell-Information-List",
+                                "Transport-Layer-Address-Info",
+                                "UL-BH-Non-UP-Traffic-Mapping",
+                                "BIT STRING",
+                                "CCO-Assistance-Information",
+                                "CellsForSON-List",
+                                "PrintableString",
+                                "Extended-GNB-CU-Name"};
+  return convert_enum_idx(names, 16, value, "gnb_cu_cfg_upd_ies_o::value_c::types");
+}
+uint8_t gnb_cu_cfg_upd_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cfg_upd_ies_o::value_c::types");
+}
+
 // GNBDUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
@@ -14070,141 +12213,39 @@ presence_e gnb_du_cfg_upd_ack_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_cfg_upd_ack_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cells_to_be_activ_list:
-      c.destroy<cells_to_be_activ_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.destroy<cells_to_be_deactiv_list_l>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.destroy<ul_bh_non_up_traffic_map_s>();
-      break;
-    case types::bap_address:
-      c.destroy<fixed_bitstring<10, false, true>>();
-      break;
-    case types::cells_for_son_list:
-      c.destroy<cells_for_son_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_cfg_upd_ack_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cells_to_be_activ_list:
-      c.init<cells_to_be_activ_list_l>();
+      c = cells_to_be_activ_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::cells_to_be_deactiv_list:
-      c.init<cells_to_be_deactiv_list_l>();
+      c = cells_to_be_deactiv_list_l{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::ul_bh_non_up_traffic_map:
-      c.init<ul_bh_non_up_traffic_map_s>();
+      c = ul_bh_non_up_traffic_map_s{};
       break;
     case types::bap_address:
-      c.init<fixed_bitstring<10, false, true>>();
+      c = fixed_bitstring<10, false, true>{};
       break;
     case types::cells_for_son_list:
-      c.init<cells_for_son_list_l>();
+      c = cells_for_son_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_cfg_upd_ack_ies_o::value_c");
   }
-}
-gnb_du_cfg_upd_ack_ies_o::value_c::value_c(const gnb_du_cfg_upd_ack_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.init(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.init(other.c.get<cells_to_be_deactiv_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.init(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.init(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::cells_for_son_list:
-      c.init(other.c.get<cells_for_son_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_ack_ies_o::value_c");
-  }
-}
-gnb_du_cfg_upd_ack_ies_o::value_c&
-gnb_du_cfg_upd_ack_ies_o::value_c::operator=(const gnb_du_cfg_upd_ack_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cells_to_be_activ_list:
-      c.set(other.c.get<cells_to_be_activ_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::cells_to_be_deactiv_list:
-      c.set(other.c.get<cells_to_be_deactiv_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::ul_bh_non_up_traffic_map:
-      c.set(other.c.get<ul_bh_non_up_traffic_map_s>());
-      break;
-    case types::bap_address:
-      c.set(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::cells_for_son_list:
-      c.set(other.c.get<cells_for_son_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_ack_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_cfg_upd_ack_ies_o::value_c::transaction_id()
 {
@@ -14403,6 +12444,24 @@ SRSASN_CODE gnb_du_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-to-be-Activated-List",
+                                "CriticalityDiagnostics",
+                                "Cells-to-be-Deactivated-List",
+                                "Transport-Layer-Address-Info",
+                                "UL-BH-Non-UP-Traffic-Mapping",
+                                "BIT STRING",
+                                "CellsForSON-List"};
+  return convert_enum_idx(names, 8, value, "gnb_du_cfg_upd_ack_ies_o::value_c::types");
+}
+uint8_t gnb_du_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_cfg_upd_ack_ies_o::value_c::types");
+}
+
 // GNBDUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -14474,89 +12533,27 @@ presence_e gnb_du_cfg_upd_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_cfg_upd_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_cfg_upd_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_cfg_upd_fail_ies_o::value_c");
   }
-}
-gnb_du_cfg_upd_fail_ies_o::value_c::value_c(const gnb_du_cfg_upd_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_fail_ies_o::value_c");
-  }
-}
-gnb_du_cfg_upd_fail_ies_o::value_c&
-gnb_du_cfg_upd_fail_ies_o::value_c::operator=(const gnb_du_cfg_upd_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_cfg_upd_fail_ies_o::value_c::transaction_id()
 {
@@ -14664,6 +12661,17 @@ SRSASN_CODE gnb_du_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_du_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_du_cfg_upd_fail_ies_o::value_c::types");
+}
+uint8_t gnb_du_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNBDUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -14793,184 +12801,51 @@ presence_e gnb_du_cfg_upd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_cfg_upd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::served_cells_to_add_list:
-      c.destroy<served_cells_to_add_list_l>();
-      break;
-    case types::served_cells_to_modify_list:
-      c.destroy<served_cells_to_modify_list_l>();
-      break;
-    case types::served_cells_to_delete_list:
-      c.destroy<served_cells_to_delete_list_l>();
-      break;
-    case types::cells_status_list:
-      c.destroy<cells_status_list_l>();
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.destroy<ded_si_delivery_needed_ue_list_l>();
-      break;
-    case types::gnb_du_tnl_assoc_to_rem_list:
-      c.destroy<gnb_du_tnl_assoc_to_rem_list_l>();
-      break;
-    case types::transport_layer_address_info:
-      c.destroy<transport_layer_address_info_s>();
-      break;
-    case types::coverage_mod_notif:
-      c.destroy<coverage_mod_notif_s>();
-      break;
-    case types::gnb_du_name:
-      c.destroy<printable_string<1, 150, true, true>>();
-      break;
-    case types::extended_gnb_du_name:
-      c.destroy<extended_gnb_du_name_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_cfg_upd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::served_cells_to_add_list:
-      c.init<served_cells_to_add_list_l>();
+      c = served_cells_to_add_list_l{};
       break;
     case types::served_cells_to_modify_list:
-      c.init<served_cells_to_modify_list_l>();
+      c = served_cells_to_modify_list_l{};
       break;
     case types::served_cells_to_delete_list:
-      c.init<served_cells_to_delete_list_l>();
+      c = served_cells_to_delete_list_l{};
       break;
     case types::cells_status_list:
-      c.init<cells_status_list_l>();
+      c = cells_status_list_l{};
       break;
     case types::ded_si_delivery_needed_ue_list:
-      c.init<ded_si_delivery_needed_ue_list_l>();
+      c = ded_si_delivery_needed_ue_list_l{};
       break;
     case types::gnb_du_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_tnl_assoc_to_rem_list:
-      c.init<gnb_du_tnl_assoc_to_rem_list_l>();
+      c = gnb_du_tnl_assoc_to_rem_list_l{};
       break;
     case types::transport_layer_address_info:
-      c.init<transport_layer_address_info_s>();
+      c = transport_layer_address_info_s{};
       break;
     case types::coverage_mod_notif:
-      c.init<coverage_mod_notif_s>();
+      c = coverage_mod_notif_s{};
       break;
     case types::gnb_du_name:
-      c.init<printable_string<1, 150, true, true>>();
+      c = printable_string<1, 150, true, true>{};
       break;
     case types::extended_gnb_du_name:
-      c.init<extended_gnb_du_name_s>();
+      c = extended_gnb_du_name_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_cfg_upd_ies_o::value_c");
   }
-}
-gnb_du_cfg_upd_ies_o::value_c::value_c(const gnb_du_cfg_upd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::served_cells_to_add_list:
-      c.init(other.c.get<served_cells_to_add_list_l>());
-      break;
-    case types::served_cells_to_modify_list:
-      c.init(other.c.get<served_cells_to_modify_list_l>());
-      break;
-    case types::served_cells_to_delete_list:
-      c.init(other.c.get<served_cells_to_delete_list_l>());
-      break;
-    case types::cells_status_list:
-      c.init(other.c.get<cells_status_list_l>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.init(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::gnb_du_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_tnl_assoc_to_rem_list:
-      c.init(other.c.get<gnb_du_tnl_assoc_to_rem_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.init(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::coverage_mod_notif:
-      c.init(other.c.get<coverage_mod_notif_s>());
-      break;
-    case types::gnb_du_name:
-      c.init(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::extended_gnb_du_name:
-      c.init(other.c.get<extended_gnb_du_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_ies_o::value_c");
-  }
-}
-gnb_du_cfg_upd_ies_o::value_c& gnb_du_cfg_upd_ies_o::value_c::operator=(const gnb_du_cfg_upd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::served_cells_to_add_list:
-      c.set(other.c.get<served_cells_to_add_list_l>());
-      break;
-    case types::served_cells_to_modify_list:
-      c.set(other.c.get<served_cells_to_modify_list_l>());
-      break;
-    case types::served_cells_to_delete_list:
-      c.set(other.c.get<served_cells_to_delete_list_l>());
-      break;
-    case types::cells_status_list:
-      c.set(other.c.get<cells_status_list_l>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.set(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::gnb_du_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_tnl_assoc_to_rem_list:
-      c.set(other.c.get<gnb_du_tnl_assoc_to_rem_list_l>());
-      break;
-    case types::transport_layer_address_info:
-      c.set(other.c.get<transport_layer_address_info_s>());
-      break;
-    case types::coverage_mod_notif:
-      c.set(other.c.get<coverage_mod_notif_s>());
-      break;
-    case types::gnb_du_name:
-      c.set(other.c.get<printable_string<1, 150, true, true>>());
-      break;
-    case types::extended_gnb_du_name:
-      c.set(other.c.get<extended_gnb_du_name_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_cfg_upd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_cfg_upd_ies_o::value_c::transaction_id()
 {
@@ -15257,6 +13132,23 @@ SRSASN_CODE gnb_du_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_cfg_upd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Served-Cells-To-Add-List",
+                                "Served-Cells-To-Modify-List",
+                                "Served-Cells-To-Delete-List",
+                                "Cells-Status-List",
+                                "Dedicated-SIDelivery-NeededUE-List",
+                                "INTEGER (0..68719476735)",
+                                "GNB-DU-TNL-Association-To-Remove-List",
+                                "Transport-Layer-Address-Info",
+                                "Coverage-Modification-Notification",
+                                "PrintableString",
+                                "Extended-GNB-DU-Name"};
+  return convert_enum_idx(names, 12, value, "gnb_du_cfg_upd_ies_o::value_c::types");
+}
+
 // GNBDUResourceConfigurationAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_res_cfg_ack_ies_o::idx_to_id(uint32_t idx)
 {
@@ -15314,69 +13206,21 @@ presence_e gnb_du_res_cfg_ack_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_res_cfg_ack_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_res_cfg_ack_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_res_cfg_ack_ies_o::value_c");
   }
-}
-gnb_du_res_cfg_ack_ies_o::value_c::value_c(const gnb_du_res_cfg_ack_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_ack_ies_o::value_c");
-  }
-}
-gnb_du_res_cfg_ack_ies_o::value_c&
-gnb_du_res_cfg_ack_ies_o::value_c::operator=(const gnb_du_res_cfg_ack_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_ack_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_res_cfg_ack_ies_o::value_c::transaction_id()
 {
@@ -15445,6 +13289,17 @@ SRSASN_CODE gnb_du_res_cfg_ack_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* gnb_du_res_cfg_ack_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 2, value, "gnb_du_res_cfg_ack_ies_o::value_c::types");
+}
+uint8_t gnb_du_res_cfg_ack_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_res_cfg_ack_ies_o::value_c::types");
 }
 
 // GNBDUResourceConfigurationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -15518,89 +13373,27 @@ presence_e gnb_du_res_cfg_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_res_cfg_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_res_cfg_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_res_cfg_fail_ies_o::value_c");
   }
-}
-gnb_du_res_cfg_fail_ies_o::value_c::value_c(const gnb_du_res_cfg_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_fail_ies_o::value_c");
-  }
-}
-gnb_du_res_cfg_fail_ies_o::value_c&
-gnb_du_res_cfg_fail_ies_o::value_c::operator=(const gnb_du_res_cfg_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_res_cfg_fail_ies_o::value_c::transaction_id()
 {
@@ -15710,6 +13503,17 @@ SRSASN_CODE gnb_du_res_cfg_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_res_cfg_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_du_res_cfg_fail_ies_o::value_c::types");
+}
+uint8_t gnb_du_res_cfg_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_res_cfg_fail_ies_o::value_c::types");
+}
+
 // GNBDUResourceConfigurationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_res_cfg_ies_o::idx_to_id(uint32_t idx)
 {
@@ -15788,104 +13592,30 @@ presence_e gnb_du_res_cfg_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_res_cfg_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::activ_cells_to_be_upd_list:
-      c.destroy<activ_cells_to_be_upd_list_l>();
-      break;
-    case types::child_nodes_list:
-      c.destroy<child_nodes_list_l>();
-      break;
-    case types::neighbour_node_cells_list:
-      c.destroy<neighbour_node_cells_list_l>();
-      break;
-    case types::serving_cells_list:
-      c.destroy<serving_cells_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_res_cfg_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::activ_cells_to_be_upd_list:
-      c.init<activ_cells_to_be_upd_list_l>();
+      c = activ_cells_to_be_upd_list_l{};
       break;
     case types::child_nodes_list:
-      c.init<child_nodes_list_l>();
+      c = child_nodes_list_l{};
       break;
     case types::neighbour_node_cells_list:
-      c.init<neighbour_node_cells_list_l>();
+      c = neighbour_node_cells_list_l{};
       break;
     case types::serving_cells_list:
-      c.init<serving_cells_list_l>();
+      c = serving_cells_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_res_cfg_ies_o::value_c");
   }
-}
-gnb_du_res_cfg_ies_o::value_c::value_c(const gnb_du_res_cfg_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::activ_cells_to_be_upd_list:
-      c.init(other.c.get<activ_cells_to_be_upd_list_l>());
-      break;
-    case types::child_nodes_list:
-      c.init(other.c.get<child_nodes_list_l>());
-      break;
-    case types::neighbour_node_cells_list:
-      c.init(other.c.get<neighbour_node_cells_list_l>());
-      break;
-    case types::serving_cells_list:
-      c.init(other.c.get<serving_cells_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_ies_o::value_c");
-  }
-}
-gnb_du_res_cfg_ies_o::value_c& gnb_du_res_cfg_ies_o::value_c::operator=(const gnb_du_res_cfg_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::activ_cells_to_be_upd_list:
-      c.set(other.c.get<activ_cells_to_be_upd_list_l>());
-      break;
-    case types::child_nodes_list:
-      c.set(other.c.get<child_nodes_list_l>());
-      break;
-    case types::neighbour_node_cells_list:
-      c.set(other.c.get<neighbour_node_cells_list_l>());
-      break;
-    case types::serving_cells_list:
-      c.set(other.c.get<serving_cells_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_cfg_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_res_cfg_ies_o::value_c::transaction_id()
 {
@@ -16028,6 +13758,21 @@ SRSASN_CODE gnb_du_res_cfg_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_res_cfg_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Activated-Cells-to-be-Updated-List",
+                                "Child-Nodes-List",
+                                "Neighbour-Node-Cells-List",
+                                "Serving-Cells-List"};
+  return convert_enum_idx(names, 5, value, "gnb_du_res_cfg_ies_o::value_c::types");
+}
+uint8_t gnb_du_res_cfg_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_res_cfg_ies_o::value_c::types");
+}
+
 // GNBDUResourceCoordinationRequest-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_res_coordination_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -16099,85 +13844,27 @@ presence_e gnb_du_res_coordination_request_ies_o::get_presence(const uint32_t& i
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_res_coordination_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::eutra_nr_cell_res_coordination_req_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_res_coordination_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::request_type:
+      c = request_type_e{};
       break;
     case types::eutra_nr_cell_res_coordination_req_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::ignore_res_coordination_container:
+      c = ignore_res_coordination_container_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_res_coordination_request_ies_o::value_c");
   }
-}
-gnb_du_res_coordination_request_ies_o::value_c::value_c(const gnb_du_res_coordination_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::request_type:
-      c.init(other.c.get<request_type_e>());
-      break;
-    case types::eutra_nr_cell_res_coordination_req_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::ignore_res_coordination_container:
-      c.init(other.c.get<ignore_res_coordination_container_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_coordination_request_ies_o::value_c");
-  }
-}
-gnb_du_res_coordination_request_ies_o::value_c&
-gnb_du_res_coordination_request_ies_o::value_c::operator=(const gnb_du_res_coordination_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::request_type:
-      c.set(other.c.get<request_type_e>());
-      break;
-    case types::eutra_nr_cell_res_coordination_req_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::ignore_res_coordination_container:
-      c.set(other.c.get<ignore_res_coordination_container_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_coordination_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_res_coordination_request_ies_o::value_c::transaction_id()
 {
@@ -16288,6 +13975,18 @@ SRSASN_CODE gnb_du_res_coordination_request_ies_o::value_c::unpack(cbit_ref& bre
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_res_coordination_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "RequestType", "OCTET STRING", "IgnoreResourceCoordinationContainer"};
+  return convert_enum_idx(names, 4, value, "gnb_du_res_coordination_request_ies_o::value_c::types");
+}
+uint8_t gnb_du_res_coordination_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_res_coordination_request_ies_o::value_c::types");
+}
+
 // GNBDUResourceCoordinationResponse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_res_coordination_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -16345,69 +14044,21 @@ presence_e gnb_du_res_coordination_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_res_coordination_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::eutra_nr_cell_res_coordination_req_ack_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_res_coordination_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::eutra_nr_cell_res_coordination_req_ack_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_res_coordination_resp_ies_o::value_c");
   }
-}
-gnb_du_res_coordination_resp_ies_o::value_c::value_c(const gnb_du_res_coordination_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::eutra_nr_cell_res_coordination_req_ack_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_coordination_resp_ies_o::value_c");
-  }
-}
-gnb_du_res_coordination_resp_ies_o::value_c&
-gnb_du_res_coordination_resp_ies_o::value_c::operator=(const gnb_du_res_coordination_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::eutra_nr_cell_res_coordination_req_ack_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_res_coordination_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_res_coordination_resp_ies_o::value_c::transaction_id()
 {
@@ -16479,6 +14130,17 @@ SRSASN_CODE gnb_du_res_coordination_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_res_coordination_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "OCTET STRING"};
+  return convert_enum_idx(names, 2, value, "gnb_du_res_coordination_resp_ies_o::value_c::types");
+}
+uint8_t gnb_du_res_coordination_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_res_coordination_resp_ies_o::value_c::types");
+}
+
 // GNBDUStatusIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_status_ind_ies_o::idx_to_id(uint32_t idx)
 {
@@ -16543,77 +14205,24 @@ presence_e gnb_du_status_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void gnb_du_status_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::iab_congestion_ind:
-      c.destroy<iab_congestion_ind_s>();
-      break;
-    default:
-      break;
-  }
-}
 void gnb_du_status_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_overload_info:
+      c = gnb_du_overload_info_e{};
       break;
     case types::iab_congestion_ind:
-      c.init<iab_congestion_ind_s>();
+      c = iab_congestion_ind_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "gnb_du_status_ind_ies_o::value_c");
   }
-}
-gnb_du_status_ind_ies_o::value_c::value_c(const gnb_du_status_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_overload_info:
-      c.init(other.c.get<gnb_du_overload_info_e>());
-      break;
-    case types::iab_congestion_ind:
-      c.init(other.c.get<iab_congestion_ind_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_status_ind_ies_o::value_c");
-  }
-}
-gnb_du_status_ind_ies_o::value_c&
-gnb_du_status_ind_ies_o::value_c::operator=(const gnb_du_status_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_overload_info:
-      c.set(other.c.get<gnb_du_overload_info_e>());
-      break;
-    case types::iab_congestion_ind:
-      c.set(other.c.get<iab_congestion_ind_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "gnb_du_status_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& gnb_du_status_ind_ies_o::value_c::transaction_id()
 {
@@ -16703,6 +14312,17 @@ SRSASN_CODE gnb_du_status_ind_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* gnb_du_status_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "GNBDUOverloadInformation", "IABCongestionIndication"};
+  return convert_enum_idx(names, 3, value, "gnb_du_status_ind_ies_o::value_c::types");
+}
+uint8_t gnb_du_status_ind_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_du_status_ind_ies_o::value_c::types");
+}
+
 // IABTNLAddressFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_tnl_address_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -16774,89 +14394,27 @@ presence_e iab_tnl_address_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_tnl_address_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_tnl_address_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_tnl_address_fail_ies_o::value_c");
   }
-}
-iab_tnl_address_fail_ies_o::value_c::value_c(const iab_tnl_address_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_fail_ies_o::value_c");
-  }
-}
-iab_tnl_address_fail_ies_o::value_c&
-iab_tnl_address_fail_ies_o::value_c::operator=(const iab_tnl_address_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_tnl_address_fail_ies_o::value_c::transaction_id()
 {
@@ -16966,6 +14524,17 @@ SRSASN_CODE iab_tnl_address_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_tnl_address_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "iab_tnl_address_fail_ies_o::value_c::types");
+}
+uint8_t iab_tnl_address_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "iab_tnl_address_fail_ies_o::value_c::types");
+}
+
 // IABTNLAddressRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_tnl_address_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -17044,105 +14613,30 @@ presence_e iab_tnl_address_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_tnl_address_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::ia_bv4_addresses_requested:
-      c.destroy<ia_bv4_addresses_requested_s>();
-      break;
-    case types::iab_ip_v6_request_type:
-      c.destroy<iab_ip_v6_request_type_c>();
-      break;
-    case types::iab_tnl_addresses_to_rem_list:
-      c.destroy<iab_tnl_addresses_to_rem_list_l>();
-      break;
-    case types::iab_tnl_addresses_exception:
-      c.destroy<iab_tnl_addresses_exception_s>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_tnl_address_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::ia_bv4_addresses_requested:
-      c.init<ia_bv4_addresses_requested_s>();
+      c = ia_bv4_addresses_requested_s{};
       break;
     case types::iab_ip_v6_request_type:
-      c.init<iab_ip_v6_request_type_c>();
+      c = iab_ip_v6_request_type_c{};
       break;
     case types::iab_tnl_addresses_to_rem_list:
-      c.init<iab_tnl_addresses_to_rem_list_l>();
+      c = iab_tnl_addresses_to_rem_list_l{};
       break;
     case types::iab_tnl_addresses_exception:
-      c.init<iab_tnl_addresses_exception_s>();
+      c = iab_tnl_addresses_exception_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_tnl_address_request_ies_o::value_c");
   }
-}
-iab_tnl_address_request_ies_o::value_c::value_c(const iab_tnl_address_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ia_bv4_addresses_requested:
-      c.init(other.c.get<ia_bv4_addresses_requested_s>());
-      break;
-    case types::iab_ip_v6_request_type:
-      c.init(other.c.get<iab_ip_v6_request_type_c>());
-      break;
-    case types::iab_tnl_addresses_to_rem_list:
-      c.init(other.c.get<iab_tnl_addresses_to_rem_list_l>());
-      break;
-    case types::iab_tnl_addresses_exception:
-      c.init(other.c.get<iab_tnl_addresses_exception_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_request_ies_o::value_c");
-  }
-}
-iab_tnl_address_request_ies_o::value_c&
-iab_tnl_address_request_ies_o::value_c::operator=(const iab_tnl_address_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ia_bv4_addresses_requested:
-      c.set(other.c.get<ia_bv4_addresses_requested_s>());
-      break;
-    case types::iab_ip_v6_request_type:
-      c.set(other.c.get<iab_ip_v6_request_type_c>());
-      break;
-    case types::iab_tnl_addresses_to_rem_list:
-      c.set(other.c.get<iab_tnl_addresses_to_rem_list_l>());
-      break;
-    case types::iab_tnl_addresses_exception:
-      c.set(other.c.get<iab_tnl_addresses_exception_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_tnl_address_request_ies_o::value_c::transaction_id()
 {
@@ -17276,6 +14770,21 @@ SRSASN_CODE iab_tnl_address_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_tnl_address_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "IABv4AddressesRequested",
+                                "IABIPv6RequestType",
+                                "IAB-TNL-Addresses-To-Remove-List",
+                                "IAB-TNL-Addresses-Exception"};
+  return convert_enum_idx(names, 5, value, "iab_tnl_address_request_ies_o::value_c::types");
+}
+uint8_t iab_tnl_address_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0, 4, 6};
+  return map_enum_number(numbers, 3, value, "iab_tnl_address_request_ies_o::value_c::types");
+}
+
 // IABTNLAddressResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_tnl_address_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -17333,69 +14842,21 @@ presence_e iab_tnl_address_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_tnl_address_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::iab_allocated_tnl_address_list:
-      c.destroy<iab_allocated_tnl_address_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_tnl_address_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::iab_allocated_tnl_address_list:
-      c.init<iab_allocated_tnl_address_list_l>();
+      c = iab_allocated_tnl_address_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_tnl_address_resp_ies_o::value_c");
   }
-}
-iab_tnl_address_resp_ies_o::value_c::value_c(const iab_tnl_address_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::iab_allocated_tnl_address_list:
-      c.init(other.c.get<iab_allocated_tnl_address_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_resp_ies_o::value_c");
-  }
-}
-iab_tnl_address_resp_ies_o::value_c&
-iab_tnl_address_resp_ies_o::value_c::operator=(const iab_tnl_address_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::iab_allocated_tnl_address_list:
-      c.set(other.c.get<iab_allocated_tnl_address_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_tnl_address_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_tnl_address_resp_ies_o::value_c::transaction_id()
 {
@@ -17469,6 +14930,17 @@ SRSASN_CODE iab_tnl_address_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_tnl_address_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "IAB-Allocated-TNL-Address-List"};
+  return convert_enum_idx(names, 2, value, "iab_tnl_address_resp_ies_o::value_c::types");
+}
+uint8_t iab_tnl_address_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "iab_tnl_address_resp_ies_o::value_c::types");
+}
+
 // IABUPConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_up_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -17540,89 +15012,27 @@ presence_e iab_up_cfg_upd_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_up_cfg_upd_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_up_cfg_upd_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::time_to_wait:
+      c = time_to_wait_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_up_cfg_upd_fail_ies_o::value_c");
   }
-}
-iab_up_cfg_upd_fail_ies_o::value_c::value_c(const iab_up_cfg_upd_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.init(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_fail_ies_o::value_c");
-  }
-}
-iab_up_cfg_upd_fail_ies_o::value_c&
-iab_up_cfg_upd_fail_ies_o::value_c::operator=(const iab_up_cfg_upd_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::time_to_wait:
-      c.set(other.c.get<time_to_wait_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_up_cfg_upd_fail_ies_o::value_c::transaction_id()
 {
@@ -17732,6 +15142,17 @@ SRSASN_CODE iab_up_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_up_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "iab_up_cfg_upd_fail_ies_o::value_c::types");
+}
+uint8_t iab_up_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "iab_up_cfg_upd_fail_ies_o::value_c::types");
+}
+
 // IABUPConfigurationUpdateRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_up_cfg_upd_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -17796,81 +15217,24 @@ presence_e iab_up_cfg_upd_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_up_cfg_upd_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::ul_up_tnl_info_to_upd_list:
-      c.destroy<ul_up_tnl_info_to_upd_list_l>();
-      break;
-    case types::ul_up_tnl_address_to_upd_list:
-      c.destroy<ul_up_tnl_address_to_upd_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_up_cfg_upd_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::ul_up_tnl_info_to_upd_list:
-      c.init<ul_up_tnl_info_to_upd_list_l>();
+      c = ul_up_tnl_info_to_upd_list_l{};
       break;
     case types::ul_up_tnl_address_to_upd_list:
-      c.init<ul_up_tnl_address_to_upd_list_l>();
+      c = ul_up_tnl_address_to_upd_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_up_cfg_upd_request_ies_o::value_c");
   }
-}
-iab_up_cfg_upd_request_ies_o::value_c::value_c(const iab_up_cfg_upd_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ul_up_tnl_info_to_upd_list:
-      c.init(other.c.get<ul_up_tnl_info_to_upd_list_l>());
-      break;
-    case types::ul_up_tnl_address_to_upd_list:
-      c.init(other.c.get<ul_up_tnl_address_to_upd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_request_ies_o::value_c");
-  }
-}
-iab_up_cfg_upd_request_ies_o::value_c&
-iab_up_cfg_upd_request_ies_o::value_c::operator=(const iab_up_cfg_upd_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ul_up_tnl_info_to_upd_list:
-      c.set(other.c.get<ul_up_tnl_info_to_upd_list_l>());
-      break;
-    case types::ul_up_tnl_address_to_upd_list:
-      c.set(other.c.get<ul_up_tnl_address_to_upd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_up_cfg_upd_request_ies_o::value_c::transaction_id()
 {
@@ -17967,6 +15331,18 @@ SRSASN_CODE iab_up_cfg_upd_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_up_cfg_upd_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "UL-UP-TNL-Information-to-Update-List", "UL-UP-TNL-Address-to-Update-List"};
+  return convert_enum_idx(names, 3, value, "iab_up_cfg_upd_request_ies_o::value_c::types");
+}
+uint8_t iab_up_cfg_upd_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "iab_up_cfg_upd_request_ies_o::value_c::types");
+}
+
 // IABUPConfigurationUpdateResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t iab_up_cfg_upd_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -18031,81 +15407,24 @@ presence_e iab_up_cfg_upd_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void iab_up_cfg_upd_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::dl_up_tnl_address_to_upd_list:
-      c.destroy<dl_up_tnl_address_to_upd_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void iab_up_cfg_upd_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::dl_up_tnl_address_to_upd_list:
-      c.init<dl_up_tnl_address_to_upd_list_l>();
+      c = dl_up_tnl_address_to_upd_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "iab_up_cfg_upd_resp_ies_o::value_c");
   }
-}
-iab_up_cfg_upd_resp_ies_o::value_c::value_c(const iab_up_cfg_upd_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::dl_up_tnl_address_to_upd_list:
-      c.init(other.c.get<dl_up_tnl_address_to_upd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_resp_ies_o::value_c");
-  }
-}
-iab_up_cfg_upd_resp_ies_o::value_c&
-iab_up_cfg_upd_resp_ies_o::value_c::operator=(const iab_up_cfg_upd_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::dl_up_tnl_address_to_upd_list:
-      c.set(other.c.get<dl_up_tnl_address_to_upd_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "iab_up_cfg_upd_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& iab_up_cfg_upd_resp_ies_o::value_c::transaction_id()
 {
@@ -18199,6 +15518,17 @@ SRSASN_CODE iab_up_cfg_upd_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* iab_up_cfg_upd_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics", "DL-UP-TNL-Address-to-Update-List"};
+  return convert_enum_idx(names, 3, value, "iab_up_cfg_upd_resp_ies_o::value_c::types");
+}
+uint8_t iab_up_cfg_upd_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "iab_up_cfg_upd_resp_ies_o::value_c::types");
+}
+
 // MeasurementActivation-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t meas_activation_ies_o::idx_to_id(uint32_t idx)
 {
@@ -18270,84 +15600,27 @@ presence_e meas_activation_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void meas_activation_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::prs_meas_info_list:
-      c.destroy<prs_meas_info_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void meas_activation_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::activation_request_type:
+      c = activation_request_type_e{};
       break;
     case types::prs_meas_info_list:
-      c.init<prs_meas_info_list_l>();
+      c = prs_meas_info_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "meas_activation_ies_o::value_c");
   }
-}
-meas_activation_ies_o::value_c::value_c(const meas_activation_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::activation_request_type:
-      c.init(other.c.get<activation_request_type_e>());
-      break;
-    case types::prs_meas_info_list:
-      c.init(other.c.get<prs_meas_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_activation_ies_o::value_c");
-  }
-}
-meas_activation_ies_o::value_c& meas_activation_ies_o::value_c::operator=(const meas_activation_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::activation_request_type:
-      c.set(other.c.get<activation_request_type_e>());
-      break;
-    case types::prs_meas_info_list:
-      c.set(other.c.get<prs_meas_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_activation_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& meas_activation_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -18459,6 +15732,13 @@ SRSASN_CODE meas_activation_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* meas_activation_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "ActivationRequestType", "PRS-Measurement-Info-List"};
+  return convert_enum_idx(names, 4, value, "meas_activation_ies_o::value_c::types");
+}
+
 // MeasurementPreconfigurationConfirm-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t meas_precfg_confirm_ies_o::idx_to_id(uint32_t idx)
 {
@@ -18530,89 +15810,27 @@ presence_e meas_precfg_confirm_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void meas_precfg_confirm_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pos_meas_gap_pre_cfg_list:
-      c.destroy<pos_meas_gap_pre_cfg_list_s>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void meas_precfg_confirm_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::pos_meas_gap_pre_cfg_list:
-      c.init<pos_meas_gap_pre_cfg_list_s>();
+      c = pos_meas_gap_pre_cfg_list_s{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "meas_precfg_confirm_ies_o::value_c");
   }
-}
-meas_precfg_confirm_ies_o::value_c::value_c(const meas_precfg_confirm_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::pos_meas_gap_pre_cfg_list:
-      c.init(other.c.get<pos_meas_gap_pre_cfg_list_s>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_confirm_ies_o::value_c");
-  }
-}
-meas_precfg_confirm_ies_o::value_c&
-meas_precfg_confirm_ies_o::value_c::operator=(const meas_precfg_confirm_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::pos_meas_gap_pre_cfg_list:
-      c.set(other.c.get<pos_meas_gap_pre_cfg_list_s>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_confirm_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& meas_precfg_confirm_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -18722,6 +15940,13 @@ SRSASN_CODE meas_precfg_confirm_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* meas_precfg_confirm_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "PosMeasGapPreConfigList", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "meas_precfg_confirm_ies_o::value_c::types");
+}
+
 // MeasurementPreconfigurationRefuse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t meas_precfg_refuse_ies_o::idx_to_id(uint32_t idx)
 {
@@ -18793,89 +16018,27 @@ presence_e meas_precfg_refuse_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void meas_precfg_refuse_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void meas_precfg_refuse_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "meas_precfg_refuse_ies_o::value_c");
   }
-}
-meas_precfg_refuse_ies_o::value_c::value_c(const meas_precfg_refuse_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_refuse_ies_o::value_c");
-  }
-}
-meas_precfg_refuse_ies_o::value_c&
-meas_precfg_refuse_ies_o::value_c::operator=(const meas_precfg_refuse_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_refuse_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& meas_precfg_refuse_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -18985,6 +16148,13 @@ SRSASN_CODE meas_precfg_refuse_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* meas_precfg_refuse_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "meas_precfg_refuse_ies_o::value_c::types");
+}
+
 // MeasurementPreconfigurationRequired-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t meas_precfg_required_ies_o::idx_to_id(uint32_t idx)
 {
@@ -19049,77 +16219,24 @@ presence_e meas_precfg_required_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void meas_precfg_required_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trp_prs_info_list:
-      c.destroy<trp_prs_info_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void meas_precfg_required_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::trp_prs_info_list:
-      c.init<trp_prs_info_list_l>();
+      c = trp_prs_info_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "meas_precfg_required_ies_o::value_c");
   }
-}
-meas_precfg_required_ies_o::value_c::value_c(const meas_precfg_required_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::trp_prs_info_list:
-      c.init(other.c.get<trp_prs_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_required_ies_o::value_c");
-  }
-}
-meas_precfg_required_ies_o::value_c&
-meas_precfg_required_ies_o::value_c::operator=(const meas_precfg_required_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::trp_prs_info_list:
-      c.set(other.c.get<trp_prs_info_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "meas_precfg_required_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& meas_precfg_required_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -19212,6 +16329,12 @@ SRSASN_CODE meas_precfg_required_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* meas_precfg_required_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "TRP-PRS-Info-List"};
+  return convert_enum_idx(names, 3, value, "meas_precfg_required_ies_o::value_c::types");
+}
+
 // MulticastContextModificationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_mod_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -19283,89 +16406,27 @@ presence_e multicast_context_mod_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_mod_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_mod_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_mod_fail_ies_o::value_c");
   }
-}
-multicast_context_mod_fail_ies_o::value_c::value_c(const multicast_context_mod_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_fail_ies_o::value_c");
-  }
-}
-multicast_context_mod_fail_ies_o::value_c&
-multicast_context_mod_fail_ies_o::value_c::operator=(const multicast_context_mod_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_mod_fail_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -19475,6 +16536,13 @@ SRSASN_CODE multicast_context_mod_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_mod_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "multicast_context_mod_fail_ies_o::value_c::types");
+}
+
 // MulticastContextModificationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_mod_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -19560,113 +16628,33 @@ presence_e multicast_context_mod_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_mod_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_service_area:
-      c.destroy<mbs_service_area_c>();
-      break;
-    case types::multicast_m_rbs_to_be_setup_mod_list:
-      c.destroy<multicast_m_rbs_to_be_setup_mod_list_l>();
-      break;
-    case types::multicast_m_rbs_to_be_modified_list:
-      c.destroy<multicast_m_rbs_to_be_modified_list_l>();
-      break;
-    case types::multicast_m_rbs_to_be_released_list:
-      c.destroy<multicast_m_rbs_to_be_released_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_mod_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_service_area:
-      c.init<mbs_service_area_c>();
+      c = mbs_service_area_c{};
       break;
     case types::multicast_m_rbs_to_be_setup_mod_list:
-      c.init<multicast_m_rbs_to_be_setup_mod_list_l>();
+      c = multicast_m_rbs_to_be_setup_mod_list_l{};
       break;
     case types::multicast_m_rbs_to_be_modified_list:
-      c.init<multicast_m_rbs_to_be_modified_list_l>();
+      c = multicast_m_rbs_to_be_modified_list_l{};
       break;
     case types::multicast_m_rbs_to_be_released_list:
-      c.init<multicast_m_rbs_to_be_released_list_l>();
+      c = multicast_m_rbs_to_be_released_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_mod_request_ies_o::value_c");
   }
-}
-multicast_context_mod_request_ies_o::value_c::value_c(const multicast_context_mod_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_service_area:
-      c.init(other.c.get<mbs_service_area_c>());
-      break;
-    case types::multicast_m_rbs_to_be_setup_mod_list:
-      c.init(other.c.get<multicast_m_rbs_to_be_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_to_be_modified_list:
-      c.init(other.c.get<multicast_m_rbs_to_be_modified_list_l>());
-      break;
-    case types::multicast_m_rbs_to_be_released_list:
-      c.init(other.c.get<multicast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_request_ies_o::value_c");
-  }
-}
-multicast_context_mod_request_ies_o::value_c&
-multicast_context_mod_request_ies_o::value_c::operator=(const multicast_context_mod_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_service_area:
-      c.set(other.c.get<mbs_service_area_c>());
-      break;
-    case types::multicast_m_rbs_to_be_setup_mod_list:
-      c.set(other.c.get<multicast_m_rbs_to_be_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_to_be_modified_list:
-      c.set(other.c.get<multicast_m_rbs_to_be_modified_list_l>());
-      break;
-    case types::multicast_m_rbs_to_be_released_list:
-      c.set(other.c.get<multicast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_mod_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -19831,6 +16819,17 @@ SRSASN_CODE multicast_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_mod_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBS-ServiceArea",
+                                "MulticastMRBs-ToBeSetupMod-List",
+                                "MulticastMRBs-ToBeModified-List",
+                                "MulticastMRBs-ToBeReleased-List"};
+  return convert_enum_idx(names, 6, value, "multicast_context_mod_request_ies_o::value_c::types");
+}
+
 // MulticastContextModificationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_mod_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -19923,125 +16922,36 @@ presence_e multicast_context_mod_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_mod_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::multicast_m_rbs_setup_mod_list:
-      c.destroy<multicast_m_rbs_setup_mod_list_l>();
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_mod_list:
-      c.destroy<multicast_m_rbs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::multicast_m_rbs_modified_list:
-      c.destroy<multicast_m_rbs_modified_list_l>();
-      break;
-    case types::multicast_m_rbs_failed_to_be_modified_list:
-      c.destroy<multicast_m_rbs_failed_to_be_modified_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_mod_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::multicast_m_rbs_setup_mod_list:
-      c.init<multicast_m_rbs_setup_mod_list_l>();
+      c = multicast_m_rbs_setup_mod_list_l{};
       break;
     case types::multicast_m_rbs_failed_to_be_setup_mod_list:
-      c.init<multicast_m_rbs_failed_to_be_setup_mod_list_l>();
+      c = multicast_m_rbs_failed_to_be_setup_mod_list_l{};
       break;
     case types::multicast_m_rbs_modified_list:
-      c.init<multicast_m_rbs_modified_list_l>();
+      c = multicast_m_rbs_modified_list_l{};
       break;
     case types::multicast_m_rbs_failed_to_be_modified_list:
-      c.init<multicast_m_rbs_failed_to_be_modified_list_l>();
+      c = multicast_m_rbs_failed_to_be_modified_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_mod_resp_ies_o::value_c");
   }
-}
-multicast_context_mod_resp_ies_o::value_c::value_c(const multicast_context_mod_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::multicast_m_rbs_setup_mod_list:
-      c.init(other.c.get<multicast_m_rbs_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<multicast_m_rbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_modified_list:
-      c.init(other.c.get<multicast_m_rbs_modified_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_modified_list:
-      c.init(other.c.get<multicast_m_rbs_failed_to_be_modified_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_resp_ies_o::value_c");
-  }
-}
-multicast_context_mod_resp_ies_o::value_c&
-multicast_context_mod_resp_ies_o::value_c::operator=(const multicast_context_mod_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::multicast_m_rbs_setup_mod_list:
-      c.set(other.c.get<multicast_m_rbs_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<multicast_m_rbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::multicast_m_rbs_modified_list:
-      c.set(other.c.get<multicast_m_rbs_modified_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_modified_list:
-      c.set(other.c.get<multicast_m_rbs_failed_to_be_modified_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_mod_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_mod_resp_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -20228,6 +17138,18 @@ SRSASN_CODE multicast_context_mod_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_mod_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MulticastMRBs-SetupMod-List",
+                                "MulticastMRBs-FailedToBeSetupMod-List",
+                                "MulticastMRBs-Modified-List",
+                                "MulticastMRBs-FailedToBeModified-List",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 7, value, "multicast_context_mod_resp_ies_o::value_c::types");
+}
+
 // MulticastContextReleaseCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_release_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -20292,77 +17214,24 @@ presence_e multicast_context_release_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_release_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_release_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_release_cmd_ies_o::value_c");
   }
-}
-multicast_context_release_cmd_ies_o::value_c::value_c(const multicast_context_release_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_cmd_ies_o::value_c");
-  }
-}
-multicast_context_release_cmd_ies_o::value_c&
-multicast_context_release_cmd_ies_o::value_c::operator=(const multicast_context_release_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_release_cmd_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -20452,6 +17321,12 @@ SRSASN_CODE multicast_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_release_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "multicast_context_release_cmd_ies_o::value_c::types");
+}
+
 // MulticastContextReleaseCompleteIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_release_complete_ies_o::idx_to_id(uint32_t idx)
 {
@@ -20517,78 +17392,24 @@ presence_e multicast_context_release_complete_ies_o::get_presence(const uint32_t
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_release_complete_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_release_complete_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_release_complete_ies_o::value_c");
   }
-}
-multicast_context_release_complete_ies_o::value_c::value_c(
-    const multicast_context_release_complete_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_complete_ies_o::value_c");
-  }
-}
-multicast_context_release_complete_ies_o::value_c& multicast_context_release_complete_ies_o::value_c::operator=(
-    const multicast_context_release_complete_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_complete_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_release_complete_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -20678,6 +17499,12 @@ SRSASN_CODE multicast_context_release_complete_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_release_complete_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "multicast_context_release_complete_ies_o::value_c::types");
+}
+
 // MulticastContextReleaseRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_release_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -20742,77 +17569,24 @@ presence_e multicast_context_release_request_ies_o::get_presence(const uint32_t&
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_release_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_release_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_release_request_ies_o::value_c");
   }
-}
-multicast_context_release_request_ies_o::value_c::value_c(const multicast_context_release_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_request_ies_o::value_c");
-  }
-}
-multicast_context_release_request_ies_o::value_c& multicast_context_release_request_ies_o::value_c::operator=(
-    const multicast_context_release_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_release_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_release_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -20902,6 +17676,12 @@ SRSASN_CODE multicast_context_release_request_ies_o::value_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_release_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "multicast_context_release_request_ies_o::value_c::types");
+}
+
 // MulticastContextSetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -20973,89 +17753,27 @@ presence_e multicast_context_setup_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_setup_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_setup_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_setup_fail_ies_o::value_c");
   }
-}
-multicast_context_setup_fail_ies_o::value_c::value_c(const multicast_context_setup_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_fail_ies_o::value_c");
-  }
-}
-multicast_context_setup_fail_ies_o::value_c&
-multicast_context_setup_fail_ies_o::value_c::operator=(const multicast_context_setup_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_setup_fail_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -21165,6 +17883,13 @@ SRSASN_CODE multicast_context_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_setup_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "multicast_context_setup_fail_ies_o::value_c::types");
+}
+
 // MulticastContextSetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -21243,105 +17968,30 @@ presence_e multicast_context_setup_request_ies_o::get_presence(const uint32_t& i
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_setup_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_session_id:
-      c.destroy<mbs_session_id_s>();
-      break;
-    case types::mbs_service_area:
-      c.destroy<mbs_service_area_c>();
-      break;
-    case types::snssai:
-      c.destroy<snssai_s>();
-      break;
-    case types::multicast_m_rbs_to_be_setup_list:
-      c.destroy<multicast_m_rbs_to_be_setup_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_setup_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_session_id:
-      c.init<mbs_session_id_s>();
+      c = mbs_session_id_s{};
       break;
     case types::mbs_service_area:
-      c.init<mbs_service_area_c>();
+      c = mbs_service_area_c{};
       break;
     case types::snssai:
-      c.init<snssai_s>();
+      c = snssai_s{};
       break;
     case types::multicast_m_rbs_to_be_setup_list:
-      c.init<multicast_m_rbs_to_be_setup_list_l>();
+      c = multicast_m_rbs_to_be_setup_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_setup_request_ies_o::value_c");
   }
-}
-multicast_context_setup_request_ies_o::value_c::value_c(const multicast_context_setup_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_session_id:
-      c.init(other.c.get<mbs_session_id_s>());
-      break;
-    case types::mbs_service_area:
-      c.init(other.c.get<mbs_service_area_c>());
-      break;
-    case types::snssai:
-      c.init(other.c.get<snssai_s>());
-      break;
-    case types::multicast_m_rbs_to_be_setup_list:
-      c.init(other.c.get<multicast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_request_ies_o::value_c");
-  }
-}
-multicast_context_setup_request_ies_o::value_c&
-multicast_context_setup_request_ies_o::value_c::operator=(const multicast_context_setup_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_session_id:
-      c.set(other.c.get<mbs_session_id_s>());
-      break;
-    case types::mbs_service_area:
-      c.set(other.c.get<mbs_service_area_c>());
-      break;
-    case types::snssai:
-      c.set(other.c.get<snssai_s>());
-      break;
-    case types::multicast_m_rbs_to_be_setup_list:
-      c.set(other.c.get<multicast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_setup_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -21476,6 +18126,18 @@ SRSASN_CODE multicast_context_setup_request_ies_o::value_c::unpack(cbit_ref& bre
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_setup_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "MBS-Session-ID", "MBS-ServiceArea", "SNSSAI", "MulticastMRBs-ToBeSetup-List"};
+  return convert_enum_idx(names, 5, value, "multicast_context_setup_request_ies_o::value_c::types");
+}
+uint8_t multicast_context_setup_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "multicast_context_setup_request_ies_o::value_c::types");
+}
+
 // MulticastContextSetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_context_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -21554,101 +18216,30 @@ presence_e multicast_context_setup_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_context_setup_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::multicast_m_rbs_setup_list:
-      c.destroy<multicast_m_rbs_setup_list_l>();
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_list:
-      c.destroy<multicast_m_rbs_failed_to_be_setup_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_context_setup_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::multicast_m_rbs_setup_list:
-      c.init<multicast_m_rbs_setup_list_l>();
+      c = multicast_m_rbs_setup_list_l{};
       break;
     case types::multicast_m_rbs_failed_to_be_setup_list:
-      c.init<multicast_m_rbs_failed_to_be_setup_list_l>();
+      c = multicast_m_rbs_failed_to_be_setup_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_context_setup_resp_ies_o::value_c");
   }
-}
-multicast_context_setup_resp_ies_o::value_c::value_c(const multicast_context_setup_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::multicast_m_rbs_setup_list:
-      c.init(other.c.get<multicast_m_rbs_setup_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_list:
-      c.init(other.c.get<multicast_m_rbs_failed_to_be_setup_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_resp_ies_o::value_c");
-  }
-}
-multicast_context_setup_resp_ies_o::value_c&
-multicast_context_setup_resp_ies_o::value_c::operator=(const multicast_context_setup_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::multicast_m_rbs_setup_list:
-      c.set(other.c.get<multicast_m_rbs_setup_list_l>());
-      break;
-    case types::multicast_m_rbs_failed_to_be_setup_list:
-      c.set(other.c.get<multicast_m_rbs_failed_to_be_setup_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_context_setup_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_context_setup_resp_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -21786,6 +18377,16 @@ SRSASN_CODE multicast_context_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_context_setup_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MulticastMRBs-Setup-List",
+                                "MulticastMRBs-FailedToBeSetup-List",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "multicast_context_setup_resp_ies_o::value_c::types");
+}
+
 // MulticastDistributionReleaseCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_distribution_release_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -21858,90 +18459,27 @@ presence_e multicast_distribution_release_cmd_ies_o::get_presence(const uint32_t
 }
 
 // Value ::= OPEN TYPE
-void multicast_distribution_release_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.destroy<mbs_multicast_f1_u_context_descriptor_s>();
-      break;
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_distribution_release_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_multicast_f1_u_context_descriptor:
-      c.init<mbs_multicast_f1_u_context_descriptor_s>();
+      c = mbs_multicast_f1_u_context_descriptor_s{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_distribution_release_cmd_ies_o::value_c");
   }
-}
-multicast_distribution_release_cmd_ies_o::value_c::value_c(
-    const multicast_distribution_release_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.init(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_release_cmd_ies_o::value_c");
-  }
-}
-multicast_distribution_release_cmd_ies_o::value_c& multicast_distribution_release_cmd_ies_o::value_c::operator=(
-    const multicast_distribution_release_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.set(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_release_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_distribution_release_cmd_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -22053,6 +18591,13 @@ SRSASN_CODE multicast_distribution_release_cmd_ies_o::value_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_distribution_release_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "MBSMulticastF1UContextDescriptor", "Cause"};
+  return convert_enum_idx(names, 4, value, "multicast_distribution_release_cmd_ies_o::value_c::types");
+}
+
 // MulticastDistributionReleaseCompleteIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_distribution_release_complete_ies_o::idx_to_id(uint32_t idx)
 {
@@ -22125,91 +18670,27 @@ presence_e multicast_distribution_release_complete_ies_o::get_presence(const uin
 }
 
 // Value ::= OPEN TYPE
-void multicast_distribution_release_complete_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.destroy<mbs_multicast_f1_u_context_descriptor_s>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_distribution_release_complete_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_multicast_f1_u_context_descriptor:
-      c.init<mbs_multicast_f1_u_context_descriptor_s>();
+      c = mbs_multicast_f1_u_context_descriptor_s{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_distribution_release_complete_ies_o::value_c");
   }
-}
-multicast_distribution_release_complete_ies_o::value_c::value_c(
-    const multicast_distribution_release_complete_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.init(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_release_complete_ies_o::value_c");
-  }
-}
-multicast_distribution_release_complete_ies_o::value_c&
-multicast_distribution_release_complete_ies_o::value_c::operator=(
-    const multicast_distribution_release_complete_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.set(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_release_complete_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_distribution_release_complete_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -22321,6 +18802,15 @@ SRSASN_CODE multicast_distribution_release_complete_ies_o::value_c::unpack(cbit_
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_distribution_release_complete_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBSMulticastF1UContextDescriptor",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "multicast_distribution_release_complete_ies_o::value_c::types");
+}
+
 // MulticastDistributionSetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_distribution_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -22399,101 +18889,30 @@ presence_e multicast_distribution_setup_fail_ies_o::get_presence(const uint32_t&
 }
 
 // Value ::= OPEN TYPE
-void multicast_distribution_setup_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.destroy<mbs_multicast_f1_u_context_descriptor_s>();
-      break;
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_distribution_setup_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_multicast_f1_u_context_descriptor:
-      c.init<mbs_multicast_f1_u_context_descriptor_s>();
+      c = mbs_multicast_f1_u_context_descriptor_s{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_distribution_setup_fail_ies_o::value_c");
   }
-}
-multicast_distribution_setup_fail_ies_o::value_c::value_c(const multicast_distribution_setup_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.init(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_fail_ies_o::value_c");
-  }
-}
-multicast_distribution_setup_fail_ies_o::value_c& multicast_distribution_setup_fail_ies_o::value_c::operator=(
-    const multicast_distribution_setup_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.set(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_distribution_setup_fail_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -22625,6 +19044,16 @@ SRSASN_CODE multicast_distribution_setup_fail_ies_o::value_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_distribution_setup_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBSMulticastF1UContextDescriptor",
+                                "Cause",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "multicast_distribution_setup_fail_ies_o::value_c::types");
+}
+
 // MulticastDistributionSetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_distribution_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -22697,90 +19126,27 @@ presence_e multicast_distribution_setup_request_ies_o::get_presence(const uint32
 }
 
 // Value ::= OPEN TYPE
-void multicast_distribution_setup_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.destroy<mbs_multicast_f1_u_context_descriptor_s>();
-      break;
-    case types::multicast_f1_u_context_to_be_setup_list:
-      c.destroy<multicast_f1_u_context_to_be_setup_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_distribution_setup_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_multicast_f1_u_context_descriptor:
-      c.init<mbs_multicast_f1_u_context_descriptor_s>();
+      c = mbs_multicast_f1_u_context_descriptor_s{};
       break;
     case types::multicast_f1_u_context_to_be_setup_list:
-      c.init<multicast_f1_u_context_to_be_setup_list_l>();
+      c = multicast_f1_u_context_to_be_setup_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_distribution_setup_request_ies_o::value_c");
   }
-}
-multicast_distribution_setup_request_ies_o::value_c::value_c(
-    const multicast_distribution_setup_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.init(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::multicast_f1_u_context_to_be_setup_list:
-      c.init(other.c.get<multicast_f1_u_context_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_request_ies_o::value_c");
-  }
-}
-multicast_distribution_setup_request_ies_o::value_c& multicast_distribution_setup_request_ies_o::value_c::operator=(
-    const multicast_distribution_setup_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.set(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::multicast_f1_u_context_to_be_setup_list:
-      c.set(other.c.get<multicast_f1_u_context_to_be_setup_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_distribution_setup_request_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -22897,6 +19263,15 @@ SRSASN_CODE multicast_distribution_setup_request_ies_o::value_c::unpack(cbit_ref
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_distribution_setup_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBSMulticastF1UContextDescriptor",
+                                "MulticastF1UContext-ToBeSetup-List"};
+  return convert_enum_idx(names, 4, value, "multicast_distribution_setup_request_ies_o::value_c::types");
+}
+
 // MulticastDistributionSetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_distribution_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -22989,125 +19364,36 @@ presence_e multicast_distribution_setup_resp_ies_o::get_presence(const uint32_t&
 }
 
 // Value ::= OPEN TYPE
-void multicast_distribution_setup_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.destroy<mbs_multicast_f1_u_context_descriptor_s>();
-      break;
-    case types::multicast_f1_u_context_setup_list:
-      c.destroy<multicast_f1_u_context_setup_list_l>();
-      break;
-    case types::multicast_f1_u_context_failed_to_be_setup_list:
-      c.destroy<multicast_f1_u_context_failed_to_be_setup_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::multicast_f1_u_context_ref_cu:
-      c.destroy<fixed_octstring<4, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_distribution_setup_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_mbs_f1ap_id:
+      c = uint64_t{};
       break;
     case types::mbs_multicast_f1_u_context_descriptor:
-      c.init<mbs_multicast_f1_u_context_descriptor_s>();
+      c = mbs_multicast_f1_u_context_descriptor_s{};
       break;
     case types::multicast_f1_u_context_setup_list:
-      c.init<multicast_f1_u_context_setup_list_l>();
+      c = multicast_f1_u_context_setup_list_l{};
       break;
     case types::multicast_f1_u_context_failed_to_be_setup_list:
-      c.init<multicast_f1_u_context_failed_to_be_setup_list_l>();
+      c = multicast_f1_u_context_failed_to_be_setup_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::multicast_f1_u_context_ref_cu:
-      c.init<fixed_octstring<4, true>>();
+      c = fixed_octstring<4, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_distribution_setup_resp_ies_o::value_c");
   }
-}
-multicast_distribution_setup_resp_ies_o::value_c::value_c(const multicast_distribution_setup_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.init(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::multicast_f1_u_context_setup_list:
-      c.init(other.c.get<multicast_f1_u_context_setup_list_l>());
-      break;
-    case types::multicast_f1_u_context_failed_to_be_setup_list:
-      c.init(other.c.get<multicast_f1_u_context_failed_to_be_setup_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::multicast_f1_u_context_ref_cu:
-      c.init(other.c.get<fixed_octstring<4, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_resp_ies_o::value_c");
-  }
-}
-multicast_distribution_setup_resp_ies_o::value_c& multicast_distribution_setup_resp_ies_o::value_c::operator=(
-    const multicast_distribution_setup_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_mbs_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::mbs_multicast_f1_u_context_descriptor:
-      c.set(other.c.get<mbs_multicast_f1_u_context_descriptor_s>());
-      break;
-    case types::multicast_f1_u_context_setup_list:
-      c.set(other.c.get<multicast_f1_u_context_setup_list_l>());
-      break;
-    case types::multicast_f1_u_context_failed_to_be_setup_list:
-      c.set(other.c.get<multicast_f1_u_context_failed_to_be_setup_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::multicast_f1_u_context_ref_cu:
-      c.set(other.c.get<fixed_octstring<4, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_distribution_setup_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& multicast_distribution_setup_resp_ies_o::value_c::gnb_cu_mbs_f1ap_id()
 {
@@ -23288,6 +19574,18 @@ SRSASN_CODE multicast_distribution_setup_resp_ies_o::value_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_distribution_setup_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "MBSMulticastF1UContextDescriptor",
+                                "MulticastF1UContext-Setup-List",
+                                "MulticastF1UContext-FailedToBeSetup-List",
+                                "CriticalityDiagnostics",
+                                "OCTET STRING"};
+  return convert_enum_idx(names, 7, value, "multicast_distribution_setup_resp_ies_o::value_c::types");
+}
+
 // MulticastGroupPagingIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t multicast_group_paging_ies_o::idx_to_id(uint32_t idx)
 {
@@ -23352,85 +19650,24 @@ presence_e multicast_group_paging_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void multicast_group_paging_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::mbs_session_id:
-      c.destroy<mbs_session_id_s>();
-      break;
-    case types::ue_id_list_for_paging_list:
-      c.destroy<ue_id_list_for_paging_list_l>();
-      break;
-    case types::mc_paging_cell_list:
-      c.destroy<mc_paging_cell_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void multicast_group_paging_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::mbs_session_id:
-      c.init<mbs_session_id_s>();
+      c = mbs_session_id_s{};
       break;
     case types::ue_id_list_for_paging_list:
-      c.init<ue_id_list_for_paging_list_l>();
+      c = ue_id_list_for_paging_list_l{};
       break;
     case types::mc_paging_cell_list:
-      c.init<mc_paging_cell_list_l>();
+      c = mc_paging_cell_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "multicast_group_paging_ies_o::value_c");
   }
-}
-multicast_group_paging_ies_o::value_c::value_c(const multicast_group_paging_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::mbs_session_id:
-      c.init(other.c.get<mbs_session_id_s>());
-      break;
-    case types::ue_id_list_for_paging_list:
-      c.init(other.c.get<ue_id_list_for_paging_list_l>());
-      break;
-    case types::mc_paging_cell_list:
-      c.init(other.c.get<mc_paging_cell_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_group_paging_ies_o::value_c");
-  }
-}
-multicast_group_paging_ies_o::value_c&
-multicast_group_paging_ies_o::value_c::operator=(const multicast_group_paging_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::mbs_session_id:
-      c.set(other.c.get<mbs_session_id_s>());
-      break;
-    case types::ue_id_list_for_paging_list:
-      c.set(other.c.get<ue_id_list_for_paging_list_l>());
-      break;
-    case types::mc_paging_cell_list:
-      c.set(other.c.get<mc_paging_cell_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "multicast_group_paging_ies_o::value_c");
-  }
-
-  return *this;
 }
 mbs_session_id_s& multicast_group_paging_ies_o::value_c::mbs_session_id()
 {
@@ -23528,6 +19765,12 @@ SRSASN_CODE multicast_group_paging_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* multicast_group_paging_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"MBS-Session-ID", "UEIdentity-List-For-Paging-List", "MC-PagingCell-list"};
+  return convert_enum_idx(names, 3, value, "multicast_group_paging_ies_o::value_c::types");
+}
+
 // NetworkAccessRateReductionIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t network_access_rate_reduction_ies_o::idx_to_id(uint32_t idx)
 {
@@ -23585,69 +19828,21 @@ presence_e network_access_rate_reduction_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void network_access_rate_reduction_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::uac_assist_info:
-      c.destroy<uac_assist_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void network_access_rate_reduction_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::uac_assist_info:
-      c.init<uac_assist_info_s>();
+      c = uac_assist_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "network_access_rate_reduction_ies_o::value_c");
   }
-}
-network_access_rate_reduction_ies_o::value_c::value_c(const network_access_rate_reduction_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::uac_assist_info:
-      c.init(other.c.get<uac_assist_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "network_access_rate_reduction_ies_o::value_c");
-  }
-}
-network_access_rate_reduction_ies_o::value_c&
-network_access_rate_reduction_ies_o::value_c::operator=(const network_access_rate_reduction_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::uac_assist_info:
-      c.set(other.c.get<uac_assist_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "network_access_rate_reduction_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& network_access_rate_reduction_ies_o::value_c::transaction_id()
 {
@@ -23718,6 +19913,17 @@ SRSASN_CODE network_access_rate_reduction_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* network_access_rate_reduction_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "UAC-Assistance-Info"};
+  return convert_enum_idx(names, 2, value, "network_access_rate_reduction_ies_o::value_c::types");
+}
+uint8_t network_access_rate_reduction_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "network_access_rate_reduction_ies_o::value_c::types");
+}
+
 // NotifyIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t notify_ies_o::idx_to_id(uint32_t idx)
 {
@@ -23782,76 +19988,24 @@ presence_e notify_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void notify_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::drb_notify_list:
-      c.destroy<drb_notify_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void notify_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::drb_notify_list:
-      c.init<drb_notify_list_l>();
+      c = drb_notify_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "notify_ies_o::value_c");
   }
-}
-notify_ies_o::value_c::value_c(const notify_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::drb_notify_list:
-      c.init(other.c.get<drb_notify_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "notify_ies_o::value_c");
-  }
-}
-notify_ies_o::value_c& notify_ies_o::value_c::operator=(const notify_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::drb_notify_list:
-      c.set(other.c.get<drb_notify_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "notify_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& notify_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -23944,6 +20098,12 @@ SRSASN_CODE notify_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* notify_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Notify-List"};
+  return convert_enum_idx(names, 3, value, "notify_ies_o::value_c::types");
+}
+
 // PDCMeasurementFailureIndication-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_fail_ind_ies_o::idx_to_id(uint32_t idx)
 {
@@ -24015,85 +20175,27 @@ presence_e pdc_meas_fail_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_fail_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void pdc_meas_fail_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
+      c = uint8_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_fail_ind_ies_o::value_c");
   }
-}
-pdc_meas_fail_ind_ies_o::value_c::value_c(const pdc_meas_fail_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_fail_ind_ies_o::value_c");
-  }
-}
-pdc_meas_fail_ind_ies_o::value_c&
-pdc_meas_fail_ind_ies_o::value_c::operator=(const pdc_meas_fail_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_fail_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_fail_ind_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -24202,6 +20304,12 @@ SRSASN_CODE pdc_meas_fail_ind_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_fail_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..16,...)", "Cause"};
+  return convert_enum_idx(names, 4, value, "pdc_meas_fail_ind_ies_o::value_c::types");
+}
+
 // PDCMeasurementInitiationFailure-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_initiation_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -24280,97 +20388,30 @@ presence_e pdc_meas_initiation_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_initiation_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void pdc_meas_initiation_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
+      c = uint8_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_initiation_fail_ies_o::value_c");
   }
-}
-pdc_meas_initiation_fail_ies_o::value_c::value_c(const pdc_meas_initiation_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_fail_ies_o::value_c");
-  }
-}
-pdc_meas_initiation_fail_ies_o::value_c&
-pdc_meas_initiation_fail_ies_o::value_c::operator=(const pdc_meas_initiation_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_initiation_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -24499,6 +20540,13 @@ SRSASN_CODE pdc_meas_initiation_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_initiation_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..16,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "pdc_meas_initiation_fail_ies_o::value_c::types");
+}
+
 // PDCMeasurementInitiationRequest-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_initiation_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -24584,101 +20632,33 @@ presence_e pdc_meas_initiation_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_initiation_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pdc_meas_quantities:
-      c.destroy<pdc_meas_quantities_l>();
-      break;
-    default:
-      break;
-  }
-}
 void pdc_meas_initiation_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
+      c = uint8_t{};
       break;
     case types::pdc_report_type:
+      c = pdc_report_type_e{};
       break;
     case types::pdc_meas_periodicity:
+      c = pdc_meas_periodicity_e{};
       break;
     case types::pdc_meas_quantities:
-      c.init<pdc_meas_quantities_l>();
+      c = pdc_meas_quantities_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_initiation_request_ies_o::value_c");
   }
-}
-pdc_meas_initiation_request_ies_o::value_c::value_c(const pdc_meas_initiation_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::pdc_report_type:
-      c.init(other.c.get<pdc_report_type_e>());
-      break;
-    case types::pdc_meas_periodicity:
-      c.init(other.c.get<pdc_meas_periodicity_e>());
-      break;
-    case types::pdc_meas_quantities:
-      c.init(other.c.get<pdc_meas_quantities_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_request_ies_o::value_c");
-  }
-}
-pdc_meas_initiation_request_ies_o::value_c&
-pdc_meas_initiation_request_ies_o::value_c::operator=(const pdc_meas_initiation_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::pdc_report_type:
-      c.set(other.c.get<pdc_report_type_e>());
-      break;
-    case types::pdc_meas_periodicity:
-      c.set(other.c.get<pdc_meas_periodicity_e>());
-      break;
-    case types::pdc_meas_quantities:
-      c.set(other.c.get<pdc_meas_quantities_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_initiation_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -24828,6 +20808,17 @@ SRSASN_CODE pdc_meas_initiation_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_initiation_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..16,...)",
+                                "PDCReportType",
+                                "PDCMeasurementPeriodicity",
+                                "PDCMeasurementQuantities"};
+  return convert_enum_idx(names, 6, value, "pdc_meas_initiation_request_ies_o::value_c::types");
+}
+
 // PDCMeasurementInitiationResponse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_initiation_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -24906,97 +20897,30 @@ presence_e pdc_meas_initiation_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_initiation_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pdc_meas_result:
-      c.destroy<pdc_meas_result_s>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void pdc_meas_initiation_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
+      c = uint8_t{};
       break;
     case types::pdc_meas_result:
-      c.init<pdc_meas_result_s>();
+      c = pdc_meas_result_s{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_initiation_resp_ies_o::value_c");
   }
-}
-pdc_meas_initiation_resp_ies_o::value_c::value_c(const pdc_meas_initiation_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::pdc_meas_result:
-      c.init(other.c.get<pdc_meas_result_s>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_resp_ies_o::value_c");
-  }
-}
-pdc_meas_initiation_resp_ies_o::value_c&
-pdc_meas_initiation_resp_ies_o::value_c::operator=(const pdc_meas_initiation_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::pdc_meas_result:
-      c.set(other.c.get<pdc_meas_result_s>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_initiation_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_initiation_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -25125,6 +21049,16 @@ SRSASN_CODE pdc_meas_initiation_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_initiation_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (1..16,...)",
+                                "PDCMeasurementResult",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "pdc_meas_initiation_resp_ies_o::value_c::types");
+}
+
 // PDCMeasurementReport-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_report_ies_o::idx_to_id(uint32_t idx)
 {
@@ -25196,84 +21130,27 @@ presence_e pdc_meas_report_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_report_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pdc_meas_result:
-      c.destroy<pdc_meas_result_s>();
-      break;
-    default:
-      break;
-  }
-}
 void pdc_meas_report_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
+      c = uint8_t{};
       break;
     case types::pdc_meas_result:
-      c.init<pdc_meas_result_s>();
+      c = pdc_meas_result_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_report_ies_o::value_c");
   }
-}
-pdc_meas_report_ies_o::value_c::value_c(const pdc_meas_report_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::pdc_meas_result:
-      c.init(other.c.get<pdc_meas_result_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_report_ies_o::value_c");
-  }
-}
-pdc_meas_report_ies_o::value_c& pdc_meas_report_ies_o::value_c::operator=(const pdc_meas_report_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::pdc_meas_result:
-      c.set(other.c.get<pdc_meas_result_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_report_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_report_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -25382,6 +21259,13 @@ SRSASN_CODE pdc_meas_report_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_report_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..16,...)", "PDCMeasurementResult"};
+  return convert_enum_idx(names, 4, value, "pdc_meas_report_ies_o::value_c::types");
+}
+
 // PDCMeasurementTerminationCommand-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pdc_meas_termination_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -25446,55 +21330,24 @@ presence_e pdc_meas_termination_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pdc_meas_termination_cmd_ies_o::value_c::destroy_() {}
 void pdc_meas_termination_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
-}
-pdc_meas_termination_cmd_ies_o::value_c::value_c(const pdc_meas_termination_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
+      c = uint64_t{};
       break;
     case types::ran_ue_pdc_meas_id:
-      c.init(other.c.get<uint8_t>());
+      c = uint8_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pdc_meas_termination_cmd_ies_o::value_c");
   }
-}
-pdc_meas_termination_cmd_ies_o::value_c&
-pdc_meas_termination_cmd_ies_o::value_c::operator=(const pdc_meas_termination_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_pdc_meas_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdc_meas_termination_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& pdc_meas_termination_cmd_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -25583,6 +21436,12 @@ SRSASN_CODE pdc_meas_termination_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pdc_meas_termination_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (1..16,...)"};
+  return convert_enum_idx(names, 3, value, "pdc_meas_termination_cmd_ies_o::value_c::types");
+}
+
 // PRSConfigurationFailure-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t prs_cfg_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -25647,80 +21506,24 @@ presence_e prs_cfg_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void prs_cfg_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void prs_cfg_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "prs_cfg_fail_ies_o::value_c");
   }
-}
-prs_cfg_fail_ies_o::value_c::value_c(const prs_cfg_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_fail_ies_o::value_c");
-  }
-}
-prs_cfg_fail_ies_o::value_c& prs_cfg_fail_ies_o::value_c::operator=(const prs_cfg_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& prs_cfg_fail_ies_o::value_c::transaction_id()
 {
@@ -25811,6 +21614,17 @@ SRSASN_CODE prs_cfg_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* prs_cfg_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "prs_cfg_fail_ies_o::value_c::types");
+}
+uint8_t prs_cfg_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "prs_cfg_fail_ies_o::value_c::types");
+}
+
 // PRSConfigurationRequest-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t prs_cfg_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -25868,68 +21682,21 @@ presence_e prs_cfg_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void prs_cfg_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::prstrp_list:
-      c.destroy<prstrp_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void prs_cfg_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::prs_cfg_request_type:
+      c = prs_cfg_request_type_e{};
       break;
     case types::prstrp_list:
-      c.init<prstrp_list_l>();
+      c = prstrp_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "prs_cfg_request_ies_o::value_c");
   }
-}
-prs_cfg_request_ies_o::value_c::value_c(const prs_cfg_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::prs_cfg_request_type:
-      c.init(other.c.get<prs_cfg_request_type_e>());
-      break;
-    case types::prstrp_list:
-      c.init(other.c.get<prstrp_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_request_ies_o::value_c");
-  }
-}
-prs_cfg_request_ies_o::value_c& prs_cfg_request_ies_o::value_c::operator=(const prs_cfg_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::prs_cfg_request_type:
-      c.set(other.c.get<prs_cfg_request_type_e>());
-      break;
-    case types::prstrp_list:
-      c.set(other.c.get<prstrp_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 prs_cfg_request_type_e& prs_cfg_request_ies_o::value_c::prs_cfg_request_type()
 {
@@ -26003,6 +21770,12 @@ SRSASN_CODE prs_cfg_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* prs_cfg_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"PRSConfigRequestType", "PRSTRPList"};
+  return convert_enum_idx(names, 2, value, "prs_cfg_request_ies_o::value_c::types");
+}
+
 // PRSConfigurationResponse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t prs_cfg_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -26067,80 +21840,24 @@ presence_e prs_cfg_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void prs_cfg_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::prs_tx_trp_list:
-      c.destroy<prs_tx_trp_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void prs_cfg_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::prs_tx_trp_list:
-      c.init<prs_tx_trp_list_l>();
+      c = prs_tx_trp_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "prs_cfg_resp_ies_o::value_c");
   }
-}
-prs_cfg_resp_ies_o::value_c::value_c(const prs_cfg_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::prs_tx_trp_list:
-      c.init(other.c.get<prs_tx_trp_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_resp_ies_o::value_c");
-  }
-}
-prs_cfg_resp_ies_o::value_c& prs_cfg_resp_ies_o::value_c::operator=(const prs_cfg_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::prs_tx_trp_list:
-      c.set(other.c.get<prs_tx_trp_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "prs_cfg_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& prs_cfg_resp_ies_o::value_c::transaction_id()
 {
@@ -26234,6 +21951,17 @@ SRSASN_CODE prs_cfg_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* prs_cfg_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "PRSTransmissionTRPList", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "prs_cfg_resp_ies_o::value_c::types");
+}
+uint8_t prs_cfg_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "prs_cfg_resp_ies_o::value_c::types");
+}
+
 // PWSCancelRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_cancel_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -26312,97 +22040,30 @@ presence_e pws_cancel_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pws_cancel_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::broadcast_to_be_cancelled_list:
-      c.destroy<broadcast_to_be_cancelled_list_l>();
-      break;
-    case types::notif_info:
-      c.destroy<notif_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void pws_cancel_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::numof_broadcast_request:
+      c = uint32_t{};
       break;
     case types::broadcast_to_be_cancelled_list:
-      c.init<broadcast_to_be_cancelled_list_l>();
+      c = broadcast_to_be_cancelled_list_l{};
       break;
     case types::cancel_all_warning_msgs_ind:
+      c = cancel_all_warning_msgs_ind_e{};
       break;
     case types::notif_info:
-      c.init<notif_info_s>();
+      c = notif_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pws_cancel_request_ies_o::value_c");
   }
-}
-pws_cancel_request_ies_o::value_c::value_c(const pws_cancel_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::numof_broadcast_request:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::broadcast_to_be_cancelled_list:
-      c.init(other.c.get<broadcast_to_be_cancelled_list_l>());
-      break;
-    case types::cancel_all_warning_msgs_ind:
-      c.init(other.c.get<cancel_all_warning_msgs_ind_e>());
-      break;
-    case types::notif_info:
-      c.init(other.c.get<notif_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_cancel_request_ies_o::value_c");
-  }
-}
-pws_cancel_request_ies_o::value_c&
-pws_cancel_request_ies_o::value_c::operator=(const pws_cancel_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::numof_broadcast_request:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::broadcast_to_be_cancelled_list:
-      c.set(other.c.get<broadcast_to_be_cancelled_list_l>());
-      break;
-    case types::cancel_all_warning_msgs_ind:
-      c.set(other.c.get<cancel_all_warning_msgs_ind_e>());
-      break;
-    case types::notif_info:
-      c.set(other.c.get<notif_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_cancel_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& pws_cancel_request_ies_o::value_c::transaction_id()
 {
@@ -26534,6 +22195,16 @@ SRSASN_CODE pws_cancel_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pws_cancel_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..65535)",
+                                "Broadcast-To-Be-Cancelled-List",
+                                "Cancel-all-Warning-Messages-Indicator",
+                                "NotificationInformation"};
+  return convert_enum_idx(names, 5, value, "pws_cancel_request_ies_o::value_c::types");
+}
+
 // PWSCancelResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_cancel_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -26598,80 +22269,24 @@ presence_e pws_cancel_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pws_cancel_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cells_broadcast_cancelled_list:
-      c.destroy<cells_broadcast_cancelled_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void pws_cancel_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cells_broadcast_cancelled_list:
-      c.init<cells_broadcast_cancelled_list_l>();
+      c = cells_broadcast_cancelled_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pws_cancel_resp_ies_o::value_c");
   }
-}
-pws_cancel_resp_ies_o::value_c::value_c(const pws_cancel_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cells_broadcast_cancelled_list:
-      c.init(other.c.get<cells_broadcast_cancelled_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_cancel_resp_ies_o::value_c");
-  }
-}
-pws_cancel_resp_ies_o::value_c& pws_cancel_resp_ies_o::value_c::operator=(const pws_cancel_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cells_broadcast_cancelled_list:
-      c.set(other.c.get<cells_broadcast_cancelled_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_cancel_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& pws_cancel_resp_ies_o::value_c::transaction_id()
 {
@@ -26765,6 +22380,17 @@ SRSASN_CODE pws_cancel_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pws_cancel_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cells-Broadcast-Cancelled-List", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "pws_cancel_resp_ies_o::value_c::types");
+}
+uint8_t pws_cancel_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_cancel_resp_ies_o::value_c::types");
+}
+
 // PWSFailureIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_fail_ind_ies_o::idx_to_id(uint32_t idx)
 {
@@ -26822,68 +22448,21 @@ presence_e pws_fail_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pws_fail_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pws_failed_nr_cgi_list:
-      c.destroy<pws_failed_nr_cgi_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void pws_fail_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::pws_failed_nr_cgi_list:
-      c.init<pws_failed_nr_cgi_list_l>();
+      c = pws_failed_nr_cgi_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pws_fail_ind_ies_o::value_c");
   }
-}
-pws_fail_ind_ies_o::value_c::value_c(const pws_fail_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pws_failed_nr_cgi_list:
-      c.init(other.c.get<pws_failed_nr_cgi_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_fail_ind_ies_o::value_c");
-  }
-}
-pws_fail_ind_ies_o::value_c& pws_fail_ind_ies_o::value_c::operator=(const pws_fail_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pws_failed_nr_cgi_list:
-      c.set(other.c.get<pws_failed_nr_cgi_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_fail_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& pws_fail_ind_ies_o::value_c::transaction_id()
 {
@@ -26957,6 +22536,17 @@ SRSASN_CODE pws_fail_ind_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pws_fail_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "PWS-Failed-NR-CGI-List"};
+  return convert_enum_idx(names, 2, value, "pws_fail_ind_ies_o::value_c::types");
+}
+uint8_t pws_fail_ind_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_fail_ind_ies_o::value_c::types");
+}
+
 // PWSRestartIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_restart_ind_ies_o::idx_to_id(uint32_t idx)
 {
@@ -27014,68 +22604,21 @@ presence_e pws_restart_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pws_restart_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi_list_for_restart_list:
-      c.destroy<nr_cgi_list_for_restart_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void pws_restart_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::nr_cgi_list_for_restart_list:
-      c.init<nr_cgi_list_for_restart_list_l>();
+      c = nr_cgi_list_for_restart_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pws_restart_ind_ies_o::value_c");
   }
-}
-pws_restart_ind_ies_o::value_c::value_c(const pws_restart_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi_list_for_restart_list:
-      c.init(other.c.get<nr_cgi_list_for_restart_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_restart_ind_ies_o::value_c");
-  }
-}
-pws_restart_ind_ies_o::value_c& pws_restart_ind_ies_o::value_c::operator=(const pws_restart_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi_list_for_restart_list:
-      c.set(other.c.get<nr_cgi_list_for_restart_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pws_restart_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& pws_restart_ind_ies_o::value_c::transaction_id()
 {
@@ -27147,6 +22690,17 @@ SRSASN_CODE pws_restart_ind_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* pws_restart_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "NR-CGI-List-For-Restart-List"};
+  return convert_enum_idx(names, 2, value, "pws_restart_ind_ies_o::value_c::types");
+}
+uint8_t pws_restart_ind_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_restart_ind_ies_o::value_c::types");
 }
 
 // PagingIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -27290,192 +22844,57 @@ presence_e paging_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void paging_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::ue_id_idx_value:
-      c.destroy<ue_id_idx_value_c>();
-      break;
-    case types::paging_id:
-      c.destroy<paging_id_c>();
-      break;
-    case types::paging_cell_list:
-      c.destroy<paging_cell_list_l>();
-      break;
-    case types::nr_paginge_drx_info:
-      c.destroy<nr_paginge_drx_info_s>();
-      break;
-    case types::nr_paginge_drx_infofor_rrc_inactive:
-      c.destroy<nr_paginge_drx_infofor_rrc_inactive_s>();
-      break;
-    case types::pe_ip_s_assist_info:
-      c.destroy<pe_ip_s_assist_info_s>();
-      break;
-    case types::ue_paging_cap:
-      c.destroy<ue_paging_cap_s>();
-      break;
-    case types::extended_ue_id_idx_value:
-      c.destroy<fixed_bitstring<16, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void paging_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::ue_id_idx_value:
-      c.init<ue_id_idx_value_c>();
+      c = ue_id_idx_value_c{};
       break;
     case types::paging_id:
-      c.init<paging_id_c>();
+      c = paging_id_c{};
       break;
     case types::paging_drx:
+      c = paging_drx_e{};
       break;
     case types::paging_prio:
+      c = paging_prio_e{};
       break;
     case types::paging_cell_list:
-      c.init<paging_cell_list_l>();
+      c = paging_cell_list_l{};
       break;
     case types::paging_origin:
+      c = paging_origin_e{};
       break;
     case types::ran_ue_paging_drx:
+      c = paging_drx_e{};
       break;
     case types::cn_ue_paging_drx:
+      c = paging_drx_e{};
       break;
     case types::nr_paginge_drx_info:
-      c.init<nr_paginge_drx_info_s>();
+      c = nr_paginge_drx_info_s{};
       break;
     case types::nr_paginge_drx_infofor_rrc_inactive:
-      c.init<nr_paginge_drx_infofor_rrc_inactive_s>();
+      c = nr_paginge_drx_infofor_rrc_inactive_s{};
       break;
     case types::paging_cause:
+      c = paging_cause_e{};
       break;
     case types::pe_ip_s_assist_info:
-      c.init<pe_ip_s_assist_info_s>();
+      c = pe_ip_s_assist_info_s{};
       break;
     case types::ue_paging_cap:
-      c.init<ue_paging_cap_s>();
+      c = ue_paging_cap_s{};
       break;
     case types::extended_ue_id_idx_value:
-      c.init<fixed_bitstring<16, false, true>>();
+      c = fixed_bitstring<16, false, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "paging_ies_o::value_c");
   }
-}
-paging_ies_o::value_c::value_c(const paging_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ue_id_idx_value:
-      c.init(other.c.get<ue_id_idx_value_c>());
-      break;
-    case types::paging_id:
-      c.init(other.c.get<paging_id_c>());
-      break;
-    case types::paging_drx:
-      c.init(other.c.get<paging_drx_e>());
-      break;
-    case types::paging_prio:
-      c.init(other.c.get<paging_prio_e>());
-      break;
-    case types::paging_cell_list:
-      c.init(other.c.get<paging_cell_list_l>());
-      break;
-    case types::paging_origin:
-      c.init(other.c.get<paging_origin_e>());
-      break;
-    case types::ran_ue_paging_drx:
-      c.init(other.c.get<paging_drx_e>());
-      break;
-    case types::cn_ue_paging_drx:
-      c.init(other.c.get<paging_drx_e>());
-      break;
-    case types::nr_paginge_drx_info:
-      c.init(other.c.get<nr_paginge_drx_info_s>());
-      break;
-    case types::nr_paginge_drx_infofor_rrc_inactive:
-      c.init(other.c.get<nr_paginge_drx_infofor_rrc_inactive_s>());
-      break;
-    case types::paging_cause:
-      c.init(other.c.get<paging_cause_e>());
-      break;
-    case types::pe_ip_s_assist_info:
-      c.init(other.c.get<pe_ip_s_assist_info_s>());
-      break;
-    case types::ue_paging_cap:
-      c.init(other.c.get<ue_paging_cap_s>());
-      break;
-    case types::extended_ue_id_idx_value:
-      c.init(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ies_o::value_c");
-  }
-}
-paging_ies_o::value_c& paging_ies_o::value_c::operator=(const paging_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ue_id_idx_value:
-      c.set(other.c.get<ue_id_idx_value_c>());
-      break;
-    case types::paging_id:
-      c.set(other.c.get<paging_id_c>());
-      break;
-    case types::paging_drx:
-      c.set(other.c.get<paging_drx_e>());
-      break;
-    case types::paging_prio:
-      c.set(other.c.get<paging_prio_e>());
-      break;
-    case types::paging_cell_list:
-      c.set(other.c.get<paging_cell_list_l>());
-      break;
-    case types::paging_origin:
-      c.set(other.c.get<paging_origin_e>());
-      break;
-    case types::ran_ue_paging_drx:
-      c.set(other.c.get<paging_drx_e>());
-      break;
-    case types::cn_ue_paging_drx:
-      c.set(other.c.get<paging_drx_e>());
-      break;
-    case types::nr_paginge_drx_info:
-      c.set(other.c.get<nr_paginge_drx_info_s>());
-      break;
-    case types::nr_paginge_drx_infofor_rrc_inactive:
-      c.set(other.c.get<nr_paginge_drx_infofor_rrc_inactive_s>());
-      break;
-    case types::paging_cause:
-      c.set(other.c.get<paging_cause_e>());
-      break;
-    case types::pe_ip_s_assist_info:
-      c.set(other.c.get<pe_ip_s_assist_info_s>());
-      break;
-    case types::ue_paging_cap:
-      c.set(other.c.get<ue_paging_cap_s>());
-      break;
-    case types::extended_ue_id_idx_value:
-      c.set(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ies_o::value_c");
-  }
-
-  return *this;
 }
 ue_id_idx_value_c& paging_ies_o::value_c::ue_id_idx_value()
 {
@@ -27783,6 +23202,25 @@ SRSASN_CODE paging_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* paging_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"UEIdentityIndexValue",
+                                "PagingIdentity",
+                                "PagingDRX",
+                                "PagingPriority",
+                                "PagingCell-list",
+                                "PagingOrigin",
+                                "PagingDRX",
+                                "PagingDRX",
+                                "NRPagingeDRXInformation",
+                                "NRPagingeDRXInformationforRRCINACTIVE",
+                                "PagingCause",
+                                "PEIPSAssistanceInfo",
+                                "UEPagingCapability",
+                                "BIT STRING"};
+  return convert_enum_idx(names, 14, value, "paging_ies_o::value_c::types");
+}
+
 // PosSystemInformationDeliveryCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pos_sys_info_delivery_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -27854,89 +23292,27 @@ presence_e pos_sys_info_delivery_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void pos_sys_info_delivery_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::pos_sitype_list:
-      c.destroy<pos_sitype_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void pos_sys_info_delivery_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::nr_cgi:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::pos_sitype_list:
-      c.init<pos_sitype_list_l>();
+      c = pos_sitype_list_l{};
       break;
     case types::confirmed_ue_id:
+      c = uint64_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "pos_sys_info_delivery_cmd_ies_o::value_c");
   }
-}
-pos_sys_info_delivery_cmd_ies_o::value_c::value_c(const pos_sys_info_delivery_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::pos_sitype_list:
-      c.init(other.c.get<pos_sitype_list_l>());
-      break;
-    case types::confirmed_ue_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pos_sys_info_delivery_cmd_ies_o::value_c");
-  }
-}
-pos_sys_info_delivery_cmd_ies_o::value_c&
-pos_sys_info_delivery_cmd_ies_o::value_c::operator=(const pos_sys_info_delivery_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::pos_sitype_list:
-      c.set(other.c.get<pos_sitype_list_l>());
-      break;
-    case types::confirmed_ue_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pos_sys_info_delivery_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& pos_sys_info_delivery_cmd_ies_o::value_c::transaction_id()
 {
@@ -28049,6 +23425,12 @@ SRSASN_CODE pos_sys_info_delivery_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* pos_sys_info_delivery_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "NRCGI", "PosSItypeList", "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 4, value, "pos_sys_info_delivery_cmd_ies_o::value_c::types");
+}
+
 // PositioningActivationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_activation_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -28120,89 +23502,27 @@ presence_e positioning_activation_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_activation_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_activation_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_activation_fail_ies_o::value_c");
   }
-}
-positioning_activation_fail_ies_o::value_c::value_c(const positioning_activation_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_fail_ies_o::value_c");
-  }
-}
-positioning_activation_fail_ies_o::value_c&
-positioning_activation_fail_ies_o::value_c::operator=(const positioning_activation_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_activation_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -28312,6 +23632,13 @@ SRSASN_CODE positioning_activation_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_activation_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "positioning_activation_fail_ies_o::value_c::types");
+}
+
 // PositioningActivationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_activation_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -28383,89 +23710,27 @@ presence_e positioning_activation_request_ies_o::get_presence(const uint32_t& id
 }
 
 // Value ::= OPEN TYPE
-void positioning_activation_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::srs_type:
-      c.destroy<srs_type_c>();
-      break;
-    case types::activation_time:
-      c.destroy<fixed_bitstring<64, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_activation_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::srs_type:
-      c.init<srs_type_c>();
+      c = srs_type_c{};
       break;
     case types::activation_time:
-      c.init<fixed_bitstring<64, false, true>>();
+      c = fixed_bitstring<64, false, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_activation_request_ies_o::value_c");
   }
-}
-positioning_activation_request_ies_o::value_c::value_c(const positioning_activation_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::srs_type:
-      c.init(other.c.get<srs_type_c>());
-      break;
-    case types::activation_time:
-      c.init(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_request_ies_o::value_c");
-  }
-}
-positioning_activation_request_ies_o::value_c&
-positioning_activation_request_ies_o::value_c::operator=(const positioning_activation_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::srs_type:
-      c.set(other.c.get<srs_type_c>());
-      break;
-    case types::activation_time:
-      c.set(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_activation_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -28574,6 +23839,12 @@ SRSASN_CODE positioning_activation_request_ies_o::value_c::unpack(cbit_ref& bref
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_activation_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "SRSType", "BIT STRING"};
+  return convert_enum_idx(names, 4, value, "positioning_activation_request_ies_o::value_c::types");
+}
+
 // PositioningActivationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_activation_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -28652,93 +23923,30 @@ presence_e positioning_activation_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_activation_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_activation_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::sys_frame_num:
+      c = uint16_t{};
       break;
     case types::slot_num:
+      c = uint8_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_activation_resp_ies_o::value_c");
   }
-}
-positioning_activation_resp_ies_o::value_c::value_c(const positioning_activation_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::sys_frame_num:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::slot_num:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_resp_ies_o::value_c");
-  }
-}
-positioning_activation_resp_ies_o::value_c&
-positioning_activation_resp_ies_o::value_c::operator=(const positioning_activation_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::sys_frame_num:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::slot_num:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_activation_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_activation_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -28866,6 +24074,16 @@ SRSASN_CODE positioning_activation_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_activation_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..1023)",
+                                "INTEGER (0..79)",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "positioning_activation_resp_ies_o::value_c::types");
+}
+
 // PositioningAssistanceInformationControlIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_assist_info_ctrl_ies_o::idx_to_id(uint32_t idx)
 {
@@ -28944,101 +24162,30 @@ presence_e positioning_assist_info_ctrl_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_assist_info_ctrl_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pos_assist_info:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::positioning_broadcast_cells:
-      c.destroy<positioning_broadcast_cells_l>();
-      break;
-    case types::routing_id:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_assist_info_ctrl_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::pos_assist_info:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::pos_broadcast:
+      c = pos_broadcast_e{};
       break;
     case types::positioning_broadcast_cells:
-      c.init<positioning_broadcast_cells_l>();
+      c = positioning_broadcast_cells_l{};
       break;
     case types::routing_id:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_assist_info_ctrl_ies_o::value_c");
   }
-}
-positioning_assist_info_ctrl_ies_o::value_c::value_c(const positioning_assist_info_ctrl_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pos_assist_info:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::pos_broadcast:
-      c.init(other.c.get<pos_broadcast_e>());
-      break;
-    case types::positioning_broadcast_cells:
-      c.init(other.c.get<positioning_broadcast_cells_l>());
-      break;
-    case types::routing_id:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_assist_info_ctrl_ies_o::value_c");
-  }
-}
-positioning_assist_info_ctrl_ies_o::value_c&
-positioning_assist_info_ctrl_ies_o::value_c::operator=(const positioning_assist_info_ctrl_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pos_assist_info:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::pos_broadcast:
-      c.set(other.c.get<pos_broadcast_e>());
-      break;
-    case types::positioning_broadcast_cells:
-      c.set(other.c.get<positioning_broadcast_cells_l>());
-      break;
-    case types::routing_id:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_assist_info_ctrl_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_assist_info_ctrl_ies_o::value_c::transaction_id()
 {
@@ -29169,6 +24316,18 @@ SRSASN_CODE positioning_assist_info_ctrl_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_assist_info_ctrl_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "OCTET STRING", "PosBroadcast", "PositioningBroadcastCells", "OCTET STRING"};
+  return convert_enum_idx(names, 5, value, "positioning_assist_info_ctrl_ies_o::value_c::types");
+}
+uint8_t positioning_assist_info_ctrl_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "positioning_assist_info_ctrl_ies_o::value_c::types");
+}
+
 // PositioningAssistanceInformationFeedbackIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_assist_info_feedback_ies_o::idx_to_id(uint32_t idx)
 {
@@ -29247,105 +24406,30 @@ presence_e positioning_assist_info_feedback_ies_o::get_presence(const uint32_t& 
 }
 
 // Value ::= OPEN TYPE
-void positioning_assist_info_feedback_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pos_assist_info_fail_list:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::positioning_broadcast_cells:
-      c.destroy<positioning_broadcast_cells_l>();
-      break;
-    case types::routing_id:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_assist_info_feedback_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::pos_assist_info_fail_list:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::positioning_broadcast_cells:
-      c.init<positioning_broadcast_cells_l>();
+      c = positioning_broadcast_cells_l{};
       break;
     case types::routing_id:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_assist_info_feedback_ies_o::value_c");
   }
-}
-positioning_assist_info_feedback_ies_o::value_c::value_c(const positioning_assist_info_feedback_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pos_assist_info_fail_list:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::positioning_broadcast_cells:
-      c.init(other.c.get<positioning_broadcast_cells_l>());
-      break;
-    case types::routing_id:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_assist_info_feedback_ies_o::value_c");
-  }
-}
-positioning_assist_info_feedback_ies_o::value_c&
-positioning_assist_info_feedback_ies_o::value_c::operator=(const positioning_assist_info_feedback_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pos_assist_info_fail_list:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::positioning_broadcast_cells:
-      c.set(other.c.get<positioning_broadcast_cells_l>());
-      break;
-    case types::routing_id:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_assist_info_feedback_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_assist_info_feedback_ies_o::value_c::transaction_id()
 {
@@ -29478,6 +24562,18 @@ SRSASN_CODE positioning_assist_info_feedback_ies_o::value_c::unpack(cbit_ref& br
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_assist_info_feedback_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "OCTET STRING", "PositioningBroadcastCells", "OCTET STRING", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "positioning_assist_info_feedback_ies_o::value_c::types");
+}
+uint8_t positioning_assist_info_feedback_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "positioning_assist_info_feedback_ies_o::value_c::types");
+}
+
 // PositioningDeactivationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_deactivation_ies_o::idx_to_id(uint32_t idx)
 {
@@ -29542,77 +24638,24 @@ presence_e positioning_deactivation_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_deactivation_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::abort_tx:
-      c.destroy<abort_tx_c>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_deactivation_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::abort_tx:
-      c.init<abort_tx_c>();
+      c = abort_tx_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_deactivation_ies_o::value_c");
   }
-}
-positioning_deactivation_ies_o::value_c::value_c(const positioning_deactivation_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::abort_tx:
-      c.init(other.c.get<abort_tx_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_deactivation_ies_o::value_c");
-  }
-}
-positioning_deactivation_ies_o::value_c&
-positioning_deactivation_ies_o::value_c::operator=(const positioning_deactivation_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::abort_tx:
-      c.set(other.c.get<abort_tx_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_deactivation_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_deactivation_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -29702,6 +24745,12 @@ SRSASN_CODE positioning_deactivation_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_deactivation_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "AbortTransmission"};
+  return convert_enum_idx(names, 3, value, "positioning_deactivation_ies_o::value_c::types");
+}
+
 // PositioningInformationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_info_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -29773,89 +24822,27 @@ presence_e positioning_info_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_info_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_info_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_info_fail_ies_o::value_c");
   }
-}
-positioning_info_fail_ies_o::value_c::value_c(const positioning_info_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_fail_ies_o::value_c");
-  }
-}
-positioning_info_fail_ies_o::value_c&
-positioning_info_fail_ies_o::value_c::operator=(const positioning_info_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_info_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -29965,6 +24952,13 @@ SRSASN_CODE positioning_info_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_info_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "positioning_info_fail_ies_o::value_c::types");
+}
+
 // PositioningInformationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_info_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -30043,97 +25037,30 @@ presence_e positioning_info_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_info_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::requested_srs_tx_characteristics:
-      c.destroy<requested_srs_tx_characteristics_s>();
-      break;
-    case types::ue_report_info:
-      c.destroy<ue_report_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_info_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::requested_srs_tx_characteristics:
-      c.init<requested_srs_tx_characteristics_s>();
+      c = requested_srs_tx_characteristics_s{};
       break;
     case types::ue_report_info:
-      c.init<ue_report_info_s>();
+      c = ue_report_info_s{};
       break;
     case types::srs_pos_rrc_inactive_query_ind:
+      c = srs_pos_rrc_inactive_query_ind_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_info_request_ies_o::value_c");
   }
-}
-positioning_info_request_ies_o::value_c::value_c(const positioning_info_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::requested_srs_tx_characteristics:
-      c.init(other.c.get<requested_srs_tx_characteristics_s>());
-      break;
-    case types::ue_report_info:
-      c.init(other.c.get<ue_report_info_s>());
-      break;
-    case types::srs_pos_rrc_inactive_query_ind:
-      c.init(other.c.get<srs_pos_rrc_inactive_query_ind_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_request_ies_o::value_c");
-  }
-}
-positioning_info_request_ies_o::value_c&
-positioning_info_request_ies_o::value_c::operator=(const positioning_info_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::requested_srs_tx_characteristics:
-      c.set(other.c.get<requested_srs_tx_characteristics_s>());
-      break;
-    case types::ue_report_info:
-      c.set(other.c.get<ue_report_info_s>());
-      break;
-    case types::srs_pos_rrc_inactive_query_ind:
-      c.set(other.c.get<srs_pos_rrc_inactive_query_ind_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_info_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -30263,6 +25190,16 @@ SRSASN_CODE positioning_info_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_info_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "RequestedSRSTransmissionCharacteristics",
+                                "UEReportingInformation",
+                                "SRSPosRRCInactiveQueryIndication"};
+  return convert_enum_idx(names, 5, value, "positioning_info_request_ies_o::value_c::types");
+}
+
 // PositioningInformationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_info_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -30348,113 +25285,33 @@ presence_e positioning_info_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_info_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::srs_cfg:
-      c.destroy<srs_cfg_s>();
-      break;
-    case types::sfn_initisation_time:
-      c.destroy<fixed_bitstring<64, false, true>>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::srs_pos_rrc_inactive_cfg:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_info_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::srs_cfg:
-      c.init<srs_cfg_s>();
+      c = srs_cfg_s{};
       break;
     case types::sfn_initisation_time:
-      c.init<fixed_bitstring<64, false, true>>();
+      c = fixed_bitstring<64, false, true>{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::srs_pos_rrc_inactive_cfg:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_info_resp_ies_o::value_c");
   }
-}
-positioning_info_resp_ies_o::value_c::value_c(const positioning_info_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::srs_cfg:
-      c.init(other.c.get<srs_cfg_s>());
-      break;
-    case types::sfn_initisation_time:
-      c.init(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::srs_pos_rrc_inactive_cfg:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_resp_ies_o::value_c");
-  }
-}
-positioning_info_resp_ies_o::value_c&
-positioning_info_resp_ies_o::value_c::operator=(const positioning_info_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::srs_cfg:
-      c.set(other.c.get<srs_cfg_s>());
-      break;
-    case types::sfn_initisation_time:
-      c.set(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::srs_pos_rrc_inactive_cfg:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_info_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -30602,6 +25459,17 @@ SRSASN_CODE positioning_info_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_info_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "SRSConfig",
+                                "BIT STRING",
+                                "CriticalityDiagnostics",
+                                "OCTET STRING"};
+  return convert_enum_idx(names, 6, value, "positioning_info_resp_ies_o::value_c::types");
+}
+
 // PositioningInformationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_info_upd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -30673,89 +25541,27 @@ presence_e positioning_info_upd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_info_upd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::srs_cfg:
-      c.destroy<srs_cfg_s>();
-      break;
-    case types::sfn_initisation_time:
-      c.destroy<fixed_bitstring<64, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_info_upd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::srs_cfg:
-      c.init<srs_cfg_s>();
+      c = srs_cfg_s{};
       break;
     case types::sfn_initisation_time:
-      c.init<fixed_bitstring<64, false, true>>();
+      c = fixed_bitstring<64, false, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_info_upd_ies_o::value_c");
   }
-}
-positioning_info_upd_ies_o::value_c::value_c(const positioning_info_upd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::srs_cfg:
-      c.init(other.c.get<srs_cfg_s>());
-      break;
-    case types::sfn_initisation_time:
-      c.init(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_upd_ies_o::value_c");
-  }
-}
-positioning_info_upd_ies_o::value_c&
-positioning_info_upd_ies_o::value_c::operator=(const positioning_info_upd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::srs_cfg:
-      c.set(other.c.get<srs_cfg_s>());
-      break;
-    case types::sfn_initisation_time:
-      c.set(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_info_upd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& positioning_info_upd_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -30864,6 +25670,12 @@ SRSASN_CODE positioning_info_upd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_info_upd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "SRSConfig", "BIT STRING"};
+  return convert_enum_idx(names, 4, value, "positioning_info_upd_ies_o::value_c::types");
+}
+
 // PositioningMeasurementAbortIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_abort_ies_o::idx_to_id(uint32_t idx)
 {
@@ -30928,55 +25740,24 @@ presence_e positioning_meas_abort_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_abort_ies_o::value_c::destroy_() {}
 void positioning_meas_abort_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
-}
-positioning_meas_abort_ies_o::value_c::value_c(const positioning_meas_abort_ies_o::value_c& other)
-{
-  type_ = other.type();
   switch (type_) {
     case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
+      c = uint32_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_abort_ies_o::value_c");
   }
-}
-positioning_meas_abort_ies_o::value_c&
-positioning_meas_abort_ies_o::value_c::operator=(const positioning_meas_abort_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_abort_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_abort_ies_o::value_c::transaction_id()
 {
@@ -31065,6 +25846,12 @@ SRSASN_CODE positioning_meas_abort_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_abort_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "INTEGER (1..65536,...)", "INTEGER (1..65536,...)"};
+  return convert_enum_idx(names, 3, value, "positioning_meas_abort_ies_o::value_c::types");
+}
+
 // PositioningMeasurementFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -31143,97 +25930,30 @@ presence_e positioning_meas_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_fail_ies_o::value_c");
   }
-}
-positioning_meas_fail_ies_o::value_c::value_c(const positioning_meas_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_fail_ies_o::value_c");
-  }
-}
-positioning_meas_fail_ies_o::value_c&
-positioning_meas_fail_ies_o::value_c::operator=(const positioning_meas_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_fail_ies_o::value_c::transaction_id()
 {
@@ -31362,6 +26082,13 @@ SRSASN_CODE positioning_meas_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "INTEGER (1..65536,...)", "INTEGER (1..65536,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "positioning_meas_fail_ies_o::value_c::types");
+}
+
 // PositioningMeasurementFailureIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_fail_ind_ies_o::idx_to_id(uint32_t idx)
 {
@@ -31433,85 +26160,27 @@ presence_e positioning_meas_fail_ind_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_fail_ind_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_fail_ind_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_fail_ind_ies_o::value_c");
   }
-}
-positioning_meas_fail_ind_ies_o::value_c::value_c(const positioning_meas_fail_ind_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_fail_ind_ies_o::value_c");
-  }
-}
-positioning_meas_fail_ind_ies_o::value_c&
-positioning_meas_fail_ind_ies_o::value_c::operator=(const positioning_meas_fail_ind_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_fail_ind_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_fail_ind_ies_o::value_c::transaction_id()
 {
@@ -31620,6 +26289,12 @@ SRSASN_CODE positioning_meas_fail_ind_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_fail_ind_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "INTEGER (1..65536,...)", "INTEGER (1..65536,...)", "Cause"};
+  return convert_enum_idx(names, 4, value, "positioning_meas_fail_ind_ies_o::value_c::types");
+}
+
 // PositioningMeasurementReportIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_report_ies_o::idx_to_id(uint32_t idx)
 {
@@ -31691,85 +26366,27 @@ presence_e positioning_meas_report_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_report_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pos_meas_result_list:
-      c.destroy<pos_meas_result_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_report_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::pos_meas_result_list:
-      c.init<pos_meas_result_list_l>();
+      c = pos_meas_result_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_report_ies_o::value_c");
   }
-}
-positioning_meas_report_ies_o::value_c::value_c(const positioning_meas_report_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::pos_meas_result_list:
-      c.init(other.c.get<pos_meas_result_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_report_ies_o::value_c");
-  }
-}
-positioning_meas_report_ies_o::value_c&
-positioning_meas_report_ies_o::value_c::operator=(const positioning_meas_report_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::pos_meas_result_list:
-      c.set(other.c.get<pos_meas_result_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_report_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_report_ies_o::value_c::transaction_id()
 {
@@ -31879,6 +26496,13 @@ SRSASN_CODE positioning_meas_report_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* positioning_meas_report_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "INTEGER (1..65536,...)", "INTEGER (1..65536,...)", "PosMeasurementResultList"};
+  return convert_enum_idx(names, 4, value, "positioning_meas_report_ies_o::value_c::types");
 }
 
 // PositioningMeasurementRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -32043,209 +26667,66 @@ presence_e positioning_meas_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trp_meas_request_list:
-      c.destroy<trp_meas_request_list_l>();
-      break;
-    case types::pos_meas_quantities:
-      c.destroy<pos_meas_quantities_l>();
-      break;
-    case types::sfn_initisation_time:
-      c.destroy<fixed_bitstring<64, false, true>>();
-      break;
-    case types::srs_cfg:
-      c.destroy<srs_cfg_s>();
-      break;
-    case types::resp_time:
-      c.destroy<resp_time_s>();
-      break;
-    case types::meas_characteristics_request_ind:
-      c.destroy<fixed_bitstring<16, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::trp_meas_request_list:
-      c.init<trp_meas_request_list_l>();
+      c = trp_meas_request_list_l{};
       break;
     case types::pos_report_characteristics:
+      c = pos_report_characteristics_e{};
       break;
     case types::pos_meas_periodicity:
+      c = meas_periodicity_e{};
       break;
     case types::pos_meas_quantities:
-      c.init<pos_meas_quantities_l>();
+      c = pos_meas_quantities_l{};
       break;
     case types::sfn_initisation_time:
-      c.init<fixed_bitstring<64, false, true>>();
+      c = fixed_bitstring<64, false, true>{};
       break;
     case types::srs_cfg:
-      c.init<srs_cfg_s>();
+      c = srs_cfg_s{};
       break;
     case types::meas_beam_info_request:
+      c = meas_beam_info_request_e{};
       break;
     case types::sys_frame_num:
+      c = uint16_t{};
       break;
     case types::slot_num:
+      c = uint8_t{};
       break;
     case types::pos_meas_periodicity_extended:
+      c = meas_periodicity_extended_e{};
       break;
     case types::resp_time:
-      c.init<resp_time_s>();
+      c = resp_time_s{};
       break;
     case types::meas_characteristics_request_ind:
-      c.init<fixed_bitstring<16, false, true>>();
+      c = fixed_bitstring<16, false, true>{};
       break;
     case types::meas_time_occasion:
+      c = meas_time_occasion_e{};
       break;
     case types::pos_meas_amount:
+      c = pos_meas_amount_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_request_ies_o::value_c");
   }
-}
-positioning_meas_request_ies_o::value_c::value_c(const positioning_meas_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::trp_meas_request_list:
-      c.init(other.c.get<trp_meas_request_list_l>());
-      break;
-    case types::pos_report_characteristics:
-      c.init(other.c.get<pos_report_characteristics_e>());
-      break;
-    case types::pos_meas_periodicity:
-      c.init(other.c.get<meas_periodicity_e>());
-      break;
-    case types::pos_meas_quantities:
-      c.init(other.c.get<pos_meas_quantities_l>());
-      break;
-    case types::sfn_initisation_time:
-      c.init(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::srs_cfg:
-      c.init(other.c.get<srs_cfg_s>());
-      break;
-    case types::meas_beam_info_request:
-      c.init(other.c.get<meas_beam_info_request_e>());
-      break;
-    case types::sys_frame_num:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::slot_num:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::pos_meas_periodicity_extended:
-      c.init(other.c.get<meas_periodicity_extended_e>());
-      break;
-    case types::resp_time:
-      c.init(other.c.get<resp_time_s>());
-      break;
-    case types::meas_characteristics_request_ind:
-      c.init(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::meas_time_occasion:
-      c.init(other.c.get<meas_time_occasion_e>());
-      break;
-    case types::pos_meas_amount:
-      c.init(other.c.get<pos_meas_amount_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_request_ies_o::value_c");
-  }
-}
-positioning_meas_request_ies_o::value_c&
-positioning_meas_request_ies_o::value_c::operator=(const positioning_meas_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::trp_meas_request_list:
-      c.set(other.c.get<trp_meas_request_list_l>());
-      break;
-    case types::pos_report_characteristics:
-      c.set(other.c.get<pos_report_characteristics_e>());
-      break;
-    case types::pos_meas_periodicity:
-      c.set(other.c.get<meas_periodicity_e>());
-      break;
-    case types::pos_meas_quantities:
-      c.set(other.c.get<pos_meas_quantities_l>());
-      break;
-    case types::sfn_initisation_time:
-      c.set(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::srs_cfg:
-      c.set(other.c.get<srs_cfg_s>());
-      break;
-    case types::meas_beam_info_request:
-      c.set(other.c.get<meas_beam_info_request_e>());
-      break;
-    case types::sys_frame_num:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::slot_num:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::pos_meas_periodicity_extended:
-      c.set(other.c.get<meas_periodicity_extended_e>());
-      break;
-    case types::resp_time:
-      c.set(other.c.get<resp_time_s>());
-      break;
-    case types::meas_characteristics_request_ind:
-      c.set(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::meas_time_occasion:
-      c.set(other.c.get<meas_time_occasion_e>());
-      break;
-    case types::pos_meas_amount:
-      c.set(other.c.get<pos_meas_amount_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_request_ies_o::value_c::transaction_id()
 {
@@ -32611,6 +27092,28 @@ SRSASN_CODE positioning_meas_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (1..65536,...)",
+                                "INTEGER (1..65536,...)",
+                                "TRP-MeasurementRequestList",
+                                "PosReportCharacteristics",
+                                "MeasurementPeriodicity",
+                                "PosMeasurementQuantities",
+                                "BIT STRING",
+                                "SRSConfig",
+                                "MeasurementBeamInfoRequest",
+                                "INTEGER (0..1023)",
+                                "INTEGER (0..79)",
+                                "MeasurementPeriodicityExtended",
+                                "ResponseTime",
+                                "BIT STRING",
+                                "MeasurementTimeOccasion",
+                                "PosMeasurementAmount"};
+  return convert_enum_idx(names, 17, value, "positioning_meas_request_ies_o::value_c::types");
+}
+
 // PositioningMeasurementResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -32689,97 +27192,30 @@ presence_e positioning_meas_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pos_meas_result_list:
-      c.destroy<pos_meas_result_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::pos_meas_result_list:
-      c.init<pos_meas_result_list_l>();
+      c = pos_meas_result_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_resp_ies_o::value_c");
   }
-}
-positioning_meas_resp_ies_o::value_c::value_c(const positioning_meas_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::pos_meas_result_list:
-      c.init(other.c.get<pos_meas_result_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_resp_ies_o::value_c");
-  }
-}
-positioning_meas_resp_ies_o::value_c&
-positioning_meas_resp_ies_o::value_c::operator=(const positioning_meas_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::pos_meas_result_list:
-      c.set(other.c.get<pos_meas_result_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_resp_ies_o::value_c::transaction_id()
 {
@@ -32911,6 +27347,16 @@ SRSASN_CODE positioning_meas_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (1..65536,...)",
+                                "INTEGER (1..65536,...)",
+                                "PosMeasurementResultList",
+                                "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "positioning_meas_resp_ies_o::value_c::types");
+}
+
 // PositioningMeasurementUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t positioning_meas_upd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -33003,117 +27449,36 @@ presence_e positioning_meas_upd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void positioning_meas_upd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::srs_cfg:
-      c.destroy<srs_cfg_s>();
-      break;
-    case types::trp_meas_upd_list:
-      c.destroy<trp_meas_upd_list_l>();
-      break;
-    case types::meas_characteristics_request_ind:
-      c.destroy<fixed_bitstring<16, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void positioning_meas_upd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::lmf_meas_id:
+      c = uint32_t{};
       break;
     case types::ran_meas_id:
+      c = uint32_t{};
       break;
     case types::srs_cfg:
-      c.init<srs_cfg_s>();
+      c = srs_cfg_s{};
       break;
     case types::trp_meas_upd_list:
-      c.init<trp_meas_upd_list_l>();
+      c = trp_meas_upd_list_l{};
       break;
     case types::meas_characteristics_request_ind:
-      c.init<fixed_bitstring<16, false, true>>();
+      c = fixed_bitstring<16, false, true>{};
       break;
     case types::meas_time_occasion:
+      c = meas_time_occasion_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "positioning_meas_upd_ies_o::value_c");
   }
-}
-positioning_meas_upd_ies_o::value_c::value_c(const positioning_meas_upd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::srs_cfg:
-      c.init(other.c.get<srs_cfg_s>());
-      break;
-    case types::trp_meas_upd_list:
-      c.init(other.c.get<trp_meas_upd_list_l>());
-      break;
-    case types::meas_characteristics_request_ind:
-      c.init(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::meas_time_occasion:
-      c.init(other.c.get<meas_time_occasion_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_upd_ies_o::value_c");
-  }
-}
-positioning_meas_upd_ies_o::value_c&
-positioning_meas_upd_ies_o::value_c::operator=(const positioning_meas_upd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::lmf_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::ran_meas_id:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::srs_cfg:
-      c.set(other.c.get<srs_cfg_s>());
-      break;
-    case types::trp_meas_upd_list:
-      c.set(other.c.get<trp_meas_upd_list_l>());
-      break;
-    case types::meas_characteristics_request_ind:
-      c.set(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::meas_time_occasion:
-      c.set(other.c.get<meas_time_occasion_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "positioning_meas_upd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& positioning_meas_upd_ies_o::value_c::transaction_id()
 {
@@ -33283,6 +27648,41 @@ SRSASN_CODE positioning_meas_upd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* positioning_meas_upd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (1..65536,...)",
+                                "INTEGER (1..65536,...)",
+                                "SRSConfig",
+                                "TRP-MeasurementUpdateList",
+                                "BIT STRING",
+                                "MeasurementTimeOccasion"};
+  return convert_enum_idx(names, 7, value, "positioning_meas_upd_ies_o::value_c::types");
+}
+
+// Value ::= OPEN TYPE
+void f1ap_private_ies_empty_o::value_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.end_obj();
+}
+SRSASN_CODE f1ap_private_ies_empty_o::value_c::pack(bit_ref& bref) const
+{
+  varlength_field_pack_guard varlen_scope(bref, true);
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE f1ap_private_ies_empty_o::value_c::unpack(cbit_ref& bref)
+{
+  varlength_field_unpack_guard varlen_scope(bref, true);
+  return SRSASN_SUCCESS;
+}
+
+const char* f1ap_private_ies_empty_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {};
+  return convert_enum_idx(names, 0, value, "f1ap_private_ies_empty_o::value_c::types");
+}
+
 // QoEInformationTransfer-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t qo_e_info_transfer_ies_o::idx_to_id(uint32_t idx)
 {
@@ -33347,77 +27747,24 @@ presence_e qo_e_info_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void qo_e_info_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::qo_e_info:
-      c.destroy<qo_e_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void qo_e_info_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::qo_e_info:
-      c.init<qo_e_info_s>();
+      c = qo_e_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "qo_e_info_transfer_ies_o::value_c");
   }
-}
-qo_e_info_transfer_ies_o::value_c::value_c(const qo_e_info_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::qo_e_info:
-      c.init(other.c.get<qo_e_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "qo_e_info_transfer_ies_o::value_c");
-  }
-}
-qo_e_info_transfer_ies_o::value_c&
-qo_e_info_transfer_ies_o::value_c::operator=(const qo_e_info_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::qo_e_info:
-      c.set(other.c.get<qo_e_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "qo_e_info_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& qo_e_info_transfer_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -33507,6 +27854,12 @@ SRSASN_CODE qo_e_info_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* qo_e_info_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "QoEInformation"};
+  return convert_enum_idx(names, 3, value, "qo_e_info_transfer_ies_o::value_c::types");
+}
+
 // RRCDeliveryReportIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t rrc_delivery_report_ies_o::idx_to_id(uint32_t idx)
 {
@@ -33578,85 +27931,27 @@ presence_e rrc_delivery_report_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void rrc_delivery_report_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::rrc_delivery_status:
-      c.destroy<rrc_delivery_status_s>();
-      break;
-    default:
-      break;
-  }
-}
 void rrc_delivery_report_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::rrc_delivery_status:
-      c.init<rrc_delivery_status_s>();
+      c = rrc_delivery_status_s{};
       break;
     case types::srb_id:
+      c = uint8_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "rrc_delivery_report_ies_o::value_c");
   }
-}
-rrc_delivery_report_ies_o::value_c::value_c(const rrc_delivery_report_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::rrc_delivery_status:
-      c.init(other.c.get<rrc_delivery_status_s>());
-      break;
-    case types::srb_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_delivery_report_ies_o::value_c");
-  }
-}
-rrc_delivery_report_ies_o::value_c&
-rrc_delivery_report_ies_o::value_c::operator=(const rrc_delivery_report_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::rrc_delivery_status:
-      c.set(other.c.get<rrc_delivery_status_s>());
-      break;
-    case types::srb_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_delivery_report_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& rrc_delivery_report_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -33765,6 +28060,13 @@ SRSASN_CODE rrc_delivery_report_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* rrc_delivery_report_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "RRCDeliveryStatus", "INTEGER (0..3,...)"};
+  return convert_enum_idx(names, 4, value, "rrc_delivery_report_ies_o::value_c::types");
+}
+
 // ReferenceTimeInformationReportIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ref_time_info_report_ies_o::idx_to_id(uint32_t idx)
 {
@@ -33822,69 +28124,21 @@ presence_e ref_time_info_report_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ref_time_info_report_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::time_ref_info:
-      c.destroy<time_ref_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ref_time_info_report_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::time_ref_info:
-      c.init<time_ref_info_s>();
+      c = time_ref_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ref_time_info_report_ies_o::value_c");
   }
-}
-ref_time_info_report_ies_o::value_c::value_c(const ref_time_info_report_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::time_ref_info:
-      c.init(other.c.get<time_ref_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ref_time_info_report_ies_o::value_c");
-  }
-}
-ref_time_info_report_ies_o::value_c&
-ref_time_info_report_ies_o::value_c::operator=(const ref_time_info_report_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::time_ref_info:
-      c.set(other.c.get<time_ref_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ref_time_info_report_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& ref_time_info_report_ies_o::value_c::transaction_id()
 {
@@ -33955,6 +28209,17 @@ SRSASN_CODE ref_time_info_report_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ref_time_info_report_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "TimeReferenceInformation"};
+  return convert_enum_idx(names, 2, value, "ref_time_info_report_ies_o::value_c::types");
+}
+uint8_t ref_time_info_report_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "ref_time_info_report_ies_o::value_c::types");
+}
+
 // ReferenceTimeInformationReportingControlIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ref_time_info_report_ctrl_ies_o::idx_to_id(uint32_t idx)
 {
@@ -34012,69 +28277,21 @@ presence_e ref_time_info_report_ctrl_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ref_time_info_report_ctrl_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::report_request_type:
-      c.destroy<report_request_type_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ref_time_info_report_ctrl_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::report_request_type:
-      c.init<report_request_type_s>();
+      c = report_request_type_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ref_time_info_report_ctrl_ies_o::value_c");
   }
-}
-ref_time_info_report_ctrl_ies_o::value_c::value_c(const ref_time_info_report_ctrl_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::report_request_type:
-      c.init(other.c.get<report_request_type_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ref_time_info_report_ctrl_ies_o::value_c");
-  }
-}
-ref_time_info_report_ctrl_ies_o::value_c&
-ref_time_info_report_ctrl_ies_o::value_c::operator=(const ref_time_info_report_ctrl_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::report_request_type:
-      c.set(other.c.get<report_request_type_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ref_time_info_report_ctrl_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& ref_time_info_report_ctrl_ies_o::value_c::transaction_id()
 {
@@ -34145,6 +28362,17 @@ SRSASN_CODE ref_time_info_report_ctrl_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ref_time_info_report_ctrl_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "ReportingRequestType"};
+  return convert_enum_idx(names, 2, value, "ref_time_info_report_ctrl_ies_o::value_c::types");
+}
+uint8_t ref_time_info_report_ctrl_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "ref_time_info_report_ctrl_ies_o::value_c::types");
+}
+
 // ResetAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t reset_ack_ies_o::idx_to_id(uint32_t idx)
 {
@@ -34209,80 +28437,24 @@ presence_e reset_ack_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void reset_ack_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::ue_associated_lc_f1_conn_list_res_ack:
-      c.destroy<ue_associated_lc_f1_conn_list_res_ack_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void reset_ack_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::ue_associated_lc_f1_conn_list_res_ack:
-      c.init<ue_associated_lc_f1_conn_list_res_ack_l>();
+      c = ue_associated_lc_f1_conn_list_res_ack_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "reset_ack_ies_o::value_c");
   }
-}
-reset_ack_ies_o::value_c::value_c(const reset_ack_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ue_associated_lc_f1_conn_list_res_ack:
-      c.init(other.c.get<ue_associated_lc_f1_conn_list_res_ack_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "reset_ack_ies_o::value_c");
-  }
-}
-reset_ack_ies_o::value_c& reset_ack_ies_o::value_c::operator=(const reset_ack_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ue_associated_lc_f1_conn_list_res_ack:
-      c.set(other.c.get<ue_associated_lc_f1_conn_list_res_ack_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "reset_ack_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& reset_ack_ies_o::value_c::transaction_id()
 {
@@ -34376,6 +28548,18 @@ SRSASN_CODE reset_ack_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* reset_ack_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "UE-associatedLogicalF1-ConnectionListResAck", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "reset_ack_ies_o::value_c::types");
+}
+uint8_t reset_ack_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0, 1};
+  return map_enum_number(numbers, 2, value, "reset_ack_ies_o::value_c::types");
+}
+
 // ResetIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t reset_ies_o::idx_to_id(uint32_t idx)
 {
@@ -34440,80 +28624,24 @@ presence_e reset_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void reset_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::reset_type:
-      c.destroy<reset_type_c>();
-      break;
-    default:
-      break;
-  }
-}
 void reset_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::reset_type:
-      c.init<reset_type_c>();
+      c = reset_type_c{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "reset_ies_o::value_c");
   }
-}
-reset_ies_o::value_c::value_c(const reset_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::reset_type:
-      c.init(other.c.get<reset_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "reset_ies_o::value_c");
-  }
-}
-reset_ies_o::value_c& reset_ies_o::value_c::operator=(const reset_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::reset_type:
-      c.set(other.c.get<reset_type_c>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "reset_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& reset_ies_o::value_c::transaction_id()
 {
@@ -34604,6 +28732,17 @@ SRSASN_CODE reset_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* reset_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "ResetType"};
+  return convert_enum_idx(names, 3, value, "reset_ies_o::value_c::types");
+}
+uint8_t reset_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "reset_ies_o::value_c::types");
+}
+
 // ResourceStatusFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t res_status_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -34682,96 +28821,30 @@ presence_e res_status_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void res_status_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void res_status_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_meas_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_meas_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "res_status_fail_ies_o::value_c");
   }
-}
-res_status_fail_ies_o::value_c::value_c(const res_status_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_fail_ies_o::value_c");
-  }
-}
-res_status_fail_ies_o::value_c& res_status_fail_ies_o::value_c::operator=(const res_status_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& res_status_fail_ies_o::value_c::transaction_id()
 {
@@ -34900,6 +28973,13 @@ SRSASN_CODE res_status_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* res_status_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "INTEGER (0..4095,...)", "INTEGER (0..4095,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 5, value, "res_status_fail_ies_o::value_c::types");
+}
+
 // ResourceStatusRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t res_status_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -34992,113 +29072,36 @@ presence_e res_status_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void res_status_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::report_characteristics:
-      c.destroy<fixed_bitstring<32, false, true>>();
-      break;
-    case types::cell_to_report_list:
-      c.destroy<cell_to_report_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void res_status_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_meas_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_meas_id:
+      c = uint16_t{};
       break;
     case types::regist_request:
+      c = regist_request_e{};
       break;
     case types::report_characteristics:
-      c.init<fixed_bitstring<32, false, true>>();
+      c = fixed_bitstring<32, false, true>{};
       break;
     case types::cell_to_report_list:
-      c.init<cell_to_report_list_l>();
+      c = cell_to_report_list_l{};
       break;
     case types::report_periodicity:
+      c = report_periodicity_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "res_status_request_ies_o::value_c");
   }
-}
-res_status_request_ies_o::value_c::value_c(const res_status_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::regist_request:
-      c.init(other.c.get<regist_request_e>());
-      break;
-    case types::report_characteristics:
-      c.init(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::cell_to_report_list:
-      c.init(other.c.get<cell_to_report_list_l>());
-      break;
-    case types::report_periodicity:
-      c.init(other.c.get<report_periodicity_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_request_ies_o::value_c");
-  }
-}
-res_status_request_ies_o::value_c&
-res_status_request_ies_o::value_c::operator=(const res_status_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::regist_request:
-      c.set(other.c.get<regist_request_e>());
-      break;
-    case types::report_characteristics:
-      c.set(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::cell_to_report_list:
-      c.set(other.c.get<cell_to_report_list_l>());
-      break;
-    case types::report_periodicity:
-      c.set(other.c.get<report_periodicity_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& res_status_request_ies_o::value_c::transaction_id()
 {
@@ -35267,6 +29270,18 @@ SRSASN_CODE res_status_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* res_status_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..4095,...)",
+                                "INTEGER (0..4095,...)",
+                                "RegistrationRequest",
+                                "BIT STRING",
+                                "CellToReportList",
+                                "ReportingPeriodicity"};
+  return convert_enum_idx(names, 7, value, "res_status_request_ies_o::value_c::types");
+}
+
 // ResourceStatusResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t res_status_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -35338,84 +29353,27 @@ presence_e res_status_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void res_status_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void res_status_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_meas_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_meas_id:
+      c = uint16_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "res_status_resp_ies_o::value_c");
   }
-}
-res_status_resp_ies_o::value_c::value_c(const res_status_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_resp_ies_o::value_c");
-  }
-}
-res_status_resp_ies_o::value_c& res_status_resp_ies_o::value_c::operator=(const res_status_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& res_status_resp_ies_o::value_c::transaction_id()
 {
@@ -35524,6 +29482,13 @@ SRSASN_CODE res_status_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* res_status_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..255,...)", "INTEGER (0..4095,...)", "INTEGER (0..4095,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "res_status_resp_ies_o::value_c::types");
+}
+
 // ResourceStatusUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t res_status_upd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -35609,108 +29574,33 @@ presence_e res_status_upd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void res_status_upd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::hardware_load_ind:
-      c.destroy<hardware_load_ind_s>();
-      break;
-    case types::tnl_capacity_ind:
-      c.destroy<tnl_capacity_ind_s>();
-      break;
-    case types::cell_meas_result_list:
-      c.destroy<cell_meas_result_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void res_status_upd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::gnb_cu_meas_id:
+      c = uint16_t{};
       break;
     case types::gnb_du_meas_id:
+      c = uint16_t{};
       break;
     case types::hardware_load_ind:
-      c.init<hardware_load_ind_s>();
+      c = hardware_load_ind_s{};
       break;
     case types::tnl_capacity_ind:
-      c.init<tnl_capacity_ind_s>();
+      c = tnl_capacity_ind_s{};
       break;
     case types::cell_meas_result_list:
-      c.init<cell_meas_result_list_l>();
+      c = cell_meas_result_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "res_status_upd_ies_o::value_c");
   }
-}
-res_status_upd_ies_o::value_c::value_c(const res_status_upd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::hardware_load_ind:
-      c.init(other.c.get<hardware_load_ind_s>());
-      break;
-    case types::tnl_capacity_ind:
-      c.init(other.c.get<tnl_capacity_ind_s>());
-      break;
-    case types::cell_meas_result_list:
-      c.init(other.c.get<cell_meas_result_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_upd_ies_o::value_c");
-  }
-}
-res_status_upd_ies_o::value_c& res_status_upd_ies_o::value_c::operator=(const res_status_upd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_cu_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::gnb_du_meas_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::hardware_load_ind:
-      c.set(other.c.get<hardware_load_ind_s>());
-      break;
-    case types::tnl_capacity_ind:
-      c.set(other.c.get<tnl_capacity_ind_s>());
-      break;
-    case types::cell_meas_result_list:
-      c.set(other.c.get<cell_meas_result_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "res_status_upd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& res_status_upd_ies_o::value_c::transaction_id()
 {
@@ -35862,6 +29752,17 @@ SRSASN_CODE res_status_upd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* res_status_upd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..4095,...)",
+                                "INTEGER (0..4095,...)",
+                                "HardwareLoadIndicator",
+                                "TNLCapacityIndicator",
+                                "CellMeasurementResultList"};
+  return convert_enum_idx(names, 6, value, "res_status_upd_ies_o::value_c::types");
+}
+
 // SystemInformationDeliveryCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sys_info_delivery_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -35933,89 +29834,27 @@ presence_e sys_info_delivery_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void sys_info_delivery_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::sitype_list:
-      c.destroy<sitype_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void sys_info_delivery_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::nr_cgi:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::sitype_list:
-      c.init<sitype_list_l>();
+      c = sitype_list_l{};
       break;
     case types::confirmed_ue_id:
+      c = uint64_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "sys_info_delivery_cmd_ies_o::value_c");
   }
-}
-sys_info_delivery_cmd_ies_o::value_c::value_c(const sys_info_delivery_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::sitype_list:
-      c.init(other.c.get<sitype_list_l>());
-      break;
-    case types::confirmed_ue_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "sys_info_delivery_cmd_ies_o::value_c");
-  }
-}
-sys_info_delivery_cmd_ies_o::value_c&
-sys_info_delivery_cmd_ies_o::value_c::operator=(const sys_info_delivery_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::sitype_list:
-      c.set(other.c.get<sitype_list_l>());
-      break;
-    case types::confirmed_ue_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "sys_info_delivery_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& sys_info_delivery_cmd_ies_o::value_c::transaction_id()
 {
@@ -36128,6 +29967,12 @@ SRSASN_CODE sys_info_delivery_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* sys_info_delivery_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "NRCGI", "SItype-List", "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 4, value, "sys_info_delivery_cmd_ies_o::value_c::types");
+}
+
 // TRPInformationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t trp_info_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -36192,80 +30037,24 @@ presence_e trp_info_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void trp_info_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void trp_info_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "trp_info_fail_ies_o::value_c");
   }
-}
-trp_info_fail_ies_o::value_c::value_c(const trp_info_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_fail_ies_o::value_c");
-  }
-}
-trp_info_fail_ies_o::value_c& trp_info_fail_ies_o::value_c::operator=(const trp_info_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& trp_info_fail_ies_o::value_c::transaction_id()
 {
@@ -36356,6 +30145,17 @@ SRSASN_CODE trp_info_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* trp_info_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "trp_info_fail_ies_o::value_c::types");
+}
+uint8_t trp_info_fail_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "trp_info_fail_ies_o::value_c::types");
+}
+
 // TRPInformationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t trp_info_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -36420,81 +30220,24 @@ presence_e trp_info_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void trp_info_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trp_list:
-      c.destroy<trp_list_l>();
-      break;
-    case types::trp_info_type_list_trp_req:
-      c.destroy<trp_info_type_list_trp_req_l>();
-      break;
-    default:
-      break;
-  }
-}
 void trp_info_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::trp_list:
-      c.init<trp_list_l>();
+      c = trp_list_l{};
       break;
     case types::trp_info_type_list_trp_req:
-      c.init<trp_info_type_list_trp_req_l>();
+      c = trp_info_type_list_trp_req_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "trp_info_request_ies_o::value_c");
   }
-}
-trp_info_request_ies_o::value_c::value_c(const trp_info_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::trp_list:
-      c.init(other.c.get<trp_list_l>());
-      break;
-    case types::trp_info_type_list_trp_req:
-      c.init(other.c.get<trp_info_type_list_trp_req_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_request_ies_o::value_c");
-  }
-}
-trp_info_request_ies_o::value_c&
-trp_info_request_ies_o::value_c::operator=(const trp_info_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::trp_list:
-      c.set(other.c.get<trp_list_l>());
-      break;
-    case types::trp_info_type_list_trp_req:
-      c.set(other.c.get<trp_info_type_list_trp_req_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& trp_info_request_ies_o::value_c::transaction_id()
 {
@@ -36591,6 +30334,17 @@ SRSASN_CODE trp_info_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* trp_info_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "TRPList", "TRPInformationTypeListTRPReq"};
+  return convert_enum_idx(names, 3, value, "trp_info_request_ies_o::value_c::types");
+}
+uint8_t trp_info_request_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "trp_info_request_ies_o::value_c::types");
+}
+
 // TRPInformationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t trp_info_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -36655,80 +30409,24 @@ presence_e trp_info_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void trp_info_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trp_info_list_trp_resp:
-      c.destroy<trp_info_list_trp_resp_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void trp_info_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::trp_info_list_trp_resp:
-      c.init<trp_info_list_trp_resp_l>();
+      c = trp_info_list_trp_resp_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "trp_info_resp_ies_o::value_c");
   }
-}
-trp_info_resp_ies_o::value_c::value_c(const trp_info_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::trp_info_list_trp_resp:
-      c.init(other.c.get<trp_info_list_trp_resp_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_resp_ies_o::value_c");
-  }
-}
-trp_info_resp_ies_o::value_c& trp_info_resp_ies_o::value_c::operator=(const trp_info_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::trp_info_list_trp_resp:
-      c.set(other.c.get<trp_info_list_trp_resp_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trp_info_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& trp_info_resp_ies_o::value_c::transaction_id()
 {
@@ -36822,6 +30520,17 @@ SRSASN_CODE trp_info_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* trp_info_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)", "TRPInformationListTRPResp", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "trp_info_resp_ies_o::value_c::types");
+}
+uint8_t trp_info_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "trp_info_resp_ies_o::value_c::types");
+}
+
 // TraceStartIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t trace_start_ies_o::idx_to_id(uint32_t idx)
 {
@@ -36886,76 +30595,24 @@ presence_e trace_start_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void trace_start_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::trace_activation:
-      c.destroy<trace_activation_s>();
-      break;
-    default:
-      break;
-  }
-}
 void trace_start_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::trace_activation:
-      c.init<trace_activation_s>();
+      c = trace_activation_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "trace_start_ies_o::value_c");
   }
-}
-trace_start_ies_o::value_c::value_c(const trace_start_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::trace_activation:
-      c.init(other.c.get<trace_activation_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trace_start_ies_o::value_c");
-  }
-}
-trace_start_ies_o::value_c& trace_start_ies_o::value_c::operator=(const trace_start_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::trace_activation:
-      c.set(other.c.get<trace_activation_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "trace_start_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& trace_start_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -37045,6 +30702,12 @@ SRSASN_CODE trace_start_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* trace_start_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "TraceActivation"};
+  return convert_enum_idx(names, 3, value, "trace_start_ies_o::value_c::types");
+}
+
 // WriteReplaceWarningRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t write_replace_warning_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -37123,97 +30786,30 @@ presence_e write_replace_warning_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void write_replace_warning_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::pws_sys_info:
-      c.destroy<pws_sys_info_s>();
-      break;
-    case types::cells_to_be_broadcast_list:
-      c.destroy<cells_to_be_broadcast_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void write_replace_warning_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::pws_sys_info:
-      c.init<pws_sys_info_s>();
+      c = pws_sys_info_s{};
       break;
     case types::repeat_period:
+      c = uint32_t{};
       break;
     case types::numof_broadcast_request:
+      c = uint32_t{};
       break;
     case types::cells_to_be_broadcast_list:
-      c.init<cells_to_be_broadcast_list_l>();
+      c = cells_to_be_broadcast_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "write_replace_warning_request_ies_o::value_c");
   }
-}
-write_replace_warning_request_ies_o::value_c::value_c(const write_replace_warning_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pws_sys_info:
-      c.init(other.c.get<pws_sys_info_s>());
-      break;
-    case types::repeat_period:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::numof_broadcast_request:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::cells_to_be_broadcast_list:
-      c.init(other.c.get<cells_to_be_broadcast_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "write_replace_warning_request_ies_o::value_c");
-  }
-}
-write_replace_warning_request_ies_o::value_c&
-write_replace_warning_request_ies_o::value_c::operator=(const write_replace_warning_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pws_sys_info:
-      c.set(other.c.get<pws_sys_info_s>());
-      break;
-    case types::repeat_period:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::numof_broadcast_request:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::cells_to_be_broadcast_list:
-      c.set(other.c.get<cells_to_be_broadcast_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "write_replace_warning_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& write_replace_warning_request_ies_o::value_c::transaction_id()
 {
@@ -37345,6 +30941,16 @@ SRSASN_CODE write_replace_warning_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* write_replace_warning_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "PWSSystemInformation",
+                                "INTEGER (0..131071,...)",
+                                "INTEGER (0..65535)",
+                                "Cells-To-Be-Broadcast-List"};
+  return convert_enum_idx(names, 5, value, "write_replace_warning_request_ies_o::value_c::types");
+}
+
 // WriteReplaceWarningResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t write_replace_warning_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -37416,93 +31022,27 @@ presence_e write_replace_warning_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void write_replace_warning_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cells_broadcast_completed_list:
-      c.destroy<cells_broadcast_completed_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.destroy<ded_si_delivery_needed_ue_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void write_replace_warning_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::cells_broadcast_completed_list:
-      c.init<cells_broadcast_completed_list_l>();
+      c = cells_broadcast_completed_list_l{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::ded_si_delivery_needed_ue_list:
-      c.init<ded_si_delivery_needed_ue_list_l>();
+      c = ded_si_delivery_needed_ue_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "write_replace_warning_resp_ies_o::value_c");
   }
-}
-write_replace_warning_resp_ies_o::value_c::value_c(const write_replace_warning_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::cells_broadcast_completed_list:
-      c.init(other.c.get<cells_broadcast_completed_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.init(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "write_replace_warning_resp_ies_o::value_c");
-  }
-}
-write_replace_warning_resp_ies_o::value_c&
-write_replace_warning_resp_ies_o::value_c::operator=(const write_replace_warning_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::cells_broadcast_completed_list:
-      c.set(other.c.get<cells_broadcast_completed_list_l>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::ded_si_delivery_needed_ue_list:
-      c.set(other.c.get<ded_si_delivery_needed_ue_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "write_replace_warning_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint16_t& write_replace_warning_resp_ies_o::value_c::transaction_id()
 {
@@ -37621,6 +31161,22 @@ SRSASN_CODE write_replace_warning_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* write_replace_warning_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-Broadcast-Completed-List",
+                                "CriticalityDiagnostics",
+                                "Dedicated-SIDelivery-NeededUE-List"};
+  return convert_enum_idx(names, 4, value, "write_replace_warning_resp_ies_o::value_c::types");
+}
+uint8_t write_replace_warning_resp_ies_o::value_c::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "write_replace_warning_resp_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<f1_removal_fail_ies_o>;
+
 SRSASN_CODE f1_removal_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -37709,6 +31265,8 @@ void f1_removal_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<f1_removal_resp_ies_o>;
+
 SRSASN_CODE f1_removal_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -37781,6 +31339,8 @@ void f1_removal_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<f1_setup_fail_ies_o>;
 
 SRSASN_CODE f1_setup_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -37887,6 +31447,8 @@ void f1_setup_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<f1_setup_request_ies_o>;
 
 SRSASN_CODE f1_setup_request_ies_container::pack(bit_ref& bref) const
 {
@@ -38066,6 +31628,8 @@ void f1_setup_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<f1_setup_resp_ies_o>;
 
 SRSASN_CODE f1_setup_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -38248,6 +31812,8 @@ void f1_setup_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<gnb_cu_cfg_upd_ies_o>;
 
 SRSASN_CODE gnb_cu_cfg_upd_ies_container::pack(bit_ref& bref) const
 {
@@ -38610,6 +32176,8 @@ void gnb_cu_cfg_upd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_cu_cfg_upd_ack_ies_o>;
+
 SRSASN_CODE gnb_cu_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -38789,6 +32357,8 @@ void gnb_cu_cfg_upd_ack_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_cu_cfg_upd_fail_ies_o>;
+
 SRSASN_CODE gnb_cu_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -38894,6 +32464,8 @@ void gnb_cu_cfg_upd_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<gnb_du_cfg_upd_ies_o>;
 
 SRSASN_CODE gnb_du_cfg_upd_ies_container::pack(bit_ref& bref) const
 {
@@ -39172,6 +32744,8 @@ void gnb_du_cfg_upd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_du_cfg_upd_ack_ies_o>;
+
 SRSASN_CODE gnb_du_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -39365,6 +32939,8 @@ void gnb_du_cfg_upd_ack_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_du_cfg_upd_fail_ies_o>;
+
 SRSASN_CODE gnb_du_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -39470,6 +33046,8 @@ void gnb_du_cfg_upd_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<gnb_du_res_cfg_ies_o>;
 
 SRSASN_CODE gnb_du_res_cfg_ies_container::pack(bit_ref& bref) const
 {
@@ -39614,6 +33192,8 @@ void gnb_du_res_cfg_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_du_res_cfg_ack_ies_o>;
+
 SRSASN_CODE gnb_du_res_cfg_ack_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -39686,6 +33266,8 @@ void gnb_du_res_cfg_ack_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<gnb_du_res_cfg_fail_ies_o>;
 
 SRSASN_CODE gnb_du_res_cfg_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -39793,6 +33375,8 @@ void gnb_du_res_cfg_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_du_res_coordination_request_ies_o>;
+
 SRSASN_CODE gnb_du_res_coordination_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -39896,6 +33480,8 @@ void gnb_du_res_coordination_request_ies_container::to_json(json_writer& j) cons
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<gnb_du_res_coordination_resp_ies_o>;
+
 SRSASN_CODE gnb_du_res_coordination_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -39965,6 +33551,8 @@ void gnb_du_res_coordination_resp_ies_container::to_json(json_writer& j) const
   j.write_str("Value", eutra_nr_cell_res_coordination_req_ack_container.to_string());
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<gnb_du_status_ind_ies_o>;
 
 SRSASN_CODE gnb_du_status_ind_ies_container::pack(bit_ref& bref) const
 {
@@ -40053,6 +33641,8 @@ void gnb_du_status_ind_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<iab_tnl_address_fail_ies_o>;
 
 SRSASN_CODE iab_tnl_address_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -40159,6 +33749,8 @@ void iab_tnl_address_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<iab_tnl_address_request_ies_o>;
 
 SRSASN_CODE iab_tnl_address_request_ies_container::pack(bit_ref& bref) const
 {
@@ -40291,6 +33883,8 @@ void iab_tnl_address_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<iab_tnl_address_resp_ies_o>;
+
 SRSASN_CODE iab_tnl_address_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -40364,6 +33958,8 @@ void iab_tnl_address_resp_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<iab_up_cfg_upd_fail_ies_o>;
 
 SRSASN_CODE iab_up_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -40471,6 +34067,8 @@ void iab_up_cfg_upd_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<iab_up_cfg_upd_request_ies_o>;
+
 SRSASN_CODE iab_up_cfg_upd_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -40570,6 +34168,8 @@ void iab_up_cfg_upd_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<iab_up_cfg_upd_resp_ies_o>;
+
 SRSASN_CODE iab_up_cfg_upd_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -40664,6 +34264,8 @@ void iab_up_cfg_upd_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<meas_activation_ies_o>;
 
 SRSASN_CODE meas_activation_ies_container::pack(bit_ref& bref) const
 {
@@ -40772,6 +34374,8 @@ void meas_activation_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<meas_precfg_confirm_ies_o>;
+
 SRSASN_CODE meas_precfg_confirm_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -40878,6 +34482,8 @@ void meas_precfg_confirm_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<meas_precfg_refuse_ies_o>;
+
 SRSASN_CODE meas_precfg_refuse_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -40981,6 +34587,8 @@ void meas_precfg_refuse_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<meas_precfg_required_ies_o>;
+
 SRSASN_CODE meas_precfg_required_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -41069,6 +34677,8 @@ void meas_precfg_required_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_mod_fail_ies_o>;
 
 SRSASN_CODE multicast_context_mod_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -41172,6 +34782,8 @@ void multicast_context_mod_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_mod_request_ies_o>;
 
 SRSASN_CODE multicast_context_mod_request_ies_container::pack(bit_ref& bref) const
 {
@@ -41326,6 +34938,8 @@ void multicast_context_mod_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_mod_resp_ies_o>;
 
 SRSASN_CODE multicast_context_mod_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -41503,6 +35117,8 @@ void multicast_context_mod_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<multicast_context_release_cmd_ies_o>;
+
 SRSASN_CODE multicast_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -41587,6 +35203,8 @@ void multicast_context_release_cmd_ies_container::to_json(json_writer& j) const
   cause.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_release_complete_ies_o>;
 
 SRSASN_CODE multicast_context_release_complete_ies_container::pack(bit_ref& bref) const
 {
@@ -41676,6 +35294,8 @@ void multicast_context_release_complete_ies_container::to_json(json_writer& j) c
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<multicast_context_release_request_ies_o>;
+
 SRSASN_CODE multicast_context_release_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -41760,6 +35380,8 @@ void multicast_context_release_request_ies_container::to_json(json_writer& j) co
   cause.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_setup_fail_ies_o>;
 
 SRSASN_CODE multicast_context_setup_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -41866,6 +35488,8 @@ void multicast_context_setup_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_setup_request_ies_o>;
 
 SRSASN_CODE multicast_context_setup_request_ies_container::pack(bit_ref& bref) const
 {
@@ -41988,6 +35612,8 @@ void multicast_context_setup_request_ies_container::to_json(json_writer& j) cons
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_context_setup_resp_ies_o>;
 
 SRSASN_CODE multicast_context_setup_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -42118,6 +35744,8 @@ void multicast_context_setup_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<multicast_distribution_release_cmd_ies_o>;
+
 SRSASN_CODE multicast_distribution_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -42217,6 +35845,8 @@ void multicast_distribution_release_cmd_ies_container::to_json(json_writer& j) c
   cause.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_distribution_release_complete_ies_o>;
 
 SRSASN_CODE multicast_distribution_release_complete_ies_container::pack(bit_ref& bref) const
 {
@@ -42320,6 +35950,8 @@ void multicast_distribution_release_complete_ies_container::to_json(json_writer&
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_distribution_setup_fail_ies_o>;
 
 SRSASN_CODE multicast_distribution_setup_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -42442,6 +36074,8 @@ void multicast_distribution_setup_fail_ies_container::to_json(json_writer& j) co
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<multicast_distribution_setup_request_ies_o>;
+
 SRSASN_CODE multicast_distribution_setup_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -42545,6 +36179,8 @@ void multicast_distribution_setup_request_ies_container::to_json(json_writer& j)
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<multicast_distribution_setup_resp_ies_o>;
 
 SRSASN_CODE multicast_distribution_setup_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -42705,6 +36341,8 @@ void multicast_distribution_setup_resp_ies_container::to_json(json_writer& j) co
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<multicast_group_paging_ies_o>;
+
 SRSASN_CODE multicast_group_paging_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -42804,6 +36442,8 @@ void multicast_group_paging_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<network_access_rate_reduction_ies_o>;
+
 SRSASN_CODE network_access_rate_reduction_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -42873,6 +36513,8 @@ void network_access_rate_reduction_ies_container::to_json(json_writer& j) const
   uac_assist_info.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<notify_ies_o>;
 
 SRSASN_CODE notify_ies_container::pack(bit_ref& bref) const
 {
@@ -42962,6 +36604,8 @@ void notify_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<pdc_meas_fail_ind_ies_o>;
 
 SRSASN_CODE pdc_meas_fail_ind_ies_container::pack(bit_ref& bref) const
 {
@@ -43062,6 +36706,8 @@ void pdc_meas_fail_ind_ies_container::to_json(json_writer& j) const
   cause.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<pdc_meas_initiation_fail_ies_o>;
 
 SRSASN_CODE pdc_meas_initiation_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -43180,6 +36826,8 @@ void pdc_meas_initiation_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<pdc_meas_initiation_request_ies_o>;
 
 SRSASN_CODE pdc_meas_initiation_request_ies_container::pack(bit_ref& bref) const
 {
@@ -43318,6 +36966,8 @@ void pdc_meas_initiation_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pdc_meas_initiation_resp_ies_o>;
+
 SRSASN_CODE pdc_meas_initiation_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -43439,6 +37089,8 @@ void pdc_meas_initiation_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pdc_meas_report_ies_o>;
+
 SRSASN_CODE pdc_meas_report_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -43539,6 +37191,8 @@ void pdc_meas_report_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pdc_meas_termination_cmd_ies_o>;
+
 SRSASN_CODE pdc_meas_termination_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -43623,6 +37277,8 @@ void pdc_meas_termination_cmd_ies_container::to_json(json_writer& j) const
   j.write_int("Value", ran_ue_pdc_meas_id);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<prs_cfg_fail_ies_o>;
 
 SRSASN_CODE prs_cfg_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -43712,6 +37368,8 @@ void prs_cfg_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<prs_cfg_request_ies_o>;
+
 SRSASN_CODE prs_cfg_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -43785,6 +37443,8 @@ void prs_cfg_request_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<prs_cfg_resp_ies_o>;
 
 SRSASN_CODE prs_cfg_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -43880,6 +37540,8 @@ void prs_cfg_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<pws_cancel_request_ies_o>;
 
 SRSASN_CODE pws_cancel_request_ies_container::pack(bit_ref& bref) const
 {
@@ -44009,6 +37671,8 @@ void pws_cancel_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pws_cancel_resp_ies_o>;
+
 SRSASN_CODE pws_cancel_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -44104,6 +37768,8 @@ void pws_cancel_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pws_fail_ind_ies_o>;
+
 SRSASN_CODE pws_fail_ind_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -44181,6 +37847,8 @@ void pws_fail_ind_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pws_restart_ind_ies_o>;
+
 SRSASN_CODE pws_restart_ind_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -44254,6 +37922,8 @@ void pws_restart_ind_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<paging_ies_o>;
 
 SRSASN_CODE paging_ies_container::pack(bit_ref& bref) const
 {
@@ -44542,6 +38212,8 @@ void paging_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<pos_sys_info_delivery_cmd_ies_o>;
+
 SRSASN_CODE pos_sys_info_delivery_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -44646,6 +38318,8 @@ void pos_sys_info_delivery_cmd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_activation_fail_ies_o>;
+
 SRSASN_CODE positioning_activation_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -44749,6 +38423,8 @@ void positioning_activation_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_activation_request_ies_o>;
+
 SRSASN_CODE positioning_activation_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -44851,6 +38527,8 @@ void positioning_activation_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_activation_resp_ies_o>;
 
 SRSASN_CODE positioning_activation_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -44975,6 +38653,8 @@ void positioning_activation_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_assist_info_ctrl_ies_o>;
 
 SRSASN_CODE positioning_assist_info_ctrl_ies_container::pack(bit_ref& bref) const
 {
@@ -45107,6 +38787,8 @@ void positioning_assist_info_ctrl_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_assist_info_feedback_ies_o>;
+
 SRSASN_CODE positioning_assist_info_feedback_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -45238,6 +38920,8 @@ void positioning_assist_info_feedback_ies_container::to_json(json_writer& j) con
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_deactivation_ies_o>;
+
 SRSASN_CODE positioning_deactivation_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -45322,6 +39006,8 @@ void positioning_deactivation_ies_container::to_json(json_writer& j) const
   abort_tx.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_info_fail_ies_o>;
 
 SRSASN_CODE positioning_info_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -45425,6 +39111,8 @@ void positioning_info_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_info_request_ies_o>;
 
 SRSASN_CODE positioning_info_request_ies_container::pack(bit_ref& bref) const
 {
@@ -45549,6 +39237,8 @@ void positioning_info_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_info_resp_ies_o>;
 
 SRSASN_CODE positioning_info_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -45692,6 +39382,8 @@ void positioning_info_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_info_upd_ies_o>;
+
 SRSASN_CODE positioning_info_upd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -45798,6 +39490,8 @@ void positioning_info_upd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_meas_abort_ies_o>;
+
 SRSASN_CODE positioning_meas_abort_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -45882,6 +39576,8 @@ void positioning_meas_abort_ies_container::to_json(json_writer& j) const
   j.write_int("Value", ran_meas_id);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_meas_fail_ies_o>;
 
 SRSASN_CODE positioning_meas_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -46001,6 +39697,8 @@ void positioning_meas_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_meas_fail_ind_ies_o>;
+
 SRSASN_CODE positioning_meas_fail_ind_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -46100,6 +39798,8 @@ void positioning_meas_fail_ind_ies_container::to_json(json_writer& j) const
   cause.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_meas_report_ies_o>;
 
 SRSASN_CODE positioning_meas_report_ies_container::pack(bit_ref& bref) const
 {
@@ -46204,6 +39904,8 @@ void positioning_meas_report_ies_container::to_json(json_writer& j) const
   j.end_array();
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_meas_request_ies_o>;
 
 SRSASN_CODE positioning_meas_request_ies_container::pack(bit_ref& bref) const
 {
@@ -46541,6 +40243,8 @@ void positioning_meas_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<positioning_meas_resp_ies_o>;
+
 SRSASN_CODE positioning_meas_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -46665,6 +40369,8 @@ void positioning_meas_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<positioning_meas_upd_ies_o>;
 
 SRSASN_CODE positioning_meas_upd_ies_container::pack(bit_ref& bref) const
 {
@@ -46880,6 +40586,8 @@ void private_msg_s::to_json(json_writer& j) const
   j.end_array();
 }
 
+template struct asn1::protocol_ie_field_s<qo_e_info_transfer_ies_o>;
+
 SRSASN_CODE qo_e_info_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -46967,6 +40675,8 @@ void qo_e_info_transfer_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<rrc_delivery_report_ies_o>;
 
 SRSASN_CODE rrc_delivery_report_ies_container::pack(bit_ref& bref) const
 {
@@ -47068,6 +40778,8 @@ void rrc_delivery_report_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ref_time_info_report_ies_o>;
+
 SRSASN_CODE ref_time_info_report_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -47138,6 +40850,8 @@ void ref_time_info_report_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ref_time_info_report_ctrl_ies_o>;
+
 SRSASN_CODE ref_time_info_report_ctrl_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -47207,6 +40921,8 @@ void ref_time_info_report_ctrl_ies_container::to_json(json_writer& j) const
   report_request_type.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<reset_ies_o>;
 
 SRSASN_CODE reset_ies_container::pack(bit_ref& bref) const
 {
@@ -47292,6 +41008,8 @@ void reset_ies_container::to_json(json_writer& j) const
   reset_type.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<reset_ack_ies_o>;
 
 SRSASN_CODE reset_ack_ies_container::pack(bit_ref& bref) const
 {
@@ -47387,6 +41105,8 @@ void reset_ack_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<res_status_fail_ies_o>;
 
 SRSASN_CODE res_status_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -47505,6 +41225,8 @@ void res_status_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<res_status_request_ies_o>;
 
 SRSASN_CODE res_status_request_ies_container::pack(bit_ref& bref) const
 {
@@ -47667,6 +41389,8 @@ void res_status_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<res_status_resp_ies_o>;
+
 SRSASN_CODE res_status_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -47769,6 +41493,8 @@ void res_status_resp_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<res_status_upd_ies_o>;
 
 SRSASN_CODE res_status_upd_ies_container::pack(bit_ref& bref) const
 {
@@ -47913,6 +41639,8 @@ void res_status_upd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<sys_info_delivery_cmd_ies_o>;
+
 SRSASN_CODE sys_info_delivery_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
@@ -48017,6 +41745,8 @@ void sys_info_delivery_cmd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<trp_info_fail_ies_o>;
+
 SRSASN_CODE trp_info_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -48104,6 +41834,8 @@ void trp_info_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<trp_info_request_ies_o>;
 
 SRSASN_CODE trp_info_request_ies_container::pack(bit_ref& bref) const
 {
@@ -48201,6 +41933,8 @@ void trp_info_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<trp_info_resp_ies_o>;
+
 SRSASN_CODE trp_info_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -48293,6 +42027,8 @@ void trp_info_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<trace_start_ies_o>;
+
 SRSASN_CODE trace_start_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -48377,6 +42113,8 @@ void trace_start_ies_container::to_json(json_writer& j) const
   trace_activation.to_json(j);
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<write_replace_warning_request_ies_o>;
 
 SRSASN_CODE write_replace_warning_request_ies_container::pack(bit_ref& bref) const
 {
@@ -48499,6 +42237,8 @@ void write_replace_warning_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<write_replace_warning_resp_ies_o>;
 
 SRSASN_CODE write_replace_warning_resp_ies_container::pack(bit_ref& bref) const
 {

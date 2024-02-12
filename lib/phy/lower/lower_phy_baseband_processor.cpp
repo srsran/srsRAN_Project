@@ -110,11 +110,19 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   // Throttling mechanism to keep a maximum latency of one millisecond in the transmit buffer based on the latest
   // received timestamp.
   {
-    std::unique_lock<std::mutex> lock(last_rx_mutex);
-    std::chrono::microseconds    timeout = 2 * std::chrono::microseconds(tx_buffer_size * 1000 / srate.to_kHz());
-    last_rx_cvar.wait_for(lock, timeout, [this, timestamp]() {
-      return (timestamp < last_rx_timestamp + rx_to_tx_max_delay) || !tx_state.is_running();
-    });
+    // Calculate maximum waiting time to avoid deadlock.
+    std::chrono::microseconds timeout_duration = 2 * std::chrono::microseconds(tx_buffer_size * 1000 / srate.to_kHz());
+    // Maximum time point to wait for.
+    std::chrono::time_point<std::chrono::steady_clock> wait_until_tp =
+        std::chrono::steady_clock::now() + timeout_duration;
+    // Wait until one of these conditions is met:
+    // - The reception timestamp reaches the desired value;
+    // - The system time reaches the maximum waiting time; or
+    // - The lower PHY was stopped.
+    while ((timestamp > (last_rx_timestamp.load(std::memory_order_acquire) + rx_to_tx_max_delay)) &&
+           (std::chrono::steady_clock::now() < wait_until_tp) && tx_state.is_running()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
   }
 
   // Throttling mechanism to slow down the baseband processing.
@@ -172,11 +180,7 @@ void lower_phy_baseband_processor::ul_process()
   ru_tracer << trace_event("receive_baseband", tp);
 
   // Update last timestamp.
-  {
-    std::unique_lock<std::mutex> lock(last_rx_mutex);
-    last_rx_timestamp = rx_metadata.ts + rx_buffer->get_nof_samples();
-    last_rx_cvar.notify_all();
-  }
+  last_rx_timestamp.store(rx_metadata.ts + rx_buffer->get_nof_samples(), std::memory_order_release);
 
   // Queue uplink buffer processing.
   report_fatal_error_if_not(uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {

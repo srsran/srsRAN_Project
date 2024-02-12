@@ -53,9 +53,9 @@ protected:
 
   void set_config(udp_network_gateway_config server_config, udp_network_gateway_config client_config)
   {
-    server = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
+    server = create_udp_network_gateway({std::move(server_config), server_data_notifier, io_tx_executor});
     ASSERT_NE(server, nullptr);
-    client = create_udp_network_gateway({client_config, client_data_notifier, io_tx_executor});
+    client = create_udp_network_gateway({std::move(client_config), client_data_notifier, io_tx_executor});
     ASSERT_NE(client, nullptr);
   }
 
@@ -75,7 +75,7 @@ protected:
 
   void run_client_receive() { client->receive(); }
 
-  void send_to_server(byte_buffer pdu, std::string dest_addr, uint16_t port)
+  void send_to_server(byte_buffer pdu, const std::string& dest_addr, uint16_t port)
   {
     in_addr          inaddr_v4    = {};
     in6_addr         inaddr_v6    = {};
@@ -97,7 +97,6 @@ protected:
     client->handle_pdu(std::move(pdu), addr_storage);
   }
 
-protected:
   dummy_network_gateway_control_notifier server_control_notifier;
   dummy_network_gateway_control_notifier client_control_notifier;
 
@@ -126,9 +125,8 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails
 {
   udp_network_gateway_config config;
   config.bind_address = "1.1.1.1";
-  config.bind_port    = get_unused_udp_port("0.0.0.0");
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(server->create_and_bind());
 }
@@ -137,9 +135,8 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fa
 {
   udp_network_gateway_config config;
   config.bind_address = "1:1::";
-  config.bind_port    = get_unused_udp_port("::1");
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(server->create_and_bind());
 }
@@ -148,42 +145,46 @@ TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
 {
   udp_network_gateway_config config;
   config.bind_address = "127.0.0.1";
-  config.bind_port    = get_unused_udp_port(config.bind_address);
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(server->create_and_bind());
+  std::string server_address = {};
+  ASSERT_TRUE(server->get_bind_address(server_address));
+  ASSERT_EQ(server_address, "127.0.0.1");
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
 {
   udp_network_gateway_config config;
   config.bind_address = "::1";
-  config.bind_port    = get_unused_udp_port(config.bind_address);
+  config.bind_port    = 0;
   config.reuse_addr   = true;
-  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(server->create_and_bind());
+  std::string server_address = {};
+  ASSERT_TRUE(server->get_bind_address(server_address));
+  ASSERT_EQ(server_address, "::1");
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
+  ASSERT_NE(server_port.value(), 0);
 }
 
 TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   // create server config
-  uint16_t server_port = get_unused_udp_port(server_address_v4);
-  ASSERT_NE(server_port, 0);
-
   udp_network_gateway_config server_config;
   server_config.bind_address      = server_address_v4;
-  server_config.bind_port         = server_port;
+  server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
 
   // create client config
-  uint16_t client_port = get_unused_udp_port(client_address_v4);
-  ASSERT_NE(client_port, 0);
-
   udp_network_gateway_config client_config;
   client_config.bind_address      = client_address_v4;
-  client_config.bind_port         = client_port;
+  client_config.bind_port         = 0;
   client_config.non_blocking_mode = true;
 
   // set configs
@@ -194,12 +195,16 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
 
+  std::string server_address = {};
+  ASSERT_TRUE(server->get_bind_address(server_address));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address_v4, server_port);
+  send_to_server(pdu_small.copy(), server_address_v4, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address_v4, server_port);
+  send_to_server(pdu_large.copy(), server_address_v4, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address_v4, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v4, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -219,20 +224,15 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   // create server config
-  uint16_t server_port = get_unused_udp_port(server_address_v6);
-  ASSERT_NE(server_port, 0);
-
   udp_network_gateway_config server_config;
   server_config.bind_address      = server_address_v6;
-  server_config.bind_port         = server_port;
+  server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
 
-  uint16_t client_port = get_unused_udp_port(client_address_v6);
-  ASSERT_NE(client_port, 0);
-
+  // create client config
   udp_network_gateway_config client_config;
   client_config.bind_address      = client_address_v6;
-  client_config.bind_port         = client_port;
+  client_config.bind_port         = 0;
   client_config.non_blocking_mode = true;
 
   set_config(server_config, client_config);
@@ -241,12 +241,16 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
 
+  std::string server_address = {};
+  ASSERT_TRUE(server->get_bind_address(server_address));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address_v6, server_port);
+  send_to_server(pdu_small.copy(), server_address_v6, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address_v6, server_port);
+  send_to_server(pdu_large.copy(), server_address_v6, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address_v6, server_port);
+  send_to_server(pdu_oversized.copy(), server_address_v6, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -266,20 +270,14 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   // create server config
-  uint16_t server_port = get_unused_udp_port(server_hostname);
-  ASSERT_NE(server_port, 0);
-
   udp_network_gateway_config server_config;
   server_config.bind_address      = server_hostname;
-  server_config.bind_port         = server_port;
+  server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
 
-  // create client config
-  uint16_t client_port = get_unused_udp_port(client_hostname);
-  ASSERT_NE(client_port, 0);
   udp_network_gateway_config client_config;
   client_config.bind_address      = client_hostname;
-  client_config.bind_port         = client_port;
+  client_config.bind_port         = 0;
   client_config.non_blocking_mode = true;
 
   // set client and server configs
@@ -291,12 +289,14 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
+  optional<uint16_t> server_port = server->get_bind_port();
+  ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small.copy(), server_address, server_port);
+  send_to_server(pdu_small.copy(), server_address, server_port.value());
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large.copy(), server_address, server_port);
+  send_to_server(pdu_large.copy(), server_address, server_port.value());
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized.copy(), server_address, server_port);
+  send_to_server(pdu_oversized.copy(), server_address, server_port.value());
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));

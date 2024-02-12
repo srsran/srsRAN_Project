@@ -66,6 +66,11 @@ public:
     return entry.input;
   }
 
+  void set_nof_softbits(units::bits nof_softbits) override
+  {
+    // Ignore.
+  }
+
   const std::vector<entry_t>& get_entries() const { return entries; }
 
   void clear() { entries.clear(); }

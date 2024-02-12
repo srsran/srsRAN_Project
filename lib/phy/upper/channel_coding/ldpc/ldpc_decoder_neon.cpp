@@ -104,27 +104,18 @@ void ldpc_decoder_neon::compute_var_to_check_msgs(span<log_likelihood_ratio>    
   }
 }
 
-span<log_likelihood_ratio> ldpc_decoder_neon::get_rotated_node(unsigned var_node)
-{
-  return span<log_likelihood_ratio>(rotated_var_to_check).subspan(var_node * node_size_byte, node_size_byte);
-}
-
 void ldpc_decoder_neon::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
                                                   span<log_likelihood_ratio>       second_min_var_to_check,
                                                   span<uint8_t>                    min_var_to_check_index,
                                                   span<uint8_t>                    sign_prod_var_to_check,
-                                                  span<log_likelihood_ratio>       rotated_node,
-                                                  span<const log_likelihood_ratio> this_var_to_check,
-                                                  unsigned                         shift,
+                                                  span<const log_likelihood_ratio> rotated_node,
                                                   unsigned                         var_node)
 {
-  srsvec::circ_shift_backward(rotated_node.first(lifting_size), this_var_to_check.first(lifting_size), shift);
-
-  neon::neon_span min_var_to_check_neon(min_var_to_check, node_size_neon);
-  neon::neon_span second_min_var_to_check_neon(second_min_var_to_check, node_size_neon);
-  neon::neon_span min_var_to_check_index_neon(min_var_to_check_index, node_size_neon);
-  neon::neon_span sign_prod_var_to_check_neon(sign_prod_var_to_check, node_size_neon);
-  neon::neon_span rotated_node_neon(rotated_node, node_size_neon);
+  neon::neon_span       min_var_to_check_neon(min_var_to_check, node_size_neon);
+  neon::neon_span       second_min_var_to_check_neon(second_min_var_to_check, node_size_neon);
+  neon::neon_span       min_var_to_check_index_neon(min_var_to_check_index, node_size_neon);
+  neon::neon_span       sign_prod_var_to_check_neon(sign_prod_var_to_check, node_size_neon);
+  neon::neon_const_span rotated_node_neon(rotated_node, node_size_neon);
 
   int8x16_t this_var_index_s8 = vdupq_n_s8(static_cast<int8_t>(var_node));
   // For all NEON registers inside a node...

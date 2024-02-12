@@ -38,6 +38,8 @@ namespace ofh {
 struct receiver_impl_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Ethernet receiver.
+  std::unique_ptr<ether::receiver> eth_receiver;
   /// eCPRI packet decoder.
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.
@@ -61,19 +63,10 @@ public:
   receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies);
 
   // See interface for documentation.
-  ether::frame_notifier& get_ethernet_frame_notifier() override;
-
-  // See interface for documentation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 
   // See interface for documentation.
   controller& get_controller() override;
-
-  /// Sets the Ethernet receiver for this Open Fronthaul receiver.
-  void set_ethernet_receiver(std::unique_ptr<ether::receiver> eth_rx)
-  {
-    msg_receiver.set_ethernet_receiver(std::move(eth_rx));
-  }
 
 private:
   rx_window_checker   window_checker;

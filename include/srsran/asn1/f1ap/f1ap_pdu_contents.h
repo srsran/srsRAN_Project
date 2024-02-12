@@ -58,9 +58,6 @@ struct access_and_mob_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -77,10 +74,8 @@ struct access_and_mob_ind_ies_o {
     const successful_ho_report_info_list_l& successful_ho_report_info_list() const;
 
   private:
-    types                                                                                              type_;
-    choice_buffer_t<rach_report_info_list_l, rlf_report_info_list_l, successful_ho_report_info_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -122,9 +117,6 @@ struct access_success_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -139,10 +131,8 @@ struct access_success_ies_o {
     const nr_cgi_s& nr_cgi() const;
 
   private:
-    types                     type_;
-    choice_buffer_t<nr_cgi_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -219,9 +209,6 @@ struct bap_map_cfg_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -246,15 +233,8 @@ struct bap_map_cfg_ies_o {
     const bap_hdr_rewriting_remd_list_l&  bap_hdr_rewriting_remd_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<bap_hdr_rewriting_added_list_l,
-                    bap_hdr_rewriting_remd_list_l,
-                    bh_routing_info_added_list_l,
-                    bh_routing_info_remd_list_l,
-                    traffic_map_info_c>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -306,9 +286,6 @@ struct bap_map_cfg_ack_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -321,10 +298,8 @@ struct bap_map_cfg_ack_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -364,9 +339,6 @@ struct bap_map_cfg_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -383,10 +355,8 @@ struct bap_map_cfg_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -427,9 +397,6 @@ struct broadcast_context_mod_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -446,10 +413,8 @@ struct broadcast_context_mod_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -498,9 +463,6 @@ struct broadcast_context_mod_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -523,15 +485,8 @@ struct broadcast_context_mod_request_ies_o {
     const broadcast_m_rbs_to_be_released_list_l&  broadcast_m_rbs_to_be_released_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<broadcast_m_rbs_to_be_modified_list_l,
-                    broadcast_m_rbs_to_be_released_list_l,
-                    broadcast_m_rbs_to_be_setup_mod_list_l,
-                    mbs_cu_to_du_rrc_info_s,
-                    mbs_service_area_c>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -586,9 +541,6 @@ struct broadcast_context_mod_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -611,15 +563,8 @@ struct broadcast_context_mod_resp_ies_o {
     const crit_diagnostics_s&                            crit_diagnostics() const;
 
   private:
-    types type_;
-    choice_buffer_t<broadcast_m_rbs_failed_to_be_modified_list_l,
-                    broadcast_m_rbs_failed_to_be_setup_mod_list_l,
-                    broadcast_m_rbs_modified_list_l,
-                    broadcast_m_rbs_setup_mod_list_l,
-                    crit_diagnostics_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -666,9 +611,6 @@ struct broadcast_context_release_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -683,10 +625,8 @@ struct broadcast_context_release_cmd_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -724,9 +664,6 @@ struct broadcast_context_release_complete_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -741,10 +678,8 @@ struct broadcast_context_release_complete_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -784,9 +719,6 @@ struct broadcast_context_release_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -801,10 +733,8 @@ struct broadcast_context_release_request_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -843,9 +773,6 @@ struct broadcast_context_setup_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -862,10 +789,8 @@ struct broadcast_context_setup_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -916,9 +841,6 @@ struct broadcast_context_setup_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -939,15 +861,8 @@ struct broadcast_context_setup_request_ies_o {
     const broadcast_m_rbs_to_be_setup_list_l& broadcast_m_rbs_to_be_setup_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<broadcast_m_rbs_to_be_setup_list_l,
-                    mbs_cu_to_du_rrc_info_s,
-                    mbs_service_area_c,
-                    mbs_session_id_s,
-                    snssai_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -997,9 +912,6 @@ struct broadcast_context_setup_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1020,14 +932,8 @@ struct broadcast_context_setup_resp_ies_o {
     const crit_diagnostics_s&                        crit_diagnostics() const;
 
   private:
-    types type_;
-    choice_buffer_t<broadcast_area_scope_c,
-                    broadcast_m_rbs_failed_to_be_setup_list_l,
-                    broadcast_m_rbs_setup_list_l,
-                    crit_diagnostics_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1073,9 +979,6 @@ struct cu_du_radio_info_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1088,10 +991,8 @@ struct cu_du_radio_info_transfer_ies_o {
     const cu_du_radio_info_type_c& cu_du_radio_info_type() const;
 
   private:
-    types                                    type_;
-    choice_buffer_t<cu_du_radio_info_type_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1136,9 +1037,6 @@ struct cell_traffic_trace_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1159,13 +1057,8 @@ struct cell_traffic_trace_ies_o {
     const visible_string<0, MAX_ASN_STRING_LENGTH, false, true>& trace_collection_entity_uri() const;
 
   private:
-    types type_;
-    choice_buffer_t<bounded_bitstring<1, 160, true, true>,
-                    fixed_octstring<8, true>,
-                    visible_string<0, MAX_ASN_STRING_LENGTH, false, true>>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1210,9 +1103,6 @@ struct du_cu_radio_info_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1225,10 +1115,8 @@ struct du_cu_radio_info_transfer_ies_o {
     const du_cu_radio_info_type_c& du_cu_radio_info_type() const;
 
   private:
-    types                                    type_;
-    choice_buffer_t<du_cu_radio_info_type_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1265,9 +1153,6 @@ struct deactiv_trace_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1282,10 +1167,8 @@ struct deactiv_trace_ies_o {
     const fixed_octstring<8, true>& trace_id() const;
 
   private:
-    types                                     type_;
-    choice_buffer_t<fixed_octstring<8, true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1323,9 +1206,6 @@ struct e_c_id_meas_fail_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1344,10 +1224,8 @@ struct e_c_id_meas_fail_ind_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1395,9 +1273,6 @@ struct e_c_id_meas_initiation_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1418,10 +1293,8 @@ struct e_c_id_meas_initiation_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1473,9 +1346,6 @@ struct e_c_id_meas_initiation_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1500,10 +1370,8 @@ struct e_c_id_meas_initiation_request_ies_o {
     const pos_meas_periodicity_nr_ao_a_e&  pos_meas_periodicity_nr_ao_a() const;
 
   private:
-    types                                     type_;
-    choice_buffer_t<e_c_id_meas_quantities_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1557,9 +1425,6 @@ struct e_c_id_meas_initiation_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1582,10 +1447,8 @@ struct e_c_id_meas_initiation_resp_ies_o {
     const crit_diagnostics_s&   crit_diagnostics() const;
 
   private:
-    types                                                     type_;
-    choice_buffer_t<crit_diagnostics_s, e_c_id_meas_result_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1638,9 +1501,6 @@ struct e_c_id_meas_report_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1661,10 +1521,8 @@ struct e_c_id_meas_report_ies_o {
     const uint16_t&             cell_portion_id() const;
 
   private:
-    types                                 type_;
-    choice_buffer_t<e_c_id_meas_result_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1706,9 +1564,6 @@ struct e_c_id_meas_termination_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1725,10 +1580,8 @@ struct e_c_id_meas_termination_cmd_ies_o {
     const uint16_t& ran_ue_meas_id() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1767,9 +1620,6 @@ struct error_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1788,10 +1638,8 @@ struct error_ind_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2176,9 +2024,6 @@ struct f1_removal_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2193,10 +2038,8 @@ struct f1_removal_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2256,9 +2099,6 @@ struct f1_removal_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2271,10 +2111,8 @@ struct f1_removal_resp_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2300,9 +2138,6 @@ struct f1_setup_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2319,10 +2154,8 @@ struct f1_setup_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2356,9 +2189,6 @@ struct f1_setup_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2383,16 +2213,8 @@ struct f1_setup_request_ies_o {
     const extended_gnb_du_name_s&               extended_gnb_du_name() const;
 
   private:
-    types type_;
-    choice_buffer_t<extended_gnb_du_name_s,
-                    fixed_bitstring<10, false, true>,
-                    gnb_du_served_cells_list_l,
-                    printable_string<1, 150, true, true>,
-                    rrc_version_s,
-                    transport_layer_address_info_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2428,9 +2250,6 @@ struct f1_setup_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2455,17 +2274,8 @@ struct f1_setup_resp_ies_o {
     const extended_gnb_cu_name_s&               extended_gnb_cu_name() const;
 
   private:
-    types type_;
-    choice_buffer_t<cells_to_be_activ_list_l,
-                    extended_gnb_cu_name_s,
-                    fixed_bitstring<10, false, true>,
-                    printable_string<1, 150, true, true>,
-                    rrc_version_s,
-                    transport_layer_address_info_s,
-                    ul_bh_non_up_traffic_map_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2500,9 +2310,6 @@ struct gnb_cu_cfg_upd_ack_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2525,16 +2332,8 @@ struct gnb_cu_cfg_upd_ack_ies_o {
     const transport_layer_address_info_s&          transport_layer_address_info() const;
 
   private:
-    types type_;
-    choice_buffer_t<cells_failed_to_be_activ_list_l,
-                    crit_diagnostics_s,
-                    ded_si_delivery_needed_ue_list_l,
-                    gnb_cu_tnl_assoc_failed_to_setup_list_l,
-                    gnb_cu_tnl_assoc_setup_list_l,
-                    transport_layer_address_info_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2560,9 +2359,6 @@ struct gnb_cu_cfg_upd_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2579,10 +2375,8 @@ struct gnb_cu_cfg_upd_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2626,9 +2420,6 @@ struct gnb_cu_cfg_upd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2669,25 +2460,8 @@ struct gnb_cu_cfg_upd_ies_o {
     const extended_gnb_cu_name_s&               extended_gnb_cu_name() const;
 
   private:
-    types type_;
-    choice_buffer_t<cco_assist_info_s,
-                    cells_for_son_list_l,
-                    cells_to_be_activ_list_l,
-                    cells_to_be_barred_list_l,
-                    cells_to_be_deactiv_list_l,
-                    extended_gnb_cu_name_s,
-                    fixed_bitstring<10, false, true>,
-                    gnb_cu_tnl_assoc_to_add_list_l,
-                    gnb_cu_tnl_assoc_to_rem_list_l,
-                    gnb_cu_tnl_assoc_to_upd_list_l,
-                    neighbour_cell_info_list_l,
-                    printable_string<1, 150, true, true>,
-                    protected_eutra_res_list_l,
-                    transport_layer_address_info_s,
-                    ul_bh_non_up_traffic_map_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2723,9 +2497,6 @@ struct gnb_du_cfg_upd_ack_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2750,17 +2521,8 @@ struct gnb_du_cfg_upd_ack_ies_o {
     const cells_for_son_list_l&             cells_for_son_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<cells_for_son_list_l,
-                    cells_to_be_activ_list_l,
-                    cells_to_be_deactiv_list_l,
-                    crit_diagnostics_s,
-                    fixed_bitstring<10, false, true>,
-                    transport_layer_address_info_s,
-                    ul_bh_non_up_traffic_map_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2786,9 +2548,6 @@ struct gnb_du_cfg_upd_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2805,10 +2564,8 @@ struct gnb_du_cfg_upd_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2846,9 +2603,6 @@ struct gnb_du_cfg_upd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2881,20 +2635,8 @@ struct gnb_du_cfg_upd_ies_o {
     const extended_gnb_du_name_s&               extended_gnb_du_name() const;
 
   private:
-    types type_;
-    choice_buffer_t<cells_status_list_l,
-                    coverage_mod_notif_s,
-                    ded_si_delivery_needed_ue_list_l,
-                    extended_gnb_du_name_s,
-                    gnb_du_tnl_assoc_to_rem_list_l,
-                    printable_string<1, 150, true, true>,
-                    served_cells_to_add_list_l,
-                    served_cells_to_delete_list_l,
-                    served_cells_to_modify_list_l,
-                    transport_layer_address_info_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2920,9 +2662,6 @@ struct gnb_du_res_cfg_ack_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2935,10 +2674,8 @@ struct gnb_du_res_cfg_ack_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2964,9 +2701,6 @@ struct gnb_du_res_cfg_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -2983,10 +2717,8 @@ struct gnb_du_res_cfg_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3019,9 +2751,6 @@ struct gnb_du_res_cfg_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3040,11 +2769,8 @@ struct gnb_du_res_cfg_ies_o {
     const serving_cells_list_l&         serving_cells_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<activ_cells_to_be_upd_list_l, child_nodes_list_l, neighbour_node_cells_list_l, serving_cells_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3076,9 +2802,6 @@ struct gnb_du_res_coordination_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3095,10 +2818,8 @@ struct gnb_du_res_coordination_request_ies_o {
     const ignore_res_coordination_container_e& ignore_res_coordination_container() const;
 
   private:
-    types                                      type_;
-    choice_buffer_t<unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3124,9 +2845,6 @@ struct gnb_du_res_coordination_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3139,10 +2857,8 @@ struct gnb_du_res_coordination_resp_ies_o {
     const unbounded_octstring<true>& eutra_nr_cell_res_coordination_req_ack_container() const;
 
   private:
-    types                                      type_;
-    choice_buffer_t<unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3168,9 +2884,6 @@ struct gnb_du_status_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3185,10 +2898,8 @@ struct gnb_du_status_ind_ies_o {
     const iab_congestion_ind_s&   iab_congestion_ind() const;
 
   private:
-    types                                 type_;
-    choice_buffer_t<iab_congestion_ind_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3214,9 +2925,6 @@ struct iab_tnl_address_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3233,10 +2941,8 @@ struct iab_tnl_address_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3269,9 +2975,6 @@ struct iab_tnl_address_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3290,14 +2993,8 @@ struct iab_tnl_address_request_ies_o {
     const iab_tnl_addresses_exception_s&   iab_tnl_addresses_exception() const;
 
   private:
-    types type_;
-    choice_buffer_t<ia_bv4_addresses_requested_s,
-                    iab_ip_v6_request_type_c,
-                    iab_tnl_addresses_exception_s,
-                    iab_tnl_addresses_to_rem_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3323,9 +3020,6 @@ struct iab_tnl_address_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3338,10 +3032,8 @@ struct iab_tnl_address_resp_ies_o {
     const iab_allocated_tnl_address_list_l& iab_allocated_tnl_address_list() const;
 
   private:
-    types                                             type_;
-    choice_buffer_t<iab_allocated_tnl_address_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3367,9 +3059,6 @@ struct iab_up_cfg_upd_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3386,10 +3075,8 @@ struct iab_up_cfg_upd_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3415,9 +3102,6 @@ struct iab_up_cfg_upd_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3432,10 +3116,8 @@ struct iab_up_cfg_upd_request_ies_o {
     const ul_up_tnl_address_to_upd_list_l& ul_up_tnl_address_to_upd_list() const;
 
   private:
-    types                                                                          type_;
-    choice_buffer_t<ul_up_tnl_address_to_upd_list_l, ul_up_tnl_info_to_upd_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3461,9 +3143,6 @@ struct iab_up_cfg_upd_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3478,10 +3157,8 @@ struct iab_up_cfg_upd_resp_ies_o {
     const dl_up_tnl_address_to_upd_list_l& dl_up_tnl_address_to_upd_list() const;
 
   private:
-    types                                                                type_;
-    choice_buffer_t<crit_diagnostics_s, dl_up_tnl_address_to_upd_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3511,9 +3188,6 @@ struct meas_activation_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3530,10 +3204,8 @@ struct meas_activation_ies_o {
     const prs_meas_info_list_l&      prs_meas_info_list() const;
 
   private:
-    types                                 type_;
-    choice_buffer_t<prs_meas_info_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3563,9 +3235,6 @@ struct meas_precfg_confirm_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3582,10 +3251,8 @@ struct meas_precfg_confirm_ies_o {
     const crit_diagnostics_s&          crit_diagnostics() const;
 
   private:
-    types                                                            type_;
-    choice_buffer_t<crit_diagnostics_s, pos_meas_gap_pre_cfg_list_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3609,9 +3276,6 @@ struct meas_precfg_refuse_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3628,10 +3292,8 @@ struct meas_precfg_refuse_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3655,9 +3317,6 @@ struct meas_precfg_required_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3672,10 +3331,8 @@ struct meas_precfg_required_ies_o {
     const trp_prs_info_list_l& trp_prs_info_list() const;
 
   private:
-    types                                type_;
-    choice_buffer_t<trp_prs_info_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3699,9 +3356,6 @@ struct multicast_context_mod_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3718,10 +3372,8 @@ struct multicast_context_mod_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3753,9 +3405,6 @@ struct multicast_context_mod_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3776,14 +3425,8 @@ struct multicast_context_mod_request_ies_o {
     const multicast_m_rbs_to_be_released_list_l&  multicast_m_rbs_to_be_released_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<mbs_service_area_c,
-                    multicast_m_rbs_to_be_modified_list_l,
-                    multicast_m_rbs_to_be_released_list_l,
-                    multicast_m_rbs_to_be_setup_mod_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3816,9 +3459,6 @@ struct multicast_context_mod_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3841,15 +3481,8 @@ struct multicast_context_mod_resp_ies_o {
     const crit_diagnostics_s&                            crit_diagnostics() const;
 
   private:
-    types type_;
-    choice_buffer_t<crit_diagnostics_s,
-                    multicast_m_rbs_failed_to_be_modified_list_l,
-                    multicast_m_rbs_failed_to_be_setup_mod_list_l,
-                    multicast_m_rbs_modified_list_l,
-                    multicast_m_rbs_setup_mod_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3873,9 +3506,6 @@ struct multicast_context_release_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3890,10 +3520,8 @@ struct multicast_context_release_cmd_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3917,9 +3545,6 @@ struct multicast_context_release_complete_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3934,10 +3559,8 @@ struct multicast_context_release_complete_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -3961,9 +3584,6 @@ struct multicast_context_release_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -3978,10 +3598,8 @@ struct multicast_context_release_request_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4005,9 +3623,6 @@ struct multicast_context_setup_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4024,10 +3639,8 @@ struct multicast_context_setup_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4060,9 +3673,6 @@ struct multicast_context_setup_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4081,10 +3691,8 @@ struct multicast_context_setup_request_ies_o {
     const multicast_m_rbs_to_be_setup_list_l& multicast_m_rbs_to_be_setup_list() const;
 
   private:
-    types                                                                                               type_;
-    choice_buffer_t<mbs_service_area_c, mbs_session_id_s, multicast_m_rbs_to_be_setup_list_l, snssai_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4115,9 +3723,6 @@ struct multicast_context_setup_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4136,10 +3741,8 @@ struct multicast_context_setup_resp_ies_o {
     const crit_diagnostics_s&                        crit_diagnostics() const;
 
   private:
-    types                                                                                                        type_;
-    choice_buffer_t<crit_diagnostics_s, multicast_m_rbs_failed_to_be_setup_list_l, multicast_m_rbs_setup_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4169,9 +3772,6 @@ struct multicast_distribution_release_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4188,10 +3788,8 @@ struct multicast_distribution_release_cmd_ies_o {
     const cause_c&                                 cause() const;
 
   private:
-    types                                                             type_;
-    choice_buffer_t<cause_c, mbs_multicast_f1_u_context_descriptor_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4221,9 +3819,6 @@ struct multicast_distribution_release_complete_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4240,10 +3835,8 @@ struct multicast_distribution_release_complete_ies_o {
     const crit_diagnostics_s&                      crit_diagnostics() const;
 
   private:
-    types                                                                        type_;
-    choice_buffer_t<crit_diagnostics_s, mbs_multicast_f1_u_context_descriptor_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4274,9 +3867,6 @@ struct multicast_distribution_setup_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4295,10 +3885,8 @@ struct multicast_distribution_setup_fail_ies_o {
     const crit_diagnostics_s&                      crit_diagnostics() const;
 
   private:
-    types                                                                                 type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s, mbs_multicast_f1_u_context_descriptor_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4328,9 +3916,6 @@ struct multicast_distribution_setup_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4347,10 +3932,8 @@ struct multicast_distribution_setup_request_ies_o {
     const multicast_f1_u_context_to_be_setup_list_l& multicast_f1_u_context_to_be_setup_list() const;
 
   private:
-    types                                                                                               type_;
-    choice_buffer_t<mbs_multicast_f1_u_context_descriptor_s, multicast_f1_u_context_to_be_setup_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4383,9 +3966,6 @@ struct multicast_distribution_setup_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4408,15 +3988,8 @@ struct multicast_distribution_setup_resp_ies_o {
     const fixed_octstring<4, true>&                         multicast_f1_u_context_ref_cu() const;
 
   private:
-    types type_;
-    choice_buffer_t<crit_diagnostics_s,
-                    fixed_octstring<4, true>,
-                    mbs_multicast_f1_u_context_descriptor_s,
-                    multicast_f1_u_context_failed_to_be_setup_list_l,
-                    multicast_f1_u_context_setup_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4440,9 +4013,6 @@ struct multicast_group_paging_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4457,10 +4027,8 @@ struct multicast_group_paging_ies_o {
     const mc_paging_cell_list_l&        mc_paging_cell_list() const;
 
   private:
-    types                                                                                  type_;
-    choice_buffer_t<mbs_session_id_s, mc_paging_cell_list_l, ue_id_list_for_paging_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4486,9 +4054,6 @@ struct network_access_rate_reduction_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4501,10 +4066,8 @@ struct network_access_rate_reduction_ies_o {
     const uac_assist_info_s& uac_assist_info() const;
 
   private:
-    types                              type_;
-    choice_buffer_t<uac_assist_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4528,9 +4091,6 @@ struct notify_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4545,10 +4105,8 @@ struct notify_ies_o {
     const drb_notify_list_l& drb_notify_list() const;
 
   private:
-    types                              type_;
-    choice_buffer_t<drb_notify_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4572,9 +4130,6 @@ struct pdc_meas_fail_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4591,10 +4146,8 @@ struct pdc_meas_fail_ind_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4625,9 +4178,6 @@ struct pdc_meas_initiation_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4646,10 +4196,8 @@ struct pdc_meas_initiation_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4681,9 +4229,6 @@ struct pdc_meas_initiation_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4704,10 +4249,8 @@ struct pdc_meas_initiation_request_ies_o {
     const pdc_meas_quantities_l&  pdc_meas_quantities() const;
 
   private:
-    types                                  type_;
-    choice_buffer_t<pdc_meas_quantities_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4738,9 +4281,6 @@ struct pdc_meas_initiation_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4759,10 +4299,8 @@ struct pdc_meas_initiation_resp_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<crit_diagnostics_s, pdc_meas_result_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4786,9 +4324,6 @@ struct pdc_meas_report_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4805,10 +4340,8 @@ struct pdc_meas_report_ies_o {
     const pdc_meas_result_s& pdc_meas_result() const;
 
   private:
-    types                              type_;
-    choice_buffer_t<pdc_meas_result_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4832,9 +4365,6 @@ struct pdc_meas_termination_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4849,10 +4379,8 @@ struct pdc_meas_termination_cmd_ies_o {
     const uint8_t&  ran_ue_pdc_meas_id() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4878,9 +4406,6 @@ struct prs_cfg_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4895,10 +4420,8 @@ struct prs_cfg_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4922,9 +4445,6 @@ struct prs_cfg_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4937,10 +4457,8 @@ struct prs_cfg_request_ies_o {
     const prstrp_list_l&          prstrp_list() const;
 
   private:
-    types                          type_;
-    choice_buffer_t<prstrp_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -4966,9 +4484,6 @@ struct prs_cfg_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -4983,10 +4498,8 @@ struct prs_cfg_resp_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<crit_diagnostics_s, prs_tx_trp_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5017,9 +4530,6 @@ struct pws_cancel_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5038,10 +4548,8 @@ struct pws_cancel_request_ies_o {
     const notif_info_s&                     notif_info() const;
 
   private:
-    types                                                           type_;
-    choice_buffer_t<broadcast_to_be_cancelled_list_l, notif_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5067,9 +4575,6 @@ struct pws_cancel_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5084,10 +4589,8 @@ struct pws_cancel_resp_ies_o {
     const crit_diagnostics_s&               crit_diagnostics() const;
 
   private:
-    types                                                                 type_;
-    choice_buffer_t<cells_broadcast_cancelled_list_l, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5113,9 +4616,6 @@ struct pws_fail_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5128,10 +4628,8 @@ struct pws_fail_ind_ies_o {
     const pws_failed_nr_cgi_list_l& pws_failed_nr_cgi_list() const;
 
   private:
-    types                                     type_;
-    choice_buffer_t<pws_failed_nr_cgi_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5157,9 +4655,6 @@ struct pws_restart_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5172,10 +4667,8 @@ struct pws_restart_ind_ies_o {
     const nr_cgi_list_for_restart_list_l& nr_cgi_list_for_restart_list() const;
 
   private:
-    types                                           type_;
-    choice_buffer_t<nr_cgi_list_for_restart_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5215,9 +4708,6 @@ struct paging_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5254,18 +4744,8 @@ struct paging_ies_o {
     const fixed_bitstring<16, false, true>&      extended_ue_id_idx_value() const;
 
   private:
-    types type_;
-    choice_buffer_t<fixed_bitstring<16, false, true>,
-                    nr_paginge_drx_info_s,
-                    nr_paginge_drx_infofor_rrc_inactive_s,
-                    paging_cell_list_l,
-                    paging_id_c,
-                    pe_ip_s_assist_info_s,
-                    ue_id_idx_value_c,
-                    ue_paging_cap_s>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5289,9 +4769,6 @@ struct pos_sys_info_delivery_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5308,10 +4785,8 @@ struct pos_sys_info_delivery_cmd_ies_o {
     const uint64_t&          confirmed_ue_id() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<nr_cgi_s, pos_sitype_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5335,9 +4810,6 @@ struct positioning_activation_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5354,10 +4826,8 @@ struct positioning_activation_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5381,9 +4851,6 @@ struct positioning_activation_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5400,10 +4867,8 @@ struct positioning_activation_request_ies_o {
     const fixed_bitstring<64, false, true>& activation_time() const;
 
   private:
-    types                                                         type_;
-    choice_buffer_t<fixed_bitstring<64, false, true>, srs_type_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5427,9 +4892,6 @@ struct positioning_activation_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5448,10 +4910,8 @@ struct positioning_activation_resp_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5484,9 +4944,6 @@ struct positioning_assist_info_ctrl_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5505,10 +4962,8 @@ struct positioning_assist_info_ctrl_ies_o {
     const unbounded_octstring<true>&     routing_id() const;
 
   private:
-    types                                                                     type_;
-    choice_buffer_t<positioning_broadcast_cells_l, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5541,9 +4996,6 @@ struct positioning_assist_info_feedback_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5562,10 +5014,8 @@ struct positioning_assist_info_feedback_ies_o {
     const crit_diagnostics_s&            crit_diagnostics() const;
 
   private:
-    types                                                                                         type_;
-    choice_buffer_t<crit_diagnostics_s, positioning_broadcast_cells_l, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5589,9 +5039,6 @@ struct positioning_deactivation_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5606,10 +5053,8 @@ struct positioning_deactivation_ies_o {
     const abort_tx_c& abort_tx() const;
 
   private:
-    types                       type_;
-    choice_buffer_t<abort_tx_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5633,9 +5078,6 @@ struct positioning_info_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5652,10 +5094,8 @@ struct positioning_info_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5686,9 +5126,6 @@ struct positioning_info_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5707,10 +5144,8 @@ struct positioning_info_request_ies_o {
     const srs_pos_rrc_inactive_query_ind_e&   srs_pos_rrc_inactive_query_ind() const;
 
   private:
-    types                                                                 type_;
-    choice_buffer_t<requested_srs_tx_characteristics_s, ue_report_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5742,9 +5177,6 @@ struct positioning_info_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5765,10 +5197,8 @@ struct positioning_info_resp_ies_o {
     const unbounded_octstring<true>&        srs_pos_rrc_inactive_cfg() const;
 
   private:
-    types                                                                                                       type_;
-    choice_buffer_t<crit_diagnostics_s, fixed_bitstring<64, false, true>, srs_cfg_s, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5792,9 +5222,6 @@ struct positioning_info_upd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5811,10 +5238,8 @@ struct positioning_info_upd_ies_o {
     const fixed_bitstring<64, false, true>& sfn_initisation_time() const;
 
   private:
-    types                                                        type_;
-    choice_buffer_t<fixed_bitstring<64, false, true>, srs_cfg_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5838,9 +5263,6 @@ struct positioning_meas_abort_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5855,10 +5277,8 @@ struct positioning_meas_abort_ies_o {
     const uint32_t& ran_meas_id() const;
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5882,9 +5302,6 @@ struct positioning_meas_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5903,10 +5320,8 @@ struct positioning_meas_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5930,9 +5345,6 @@ struct positioning_meas_fail_ind_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5949,10 +5361,8 @@ struct positioning_meas_fail_ind_ies_o {
     const cause_c&  cause() const;
 
   private:
-    types                    type_;
-    choice_buffer_t<cause_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -5976,9 +5386,6 @@ struct positioning_meas_report_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -5995,10 +5402,8 @@ struct positioning_meas_report_ies_o {
     const pos_meas_result_list_l& pos_meas_result_list() const;
 
   private:
-    types                                   type_;
-    choice_buffer_t<pos_meas_result_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6041,9 +5446,6 @@ struct positioning_meas_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6086,15 +5488,8 @@ struct positioning_meas_request_ies_o {
     const pos_meas_amount_e&                pos_meas_amount() const;
 
   private:
-    types type_;
-    choice_buffer_t<fixed_bitstring<64, false, true>,
-                    pos_meas_quantities_l,
-                    resp_time_s,
-                    srs_cfg_s,
-                    trp_meas_request_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6118,9 +5513,6 @@ struct positioning_meas_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6139,10 +5531,8 @@ struct positioning_meas_resp_ies_o {
     const crit_diagnostics_s&     crit_diagnostics() const;
 
   private:
-    types                                                       type_;
-    choice_buffer_t<crit_diagnostics_s, pos_meas_result_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6175,9 +5565,6 @@ struct positioning_meas_upd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6200,10 +5587,8 @@ struct positioning_meas_upd_ies_o {
     const meas_time_occasion_e&             meas_time_occasion() const;
 
   private:
-    types                                                                             type_;
-    choice_buffer_t<fixed_bitstring<16, false, true>, srs_cfg_s, trp_meas_upd_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6213,6 +5598,26 @@ struct positioning_meas_upd_ies_o {
   static value_c    get_value(const uint32_t& id);
   static presence_e get_presence(const uint32_t& id);
 };
+
+struct f1ap_private_ies_empty_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    types       type() const { return types::nulltype; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+  };
+};
+// PrivateMessage-IEs ::= OBJECT SET OF F1AP-PRIVATE-IES
+using private_msg_ies_o = f1ap_private_ies_empty_o;
 
 // QoEInformationTransfer-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 struct qo_e_info_transfer_ies_o {
@@ -6227,9 +5632,6 @@ struct qo_e_info_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6244,10 +5646,8 @@ struct qo_e_info_transfer_ies_o {
     const qo_e_info_s& qo_e_info() const;
 
   private:
-    types                        type_;
-    choice_buffer_t<qo_e_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6271,9 +5671,6 @@ struct rrc_delivery_report_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6290,10 +5687,8 @@ struct rrc_delivery_report_ies_o {
     const uint8_t&               srb_id() const;
 
   private:
-    types                                  type_;
-    choice_buffer_t<rrc_delivery_status_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6319,9 +5714,6 @@ struct ref_time_info_report_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6334,10 +5726,8 @@ struct ref_time_info_report_ies_o {
     const time_ref_info_s& time_ref_info() const;
 
   private:
-    types                            type_;
-    choice_buffer_t<time_ref_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6363,9 +5753,6 @@ struct ref_time_info_report_ctrl_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6378,10 +5765,8 @@ struct ref_time_info_report_ctrl_ies_o {
     const report_request_type_s& report_request_type() const;
 
   private:
-    types                                  type_;
-    choice_buffer_t<report_request_type_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6407,9 +5792,6 @@ struct reset_ack_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6424,10 +5806,8 @@ struct reset_ack_ies_o {
     const crit_diagnostics_s&                      crit_diagnostics() const;
 
   private:
-    types                                                                        type_;
-    choice_buffer_t<crit_diagnostics_s, ue_associated_lc_f1_conn_list_res_ack_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6453,9 +5833,6 @@ struct reset_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6470,10 +5847,8 @@ struct reset_ies_o {
     const reset_type_c& reset_type() const;
 
   private:
-    types                                  type_;
-    choice_buffer_t<cause_c, reset_type_c> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6497,9 +5872,6 @@ struct res_status_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6518,10 +5890,8 @@ struct res_status_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6554,9 +5924,6 @@ struct res_status_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6579,10 +5946,8 @@ struct res_status_request_ies_o {
     const report_periodicity_e&             report_periodicity() const;
 
   private:
-    types                                                                    type_;
-    choice_buffer_t<cell_to_report_list_l, fixed_bitstring<32, false, true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6606,9 +5971,6 @@ struct res_status_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6625,10 +5987,8 @@ struct res_status_resp_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6660,9 +6020,6 @@ struct res_status_upd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6683,10 +6040,8 @@ struct res_status_upd_ies_o {
     const cell_meas_result_list_l& cell_meas_result_list() const;
 
   private:
-    types                                                                             type_;
-    choice_buffer_t<cell_meas_result_list_l, hardware_load_ind_s, tnl_capacity_ind_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6710,9 +6065,6 @@ struct sys_info_delivery_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6729,10 +6081,8 @@ struct sys_info_delivery_cmd_ies_o {
     const uint64_t&      confirmed_ue_id() const;
 
   private:
-    types                                    type_;
-    choice_buffer_t<nr_cgi_s, sitype_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6758,9 +6108,6 @@ struct trp_info_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6775,10 +6122,8 @@ struct trp_info_fail_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6804,9 +6149,6 @@ struct trp_info_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6821,10 +6163,8 @@ struct trp_info_request_ies_o {
     const trp_info_type_list_trp_req_l& trp_info_type_list_trp_req() const;
 
   private:
-    types                                                     type_;
-    choice_buffer_t<trp_info_type_list_trp_req_l, trp_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6850,9 +6190,6 @@ struct trp_info_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6867,10 +6204,8 @@ struct trp_info_resp_ies_o {
     const crit_diagnostics_s&       crit_diagnostics() const;
 
   private:
-    types                                                         type_;
-    choice_buffer_t<crit_diagnostics_s, trp_info_list_trp_resp_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6894,9 +6229,6 @@ struct trace_start_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6911,10 +6243,8 @@ struct trace_start_ies_o {
     const trace_activation_s& trace_activation() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<trace_activation_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -6945,9 +6275,6 @@ struct write_replace_warning_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -6966,10 +6293,8 @@ struct write_replace_warning_request_ies_o {
     const cells_to_be_broadcast_list_l& cells_to_be_broadcast_list() const;
 
   private:
-    types                                                         type_;
-    choice_buffer_t<cells_to_be_broadcast_list_l, pws_sys_info_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -7001,9 +6326,6 @@ struct write_replace_warning_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -7020,10 +6342,8 @@ struct write_replace_warning_resp_ies_o {
     const ded_si_delivery_needed_ue_list_l& ded_si_delivery_needed_ue_list() const;
 
   private:
-    types                                                                                                   type_;
-    choice_buffer_t<cells_broadcast_completed_list_l, crit_diagnostics_s, ded_si_delivery_needed_ue_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -8703,9 +8023,127 @@ using write_replace_warning_resp_s = elementary_procedure_option<write_replace_w
 } // namespace f1ap
 } // namespace asn1
 
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::access_and_mob_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::access_success_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::bap_map_cfg_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_mod_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::broadcast_context_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::cu_du_radio_info_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::cell_traffic_trace_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::du_cu_radio_info_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::deactiv_trace_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_fail_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_initiation_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_report_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::e_c_id_meas_termination_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::error_ind_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::ue_associated_lc_f1_conn_item_res_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::mc_paging_cell_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::trp_info_item_trp_resp_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::trp_info_type_item_trp_req_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::ue_associated_lc_f1_conn_item_res_ack_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_removal_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_removal_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_cfg_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_status_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_tnl_address_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::iab_up_cfg_upd_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_activation_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_confirm_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_refuse_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::meas_precfg_required_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_mod_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_context_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_distribution_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::multicast_group_paging_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::network_access_rate_reduction_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::notify_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_fail_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_initiation_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_report_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pdc_meas_termination_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::prs_cfg_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_cancel_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_cancel_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_fail_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_restart_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::paging_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pos_sys_info_delivery_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_activation_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_assist_info_ctrl_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_assist_info_feedback_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_deactivation_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_info_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_abort_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_fail_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_report_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::positioning_meas_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::qo_e_info_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::rrc_delivery_report_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ref_time_info_report_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ref_time_info_report_ctrl_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::reset_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::reset_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::res_status_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::sys_info_delivery_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trp_info_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::trace_start_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_resp_ies_o>;

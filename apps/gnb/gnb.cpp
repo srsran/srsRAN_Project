@@ -60,6 +60,7 @@
 
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
+#include "srsran/ru/ru_dummy_factory.h"
 #include "srsran/ru/ru_generic_factory.h"
 #include "srsran/ru/ru_ofh_factory.h"
 
@@ -159,6 +160,23 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   }
 }
 
+/// Resolves the Dummy Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_dummy_executors_and_notifiers(ru_dummy_configuration&             config,
+                                                       ru_dummy_dependencies&              dependencies,
+                                                       const log_appconfig&                log_cfg,
+                                                       worker_manager&                     workers,
+                                                       ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                       ru_timing_notifier&                 timing_notifier)
+{
+  srslog::basic_logger& ru_logger = srslog::fetch_basic_logger("RU", true);
+  ru_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
+
+  dependencies.logger          = &ru_logger;
+  dependencies.executor        = workers.radio_exec;
+  dependencies.timing_notifier = &timing_notifier;
+  dependencies.symbol_notifier = &symbol_notifier;
+}
+
 int main(int argc, char** argv)
 {
   // Set signal handler.
@@ -166,9 +184,6 @@ int main(int argc, char** argv)
 
   // Enable backtrace.
   enable_backtrace();
-
-  // Clean cgroups from a previous run.
-  cleanup_cgroups();
 
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
@@ -193,24 +208,6 @@ int main(int argc, char** argv)
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
   }
-  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
-    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
-    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
-  }
-
-#ifdef DPDK_FOUND
-  std::unique_ptr<dpdk::dpdk_eal> eal;
-  if (gnb_cfg.hal_config) {
-    // Prepend the application name in argv[0] as it is expected by EAL.
-    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + gnb_cfg.hal_config->eal_args,
-                                srslog::fetch_basic_logger("EAL", false));
-  }
-#endif
-
-  // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
 
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
@@ -249,7 +246,7 @@ int main(int argc, char** argv)
   }
 
   // Set layer-specific logging options.
-  auto& phy_logger = srslog::fetch_basic_logger("PHY", false);
+  auto& phy_logger = srslog::fetch_basic_logger("PHY", true);
   phy_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.phy_level));
   phy_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
@@ -313,6 +310,24 @@ int main(int argc, char** argv)
     gnb_logger.info("Event tracer opened successfully");
   }
 
+  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
+    if (!configure_cgroups(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
+      report_error("Failed to isolate specified CPUs");
+    }
+  }
+
+#ifdef DPDK_FOUND
+  std::unique_ptr<dpdk::dpdk_eal> eal;
+  if (gnb_cfg.hal_config) {
+    // Prepend the application name in argv[0] as it is expected by EAL.
+    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + gnb_cfg.hal_config->eal_args,
+                                srslog::fetch_basic_logger("EAL", false));
+  }
+#endif
+
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
@@ -327,8 +342,7 @@ int main(int argc, char** argv)
                  get_cpu_feature_info());
   }
 
-  // Check some common causes of performance issues and
-  // print a warning if required.
+  // Check some common causes of performance issues and print a warning if required.
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
@@ -411,24 +425,17 @@ int main(int argc, char** argv)
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
 
-  // NGAP configuration.
-  srsran::sctp_network_gateway_config ngap_nw_config = generate_ngap_nw_config(gnb_cfg);
+  // Create NGAP Gateway.
+  std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
+  {
+    using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
+    using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
+    using ngap_mode_t    = variant<no_core_mode_t, network_mode_t>;
 
-  // Create NGAP adapter.
-  std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
-
-  // Create SCTP network adapter.
-  std::unique_ptr<sctp_network_gateway> sctp_gateway = {};
-  if (not gnb_cfg.amf_cfg.no_core) {
-    gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
-    sctp_gateway = create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
-
-    // Connect NGAP adapter to SCTP network gateway.
-    ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
-    gnb_logger.info("AMF connection established");
-  } else {
-    gnb_logger.info("Bypassing AMF connection");
+    ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
+        *ngap_p,
+        gnb_cfg.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
+                                : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(gnb_cfg)}}});
   }
 
   // E2AP configuration.
@@ -448,19 +455,14 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_ngap(&cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
-                             &cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
+  ngap_adapter->connect_cu_cp(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler(),
+                              cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
 
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
-
-  // Signal AMF connection for instant CU-CP start and to make sure test UEs do not get rejected
-  if (gnb_cfg.amf_cfg.no_core) {
-    cu_cp_obj->get_cu_cp_ngap_handler().handle_amf_connection();
-  }
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
@@ -508,11 +510,21 @@ int main(int argc, char** argv)
                                              ru_timing_adapt);
 
     ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
-  } else {
+  } else if (variant_holds_alternative<ru_generic_configuration>(ru_cfg.config)) {
     configure_ru_generic_executors_and_notifiers(
         variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
 
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
+  } else {
+    ru_dummy_dependencies ru_dependencies;
+    configure_ru_dummy_executors_and_notifiers(variant_get<ru_dummy_configuration>(ru_cfg.config),
+                                               ru_dependencies,
+                                               gnb_cfg.log_cfg,
+                                               workers,
+                                               ru_ul_adapt,
+                                               ru_timing_adapt);
+
+    ru_object = create_dummy_ru(variant_get<ru_dummy_configuration>(ru_cfg.config), ru_dependencies);
   }
   report_error_if_not(ru_object, "Unable to create Radio Unit.");
   gnb_logger.info("Radio Unit created successfully");
@@ -578,11 +590,9 @@ int main(int argc, char** argv)
   // Stop CU-CP activity.
   cu_cp_obj->stop();
 
-  if (not gnb_cfg.amf_cfg.no_core) {
-    gnb_logger.info("Closing network connections...");
-    ngap_adapter->disconnect_gateway();
-    gnb_logger.info("Network connections closed successfully");
-  }
+  gnb_logger.info("Closing network connections...");
+  ngap_adapter->disconnect();
+  gnb_logger.info("Network connections closed successfully");
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
     gnb_logger.info("Closing E2 network connections...");
@@ -612,7 +622,7 @@ int main(int argc, char** argv)
     gnb_logger.info("Event tracer closed successfully");
   }
 
-  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
     cleanup_cgroups();
   }
 

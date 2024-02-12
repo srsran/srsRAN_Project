@@ -1,15 +1,29 @@
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
-# By using this file, you agree to the terms and conditions set
-# forth in the LICENSE file which can be found at the top level of
-# the distribution.
+# This file is part of srsRAN
 #
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
 """
 Steps related with stubs / resources
 """
 
 import logging
+from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from time import sleep
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
@@ -220,32 +234,32 @@ def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
         )
 
 
-def ping(
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
-    fivegc: FiveGCStub,
-    ping_count,
-):
+def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 1):
     """
     Ping command between an UE and a 5GC
     """
 
-    ping_success = True
+    # Launch ping (ue -> 5gc and 5gc -> ue) for each attached ue in parallel
 
-    # For each attached UE
+    ping_task_array: List[grpc.Future] = []
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
-        # Launch both ping in parallel: ue -> 5gc and 5gc -> ue
-        ue_to_fivegc = ue_stub.Ping.future(PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count))
-        fivegc_to_ue = fivegc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
+        ue_to_fivegc: grpc.Future = ue_stub.Ping.future(
+            PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
+        )
+        ue_to_fivegc.add_done_callback(
+            lambda _task, _msg=f"[{ue_attached_info.ipv4}] UE -> 5GC": _print_ping_result(_msg, _task.result())
+        )
+        fivegc_to_ue: grpc.Future = fivegc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
+        fivegc_to_ue.add_done_callback(
+            lambda _task, _msg=f"[{ue_attached_info.ipv4}] 5GC -> UE": _print_ping_result(_msg, _task.result())
+        )
+        ping_task_array.append(ue_to_fivegc)
+        ping_task_array.append(fivegc_to_ue)
+        sleep(time_step)
 
-        # Wait both ping to end
-        ue_to_fivegc_result: PingResponse = ue_to_fivegc.result()
-        fivegc_to_ue_result: PingResponse = fivegc_to_ue.result()
-
-        # Wait both ping to end & print result
-        _print_ping_result(f"[{ue_attached_info.ipv4}] UE -> 5GC", ue_to_fivegc_result)
-        _print_ping_result(f"[{ue_attached_info.ipv4}] 5GC -> UE", fivegc_to_ue_result)
-
-        ping_success &= ue_to_fivegc_result.status and fivegc_to_ue_result.status
+    ping_success = True
+    for ping_task in ping_task_array:
+        ping_success &= ping_task.result().status
 
     if not ping_success:
         pytest.fail("Ping. Some packages got lost.")
@@ -258,7 +272,7 @@ def _print_ping_result(msg: str, result: PingResponse):
     log_fn("Ping %s: %s", msg, result)
 
 
-def iperf(
+def iperf_parallel(
     ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
     fivegc: FiveGCStub,
     protocol: IPerfProto,
@@ -266,31 +280,35 @@ def iperf(
     iperf_duration: int,
     bitrate: int,
     bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    parallel_iperfs: int = 8,
 ) -> List[IPerfResponse]:
     """
-    iperf command between an UE and a 5GC
+    iperf command between multiple UEs and a 5GC. Runs at <parallel_iperfs> in parallel.
     """
 
-    iperf_success = True
     iperf_result_list: List[IPerfResponse] = []
 
-    # For each attached UE
-    for ue_stub, ue_attached_info in ue_attach_info_dict.items():
-        # Start IPerf Server
-        task, iperf_request = iperf_start(
-            ue_stub,
-            ue_attached_info,
-            fivegc,
-            protocol,
-            direction,
-            iperf_duration,
-            bitrate,
+    with ThreadPoolExecutor(max_workers=parallel_iperfs) as executor:
+        future_array = (
+            executor.submit(
+                iperf_sequentially,
+                ue_stub,
+                ue_attached_info,
+                fivegc,
+                protocol,
+                direction,
+                iperf_duration,
+                bitrate,
+                bitrate_threshold_ratio,
+            )
+            for ue_stub, ue_attached_info in ue_attach_info_dict.items()
         )
-        sleep(iperf_duration)
-        iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
-        iperf_success &= iperf_response[0]
-        iperf_result_list.append(iperf_response[1])
+        iperf_success = True
+        for future in as_completed(future_array):
+            iperf_response = future.result()
+            iperf_success &= iperf_response[0]
+            iperf_result_list.append(iperf_response[1])
 
     if not iperf_success:
         pytest.fail("iperf did not achieve the expected data rate.")
@@ -298,8 +316,54 @@ def iperf(
     return iperf_result_list
 
 
+def iperf_sequentially(
+    ue_stub: UEStub,
+    ue_attached_info: UEAttachedInfo,
+    fivegc: FiveGCStub,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+    iperf_duration: int,
+    bitrate: int,
+    bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    max_retries: int = 5,
+    sleep_between_retries: int = 3,
+) -> Tuple[bool, IPerfResponse]:
+    """
+    iperf command between an UE and a 5GC
+    """
+
+    for _ in range(max_retries):
+        try:
+            task, iperf_request = iperf_start(
+                ue_stub,
+                ue_attached_info,
+                fivegc,
+                protocol,
+                direction,
+                iperf_duration,
+                bitrate,
+            )
+            sleep(iperf_duration)
+            iperf_success, iperf_data = iperf_wait_until_finish(
+                ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio
+            )
+            if iperf_success:
+                return iperf_success, iperf_data
+        except grpc.RpcError as err:
+            logging.warning(
+                "Iperf %s [%s %s] failed due to %s",
+                ue_attached_info.ipv4,
+                _iperf_proto_to_str(iperf_request.proto),
+                _iperf_dir_to_str(iperf_request.direction),
+                ErrorReportedByAgent(err).details,
+            )
+        sleep(sleep_between_retries)
+
+    return False, IPerfResponse()
+
+
 def iperf_start(
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_stub: UEStub,
     ue_attached_info: UEAttachedInfo,
     fivegc: FiveGCStub,
     protocol: IPerfProto,
@@ -320,7 +384,7 @@ def iperf_start(
     )
 
     # Run iperf
-    task = ue.IPerf.future(iperf_request)
+    task: grpc.Future = ue_stub.IPerf.future(iperf_request)
 
     logging.info(
         "Iperf %s [%s %s] started",

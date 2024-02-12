@@ -26,7 +26,6 @@
 #include "rrc_ue_context.h"
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -41,15 +40,14 @@ public:
               rrc_pdu_f1ap_notifier&            f1ap_pdu_notifier_,
               rrc_ue_nas_notifier&              nas_notif_,
               rrc_ue_control_notifier&          ngap_ctrl_notif_,
-              rrc_ue_reestablishment_notifier&  cu_cp_notif_,
-              cell_meas_manager&                cell_meas_mng_,
+              rrc_ue_context_update_notifier&   cu_cp_notif_,
+              rrc_ue_measurement_notifier&      measurement_notifier_,
               const ue_index_t                  ue_index_,
               const rnti_t                      c_rnti_,
               const rrc_cell_context            cell_,
               const rrc_ue_cfg_t&               cfg_,
               const byte_buffer                 du_to_cu_container,
               rrc_ue_task_scheduler&            task_sched,
-              bool&                             reject_users_,
               optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl() = default;
 
@@ -105,9 +103,6 @@ private:
   void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
 
   // message senders
-  /// \remark Send RRC Reject, see section 5.3.15 in TS 38.331
-  void send_rrc_reject(uint8_t reject_wait_time_secs);
-
   /// Packs a DL-CCCH message and logs the message
   void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
   void send_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg);
@@ -125,18 +120,17 @@ private:
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
 
-  rrc_ue_context_t                 context;
-  up_resource_manager&             up_resource_mng;       // UP resource manager
-  rrc_ue_du_processor_notifier&    du_processor_notifier; // notifier to the DU processor
-  rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier;     // PDU notifier to the F1AP
-  rrc_ue_nas_notifier&             nas_notifier;          // PDU notifier to the NGAP
-  rrc_ue_control_notifier&         ngap_ctrl_notifier;    // Control message notifier to the NGAP
-  rrc_ue_reestablishment_notifier& cu_cp_notifier;        // notifier to the CU-CP
-  cell_meas_manager&               cell_meas_mng;         // cell measurement manager
-  byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
-  rrc_ue_task_scheduler&           task_sched;
-  bool&                            reject_users;
-  rrc_ue_logger                    logger;
+  rrc_ue_context_t                context;
+  up_resource_manager&            up_resource_mng;       // UP resource manager
+  rrc_ue_du_processor_notifier&   du_processor_notifier; // notifier to the DU processor
+  rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;     // PDU notifier to the F1AP
+  rrc_ue_nas_notifier&            nas_notifier;          // PDU notifier to the NGAP
+  rrc_ue_control_notifier&        ngap_ctrl_notifier;    // Control message notifier to the NGAP
+  rrc_ue_context_update_notifier& cu_cp_notifier;        // notifier to the CU-CP
+  rrc_ue_measurement_notifier&    measurement_notifier;  // cell measurement notifier
+  byte_buffer                     du_to_cu_container;    // initial RRC message from DU to CU
+  rrc_ue_task_scheduler&          task_sched;
+  rrc_ue_logger                   logger;
 
   // RRC procedures handling
   std::unique_ptr<rrc_ue_event_manager> event_mng;

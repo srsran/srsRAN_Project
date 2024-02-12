@@ -72,32 +72,20 @@ backend_pcap_writer::~backend_pcap_writer()
 
 void backend_pcap_writer::close()
 {
-  std::lock_guard<std::mutex> lock(close_mutex);
-  if (is_open.load(std::memory_order_relaxed)) {
-    // The pcap writing is still enabled. Dispatch closing of the pcap writer to backend executor.
-
-    // Note: We use a sync executor to ensure the pcap file is closed before we return.
-    auto sync_exec = make_sync_executor(&backend_exec);
-
-    // Note: We need to handle the case where we fail to dispatch the pcap closing task because the task worker
-    // queue is full.
-    const unsigned nof_dispatch_attempts = 20;
-    unsigned       count                 = 0;
-    auto           close_task            = [this]() {
-      writer.close();
-      is_open = false;
-    };
-    for (; count < nof_dispatch_attempts and not sync_exec->execute(close_task); ++count) {
-      // give some time for task executor queue to be flushed.
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    // make sure dlt_pcap_close is called.
-    if (count == nof_dispatch_attempts) {
-      logger.warning("Failed to dispatch task to close {} pcap file. Forcing close...", layer_name);
-      close_task();
-    }
+  bool prev_value = is_open.exchange(false, std::memory_order_relaxed);
+  if (not prev_value) {
+    // It was already closed.
+    return;
   }
+
+  logger.debug("Scheduling the closing of the \"{}\" pcap writer", layer_name);
+
+  // The pcap writing is still enabled. Dispatch closing of the pcap writer to backend executor.
+  // Note: We block waiting until the pcap finishes closing.
+  force_blocking_execute(
+      backend_exec,
+      [this]() { writer.close(); },
+      []() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
 }
 
 void backend_pcap_writer::write_pdu(byte_buffer pdu)

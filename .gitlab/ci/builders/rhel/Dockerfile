@@ -1,3 +1,11 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 ARG RHEL_VERSION
 ARG CR_REGISTRY_URI
 FROM ${CR_REGISTRY_URI}/ci/rhel-images/srsgnb-ubi8:pre-builder_${RHEL_VERSION}

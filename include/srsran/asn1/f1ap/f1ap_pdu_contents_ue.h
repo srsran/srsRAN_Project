@@ -66,9 +66,6 @@ struct dl_rrc_msg_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -105,14 +102,8 @@ struct dl_rrc_msg_transfer_ies_o {
     const fixed_bitstring<16, false, true>& srb_map_info() const;
 
   private:
-    types type_;
-    choice_buffer_t<fixed_bitstring<32, false, true>,
-                    fixed_octstring<3, true>,
-                    rat_freq_prio_info_c,
-                    unbounded_octstring<true>>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -185,9 +176,6 @@ struct init_ul_rrc_msg_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -220,10 +208,8 @@ struct init_ul_rrc_msg_transfer_ies_o {
     const sidelink_relay_cfg_s&      sidelink_relay_cfg() const;
 
   private:
-    types type_;
-    choice_buffer_t<fixed_octstring<8, true>, nr_cgi_s, sdt_info_s, sidelink_relay_cfg_s, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -261,9 +247,6 @@ struct ue_context_mod_confirm_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -296,18 +279,8 @@ struct ue_context_mod_confirm_ies_o {
     const ue_multicast_m_rbs_confirmed_to_be_modified_list_l& ue_multicast_m_rbs_confirmed_to_be_modified_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<crit_diagnostics_s,
-                    drbs_modified_conf_list_l,
-                    pc5_rlc_ch_modified_list_l,
-                    res_coordination_transfer_info_s,
-                    sl_drbs_modified_conf_list_l,
-                    ue_multicast_m_rbs_confirmed_to_be_modified_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_modified_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -338,9 +311,6 @@ struct ue_context_mod_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -359,10 +329,8 @@ struct ue_context_mod_fail_ies_o {
     const nr_cgi_s&           requested_target_cell_global_id() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s, nr_cgi_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -386,9 +354,6 @@ struct ue_context_mod_refuse_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -405,10 +370,8 @@ struct ue_context_mod_refuse_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -510,9 +473,6 @@ struct ue_context_mod_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -673,54 +633,8 @@ struct ue_context_mod_request_ies_o {
     const cp_acmcg_info_s&                                 cp_acmcg_info() const;
 
   private:
-    types type_;
-    choice_buffer_t<bh_chs_to_be_modified_list_l,
-                    bh_chs_to_be_released_list_l,
-                    bh_chs_to_be_setup_mod_list_l,
-                    conditional_intra_du_mob_info_s,
-                    cp_acmcg_info_s,
-                    cu_to_du_rrc_info_s,
-                    drbs_to_be_modified_list_l,
-                    drbs_to_be_released_list_l,
-                    drbs_to_be_setup_mod_list_l,
-                    drx_cycle_s,
-                    f1_c_transfer_path_nr_dc_s,
-                    f1_c_transfer_path_s,
-                    five_g_pro_se_authorized_s,
-                    fixed_bitstring<32, false, true>,
-                    gnb_du_ue_slice_max_bit_rate_list_l,
-                    lte_ue_sidelink_aggr_max_bitrate_s,
-                    ltev2x_services_authorized_s,
-                    mdt_plmn_mod_list_l,
-                    multicast_mbs_session_list_l,
-                    nr_cgi_s,
-                    nr_ue_sidelink_aggr_max_bitrate_s,
-                    nr_v2x_services_authorized_s,
-                    path_switch_cfg_s,
-                    pc5_rlc_ch_to_be_modified_list_l,
-                    pc5_rlc_ch_to_be_released_list_l,
-                    pc5_rlc_ch_to_be_setup_list_l,
-                    rat_freq_prio_info_c,
-                    res_coordination_transfer_info_s,
-                    rlc_fail_ind_s,
-                    scell_to_be_remd_list_l,
-                    scell_to_be_setup_mod_list_l,
-                    serving_cell_mo_list_l,
-                    sl_drbs_to_be_modified_list_l,
-                    sl_drbs_to_be_released_list_l,
-                    sl_drbs_to_be_setup_mod_list_l,
-                    sldrx_cycle_list_l,
-                    srbs_to_be_released_list_l,
-                    srbs_to_be_setup_mod_list_l,
-                    ue_multicast_m_rbs_to_be_released_list_l,
-                    ue_multicast_m_rbs_to_be_setup_at_modify_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_to_be_modified_list_l,
-                    uu_rlc_ch_to_be_released_list_l,
-                    uu_rlc_ch_to_be_setup_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -764,9 +678,6 @@ struct ue_context_mod_required_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -811,26 +722,8 @@ struct ue_context_mod_required_ies_o {
     const ue_multicast_m_rbs_required_to_be_released_list_l& ue_multicast_m_rbs_required_to_be_released_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<bh_chs_required_to_be_released_list_l,
-                    cause_c,
-                    drbs_required_to_be_modified_list_l,
-                    drbs_required_to_be_released_list_l,
-                    du_to_cu_rrc_info_s,
-                    pc5_rlc_ch_required_to_be_modified_list_l,
-                    pc5_rlc_ch_required_to_be_released_list_l,
-                    sl_drbs_required_to_be_modified_list_l,
-                    sl_drbs_required_to_be_released_list_l,
-                    srbs_required_to_be_released_list_l,
-                    target_cell_list_l,
-                    ue_multicast_m_rbs_required_to_be_modified_list_l,
-                    ue_multicast_m_rbs_required_to_be_released_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_required_to_be_modified_list_l,
-                    uu_rlc_ch_required_to_be_released_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -894,9 +787,6 @@ struct ue_context_mod_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -981,42 +871,8 @@ struct ue_context_mod_resp_ies_o {
     const serving_cell_mo_encoded_in_cgc_list_l&   serving_cell_mo_encoded_in_cgc_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<associated_scell_list_l,
-                    bh_chs_failed_to_be_modified_list_l,
-                    bh_chs_failed_to_be_setup_mod_list_l,
-                    bh_chs_modified_list_l,
-                    bh_chs_setup_mod_list_l,
-                    crit_diagnostics_s,
-                    drbs_failed_to_be_modified_list_l,
-                    drbs_failed_to_be_setup_mod_list_l,
-                    drbs_modified_list_l,
-                    drbs_setup_mod_list_l,
-                    du_to_cu_rrc_info_s,
-                    nr_cgi_s,
-                    pc5_rlc_ch_failed_to_be_modified_list_l,
-                    pc5_rlc_ch_failed_to_be_setup_list_l,
-                    pc5_rlc_ch_modified_list_l,
-                    pc5_rlc_ch_setup_list_l,
-                    scell_failedto_setup_mod_list_l,
-                    sdt_bearer_cfg_info_s,
-                    serving_cell_mo_encoded_in_cgc_list_l,
-                    sl_drbs_failed_to_be_modified_list_l,
-                    sl_drbs_failed_to_be_setup_mod_list_l,
-                    sl_drbs_modified_list_l,
-                    sl_drbs_setup_mod_list_l,
-                    srbs_failed_to_be_setup_mod_list_l,
-                    srbs_modified_list_l,
-                    srbs_setup_mod_list_l,
-                    ue_multicast_m_rbs_setup_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_failed_to_be_modified_list_l,
-                    uu_rlc_ch_failed_to_be_setup_list_l,
-                    uu_rlc_ch_modified_list_l,
-                    uu_rlc_ch_setup_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1053,9 +909,6 @@ struct ue_context_release_cmd_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1086,10 +939,8 @@ struct ue_context_release_cmd_ies_o {
     const cg_sdt_kept_ind_e&             cg_sdt_kept_ind() const;
 
   private:
-    types                                                                   type_;
-    choice_buffer_t<cause_c, target_cell_list_l, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1113,9 +964,6 @@ struct ue_context_release_complete_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1130,10 +978,8 @@ struct ue_context_release_complete_ies_o {
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    types                               type_;
-    choice_buffer_t<crit_diagnostics_s> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1157,9 +1003,6 @@ struct ue_context_release_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1176,10 +1019,8 @@ struct ue_context_release_request_ies_o {
     const target_cell_list_l& target_cells_to_cancel() const;
 
   private:
-    types                                        type_;
-    choice_buffer_t<cause_c, target_cell_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1211,9 +1052,6 @@ struct ue_context_setup_fail_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1234,10 +1072,8 @@ struct ue_context_setup_fail_ies_o {
     const nr_cgi_s&                 requested_target_cell_global_id() const;
 
   private:
-    types                                                                            type_;
-    choice_buffer_t<cause_c, crit_diagnostics_s, nr_cgi_s, potential_sp_cell_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1314,9 +1150,6 @@ struct ue_context_setup_request_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1427,43 +1260,8 @@ struct ue_context_setup_request_ies_o {
     const serving_cell_mo_list_l&                serving_cell_mo_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<bh_chs_to_be_setup_list_l,
-                    candidate_sp_cell_list_l,
-                    cg_sdt_session_info_s,
-                    conditional_inter_du_mob_info_s,
-                    cu_to_du_rrc_info_s,
-                    drbs_to_be_setup_list_l,
-                    drx_cycle_s,
-                    f1_c_transfer_path_nr_dc_s,
-                    f1_c_transfer_path_s,
-                    five_g_pro_se_authorized_s,
-                    fixed_bitstring<64, false, true>,
-                    fixed_octstring<3, true>,
-                    fixed_octstring<8, true>,
-                    gnb_du_ue_slice_max_bit_rate_list_l,
-                    lte_ue_sidelink_aggr_max_bitrate_s,
-                    ltev2x_services_authorized_s,
-                    mdt_plmn_list_l,
-                    multicast_mbs_session_list_l,
-                    nr_cgi_s,
-                    nr_ue_sidelink_aggr_max_bitrate_s,
-                    nr_v2x_services_authorized_s,
-                    path_switch_cfg_s,
-                    pc5_rlc_ch_to_be_setup_list_l,
-                    rat_freq_prio_info_c,
-                    res_coordination_transfer_info_s,
-                    scell_to_be_setup_list_l,
-                    serving_cell_mo_list_l,
-                    sl_drbs_to_be_setup_list_l,
-                    srbs_to_be_setup_list_l,
-                    trace_activation_s,
-                    ue_multicast_m_rbs_to_be_setup_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_to_be_setup_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1513,9 +1311,6 @@ struct ue_context_setup_resp_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1572,28 +1367,8 @@ struct ue_context_setup_resp_ies_o {
     const serving_cell_mo_encoded_in_cgc_list_l& serving_cell_mo_encoded_in_cgc_list() const;
 
   private:
-    types type_;
-    choice_buffer_t<bh_chs_failed_to_be_setup_list_l,
-                    bh_chs_setup_list_l,
-                    crit_diagnostics_s,
-                    drbs_failed_to_be_setup_list_l,
-                    drbs_setup_list_l,
-                    du_to_cu_rrc_info_s,
-                    nr_cgi_s,
-                    pc5_rlc_ch_failed_to_be_setup_list_l,
-                    pc5_rlc_ch_setup_list_l,
-                    scell_failedto_setup_list_l,
-                    serving_cell_mo_encoded_in_cgc_list_l,
-                    sl_drbs_failed_to_be_setup_list_l,
-                    sl_drbs_setup_list_l,
-                    srbs_failed_to_be_setup_list_l,
-                    srbs_setup_list_l,
-                    unbounded_octstring<true>,
-                    uu_rlc_ch_failed_to_be_setup_list_l,
-                    uu_rlc_ch_setup_list_l>
-        c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1617,9 +1392,6 @@ struct ue_inactivity_notif_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1636,10 +1408,8 @@ struct ue_inactivity_notif_ies_o {
     const sdt_termination_request_e& sdt_termination_request() const;
 
   private:
-    types                                type_;
-    choice_buffer_t<drb_activity_list_l> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -1671,9 +1441,6 @@ struct ul_rrc_msg_transfer_ies_o {
 
     // choice methods
     value_c() = default;
-    value_c(const value_c& other);
-    value_c& operator=(const value_c& other);
-    ~value_c() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
@@ -1694,10 +1461,8 @@ struct ul_rrc_msg_transfer_ies_o {
     const uint64_t&                  new_gnb_du_ue_f1ap_id() const;
 
   private:
-    types                                                                type_;
-    choice_buffer_t<fixed_octstring<3, true>, unbounded_octstring<true>> c;
-
-    void destroy_();
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2379,3 +2144,20 @@ using ul_rrc_msg_transfer_s = elementary_procedure_option<ul_rrc_msg_transfer_ie
 
 } // namespace f1ap
 } // namespace asn1
+
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::dl_rrc_msg_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::init_ul_rrc_msg_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_confirm_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_refuse_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_required_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_mod_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_inactivity_notif_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ul_rrc_msg_transfer_ies_o>;

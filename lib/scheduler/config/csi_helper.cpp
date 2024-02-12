@@ -178,7 +178,7 @@ static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_para
     res.res_mapping.fd_alloc.set(2, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
   } else {
-    report_fatal_error("Unsupported number of antenna ports={}", params.nof_ports);
+    report_error("Unsupported number of antenna ports={}", params.nof_ports);
   }
   res.res_mapping.first_ofdm_symbol_in_td = 8;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
@@ -221,7 +221,7 @@ srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_para
     list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
 
   } else {
-    report_fatal_error("Unsupported number of antenna ports");
+    report_error("Unsupported number of antenna ports");
   }
 
   for (auto& res : list) {
@@ -248,7 +248,7 @@ zp_csi_rs_resource_set srsran::csi_helper::make_periodic_zp_csi_rs_resource_set(
   } else if (params.nof_ports == 4) {
     zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0)};
   } else {
-    report_fatal_error("Unsupported number of antenna ports {}", params.nof_ports);
+    report_error("Unsupported number of antenna ports {}", params.nof_ports);
   }
 
   return zp_set;
@@ -339,7 +339,7 @@ static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const cs
     res.res_mapping.fd_alloc.set(2, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
   } else {
-    report_fatal_error("Number of ports {} not supported", params.nof_ports);
+    report_error("Number of ports {} not supported", params.nof_ports);
   }
 
   return res;
@@ -476,7 +476,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   report_cfg_type.report_slot_period = convert_csi_resource_period_to_report_period(params.csi_rs_period);
   report_cfg_type.report_slot_offset = params.csi_report_slot_offset;
   report_cfg_type.pucch_csi_res_list = {
-      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9}};
+      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = pucch_res_id_t{9, 9}}};
   reps[0].report_cfg_type = report_cfg_type;
 
   reps[0].report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
@@ -507,7 +507,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
       port_cfg.typei_single_panel_codebook_subset_restriction_i2.fill(0, 16, true);
       single_panel.nof_antenna_ports = port_cfg;
     } else {
-      report_fatal_error("Unsupported number of antenna ports {}", params.nof_ports);
+      report_error("Unsupported number of antenna ports {}", params.nof_ports);
     }
     // Enable all layer options for the given number of ports. As per TS 38.214, section 5.2.2.2.1, this can be done
     // by setting the RI restriction bitmap to 0b11...11, where the number of 1s is set to be equal to the number of

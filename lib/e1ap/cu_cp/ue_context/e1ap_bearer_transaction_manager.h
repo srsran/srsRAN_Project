@@ -24,6 +24,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/support/async/event_signal.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
 

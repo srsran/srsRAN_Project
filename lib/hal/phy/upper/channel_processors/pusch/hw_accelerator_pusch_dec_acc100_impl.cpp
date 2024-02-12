@@ -37,10 +37,9 @@ void hw_accelerator_pusch_dec_acc100_impl::allocate_resources()
   // Note that a single hardware-queue per lcore is assumed.
   unsigned nof_ldpc_dec_cores = bbdev_accelerator->get_nof_ldpc_dec_cores();
   // op pools require unique names.
-  char op_pool_name[50];
-  snprintf(op_pool_name, sizeof op_pool_name, "dec_op_pool_%d_%d", device_id, queue_id);
-  op_pool = ::dpdk::create_bbdev_op_pool(
-      op_pool_name, RTE_BBDEV_OP_LDPC_DEC, nof_ldpc_dec_cores, socket_id, bbdev_accelerator->get_logger());
+  std::string op_pool_name = fmt::format("dec_op_pool_{}_{}", device_id, queue_id);
+  op_pool                  = ::dpdk::create_bbdev_op_pool(
+      op_pool_name.c_str(), RTE_BBDEV_OP_LDPC_DEC, nof_ldpc_dec_cores, socket_id, bbdev_accelerator->get_logger());
 
   // Create new mbuf pools for both input and output data for the hardware-accelerated LDPC decoder.
   // Note that the buffers are sized taking into account that only CB mode is supported by the decoder.
@@ -111,7 +110,7 @@ bool hw_accelerator_pusch_dec_acc100_impl::hw_enqueue(span<const int8_t> data,
                                     *harq_out_pool,
                                     data,
                                     soft_data,
-                                    dec_config,
+                                    dec_config.new_data,
                                     ext_softbuffer,
                                     soft_data_len,
                                     cb_index,
@@ -137,11 +136,13 @@ bool hw_accelerator_pusch_dec_acc100_impl::hw_enqueue(span<const int8_t> data,
                 dec_config.cb_crc_len,
                 queue_id);
 
-    // Enqueue the LDPC decoding oepration.
+    // Enqueue the LDPC decoding operation.
     enqueued = ::dpdk::enqueue_ldpc_dec_operation(op[cb_index],
                                                   1,
                                                   device_id,
                                                   queue_id,
+                                                  dec_config.new_data,
+                                                  ext_softbuffer,
                                                   bbdev_accelerator->get_logger()); // TBD: single operation enqueued.
 
     // Update the enqueued task counter.
@@ -180,7 +181,7 @@ bool hw_accelerator_pusch_dec_acc100_impl::hw_dequeue(span<uint8_t> data,
     if (dequeued) {
       // Read the accelerator output data and related soft-combining outputs, while updating the HARQ context.
       harq_context_entries[segment_index]->soft_data_len =
-          ::dpdk::read_ldpc_dec_bbdev_data(op[segment_index], data, soft_data, dec_config, ext_softbuffer);
+          ::dpdk::read_ldpc_dec_bbdev_data(op[segment_index], data, soft_data, dec_config.new_data, ext_softbuffer);
 
       // Update the enqueued task counter.
       --nof_enqueued_op;

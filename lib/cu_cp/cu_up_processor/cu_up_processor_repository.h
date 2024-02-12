@@ -56,7 +56,7 @@ public:
 
 private:
   struct cu_up_context final : public cu_up_handler {
-    std::unique_ptr<cu_up_processor_interface> cu_up_processor;
+    std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor;
 
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
@@ -70,7 +70,7 @@ private:
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
   /// \return The CU-UP processor object.
-  cu_up_processor_interface& find_cu_up(cu_up_index_t cu_up_index);
+  cu_up_processor_impl_interface& find_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Adds a CU-UP processor object to the CU-CP.
   /// \return The CU-UP index of the added CU-UP processor object.
@@ -82,17 +82,17 @@ private:
 
   /// \brief Get the next available index from the CU-UP processor database.
   /// \return The CU-UP index.
-  cu_up_index_t get_next_cu_up_index();
+  cu_up_index_t allocate_cu_up_index();
 
   cu_up_repository_config cfg;
   srslog::basic_logger&   logger;
 
   cu_up_task_scheduler cu_up_task_sched;
 
-  std::unordered_map<cu_up_index_t, cu_up_context> cu_up_db;
+  std::map<cu_up_index_t, cu_up_context> cu_up_db;
 
   // TODO: CU-UP removal not yet fully supported. Instead we just move the CU-UP context to a separate map.
-  std::unordered_map<cu_up_index_t, cu_up_context> removed_cu_up_db;
+  std::map<cu_up_index_t, cu_up_context> removed_cu_up_db;
 };
 
 } // namespace srs_cu_cp

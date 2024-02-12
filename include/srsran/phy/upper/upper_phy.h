@@ -90,6 +90,11 @@ public:
   ///
   /// \param[in] notifier Notifier assigned to this upper PHY.
   virtual void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
+
+  /// \brief Stops the upper PHY.
+  ///
+  /// It shall wait for pending tasks that have cross dependencies to finish their processing.
+  virtual void stop() = 0;
 };
 
 } // namespace srsran

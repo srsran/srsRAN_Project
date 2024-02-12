@@ -36,24 +36,24 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
 {
   // Sanity checks.
   if (target_ue_context_setup_response.ue_index == ue_index_t::invalid) {
-    logger.error("Failed to create UE at the target DU.");
+    logger.warning("Failed to create UE at the target DU");
     return false;
   }
 
   if (!target_ue_context_setup_response.srbs_failed_to_be_setup_list.empty()) {
-    logger.error("Couldn't setup {} SRBs at target DU",
-                 target_ue_context_setup_response.srbs_failed_to_be_setup_list.size());
+    logger.warning("Couldn't setup {} SRBs at target DU",
+                   target_ue_context_setup_response.srbs_failed_to_be_setup_list.size());
     return false;
   }
 
   if (!target_ue_context_setup_response.drbs_failed_to_be_setup_list.empty()) {
-    logger.error("Couldn't setup {} DRBs at target DU",
-                 target_ue_context_setup_response.drbs_failed_to_be_setup_list.size());
+    logger.warning("Couldn't setup {} DRBs at target DU",
+                   target_ue_context_setup_response.drbs_failed_to_be_setup_list.size());
     return false;
   }
 
   if (!target_ue_context_setup_response.c_rnti.has_value()) {
-    logger.error("No C-RNTI present in UE context setup");
+    logger.warning("No C-RNTI present in UE context setup");
     return false;
   }
 

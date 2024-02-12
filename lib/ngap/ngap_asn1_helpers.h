@@ -24,7 +24,6 @@
 
 #include "ngap_asn1_converters.h"
 #include "ngap_context.h"
-#include "procedures/ngap_initial_context_setup_procedure.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
@@ -32,6 +31,8 @@
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ngap/ngap_init_context_setup.h"
+#include "srsran/ngap/ngap_setup.h"
 #include "srsran/security/security.h"
 #include <string>
 #include <vector>
@@ -312,6 +313,10 @@ inline bool fill_cu_cp_pdu_session_resource_setup_request(
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_su_req_s, 1U, 256U, true>&
         asn1_pdu_session_res_setup_list)
 {
+  if (asn1_pdu_session_res_setup_list.size() == 0) {
+    return false;
+  }
+
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
@@ -533,36 +538,38 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
       qos_flow_add_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
 
       // qosFlowLevelQosParameters
-      if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
-          asn1::ngap::qos_characteristics_c::types::dyn5qi) {
-        dyn_5qi_descriptor_t dyn_5qi = {};
-        if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
-          dyn_5qi.five_qi =
-              uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
+      if (asn1_flow_item.qos_flow_level_qos_params_present) {
+        if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+            asn1::ngap::qos_characteristics_c::types::dyn5qi) {
+          dyn_5qi_descriptor_t dyn_5qi = {};
+          if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
+            dyn_5qi.five_qi =
+                uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
+          }
+          // TODO: Add optional values
+
+          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+
+          // TODO: Add optional values
+
+        } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+                   asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
+          non_dyn_5qi_descriptor_t non_dyn_5qi = {};
+          non_dyn_5qi.five_qi =
+              uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
+          qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+          // TODO: Add optional values
         }
-        // TODO: Add optional values
 
-        qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
-
-        // TODO: Add optional values
-
-      } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
-                 asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
-        non_dyn_5qi_descriptor_t non_dyn_5qi = {};
-        non_dyn_5qi.five_qi =
-            uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
-        qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-
-        // TODO: Add optional values
+        // allocationAndRetentionPriority
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
+            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
+            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
+        qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
+            asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
       }
-
-      // allocationAndRetentionPriority
-      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
-          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
-          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
-      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
-          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
 
       modify_item.transfer.qos_flow_add_or_modify_request_list.emplace(qos_flow_add_item.qos_flow_id,
                                                                        qos_flow_add_item);
@@ -812,8 +819,8 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
 /// \param[out] cu_cp_ngap_ue_context_release_cmd The cu_cp_ngap_ue_context_release_cmd struct to fill.
 /// \param[in] asn1_ue_context_release_cmd The UE Context Release Command ASN1 struct.
 inline void
-fill_cu_cp_ngap_ue_context_release_command(cu_cp_ngap_ue_context_release_command&      cu_cp_ue_context_release_cmd,
-                                           const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
+fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&           cu_cp_ue_context_release_cmd,
+                                      const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
 {
   cu_cp_ue_context_release_cmd.cause = asn1_to_cause(asn1_ue_context_release_cmd->cause);
 }

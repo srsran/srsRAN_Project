@@ -36,12 +36,11 @@ namespace srs_cu_cp {
 class rrc_du_impl : public rrc_du_interface
 {
 public:
-  rrc_du_impl(const rrc_cfg_t&                 cfg_,
-              rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notif_,
-              rrc_ue_nas_notifier&             nas_notif_,
-              rrc_ue_control_notifier&         ngap_ctrl_notif_,
-              rrc_ue_reestablishment_notifier& cu_cp_notif_,
-              cell_meas_manager&               cell_meas_mng_);
+  rrc_du_impl(const rrc_cfg_t&                    cfg_,
+              rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notif_,
+              rrc_ue_nas_notifier&                nas_notif_,
+              rrc_ue_control_notifier&            ngap_ctrl_notif_,
+              rrc_du_measurement_config_notifier& meas_config_notifier_);
   ~rrc_du_impl() = default;
 
   // rrc_du_cell_manager
@@ -50,14 +49,9 @@ public:
   // rrc_du_ue_repository
   rrc_ue_interface* add_ue(up_resource_manager& up_resource_mng, const rrc_ue_creation_message& msg) override;
   void              release_ues() override;
-  void              handle_amf_connection() override;
-  void              handle_amf_connection_drop() override;
 
   // rrc_ue_removal_handler
   void remove_ue(ue_index_t ue_index) override;
-
-  // rrc_du_ue_manager
-  bool is_rrc_connect_allowed() override;
 
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
@@ -69,7 +63,6 @@ public:
   size_t get_nof_ues() const override { return ue_db.size(); }
 
   rrc_du_cell_manager&       get_rrc_du_cell_manager() override { return *this; }
-  rrc_du_ue_manager&         get_rrc_du_ue_manager() override { return *this; }
   rrc_du_ue_repository&      get_rrc_du_ue_repository() override { return *this; }
   rrc_ue_removal_handler&    get_rrc_ue_removal_handler() override { return *this; }
   rrc_du_statistics_handler& get_rrc_du_statistics_handler() override { return *this; }
@@ -78,14 +71,11 @@ private:
   // helpers
   const rrc_cfg_t& cfg;
 
-  bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
-
-  rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&             nas_notifier;            // PDU notifier to the NGAP
-  rrc_ue_control_notifier&         ngap_ctrl_notifier;      // Control notifier to the NGAP
-  rrc_ue_reestablishment_notifier& cu_cp_notifier;          // notifier to the CU-CP
-  cell_meas_manager&               cell_meas_mng;           // cell measurement manager
-  srslog::basic_logger&            logger;
+  rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notifier; // notifier to the DU processor
+  rrc_ue_nas_notifier&                nas_notifier;            // PDU notifier to the NGAP
+  rrc_ue_control_notifier&            ngap_ctrl_notifier;      // Control notifier to the NGAP
+  rrc_du_measurement_config_notifier& meas_config_notifier;    // notifier to the CU-CP
+  srslog::basic_logger&               logger;
 
   // RRC-internal user database indexed by ue_index
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;

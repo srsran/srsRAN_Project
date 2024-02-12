@@ -23,8 +23,8 @@
 #pragma once
 
 #include "ngap_ue_logger.h"
-#include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -42,6 +42,7 @@ struct ngap_ue_context {
   unique_timer   ue_context_setup_timer        = {};
   bool           release_requested             = false;
   bool           release_scheduled             = false;
+  byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
   ngap_ue_logger logger;
 
   ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
@@ -197,7 +198,7 @@ public:
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available RAN-UE-ID.
-  ran_ue_id_t get_next_ran_ue_id()
+  ran_ue_id_t allocate_ran_ue_id()
   {
     // return invalid when no RAN-UE-ID is available
     if (ue_index_to_ran_ue_id.size() == MAX_NOF_RAN_UES) {

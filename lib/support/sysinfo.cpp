@@ -21,8 +21,12 @@
  */
 
 #include "srsran/support/sysinfo.h"
+#include "srsran/support/unique_thread.h"
+#include <fstream>
 #include <sstream>
+#include <string>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
 
 /// Executes system command, deletes the given path if the command fails.
@@ -73,8 +77,20 @@ static bool move_procs_between_cgroups(const std::string& dst_path, const std::s
   return true;
 }
 
-bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus)
+bool srsran::configure_cgroups(const srsran::os_sched_affinity_bitmask& isol_cpus)
 {
+  std::string isolated_cpus;
+  std::string os_cpus;
+
+  // Create the string with the CPU indexes.
+  for (unsigned pos = 0; pos != isol_cpus.size(); ++pos) {
+    if (isol_cpus.test(pos)) {
+      isolated_cpus += (isolated_cpus.empty()) ? std::to_string(pos) : "," + std::to_string(pos);
+    } else {
+      os_cpus += (os_cpus.empty()) ? std::to_string(pos) : "," + std::to_string(pos);
+    }
+  }
+
   std::string cgroup_path = "/sys/fs/cgroup";
   struct stat info;
   if (::stat(cgroup_path.c_str(), &info) < 0) {
@@ -126,7 +142,7 @@ bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus)
     return false;
   }
 
-  std::string set_cpus_cmd = "echo " + isol_cpus + " > " + isol_cgroup_path + "/cpuset.cpus";
+  std::string set_cpus_cmd = "echo " + isolated_cpus + " > " + isol_cgroup_path + "/cpuset.cpus";
   if (!exec_system_command(set_cpus_cmd, isol_cgroup_path)) {
     return false;
   }
@@ -137,7 +153,7 @@ bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus)
   return true;
 }
 
-void cleanup_cgroups()
+void srsran::cleanup_cgroups()
 {
   using namespace std::chrono_literals;
 
@@ -172,5 +188,57 @@ void cleanup_cgroups()
   if (cgroup_changed) {
     std::this_thread::sleep_for(100ms);
   }
-  move_to_cgroup("/sys/fs/cgroup");
+}
+
+bool srsran::check_cpu_governor(srslog::basic_logger& logger)
+{
+  unsigned int n_cpus        = std::thread::hardware_concurrency();
+  std::string  filename_base = "/sys/devices/system/cpu/cpu";
+  for (unsigned int i = 0; i < n_cpus; ++i) {
+    std::string   filename = filename_base + std::to_string(i) + "/cpufreq/scaling_governor";
+    std::ifstream input(filename);
+    if (input.fail()) {
+      logger.warning("Could not check scaling governor. filename={} error=\"{}\"", filename, strerror(errno));
+      return false;
+    }
+    std::string gov;
+    std::getline(input, gov);
+    if (input.fail()) {
+      logger.warning("Could not check scaling governor. filename={} error=\"{}\"", filename, strerror(errno));
+      return false;
+    }
+    if (gov == "performance") {
+      logger.debug("CPU{} scaling governor is set to performance", i);
+    } else {
+      logger.warning(
+          "CPU{} scaling governor is not set to performance, which may hinder performance. You can set it to "
+          "performance using the "
+          "\"srsran_performance\" script",
+          i);
+    }
+  }
+  return true;
+}
+
+bool srsran::check_drm_kms_polling(srslog::basic_logger& logger)
+{
+  std::string   filename = "/sys/module/drm_kms_helper/parameters/poll";
+  std::ifstream input(filename);
+  if (input.fail()) {
+    logger.warning("Could not check DRM KMS polling. filename={} error=\"{}\"", filename, strerror(errno));
+    return false;
+  }
+  std::string polling;
+  std::getline(input, polling);
+  if (input.fail()) {
+    logger.warning("Could not check DRM KMS polling. filename={} error=\"{}\"", filename, strerror(errno));
+    return false;
+  }
+  if (polling == "N") {
+    logger.debug("DRM KMS polling is disabled");
+  } else {
+    logger.warning("DRM KMS polling is enabled, which may hinder performance. You can disable it using the "
+                   "\"srsran_performance\" script");
+  }
+  return true;
 }

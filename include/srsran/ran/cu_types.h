@@ -237,7 +237,7 @@ struct formatter<srsran::pdu_session_id_t> {
   template <typename FormatContext>
   auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{:#}", pdu_session_id_to_uint(sid));
+    return format_to(ctx.out(), "psi={:#}", pdu_session_id_to_uint(sid));
   }
 };
 

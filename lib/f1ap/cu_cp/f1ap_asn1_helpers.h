@@ -26,6 +26,7 @@
 #include "f1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
@@ -35,125 +36,6 @@
 
 namespace srsran {
 namespace srs_cu_cp {
-
-/// \brief Convert the F1 Setup Request from ASN.1 to common type.
-/// \param[out] request The common type struct to store the result.
-/// \param[in] asn1_request The ASN.1 type F1 Setup Request.
-inline void fill_f1_setup_request(f1ap_f1_setup_request& request, const asn1::f1ap::f1_setup_request_s& asn1_request)
-{
-  // GNB DU ID
-  request.gnb_du_id = asn1_request->gnb_du_id;
-
-  // GNB DU name
-  if (asn1_request->gnb_du_name_present) {
-    request.gnb_du_name = asn1_request->gnb_du_name.to_string();
-  }
-
-  // GNB DU served cells list
-  if (asn1_request->gnb_du_served_cells_list_present) {
-    for (const auto& asn1_served_cell_item : asn1_request->gnb_du_served_cells_list) {
-      auto& asn1_served_cell = asn1_served_cell_item.value().gnb_du_served_cells_item();
-
-      cu_cp_du_served_cells_item served_cell;
-
-      // served cell info
-      // NR CGI
-      served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi);
-
-      // NR PCI
-      served_cell.served_cell_info.nr_pci = asn1_served_cell.served_cell_info.nr_pci;
-
-      // 5GS TAC
-      if (asn1_served_cell.served_cell_info.five_gs_tac_present) {
-        served_cell.served_cell_info.five_gs_tac = asn1_served_cell.served_cell_info.five_gs_tac.to_number();
-      }
-
-      // cfg EPS TAC
-      if (asn1_served_cell.served_cell_info.cfg_eps_tac_present) {
-        served_cell.served_cell_info.cfg_eps_tac = asn1_served_cell.served_cell_info.cfg_eps_tac.to_number();
-      }
-
-      // served PLMNs
-      for (const auto& asn1_plmn : asn1_served_cell.served_cell_info.served_plmns) {
-        served_cell.served_cell_info.served_plmns.push_back(asn1_plmn.plmn_id.to_string());
-      }
-
-      // NR mode info
-      served_cell.served_cell_info.nr_mode_info =
-          f1ap_asn1_to_nr_mode_info(asn1_served_cell.served_cell_info.nr_mode_info);
-
-      // meas timing cfg
-      served_cell.served_cell_info.meas_timing_cfg = asn1_served_cell.served_cell_info.meas_timing_cfg.copy();
-
-      // GNB DU sys info
-      if (asn1_served_cell.gnb_du_sys_info_present) {
-        cu_cp_gnb_du_sys_info gnb_du_sys_info;
-
-        // MIB msg
-        gnb_du_sys_info.mib_msg = asn1_served_cell.gnb_du_sys_info.mib_msg.copy();
-
-        // SIB1 msg
-        gnb_du_sys_info.sib1_msg = asn1_served_cell.gnb_du_sys_info.sib1_msg.copy();
-
-        served_cell.gnb_du_sys_info = gnb_du_sys_info;
-      } else {
-        srslog::fetch_basic_logger("CU-CP-F1").error("gNB DU system information must be present for NG-RAN.");
-      }
-
-      request.gnb_du_served_cells_list.push_back(served_cell);
-    }
-  }
-
-  // GNB DU RRC version
-  request.gnb_du_rrc_version = asn1_request->gnb_du_rrc_version.latest_rrc_version.to_number();
-
-  // TODO: Add optional fields
-}
-
-/// \brief Convert the F1 Setup Response from common type to ASN.1.
-/// \param[out] asn1_response The F1 Setup Response ASN.1 struct to store the result.
-/// \param[in] msg The common type F1 Setup Response.
-inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&  asn1_response,
-                                        const f1ap_f1_setup_response& response)
-{
-  // fill CU common info
-  if (response.gnb_cu_name.has_value()) {
-    asn1_response->gnb_cu_name_present = true;
-    asn1_response->gnb_cu_name.from_string(response.gnb_cu_name.value());
-  }
-  asn1_response->gnb_cu_rrc_version.latest_rrc_version.from_number(response.gnb_cu_rrc_version);
-
-  // activate all DU cells
-  if (response.cells_to_be_activ_list.size() > 0) {
-    asn1_response->cells_to_be_activ_list_present = true;
-    for (const auto& du_cell : response.cells_to_be_activ_list) {
-      asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
-      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(plmn_string_to_bcd(du_cell.nr_cgi.plmn));
-      resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci);
-
-      if (du_cell.nr_pci.has_value()) {
-        resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;
-        resp_cell->cells_to_be_activ_list_item().nr_pci         = du_cell.nr_pci.value();
-      }
-
-      asn1_response->cells_to_be_activ_list.push_back(resp_cell);
-    }
-  }
-}
-
-/// \brief Convert the F1 Setup Failure from common type to ASN.1.
-/// \param[out] asn1_failure The F1 Setup Failure ASN.1 struct to store the result.
-/// \param[in] msg The common type F1 Setup Failure.
-inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s& asn1_failure, const f1ap_f1_setup_response& failure)
-{
-  if (failure.cause.has_value()) {
-    asn1_failure->cause = cause_to_f1ap_asn1(failure.cause.value());
-  } else {
-    asn1_failure->cause.radio_network();
-  }
-
-  // TODO: Add optional values
-}
 
 /// \brief Convert the UE Context Setup Request from common type to ASN.1.
 /// \param[out] asn1_request The ASN.1 struct to store the result.

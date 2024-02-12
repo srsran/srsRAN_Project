@@ -22,17 +22,30 @@
 
 #pragma once
 
-#include "srsran/cu_cp/mobility_manager.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/du_repository.h"
+#include "srsran/cu_cp/mobility_manager_config.h"
+#include "srsran/cu_cp/ue_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Basic cell manager implementation
-class mobility_manager_impl final : public mobility_manager
+/// Handler for measurement related events.
+class mobility_manager_measurement_handler
 {
 public:
-  mobility_manager_impl(const mobility_manager_cfg& cfg, du_repository& du_db_, du_processor_ue_manager& ue_mng_);
-  ~mobility_manager_impl() = default;
+  virtual ~mobility_manager_measurement_handler() = default;
+
+  /// \brief Handle event where neighbor became better than serving cell.
+  virtual void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+};
+
+/// Basic cell manager implementation
+class mobility_manager final : public mobility_manager_measurement_handler
+{
+public:
+  mobility_manager(const mobility_manager_cfg& cfg, du_repository& du_db_, du_processor_ue_manager& ue_mng_);
+  ~mobility_manager() = default;
 
   void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override;
 

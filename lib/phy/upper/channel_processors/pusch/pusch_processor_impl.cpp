@@ -27,7 +27,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
 
@@ -38,11 +38,13 @@ class pusch_processor_csi_part1_feedback_impl : public pusch_processor_csi_part1
 {
 public:
   pusch_processor_csi_part1_feedback_impl(pusch_uci_decoder_wrapper&        csi_part2_decoder_,
+                                          pusch_decoder&                    ulsch_decoder_,
                                           ulsch_demultiplex&                demultiplex_,
                                           modulation_scheme                 modulation_,
                                           const uci_part2_size_description& csi_part2_size_,
                                           const ulsch_configuration&        ulsch_config_) :
     csi_part2_decoder(csi_part2_decoder_),
+    ulsch_decoder(ulsch_decoder_),
     demultiplex(demultiplex_),
     modulation(modulation_),
     csi_part2_size(csi_part2_size_),
@@ -78,11 +80,15 @@ public:
 
     // Configure UL-SCH demultiplex.
     demultiplex.set_csi_part2(csi_part2_buffer, nof_csi_part_2_bits, info.nof_csi_part2_bits.value());
+
+    // Set the number of UL-SCH softbits in the PUSCH decoder.
+    ulsch_decoder.set_nof_softbits(info.nof_ul_sch_bits);
   }
 
 private:
   pusch_processor_notifier_adaptor* notifier;
   pusch_uci_decoder_wrapper&        csi_part2_decoder;
+  pusch_decoder&                    ulsch_decoder;
   ulsch_demultiplex&                demultiplex;
   modulation_scheme                 modulation;
   uci_part2_size_description        csi_part2_size;
@@ -203,10 +209,10 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   using namespace units::literals;
 
   // Get thread local dependencies.
-  concurrent_dependencies& depedencies = thread_local_dependencies_pool->get();
+  concurrent_dependencies& dependencies = thread_local_dependencies_pool->get();
 
   // Get channel estimates.
-  channel_estimate& ch_estimate = depedencies.get_channel_estimate();
+  channel_estimate& ch_estimate = dependencies.get_channel_estimate();
 
   // Assert PDU.
   assert_pdu(pdu, ch_estimate);
@@ -217,7 +223,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Get UL-SCH information.
+  // Get UL-SCH information as if there was no CSI Part 2 in the PUSCH.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
   ulsch_config.mcs_descr             = pdu.mcs_descr;
@@ -251,7 +257,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.nof_symbols   = pdu.nof_symbols;
   ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
-  depedencies.get_estimator().estimate(ch_estimate, grid, ch_est_config);
+  dependencies.get_estimator().estimate(ch_estimate, grid, ch_est_config);
 
   // Handles the direct current if it is present.
   if (pdu.dc_position.has_value()) {
@@ -299,8 +305,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
   // Prepare CSI Part 1 feedback.
-  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(depedencies.get_csi_part2_decoder(),
-                                                             depedencies.get_demultiplex(),
+  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(dependencies.get_csi_part2_decoder(),
+                                                             *decoder,
+                                                             dependencies.get_demultiplex(),
                                                              pdu.mcs_descr.modulation,
                                                              pdu.uci.csi_part2_size,
                                                              ulsch_config);
@@ -324,23 +331,29 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     // Setup decoder.
     decoder_buffer =
         decoder->new_data(data, std::move(rm_buffer), notifier_adaptor.get_sch_data_notifier(), decoder_config);
+
+    // If there is no expected CSI Part 2 payload, the number of UL-SCH LLRs is known without the need to decode the
+    // CSI Part 1 payload.
+    if (pdu.uci.csi_part2_size.entries.empty()) {
+      decoder->set_nof_softbits(info.nof_ul_sch_bits);
+    }
   }
 
   // Prepares HARQ-ACK notifier and buffer.
   if (pdu.uci.nof_harq_ack != 0) {
-    harq_ack_buffer = depedencies.get_harq_ack_decoder().new_transmission(
+    harq_ack_buffer = dependencies.get_harq_ack_decoder().new_transmission(
         pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
   }
 
   // Prepares CSI Part 1 notifier and buffer.
   if (pdu.uci.nof_csi_part1 != 0) {
-    csi_part1_buffer = depedencies.get_csi_part1_decoder().new_transmission(
+    csi_part1_buffer = dependencies.get_csi_part1_decoder().new_transmission(
         pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
   }
 
   // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
   pusch_codeword_buffer& demodulator_buffer =
-      depedencies.get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
+      dependencies.get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -355,7 +368,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
-  depedencies.get_demodulator().demodulate(
+  dependencies.get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
 }
 

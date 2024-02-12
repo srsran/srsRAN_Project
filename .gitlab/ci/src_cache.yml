@@ -1,3 +1,11 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 ###############################
 # Cache related code to reuse #
 ###############################
@@ -21,7 +29,7 @@
 push_src_cache amd:
   stage: .pre
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       allow_failure: true
   interruptible: false
   script:
@@ -37,7 +45,7 @@ push_src_cache arm:
 pull_src_cache amd:
   stage: .pre
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       allow_failure: true
   interruptible: false
   variables:

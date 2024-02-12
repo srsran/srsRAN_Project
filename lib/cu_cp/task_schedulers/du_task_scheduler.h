@@ -35,7 +35,10 @@ namespace srs_cu_cp {
 class du_task_scheduler
 {
 public:
-  explicit du_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_);
+  explicit du_task_scheduler(timer_manager&        timers_,
+                             task_executor&        exec_,
+                             uint16_t              max_nof_dus,
+                             srslog::basic_logger& logger_);
   ~du_task_scheduler() = default;
 
   // CU-UP task scheduler
@@ -50,7 +53,7 @@ private:
   srslog::basic_logger& logger;
 
   // task event loops indexed by du_index
-  slotted_array<fifo_async_task_scheduler, MAX_NOF_DUS> du_ctrl_loop;
+  std::map<du_index_t, fifo_async_task_scheduler> du_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

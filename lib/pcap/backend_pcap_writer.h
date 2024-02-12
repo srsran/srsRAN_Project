@@ -91,8 +91,6 @@ private:
 
   pcap_file_writer  writer;
   std::atomic<bool> is_open{true};
-
-  std::mutex close_mutex;
 };
 
 } // namespace srsran

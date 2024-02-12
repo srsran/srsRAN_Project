@@ -65,7 +65,6 @@ public:
 class rrc_ue_setup_proc_notifier
 {
 public:
-  rrc_ue_setup_proc_notifier()          = default;
   virtual ~rrc_ue_setup_proc_notifier() = default;
 
   /// \brief Notify about a DL CCCH message.
@@ -173,10 +172,16 @@ public:
 class rrc_ue_task_scheduler
 {
 public:
-  virtual ~rrc_ue_task_scheduler()                                   = default;
-  virtual void          schedule_async_task(async_task<void>&& task) = 0;
-  virtual unique_timer  make_unique_timer()                          = 0;
-  virtual timer_factory get_timer_factory()                          = 0;
+  virtual ~rrc_ue_task_scheduler() = default;
+
+  /// \brief Schedule an asynchronous task for the UE.
+  virtual void schedule_async_task(async_task<void> task) = 0;
+
+  /// \brief Create a new timer for the UE.
+  virtual unique_timer make_unique_timer() = 0;
+
+  /// \brief Get UE timer factory.
+  virtual timer_factory get_timer_factory() = 0;
 };
 
 /// Interface to notify about NAS messages.
@@ -205,7 +210,7 @@ class rrc_ue_control_notifier
 public:
   virtual ~rrc_ue_control_notifier() = default;
 
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
@@ -244,7 +249,9 @@ public:
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
-  /// \returns The release context of the UE.
+  /// \returns The release context of the UE.  If SRB1 is not created yet, a RrcReject message is contained in the
+  /// release context, see section 5.3.15 in TS 38.331. Otherwise, a RrcRelease message is contained in the release
+  /// context.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 
   /// \brief Retrieve RRC context of a UE to perform mobility (handover, reestablishment).
@@ -305,11 +312,15 @@ struct rrc_reestablishment_ue_context_t {
   bool                                old_ue_fully_attached = false;
 };
 
-/// Interface to notify about RRC Reestablishment Requests.
-class rrc_ue_reestablishment_notifier
+/// Interface to notify about UE context updates.
+class rrc_ue_context_update_notifier
 {
 public:
-  virtual ~rrc_ue_reestablishment_notifier() = default;
+  virtual ~rrc_ue_context_update_notifier() = default;
+
+  /// \brief Notifies that a new RRC UE needs to be setup.
+  /// \return True if the UE is accepted.
+  virtual bool on_ue_setup_request() = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
@@ -327,6 +338,22 @@ public:
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+};
+
+/// Interface to notify about measurements
+class rrc_ue_measurement_notifier
+{
+public:
+  virtual ~rrc_ue_measurement_notifier() = default;
+
+  /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] current_meas_config The current meas config of the UE (if applicable).
+  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+                                                               optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+
+  /// \brief Submit measurement report for given UE to cell manager.
+  virtual void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
 };
 
 class rrc_ue_context_handler

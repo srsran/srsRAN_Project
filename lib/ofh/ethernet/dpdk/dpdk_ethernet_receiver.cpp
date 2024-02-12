@@ -23,36 +23,82 @@
 #include "dpdk_ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
+#include <future>
 #include <rte_ethdev.h>
 #include <thread>
 
 using namespace srsran;
 using namespace ether;
 
-static constexpr unsigned MAX_BURST_SIZE  = 32;
-static constexpr unsigned MAX_BUFFER_SIZE = 9600;
+namespace {
 
-void dpdk_receiver_impl::start()
+class dummy_frame_notifier : public frame_notifier
 {
-  logger.info("Starting the DPDK ethernet frame receiver");
-  if (not executor.defer([this]() { receive_loop(); })) {
-    report_error("Unable to start the OFH DPDK ethernet frame receiver");
+  // See interface for documentation.
+  void on_new_frame(span<const uint8_t> payload) override {}
+};
+
+} // namespace
+
+/// This dummy object is passed to the constructor of the DPDK Ethernet receiver implementation as a placeholder for the
+/// actual frame notifier, which will be later set up through the \ref start() method.
+static dummy_frame_notifier dummy_notifier;
+
+dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
+                                       std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                                       srslog::basic_logger&              logger_) :
+  logger(logger_),
+  executor(executor_),
+  notifier(dummy_notifier),
+  port_ctx_ptr(std::move(port_ctx_ptr_)),
+  port_ctx(*port_ctx_ptr)
+{
+  srsran_assert(port_ctx_ptr, "Invalid port context");
+}
+
+void dpdk_receiver_impl::start(frame_notifier& notifier_)
+{
+  notifier = std::ref(notifier_);
+
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (!executor.defer([this, &p]() {
+        rx_status.store(receiver_status::running, std::memory_order_relaxed);
+        // Signal start() caller thread that the operation is complete.
+        p.set_value();
+        receive_loop();
+      })) {
+    report_error("Unable to start the DPDK ethernet frame receiver");
   }
+
+  // Block waiting for timing executor to start.
+  fut.wait();
+
+  logger.info("Started the DPDK ethernet frame receiver");
 }
 
 void dpdk_receiver_impl::stop()
 {
   logger.info("Requesting stop of the DPDK ethernet frame receiver");
-  is_stop_requested.store(true, std::memory_order::memory_order_relaxed);
+  rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
+
+  // Wait for the receiver thread to stop.
+  while (rx_status.load(std::memory_order_acquire) != receiver_status::stopped) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+
+  logger.info("Stopped the DPDK ethernet frame receiver");
 }
 
 void dpdk_receiver_impl::receive_loop()
 {
-  receive();
-
-  if (is_stop_requested.load(std::memory_order_relaxed)) {
+  if (rx_status.load(std::memory_order_relaxed) == receiver_status::stop_requested) {
+    rx_status.store(receiver_status::stopped, std::memory_order_release);
     return;
   }
+
+  receive();
 
   // Retry the task deferring when it fails.
   while (!executor.defer([this]() { receive_loop(); })) {
@@ -63,7 +109,7 @@ void dpdk_receiver_impl::receive_loop()
 void dpdk_receiver_impl::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-  unsigned                                num_frames = ::rte_eth_rx_burst(port_id, 0, mbufs.data(), MAX_BURST_SIZE);
+  unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
@@ -79,27 +125,6 @@ void dpdk_receiver_impl::receive()
     std::memcpy(buffer.data(), eth, length);
     ::rte_pktmbuf_free(mbuf);
 
-    notifier.on_new_frame(span<const uint8_t>(buffer.data(), length));
+    notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), length));
   }
-}
-
-/// Closes an Ethernet port using DPDK.
-static void dpdk_eth_close()
-{
-  unsigned portid;
-  RTE_ETH_FOREACH_DEV(portid)
-  {
-    fmt::print("Closing port {}...", portid);
-    int ret = ::rte_eth_dev_stop(portid);
-    if (ret != 0) {
-      fmt::print("rte_eth_dev_stop: err={}, port={}\n", ret, portid);
-    }
-    ::rte_eth_dev_close(portid);
-    fmt::print(" Done\n");
-  }
-}
-
-dpdk_receiver_impl::~dpdk_receiver_impl()
-{
-  dpdk_eth_close();
 }

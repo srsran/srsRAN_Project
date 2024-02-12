@@ -22,9 +22,10 @@
 
 #pragma once
 
+#include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../task_schedulers/ue_task_scheduler.h"
-#include "srsran/cu_cp/du_processor.h"
+#include "../du_processor/du_processor_impl_interface.h"
+#include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
@@ -40,7 +41,7 @@ class du_processor_to_cu_cp_task_scheduler : public du_processor_ue_task_schedul
 public:
   du_processor_to_cu_cp_task_scheduler() {}
 
-  void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
+  void connect_cu_cp(ue_task_scheduler_manager& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -66,7 +67,7 @@ public:
   }
 
 private:
-  ue_task_scheduler* cu_cp_task_sched = nullptr;
+  ue_task_scheduler_manager* cu_cp_task_sched = nullptr;
 };
 
 /// Adapter between DU processor and CU-CP
@@ -351,7 +352,7 @@ public:
 
   void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
     return ngap_handler->handle_ue_context_release_request(msg);
@@ -366,6 +367,21 @@ public:
 
 private:
   ngap_control_message_handler* ngap_handler = nullptr;
+};
+
+class du_processor_cu_cp_connection_adapter final : public du_connection_notifier
+{
+public:
+  void connect_node_connection_handler(cu_cp_controller& cu_ctrl_) { cu_ctrl = &cu_ctrl_; }
+
+  bool on_du_setup_request(const du_setup_request& req) override
+  {
+    srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
+    return cu_ctrl->handle_du_setup_request(req);
+  }
+
+private:
+  cu_cp_controller* cu_ctrl = nullptr;
 };
 
 } // namespace srs_cu_cp

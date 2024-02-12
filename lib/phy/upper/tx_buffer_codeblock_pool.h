@@ -66,17 +66,10 @@ public:
 
   /// \brief Reserves a codeblock buffer.
   /// \return The codeblock identifier in the pool if it is reserved successfully. Otherwise, \c UNRESERVED_CB_ID
-  unsigned reserve()
+  optional<unsigned> reserve()
   {
     // Try to get an available codeblock.
-    optional<unsigned> id = free_list.try_pop();
-
-    // If the pop was not successful, return an unreserved identifier.
-    if (!id.has_value()) {
-      return UNRESERVED_CB_ID;
-    }
-
-    return id.value();
+    return free_list.try_pop();
   }
 
   /// \brief Frees a codeblock buffer.

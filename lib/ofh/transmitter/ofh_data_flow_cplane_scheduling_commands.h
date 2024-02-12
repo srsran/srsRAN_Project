@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/ofh/serdes/ofh_message_properties.h"
-#include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

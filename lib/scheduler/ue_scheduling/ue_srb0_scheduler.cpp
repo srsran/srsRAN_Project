@@ -25,7 +25,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/tbs_calculator.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 
 using namespace srsran;
 

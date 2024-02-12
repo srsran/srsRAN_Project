@@ -26,7 +26,7 @@
 #include "rlc_am_pdu.h"
 #include "rlc_pdu_recycler.h"
 #include "rlc_retx_queue.h"
-#include "rlc_sdu_queue.h"
+#include "rlc_sdu_queue_lockfree.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
@@ -37,10 +37,11 @@ namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  byte_buffer        sdu = {};
-  optional<uint32_t> pdcp_sn;
-  uint32_t           next_so    = 0;
-  uint32_t           retx_count = RETX_COUNT_NOT_STARTED;
+  byte_buffer                           sdu = {};
+  std::chrono::system_clock::time_point time_of_arrival;
+  optional<uint32_t>                    pdcp_sn;
+  uint32_t                              next_so    = 0;
+  uint32_t                              retx_count = RETX_COUNT_NOT_STARTED;
 };
 
 /// \brief TX state variables
@@ -87,8 +88,8 @@ private:
   rlc_tx_am_state st;
 
   // TX SDU buffers
-  rlc_sdu_queue sdu_queue;
-  uint32_t      sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
+  rlc_sdu_queue_lockfree sdu_queue;
+  uint32_t               sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
 
   // RETX buffers
   rlc_retx_queue retx_queue;

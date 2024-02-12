@@ -37,7 +37,10 @@ struct ngap_message;
 class ngap_asn1_packer : public srs_cu_cp::ngap_message_handler
 {
 public:
-  ngap_asn1_packer(sctp_network_gateway_data_handler& gw, ngap_message_handler& ngap, dlt_pcap& pcap_);
+  ngap_asn1_packer(sctp_network_gateway_data_handler& gw,
+                   ngap_message_notifier&             amf_notifier_,
+                   ngap_message_handler&              ngap,
+                   dlt_pcap&                          pcap_);
 
   void handle_packed_pdu(const byte_buffer& pdu);
 
@@ -46,6 +49,7 @@ public:
 private:
   srslog::basic_logger&              logger;
   sctp_network_gateway_data_handler& gw;
+  ngap_message_notifier&             amf_notifier;
   ngap_message_handler&              ngap;
   dlt_pcap&                          pcap;
 };

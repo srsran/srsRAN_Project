@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"

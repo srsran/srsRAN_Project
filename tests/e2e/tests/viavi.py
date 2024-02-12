@@ -1,9 +1,21 @@
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
-# By using this file, you agree to the terms and conditions set
-# forth in the LICENSE file which can be found at the top level of
-# the distribution.
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
 #
 
 """
@@ -12,6 +24,7 @@ Launch tests in Viavi
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from pytest import mark, param
@@ -27,6 +40,74 @@ from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
 from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
+
+
+@pytest.fixture
+def viavi_manual_campaign_filename(request):
+    """
+    Campaign filename
+    """
+    return request.config.getoption("viavi_manual_campaign_filename")
+
+
+@pytest.fixture
+def viavi_manual_test_name(request):
+    """
+    Test name
+    """
+    return request.config.getoption("viavi_manual_test_name")
+
+
+@pytest.fixture
+def viavi_manual_test_timeout(request):
+    """
+    Test timeout
+    """
+    return request.config.getoption("viavi_manual_test_timeout")
+
+
+@mark.viavi_manual
+# pylint: disable=too-many-arguments, too-many-locals
+def test_viavi_manual(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    test_log_folder: str,
+    # Clients
+    gnb: GNBStub,
+    viavi: Viavi,
+    # Test info
+    viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
+    viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
+    viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+):
+    """
+    Runs a test using Viavi
+    """
+    _test_viavi(
+        # Retina
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        test_log_folder=test_log_folder,
+        # Clients
+        gnb=gnb,
+        viavi=viavi,
+        metrics_server=None,
+        # Test info
+        campaign_filename=viavi_manual_campaign_filename,
+        test_name=viavi_manual_test_name,
+        test_timeout=viavi_manual_test_timeout,
+        # Test extra params
+        always_download_artifacts=always_download_artifacts,
+        gnb_startup_timeout=gnb_startup_timeout,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+    )
 
 
 @mark.parametrize(
@@ -63,12 +144,57 @@ def test_viavi(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = True,
 ):
     """
     Runs a test using Viavi
     """
+    _test_viavi(
+        # Retina
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        test_log_folder=test_log_folder,
+        # Clients
+        gnb=gnb,
+        viavi=viavi,
+        metrics_server=metrics_server,
+        # Test info
+        campaign_filename=campaign_filename,
+        test_name=test_name,
+        test_timeout=test_timeout,
+        # Test extra params
+        always_download_artifacts=always_download_artifacts,
+        gnb_startup_timeout=gnb_startup_timeout,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        post_commands=post_commands,
+    )
 
+
+# pylint: disable=too-many-arguments, too-many-locals
+def _test_viavi(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    test_log_folder: str,
+    # Clients
+    gnb: GNBStub,
+    viavi: Viavi,
+    metrics_server: Optional[MetricServerInfo],
+    # Test info
+    campaign_filename: str,
+    test_name: str,
+    test_timeout: int,
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = False,
+    post_commands: str = "",
+):
+    """
+    Runs a test using Viavi
+    """
     retina_data.test_config = {
         "gnb": {
             "parameters": {
@@ -79,9 +205,11 @@ def test_viavi(
             "templates": {"cell": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
-    configure_metric_server_for_gnb(
-        retina_manager=retina_manager, retina_data=retina_data, metrics_server=metrics_server
-    )
+    if metrics_server is not None:
+        configure_metric_server_for_gnb(
+            retina_manager=retina_manager, retina_data=retina_data, metrics_server=metrics_server
+        )
+
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
 
@@ -98,7 +226,10 @@ def test_viavi(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
                 fivegc_definition=FiveGCDefinition(amf_ip=amf_ip, amf_port=amf_port),
-                start_info=StartInfo(timeout=gnb_startup_timeout, post_commands=post_commands),
+                start_info=StartInfo(
+                    timeout=gnb_startup_timeout,
+                    post_commands=post_commands,
+                ),
             )
         )
 

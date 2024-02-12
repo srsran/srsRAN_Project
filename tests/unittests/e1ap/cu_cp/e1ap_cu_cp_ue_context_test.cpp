@@ -22,6 +22,7 @@
 
 #include "../common/test_helpers.h"
 #include "lib/e1ap/cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
@@ -40,6 +41,7 @@ protected:
     e1ap_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
   };
+
   ~e1ap_cu_cp_ue_context_test()
   {
     // flush logger after each test
@@ -56,7 +58,8 @@ protected:
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("CU-CP-E1");
   manual_task_worker    ctrl_worker{128};
   timer_factory         timers{timer_mng, ctrl_worker};
-  e1ap_ue_context_list  ue_ctxt_list{timers, e1ap_logger};
+  unsigned              max_nof_supported_ues = 1024 * 4;
+  e1ap_ue_context_list  ue_ctxt_list{timers, max_nof_supported_ues, e1ap_logger};
 };
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_added_then_ue_exists)
@@ -88,8 +91,8 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
 {
   // Add maximum number of supported UEs
   e1ap_logger.set_level(srslog::basic_levels::error);
-  for (unsigned it = 0; it < MAX_NOF_CU_UES; ++it) {
-    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id();
+  for (unsigned it = 0; it < max_nof_supported_ues; ++it) {
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.allocate_gnb_cu_cp_ue_e1ap_id();
     ASSERT_NE(cu_cp_ue_e1ap_id, gnb_cu_cp_ue_e1ap_id_t::invalid);
     ue_index_t ue_index = uint_to_ue_index(it);
 
@@ -101,7 +104,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
   e1ap_logger.set_level(srslog::basic_levels::debug);
 
   // Try to get another cu_cp_ue_e1ap_id (should fail)
-  ASSERT_EQ(ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id(), gnb_cu_cp_ue_e1ap_id_t::invalid);
+  ASSERT_EQ(ue_ctxt_list.allocate_gnb_cu_cp_ue_e1ap_id(), gnb_cu_cp_ue_e1ap_id_t::invalid);
 }
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_removal_succeeds)

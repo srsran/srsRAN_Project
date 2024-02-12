@@ -195,15 +195,18 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
 
     // Configure test mode
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-      du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.pusch_active,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.cqi,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.ri,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.pmi,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.i_1_1,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.i_1_3,
-                                                                          gnb_cfg.test_mode_cfg.test_ue.i_2};
+      du_hi_cfg.test_cfg.test_ue =
+          srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
+                                                 gnb_cfg.test_mode_cfg.test_ue.nof_ues,
+                                                 gnb_cfg.test_mode_cfg.test_ue.auto_ack_indication_delay,
+                                                 gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
+                                                 gnb_cfg.test_mode_cfg.test_ue.pusch_active,
+                                                 gnb_cfg.test_mode_cfg.test_ue.cqi,
+                                                 gnb_cfg.test_mode_cfg.test_ue.ri,
+                                                 gnb_cfg.test_mode_cfg.test_ue.pmi,
+                                                 gnb_cfg.test_mode_cfg.test_ue.i_1_1,
+                                                 gnb_cfg.test_mode_cfg.test_ue.i_1_3,
+                                                 gnb_cfg.test_mode_cfg.test_ue.i_2};
     }
     // FAPI configuration.
     du_cfg.fapi.log_level   = gnb_cfg.log_cfg.fapi_level;

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/ldpc_base_graph.h"
+#include "ldpc_base_graph.h"
 #include "srsran/support/units.h"
 
 namespace srsran {

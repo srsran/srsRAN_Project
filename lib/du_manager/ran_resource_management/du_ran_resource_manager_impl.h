@@ -58,6 +58,7 @@ class du_ran_resource_manager_impl : public du_ran_resource_manager
 {
 public:
   du_ran_resource_manager_impl(span<const du_cell_config>                cell_cfg_list_,
+                               const scheduler_expert_config&            scheduler_cfg,
                                const std::map<srb_id_t, du_srb_config>&  srbs,
                                const std::map<five_qi_t, du_qos_config>& qos);
   du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
@@ -85,11 +86,13 @@ public:
   void deallocate_context(du_ue_index_t ue_index);
 
 private:
-  bool allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
+  error_type<std::string>
+       allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
   void modify_rlc_for_ntn(cell_group_config& ue_mcg);
 
   span<const du_cell_config>                cell_cfg_list;
+  const scheduler_expert_config&            sched_cfg;
   const std::map<srb_id_t, du_srb_config>&  srb_config;
   const std::map<five_qi_t, du_qos_config>& qos_config;
   srslog::basic_logger&                     logger;

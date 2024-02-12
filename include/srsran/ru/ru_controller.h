@@ -37,11 +37,11 @@ public:
   virtual ~ru_controller() = default;
 
   /// \brief Starts the Radio Unit operation.
+  /// \note Caller will be blocked until the controller is fully started.
   virtual void start() = 0;
 
   /// \brief Stops the Radio Unit operation.
-  ///
-  /// Waits for all asynchronous processes to be over before returning.
+  /// \note Caller will be blocked until the controller is fully stopped.
   virtual void stop() = 0;
 };
 

@@ -28,6 +28,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/rrc_config.h"
+#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -81,7 +82,9 @@ protected:
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
     rrc_ue_create_msg.du_to_cu_container.resize(1);
-    rrc_ue_create_msg.f1ap_pdu_notifier = &rrc_ue_f1ap_notifier;
+    rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_notifier;
+    rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &rrc_ue_cu_cp_notifier;
+    rrc_ue_create_msg.measurement_notifier  = &rrc_ue_cu_cp_notifier;
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
     ue_cfg.int_algo_pref_list = {security::integrity_algorithm::nia2,
@@ -107,15 +110,14 @@ protected:
                                            *rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
-                                           rrc_ue_cu_cp_notifier,
-                                           cell_meas_mng,
+                                           *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
+                                           *rrc_ue_create_msg.measurement_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
-                                           reject_users,
                                            optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
@@ -176,12 +178,6 @@ protected:
     return &rrc_ue->get_rrc_ue_control_message_handler();
   }
 
-  void connect_amf()
-  {
-    // Notify RRC about successful AMF connection
-    reject_users = false;
-  }
-
   void init_security_context()
   {
     // setup security
@@ -213,6 +209,12 @@ protected:
   {
     // inject RRC setup into UE object
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
+  }
+
+  void receive_invalid_setup_request()
+  {
+    // inject corrupted RRC setup into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{{0x9d, 0xec, 0x89, 0xde, 0x57, 0x66}});
   }
 
   void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
@@ -271,6 +273,8 @@ protected:
       ctrl_worker.run_pending_tasks();
     }
   }
+
+  void set_ue_context_release_outcome(bool outcome) { rrc_ue_ngap_notifier.set_ue_context_release_outcome(outcome); }
 
   void check_ue_release_not_requested()
   {
@@ -398,7 +402,6 @@ protected:
               92);
   }
 
-private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
@@ -408,13 +411,10 @@ private:
   dummy_rrc_ue_du_processor_adapter        rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter               rrc_ue_cu_cp_notifier;
-  dummy_cell_meas_manager                  cell_meas_mng;
   timer_manager                            timers;
   std::unique_ptr<dummy_ue_task_scheduler> task_sched_handle;
   std::unique_ptr<rrc_ue_interface>        rrc_ue;
   manual_task_worker                       ctrl_worker{64};
-
-  bool reject_users = true;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

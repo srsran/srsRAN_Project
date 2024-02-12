@@ -30,6 +30,9 @@ void scheduler_event_logger::log_impl()
   if (mode == debug) {
     logger.debug("Processed slot events:{}", to_c_str(fmtbuf));
     fmtbuf.clear();
+  } else if (mode == info) {
+    logger.info("Processed slot events:{}", to_c_str(fmtbuf));
+    fmtbuf.clear();
   }
 }
 
@@ -101,6 +104,20 @@ void scheduler_event_logger::enqueue_impl(const sched_ue_delete_message& ue_requ
 {
   if (mode == debug) {
     fmt::format_to(fmtbuf, "\n- UE removal: ue={} rnti={}", ue_request.ue_index, ue_request.crnti);
+  }
+}
+
+void scheduler_event_logger::enqueue_impl(const error_indication_event& err_ind)
+{
+  if (mode == debug) {
+    fmt::format_to(fmtbuf,
+                   "\n- ErrorIndication: slot={}{}{}{}",
+                   err_ind.sl_tx,
+                   err_ind.outcome.pdcch_discarded ? ", PDCCH discarded" : "",
+                   err_ind.outcome.pdsch_discarded ? ", PDSCH discarded" : "",
+                   err_ind.outcome.pusch_and_pucch_discarded ? ", PUSCH and PUCCH discarded" : "");
+  } else if (mode == info) {
+    fmt::format_to(fmtbuf, "{}ErrorIndication slot={}", separator(), err_ind.sl_tx);
   }
 }
 

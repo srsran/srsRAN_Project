@@ -29,7 +29,7 @@
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/ran/pusch/pusch_context.h"
-#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_part2_size_description.h"

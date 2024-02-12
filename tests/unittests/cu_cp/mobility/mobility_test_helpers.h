@@ -23,12 +23,12 @@
 #pragma once
 
 #include "../cu_cp_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_processor_config.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/rrc/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor_config.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -50,7 +50,7 @@ protected:
   timer_manager           timers;
   ue_configuration        ue_config;
   up_resource_manager_cfg up_config;
-  ue_manager              ue_mng{ue_config, up_config};
+  ue_manager              ue_mng{ue_config, up_config, timers, ctrl_worker};
 };
 
 } // namespace srs_cu_cp

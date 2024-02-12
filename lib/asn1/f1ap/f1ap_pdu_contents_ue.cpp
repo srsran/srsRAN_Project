@@ -21,8 +21,6 @@
  */
 
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::f1ap;
 
@@ -171,185 +169,57 @@ presence_e dl_rrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void dl_rrc_msg_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::rat_freq_prio_info:
-      c.destroy<rat_freq_prio_info_c>();
-      break;
-    case types::redirected_rrc_msg:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::plmn_assist_info_for_net_shar:
-      c.destroy<fixed_octstring<3, true>>();
-      break;
-    case types::add_rrm_prio_idx:
-      c.destroy<fixed_bitstring<32, false, true>>();
-      break;
-    case types::srb_map_info:
-      c.destroy<fixed_bitstring<16, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void dl_rrc_msg_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::old_gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::srb_id:
+      c = uint8_t{};
       break;
     case types::execute_dupl:
+      c = execute_dupl_e{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::rat_freq_prio_info:
-      c.init<rat_freq_prio_info_c>();
+      c = rat_freq_prio_info_c{};
       break;
     case types::rrc_delivery_status_request:
+      c = rrc_delivery_status_request_e{};
       break;
     case types::ue_context_not_retrievable:
+      c = ue_context_not_retrievable_e{};
       break;
     case types::redirected_rrc_msg:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::plmn_assist_info_for_net_shar:
-      c.init<fixed_octstring<3, true>>();
+      c = fixed_octstring<3, true>{};
       break;
     case types::new_gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::add_rrm_prio_idx:
-      c.init<fixed_bitstring<32, false, true>>();
+      c = fixed_bitstring<32, false, true>{};
       break;
     case types::srb_map_info:
-      c.init<fixed_bitstring<16, false, true>>();
+      c = fixed_bitstring<16, false, true>{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "dl_rrc_msg_transfer_ies_o::value_c");
   }
-}
-dl_rrc_msg_transfer_ies_o::value_c::value_c(const dl_rrc_msg_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::old_gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::srb_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::execute_dupl:
-      c.init(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::rat_freq_prio_info:
-      c.init(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.init(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::ue_context_not_retrievable:
-      c.init(other.c.get<ue_context_not_retrievable_e>());
-      break;
-    case types::redirected_rrc_msg:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::plmn_assist_info_for_net_shar:
-      c.init(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::new_gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.init(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::srb_map_info:
-      c.init(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_rrc_msg_transfer_ies_o::value_c");
-  }
-}
-dl_rrc_msg_transfer_ies_o::value_c&
-dl_rrc_msg_transfer_ies_o::value_c::operator=(const dl_rrc_msg_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::old_gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::srb_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::execute_dupl:
-      c.set(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::rat_freq_prio_info:
-      c.set(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.set(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::ue_context_not_retrievable:
-      c.set(other.c.get<ue_context_not_retrievable_e>());
-      break;
-    case types::redirected_rrc_msg:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::plmn_assist_info_for_net_shar:
-      c.set(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::new_gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.set(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::srb_map_info:
-      c.set(other.c.get<fixed_bitstring<16, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_rrc_msg_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& dl_rrc_msg_transfer_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -647,6 +517,27 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* dl_rrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..3,...)",
+                                "ExecuteDuplication",
+                                "OCTET STRING",
+                                "RAT-FrequencyPriorityInformation",
+                                "RRCDeliveryStatusRequest",
+                                "UEContextNotRetrievable",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4294967295)",
+                                "BIT STRING",
+                                "BIT STRING"};
+  return convert_enum_idx(names, 14, value, "dl_rrc_msg_transfer_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<dl_rrc_msg_transfer_ies_o>;
 
 SRSASN_CODE dl_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
 {
@@ -1055,173 +946,51 @@ presence_e init_ul_rrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void init_ul_rrc_msg_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::du_to_cu_rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::ran_ue_id:
-      c.destroy<fixed_octstring<8, true>>();
-      break;
-    case types::rrc_container_rrc_setup_complete:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::sdt_info:
-      c.destroy<sdt_info_s>();
-      break;
-    case types::sidelink_relay_cfg:
-      c.destroy<sidelink_relay_cfg_s>();
-      break;
-    default:
-      break;
-  }
-}
 void init_ul_rrc_msg_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::nr_cgi:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::c_rnti:
+      c = uint32_t{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::du_to_cu_rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::sul_access_ind:
+      c = sul_access_ind_e{};
       break;
     case types::transaction_id:
+      c = uint16_t{};
       break;
     case types::ran_ue_id:
-      c.init<fixed_octstring<8, true>>();
+      c = fixed_octstring<8, true>{};
       break;
     case types::rrc_container_rrc_setup_complete:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::nr_red_cap_ue_ind:
+      c = nr_red_cap_ue_ind_e{};
       break;
     case types::sdt_info:
-      c.init<sdt_info_s>();
+      c = sdt_info_s{};
       break;
     case types::sidelink_relay_cfg:
-      c.init<sidelink_relay_cfg_s>();
+      c = sidelink_relay_cfg_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "init_ul_rrc_msg_transfer_ies_o::value_c");
   }
-}
-init_ul_rrc_msg_transfer_ies_o::value_c::value_c(const init_ul_rrc_msg_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::c_rnti:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::sul_access_ind:
-      c.init(other.c.get<sul_access_ind_e>());
-      break;
-    case types::transaction_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_id:
-      c.init(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::rrc_container_rrc_setup_complete:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nr_red_cap_ue_ind:
-      c.init(other.c.get<nr_red_cap_ue_ind_e>());
-      break;
-    case types::sdt_info:
-      c.init(other.c.get<sdt_info_s>());
-      break;
-    case types::sidelink_relay_cfg:
-      c.init(other.c.get<sidelink_relay_cfg_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "init_ul_rrc_msg_transfer_ies_o::value_c");
-  }
-}
-init_ul_rrc_msg_transfer_ies_o::value_c&
-init_ul_rrc_msg_transfer_ies_o::value_c::operator=(const init_ul_rrc_msg_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::c_rnti:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::sul_access_ind:
-      c.set(other.c.get<sul_access_ind_e>());
-      break;
-    case types::transaction_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ran_ue_id:
-      c.set(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::rrc_container_rrc_setup_complete:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::nr_red_cap_ue_ind:
-      c.set(other.c.get<nr_red_cap_ue_ind_e>());
-      break;
-    case types::sdt_info:
-      c.set(other.c.get<sdt_info_s>());
-      break;
-    case types::sidelink_relay_cfg:
-      c.set(other.c.get<sidelink_relay_cfg_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "init_ul_rrc_msg_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& init_ul_rrc_msg_transfer_ies_o::value_c::gnb_du_ue_f1ap_id()
 {
@@ -1484,6 +1253,23 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* init_ul_rrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..65535,...)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "SULAccessIndication",
+                                "INTEGER (0..255,...)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "NRRedCapUEIndication",
+                                "SDTInformation",
+                                "SidelinkRelayConfiguration"};
+  return convert_enum_idx(names, 12, value, "init_ul_rrc_msg_transfer_ies_o::value_c::types");
+}
+
 // UEContextModificationConfirmIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_confirm_ies_o::idx_to_id(uint32_t idx)
 {
@@ -1611,181 +1397,51 @@ presence_e ue_context_mod_confirm_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_confirm_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::drbs_modified_conf_list:
-      c.destroy<drbs_modified_conf_list_l>();
-      break;
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::res_coordination_transfer_info:
-      c.destroy<res_coordination_transfer_info_s>();
-      break;
-    case types::sl_drbs_modified_conf_list:
-      c.destroy<sl_drbs_modified_conf_list_l>();
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.destroy<uu_rlc_ch_modified_list_l>();
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.destroy<pc5_rlc_ch_modified_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_confirmed_to_be_modified_list:
-      c.destroy<ue_multicast_m_rbs_confirmed_to_be_modified_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_confirm_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::drbs_modified_conf_list:
-      c.init<drbs_modified_conf_list_l>();
+      c = drbs_modified_conf_list_l{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::execute_dupl:
+      c = execute_dupl_e{};
       break;
     case types::res_coordination_transfer_info:
-      c.init<res_coordination_transfer_info_s>();
+      c = res_coordination_transfer_info_s{};
       break;
     case types::sl_drbs_modified_conf_list:
-      c.init<sl_drbs_modified_conf_list_l>();
+      c = sl_drbs_modified_conf_list_l{};
       break;
     case types::uu_rlc_ch_modified_list:
-      c.init<uu_rlc_ch_modified_list_l>();
+      c = uu_rlc_ch_modified_list_l{};
       break;
     case types::pc5_rlc_ch_modified_list:
-      c.init<pc5_rlc_ch_modified_list_l>();
+      c = pc5_rlc_ch_modified_list_l{};
       break;
     case types::ue_multicast_m_rbs_confirmed_to_be_modified_list:
-      c.init<ue_multicast_m_rbs_confirmed_to_be_modified_list_l>();
+      c = ue_multicast_m_rbs_confirmed_to_be_modified_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_confirm_ies_o::value_c");
   }
-}
-ue_context_mod_confirm_ies_o::value_c::value_c(const ue_context_mod_confirm_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::drbs_modified_conf_list:
-      c.init(other.c.get<drbs_modified_conf_list_l>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::execute_dupl:
-      c.init(other.c.get<execute_dupl_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.init(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::sl_drbs_modified_conf_list:
-      c.init(other.c.get<sl_drbs_modified_conf_list_l>());
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.init(other.c.get<uu_rlc_ch_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.init(other.c.get<pc5_rlc_ch_modified_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_confirmed_to_be_modified_list:
-      c.init(other.c.get<ue_multicast_m_rbs_confirmed_to_be_modified_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_confirm_ies_o::value_c");
-  }
-}
-ue_context_mod_confirm_ies_o::value_c&
-ue_context_mod_confirm_ies_o::value_c::operator=(const ue_context_mod_confirm_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::drbs_modified_conf_list:
-      c.set(other.c.get<drbs_modified_conf_list_l>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::execute_dupl:
-      c.set(other.c.get<execute_dupl_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.set(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::sl_drbs_modified_conf_list:
-      c.set(other.c.get<sl_drbs_modified_conf_list_l>());
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.set(other.c.get<uu_rlc_ch_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.set(other.c.get<pc5_rlc_ch_modified_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_confirmed_to_be_modified_list:
-      c.set(other.c.get<ue_multicast_m_rbs_confirmed_to_be_modified_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_confirm_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_confirm_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -2069,6 +1725,23 @@ SRSASN_CODE ue_context_mod_confirm_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_mod_confirm_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DRBs-ModifiedConf-List",
+                                "OCTET STRING",
+                                "CriticalityDiagnostics",
+                                "ExecuteDuplication",
+                                "ResourceCoordinationTransferInformation",
+                                "SLDRBs-ModifiedConf-List",
+                                "UuRLCChannelModifiedList",
+                                "PC5RLCChannelModifiedList",
+                                "UE-MulticastMRBs-ConfirmedToBeModified-List"};
+  return convert_enum_idx(names, 12, value, "ue_context_mod_confirm_ies_o::value_c::types");
+}
+
 // UEContextModificationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -2147,101 +1820,30 @@ presence_e ue_context_mod_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::requested_target_cell_global_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::requested_target_cell_global_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_fail_ies_o::value_c");
   }
-}
-ue_context_mod_fail_ies_o::value_c::value_c(const ue_context_mod_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_fail_ies_o::value_c");
-  }
-}
-ue_context_mod_fail_ies_o::value_c&
-ue_context_mod_fail_ies_o::value_c::operator=(const ue_context_mod_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -2371,6 +1973,13 @@ SRSASN_CODE ue_context_mod_fail_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_mod_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics", "NRCGI"};
+  return convert_enum_idx(names, 5, value, "ue_context_mod_fail_ies_o::value_c::types");
+}
+
 // UEContextModificationRefuseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_refuse_ies_o::idx_to_id(uint32_t idx)
 {
@@ -2442,89 +2051,27 @@ presence_e ue_context_mod_refuse_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_refuse_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_refuse_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_refuse_ies_o::value_c");
   }
-}
-ue_context_mod_refuse_ies_o::value_c::value_c(const ue_context_mod_refuse_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_refuse_ies_o::value_c");
-  }
-}
-ue_context_mod_refuse_ies_o::value_c&
-ue_context_mod_refuse_ies_o::value_c::operator=(const ue_context_mod_refuse_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_refuse_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_refuse_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -2632,6 +2179,13 @@ SRSASN_CODE ue_context_mod_refuse_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* ue_context_mod_refuse_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "ue_context_mod_refuse_ies_o::value_c::types");
 }
 
 // UEContextModificationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3217,857 +2771,243 @@ presence_e ue_context_mod_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::sp_cell_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::drx_cycle:
-      c.destroy<drx_cycle_s>();
-      break;
-    case types::cu_to_du_rrc_info:
-      c.destroy<cu_to_du_rrc_info_s>();
-      break;
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::scell_to_be_setup_mod_list:
-      c.destroy<scell_to_be_setup_mod_list_l>();
-      break;
-    case types::scell_to_be_remd_list:
-      c.destroy<scell_to_be_remd_list_l>();
-      break;
-    case types::srbs_to_be_setup_mod_list:
-      c.destroy<srbs_to_be_setup_mod_list_l>();
-      break;
-    case types::drbs_to_be_setup_mod_list:
-      c.destroy<drbs_to_be_setup_mod_list_l>();
-      break;
-    case types::drbs_to_be_modified_list:
-      c.destroy<drbs_to_be_modified_list_l>();
-      break;
-    case types::srbs_to_be_released_list:
-      c.destroy<srbs_to_be_released_list_l>();
-      break;
-    case types::drbs_to_be_released_list:
-      c.destroy<drbs_to_be_released_list_l>();
-      break;
-    case types::rat_freq_prio_info:
-      c.destroy<rat_freq_prio_info_c>();
-      break;
-    case types::rlc_fail_ind:
-      c.destroy<rlc_fail_ind_s>();
-      break;
-    case types::ul_tx_direct_current_list_info:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::res_coordination_transfer_info:
-      c.destroy<res_coordination_transfer_info_s>();
-      break;
-    case types::add_rrm_prio_idx:
-      c.destroy<fixed_bitstring<32, false, true>>();
-      break;
-    case types::bh_chs_to_be_setup_mod_list:
-      c.destroy<bh_chs_to_be_setup_mod_list_l>();
-      break;
-    case types::bh_chs_to_be_modified_list:
-      c.destroy<bh_chs_to_be_modified_list_l>();
-      break;
-    case types::bh_chs_to_be_released_list:
-      c.destroy<bh_chs_to_be_released_list_l>();
-      break;
-    case types::nr_v2x_services_authorized:
-      c.destroy<nr_v2x_services_authorized_s>();
-      break;
-    case types::ltev2x_services_authorized:
-      c.destroy<ltev2x_services_authorized_s>();
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.destroy<nr_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.destroy<lte_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::sl_drbs_to_be_setup_mod_list:
-      c.destroy<sl_drbs_to_be_setup_mod_list_l>();
-      break;
-    case types::sl_drbs_to_be_modified_list:
-      c.destroy<sl_drbs_to_be_modified_list_l>();
-      break;
-    case types::sl_drbs_to_be_released_list:
-      c.destroy<sl_drbs_to_be_released_list_l>();
-      break;
-    case types::conditional_intra_du_mob_info:
-      c.destroy<conditional_intra_du_mob_info_s>();
-      break;
-    case types::f1_c_transfer_path:
-      c.destroy<f1_c_transfer_path_s>();
-      break;
-    case types::ul_tx_direct_current_two_carrier_list_info:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.destroy<f1_c_transfer_path_nr_dc_s>();
-      break;
-    case types::five_g_pro_se_authorized:
-      c.destroy<five_g_pro_se_authorized_s>();
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.destroy<nr_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.destroy<uu_rlc_ch_to_be_setup_list_l>();
-      break;
-    case types::uu_rlc_ch_to_be_modified_list:
-      c.destroy<uu_rlc_ch_to_be_modified_list_l>();
-      break;
-    case types::uu_rlc_ch_to_be_released_list:
-      c.destroy<uu_rlc_ch_to_be_released_list_l>();
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.destroy<pc5_rlc_ch_to_be_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_to_be_modified_list:
-      c.destroy<pc5_rlc_ch_to_be_modified_list_l>();
-      break;
-    case types::pc5_rlc_ch_to_be_released_list:
-      c.destroy<pc5_rlc_ch_to_be_released_list_l>();
-      break;
-    case types::path_switch_cfg:
-      c.destroy<path_switch_cfg_s>();
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.destroy<gnb_du_ue_slice_max_bit_rate_list_l>();
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.destroy<multicast_mbs_session_list_l>();
-      break;
-    case types::multicast_mbs_session_rem_list:
-      c.destroy<multicast_mbs_session_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_at_modify_list:
-      c.destroy<ue_multicast_m_rbs_to_be_setup_at_modify_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_to_be_released_list:
-      c.destroy<ue_multicast_m_rbs_to_be_released_list_l>();
-      break;
-    case types::sldrx_cycle_list:
-      c.destroy<sldrx_cycle_list_l>();
-      break;
-    case types::management_based_mdt_plmn_mod_list:
-      c.destroy<mdt_plmn_mod_list_l>();
-      break;
-    case types::serving_cell_mo_list:
-      c.destroy<serving_cell_mo_list_l>();
-      break;
-    case types::ul_tx_direct_current_more_carrier_info:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::cp_acmcg_info:
-      c.destroy<cp_acmcg_info_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::sp_cell_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::serv_cell_idx:
+      c = uint8_t{};
       break;
     case types::sp_cell_ul_cfg:
+      c = cell_ul_cfg_e{};
       break;
     case types::drx_cycle:
-      c.init<drx_cycle_s>();
+      c = drx_cycle_s{};
       break;
     case types::cu_to_du_rrc_info:
-      c.init<cu_to_du_rrc_info_s>();
+      c = cu_to_du_rrc_info_s{};
       break;
     case types::tx_action_ind:
+      c = tx_action_ind_e{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::rrc_recfg_complete_ind:
+      c = rrc_recfg_complete_ind_e{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::scell_to_be_setup_mod_list:
-      c.init<scell_to_be_setup_mod_list_l>();
+      c = scell_to_be_setup_mod_list_l{};
       break;
     case types::scell_to_be_remd_list:
-      c.init<scell_to_be_remd_list_l>();
+      c = scell_to_be_remd_list_l{};
       break;
     case types::srbs_to_be_setup_mod_list:
-      c.init<srbs_to_be_setup_mod_list_l>();
+      c = srbs_to_be_setup_mod_list_l{};
       break;
     case types::drbs_to_be_setup_mod_list:
-      c.init<drbs_to_be_setup_mod_list_l>();
+      c = drbs_to_be_setup_mod_list_l{};
       break;
     case types::drbs_to_be_modified_list:
-      c.init<drbs_to_be_modified_list_l>();
+      c = drbs_to_be_modified_list_l{};
       break;
     case types::srbs_to_be_released_list:
-      c.init<srbs_to_be_released_list_l>();
+      c = srbs_to_be_released_list_l{};
       break;
     case types::drbs_to_be_released_list:
-      c.init<drbs_to_be_released_list_l>();
+      c = drbs_to_be_released_list_l{};
       break;
     case types::inactivity_monitoring_request:
+      c = inactivity_monitoring_request_e{};
       break;
     case types::rat_freq_prio_info:
-      c.init<rat_freq_prio_info_c>();
+      c = rat_freq_prio_info_c{};
       break;
     case types::drx_cfg_ind:
+      c = drx_cfg_ind_e{};
       break;
     case types::rlc_fail_ind:
-      c.init<rlc_fail_ind_s>();
+      c = rlc_fail_ind_s{};
       break;
     case types::ul_tx_direct_current_list_info:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::gnb_du_cfg_query:
+      c = gnb_du_cfg_query_e{};
       break;
     case types::gnb_du_ue_ambr_ul:
+      c = uint64_t{};
       break;
     case types::execute_dupl:
+      c = execute_dupl_e{};
       break;
     case types::rrc_delivery_status_request:
+      c = rrc_delivery_status_request_e{};
       break;
     case types::res_coordination_transfer_info:
-      c.init<res_coordination_transfer_info_s>();
+      c = res_coordination_transfer_info_s{};
       break;
     case types::serving_cell_mo:
+      c = uint8_t{};
       break;
     case types::needfor_gap:
+      c = needfor_gap_e{};
       break;
     case types::full_cfg:
+      c = full_cfg_e{};
       break;
     case types::add_rrm_prio_idx:
-      c.init<fixed_bitstring<32, false, true>>();
+      c = fixed_bitstring<32, false, true>{};
       break;
     case types::lower_layer_presence_status_change:
+      c = lower_layer_presence_status_change_e{};
       break;
     case types::bh_chs_to_be_setup_mod_list:
-      c.init<bh_chs_to_be_setup_mod_list_l>();
+      c = bh_chs_to_be_setup_mod_list_l{};
       break;
     case types::bh_chs_to_be_modified_list:
-      c.init<bh_chs_to_be_modified_list_l>();
+      c = bh_chs_to_be_modified_list_l{};
       break;
     case types::bh_chs_to_be_released_list:
-      c.init<bh_chs_to_be_released_list_l>();
+      c = bh_chs_to_be_released_list_l{};
       break;
     case types::nr_v2x_services_authorized:
-      c.init<nr_v2x_services_authorized_s>();
+      c = nr_v2x_services_authorized_s{};
       break;
     case types::ltev2x_services_authorized:
-      c.init<ltev2x_services_authorized_s>();
+      c = ltev2x_services_authorized_s{};
       break;
     case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.init<nr_ue_sidelink_aggr_max_bitrate_s>();
+      c = nr_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.init<lte_ue_sidelink_aggr_max_bitrate_s>();
+      c = lte_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::pc5_link_ambr:
+      c = uint64_t{};
       break;
     case types::sl_drbs_to_be_setup_mod_list:
-      c.init<sl_drbs_to_be_setup_mod_list_l>();
+      c = sl_drbs_to_be_setup_mod_list_l{};
       break;
     case types::sl_drbs_to_be_modified_list:
-      c.init<sl_drbs_to_be_modified_list_l>();
+      c = sl_drbs_to_be_modified_list_l{};
       break;
     case types::sl_drbs_to_be_released_list:
-      c.init<sl_drbs_to_be_released_list_l>();
+      c = sl_drbs_to_be_released_list_l{};
       break;
     case types::conditional_intra_du_mob_info:
-      c.init<conditional_intra_du_mob_info_s>();
+      c = conditional_intra_du_mob_info_s{};
       break;
     case types::f1_c_transfer_path:
-      c.init<f1_c_transfer_path_s>();
+      c = f1_c_transfer_path_s{};
       break;
     case types::scg_ind:
+      c = scg_ind_e{};
       break;
     case types::ul_tx_direct_current_two_carrier_list_info:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::iab_conditional_rrc_msg_delivery_ind:
+      c = iab_conditional_rrc_msg_delivery_ind_e{};
       break;
     case types::f1_c_transfer_path_nr_dc:
-      c.init<f1_c_transfer_path_nr_dc_s>();
+      c = f1_c_transfer_path_nr_dc_s{};
       break;
     case types::mdt_polluted_meas_ind:
+      c = mdt_polluted_meas_ind_e{};
       break;
     case types::scg_activation_request:
+      c = scg_activation_request_e{};
       break;
     case types::cg_sdt_query_ind:
+      c = cg_sdt_query_ind_e{};
       break;
     case types::five_g_pro_se_authorized:
-      c.init<five_g_pro_se_authorized_s>();
+      c = five_g_pro_se_authorized_s{};
       break;
     case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.init<nr_ue_sidelink_aggr_max_bitrate_s>();
+      c = nr_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::five_g_pro_se_pc5_link_ambr:
+      c = uint64_t{};
       break;
     case types::upd_remote_ue_local_id:
+      c = uint16_t{};
       break;
     case types::uu_rlc_ch_to_be_setup_list:
-      c.init<uu_rlc_ch_to_be_setup_list_l>();
+      c = uu_rlc_ch_to_be_setup_list_l{};
       break;
     case types::uu_rlc_ch_to_be_modified_list:
-      c.init<uu_rlc_ch_to_be_modified_list_l>();
+      c = uu_rlc_ch_to_be_modified_list_l{};
       break;
     case types::uu_rlc_ch_to_be_released_list:
-      c.init<uu_rlc_ch_to_be_released_list_l>();
+      c = uu_rlc_ch_to_be_released_list_l{};
       break;
     case types::pc5_rlc_ch_to_be_setup_list:
-      c.init<pc5_rlc_ch_to_be_setup_list_l>();
+      c = pc5_rlc_ch_to_be_setup_list_l{};
       break;
     case types::pc5_rlc_ch_to_be_modified_list:
-      c.init<pc5_rlc_ch_to_be_modified_list_l>();
+      c = pc5_rlc_ch_to_be_modified_list_l{};
       break;
     case types::pc5_rlc_ch_to_be_released_list:
-      c.init<pc5_rlc_ch_to_be_released_list_l>();
+      c = pc5_rlc_ch_to_be_released_list_l{};
       break;
     case types::path_switch_cfg:
-      c.init<path_switch_cfg_s>();
+      c = path_switch_cfg_s{};
       break;
     case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.init<gnb_du_ue_slice_max_bit_rate_list_l>();
+      c = gnb_du_ue_slice_max_bit_rate_list_l{};
       break;
     case types::multicast_mbs_session_setup_list:
-      c.init<multicast_mbs_session_list_l>();
+      c = multicast_mbs_session_list_l{};
       break;
     case types::multicast_mbs_session_rem_list:
-      c.init<multicast_mbs_session_list_l>();
+      c = multicast_mbs_session_list_l{};
       break;
     case types::ue_multicast_m_rbs_to_be_setup_at_modify_list:
-      c.init<ue_multicast_m_rbs_to_be_setup_at_modify_list_l>();
+      c = ue_multicast_m_rbs_to_be_setup_at_modify_list_l{};
       break;
     case types::ue_multicast_m_rbs_to_be_released_list:
-      c.init<ue_multicast_m_rbs_to_be_released_list_l>();
+      c = ue_multicast_m_rbs_to_be_released_list_l{};
       break;
     case types::sldrx_cycle_list:
-      c.init<sldrx_cycle_list_l>();
+      c = sldrx_cycle_list_l{};
       break;
     case types::management_based_mdt_plmn_mod_list:
-      c.init<mdt_plmn_mod_list_l>();
+      c = mdt_plmn_mod_list_l{};
       break;
     case types::sdt_bearer_cfg_query_ind:
+      c = sdt_bearer_cfg_query_ind_e{};
       break;
     case types::daps_ho_status:
+      c = daps_ho_status_e{};
       break;
     case types::serving_cell_mo_list:
-      c.init<serving_cell_mo_list_l>();
+      c = serving_cell_mo_list_l{};
       break;
     case types::ul_tx_direct_current_more_carrier_info:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::cp_acmcg_info:
-      c.init<cp_acmcg_info_s>();
+      c = cp_acmcg_info_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_request_ies_o::value_c");
   }
-}
-ue_context_mod_request_ies_o::value_c::value_c(const ue_context_mod_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::sp_cell_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::serv_cell_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sp_cell_ul_cfg:
-      c.init(other.c.get<cell_ul_cfg_e>());
-      break;
-    case types::drx_cycle:
-      c.init(other.c.get<drx_cycle_s>());
-      break;
-    case types::cu_to_du_rrc_info:
-      c.init(other.c.get<cu_to_du_rrc_info_s>());
-      break;
-    case types::tx_action_ind:
-      c.init(other.c.get<tx_action_ind_e>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::rrc_recfg_complete_ind:
-      c.init(other.c.get<rrc_recfg_complete_ind_e>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::scell_to_be_setup_mod_list:
-      c.init(other.c.get<scell_to_be_setup_mod_list_l>());
-      break;
-    case types::scell_to_be_remd_list:
-      c.init(other.c.get<scell_to_be_remd_list_l>());
-      break;
-    case types::srbs_to_be_setup_mod_list:
-      c.init(other.c.get<srbs_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_to_be_setup_mod_list:
-      c.init(other.c.get<drbs_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_to_be_modified_list:
-      c.init(other.c.get<drbs_to_be_modified_list_l>());
-      break;
-    case types::srbs_to_be_released_list:
-      c.init(other.c.get<srbs_to_be_released_list_l>());
-      break;
-    case types::drbs_to_be_released_list:
-      c.init(other.c.get<drbs_to_be_released_list_l>());
-      break;
-    case types::inactivity_monitoring_request:
-      c.init(other.c.get<inactivity_monitoring_request_e>());
-      break;
-    case types::rat_freq_prio_info:
-      c.init(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::drx_cfg_ind:
-      c.init(other.c.get<drx_cfg_ind_e>());
-      break;
-    case types::rlc_fail_ind:
-      c.init(other.c.get<rlc_fail_ind_s>());
-      break;
-    case types::ul_tx_direct_current_list_info:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::gnb_du_cfg_query:
-      c.init(other.c.get<gnb_du_cfg_query_e>());
-      break;
-    case types::gnb_du_ue_ambr_ul:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::execute_dupl:
-      c.init(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.init(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.init(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::serving_cell_mo:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::needfor_gap:
-      c.init(other.c.get<needfor_gap_e>());
-      break;
-    case types::full_cfg:
-      c.init(other.c.get<full_cfg_e>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.init(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::lower_layer_presence_status_change:
-      c.init(other.c.get<lower_layer_presence_status_change_e>());
-      break;
-    case types::bh_chs_to_be_setup_mod_list:
-      c.init(other.c.get<bh_chs_to_be_setup_mod_list_l>());
-      break;
-    case types::bh_chs_to_be_modified_list:
-      c.init(other.c.get<bh_chs_to_be_modified_list_l>());
-      break;
-    case types::bh_chs_to_be_released_list:
-      c.init(other.c.get<bh_chs_to_be_released_list_l>());
-      break;
-    case types::nr_v2x_services_authorized:
-      c.init(other.c.get<nr_v2x_services_authorized_s>());
-      break;
-    case types::ltev2x_services_authorized:
-      c.init(other.c.get<ltev2x_services_authorized_s>());
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.init(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.init(other.c.get<lte_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::pc5_link_ambr:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::sl_drbs_to_be_setup_mod_list:
-      c.init(other.c.get<sl_drbs_to_be_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_to_be_modified_list:
-      c.init(other.c.get<sl_drbs_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_to_be_released_list:
-      c.init(other.c.get<sl_drbs_to_be_released_list_l>());
-      break;
-    case types::conditional_intra_du_mob_info:
-      c.init(other.c.get<conditional_intra_du_mob_info_s>());
-      break;
-    case types::f1_c_transfer_path:
-      c.init(other.c.get<f1_c_transfer_path_s>());
-      break;
-    case types::scg_ind:
-      c.init(other.c.get<scg_ind_e>());
-      break;
-    case types::ul_tx_direct_current_two_carrier_list_info:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::iab_conditional_rrc_msg_delivery_ind:
-      c.init(other.c.get<iab_conditional_rrc_msg_delivery_ind_e>());
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.init(other.c.get<f1_c_transfer_path_nr_dc_s>());
-      break;
-    case types::mdt_polluted_meas_ind:
-      c.init(other.c.get<mdt_polluted_meas_ind_e>());
-      break;
-    case types::scg_activation_request:
-      c.init(other.c.get<scg_activation_request_e>());
-      break;
-    case types::cg_sdt_query_ind:
-      c.init(other.c.get<cg_sdt_query_ind_e>());
-      break;
-    case types::five_g_pro_se_authorized:
-      c.init(other.c.get<five_g_pro_se_authorized_s>());
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.init(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::five_g_pro_se_pc5_link_ambr:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::upd_remote_ue_local_id:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.init(other.c.get<uu_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_to_be_modified_list:
-      c.init(other.c.get<uu_rlc_ch_to_be_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_to_be_released_list:
-      c.init(other.c.get<uu_rlc_ch_to_be_released_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_modified_list:
-      c.init(other.c.get<pc5_rlc_ch_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_released_list:
-      c.init(other.c.get<pc5_rlc_ch_to_be_released_list_l>());
-      break;
-    case types::path_switch_cfg:
-      c.init(other.c.get<path_switch_cfg_s>());
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.init(other.c.get<gnb_du_ue_slice_max_bit_rate_list_l>());
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.init(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::multicast_mbs_session_rem_list:
-      c.init(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_at_modify_list:
-      c.init(other.c.get<ue_multicast_m_rbs_to_be_setup_at_modify_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_released_list:
-      c.init(other.c.get<ue_multicast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::sldrx_cycle_list:
-      c.init(other.c.get<sldrx_cycle_list_l>());
-      break;
-    case types::management_based_mdt_plmn_mod_list:
-      c.init(other.c.get<mdt_plmn_mod_list_l>());
-      break;
-    case types::sdt_bearer_cfg_query_ind:
-      c.init(other.c.get<sdt_bearer_cfg_query_ind_e>());
-      break;
-    case types::daps_ho_status:
-      c.init(other.c.get<daps_ho_status_e>());
-      break;
-    case types::serving_cell_mo_list:
-      c.init(other.c.get<serving_cell_mo_list_l>());
-      break;
-    case types::ul_tx_direct_current_more_carrier_info:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::cp_acmcg_info:
-      c.init(other.c.get<cp_acmcg_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_request_ies_o::value_c");
-  }
-}
-ue_context_mod_request_ies_o::value_c&
-ue_context_mod_request_ies_o::value_c::operator=(const ue_context_mod_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::sp_cell_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::serv_cell_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sp_cell_ul_cfg:
-      c.set(other.c.get<cell_ul_cfg_e>());
-      break;
-    case types::drx_cycle:
-      c.set(other.c.get<drx_cycle_s>());
-      break;
-    case types::cu_to_du_rrc_info:
-      c.set(other.c.get<cu_to_du_rrc_info_s>());
-      break;
-    case types::tx_action_ind:
-      c.set(other.c.get<tx_action_ind_e>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::rrc_recfg_complete_ind:
-      c.set(other.c.get<rrc_recfg_complete_ind_e>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::scell_to_be_setup_mod_list:
-      c.set(other.c.get<scell_to_be_setup_mod_list_l>());
-      break;
-    case types::scell_to_be_remd_list:
-      c.set(other.c.get<scell_to_be_remd_list_l>());
-      break;
-    case types::srbs_to_be_setup_mod_list:
-      c.set(other.c.get<srbs_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_to_be_setup_mod_list:
-      c.set(other.c.get<drbs_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_to_be_modified_list:
-      c.set(other.c.get<drbs_to_be_modified_list_l>());
-      break;
-    case types::srbs_to_be_released_list:
-      c.set(other.c.get<srbs_to_be_released_list_l>());
-      break;
-    case types::drbs_to_be_released_list:
-      c.set(other.c.get<drbs_to_be_released_list_l>());
-      break;
-    case types::inactivity_monitoring_request:
-      c.set(other.c.get<inactivity_monitoring_request_e>());
-      break;
-    case types::rat_freq_prio_info:
-      c.set(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::drx_cfg_ind:
-      c.set(other.c.get<drx_cfg_ind_e>());
-      break;
-    case types::rlc_fail_ind:
-      c.set(other.c.get<rlc_fail_ind_s>());
-      break;
-    case types::ul_tx_direct_current_list_info:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::gnb_du_cfg_query:
-      c.set(other.c.get<gnb_du_cfg_query_e>());
-      break;
-    case types::gnb_du_ue_ambr_ul:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::execute_dupl:
-      c.set(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.set(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.set(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::serving_cell_mo:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::needfor_gap:
-      c.set(other.c.get<needfor_gap_e>());
-      break;
-    case types::full_cfg:
-      c.set(other.c.get<full_cfg_e>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.set(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::lower_layer_presence_status_change:
-      c.set(other.c.get<lower_layer_presence_status_change_e>());
-      break;
-    case types::bh_chs_to_be_setup_mod_list:
-      c.set(other.c.get<bh_chs_to_be_setup_mod_list_l>());
-      break;
-    case types::bh_chs_to_be_modified_list:
-      c.set(other.c.get<bh_chs_to_be_modified_list_l>());
-      break;
-    case types::bh_chs_to_be_released_list:
-      c.set(other.c.get<bh_chs_to_be_released_list_l>());
-      break;
-    case types::nr_v2x_services_authorized:
-      c.set(other.c.get<nr_v2x_services_authorized_s>());
-      break;
-    case types::ltev2x_services_authorized:
-      c.set(other.c.get<ltev2x_services_authorized_s>());
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.set(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.set(other.c.get<lte_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::pc5_link_ambr:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::sl_drbs_to_be_setup_mod_list:
-      c.set(other.c.get<sl_drbs_to_be_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_to_be_modified_list:
-      c.set(other.c.get<sl_drbs_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_to_be_released_list:
-      c.set(other.c.get<sl_drbs_to_be_released_list_l>());
-      break;
-    case types::conditional_intra_du_mob_info:
-      c.set(other.c.get<conditional_intra_du_mob_info_s>());
-      break;
-    case types::f1_c_transfer_path:
-      c.set(other.c.get<f1_c_transfer_path_s>());
-      break;
-    case types::scg_ind:
-      c.set(other.c.get<scg_ind_e>());
-      break;
-    case types::ul_tx_direct_current_two_carrier_list_info:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::iab_conditional_rrc_msg_delivery_ind:
-      c.set(other.c.get<iab_conditional_rrc_msg_delivery_ind_e>());
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.set(other.c.get<f1_c_transfer_path_nr_dc_s>());
-      break;
-    case types::mdt_polluted_meas_ind:
-      c.set(other.c.get<mdt_polluted_meas_ind_e>());
-      break;
-    case types::scg_activation_request:
-      c.set(other.c.get<scg_activation_request_e>());
-      break;
-    case types::cg_sdt_query_ind:
-      c.set(other.c.get<cg_sdt_query_ind_e>());
-      break;
-    case types::five_g_pro_se_authorized:
-      c.set(other.c.get<five_g_pro_se_authorized_s>());
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.set(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::five_g_pro_se_pc5_link_ambr:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::upd_remote_ue_local_id:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.set(other.c.get<uu_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_to_be_modified_list:
-      c.set(other.c.get<uu_rlc_ch_to_be_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_to_be_released_list:
-      c.set(other.c.get<uu_rlc_ch_to_be_released_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_modified_list:
-      c.set(other.c.get<pc5_rlc_ch_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_released_list:
-      c.set(other.c.get<pc5_rlc_ch_to_be_released_list_l>());
-      break;
-    case types::path_switch_cfg:
-      c.set(other.c.get<path_switch_cfg_s>());
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.set(other.c.get<gnb_du_ue_slice_max_bit_rate_list_l>());
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.set(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::multicast_mbs_session_rem_list:
-      c.set(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_at_modify_list:
-      c.set(other.c.get<ue_multicast_m_rbs_to_be_setup_at_modify_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_released_list:
-      c.set(other.c.get<ue_multicast_m_rbs_to_be_released_list_l>());
-      break;
-    case types::sldrx_cycle_list:
-      c.set(other.c.get<sldrx_cycle_list_l>());
-      break;
-    case types::management_based_mdt_plmn_mod_list:
-      c.set(other.c.get<mdt_plmn_mod_list_l>());
-      break;
-    case types::sdt_bearer_cfg_query_ind:
-      c.set(other.c.get<sdt_bearer_cfg_query_ind_e>());
-      break;
-    case types::daps_ho_status:
-      c.set(other.c.get<daps_ho_status_e>());
-      break;
-    case types::serving_cell_mo_list:
-      c.set(other.c.get<serving_cell_mo_list_l>());
-      break;
-    case types::ul_tx_direct_current_more_carrier_info:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::cp_acmcg_info:
-      c.set(other.c.get<cp_acmcg_info_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -5678,6 +4618,87 @@ SRSASN_CODE ue_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_mod_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..31,...)",
+                                "CellULConfigured",
+                                "DRXCycle",
+                                "CUtoDURRCInformation",
+                                "TransmissionActionIndicator",
+                                "OCTET STRING",
+                                "RRCReconfigurationCompleteIndicator",
+                                "OCTET STRING",
+                                "SCell-ToBeSetupMod-List",
+                                "SCell-ToBeRemoved-List",
+                                "SRBs-ToBeSetupMod-List",
+                                "DRBs-ToBeSetupMod-List",
+                                "DRBs-ToBeModified-List",
+                                "SRBs-ToBeReleased-List",
+                                "DRBs-ToBeReleased-List",
+                                "InactivityMonitoringRequest",
+                                "RAT-FrequencyPriorityInformation",
+                                "DRXConfigurationIndicator",
+                                "RLCFailureIndication",
+                                "OCTET STRING",
+                                "GNB-DUConfigurationQuery",
+                                "INTEGER (0..4000000000000,...)",
+                                "ExecuteDuplication",
+                                "RRCDeliveryStatusRequest",
+                                "ResourceCoordinationTransferInformation",
+                                "INTEGER (1..64,...)",
+                                "NeedforGap",
+                                "FullConfiguration",
+                                "BIT STRING",
+                                "LowerLayerPresenceStatusChange",
+                                "BHChannels-ToBeSetupMod-List",
+                                "BHChannels-ToBeModified-List",
+                                "BHChannels-ToBeReleased-List",
+                                "NRV2XServicesAuthorized",
+                                "LTEV2XServicesAuthorized",
+                                "NRUESidelinkAggregateMaximumBitrate",
+                                "LTEUESidelinkAggregateMaximumBitrate",
+                                "INTEGER (0..4000000000000,...)",
+                                "SLDRBs-ToBeSetupMod-List",
+                                "SLDRBs-ToBeModified-List",
+                                "SLDRBs-ToBeReleased-List",
+                                "ConditionalIntraDUMobilityInformation",
+                                "F1CTransferPath",
+                                "SCGIndicator",
+                                "OCTET STRING",
+                                "IABConditionalRRCMessageDeliveryIndication",
+                                "F1CTransferPathNRDC",
+                                "MDTPollutedMeasurementIndicator",
+                                "SCGActivationRequest",
+                                "CG-SDTQueryIndication",
+                                "FiveG-ProSeAuthorized",
+                                "NRUESidelinkAggregateMaximumBitrate",
+                                "INTEGER (0..4000000000000,...)",
+                                "INTEGER (0..255,...)",
+                                "UuRLCChannelToBeSetupList",
+                                "UuRLCChannelToBeModifiedList",
+                                "UuRLCChannelToBeReleasedList",
+                                "PC5RLCChannelToBeSetupList",
+                                "PC5RLCChannelToBeModifiedList",
+                                "PC5RLCChannelToBeReleasedList",
+                                "PathSwitchConfiguration",
+                                "GNBDUUESliceMaximumBitRateList",
+                                "MulticastMBSSessionList",
+                                "MulticastMBSSessionList",
+                                "UE-MulticastMRBs-ToBeSetup-atModify-List",
+                                "UE-MulticastMRBs-ToBeReleased-List",
+                                "SLDRXCycleList",
+                                "MDTPLMNModificationList",
+                                "SDTBearerConfigurationQueryIndication",
+                                "DAPS-HO-Status",
+                                "ServingCellMO-List",
+                                "OCTET STRING",
+                                "CPACMCGInformation"};
+  return convert_enum_idx(names, 76, value, "ue_context_mod_request_ies_o::value_c::types");
+}
+
 // UEContextModificationRequiredIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_required_ies_o::idx_to_id(uint32_t idx)
 {
@@ -5847,257 +4868,69 @@ presence_e ue_context_mod_required_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_required_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::du_to_cu_rrc_info:
-      c.destroy<du_to_cu_rrc_info_s>();
-      break;
-    case types::drbs_required_to_be_modified_list:
-      c.destroy<drbs_required_to_be_modified_list_l>();
-      break;
-    case types::srbs_required_to_be_released_list:
-      c.destroy<srbs_required_to_be_released_list_l>();
-      break;
-    case types::drbs_required_to_be_released_list:
-      c.destroy<drbs_required_to_be_released_list_l>();
-      break;
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::bh_chs_required_to_be_released_list:
-      c.destroy<bh_chs_required_to_be_released_list_l>();
-      break;
-    case types::sl_drbs_required_to_be_modified_list:
-      c.destroy<sl_drbs_required_to_be_modified_list_l>();
-      break;
-    case types::sl_drbs_required_to_be_released_list:
-      c.destroy<sl_drbs_required_to_be_released_list_l>();
-      break;
-    case types::target_cells_to_cancel:
-      c.destroy<target_cell_list_l>();
-      break;
-    case types::uu_rlc_ch_required_to_be_modified_list:
-      c.destroy<uu_rlc_ch_required_to_be_modified_list_l>();
-      break;
-    case types::uu_rlc_ch_required_to_be_released_list:
-      c.destroy<uu_rlc_ch_required_to_be_released_list_l>();
-      break;
-    case types::pc5_rlc_ch_required_to_be_modified_list:
-      c.destroy<pc5_rlc_ch_required_to_be_modified_list_l>();
-      break;
-    case types::pc5_rlc_ch_required_to_be_released_list:
-      c.destroy<pc5_rlc_ch_required_to_be_released_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_modified_list:
-      c.destroy<ue_multicast_m_rbs_required_to_be_modified_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_released_list:
-      c.destroy<ue_multicast_m_rbs_required_to_be_released_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_required_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::du_to_cu_rrc_info:
-      c.init<du_to_cu_rrc_info_s>();
+      c = du_to_cu_rrc_info_s{};
       break;
     case types::drbs_required_to_be_modified_list:
-      c.init<drbs_required_to_be_modified_list_l>();
+      c = drbs_required_to_be_modified_list_l{};
       break;
     case types::srbs_required_to_be_released_list:
-      c.init<srbs_required_to_be_released_list_l>();
+      c = srbs_required_to_be_released_list_l{};
       break;
     case types::drbs_required_to_be_released_list:
-      c.init<drbs_required_to_be_released_list_l>();
+      c = drbs_required_to_be_released_list_l{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::bh_chs_required_to_be_released_list:
-      c.init<bh_chs_required_to_be_released_list_l>();
+      c = bh_chs_required_to_be_released_list_l{};
       break;
     case types::sl_drbs_required_to_be_modified_list:
-      c.init<sl_drbs_required_to_be_modified_list_l>();
+      c = sl_drbs_required_to_be_modified_list_l{};
       break;
     case types::sl_drbs_required_to_be_released_list:
-      c.init<sl_drbs_required_to_be_released_list_l>();
+      c = sl_drbs_required_to_be_released_list_l{};
       break;
     case types::target_cells_to_cancel:
-      c.init<target_cell_list_l>();
+      c = target_cell_list_l{};
       break;
     case types::uu_rlc_ch_required_to_be_modified_list:
-      c.init<uu_rlc_ch_required_to_be_modified_list_l>();
+      c = uu_rlc_ch_required_to_be_modified_list_l{};
       break;
     case types::uu_rlc_ch_required_to_be_released_list:
-      c.init<uu_rlc_ch_required_to_be_released_list_l>();
+      c = uu_rlc_ch_required_to_be_released_list_l{};
       break;
     case types::pc5_rlc_ch_required_to_be_modified_list:
-      c.init<pc5_rlc_ch_required_to_be_modified_list_l>();
+      c = pc5_rlc_ch_required_to_be_modified_list_l{};
       break;
     case types::pc5_rlc_ch_required_to_be_released_list:
-      c.init<pc5_rlc_ch_required_to_be_released_list_l>();
+      c = pc5_rlc_ch_required_to_be_released_list_l{};
       break;
     case types::ue_multicast_m_rbs_required_to_be_modified_list:
-      c.init<ue_multicast_m_rbs_required_to_be_modified_list_l>();
+      c = ue_multicast_m_rbs_required_to_be_modified_list_l{};
       break;
     case types::ue_multicast_m_rbs_required_to_be_released_list:
-      c.init<ue_multicast_m_rbs_required_to_be_released_list_l>();
+      c = ue_multicast_m_rbs_required_to_be_released_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_required_ies_o::value_c");
   }
-}
-ue_context_mod_required_ies_o::value_c::value_c(const ue_context_mod_required_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.init(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::drbs_required_to_be_modified_list:
-      c.init(other.c.get<drbs_required_to_be_modified_list_l>());
-      break;
-    case types::srbs_required_to_be_released_list:
-      c.init(other.c.get<srbs_required_to_be_released_list_l>());
-      break;
-    case types::drbs_required_to_be_released_list:
-      c.init(other.c.get<drbs_required_to_be_released_list_l>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::bh_chs_required_to_be_released_list:
-      c.init(other.c.get<bh_chs_required_to_be_released_list_l>());
-      break;
-    case types::sl_drbs_required_to_be_modified_list:
-      c.init(other.c.get<sl_drbs_required_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_required_to_be_released_list:
-      c.init(other.c.get<sl_drbs_required_to_be_released_list_l>());
-      break;
-    case types::target_cells_to_cancel:
-      c.init(other.c.get<target_cell_list_l>());
-      break;
-    case types::uu_rlc_ch_required_to_be_modified_list:
-      c.init(other.c.get<uu_rlc_ch_required_to_be_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_required_to_be_released_list:
-      c.init(other.c.get<uu_rlc_ch_required_to_be_released_list_l>());
-      break;
-    case types::pc5_rlc_ch_required_to_be_modified_list:
-      c.init(other.c.get<pc5_rlc_ch_required_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_required_to_be_released_list:
-      c.init(other.c.get<pc5_rlc_ch_required_to_be_released_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_modified_list:
-      c.init(other.c.get<ue_multicast_m_rbs_required_to_be_modified_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_released_list:
-      c.init(other.c.get<ue_multicast_m_rbs_required_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_required_ies_o::value_c");
-  }
-}
-ue_context_mod_required_ies_o::value_c&
-ue_context_mod_required_ies_o::value_c::operator=(const ue_context_mod_required_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.set(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::drbs_required_to_be_modified_list:
-      c.set(other.c.get<drbs_required_to_be_modified_list_l>());
-      break;
-    case types::srbs_required_to_be_released_list:
-      c.set(other.c.get<srbs_required_to_be_released_list_l>());
-      break;
-    case types::drbs_required_to_be_released_list:
-      c.set(other.c.get<drbs_required_to_be_released_list_l>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::bh_chs_required_to_be_released_list:
-      c.set(other.c.get<bh_chs_required_to_be_released_list_l>());
-      break;
-    case types::sl_drbs_required_to_be_modified_list:
-      c.set(other.c.get<sl_drbs_required_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_required_to_be_released_list:
-      c.set(other.c.get<sl_drbs_required_to_be_released_list_l>());
-      break;
-    case types::target_cells_to_cancel:
-      c.set(other.c.get<target_cell_list_l>());
-      break;
-    case types::uu_rlc_ch_required_to_be_modified_list:
-      c.set(other.c.get<uu_rlc_ch_required_to_be_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_required_to_be_released_list:
-      c.set(other.c.get<uu_rlc_ch_required_to_be_released_list_l>());
-      break;
-    case types::pc5_rlc_ch_required_to_be_modified_list:
-      c.set(other.c.get<pc5_rlc_ch_required_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_required_to_be_released_list:
-      c.set(other.c.get<pc5_rlc_ch_required_to_be_released_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_modified_list:
-      c.set(other.c.get<ue_multicast_m_rbs_required_to_be_modified_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_required_to_be_released_list:
-      c.set(other.c.get<ue_multicast_m_rbs_required_to_be_released_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_required_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_required_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -6543,6 +5376,29 @@ SRSASN_CODE ue_context_mod_required_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_mod_required_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DUtoCURRCInformation",
+                                "DRBs-Required-ToBeModified-List",
+                                "SRBs-Required-ToBeReleased-List",
+                                "DRBs-Required-ToBeReleased-List",
+                                "Cause",
+                                "BHChannels-Required-ToBeReleased-List",
+                                "SLDRBs-Required-ToBeModified-List",
+                                "SLDRBs-Required-ToBeReleased-List",
+                                "TargetCellList",
+                                "UuRLCChannelRequiredToBeModifiedList",
+                                "UuRLCChannelRequiredToBeReleasedList",
+                                "PC5RLCChannelRequiredToBeModifiedList",
+                                "PC5RLCChannelRequiredToBeReleasedList",
+                                "UE-MulticastMRBs-RequiredToBeModified-List",
+                                "UE-MulticastMRBs-RequiredToBeReleased-List"};
+  return convert_enum_idx(names, 18, value, "ue_context_mod_required_ies_o::value_c::types");
+}
+
 // UEContextModificationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -6856,481 +5712,129 @@ presence_e ue_context_mod_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_mod_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::du_to_cu_rrc_info:
-      c.destroy<du_to_cu_rrc_info_s>();
-      break;
-    case types::drbs_setup_mod_list:
-      c.destroy<drbs_setup_mod_list_l>();
-      break;
-    case types::drbs_modified_list:
-      c.destroy<drbs_modified_list_l>();
-      break;
-    case types::srbs_failed_to_be_setup_mod_list:
-      c.destroy<srbs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::drbs_failed_to_be_setup_mod_list:
-      c.destroy<drbs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::scell_failedto_setup_mod_list:
-      c.destroy<scell_failedto_setup_mod_list_l>();
-      break;
-    case types::drbs_failed_to_be_modified_list:
-      c.destroy<drbs_failed_to_be_modified_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::associated_scell_list:
-      c.destroy<associated_scell_list_l>();
-      break;
-    case types::srbs_setup_mod_list:
-      c.destroy<srbs_setup_mod_list_l>();
-      break;
-    case types::srbs_modified_list:
-      c.destroy<srbs_modified_list_l>();
-      break;
-    case types::bh_chs_setup_mod_list:
-      c.destroy<bh_chs_setup_mod_list_l>();
-      break;
-    case types::bh_chs_modified_list:
-      c.destroy<bh_chs_modified_list_l>();
-      break;
-    case types::bh_chs_failed_to_be_setup_mod_list:
-      c.destroy<bh_chs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::bh_chs_failed_to_be_modified_list:
-      c.destroy<bh_chs_failed_to_be_modified_list_l>();
-      break;
-    case types::sl_drbs_setup_mod_list:
-      c.destroy<sl_drbs_setup_mod_list_l>();
-      break;
-    case types::sl_drbs_modified_list:
-      c.destroy<sl_drbs_modified_list_l>();
-      break;
-    case types::sl_drbs_failed_to_be_setup_mod_list:
-      c.destroy<sl_drbs_failed_to_be_setup_mod_list_l>();
-      break;
-    case types::sl_drbs_failed_to_be_modified_list:
-      c.destroy<sl_drbs_failed_to_be_modified_list_l>();
-      break;
-    case types::requested_target_cell_global_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.destroy<uu_rlc_ch_setup_list_l>();
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.destroy<uu_rlc_ch_failed_to_be_setup_list_l>();
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.destroy<uu_rlc_ch_modified_list_l>();
-      break;
-    case types::uu_rlc_ch_failed_to_be_modified_list:
-      c.destroy<uu_rlc_ch_failed_to_be_modified_list_l>();
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.destroy<pc5_rlc_ch_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.destroy<pc5_rlc_ch_failed_to_be_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.destroy<pc5_rlc_ch_modified_list_l>();
-      break;
-    case types::pc5_rlc_ch_failed_to_be_modified_list:
-      c.destroy<pc5_rlc_ch_failed_to_be_modified_list_l>();
-      break;
-    case types::sdt_bearer_cfg_info:
-      c.destroy<sdt_bearer_cfg_info_s>();
-      break;
-    case types::ue_multicast_m_rbs_setup_list:
-      c.destroy<ue_multicast_m_rbs_setup_list_l>();
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.destroy<serving_cell_mo_encoded_in_cgc_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_mod_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::du_to_cu_rrc_info:
-      c.init<du_to_cu_rrc_info_s>();
+      c = du_to_cu_rrc_info_s{};
       break;
     case types::drbs_setup_mod_list:
-      c.init<drbs_setup_mod_list_l>();
+      c = drbs_setup_mod_list_l{};
       break;
     case types::drbs_modified_list:
-      c.init<drbs_modified_list_l>();
+      c = drbs_modified_list_l{};
       break;
     case types::srbs_failed_to_be_setup_mod_list:
-      c.init<srbs_failed_to_be_setup_mod_list_l>();
+      c = srbs_failed_to_be_setup_mod_list_l{};
       break;
     case types::drbs_failed_to_be_setup_mod_list:
-      c.init<drbs_failed_to_be_setup_mod_list_l>();
+      c = drbs_failed_to_be_setup_mod_list_l{};
       break;
     case types::scell_failedto_setup_mod_list:
-      c.init<scell_failedto_setup_mod_list_l>();
+      c = scell_failedto_setup_mod_list_l{};
       break;
     case types::drbs_failed_to_be_modified_list:
-      c.init<drbs_failed_to_be_modified_list_l>();
+      c = drbs_failed_to_be_modified_list_l{};
       break;
     case types::inactivity_monitoring_resp:
+      c = inactivity_monitoring_resp_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::c_rnti:
+      c = uint32_t{};
       break;
     case types::associated_scell_list:
-      c.init<associated_scell_list_l>();
+      c = associated_scell_list_l{};
       break;
     case types::srbs_setup_mod_list:
-      c.init<srbs_setup_mod_list_l>();
+      c = srbs_setup_mod_list_l{};
       break;
     case types::srbs_modified_list:
-      c.init<srbs_modified_list_l>();
+      c = srbs_modified_list_l{};
       break;
     case types::full_cfg:
+      c = full_cfg_e{};
       break;
     case types::bh_chs_setup_mod_list:
-      c.init<bh_chs_setup_mod_list_l>();
+      c = bh_chs_setup_mod_list_l{};
       break;
     case types::bh_chs_modified_list:
-      c.init<bh_chs_modified_list_l>();
+      c = bh_chs_modified_list_l{};
       break;
     case types::bh_chs_failed_to_be_setup_mod_list:
-      c.init<bh_chs_failed_to_be_setup_mod_list_l>();
+      c = bh_chs_failed_to_be_setup_mod_list_l{};
       break;
     case types::bh_chs_failed_to_be_modified_list:
-      c.init<bh_chs_failed_to_be_modified_list_l>();
+      c = bh_chs_failed_to_be_modified_list_l{};
       break;
     case types::sl_drbs_setup_mod_list:
-      c.init<sl_drbs_setup_mod_list_l>();
+      c = sl_drbs_setup_mod_list_l{};
       break;
     case types::sl_drbs_modified_list:
-      c.init<sl_drbs_modified_list_l>();
+      c = sl_drbs_modified_list_l{};
       break;
     case types::sl_drbs_failed_to_be_setup_mod_list:
-      c.init<sl_drbs_failed_to_be_setup_mod_list_l>();
+      c = sl_drbs_failed_to_be_setup_mod_list_l{};
       break;
     case types::sl_drbs_failed_to_be_modified_list:
-      c.init<sl_drbs_failed_to_be_modified_list_l>();
+      c = sl_drbs_failed_to_be_modified_list_l{};
       break;
     case types::requested_target_cell_global_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::scg_activation_status:
+      c = scg_activation_status_e{};
       break;
     case types::uu_rlc_ch_setup_list:
-      c.init<uu_rlc_ch_setup_list_l>();
+      c = uu_rlc_ch_setup_list_l{};
       break;
     case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.init<uu_rlc_ch_failed_to_be_setup_list_l>();
+      c = uu_rlc_ch_failed_to_be_setup_list_l{};
       break;
     case types::uu_rlc_ch_modified_list:
-      c.init<uu_rlc_ch_modified_list_l>();
+      c = uu_rlc_ch_modified_list_l{};
       break;
     case types::uu_rlc_ch_failed_to_be_modified_list:
-      c.init<uu_rlc_ch_failed_to_be_modified_list_l>();
+      c = uu_rlc_ch_failed_to_be_modified_list_l{};
       break;
     case types::pc5_rlc_ch_setup_list:
-      c.init<pc5_rlc_ch_setup_list_l>();
+      c = pc5_rlc_ch_setup_list_l{};
       break;
     case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.init<pc5_rlc_ch_failed_to_be_setup_list_l>();
+      c = pc5_rlc_ch_failed_to_be_setup_list_l{};
       break;
     case types::pc5_rlc_ch_modified_list:
-      c.init<pc5_rlc_ch_modified_list_l>();
+      c = pc5_rlc_ch_modified_list_l{};
       break;
     case types::pc5_rlc_ch_failed_to_be_modified_list:
-      c.init<pc5_rlc_ch_failed_to_be_modified_list_l>();
+      c = pc5_rlc_ch_failed_to_be_modified_list_l{};
       break;
     case types::sdt_bearer_cfg_info:
-      c.init<sdt_bearer_cfg_info_s>();
+      c = sdt_bearer_cfg_info_s{};
       break;
     case types::ue_multicast_m_rbs_setup_list:
-      c.init<ue_multicast_m_rbs_setup_list_l>();
+      c = ue_multicast_m_rbs_setup_list_l{};
       break;
     case types::serving_cell_mo_encoded_in_cgc_list:
-      c.init<serving_cell_mo_encoded_in_cgc_list_l>();
+      c = serving_cell_mo_encoded_in_cgc_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_mod_resp_ies_o::value_c");
   }
-}
-ue_context_mod_resp_ies_o::value_c::value_c(const ue_context_mod_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.init(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::drbs_setup_mod_list:
-      c.init(other.c.get<drbs_setup_mod_list_l>());
-      break;
-    case types::drbs_modified_list:
-      c.init(other.c.get<drbs_modified_list_l>());
-      break;
-    case types::srbs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<srbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<drbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::scell_failedto_setup_mod_list:
-      c.init(other.c.get<scell_failedto_setup_mod_list_l>());
-      break;
-    case types::drbs_failed_to_be_modified_list:
-      c.init(other.c.get<drbs_failed_to_be_modified_list_l>());
-      break;
-    case types::inactivity_monitoring_resp:
-      c.init(other.c.get<inactivity_monitoring_resp_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::c_rnti:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::associated_scell_list:
-      c.init(other.c.get<associated_scell_list_l>());
-      break;
-    case types::srbs_setup_mod_list:
-      c.init(other.c.get<srbs_setup_mod_list_l>());
-      break;
-    case types::srbs_modified_list:
-      c.init(other.c.get<srbs_modified_list_l>());
-      break;
-    case types::full_cfg:
-      c.init(other.c.get<full_cfg_e>());
-      break;
-    case types::bh_chs_setup_mod_list:
-      c.init(other.c.get<bh_chs_setup_mod_list_l>());
-      break;
-    case types::bh_chs_modified_list:
-      c.init(other.c.get<bh_chs_modified_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<bh_chs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_modified_list:
-      c.init(other.c.get<bh_chs_failed_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_setup_mod_list:
-      c.init(other.c.get<sl_drbs_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_modified_list:
-      c.init(other.c.get<sl_drbs_modified_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_setup_mod_list:
-      c.init(other.c.get<sl_drbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_modified_list:
-      c.init(other.c.get<sl_drbs_failed_to_be_modified_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::scg_activation_status:
-      c.init(other.c.get<scg_activation_status_e>());
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.init(other.c.get<uu_rlc_ch_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.init(other.c.get<uu_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.init(other.c.get<uu_rlc_ch_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_modified_list:
-      c.init(other.c.get<uu_rlc_ch_failed_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.init(other.c.get<pc5_rlc_ch_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_modified_list:
-      c.init(other.c.get<pc5_rlc_ch_failed_to_be_modified_list_l>());
-      break;
-    case types::sdt_bearer_cfg_info:
-      c.init(other.c.get<sdt_bearer_cfg_info_s>());
-      break;
-    case types::ue_multicast_m_rbs_setup_list:
-      c.init(other.c.get<ue_multicast_m_rbs_setup_list_l>());
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.init(other.c.get<serving_cell_mo_encoded_in_cgc_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_resp_ies_o::value_c");
-  }
-}
-ue_context_mod_resp_ies_o::value_c&
-ue_context_mod_resp_ies_o::value_c::operator=(const ue_context_mod_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.set(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::drbs_setup_mod_list:
-      c.set(other.c.get<drbs_setup_mod_list_l>());
-      break;
-    case types::drbs_modified_list:
-      c.set(other.c.get<drbs_modified_list_l>());
-      break;
-    case types::srbs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<srbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::drbs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<drbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::scell_failedto_setup_mod_list:
-      c.set(other.c.get<scell_failedto_setup_mod_list_l>());
-      break;
-    case types::drbs_failed_to_be_modified_list:
-      c.set(other.c.get<drbs_failed_to_be_modified_list_l>());
-      break;
-    case types::inactivity_monitoring_resp:
-      c.set(other.c.get<inactivity_monitoring_resp_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::c_rnti:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::associated_scell_list:
-      c.set(other.c.get<associated_scell_list_l>());
-      break;
-    case types::srbs_setup_mod_list:
-      c.set(other.c.get<srbs_setup_mod_list_l>());
-      break;
-    case types::srbs_modified_list:
-      c.set(other.c.get<srbs_modified_list_l>());
-      break;
-    case types::full_cfg:
-      c.set(other.c.get<full_cfg_e>());
-      break;
-    case types::bh_chs_setup_mod_list:
-      c.set(other.c.get<bh_chs_setup_mod_list_l>());
-      break;
-    case types::bh_chs_modified_list:
-      c.set(other.c.get<bh_chs_modified_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<bh_chs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_modified_list:
-      c.set(other.c.get<bh_chs_failed_to_be_modified_list_l>());
-      break;
-    case types::sl_drbs_setup_mod_list:
-      c.set(other.c.get<sl_drbs_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_modified_list:
-      c.set(other.c.get<sl_drbs_modified_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_setup_mod_list:
-      c.set(other.c.get<sl_drbs_failed_to_be_setup_mod_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_modified_list:
-      c.set(other.c.get<sl_drbs_failed_to_be_modified_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::scg_activation_status:
-      c.set(other.c.get<scg_activation_status_e>());
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.set(other.c.get<uu_rlc_ch_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.set(other.c.get<uu_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_modified_list:
-      c.set(other.c.get<uu_rlc_ch_modified_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_modified_list:
-      c.set(other.c.get<uu_rlc_ch_failed_to_be_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_modified_list:
-      c.set(other.c.get<pc5_rlc_ch_modified_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_modified_list:
-      c.set(other.c.get<pc5_rlc_ch_failed_to_be_modified_list_l>());
-      break;
-    case types::sdt_bearer_cfg_info:
-      c.set(other.c.get<sdt_bearer_cfg_info_s>());
-      break;
-    case types::ue_multicast_m_rbs_setup_list:
-      c.set(other.c.get<ue_multicast_m_rbs_setup_list_l>());
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.set(other.c.get<serving_cell_mo_encoded_in_cgc_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_mod_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_mod_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -8203,6 +6707,49 @@ SRSASN_CODE ue_context_mod_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_mod_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DUtoCURRCInformation",
+                                "DRBs-SetupMod-List",
+                                "DRBs-Modified-List",
+                                "SRBs-FailedToBeSetupMod-List",
+                                "DRBs-FailedToBeSetupMod-List",
+                                "SCell-FailedtoSetupMod-List",
+                                "DRBs-FailedToBeModified-List",
+                                "InactivityMonitoringResponse",
+                                "CriticalityDiagnostics",
+                                "INTEGER (0..65535,...)",
+                                "Associated-SCell-List",
+                                "SRBs-SetupMod-List",
+                                "SRBs-Modified-List",
+                                "FullConfiguration",
+                                "BHChannels-SetupMod-List",
+                                "BHChannels-Modified-List",
+                                "BHChannels-FailedToBeSetupMod-List",
+                                "BHChannels-FailedToBeModified-List",
+                                "SLDRBs-SetupMod-List",
+                                "SLDRBs-Modified-List",
+                                "SLDRBs-FailedToBeSetupMod-List",
+                                "SLDRBs-FailedToBeModified-List",
+                                "NRCGI",
+                                "SCGActivationStatus",
+                                "UuRLCChannelSetupList",
+                                "UuRLCChannelFailedToBeSetupList",
+                                "UuRLCChannelModifiedList",
+                                "UuRLCChannelFailedToBeModifiedList",
+                                "PC5RLCChannelSetupList",
+                                "PC5RLCChannelFailedToBeSetupList",
+                                "PC5RLCChannelModifiedList",
+                                "PC5RLCChannelFailedToBeModifiedList",
+                                "SDTBearerConfigurationInfo",
+                                "UE-MulticastMRBs-Setup-List",
+                                "ServingCellMO-encoded-in-CGC-List"};
+  return convert_enum_idx(names, 38, value, "ue_context_mod_resp_ies_o::value_c::types");
+}
+
 // UEContextReleaseCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_cmd_ies_o::idx_to_id(uint32_t idx)
 {
@@ -8323,149 +6870,48 @@ presence_e ue_context_release_cmd_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_release_cmd_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::target_cells_to_cancel:
-      c.destroy<target_cell_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_release_cmd_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::srb_id:
+      c = uint8_t{};
       break;
     case types::old_gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::execute_dupl:
+      c = execute_dupl_e{};
       break;
     case types::rrc_delivery_status_request:
+      c = rrc_delivery_status_request_e{};
       break;
     case types::target_cells_to_cancel:
-      c.init<target_cell_list_l>();
+      c = target_cell_list_l{};
       break;
     case types::pos_conext_rev_ind:
+      c = pos_conext_rev_ind_e{};
       break;
     case types::cg_sdt_kept_ind:
+      c = cg_sdt_kept_ind_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_release_cmd_ies_o::value_c");
   }
-}
-ue_context_release_cmd_ies_o::value_c::value_c(const ue_context_release_cmd_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::srb_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::old_gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::execute_dupl:
-      c.init(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.init(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::target_cells_to_cancel:
-      c.init(other.c.get<target_cell_list_l>());
-      break;
-    case types::pos_conext_rev_ind:
-      c.init(other.c.get<pos_conext_rev_ind_e>());
-      break;
-    case types::cg_sdt_kept_ind:
-      c.init(other.c.get<cg_sdt_kept_ind_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_cmd_ies_o::value_c");
-  }
-}
-ue_context_release_cmd_ies_o::value_c&
-ue_context_release_cmd_ies_o::value_c::operator=(const ue_context_release_cmd_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::srb_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::old_gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::execute_dupl:
-      c.set(other.c.get<execute_dupl_e>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.set(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::target_cells_to_cancel:
-      c.set(other.c.get<target_cell_list_l>());
-      break;
-    case types::pos_conext_rev_ind:
-      c.set(other.c.get<pos_conext_rev_ind_e>());
-      break;
-    case types::cg_sdt_kept_ind:
-      c.set(other.c.get<cg_sdt_kept_ind_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_cmd_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_release_cmd_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -8711,6 +7157,22 @@ SRSASN_CODE ue_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_release_cmd_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "Cause",
+                                "OCTET STRING",
+                                "INTEGER (0..3,...)",
+                                "INTEGER (0..4294967295)",
+                                "ExecuteDuplication",
+                                "RRCDeliveryStatusRequest",
+                                "TargetCellList",
+                                "PosConextRevIndication",
+                                "CG-SDTKeptIndicator"};
+  return convert_enum_idx(names, 11, value, "ue_context_release_cmd_ies_o::value_c::types");
+}
+
 // UEContextReleaseCompleteIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_complete_ies_o::idx_to_id(uint32_t idx)
 {
@@ -8775,77 +7237,24 @@ presence_e ue_context_release_complete_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_release_complete_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_release_complete_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_release_complete_ies_o::value_c");
   }
-}
-ue_context_release_complete_ies_o::value_c::value_c(const ue_context_release_complete_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_complete_ies_o::value_c");
-  }
-}
-ue_context_release_complete_ies_o::value_c&
-ue_context_release_complete_ies_o::value_c::operator=(const ue_context_release_complete_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_complete_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_release_complete_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -8935,6 +7344,12 @@ SRSASN_CODE ue_context_release_complete_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_release_complete_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "ue_context_release_complete_ies_o::value_c::types");
+}
+
 // UEContextReleaseRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_request_ies_o::idx_to_id(uint32_t idx)
 {
@@ -9006,89 +7421,27 @@ presence_e ue_context_release_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_release_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::target_cells_to_cancel:
-      c.destroy<target_cell_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_release_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::target_cells_to_cancel:
-      c.init<target_cell_list_l>();
+      c = target_cell_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_release_request_ies_o::value_c");
   }
-}
-ue_context_release_request_ies_o::value_c::value_c(const ue_context_release_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::target_cells_to_cancel:
-      c.init(other.c.get<target_cell_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_request_ies_o::value_c");
-  }
-}
-ue_context_release_request_ies_o::value_c&
-ue_context_release_request_ies_o::value_c::operator=(const ue_context_release_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::target_cells_to_cancel:
-      c.set(other.c.get<target_cell_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_release_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_release_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -9201,6 +7554,12 @@ SRSASN_CODE ue_context_release_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_release_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "TargetCellList"};
+  return convert_enum_idx(names, 4, value, "ue_context_release_request_ies_o::value_c::types");
+}
+
 // UEContextSetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
@@ -9286,113 +7645,33 @@ presence_e ue_context_setup_fail_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_setup_fail_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::cause:
-      c.destroy<cause_c>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::potential_sp_cell_list:
-      c.destroy<potential_sp_cell_list_l>();
-      break;
-    case types::requested_target_cell_global_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_setup_fail_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::cause:
-      c.init<cause_c>();
+      c = cause_c{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::potential_sp_cell_list:
-      c.init<potential_sp_cell_list_l>();
+      c = potential_sp_cell_list_l{};
       break;
     case types::requested_target_cell_global_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_setup_fail_ies_o::value_c");
   }
-}
-ue_context_setup_fail_ies_o::value_c::value_c(const ue_context_setup_fail_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.init(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::potential_sp_cell_list:
-      c.init(other.c.get<potential_sp_cell_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_fail_ies_o::value_c");
-  }
-}
-ue_context_setup_fail_ies_o::value_c&
-ue_context_setup_fail_ies_o::value_c::operator=(const ue_context_setup_fail_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::cause:
-      c.set(other.c.get<cause_c>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::potential_sp_cell_list:
-      c.set(other.c.get<potential_sp_cell_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_fail_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_setup_fail_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -9543,6 +7822,17 @@ SRSASN_CODE ue_context_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* ue_context_setup_fail_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "Cause",
+                                "CriticalityDiagnostics",
+                                "Potential-SpCell-List",
+                                "NRCGI"};
+  return convert_enum_idx(names, 6, value, "ue_context_setup_fail_ies_o::value_c::types");
 }
 
 // UEContextSetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -9949,609 +8239,168 @@ presence_e ue_context_setup_request_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_setup_request_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::sp_cell_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::cu_to_du_rrc_info:
-      c.destroy<cu_to_du_rrc_info_s>();
-      break;
-    case types::candidate_sp_cell_list:
-      c.destroy<candidate_sp_cell_list_l>();
-      break;
-    case types::drx_cycle:
-      c.destroy<drx_cycle_s>();
-      break;
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::scell_to_be_setup_list:
-      c.destroy<scell_to_be_setup_list_l>();
-      break;
-    case types::srbs_to_be_setup_list:
-      c.destroy<srbs_to_be_setup_list_l>();
-      break;
-    case types::drbs_to_be_setup_list:
-      c.destroy<drbs_to_be_setup_list_l>();
-      break;
-    case types::rat_freq_prio_info:
-      c.destroy<rat_freq_prio_info_c>();
-      break;
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::masked_imeisv:
-      c.destroy<fixed_bitstring<64, false, true>>();
-      break;
-    case types::serving_plmn:
-      c.destroy<fixed_octstring<3, true>>();
-      break;
-    case types::res_coordination_transfer_info:
-      c.destroy<res_coordination_transfer_info_s>();
-      break;
-    case types::ran_ue_id:
-      c.destroy<fixed_octstring<8, true>>();
-      break;
-    case types::trace_activation:
-      c.destroy<trace_activation_s>();
-      break;
-    case types::add_rrm_prio_idx:
-      c.destroy<fixed_bitstring<32, false, true>>();
-      break;
-    case types::bh_chs_to_be_setup_list:
-      c.destroy<bh_chs_to_be_setup_list_l>();
-      break;
-    case types::cfg_bap_address:
-      c.destroy<fixed_bitstring<10, false, true>>();
-      break;
-    case types::nr_v2x_services_authorized:
-      c.destroy<nr_v2x_services_authorized_s>();
-      break;
-    case types::ltev2x_services_authorized:
-      c.destroy<ltev2x_services_authorized_s>();
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.destroy<nr_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.destroy<lte_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::sl_drbs_to_be_setup_list:
-      c.destroy<sl_drbs_to_be_setup_list_l>();
-      break;
-    case types::conditional_inter_du_mob_info:
-      c.destroy<conditional_inter_du_mob_info_s>();
-      break;
-    case types::management_based_mdt_plmn_list:
-      c.destroy<mdt_plmn_list_l>();
-      break;
-    case types::serving_n_id:
-      c.destroy<fixed_bitstring<44, false, true>>();
-      break;
-    case types::f1_c_transfer_path:
-      c.destroy<f1_c_transfer_path_s>();
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.destroy<f1_c_transfer_path_nr_dc_s>();
-      break;
-    case types::cg_sdt_session_info_old:
-      c.destroy<cg_sdt_session_info_s>();
-      break;
-    case types::five_g_pro_se_authorized:
-      c.destroy<five_g_pro_se_authorized_s>();
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.destroy<nr_ue_sidelink_aggr_max_bitrate_s>();
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.destroy<uu_rlc_ch_to_be_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.destroy<pc5_rlc_ch_to_be_setup_list_l>();
-      break;
-    case types::path_switch_cfg:
-      c.destroy<path_switch_cfg_s>();
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.destroy<gnb_du_ue_slice_max_bit_rate_list_l>();
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.destroy<multicast_mbs_session_list_l>();
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_list:
-      c.destroy<ue_multicast_m_rbs_to_be_setup_list_l>();
-      break;
-    case types::serving_cell_mo_list:
-      c.destroy<serving_cell_mo_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_setup_request_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::sp_cell_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::serv_cell_idx:
+      c = uint8_t{};
       break;
     case types::sp_cell_ul_cfg:
+      c = cell_ul_cfg_e{};
       break;
     case types::cu_to_du_rrc_info:
-      c.init<cu_to_du_rrc_info_s>();
+      c = cu_to_du_rrc_info_s{};
       break;
     case types::candidate_sp_cell_list:
-      c.init<candidate_sp_cell_list_l>();
+      c = candidate_sp_cell_list_l{};
       break;
     case types::drx_cycle:
-      c.init<drx_cycle_s>();
+      c = drx_cycle_s{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::scell_to_be_setup_list:
-      c.init<scell_to_be_setup_list_l>();
+      c = scell_to_be_setup_list_l{};
       break;
     case types::srbs_to_be_setup_list:
-      c.init<srbs_to_be_setup_list_l>();
+      c = srbs_to_be_setup_list_l{};
       break;
     case types::drbs_to_be_setup_list:
-      c.init<drbs_to_be_setup_list_l>();
+      c = drbs_to_be_setup_list_l{};
       break;
     case types::inactivity_monitoring_request:
+      c = inactivity_monitoring_request_e{};
       break;
     case types::rat_freq_prio_info:
-      c.init<rat_freq_prio_info_c>();
+      c = rat_freq_prio_info_c{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::masked_imeisv:
-      c.init<fixed_bitstring<64, false, true>>();
+      c = fixed_bitstring<64, false, true>{};
       break;
     case types::serving_plmn:
-      c.init<fixed_octstring<3, true>>();
+      c = fixed_octstring<3, true>{};
       break;
     case types::gnb_du_ue_ambr_ul:
+      c = uint64_t{};
       break;
     case types::rrc_delivery_status_request:
+      c = rrc_delivery_status_request_e{};
       break;
     case types::res_coordination_transfer_info:
-      c.init<res_coordination_transfer_info_s>();
+      c = res_coordination_transfer_info_s{};
       break;
     case types::serving_cell_mo:
+      c = uint8_t{};
       break;
     case types::new_gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::ran_ue_id:
-      c.init<fixed_octstring<8, true>>();
+      c = fixed_octstring<8, true>{};
       break;
     case types::trace_activation:
-      c.init<trace_activation_s>();
+      c = trace_activation_s{};
       break;
     case types::add_rrm_prio_idx:
-      c.init<fixed_bitstring<32, false, true>>();
+      c = fixed_bitstring<32, false, true>{};
       break;
     case types::bh_chs_to_be_setup_list:
-      c.init<bh_chs_to_be_setup_list_l>();
+      c = bh_chs_to_be_setup_list_l{};
       break;
     case types::cfg_bap_address:
-      c.init<fixed_bitstring<10, false, true>>();
+      c = fixed_bitstring<10, false, true>{};
       break;
     case types::nr_v2x_services_authorized:
-      c.init<nr_v2x_services_authorized_s>();
+      c = nr_v2x_services_authorized_s{};
       break;
     case types::ltev2x_services_authorized:
-      c.init<ltev2x_services_authorized_s>();
+      c = ltev2x_services_authorized_s{};
       break;
     case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.init<nr_ue_sidelink_aggr_max_bitrate_s>();
+      c = nr_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.init<lte_ue_sidelink_aggr_max_bitrate_s>();
+      c = lte_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::pc5_link_ambr:
+      c = uint64_t{};
       break;
     case types::sl_drbs_to_be_setup_list:
-      c.init<sl_drbs_to_be_setup_list_l>();
+      c = sl_drbs_to_be_setup_list_l{};
       break;
     case types::conditional_inter_du_mob_info:
-      c.init<conditional_inter_du_mob_info_s>();
+      c = conditional_inter_du_mob_info_s{};
       break;
     case types::management_based_mdt_plmn_list:
-      c.init<mdt_plmn_list_l>();
+      c = mdt_plmn_list_l{};
       break;
     case types::serving_n_id:
-      c.init<fixed_bitstring<44, false, true>>();
+      c = fixed_bitstring<44, false, true>{};
       break;
     case types::f1_c_transfer_path:
-      c.init<f1_c_transfer_path_s>();
+      c = f1_c_transfer_path_s{};
       break;
     case types::f1_c_transfer_path_nr_dc:
-      c.init<f1_c_transfer_path_nr_dc_s>();
+      c = f1_c_transfer_path_nr_dc_s{};
       break;
     case types::mdt_polluted_meas_ind:
+      c = mdt_polluted_meas_ind_e{};
       break;
     case types::scg_activation_request:
+      c = scg_activation_request_e{};
       break;
     case types::cg_sdt_session_info_old:
-      c.init<cg_sdt_session_info_s>();
+      c = cg_sdt_session_info_s{};
       break;
     case types::five_g_pro_se_authorized:
-      c.init<five_g_pro_se_authorized_s>();
+      c = five_g_pro_se_authorized_s{};
       break;
     case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.init<nr_ue_sidelink_aggr_max_bitrate_s>();
+      c = nr_ue_sidelink_aggr_max_bitrate_s{};
       break;
     case types::five_g_pro_se_pc5_link_ambr:
+      c = uint64_t{};
       break;
     case types::uu_rlc_ch_to_be_setup_list:
-      c.init<uu_rlc_ch_to_be_setup_list_l>();
+      c = uu_rlc_ch_to_be_setup_list_l{};
       break;
     case types::pc5_rlc_ch_to_be_setup_list:
-      c.init<pc5_rlc_ch_to_be_setup_list_l>();
+      c = pc5_rlc_ch_to_be_setup_list_l{};
       break;
     case types::path_switch_cfg:
-      c.init<path_switch_cfg_s>();
+      c = path_switch_cfg_s{};
       break;
     case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.init<gnb_du_ue_slice_max_bit_rate_list_l>();
+      c = gnb_du_ue_slice_max_bit_rate_list_l{};
       break;
     case types::multicast_mbs_session_setup_list:
-      c.init<multicast_mbs_session_list_l>();
+      c = multicast_mbs_session_list_l{};
       break;
     case types::ue_multicast_m_rbs_to_be_setup_list:
-      c.init<ue_multicast_m_rbs_to_be_setup_list_l>();
+      c = ue_multicast_m_rbs_to_be_setup_list_l{};
       break;
     case types::serving_cell_mo_list:
-      c.init<serving_cell_mo_list_l>();
+      c = serving_cell_mo_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_setup_request_ies_o::value_c");
   }
-}
-ue_context_setup_request_ies_o::value_c::value_c(const ue_context_setup_request_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::sp_cell_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::serv_cell_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sp_cell_ul_cfg:
-      c.init(other.c.get<cell_ul_cfg_e>());
-      break;
-    case types::cu_to_du_rrc_info:
-      c.init(other.c.get<cu_to_du_rrc_info_s>());
-      break;
-    case types::candidate_sp_cell_list:
-      c.init(other.c.get<candidate_sp_cell_list_l>());
-      break;
-    case types::drx_cycle:
-      c.init(other.c.get<drx_cycle_s>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::scell_to_be_setup_list:
-      c.init(other.c.get<scell_to_be_setup_list_l>());
-      break;
-    case types::srbs_to_be_setup_list:
-      c.init(other.c.get<srbs_to_be_setup_list_l>());
-      break;
-    case types::drbs_to_be_setup_list:
-      c.init(other.c.get<drbs_to_be_setup_list_l>());
-      break;
-    case types::inactivity_monitoring_request:
-      c.init(other.c.get<inactivity_monitoring_request_e>());
-      break;
-    case types::rat_freq_prio_info:
-      c.init(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::masked_imeisv:
-      c.init(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::serving_plmn:
-      c.init(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::gnb_du_ue_ambr_ul:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.init(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.init(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::serving_cell_mo:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::new_gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_id:
-      c.init(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::trace_activation:
-      c.init(other.c.get<trace_activation_s>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.init(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::bh_chs_to_be_setup_list:
-      c.init(other.c.get<bh_chs_to_be_setup_list_l>());
-      break;
-    case types::cfg_bap_address:
-      c.init(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::nr_v2x_services_authorized:
-      c.init(other.c.get<nr_v2x_services_authorized_s>());
-      break;
-    case types::ltev2x_services_authorized:
-      c.init(other.c.get<ltev2x_services_authorized_s>());
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.init(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.init(other.c.get<lte_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::pc5_link_ambr:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::sl_drbs_to_be_setup_list:
-      c.init(other.c.get<sl_drbs_to_be_setup_list_l>());
-      break;
-    case types::conditional_inter_du_mob_info:
-      c.init(other.c.get<conditional_inter_du_mob_info_s>());
-      break;
-    case types::management_based_mdt_plmn_list:
-      c.init(other.c.get<mdt_plmn_list_l>());
-      break;
-    case types::serving_n_id:
-      c.init(other.c.get<fixed_bitstring<44, false, true>>());
-      break;
-    case types::f1_c_transfer_path:
-      c.init(other.c.get<f1_c_transfer_path_s>());
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.init(other.c.get<f1_c_transfer_path_nr_dc_s>());
-      break;
-    case types::mdt_polluted_meas_ind:
-      c.init(other.c.get<mdt_polluted_meas_ind_e>());
-      break;
-    case types::scg_activation_request:
-      c.init(other.c.get<scg_activation_request_e>());
-      break;
-    case types::cg_sdt_session_info_old:
-      c.init(other.c.get<cg_sdt_session_info_s>());
-      break;
-    case types::five_g_pro_se_authorized:
-      c.init(other.c.get<five_g_pro_se_authorized_s>());
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.init(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::five_g_pro_se_pc5_link_ambr:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.init(other.c.get<uu_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::path_switch_cfg:
-      c.init(other.c.get<path_switch_cfg_s>());
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.init(other.c.get<gnb_du_ue_slice_max_bit_rate_list_l>());
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.init(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_list:
-      c.init(other.c.get<ue_multicast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::serving_cell_mo_list:
-      c.init(other.c.get<serving_cell_mo_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_request_ies_o::value_c");
-  }
-}
-ue_context_setup_request_ies_o::value_c&
-ue_context_setup_request_ies_o::value_c::operator=(const ue_context_setup_request_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::sp_cell_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::serv_cell_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sp_cell_ul_cfg:
-      c.set(other.c.get<cell_ul_cfg_e>());
-      break;
-    case types::cu_to_du_rrc_info:
-      c.set(other.c.get<cu_to_du_rrc_info_s>());
-      break;
-    case types::candidate_sp_cell_list:
-      c.set(other.c.get<candidate_sp_cell_list_l>());
-      break;
-    case types::drx_cycle:
-      c.set(other.c.get<drx_cycle_s>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::scell_to_be_setup_list:
-      c.set(other.c.get<scell_to_be_setup_list_l>());
-      break;
-    case types::srbs_to_be_setup_list:
-      c.set(other.c.get<srbs_to_be_setup_list_l>());
-      break;
-    case types::drbs_to_be_setup_list:
-      c.set(other.c.get<drbs_to_be_setup_list_l>());
-      break;
-    case types::inactivity_monitoring_request:
-      c.set(other.c.get<inactivity_monitoring_request_e>());
-      break;
-    case types::rat_freq_prio_info:
-      c.set(other.c.get<rat_freq_prio_info_c>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::masked_imeisv:
-      c.set(other.c.get<fixed_bitstring<64, false, true>>());
-      break;
-    case types::serving_plmn:
-      c.set(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::gnb_du_ue_ambr_ul:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::rrc_delivery_status_request:
-      c.set(other.c.get<rrc_delivery_status_request_e>());
-      break;
-    case types::res_coordination_transfer_info:
-      c.set(other.c.get<res_coordination_transfer_info_s>());
-      break;
-    case types::serving_cell_mo:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::new_gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::ran_ue_id:
-      c.set(other.c.get<fixed_octstring<8, true>>());
-      break;
-    case types::trace_activation:
-      c.set(other.c.get<trace_activation_s>());
-      break;
-    case types::add_rrm_prio_idx:
-      c.set(other.c.get<fixed_bitstring<32, false, true>>());
-      break;
-    case types::bh_chs_to_be_setup_list:
-      c.set(other.c.get<bh_chs_to_be_setup_list_l>());
-      break;
-    case types::cfg_bap_address:
-      c.set(other.c.get<fixed_bitstring<10, false, true>>());
-      break;
-    case types::nr_v2x_services_authorized:
-      c.set(other.c.get<nr_v2x_services_authorized_s>());
-      break;
-    case types::ltev2x_services_authorized:
-      c.set(other.c.get<ltev2x_services_authorized_s>());
-      break;
-    case types::nr_ue_sidelink_aggr_max_bitrate:
-      c.set(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::lte_ue_sidelink_aggr_max_bitrate:
-      c.set(other.c.get<lte_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::pc5_link_ambr:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::sl_drbs_to_be_setup_list:
-      c.set(other.c.get<sl_drbs_to_be_setup_list_l>());
-      break;
-    case types::conditional_inter_du_mob_info:
-      c.set(other.c.get<conditional_inter_du_mob_info_s>());
-      break;
-    case types::management_based_mdt_plmn_list:
-      c.set(other.c.get<mdt_plmn_list_l>());
-      break;
-    case types::serving_n_id:
-      c.set(other.c.get<fixed_bitstring<44, false, true>>());
-      break;
-    case types::f1_c_transfer_path:
-      c.set(other.c.get<f1_c_transfer_path_s>());
-      break;
-    case types::f1_c_transfer_path_nr_dc:
-      c.set(other.c.get<f1_c_transfer_path_nr_dc_s>());
-      break;
-    case types::mdt_polluted_meas_ind:
-      c.set(other.c.get<mdt_polluted_meas_ind_e>());
-      break;
-    case types::scg_activation_request:
-      c.set(other.c.get<scg_activation_request_e>());
-      break;
-    case types::cg_sdt_session_info_old:
-      c.set(other.c.get<cg_sdt_session_info_s>());
-      break;
-    case types::five_g_pro_se_authorized:
-      c.set(other.c.get<five_g_pro_se_authorized_s>());
-      break;
-    case types::five_g_pro_se_ue_pc5_aggr_max_bitrate:
-      c.set(other.c.get<nr_ue_sidelink_aggr_max_bitrate_s>());
-      break;
-    case types::five_g_pro_se_pc5_link_ambr:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::uu_rlc_ch_to_be_setup_list:
-      c.set(other.c.get<uu_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_to_be_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_to_be_setup_list_l>());
-      break;
-    case types::path_switch_cfg:
-      c.set(other.c.get<path_switch_cfg_s>());
-      break;
-    case types::gnb_du_ue_slice_max_bit_rate_list:
-      c.set(other.c.get<gnb_du_ue_slice_max_bit_rate_list_l>());
-      break;
-    case types::multicast_mbs_session_setup_list:
-      c.set(other.c.get<multicast_mbs_session_list_l>());
-      break;
-    case types::ue_multicast_m_rbs_to_be_setup_list:
-      c.set(other.c.get<ue_multicast_m_rbs_to_be_setup_list_l>());
-      break;
-    case types::serving_cell_mo_list:
-      c.set(other.c.get<serving_cell_mo_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_request_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_setup_request_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -11626,6 +9475,62 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_setup_request_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..31,...)",
+                                "CellULConfigured",
+                                "CUtoDURRCInformation",
+                                "Candidate-SpCell-List",
+                                "DRXCycle",
+                                "OCTET STRING",
+                                "SCell-ToBeSetup-List",
+                                "SRBs-ToBeSetup-List",
+                                "DRBs-ToBeSetup-List",
+                                "InactivityMonitoringRequest",
+                                "RAT-FrequencyPriorityInformation",
+                                "OCTET STRING",
+                                "BIT STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4000000000000,...)",
+                                "RRCDeliveryStatusRequest",
+                                "ResourceCoordinationTransferInformation",
+                                "INTEGER (1..64,...)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "TraceActivation",
+                                "BIT STRING",
+                                "BHChannels-ToBeSetup-List",
+                                "BIT STRING",
+                                "NRV2XServicesAuthorized",
+                                "LTEV2XServicesAuthorized",
+                                "NRUESidelinkAggregateMaximumBitrate",
+                                "LTEUESidelinkAggregateMaximumBitrate",
+                                "INTEGER (0..4000000000000,...)",
+                                "SLDRBs-ToBeSetup-List",
+                                "ConditionalInterDUMobilityInformation",
+                                "MDTPLMNList",
+                                "BIT STRING",
+                                "F1CTransferPath",
+                                "F1CTransferPathNRDC",
+                                "MDTPollutedMeasurementIndicator",
+                                "SCGActivationRequest",
+                                "CG-SDTSessionInfo",
+                                "FiveG-ProSeAuthorized",
+                                "NRUESidelinkAggregateMaximumBitrate",
+                                "INTEGER (0..4000000000000,...)",
+                                "UuRLCChannelToBeSetupList",
+                                "PC5RLCChannelToBeSetupList",
+                                "PathSwitchConfiguration",
+                                "GNBDUUESliceMaximumBitRateList",
+                                "MulticastMBSSessionList",
+                                "UE-MulticastMRBs-ToBeSetup-List",
+                                "ServingCellMO-List"};
+  return convert_enum_idx(names, 51, value, "ue_context_setup_request_ies_o::value_c::types");
+}
+
 // UEContextSetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
@@ -11839,313 +9744,87 @@ presence_e ue_context_setup_resp_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_context_setup_resp_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::du_to_cu_rrc_info:
-      c.destroy<du_to_cu_rrc_info_s>();
-      break;
-    case types::res_coordination_transfer_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::drbs_setup_list:
-      c.destroy<drbs_setup_list_l>();
-      break;
-    case types::srbs_failed_to_be_setup_list:
-      c.destroy<srbs_failed_to_be_setup_list_l>();
-      break;
-    case types::drbs_failed_to_be_setup_list:
-      c.destroy<drbs_failed_to_be_setup_list_l>();
-      break;
-    case types::scell_failedto_setup_list:
-      c.destroy<scell_failedto_setup_list_l>();
-      break;
-    case types::crit_diagnostics:
-      c.destroy<crit_diagnostics_s>();
-      break;
-    case types::srbs_setup_list:
-      c.destroy<srbs_setup_list_l>();
-      break;
-    case types::bh_chs_setup_list:
-      c.destroy<bh_chs_setup_list_l>();
-      break;
-    case types::bh_chs_failed_to_be_setup_list:
-      c.destroy<bh_chs_failed_to_be_setup_list_l>();
-      break;
-    case types::sl_drbs_setup_list:
-      c.destroy<sl_drbs_setup_list_l>();
-      break;
-    case types::sl_drbs_failed_to_be_setup_list:
-      c.destroy<sl_drbs_failed_to_be_setup_list_l>();
-      break;
-    case types::requested_target_cell_global_id:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.destroy<uu_rlc_ch_setup_list_l>();
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.destroy<uu_rlc_ch_failed_to_be_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.destroy<pc5_rlc_ch_setup_list_l>();
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.destroy<pc5_rlc_ch_failed_to_be_setup_list_l>();
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.destroy<serving_cell_mo_encoded_in_cgc_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_context_setup_resp_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::du_to_cu_rrc_info:
-      c.init<du_to_cu_rrc_info_s>();
+      c = du_to_cu_rrc_info_s{};
       break;
     case types::c_rnti:
+      c = uint32_t{};
       break;
     case types::res_coordination_transfer_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::full_cfg:
+      c = full_cfg_e{};
       break;
     case types::drbs_setup_list:
-      c.init<drbs_setup_list_l>();
+      c = drbs_setup_list_l{};
       break;
     case types::srbs_failed_to_be_setup_list:
-      c.init<srbs_failed_to_be_setup_list_l>();
+      c = srbs_failed_to_be_setup_list_l{};
       break;
     case types::drbs_failed_to_be_setup_list:
-      c.init<drbs_failed_to_be_setup_list_l>();
+      c = drbs_failed_to_be_setup_list_l{};
       break;
     case types::scell_failedto_setup_list:
-      c.init<scell_failedto_setup_list_l>();
+      c = scell_failedto_setup_list_l{};
       break;
     case types::inactivity_monitoring_resp:
+      c = inactivity_monitoring_resp_e{};
       break;
     case types::crit_diagnostics:
-      c.init<crit_diagnostics_s>();
+      c = crit_diagnostics_s{};
       break;
     case types::srbs_setup_list:
-      c.init<srbs_setup_list_l>();
+      c = srbs_setup_list_l{};
       break;
     case types::bh_chs_setup_list:
-      c.init<bh_chs_setup_list_l>();
+      c = bh_chs_setup_list_l{};
       break;
     case types::bh_chs_failed_to_be_setup_list:
-      c.init<bh_chs_failed_to_be_setup_list_l>();
+      c = bh_chs_failed_to_be_setup_list_l{};
       break;
     case types::sl_drbs_setup_list:
-      c.init<sl_drbs_setup_list_l>();
+      c = sl_drbs_setup_list_l{};
       break;
     case types::sl_drbs_failed_to_be_setup_list:
-      c.init<sl_drbs_failed_to_be_setup_list_l>();
+      c = sl_drbs_failed_to_be_setup_list_l{};
       break;
     case types::requested_target_cell_global_id:
-      c.init<nr_cgi_s>();
+      c = nr_cgi_s{};
       break;
     case types::scg_activation_status:
+      c = scg_activation_status_e{};
       break;
     case types::uu_rlc_ch_setup_list:
-      c.init<uu_rlc_ch_setup_list_l>();
+      c = uu_rlc_ch_setup_list_l{};
       break;
     case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.init<uu_rlc_ch_failed_to_be_setup_list_l>();
+      c = uu_rlc_ch_failed_to_be_setup_list_l{};
       break;
     case types::pc5_rlc_ch_setup_list:
-      c.init<pc5_rlc_ch_setup_list_l>();
+      c = pc5_rlc_ch_setup_list_l{};
       break;
     case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.init<pc5_rlc_ch_failed_to_be_setup_list_l>();
+      c = pc5_rlc_ch_failed_to_be_setup_list_l{};
       break;
     case types::serving_cell_mo_encoded_in_cgc_list:
-      c.init<serving_cell_mo_encoded_in_cgc_list_l>();
+      c = serving_cell_mo_encoded_in_cgc_list_l{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_context_setup_resp_ies_o::value_c");
   }
-}
-ue_context_setup_resp_ies_o::value_c::value_c(const ue_context_setup_resp_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.init(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::c_rnti:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::full_cfg:
-      c.init(other.c.get<full_cfg_e>());
-      break;
-    case types::drbs_setup_list:
-      c.init(other.c.get<drbs_setup_list_l>());
-      break;
-    case types::srbs_failed_to_be_setup_list:
-      c.init(other.c.get<srbs_failed_to_be_setup_list_l>());
-      break;
-    case types::drbs_failed_to_be_setup_list:
-      c.init(other.c.get<drbs_failed_to_be_setup_list_l>());
-      break;
-    case types::scell_failedto_setup_list:
-      c.init(other.c.get<scell_failedto_setup_list_l>());
-      break;
-    case types::inactivity_monitoring_resp:
-      c.init(other.c.get<inactivity_monitoring_resp_e>());
-      break;
-    case types::crit_diagnostics:
-      c.init(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::srbs_setup_list:
-      c.init(other.c.get<srbs_setup_list_l>());
-      break;
-    case types::bh_chs_setup_list:
-      c.init(other.c.get<bh_chs_setup_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_setup_list:
-      c.init(other.c.get<bh_chs_failed_to_be_setup_list_l>());
-      break;
-    case types::sl_drbs_setup_list:
-      c.init(other.c.get<sl_drbs_setup_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_setup_list:
-      c.init(other.c.get<sl_drbs_failed_to_be_setup_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::scg_activation_status:
-      c.init(other.c.get<scg_activation_status_e>());
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.init(other.c.get<uu_rlc_ch_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.init(other.c.get<uu_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.init(other.c.get<pc5_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.init(other.c.get<serving_cell_mo_encoded_in_cgc_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_resp_ies_o::value_c");
-  }
-}
-ue_context_setup_resp_ies_o::value_c&
-ue_context_setup_resp_ies_o::value_c::operator=(const ue_context_setup_resp_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::du_to_cu_rrc_info:
-      c.set(other.c.get<du_to_cu_rrc_info_s>());
-      break;
-    case types::c_rnti:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::res_coordination_transfer_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::full_cfg:
-      c.set(other.c.get<full_cfg_e>());
-      break;
-    case types::drbs_setup_list:
-      c.set(other.c.get<drbs_setup_list_l>());
-      break;
-    case types::srbs_failed_to_be_setup_list:
-      c.set(other.c.get<srbs_failed_to_be_setup_list_l>());
-      break;
-    case types::drbs_failed_to_be_setup_list:
-      c.set(other.c.get<drbs_failed_to_be_setup_list_l>());
-      break;
-    case types::scell_failedto_setup_list:
-      c.set(other.c.get<scell_failedto_setup_list_l>());
-      break;
-    case types::inactivity_monitoring_resp:
-      c.set(other.c.get<inactivity_monitoring_resp_e>());
-      break;
-    case types::crit_diagnostics:
-      c.set(other.c.get<crit_diagnostics_s>());
-      break;
-    case types::srbs_setup_list:
-      c.set(other.c.get<srbs_setup_list_l>());
-      break;
-    case types::bh_chs_setup_list:
-      c.set(other.c.get<bh_chs_setup_list_l>());
-      break;
-    case types::bh_chs_failed_to_be_setup_list:
-      c.set(other.c.get<bh_chs_failed_to_be_setup_list_l>());
-      break;
-    case types::sl_drbs_setup_list:
-      c.set(other.c.get<sl_drbs_setup_list_l>());
-      break;
-    case types::sl_drbs_failed_to_be_setup_list:
-      c.set(other.c.get<sl_drbs_failed_to_be_setup_list_l>());
-      break;
-    case types::requested_target_cell_global_id:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::scg_activation_status:
-      c.set(other.c.get<scg_activation_status_e>());
-      break;
-    case types::uu_rlc_ch_setup_list:
-      c.set(other.c.get<uu_rlc_ch_setup_list_l>());
-      break;
-    case types::uu_rlc_ch_failed_to_be_setup_list:
-      c.set(other.c.get<uu_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_setup_list_l>());
-      break;
-    case types::pc5_rlc_ch_failed_to_be_setup_list:
-      c.set(other.c.get<pc5_rlc_ch_failed_to_be_setup_list_l>());
-      break;
-    case types::serving_cell_mo_encoded_in_cgc_list:
-      c.set(other.c.get<serving_cell_mo_encoded_in_cgc_list_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_context_setup_resp_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_context_setup_resp_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -12695,6 +10374,35 @@ SRSASN_CODE ue_context_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_context_setup_resp_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "DUtoCURRCInformation",
+                                "INTEGER (0..65535,...)",
+                                "OCTET STRING",
+                                "FullConfiguration",
+                                "DRBs-Setup-List",
+                                "SRBs-FailedToBeSetup-List",
+                                "DRBs-FailedToBeSetup-List",
+                                "SCell-FailedtoSetup-List",
+                                "InactivityMonitoringResponse",
+                                "CriticalityDiagnostics",
+                                "SRBs-Setup-List",
+                                "BHChannels-Setup-List",
+                                "BHChannels-FailedToBeSetup-List",
+                                "SLDRBs-Setup-List",
+                                "SLDRBs-FailedToBeSetup-List",
+                                "NRCGI",
+                                "SCGActivationStatus",
+                                "UuRLCChannelSetupList",
+                                "UuRLCChannelFailedToBeSetupList",
+                                "PC5RLCChannelSetupList",
+                                "PC5RLCChannelFailedToBeSetupList",
+                                "ServingCellMO-encoded-in-CGC-List"};
+  return convert_enum_idx(names, 24, value, "ue_context_setup_resp_ies_o::value_c::types");
+}
+
 // UEInactivityNotificationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_inactivity_notif_ies_o::idx_to_id(uint32_t idx)
 {
@@ -12766,85 +10474,27 @@ presence_e ue_inactivity_notif_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ue_inactivity_notif_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::drb_activity_list:
-      c.destroy<drb_activity_list_l>();
-      break;
-    default:
-      break;
-  }
-}
 void ue_inactivity_notif_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::drb_activity_list:
-      c.init<drb_activity_list_l>();
+      c = drb_activity_list_l{};
       break;
     case types::sdt_termination_request:
+      c = sdt_termination_request_e{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ue_inactivity_notif_ies_o::value_c");
   }
-}
-ue_inactivity_notif_ies_o::value_c::value_c(const ue_inactivity_notif_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::drb_activity_list:
-      c.init(other.c.get<drb_activity_list_l>());
-      break;
-    case types::sdt_termination_request:
-      c.init(other.c.get<sdt_termination_request_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_inactivity_notif_ies_o::value_c");
-  }
-}
-ue_inactivity_notif_ies_o::value_c&
-ue_inactivity_notif_ies_o::value_c::operator=(const ue_inactivity_notif_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::drb_activity_list:
-      c.set(other.c.get<drb_activity_list_l>());
-      break;
-    case types::sdt_termination_request:
-      c.set(other.c.get<sdt_termination_request_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_inactivity_notif_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ue_inactivity_notif_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -12956,6 +10606,13 @@ SRSASN_CODE ue_inactivity_notif_ies_o::value_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* ue_inactivity_notif_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Activity-List", "SDT-Termination-Request"};
+  return convert_enum_idx(names, 4, value, "ue_inactivity_notif_ies_o::value_c::types");
+}
+
 // ULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ul_rrc_msg_transfer_ies_o::idx_to_id(uint32_t idx)
 {
@@ -13041,105 +10698,33 @@ presence_e ul_rrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
 }
 
 // Value ::= OPEN TYPE
-void ul_rrc_msg_transfer_ies_o::value_c::destroy_()
-{
-  switch (type_) {
-    case types::rrc_container:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::sel_plmn_id:
-      c.destroy<fixed_octstring<3, true>>();
-      break;
-    default:
-      break;
-  }
-}
 void ul_rrc_msg_transfer_ies_o::value_c::set(types::options e)
 {
-  destroy_();
   type_ = e;
   switch (type_) {
     case types::gnb_cu_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::srb_id:
+      c = uint8_t{};
       break;
     case types::rrc_container:
-      c.init<unbounded_octstring<true>>();
+      c = unbounded_octstring<true>{};
       break;
     case types::sel_plmn_id:
-      c.init<fixed_octstring<3, true>>();
+      c = fixed_octstring<3, true>{};
       break;
     case types::new_gnb_du_ue_f1ap_id:
+      c = uint64_t{};
       break;
     case types::nulltype:
       break;
     default:
       log_invalid_choice_id(type_, "ul_rrc_msg_transfer_ies_o::value_c");
   }
-}
-ul_rrc_msg_transfer_ies_o::value_c::value_c(const ul_rrc_msg_transfer_ies_o::value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::srb_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::rrc_container:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::sel_plmn_id:
-      c.init(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::new_gnb_du_ue_f1ap_id:
-      c.init(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_rrc_msg_transfer_ies_o::value_c");
-  }
-}
-ul_rrc_msg_transfer_ies_o::value_c&
-ul_rrc_msg_transfer_ies_o::value_c::operator=(const ul_rrc_msg_transfer_ies_o::value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_cu_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::srb_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::rrc_container:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::sel_plmn_id:
-      c.set(other.c.get<fixed_octstring<3, true>>());
-      break;
-    case types::new_gnb_du_ue_f1ap_id:
-      c.set(other.c.get<uint64_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_rrc_msg_transfer_ies_o::value_c");
-  }
-
-  return *this;
 }
 uint64_t& ul_rrc_msg_transfer_ies_o::value_c::gnb_cu_ue_f1ap_id()
 {
@@ -13284,6 +10869,19 @@ SRSASN_CODE ul_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
   }
   return SRSASN_SUCCESS;
 }
+
+const char* ul_rrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..3,...)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 6, value, "ul_rrc_msg_transfer_ies_o::value_c::types");
+}
+
+template struct asn1::protocol_ie_field_s<init_ul_rrc_msg_transfer_ies_o>;
 
 SRSASN_CODE init_ul_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
 {
@@ -13525,6 +11123,8 @@ void init_ul_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_mod_confirm_ies_o>;
 
 SRSASN_CODE ue_context_mod_confirm_ies_container::pack(bit_ref& bref) const
 {
@@ -13796,6 +11396,8 @@ void ue_context_mod_confirm_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_mod_fail_ies_o>;
+
 SRSASN_CODE ue_context_mod_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -13917,6 +11519,8 @@ void ue_context_mod_fail_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_mod_refuse_ies_o>;
+
 SRSASN_CODE ue_context_mod_refuse_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -14019,6 +11623,8 @@ void ue_context_mod_refuse_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_mod_request_ies_o>;
 
 SRSASN_CODE ue_context_mod_request_ies_container::pack(bit_ref& bref) const
 {
@@ -15531,6 +13137,8 @@ void ue_context_mod_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_mod_required_ies_o>;
+
 SRSASN_CODE ue_context_mod_required_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -15937,6 +13545,8 @@ void ue_context_mod_required_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_mod_resp_ies_o>;
 
 SRSASN_CODE ue_context_mod_resp_ies_container::pack(bit_ref& bref) const
 {
@@ -16764,6 +14374,8 @@ void ue_context_mod_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_release_cmd_ies_o>;
+
 SRSASN_CODE ue_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -16997,6 +14609,8 @@ void ue_context_release_cmd_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_release_complete_ies_o>;
+
 SRSASN_CODE ue_context_release_complete_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
@@ -17084,6 +14698,8 @@ void ue_context_release_complete_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_release_request_ies_o>;
 
 SRSASN_CODE ue_context_release_request_ies_container::pack(bit_ref& bref) const
 {
@@ -17191,6 +14807,8 @@ void ue_context_release_request_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_setup_fail_ies_o>;
 
 SRSASN_CODE ue_context_setup_fail_ies_container::pack(bit_ref& bref) const
 {
@@ -17337,6 +14955,8 @@ void ue_context_setup_fail_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ue_context_setup_request_ies_o>;
 
 SRSASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
 {
@@ -18337,6 +15957,8 @@ void ue_context_setup_request_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_context_setup_resp_ies_o>;
+
 SRSASN_CODE ue_context_setup_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -18856,6 +16478,8 @@ void ue_context_setup_resp_ies_container::to_json(json_writer& j) const
   j.end_obj();
 }
 
+template struct asn1::protocol_ie_field_s<ue_inactivity_notif_ies_o>;
+
 SRSASN_CODE ue_inactivity_notif_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -18962,6 +16586,8 @@ void ue_inactivity_notif_ies_container::to_json(json_writer& j) const
   }
   j.end_obj();
 }
+
+template struct asn1::protocol_ie_field_s<ul_rrc_msg_transfer_ies_o>;
 
 SRSASN_CODE ul_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
 {

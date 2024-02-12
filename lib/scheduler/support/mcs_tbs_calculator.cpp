@@ -23,11 +23,11 @@
 #include "mcs_tbs_calculator.h"
 #include "dmrs_helpers.h"
 #include "sch_pdu_builder.h"
-#include "tbs_calculator.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/uci/uci_mapping.h"
 
 using namespace srsran;

@@ -52,7 +52,7 @@ void ldpc_encoder_generic::select_strategy()
     high_rate = &ldpc_encoder_generic::high_rate_bg2_other;
     return;
   }
-  assert(false);
+  srsran_assert(false, "Unreachable code");
 }
 
 void ldpc_encoder_generic::preprocess_systematic_bits()

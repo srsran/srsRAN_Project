@@ -26,6 +26,6 @@ add_library(srsran_pusch_processor STATIC
         pusch_processor_impl.cpp
         pusch_decoder_hw_impl.cpp
         ulsch_demultiplex_impl.cpp)
-set(SRSAN_PUSCH_LIBS srsran_upper_phy_support srsran_ran)
+set(SRSRAN_PUSCH_LIBS srsran_upper_phy_support srsran_ran)
 
-target_link_libraries(srsran_pusch_processor ${SRSAN_PUSCH_LIBS})
+target_link_libraries(srsran_pusch_processor ${SRSRAN_PUSCH_LIBS})

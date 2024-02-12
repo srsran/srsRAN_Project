@@ -23,9 +23,10 @@
 #pragma once
 
 #include "../common/f1ap_ue_id.h"
+#include "du_setup_notifier.h"
 #include "f1ap_cu_ue_context_update.h"
-#include "f1ap_interface_management_types.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/expected.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/f1ap/common/f1ap_common.h"
@@ -49,18 +50,6 @@ public:
   /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
   /// \param[in] msg The DL RRC message transfer message to transmit.
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
-};
-
-/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
-class f1ap_connection_manager
-{
-public:
-  virtual ~f1ap_connection_manager() = default;
-
-  /// \brief Creates and transmits the F1 Setup outcome to the DU.
-  /// \param[in] msg The common type F1 Setup Response Message to transmit.
-  /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1_setup_response(const f1ap_f1_setup_response& msg) = 0;
 };
 
 struct f1ap_ue_context_release_command {
@@ -147,14 +136,10 @@ struct ue_update_complete_message {
 };
 
 /// Methods used by F1AP to notify the DU processor.
-class f1ap_du_processor_notifier
+class f1ap_du_processor_notifier : public du_setup_notifier
 {
 public:
   virtual ~f1ap_du_processor_notifier() = default;
-
-  /// \brief Notifies about the reception of a F1 Setup Request message.
-  /// \param[in] msg The received F1 Setup Request message.
-  virtual void on_f1_setup_request_received(const f1ap_f1_setup_request& msg) = 0;
 
   /// \brief Request allocation of a new UE index.
   virtual ue_index_t on_new_ue_index_required() = 0;
@@ -231,7 +216,6 @@ public:
 class f1ap_cu : public f1ap_message_handler,
                 public f1ap_event_handler,
                 public f1ap_rrc_message_handler,
-                public f1ap_connection_manager,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
                 public f1ap_paging_manager,
@@ -243,7 +227,6 @@ public:
   virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
   virtual f1ap_event_handler&              get_f1ap_event_handler()              = 0;
   virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
-  virtual f1ap_connection_manager&         get_f1ap_connection_manager()         = 0;
   virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
   virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;
   virtual f1ap_paging_manager&             get_f1ap_paging_manager()             = 0;

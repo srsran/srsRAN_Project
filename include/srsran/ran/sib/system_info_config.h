@@ -175,13 +175,13 @@ struct sib2_info {
 };
 
 struct sib19_info {
-  optional<uint16_t>            distance_thres;
-  optional<std::string>         ref_location;
-  optional<uint16_t>            cell_specific_koffset;
-  optional<position_velocity_t> ephemeris_info;
-  optional<epoch_time_t>        epoch_time;
-  optional<uint16_t>            k_mac;
-  optional<ta_common_t>         ta_info;
+  optional<uint16_t>                                           distance_thres;
+  optional<std::string>                                        ref_location;
+  optional<uint16_t>                                           cell_specific_koffset;
+  optional<variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  optional<epoch_time_t>                                       epoch_time;
+  optional<uint16_t>                                           k_mac;
+  optional<ta_common_t>                                        ta_info;
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.

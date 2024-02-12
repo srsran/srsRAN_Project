@@ -121,3 +121,44 @@ optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier
   }
   return nullopt;
 }
+
+error_type<std::string>
+srsran::prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(float   nof_ssb_per_ro,
+                                                                           uint8_t nof_cb_preambles_per_ssb)
+{
+  bool is_valid = true;
+
+  if (nof_ssb_per_ro == 1 / 8 or nof_ssb_per_ro == 1 / 4 or nof_ssb_per_ro == 1 / 2 or nof_ssb_per_ro == 1) {
+    // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {4, 8, 12, 16, 20, 24, 28, 32, 36,
+    // 40, 44, 48, 52, 56, 60, 64}.
+    if (nof_cb_preambles_per_ssb < 4 or nof_cb_preambles_per_ssb > 64 or nof_cb_preambles_per_ssb % 4 != 0) {
+      is_valid = false;
+    }
+  } else if (nof_ssb_per_ro == 2) {
+    // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {4, 8, 12, 16, 20, 24, 28, 32}.
+    if (nof_cb_preambles_per_ssb < 4 or nof_cb_preambles_per_ssb > 32 or nof_cb_preambles_per_ssb % 4 != 0) {
+      is_valid = false;
+    }
+  } else if (nof_ssb_per_ro == 4) {
+    // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,16}.
+    if (nof_cb_preambles_per_ssb < 1 or nof_cb_preambles_per_ssb > 16) {
+      is_valid = false;
+    }
+  } else if (nof_ssb_per_ro == 8) {
+    // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,8}.
+    if (nof_cb_preambles_per_ssb < 1 or nof_cb_preambles_per_ssb > 8) {
+      is_valid = false;
+    }
+  } else if (nof_ssb_per_ro == 16) {
+    // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,4}.
+    is_valid = false;
+  }
+
+  if (not is_valid) {
+    return fmt::format("Invalid nof. contention based preambles per SSB ({}) for nof. SSB per RACH occasion ({}).\n",
+                       nof_cb_preambles_per_ssb,
+                       nof_ssb_per_ro);
+  }
+
+  return {};
+}

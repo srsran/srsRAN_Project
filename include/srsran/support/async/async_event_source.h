@@ -53,12 +53,11 @@ public:
   {
     if (has_subscriber()) {
       running_timer.stop();
-      auto old_sub = sub;
+      auto* old_sub = sub;
       remove_observer();
       old_sub->event.set(std::forward<U>(u));
       return true;
     }
-    srslog::fetch_basic_logger("ALL").debug("Setting transaction result, but no subscriber is listening");
     return false;
   }
 

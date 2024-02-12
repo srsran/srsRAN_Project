@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "rlc_sdu_queue.h"
+#include "rlc_sdu_queue_lockfree.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -31,7 +31,11 @@ namespace srsran {
 class rlc_tx_tm_entity : public rlc_tx_entity
 {
 private:
-  rlc_sdu_queue sdu_queue;
+  // Config storage
+  const rlc_tx_tm_config cfg;
+
+  rlc_sdu_queue_lockfree sdu_queue;
+  rlc_sdu                sdu;
 
   task_executor& pcell_executor;
 
@@ -47,6 +51,7 @@ public:
   rlc_tx_tm_entity(uint32_t                             du_index,
                    du_ue_index_t                        ue_index,
                    rb_id_t                              rb_id,
+                   const rlc_tx_tm_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,

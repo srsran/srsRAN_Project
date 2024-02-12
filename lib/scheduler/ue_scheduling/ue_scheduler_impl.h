@@ -57,7 +57,10 @@ public:
 
   void handle_error_indication(slot_point                            sl_tx,
                                du_cell_index_t                       cell_index,
-                               scheduler_slot_handler::error_outcome event) override;
+                               scheduler_slot_handler::error_outcome event) override
+  {
+    event_mng.handle_error_indication(sl_tx, cell_index, event);
+  }
 
   sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
 

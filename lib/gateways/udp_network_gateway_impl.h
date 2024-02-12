@@ -52,11 +52,11 @@ private:
   void handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr);
 
   // udp_network_gateway_controller interface
-  bool create_and_bind() override;
-  void receive() override;
-  int  get_socket_fd() override;
-  bool get_bind_port(uint16_t& port) override;
-  bool get_bind_address(std::string& ip_address) override;
+  bool               create_and_bind() override;
+  void               receive() override;
+  int                get_socket_fd() override;
+  optional<uint16_t> get_bind_port() override;
+  bool               get_bind_address(std::string& ip_address) override;
 
   // socket helpers
   bool set_non_blocking();

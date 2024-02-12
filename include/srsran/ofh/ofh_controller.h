@@ -32,9 +32,11 @@ public:
   virtual ~controller() = default;
 
   /// \brief Starts the Open Fronthaul operation.
+  /// \note Caller will be blocked until the controller is fully started.
   virtual void start() = 0;
 
-  /// Stops the Open Fronthaul operation.
+  /// \brief Stops the Open Fronthaul operation.
+  /// \note Caller will be blocked until the controller is fully stopped.
   virtual void stop() = 0;
 };
 

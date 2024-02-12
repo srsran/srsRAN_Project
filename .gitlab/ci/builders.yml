@@ -1,10 +1,21 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "16"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "14"
+    ref: "16"
     file: .gitlab/ci-shared/tools/docker.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "16"
+    file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -15,35 +26,52 @@ stages:
   - ci
   - dependencies
   - publish
-  - manifest
   - alt registries
+  - manifest
+
+################################################################################
+## CI
+################################################################################
+tox python in builder:
+  stage: ci
+  extends: .tox
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/builders/**/*.py
+  variables:
+    PY_DIR: .gitlab/ci/builders
 
 ################################################################################
 # UHD builder
 ################################################################################
-.ubuntu-uhd-builder:
+ubuntu-uhd-builder:
   stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - on-prem-${arch_name}
   variables:
     os_version: ""
+    arch_name: ""
     uhd_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
     # Download existing package in the registry, if exists
     - |
       download_from_registry() {
-        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
         
         cd ${CI_PROJECT_DIR}
-        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${uhd_version}/uhd.tar.gz" -o output.tar.gz)
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${arch_name}-${uhd_version}/uhd.tar.gz" -o output.tar.gz)
         if [[ $http_code == "200" ]]; then
           tar -xf output.tar.gz
           return 0
@@ -56,6 +84,7 @@ stages:
     - |
       build_uhd() {
         DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          curl apt-transport-https ca-certificates xz-utils \
           cmake build-essential pkg-config \
           libboost-all-dev libusb-1.0-0-dev doxygen \
           python3-docutils python3-mako python3-numpy python3-setuptools python3-requests
@@ -77,7 +106,7 @@ stages:
       publish_to_registry() {
         cd ${CI_PROJECT_DIR}
         tar -czf uhd.tar.gz .gitlab/ci/builders/uhd/${uhd_version}
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file uhd.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${uhd_version}/uhd.tar.gz"
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file uhd.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${arch_name}-${uhd_version}/uhd.tar.gz"
       }
   script:
     - |
@@ -91,53 +120,41 @@ stages:
   artifacts:
     paths:
       - .gitlab/ci/builders/uhd
-    expire_in: 30 minutes
+    expire_in: 8 hours
   parallel:
     matrix:
-      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
-
-ubuntu-23.10-uhd:
-  extends: .ubuntu-uhd-builder
-  variables:
-    os_version: "23.10"
-  parallel:
-    matrix:
-      - uhd_version: ["4.5.0.0"]
-
-ubuntu-23.04-uhd:
-  extends: .ubuntu-uhd-builder
-  variables:
-    os_version: "23.04"
-  parallel:
-    matrix:
-      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
-
-ubuntu-22.04-uhd:
-  extends: .ubuntu-uhd-builder
-  variables:
-    os_version: "22.04"
-
-ubuntu-20.04-uhd:
-  extends: .ubuntu-uhd-builder
-  variables:
-    os_version: "20.04"
+      - os_version: "20.04"
+        arch_name: [amd64, arm64]
+        uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"] # uhd 3.15.0.0 default
+      - os_version: "22.04"
+        arch_name: [amd64, arm64]
+        uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
+      - os_version: "23.04"
+        arch_name: [amd64, arm64]
+        uhd_version: ["4.6.0.0", "4.4.0.0"] # "4.3.0.0" default
+      - os_version: "23.10"
+        arch_name: [amd64, arm64]
+        uhd_version: ["4.6.0.0"] # "4.4.0.0" default
 
 ################################################################################
 # DPDK builder
 ################################################################################
-.ubuntu-dpdk-builder:
+ubuntu-dpdk-builder:
   stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
   tags:
-    - ${AMD64_TAG}
+    - on-prem-${arch_name}
   variables:
     os_version: ""
+    arch_name: ""
     dpdk_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_CPU_REQUEST: 3
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -147,7 +164,7 @@ ubuntu-20.04-uhd:
         DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
         
         cd ${CI_PROJECT_DIR}
-        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz" -o output.tar.gz)
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}/dpdk.tar.gz" -o output.tar.gz)
         if [[ $http_code == "200" ]]; then
           tar -xf output.tar.gz
           return 0
@@ -160,6 +177,7 @@ ubuntu-20.04-uhd:
     - |
       build_dpdk() {
         DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          curl apt-transport-https ca-certificates xz-utils \
           python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
         
         export PIP_EXTRA_INDEX_URL=""
@@ -169,7 +187,7 @@ ubuntu-20.04-uhd:
         curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
         cd dpdk*${dpdk_version}
         meson build --prefix "/opt/dpdk/${dpdk_version}"
-        ninja -C build install
+        ninja -j${KUBERNETES_CPU_REQUEST} -C build install
 
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
         cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
@@ -180,7 +198,7 @@ ubuntu-20.04-uhd:
       publish_to_registry() {
         cd ${CI_PROJECT_DIR}
         tar -czf dpdk.tar.gz .gitlab/ci/builders/dpdk/${dpdk_version}
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz"
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}/dpdk.tar.gz"
       }
   script:
     - |
@@ -194,45 +212,33 @@ ubuntu-20.04-uhd:
   artifacts:
     paths:
       - .gitlab/ci/builders/dpdk
-    expire_in: 30 minutes
+    expire_in: 8 hours
   parallel:
     matrix:
-      - dpdk_version: ["21.08", "22.11.2", "23.07"]
-
-ubuntu-23.10-dpdk:
-  extends: .ubuntu-dpdk-builder
-  variables:
-    os_version: "23.10"
-  parallel:
-    matrix:
-      - dpdk_version: ["22.11.2", "23.07"]
-
-ubuntu-23.04-dpdk:
-  extends: .ubuntu-dpdk-builder
-  variables:
-    os_version: "23.04"
-
-ubuntu-22.04-dpdk:
-  extends: .ubuntu-dpdk-builder
-  variables:
-    os_version: "22.04"
-
-ubuntu-20.04-dpdk:
-  extends: .ubuntu-dpdk-builder
-  variables:
-    os_version: "20.04"
+      - os_version: "20.04"
+        arch_name: [amd64, arm64]
+        dpdk_version: ["21.08", "22.11.3", "23.11"]
+      - os_version: "22.04"
+        arch_name: [amd64, arm64]
+        dpdk_version: ["21.08", "22.11.3", "23.11"]
+      - os_version: "23.04"
+        arch_name: [amd64, arm64]
+        dpdk_version: ["21.08", "22.11.3", "23.11"]
+      - os_version: "23.10"
+        arch_name: [amd64, arm64]
+        dpdk_version: ["22.11.3", "23.11"]
 
 ################################################################################
 # Common
 ################################################################################
-.docker-builder-gnb:
+.image-build-publish:
   extends: .docker-builder
   stage: publish
   variables:
     OS_FAMILY: none
     OS_NAME: none
     OS_VERSION: none
-    MULTI_ARCH_BUILD: none
+    MULTI_ARCH_BUILD: "false"
     RHEL_CT_VERSION: none
     MODE: publish
   tags:
@@ -244,23 +250,56 @@ ubuntu-20.04-dpdk:
     - !reference [.fetch_src_cache, script]
     - |
       export NAME=builder-$OS_NAME-$OS_VERSION
-      export VERSION=$DOCKER_BUILDER_VERSION
+      export VERSION=${DOCKER_BUILDER_VERSION}-${PLATFORM}
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
+    - |
       mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
+      ls -lah $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
   cache:
     - !reference [.fetch_src_cache, cache]
 
-################################################################################
-# Publish
-################################################################################
+.alternative-tag:
+  extends: .docker manifest
+  stage: alt registries
+  variables:
+    OS_NAME: none
+    OS_VERSION: none
+    VERSION: $DOCKER_BUILDER_VERSION
+    ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+  script:
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get update && \
+        apt-get install -y --no-install-recommends skopeo
+    - |
+      skopeo copy \
+        docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION} \
+        docker://${ALT_REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION}
 
+.manifest:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    OS_NAME: none
+    OS_VERSION: none
+    VERSION: $DOCKER_BUILDER_VERSION
+    REGISTRY: ${CR_REGISTRY_URI}
+  script:
+    - |
+      docker manifest create \
+        ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION} \
+        --amend ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}-amd64 \
+        --amend ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}-arm64
+      docker manifest push ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}
+
+################################################################################
 # Codechecker
-docker-builder-publish [codechecker]:
-  extends: .docker-builder
+################################################################################
+image-build-publish [codechecker]:
+  extends: .image-build-publish
   stage: publish
   variables:
     MULTI_ARCH_BUILD: none
@@ -285,146 +324,356 @@ docker-builder-publish [codechecker]:
   cache:
     - !reference [.fetch_src_cache, cache]
 
+################################################################################
 # Ubuntu 20.04
-docker-builder-publish [ubuntu, 20.04]:
+################################################################################
+image-build-publish [ubuntu, 20.04, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .image-build-publish
   variables:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "20.04"
-    MULTI_ARCH_BUILD: "true"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "20.04"
+            arch_name: amd64
+            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "20.04"
+            arch_name: amd64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 20.04, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "20.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 20.04, amd64]
+
+image-build-publish [ubuntu, 20.04, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "20.04"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "20.04"
+            arch_name: arm64
+            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "20.04"
+            arch_name: arm64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 20.04, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "20.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 20.04, arm64]
+
+manifest [ubuntu, 20.04]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "20.04"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 20.04, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 20.04, arm64]
+      optional: false
   parallel:
     matrix:
-      - PLATFORM: ["arm64", "amd64"]
-  needs:
-    - builder version
-    - ubuntu-20.04-uhd
-    - ubuntu-20.04-dpdk
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
-docker manifest ubuntu 20.04:
-  extends: .docker manifest
-  stage: manifest
-  variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [ubuntu, 20.04]
-      optional: false
-  script:
-    - |
-      docker manifest create \
-        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION} \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}-amd64 \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}-arm64
-      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}
-
+################################################################################
 # Ubuntu 22.04
-docker-builder-publish [ubuntu, 22.04]:
+################################################################################
+image-build-publish [ubuntu, 22.04, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .image-build-publish
   variables:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
-    MULTI_ARCH_BUILD: "true"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "22.04"
+            arch_name: amd64
+            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "22.04"
+            arch_name: amd64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 22.04, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "22.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 22.04, amd64]
+
+image-build-publish [ubuntu, 22.04, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "22.04"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "22.04"
+            arch_name: arm64
+            uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "22.04"
+            arch_name: arm64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 22.04, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "22.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 22.04, arm64]
+
+manifest [ubuntu, 22.04]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "22.04"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 22.04, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 22.04, arm64]
+      optional: false
   parallel:
     matrix:
-      - PLATFORM: ["arm64", "amd64"]
-  needs:
-    - builder version
-    - ubuntu-22.04-uhd
-    - ubuntu-22.04-dpdk
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
-docker manifest ubuntu 22.04:
-  extends: .docker manifest
-  stage: manifest
-  variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [ubuntu, 22.04]
-      optional: false
-  script:
-    - |
-      docker manifest create \
-        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION} \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}-amd64 \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}-arm64
-      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}
-
+################################################################################
 # Ubuntu 23.04
-docker-builder-publish [ubuntu, 23.04]:
+################################################################################
+image-build-publish [ubuntu, 23.04, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .image-build-publish
   variables:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.04"
-    MULTI_ARCH_BUILD: "true"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "23.04"
+            arch_name: amd64
+            uhd_version: ["4.6.0.0", "4.4.0.0"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "23.04"
+            arch_name: amd64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 23.04, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 23.04, amd64]
+
+image-build-publish [ubuntu, 23.04, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "23.04"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "23.04"
+            arch_name: arm64
+            uhd_version: ["4.6.0.0", "4.4.0.0"]
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "23.04"
+            arch_name: arm64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 23.04, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 23.04, arm64]
+
+manifest [ubuntu, 23.04]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.04"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 23.04, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 23.04, arm64]
+      optional: false
   parallel:
     matrix:
-      - PLATFORM: ["arm64", "amd64"]
-  needs:
-    - builder version
-    - ubuntu-23.04-uhd
-    - ubuntu-23.04-dpdk
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
-docker manifest ubuntu 23.04:
-  extends: .docker manifest
-  stage: manifest
-  variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [ubuntu, 23.04]
-      optional: false
-  script:
-    - |
-      docker manifest create \
-        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION} \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-amd64 \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-arm64
-      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}
-
+################################################################################
 # Ubuntu 23.10
-docker-builder-publish [ubuntu, 23.10]:
+################################################################################
+image-build-publish [ubuntu, 23.10, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .image-build-publish
   variables:
     OS_FAMILY: debian
     OS_NAME: ubuntu
     OS_VERSION: "23.10"
-    MULTI_ARCH_BUILD: "true"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "23.10"
+            arch_name: amd64
+            uhd_version: ["4.6.0.0"] # "4.4.0.0" default
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "23.10"
+            arch_name: amd64
+            dpdk_version: ["22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 23.10, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 23.10, amd64]
+
+image-build-publish [ubuntu, 23.10, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder
+      parallel:
+        matrix:
+          - os_version: "23.10"
+            arch_name: arm64
+            uhd_version: ["4.6.0.0"] # "4.4.0.0" default
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "23.10"
+            arch_name: arm64
+            dpdk_version: ["22.11.3", "23.11"]
+
+alternative-tag [ubuntu, 23.10, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 23.10, arm64]
+
+manifest [ubuntu, 23.10]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 23.10, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 23.10, arm64]
+      optional: false
   parallel:
     matrix:
-      - PLATFORM: ["arm64", "amd64"]
-  needs:
-    - builder version
-    - ubuntu-23.10-uhd
-    - ubuntu-23.10-dpdk
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
-docker manifest ubuntu 23.10:
-  extends: .docker manifest
-  stage: manifest
-  variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [ubuntu, 23.10]
-      optional: false
-  script:
-    - |
-      docker manifest create \
-        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION} \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-amd64 \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-arm64
-      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}
-
-# debian
-docker-builder-publish [debian]:
+################################################################################
+# Debian
+################################################################################
+image-build-publish [debian]:
   extends:
-    - .docker-builder-gnb
+    - .image-build-publish
   variables:
     OS_FAMILY: debian
     OS_NAME: debian
@@ -432,13 +681,170 @@ docker-builder-publish [debian]:
   parallel:
     matrix:
       - OS_VERSION: ["11", "12"]
+        PLATFORM: [amd64, arm64]
   needs:
     - builder version
 
-# archlinux
-docker-builder-publish [archlinux, latest]:
+alternative-tag [debian, 11, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .alternative-tag
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "11"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "11"
+            PLATFORM: amd64
+
+alternative-tag [debian, 11, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "11"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "11"
+            PLATFORM: arm64
+
+manifest [debian, 11]:
+  extends: .manifest
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "11"
+  needs:
+    - builder version
+    - job: alternative-tag [debian, 11, amd64]
+      optional: false
+    - job: alternative-tag [debian, 11, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+alternative-tag [debian, 12, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "12"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "12"
+            PLATFORM: amd64
+
+alternative-tag [debian, 12, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "12"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - job: image-build-publish [debian]
+      parallel:
+        matrix:
+          - OS_VERSION: "12"
+            PLATFORM: arm64
+
+manifest [debian, 12]:
+  extends: .manifest
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "12"
+  needs:
+    - builder version
+    - job: alternative-tag [debian, 12, amd64]
+      optional: false
+    - job: alternative-tag [debian, 12, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
+# Rhel 8
+################################################################################
+image-build-publish [rhel, 8, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: rhel
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    RHEL_CT_VERSION: "2023.5_1.0.3"
+    PLATFORM: amd64
+  needs:
+    - builder version
+
+alternative-tag [rhel, 8, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [rhel, 8, amd64]
+
+image-build-publish [rhel, 8, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: rhel
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    RHEL_CT_VERSION: "2023.5_1.0.3"
+    PLATFORM: arm64
+  needs:
+    - builder version
+
+alternative-tag [rhel, 8, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [rhel, 8, arm64]
+
+manifest [rhel, 8]:
+  extends: .manifest
+  variables:
+    OS_NAME: rhel
+    OS_VERSION: "8"
+  needs:
+    - builder version
+    - job: alternative-tag [rhel, 8, amd64]
+      optional: false
+    - job: alternative-tag [rhel, 8, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
+# Archlinux
+################################################################################
+image-build-publish [archlinux, latest, amd64]:
+  extends:
+    - .image-build-publish
   variables:
     OS_FAMILY: archlinux
     OS_NAME: archlinux
@@ -447,82 +853,35 @@ docker-builder-publish [archlinux, latest]:
   needs:
     - builder version
 
-# rhel 8
-docker-builder-publish [rhel, 8]:
+alternative-tag [archlinux, latest, amd64]:
   extends:
-    - .docker-builder-gnb
+    - .alternative-tag
   variables:
-    OS_FAMILY: rhel
-    OS_NAME: rhel
-    OS_VERSION: "8"
-    VERSION: $DOCKER_BUILDER_VERSION
-    RHEL_CT_VERSION: "2023.5_1.0.3"
-    MULTI_ARCH_BUILD: "true"
-  parallel:
-    matrix:
-      - PLATFORM: ["arm64", "amd64"]
+    OS_NAME: archlinux
+    OS_VERSION: latest
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
     - builder version
+    - image-build-publish [archlinux, latest, amd64]
 
-docker manifest rhel 8:
+manifest [archlinux, latest]:
   extends: .docker manifest
   stage: manifest
   variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [rhel, 8]
-      optional: false
-  script:
-    - |
-      docker manifest create \
-        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION} \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-amd64 \
-        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-arm64
-      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}
-
-tag alt registries:
-  extends: .docker manifest
-  stage: alt registries
-  variables:
-    VERSION: $DOCKER_BUILDER_VERSION
-  needs:
-    - builder version
-    - job: docker-builder-publish [archlinux, latest]
-      artifacts: false
-    - job: "docker-builder-publish [debian]: [11]"
-      artifacts: false
-    - job: "docker-builder-publish [debian]: [12]"
-      artifacts: false
-    - job: docker manifest ubuntu 20.04
-      artifacts: false
-    - job: docker manifest ubuntu 22.04
-      artifacts: false
-    - job: docker manifest ubuntu 23.04
-      artifacts: false
-    - job: docker manifest ubuntu 23.10
-      artifacts: false
-    - job: docker manifest rhel 8
-      artifacts: false
+    OS_NAME: archlinux
+    OS_VERSION: latest
   script:
     - |
       DEBIAN_FRONTEND=noninteractive apt-get update && \
         apt-get install -y --no-install-recommends skopeo
     - |
       skopeo copy \
-        docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION} \
-        docker://${ALT_REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION}
+        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}-amd64 \
+        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}
   parallel:
     matrix:
-      - OS_NAME: ubuntu
-        OS_VERSION: ["20.04", "22.04", "23.04", "23.10"]
-        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
-      - OS_NAME: debian
-        OS_VERSION: ["11", "12"]
-        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
-      - OS_NAME: archlinux
-        OS_VERSION: latest
-        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
-      - OS_NAME: rhel
-        OS_VERSION: "8"
-        ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+  needs:
+    - builder version
+    - job: alternative-tag [archlinux, latest, amd64]
+      optional: false

@@ -66,15 +66,21 @@ public:
   /// \param[in] crc_set_      Structure with pointers to three CRC calculator objects, with generator
   ///                          polynomials of type \c CRC16, \c CRC24A and \c CRC24B.
   /// \param[in] executor_     Task executor for asynchronous PUSCH code block decoding.
+  /// \param[in] nof_prb       Number of PRBs.
+  /// \param[in] nof_layers    Number of layers.
+
   pusch_decoder_impl(std::unique_ptr<ldpc_segmenter_rx>      segmenter_,
                      std::shared_ptr<codeblock_decoder_pool> decoder_pool_,
                      sch_crc                                 crc_set_,
-                     task_executor*                          executor_) :
+                     task_executor*                          executor_,
+                     unsigned                                nof_prb,
+                     unsigned                                nof_layers) :
+
     segmenter(std::move(segmenter_)),
     decoder_pool(std::move(decoder_pool_)),
     crc_set(std::move(crc_set_)),
     executor(executor_),
-    softbits_buffer(pusch_constants::CODEWORD_MAX_SIZE.value()),
+    softbits_buffer(pusch_constants::get_max_codeword_size(nof_prb, nof_layers).value()),
     cb_stats(MAX_NOF_SEGMENTS)
   {
     srsran_assert(segmenter, "Invalid segmenter.");
@@ -97,6 +103,9 @@ public:
                                  unique_rx_buffer        rm_buffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
+
+  // See interface for the documentation.
+  void set_nof_softbits(units::bits nof_softbits) override;
 
 private:
   /// Pointer to an LDPC segmenter.
@@ -123,12 +132,22 @@ private:
   pusch_decoder_notifier* result_notifier = nullptr;
   /// Current PUSCH decoder configuration.
   pusch_decoder::configuration current_config;
+  /// Segmentation configuration parameters.
+  segmenter_config segmentation_config;
   /// Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs;
-  /// Counts code blocks.
-  std::atomic<unsigned> cb_counter;
+  /// Counts the number of remaining CB decoding tasks.
+  std::atomic<unsigned> cb_task_counter;
+  /// Counts the number of CB available for decoding.
+  unsigned available_cb_counter;
   /// Enqueues code block decoder statistics.
   concurrent_queue<unsigned, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep> cb_stats;
+  /// Number of UL-SCH codeword softbits. If set, the decoder will start decoding codeblocks as they become available.
+  optional<units::bits> nof_ulsch_softbits;
+  /// Number of codeblocks in the current codeword.
+  unsigned nof_codeblocks;
+  /// CRC calculator for inner codeblock checks.
+  crc_calculator* block_crc;
 
   // See interface for the documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override;
@@ -138,6 +157,11 @@ private:
 
   // See interface for the documentation.
   void on_end_softbits() override;
+
+  /// \brief Creates a codeblock decoding task.
+  ///
+  /// \param[in] cb_id Identifier of the codeblock to decode.
+  void fork_codeblock_task(unsigned cb_id);
 
   /// \brief Joins the multiple code block processing.
   ///

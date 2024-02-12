@@ -31,8 +31,13 @@
     "ci_allow_fork_pipelines_to_run_in_parent_project": false,
     "ci_default_git_depth": 1,
     "ci_separated_caches": false,
-    "container_expiration_policy_attributes": {
-        "enabled": false
+    "container_expiration_policy": {
+        "cadence": "1d",
+        "enabled": true,
+        "keep_n": 9,
+        "older_than": "7d",
+        "name_regex": ".*",
+        "name_regex_keep": null
     },
     "container_registry_access_level": "enabled",
     "default_branch": "dev",

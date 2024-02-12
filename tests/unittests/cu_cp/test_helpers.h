@@ -23,14 +23,16 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
+#include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
+#include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
+#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_processor.h"
-#include "srsran/cu_cp/du_processor.h"
+#include "srsran/support/async/async_task.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/test_utils.h"
@@ -146,6 +148,12 @@ private:
   cu_cp_ue_removal_handler*                         ue_removal_handler  = nullptr;
   rrc_ue_removal_handler*                           rrc_removal_handler = nullptr;
   bool                                              ue_transfer_outcome = true;
+};
+
+class dummy_du_connection_notifier : public du_connection_notifier
+{
+public:
+  bool on_du_setup_request(const du_setup_request& req) override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {
@@ -349,16 +357,19 @@ struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_contr
 public:
   dummy_du_processor_ngap_control_notifier() = default;
 
-  virtual bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
-    return release_request_outcome;
+    return launch_async([this](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(release_request_outcome);
+    });
   }
 
   async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
-    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) mutable {
+    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ngap_handover_preparation_response{false});
     });

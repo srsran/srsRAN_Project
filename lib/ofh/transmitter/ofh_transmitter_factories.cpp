@@ -33,10 +33,6 @@
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 #include "srsran/ofh/serdes/ofh_serdes_factories.h"
 
-#ifdef DPDK_FOUND
-#include "../ethernet/dpdk/dpdk_ethernet_factories.h"
-#endif
-
 using namespace srsran;
 using namespace ofh;
 
@@ -57,6 +53,7 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.dl_compr_params             = tx_config.dl_compr_params;
   config.ul_compr_params             = tx_config.ul_compr_params;
   config.prach_compr_params          = tx_config.prach_compr_params;
+  config.cp                          = tx_config.cp;
 
   data_flow_cplane_scheduling_commands_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
@@ -84,6 +81,7 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
   config.vlan_params.mac_src_address = tx_config.mac_src_address;
   config.compr_params                = tx_config.dl_compr_params;
+  config.cp                          = tx_config.cp;
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
   dependencies.logger        = &logger;
@@ -135,6 +133,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
     dl_dependencies.logger           = &logger;
     dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
     dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
+    dl_dependencies.frame_pool_ptr   = frame_pool;
 
     return std::make_unique<downlink_manager_broadcast_impl>(dl_config, std::move(dl_dependencies));
   }
@@ -235,24 +234,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
           tx_config, logger, frame_pool, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
       downlink_executor);
 
-  ether::gw_config eth_cfg;
-  eth_cfg.interface                   = tx_config.interface;
-  eth_cfg.is_promiscuous_mode_enabled = tx_config.is_promiscuous_mode_enabled;
-  eth_cfg.mac_dst_address             = tx_config.mac_dst_address;
-  eth_cfg.mtu_size                    = tx_config.mtu_size;
-  if (eth_gateway != nullptr) {
-    dependencies.eth_gateway = std::move(eth_gateway);
-  } else {
-#ifdef DPDK_FOUND
-    if (tx_config.uses_dpdk) {
-      dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, logger);
-    } else {
-      dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
-    }
-#else
-    dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
-#endif
-  }
+  dependencies.eth_gateway = std::move(eth_gateway);
 
   dependencies.frame_pool = frame_pool;
 

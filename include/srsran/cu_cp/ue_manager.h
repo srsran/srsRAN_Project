@@ -22,13 +22,17 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Forward declared classes.
+class du_processor_rrc_ue_control_message_notifier;
+class du_processor_rrc_ue_srb_control_notifier;
 
 /// Common UE interface.
 class ue_base
@@ -58,6 +62,12 @@ public:
   /// \brief Get the RRC UE SRB control notifier of the UE.
   virtual du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() = 0;
 
+  /// \brief Get the RRC UE context update notifier of the UE.
+  virtual rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() = 0;
+
+  /// \brief Get the RRC UE measurement notifier of the UE.
+  virtual rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() = 0;
+
   /// \brief Get the PCI of the UE.
   virtual pci_t get_pci() = 0;
 
@@ -77,10 +87,6 @@ public:
   /// \param[in] pcell_index PCell index of the UE.
   virtual void set_pcell_index(du_cell_index_t pcell_index) = 0;
 
-  /// \brief Set the task scheduler of the UE.
-  /// \param[in] task_sched_ Task scheduler of the UE.
-  virtual void set_task_sched(rrc_ue_task_scheduler& task_sched_) = 0;
-
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
   virtual void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) = 0;
@@ -93,6 +99,7 @@ public:
 /// UE configuration passed to CU-CP
 struct ue_configuration {
   std::chrono::seconds inactivity_timer;
+  unsigned             max_nof_supported_ues = MAX_NOF_CU_UES;
 };
 
 /// Common UE manager interface.

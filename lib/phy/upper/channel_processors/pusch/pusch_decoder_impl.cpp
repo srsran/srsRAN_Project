@@ -67,6 +67,25 @@ static std::tuple<unsigned, unsigned, unsigned> get_cblk_bit_breakdown(const cod
   return {cb_length, msg_length, nof_data_bits};
 }
 
+// Computes the number of entire CBs present in the CW buffer, given the CB segmentation information and the number of
+// available CW softbits.
+static unsigned
+get_nof_available_codeblocks(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
+                             unsigned                                                 nof_cw_softbits)
+{
+  unsigned i_cb = 0;
+  for (unsigned nof_cbs = described_codeblocks.size(); i_cb != nof_cbs; ++i_cb) {
+    unsigned i_cb_end = described_codeblocks[i_cb].second.cb_specific.cw_offset +
+                        described_codeblocks[i_cb].second.cb_specific.rm_length;
+
+    // Stop counting codeblocks if not all softbits of the current codeblock are available.
+    if (i_cb_end > nof_cw_softbits) {
+      break;
+    }
+  }
+  return i_cb;
+}
+
 pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                       transport_block_,
                                                    unique_rx_buffer                    unique_rm_buffer_,
                                                    pusch_decoder_notifier&             notifier,
@@ -77,6 +96,38 @@ pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                
   result_notifier  = &notifier;
   current_config   = cfg;
   softbits_count   = 0;
+  codeblock_llrs.clear();
+
+  // Unset the expected number of UL-SCH softbits.
+  nof_ulsch_softbits.reset();
+
+  // Compute segmentation configuration.
+  segmentation_config.base_graph = current_config.base_graph;
+  segmentation_config.rv         = current_config.rv;
+  segmentation_config.mod        = current_config.mod;
+  segmentation_config.Nref       = current_config.Nref;
+  segmentation_config.nof_layers = current_config.nof_layers;
+
+  // Set the CB counters.
+  unsigned tb_size     = transport_block.size() * BITS_PER_BYTE;
+  nof_codeblocks       = ldpc::compute_nof_codeblocks(units::bits(tb_size), segmentation_config.base_graph);
+  cb_task_counter      = nof_codeblocks;
+  available_cb_counter = 0;
+
+  srsran_assert(nof_codeblocks == unique_rm_buffer->get_nof_codeblocks(),
+                "Wrong number of codeblocks {} (expected {}).",
+                unique_rm_buffer->get_nof_codeblocks(),
+                nof_codeblocks);
+
+  // Select CRC calculator for inner codeblock checks.
+  block_crc = select_crc(crc_set, tb_size, nof_codeblocks);
+
+  // Reset CRCs if new data is flagged.
+  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
+  if (current_config.new_data) {
+    srsvec::zero(cb_crcs);
+  }
+
   return *this;
 }
 
@@ -93,6 +144,48 @@ span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned bloc
   return span<log_likelihood_ratio>(softbits_buffer).subspan(softbits_count, block_size);
 }
 
+void pusch_decoder_impl::set_nof_softbits(units::bits nof_softbits)
+{
+  nof_ulsch_softbits.emplace(nof_softbits);
+
+  unsigned modulation_order = get_bits_per_symbol(current_config.mod);
+  srsran_assert(nof_ulsch_softbits->value() % modulation_order == 0,
+                "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).",
+                nof_ulsch_softbits->value(),
+                modulation_order);
+
+  // Set derived parameters.
+  segmentation_config.nof_ch_symbols = nof_ulsch_softbits->value() / modulation_order;
+
+  // Select view of LLRs.
+  span<const log_likelihood_ratio> llrs =
+      span<const log_likelihood_ratio>(softbits_buffer).first(nof_ulsch_softbits->value());
+
+  // Recall that the TB is in packed format.
+  unsigned tb_size = transport_block.size() * BITS_PER_BYTE;
+
+  // Generate segmentation information and CB views.
+  segmenter->segment(codeblock_llrs, llrs, tb_size, segmentation_config);
+
+  // All information about the CW segments should be available.
+  srsran_assert(
+      nof_codeblocks == codeblock_llrs.size(),
+      "The number of described CW segments, i.e., {}, does not match the expected number of codeblocks, i.e., {}.",
+      codeblock_llrs.size(),
+      nof_codeblocks);
+
+  // Compute the number of currently available codeblocks.
+  available_cb_counter = get_nof_available_codeblocks(codeblock_llrs, softbits_count);
+
+  // If there are available codeblocks, start as many decoding tasks as possible.
+  if (available_cb_counter > 0) {
+    // Fork tasks for new codeblocks.
+    for (unsigned i_cb = 0; i_cb != available_cb_counter; ++i_cb) {
+      fork_codeblock_task(i_cb);
+    }
+  }
+}
+
 void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbits)
 {
   span<log_likelihood_ratio> block = get_next_block_view(softbits.size());
@@ -103,121 +196,140 @@ void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbi
   }
 
   softbits_count += softbits.size();
+
+  if (nof_ulsch_softbits.has_value()) {
+    // Codeblocks that have already been dispatched to the decoder.
+    unsigned dispatched_codeblocks = available_cb_counter;
+
+    // Update the number of currently available codeblocks.
+    available_cb_counter = get_nof_available_codeblocks(codeblock_llrs, softbits_count);
+
+    // Fork tasks for new codeblocks.
+    for (unsigned i_cb = dispatched_codeblocks, i_cb_end = available_cb_counter; i_cb != i_cb_end; ++i_cb) {
+      fork_codeblock_task(i_cb);
+    }
+  }
 }
 
 void pusch_decoder_impl::on_end_softbits()
 {
+  srsran_assert(!nof_ulsch_softbits.has_value() || (nof_ulsch_softbits.value() == units::bits(softbits_count)),
+                "The number of UL-SCH softbits, i.e., {}, does not match the expected value, i.e., {}.",
+                softbits_count,
+                nof_ulsch_softbits.value());
+
   unsigned modulation_order = get_bits_per_symbol(current_config.mod);
   srsran_assert(softbits_count % modulation_order == 0,
-                "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).\n",
+                "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).",
                 softbits_count,
                 modulation_order);
 
-  segmenter_config segmentation_config;
-  segmentation_config.base_graph     = current_config.base_graph;
-  segmentation_config.rv             = current_config.rv;
-  segmentation_config.mod            = current_config.mod;
-  segmentation_config.Nref           = current_config.Nref;
-  segmentation_config.nof_layers     = current_config.nof_layers;
-  segmentation_config.nof_ch_symbols = softbits_count / modulation_order;
+  // Skip processing if all codeblock decoding tasks have already been dispatched. This should be the case if the
+  // number of CW softbits has been provided by calling set_nof_sofbits.
+  if (available_cb_counter == nof_codeblocks) {
+    srsran_assert(nof_ulsch_softbits->value() == softbits_count,
+                  "The number of provided softbits (i.e. {}), does not match the expected number (i.e. {}).",
+                  softbits_count,
+                  nof_ulsch_softbits->value());
+    return;
+  }
 
-  // Select view of LLRs.
+  srsran_assert(!nof_ulsch_softbits.has_value(),
+                "The number of CW softbits has been provided and not all CB decoding tasks have been dispatched.");
+
+  // Compute segmentation.
   span<const log_likelihood_ratio> llrs = span<const log_likelihood_ratio>(softbits_buffer).first(softbits_count);
 
   // Recall that the TB is in packed format.
-  unsigned tb_size = transport_block.size() * BITS_PER_BYTE;
-  codeblock_llrs.clear();
+  unsigned tb_size                   = transport_block.size() * BITS_PER_BYTE;
+  segmentation_config.nof_ch_symbols = softbits_count / modulation_order;
   segmenter->segment(codeblock_llrs, llrs, tb_size, segmentation_config);
 
-  unsigned nof_cbs = codeblock_llrs.size();
-  srsran_assert(nof_cbs == unique_rm_buffer->get_nof_codeblocks(),
-                "Wrong number of codeblocks {} (expected {}).",
-                unique_rm_buffer->get_nof_codeblocks(),
-                nof_cbs);
+  // All information about the CW segments should be available.
+  srsran_assert(
+      nof_codeblocks == codeblock_llrs.size(),
+      "The number of described CW segments, i.e., {}, does not match the expected number of codeblocks, i.e., {}.",
+      codeblock_llrs.size(),
+      nof_codeblocks);
 
-  // Select CRC calculator for inner codeblock checks.
-  crc_calculator* block_crc = select_crc(crc_set, tb_size, nof_cbs);
-
-  // Reset CRCs if new data is flagged.
-  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
-  if (current_config.new_data) {
-    srsvec::zero(cb_crcs);
+  // Iterate for each remaining code block.
+  for (unsigned cb_id = 0; cb_id != nof_codeblocks; ++cb_id) {
+    fork_codeblock_task(cb_id);
   }
+}
 
-  // Set the atomic number of codeblocks.
-  cb_counter = nof_cbs;
+void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
+{
+  span<const log_likelihood_ratio> cb_llrs = codeblock_llrs[cb_id].first;
+  const codeblock_metadata&        cb_meta = codeblock_llrs[cb_id].second;
+  srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
 
-  // Iterate for each code block.
-  for (unsigned cb_id = 0; cb_id != nof_cbs; ++cb_id) {
-    span<const log_likelihood_ratio> cb_llrs = codeblock_llrs[cb_id].first;
-    const codeblock_metadata&        cb_meta = codeblock_llrs[cb_id].second;
-    srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
+  // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
+  // bits - may contain zero-padding).
+  unsigned cb_length = 0, msg_length = 0, nof_data_bits = 0;
+  std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
 
-    // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
-    // bits - may contain zero-padding).
-    unsigned cb_length = 0, msg_length = 0, nof_data_bits = 0;
-    std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
+  // Get data bits from previous transmissions, if any.
+  // Messages are written on a dedicated buffer associated to the softbuffer. By doing this, we keep the decoded
+  // message in memory and we don't need to compute it again if there is a retransmission.
+  bit_buffer message = unique_rm_buffer->get_codeblock_data_bits(cb_id, msg_length);
 
-    // Get data bits from previous transmissions, if any.
-    // Messages are written on a dedicated buffer associated to the buffer. By doing this, we keep the decoded message
-    // in memory and we don't need to compute it again if there is a retransmission.
-    bit_buffer message = unique_rm_buffer->get_codeblock_data_bits(cb_id, msg_length);
+  // Get the LLRs from previous transmissions, if any, or a clean buffer.
+  span<log_likelihood_ratio> rm_buffer = unique_rm_buffer->get_codeblock_soft_bits(cb_id, cb_length);
 
-    // Get the LLRs from previous transmissions, if any, or a clean buffer.
-    span<log_likelihood_ratio> rm_buffer = unique_rm_buffer->get_codeblock_soft_bits(cb_id, cb_length);
+  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
 
-    // Code block processing task.
-    auto cb_process_task = [this, cb_meta, rm_buffer, cb_llrs, &cb_crc = cb_crcs[cb_id], block_crc, message]() {
-      trace_point tp = l1_tracer.now();
+  // Code block processing task.
+  auto cb_process_task = [this, cb_meta, rm_buffer, cb_llrs, &cb_crc = cb_crcs[cb_id], message]() {
+    trace_point tp = l1_tracer.now();
 
-      // Check current CRC status.
-      if (cb_crc) {
-        // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime,
-        // including when the CRC for the codeblock is OK (from previous retransmissions), because we may need to
-        // decode it again if, eventually, we find out that the CRC of the entire transport block is KO.
-        decoder_pool->get().rate_match(rm_buffer, cb_llrs, current_config.new_data, cb_meta);
+    // Check current CRC status.
+    if (cb_crc) {
+      // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime,
+      // including when the CRC for the codeblock is OK (from previous retransmissions), because we may need to
+      // decode it again if, eventually, we find out that the CRC of the entire transport block is KO.
+      decoder_pool->get().rate_match(rm_buffer, cb_llrs, current_config.new_data, cb_meta);
 
-        if (cb_counter.fetch_sub(1) == 1) {
-          join_and_notify();
-        }
-        return;
-      }
-
-      // Try to decode.
-      optional<unsigned> nof_iters = decoder_pool->get().decode(message,
-                                                                rm_buffer,
-                                                                cb_llrs,
-                                                                current_config.new_data,
-                                                                block_crc->get_generator_poly(),
-                                                                current_config.use_early_stop,
-                                                                current_config.nof_ldpc_iterations,
-                                                                cb_meta);
-
-      if (nof_iters.has_value()) {
-        // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
-        cb_crc = true;
-        cb_stats.push_blocking(nof_iters.value());
-      } else {
-        cb_stats.push_blocking(current_config.nof_ldpc_iterations);
-      }
-
-      if (cb_counter.fetch_sub(1) == 1) {
+      if (cb_task_counter.fetch_sub(1) == 1) {
         join_and_notify();
       }
-
-      l1_tracer << trace_event("cb_decode", tp);
-    };
-
-    // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.
-    bool enqueued = false;
-    if ((executor != nullptr) && (nof_cbs > 1)) {
-      enqueued = executor->execute(cb_process_task);
+      return;
     }
 
-    // Process task synchronously if is not successfully enqueued.
-    if (!enqueued) {
-      cb_process_task();
+    // Try to decode.
+    optional<unsigned> nof_iters = decoder_pool->get().decode(message,
+                                                              rm_buffer,
+                                                              cb_llrs,
+                                                              current_config.new_data,
+                                                              block_crc->get_generator_poly(),
+                                                              current_config.use_early_stop,
+                                                              current_config.nof_ldpc_iterations,
+                                                              cb_meta);
+
+    if (nof_iters.has_value()) {
+      // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
+      cb_crc = true;
+      cb_stats.push_blocking(nof_iters.value());
+    } else {
+      cb_stats.push_blocking(current_config.nof_ldpc_iterations);
     }
+
+    if (cb_task_counter.fetch_sub(1) == 1) {
+      join_and_notify();
+    }
+
+    l1_tracer << trace_event("cb_decode", tp);
+  };
+
+  // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.
+  bool enqueued = false;
+  if ((executor != nullptr) && (nof_codeblocks > 1)) {
+    enqueued = executor->execute(cb_process_task);
+  }
+
+  // Process task synchronously if is not successfully enqueued.
+  if (!enqueued) {
+    cb_process_task();
   }
 }
 

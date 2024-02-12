@@ -71,9 +71,24 @@ private:
   /// \param[in] check_node The check node (in the base graph) the messages are coming from.
   void update_check_to_variable_messages(unsigned check_node);
 
-  /// Helper function for \ref update_check_to_variable_messages -  Returns a view to the portion of a buffer used to
-  /// store a cyclically shifted version of the variable-to-check messages from \c var_node to the current check node.
-  virtual span<log_likelihood_ratio> get_rotated_node(unsigned var_node) = 0;
+  /// Gets a view to a node soft bits.
+  span<log_likelihood_ratio> get_soft_bits(unsigned i_node)
+  {
+    return span<log_likelihood_ratio>(soft_bits).subspan(i_node * node_size_byte, node_size_byte);
+  }
+
+  /// Gets a view to the check-to-var message from layer (check node) \c i_layer to variable node \c i_node.
+  span<log_likelihood_ratio> get_check_to_var(unsigned i_layer, unsigned i_node)
+  {
+    return span<log_likelihood_ratio>(check_to_var[i_layer]).subspan(i_node * node_size_byte, node_size_byte);
+  }
+
+  /// Gets a view to the variable-to-check message from variable node \c i_node to the current layer (check node) after
+  /// applying a \c shift.
+  span<log_likelihood_ratio> get_var_to_check(unsigned i_node, unsigned shift)
+  {
+    return span<log_likelihood_ratio>(var_to_check).subspan(2 * i_node * node_size_byte + shift, node_size_byte);
+  }
 
   /// \brief Helper function for \ref update_check_to_variable_messages - Analyzes the variable-to-check messages for a
   /// check node.
@@ -88,19 +103,15 @@ private:
   /// \param[out] min_var_to_check_index  Buffer to store the index of the absolute minimum variable-to-check message.
   /// \param[out] sign_prod_var_to_check  Buffer to store the sign of the product of all the messages reaching the check
   ///                                     node.
-  /// \param[out] rotated_node            Buffer to store a cyclically-shifted version of the variable-to-check
+  /// \param[in]  rotated_node            Buffer with the cyclically-shifted version of the considered variable-to-check
   ///                                     messages.
-  /// \param[in]  this_var_to_check       Buffer with the variable-to-check messages for the considered check node.
-  /// \param[in]  shift                   Shift applied to the variable-to-check edges when lifting the base graph.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
   virtual void analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
                                          span<log_likelihood_ratio>       second_min_var_to_check,
                                          span<uint8_t>                    min_var_to_check_index,
                                          span<uint8_t>                    sign_prod_var_to_check,
-                                         span<log_likelihood_ratio>       rotated_node,
-                                         span<const log_likelihood_ratio> this_var_to_check,
-                                         unsigned                         shift,
+                                         span<const log_likelihood_ratio> rotated_node,
                                          unsigned                         var_node) = 0;
 
   /// \brief Helper function for \ref update_check_to_variable_messages - Computes the new check-to-variable messages.
@@ -201,8 +212,10 @@ private:
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding
   /// to the current (base graph) check node.
-  std::array<log_likelihood_ratio, static_cast<size_t>(MAX_CHECK_NODE_DEGREE* ldpc::MAX_LIFTING_SIZE)> var_to_check =
-      {};
+  /// \remark The factor 2 stems from the fact that we store two copies of all messages to facilitate their circular
+  ///         shift.
+  std::array<log_likelihood_ratio, static_cast<size_t>(2 * MAX_CHECK_NODE_DEGREE * ldpc::MAX_LIFTING_SIZE)>
+      var_to_check = {};
 
   /// Buffer to store the current value of the check-to-variable messages.
   std::array<std::array<log_likelihood_ratio, static_cast<size_t>(MAX_CHECK_NODE_DEGREE* ldpc::MAX_LIFTING_SIZE)>,
@@ -210,7 +223,7 @@ private:
       check_to_var;
 
   /// Initialization flags of check-to-variable messages: true if initialized.
-  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised;
+  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialized;
 };
 
 } // namespace srsran

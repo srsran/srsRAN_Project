@@ -54,18 +54,22 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
 
   sec_cfg = get_security_config_from_args(args_);
 
+  // SDU queue size;
+  const uint32_t rlc_sdu_queue = 256;
+
   // PDCP
-  pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args_);
-  pdcp_entity_creation_message pdcp_msg  = {};
-  pdcp_msg.ue_index                      = id;
-  pdcp_msg.rb_id                         = rb_id;
-  pdcp_msg.config                        = pdcp_cnfg;
-  pdcp_msg.tx_lower                      = f1ap.get();
-  pdcp_msg.tx_upper_cn                   = rrc.get();
-  pdcp_msg.rx_upper_dn                   = traffic_sink.get();
-  pdcp_msg.rx_upper_cn                   = rrc.get();
-  pdcp_msg.timers                        = timer_factory{timers, *ue_executor};
-  pdcp                                   = create_pdcp_entity(pdcp_msg);
+  pdcp_config pdcp_cnfg                 = get_pdcp_config_from_args(id, args_);
+  pdcp_cnfg.custom.tx.rlc_sdu_queue     = rlc_sdu_queue;
+  pdcp_entity_creation_message pdcp_msg = {};
+  pdcp_msg.ue_index                     = id;
+  pdcp_msg.rb_id                        = rb_id;
+  pdcp_msg.config                       = pdcp_cnfg;
+  pdcp_msg.tx_lower                     = f1ap.get();
+  pdcp_msg.tx_upper_cn                  = rrc.get();
+  pdcp_msg.rx_upper_dn                  = traffic_sink.get();
+  pdcp_msg.rx_upper_cn                  = rrc.get();
+  pdcp_msg.timers                       = timer_factory{timers, *ue_executor};
+  pdcp                                  = create_pdcp_entity(pdcp_msg);
   traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
   f1ap->set_pdcp_rx_lower(&pdcp->get_rx_lower_interface());
 
@@ -75,20 +79,32 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   rrc_rx_if.configure_security(sec_cfg);
 
   // RLC
-  rlc_config                  rlc_cnfg = get_rlc_config_from_args(args_);
-  rlc_entity_creation_message rlc_msg  = {};
-  rlc_msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
-  rlc_msg.rb_id                        = rb_id;
-  rlc_msg.rx_upper_dn                  = f1ap.get();
-  rlc_msg.tx_upper_cn                  = f1ap.get();
-  rlc_msg.tx_upper_dn                  = f1ap.get();
-  rlc_msg.tx_lower_dn                  = mac.get();
-  rlc_msg.config                       = rlc_cnfg;
-  rlc_msg.timers                       = &timers;
-  rlc_msg.pcell_executor               = pcell_executor.get();
-  rlc_msg.ue_executor                  = ue_executor.get();
-  rlc_msg.pcap_writer                  = &pcap;
-  rlc                                  = create_rlc_entity(rlc_msg);
+  rlc_config rlc_cnfg = get_rlc_config_from_args(args_);
+  switch (rlc_cnfg.mode) {
+    case rlc_mode::am:
+      rlc_cnfg.am.tx.queue_size = rlc_sdu_queue;
+      break;
+    case rlc_mode::um_bidir:
+    case rlc_mode::um_unidir_dl:
+      rlc_cnfg.um.tx.queue_size = rlc_sdu_queue;
+      break;
+    default:
+      report_fatal_error("Invalid RLC mode.");
+      break;
+  }
+  rlc_entity_creation_message rlc_msg = {};
+  rlc_msg.ue_index                    = static_cast<du_ue_index_t>(stack_id);
+  rlc_msg.rb_id                       = rb_id;
+  rlc_msg.rx_upper_dn                 = f1ap.get();
+  rlc_msg.tx_upper_cn                 = f1ap.get();
+  rlc_msg.tx_upper_dn                 = f1ap.get();
+  rlc_msg.tx_lower_dn                 = mac.get();
+  rlc_msg.config                      = rlc_cnfg;
+  rlc_msg.timers                      = &timers;
+  rlc_msg.pcell_executor              = pcell_executor.get();
+  rlc_msg.ue_executor                 = ue_executor.get();
+  rlc_msg.pcap_writer                 = &pcap;
+  rlc                                 = create_rlc_entity(rlc_msg);
   f1ap->set_rlc_tx_upper_data(rlc->get_tx_upper_layer_data_interface());
 
   mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());

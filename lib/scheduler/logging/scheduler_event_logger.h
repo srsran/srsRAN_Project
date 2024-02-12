@@ -89,6 +89,10 @@ public:
     ph_db_range                ph;
     optional<p_cmax_dbm_range> p_cmax;
   };
+  struct error_indication_event {
+    slot_point                            sl_tx;
+    scheduler_slot_handler::error_outcome outcome;
+  };
 
   scheduler_event_logger() :
     logger(srslog::fetch_basic_logger("SCHED")),
@@ -131,6 +135,8 @@ private:
   void enqueue_impl(const ue_creation_event& ue_request);
   void enqueue_impl(const ue_reconf_event& ue_request);
   void enqueue_impl(const sched_ue_delete_message& ue_request);
+
+  void enqueue_impl(const error_indication_event& err_ind);
 
   void enqueue_impl(const sr_event& sr);
   void enqueue_impl(const bsr_event& bsr);

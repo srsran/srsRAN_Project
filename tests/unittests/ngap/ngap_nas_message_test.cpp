@@ -21,6 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ran/cause.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
@@ -95,7 +96,7 @@ TEST_F(ngap_nas_message_routine_test, when_initial_context_setup_request_is_not_
 
   // tick timers
   // Status: NGAP does not receive new Initial Context Setup Request until ue_context_setup_timer has ended.
-  for (unsigned msec_elapsed = 0; msec_elapsed < cfg.ue_context_setup_timeout_s.count() * 1000; ++msec_elapsed) {
+  for (unsigned msec_elapsed = 0; msec_elapsed < cfg.ue_context_setup_timeout.count() * 1000; ++msec_elapsed) {
     this->tick();
   }
 

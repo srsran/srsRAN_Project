@@ -20,7 +20,6 @@
  *
  */
 
-#include "../../ran/gnb_format.h"
 #include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_reestablishment_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
@@ -29,7 +28,6 @@
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/ran/lcid.h"
 
 using namespace srsran;
@@ -45,6 +43,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
       logger.log_error(pdu.begin(), pdu.end(), "Failed to unpack CCCH UL PDU");
+      on_ue_release_required(cause_radio_network_t::unspecified);
       return;
     }
   }
@@ -62,16 +61,23 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
       break;
     default:
       logger.log_error("Unsupported CCCH UL message type");
-      // TODO Remove user
+      on_ue_release_required(cause_radio_network_t::unspecified);
   }
 }
 
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
   // Perform various checks to make sure we can serve the RRC Setup Request
-  if (reject_users) {
+  if (not cu_cp_notifier.on_ue_setup_request()) {
     logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
-    send_rrc_reject(rrc_reject_max_wait_time_s);
+    on_ue_release_required(cause_radio_network_t::unspecified);
+    return;
+  }
+
+  if (du_to_cu_container.empty()) {
+    // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
+    // TS 38.473 section 8.4.1.2.
+    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
     on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
@@ -94,9 +100,8 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       // TODO: communicate with NGAP
       break;
     default:
-      logger.log_error("Unsupported RRCSetupRequest");
-      send_rrc_reject(rrc_reject_max_wait_time_s);
-      on_ue_release_required(cause_protocol_t::unspecified);
+      logger.log_error("Unsupported RrcSetupRequest");
+      on_ue_release_required(cause_radio_network_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
@@ -188,7 +193,7 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "RX {} PDCP PDU", srb_id);
 
   if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UlDcchPdu. Rx {} is not set up", srb_id);
+    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UL-DCCH PDU. Rx {} is not set up", srb_id);
     return;
   }
 
@@ -220,7 +225,7 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
   // convert asn1 to common type
   rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
   // send measurement results to cell measurement manager
-  cell_meas_mng.report_measurement(context.ue_index, meas_results);
+  measurement_notifier.on_measurement_report(context.ue_index, meas_results);
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
@@ -252,7 +257,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(
-      context, msg, *this, ngap_ctrl_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
+      context, msg, *this, ngap_ctrl_notifier, du_processor_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
 uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
@@ -311,16 +316,47 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
   release_context.user_location_info.tai.tac     = context.cell.tac;
 
-  dl_dcch_msg_s dl_dcch_msg;
-  dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+  if (context.srbs.empty()) {
+    // SRB1 was not created, so we need to reject the UE
+    // Create and RrcReject container, see section 5.3.15 in TS 38.331
+    dl_ccch_msg_s dl_ccch_msg;
+    // SRB1 was not created, so we create a RRC Container with RrcReject
+    rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
 
-  // pack DL CCCH msg
-  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
-    logger.log_error("Can't create RRC Release PDU. RX {} is not set up", srb_id_t::srb1);
+    // See TS 38.331, RejectWaitTime
+    reject.wait_time_present = true;
+    reject.wait_time         = rrc_reject_max_wait_time_s;
+
+    // pack DL CCCH msg
+    release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg, "RRCReject");
+    release_context.srb_id          = srb_id_t::srb0;
+
+    // Log Tx message
+    log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_ccch_msg, "CCCH DL");
   } else {
-    release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
-    release_context.srb_id          = srb_id_t::srb1;
+    // prepare SRB1 RRC Release PDU to return
+    if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+      logger.log_error("Can't create RrcRelease PDU. RX {} is not set up", srb_id_t::srb1);
+      return release_context;
+    } else {
+      dl_dcch_msg_s dl_dcch_msg;
+      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+      // pack DL CCCH msg
+      release_context.rrc_release_pdu =
+          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+      release_context.srb_id = srb_id_t::srb1;
+
+      // Log Tx message
+      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
+    }
   }
+
+  // Log Tx message
+  logger.log_debug(release_context.rrc_release_pdu.begin(),
+                   release_context.rrc_release_pdu.end(),
+                   "TX {} PDU",
+                   release_context.srb_id);
 
   return release_context;
 }
@@ -328,7 +364,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
 optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(optional<rrc_meas_cfg> current_meas_config)
 {
   // (Re-)generate measurement config and return result.
-  context.meas_cfg = cell_meas_mng.get_measurement_config(context.cell.cgi.nci, current_meas_config);
+  context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
   return context.meas_cfg;
 }
 
@@ -387,16 +423,16 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   // pack RRC Reconfig
   rrc_recfg_s rrc_reconfig;
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);
-  byte_buffer reconfig_pdu = pack_into_pdu(rrc_reconfig);
+  byte_buffer reconfig_pdu = pack_into_pdu(rrc_reconfig, "RRCReconfiguration");
 
   ho_cmd_s ho_cmd;
   ho_cmd.crit_exts.set_c1().set_ho_cmd().ho_cmd_msg = reconfig_pdu.copy();
 
   // pack Handover Command
-  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd);
+  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd, "HandoverCommand");
 
   // Log message
-  logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RrcHandoverCommand ({} B)", ho_cmd_pdu.length());
+  logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RRCHandoverCommand ({} B)", ho_cmd_pdu.length());
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     ho_cmd.to_json(js);

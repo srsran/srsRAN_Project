@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gtpu/gtpu_demux.h"
@@ -95,7 +96,7 @@ public:
   virtual void stop() = 0;
 
   /// \brief Get the N3 bind port.
-  virtual int get_n3_bind_port() = 0;
+  virtual optional<uint16_t> get_n3_bind_port() = 0;
 };
 
 } // namespace srs_cu_up

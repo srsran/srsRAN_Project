@@ -27,6 +27,7 @@
 namespace srsran {
 namespace hal {
 
+/// PUSCH decoder hardware accelerator factory.
 class hw_accelerator_pusch_dec_factory
 {
 public:

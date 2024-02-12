@@ -38,6 +38,30 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
 
   supported_metrics.emplace(
+      "RRU.PrbAvailDl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl});
+
+  supported_metrics.emplace(
+      "RRU.PrbAvailUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul});
+
+  supported_metrics.emplace(
+      "RRU.PrbTotDl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl});
+
+  supported_metrics.emplace(
+      "RRU.PrbTotUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul});
+
+  supported_metrics.emplace("DRB.RlcSduDelayDl",
+                            e2sm_kpm_supported_metric_t{
+                                NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency});
+
+  supported_metrics.emplace(
       "DRB.PacketSuccessRateUlgNBUu",
       e2sm_kpm_supported_metric_t{
           NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate});
@@ -123,12 +147,14 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdus += metrics.rx.num_pdus;
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdu_bytes += metrics.rx.num_pdu_bytes;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdus += metrics.tx.num_sdus;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_of_pulled_sdus += metrics.tx.num_of_pulled_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdu_bytes += metrics.tx.num_sdu_bytes;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_dropped_sdus += metrics.tx.num_dropped_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discarded_sdus += metrics.tx.num_discarded_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discard_failures += metrics.tx.num_discard_failures;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus_no_segmentation += metrics.tx.num_pdus_no_segmentation;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes_no_segmentation += metrics.tx.num_pdu_bytes_no_segmentation;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx.sum_sdu_latency_us += metrics.tx.sum_sdu_latency_us;
     switch (ue_aggr_rlc_metrics[metrics.ue_index].tx.mode) {
       case rlc_mode::um_bidir:
       case rlc_mode::um_unidir_dl:
@@ -283,6 +309,85 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm_kpm::label_info_l
 
   meas_record_item_c meas_record_item;
   meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                                      const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                                      const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                                      std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (ue_metrics.nof_prbs - (int)ue_metrics.dl_prbs_used);
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                                      const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                                      const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                                      std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (ue_metrics.nof_prbs - (int)ue_metrics.ul_prbs_used);
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm_kpm::label_info_list_l       label_info_list,
+                                                         const std::vector<asn1::e2sm_kpm::ueid_c>&    ues,
+                                                         const srsran::optional<asn1::e2sm_kpm::cgi_c> cell_global_id,
+                                                         std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (double)ue_metrics.dl_prbs_used * 100 / ue_metrics.nof_prbs;
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm_kpm::label_info_list_l       label_info_list,
+                                                         const std::vector<asn1::e2sm_kpm::ueid_c>&    ues,
+                                                         const srsran::optional<asn1::e2sm_kpm::cgi_c> cell_global_id,
+                                                         std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (double)ue_metrics.ul_prbs_used * 100 / ue_metrics.nof_prbs;
   items.push_back(meas_record_item);
   meas_collected = true;
 
@@ -618,6 +723,61 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
       meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].rx.num_sdu_bytes * 8 / 1000; // unit is kbit
       items.push_back(meas_record_item);
       meas_collected = true;
+    }
+  }
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(
+    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcSduDelayDl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  if (ues.size() == 0) {
+    meas_record_item_c meas_record_item;
+    float              av_ue_sdu_latency_us = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      if (rlc_metric.second.tx.num_of_pulled_sdus && rlc_metric.second.tx.sum_sdu_latency_us) {
+        av_ue_sdu_latency_us +=
+            (float)rlc_metric.second.tx.sum_sdu_latency_us / (float)rlc_metric.second.tx.num_of_pulled_sdus;
+      }
+    }
+    if (av_ue_sdu_latency_us) {
+      meas_record_item.set_real();
+      meas_record_item.real().value = av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    } else {
+      logger.warning("Invalid RLC SDU latency value.");
+      return meas_collected;
+    }
+  } else {
+    for (auto& ue : ues) {
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+      if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
+        continue;
+      }
+      if (ue_aggr_rlc_metrics[ue_idx].tx.sum_sdu_latency_us) {
+        meas_record_item.set_real();
+        meas_record_item.real().value =
+            ue_aggr_rlc_metrics[ue_idx].tx.sum_sdu_latency_us / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
+        items.push_back(meas_record_item);
+        meas_collected = true;
+      } else {
+        logger.warning("Invalid RLC SDU latency value.");
+      }
     }
   }
   return meas_collected;

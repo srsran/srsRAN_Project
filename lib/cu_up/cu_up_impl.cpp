@@ -83,9 +83,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
   if (not ngu_gw->create_and_bind()) {
-    logger.error("Failed to create and connect NG-U gateway");
+    logger.error("Failed to create and connect N3 gateway");
   }
-  cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  bool success = cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  if (!success) {
+    logger.error("Failed to register N3 (GTP-U) network gateway at IO broker. socket_fd={}", ngu_gw->get_socket_fd());
+  }
 
   // Create TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};
@@ -161,6 +164,14 @@ void cu_up::stop()
   if (not std::exchange(running, false)) {
     return;
   }
+  logger.debug("CU-UP stopping...");
+
+  // CU-UP stops listening to new GTPU Rx PDUs.
+  if (ngu_gw) {
+    if (not cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd())) {
+      logger.warning("Failed to stop NG-U gateway socket");
+    }
+  }
 
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};
@@ -187,14 +198,12 @@ void cu_up::stop()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+
+  logger.info("CU-UP stopped successfully");
 }
 
 cu_up::~cu_up()
 {
-  if (ngu_gw) {
-    cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
-  }
-
   stop();
 }
 
@@ -357,7 +366,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return {};
   }
 
-  ue_ctxt->get_logger().log_debug("Handling bearer context modification request");
+  ue_ctxt->get_logger().log_debug("Handling BearerContextModificationRequest");
 
   e1ap_bearer_context_modification_response response = {};
   response.ue_index                                  = ue_ctxt->get_index();
@@ -369,7 +378,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
-      ue_ctxt->get_logger().log_debug("Setup/Modification of psi={}", pdu_session_item.pdu_session_id);
+      ue_ctxt->get_logger().log_debug("Setup/Modification of {}", pdu_session_item.pdu_session_id);
       pdu_session_setup_result session_result = ue_ctxt->setup_pdu_session(pdu_session_item);
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
       response.success &= session_result.success; // Update final result.
@@ -377,7 +386,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
-      ue_ctxt->get_logger().log_debug("Modifying psi={}", pdu_session_item.pdu_session_id);
+      ue_ctxt->get_logger().log_debug("Modifying {}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result session_result =
           ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
@@ -391,7 +400,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
     // Traverse list of PDU sessions to be removed.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
-      ue_ctxt->get_logger().log_info("Removing psi={}", pdu_session_item);
+      ue_ctxt->get_logger().log_info("Removing {}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
       // There is no IE to confirm successful removal.
     }

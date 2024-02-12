@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cell_meas_manager.h"
+#include "../cell_meas_manager/cell_meas_manager_impl.h"
+#include "../mobility_manager/mobility_manager_impl.h"
 
 namespace srsran {
 namespace srs_cu_cp {

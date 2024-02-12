@@ -1,9 +1,21 @@
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
-# By using this file, you agree to the terms and conditions set
-# forth in the LICENSE file which can be found at the top level of
-# the distribution.
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
 #
 
 """
@@ -13,7 +25,7 @@ Test Iperf
 import logging
 from collections import defaultdict
 from time import sleep
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -26,7 +38,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
-from .steps.stub import iperf, start_and_attach, stop
+from .steps.stub import iperf_parallel, start_and_attach, stop
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
@@ -170,7 +182,7 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
 def test_srsue(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -186,7 +198,7 @@ def test_srsue(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -232,7 +244,7 @@ def test_srsue(
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -248,7 +260,7 @@ def test_android(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -294,7 +306,7 @@ def test_android(
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -310,7 +322,7 @@ def test_android_hp(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -352,7 +364,7 @@ def test_android_hp(
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -368,7 +380,7 @@ def test_zmq_4x4_mimo(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1,),
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -410,10 +422,7 @@ def test_zmq_4x4_mimo(
 def test_zmq_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -431,7 +440,7 @@ def test_zmq_smoke(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -446,6 +455,7 @@ def test_zmq_smoke(
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
+        ue_stop_timeout=10,
     )
 
 
@@ -482,10 +492,7 @@ def test_zmq_smoke(
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -503,7 +510,7 @@ def test_zmq(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_32,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -549,10 +556,7 @@ def test_zmq(
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
-    ue_2: UEStub,
-    ue_3: UEStub,
-    ue_4: UEStub,
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -568,7 +572,7 @@ def test_rf(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -610,6 +614,7 @@ def _iperf(
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
     prach_config_index=-1,
+    ue_stop_timeout: int = 0,
 ):
     wait_before_power_off = 5
 
@@ -635,7 +640,7 @@ def _iperf(
 
     ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
 
-    iperf(
+    iperf_parallel(
         ue_attach_info_dict,
         fivegc,
         protocol,
@@ -646,4 +651,4 @@ def _iperf(
     )
 
     sleep(wait_before_power_off)
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)

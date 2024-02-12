@@ -116,7 +116,7 @@ public:
     // Checks if the thread is the main.
     if (std::this_thread::get_id() == main_thread_id) {
       if (!main_thread_ptr) {
-        report_fatal_error_if_not(queue.try_pop(main_thread_ptr), "Insufficient number of instances.");
+        report_fatal_error_if_not(queue.try_pop(main_thread_ptr), "Insufficient number of instances (main thread).");
       }
       return *main_thread_ptr;
     }

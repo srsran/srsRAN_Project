@@ -416,12 +416,13 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   // >> PUCCH Resource Set 1.
   dest_pucch_cfg.pucch_res_set.emplace_back();
   dest_pucch_cfg.pucch_res_set.back().pucch_res_set_id = 1;
-  dest_pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(1);
+  dest_pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(pucch_res_id_t{1, 1});
   // Remove first element.
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id = 12, .starting_prb = 40, .second_hop_prb = 50, .format = pucch_format::FORMAT_3};
+  pucch_resource res_basic{
+      .res_id = pucch_res_id_t{12, 12}, .starting_prb = 40, .second_hop_prb = 50, .format = pucch_format::FORMAT_3};
   res_basic.format = pucch_format::FORMAT_2;
   res_basic.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{.nof_symbols = 1, .starting_sym_idx = 13});
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
@@ -454,7 +455,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
                                                                           .sr_id        = uint_to_sched_req_id(1),
                                                                           .period       = sr_periodicity::sl_80,
                                                                           .offset       = 0,
-                                                                          .pucch_res_id = 1});
+                                                                          .pucch_res_id = pucch_res_id_t{1, 1}});
 
   // Remove first element.
   dest_pucch_cfg.sr_res_list.erase(dest_pucch_cfg.sr_res_list.begin());

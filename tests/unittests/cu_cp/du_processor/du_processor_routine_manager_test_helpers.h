@@ -24,7 +24,7 @@
 
 #include "../test_helpers.h"
 #include "lib/cu_cp/routine_managers/du_processor_routine_manager.h"
-#include "lib/cu_cp/ue_manager_impl.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/cu_cp/up_resource_manager/up_resource_manager_impl.h"
 #include <gtest/gtest.h>
 
@@ -48,13 +48,13 @@ protected:
   security_indication_t           default_security_indication = {};
   up_resource_manager_cfg         drb_cfg;
 
+  timer_manager                                         timers;
+  manual_task_worker                                    ctrl_worker{128};
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
   dummy_du_processor_f1ap_ue_context_notifier           f1ap_ue_ctxt_notifier;
   dummy_du_processor_ngap_control_notifier              ngap_control_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
-  ue_manager                                            ue_mng{ue_config, drb_cfg};
-  manual_task_worker                                    ctrl_worker{128};
-  timer_manager                                         timers;
+  ue_manager                                            ue_mng{ue_config, drb_cfg, timers, ctrl_worker};
   dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;
   dummy_du_processor_rrc_ue_srb_control_notifier        rrc_ue_srb_ctrl_notifier;
   dummy_ngap_ue_context_removal_handler                 ngap_ue_removal_handler;

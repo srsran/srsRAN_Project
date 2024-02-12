@@ -35,19 +35,21 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/test_utils.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
-#include "srsran/hal/phy/upper/channel_processors/pusch/hal_factories.h"
+#include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 #endif // HWACC_PUSCH_ENABLED
 #include <getopt.h>
 
 /// \cond
 using namespace srsran;
+using namespace units::literals;
 
 static bool     use_early_stop      = false;
 static unsigned nof_ldpc_iterations = 6;
@@ -163,6 +165,8 @@ static std::shared_ptr<pusch_decoder_factory> create_generic_pusch_decoder_facto
   pusch_decoder_factory_sw_config.decoder_factory   = ldpc_decoder_factory;
   pusch_decoder_factory_sw_config.dematcher_factory = ldpc_rate_dematcher_factory;
   pusch_decoder_factory_sw_config.segmenter_factory = segmenter_rx_factory;
+  pusch_decoder_factory_sw_config.nof_prb           = MAX_RB;
+  pusch_decoder_factory_sw_config.nof_layers        = pusch_constants::MAX_NOF_LAYERS;
   return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
 }
 
@@ -185,11 +189,11 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
   // Intefacing to the bbdev-based hardware-accelerator.
   dpdk::bbdev_acc_configuration bbdev_config;
-  bbdev_config.id                  = 0;
-  bbdev_config.nof_ldpc_enc_lcores = 0;
-  bbdev_config.nof_ldpc_dec_lcores = 1;
-  bbdev_config.nof_fft_lcores      = 0;
-  bbdev_config.nof_mbuf            = static_cast<unsigned>(pow(2, ceil(log(MAX_NOF_SEGMENTS) / log(2))));
+  bbdev_config.id                                    = 0;
+  bbdev_config.nof_ldpc_enc_lcores                   = 0;
+  bbdev_config.nof_ldpc_dec_lcores                   = 1;
+  bbdev_config.nof_fft_lcores                        = 0;
+  bbdev_config.nof_mbuf                              = static_cast<unsigned>(pow2(log2_ceil(MAX_NOF_SEGMENTS)));
   std::shared_ptr<dpdk::bbdev_acc> bbdev_accelerator = create_bbdev_acc(bbdev_config, logger);
   TESTASSERT(bbdev_accelerator);
 
@@ -200,8 +204,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
       create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);
 
-  // Set the hardware-accelerator configuration (neither the memory map, nor the debug configuration are used in the
-  // ACC100).
+  // Set the hardware-accelerator configuration.
   hw_accelerator_pusch_dec_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
@@ -217,16 +220,8 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
 static std::shared_ptr<pusch_decoder_factory> create_acc100_pusch_decoder_factory()
 {
-  // Software-based PUSCH decoder implementation.
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calculator_factory);
-
-  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
-  TESTASSERT(ldpc_decoder_factory);
-
-  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
-      create_ldpc_rate_dematcher_factory_sw("auto");
-  TESTASSERT(ldpc_rate_dematcher_factory);
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
   TESTASSERT(segmenter_rx_factory);
@@ -296,7 +291,7 @@ int main(int argc, char** argv)
     // extra margin.
     pool_config.max_codeblock_size   = static_cast<unsigned>(std::round(cws * 5 / nof_codeblocks));
     pool_config.nof_buffers          = 1;
-    pool_config.max_nof_codeblocks   = nof_codeblocks;
+    pool_config.nof_codeblocks       = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
     pool_config.external_soft_bits   = false;
 #ifdef HWACC_PUSCH_ENABLED
@@ -306,7 +301,7 @@ int main(int argc, char** argv)
 #endif // HWACC_PUSCH_ENABLED
 
     // Create Rx buffer pool.
-    std::unique_ptr<rx_buffer_pool> pool = create_rx_buffer_pool(pool_config);
+    std::unique_ptr<rx_buffer_pool_controller> pool = create_rx_buffer_pool(pool_config);
     TESTASSERT(pool);
 
     pusch_decoder::configuration dec_cfg = {};
@@ -315,6 +310,12 @@ int main(int argc, char** argv)
     dec_cfg.new_data            = true;
     dec_cfg.nof_ldpc_iterations = nof_ldpc_iterations;
     dec_cfg.use_early_stop      = use_early_stop;
+
+    // List of bit indexes within the codeword at which point the PUSCH decoder will be informed of the total number of
+    // UL-SCH CW bits. This enables the PUSCH decoder to start decoding codeblocks.
+    std::vector<units::bits> i_cw_decoding_start_list = {0_bits, units::bits((cws / 2) + 1), units::bits(cws - 1)};
+    unsigned                 cw_dec_start_idx         = 0;
+
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs.truncate_to_bytes().value());
@@ -327,7 +328,7 @@ int main(int argc, char** argv)
       dec_cfg.nof_layers = cfg.nof_layers;
 
       // Reserve buffer.
-      unique_rx_buffer buffer = pool->reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks);
+      unique_rx_buffer buffer = pool->get_pool().reserve({}, trx_buffer_identifier(0, 0), nof_codeblocks, true);
       TESTASSERT(buffer.is_valid());
 
       // Reset code blocks CRCs.
@@ -338,7 +339,25 @@ int main(int argc, char** argv)
       pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, std::move(buffer), decoder_notifier_spy, dec_cfg);
 
       // Feed codeword.
-      decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));
+      span<const log_likelihood_ratio> llrs_cw = span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws);
+
+      // Bit index within the CW at which point the set_nof_softbits decoder function will be called.
+      units::bits i_cw_dec_start = i_cw_decoding_start_list[cw_dec_start_idx];
+
+      if (i_cw_dec_start > 0_bits) {
+        // Feed bits before passing the number of UL-SCH CW bits to the decoder.
+        span<const log_likelihood_ratio> llrs_before_nof_softbits_call = llrs_cw.first(i_cw_dec_start.value());
+        decoder_buffer.on_new_softbits(llrs_before_nof_softbits_call);
+      }
+
+      if (i_cw_dec_start != units::bits(cws - 1)) {
+        // Pass the number of soft bits to the decoder.
+        decoder->set_nof_softbits(units::bits(cws));
+      }
+
+      // Feed the remaining softbits.
+      span<const log_likelihood_ratio> llrs_after_nof_softbits_call = llrs_cw.last(cws - i_cw_dec_start.value());
+      decoder_buffer.on_new_softbits(llrs_after_nof_softbits_call);
       decoder_buffer.on_end_softbits();
 
       // Extract decoding results.
@@ -362,6 +381,9 @@ int main(int argc, char** argv)
                       dec_stats.ldpc_decoder_stats.get_min(),
                       "Something wrong with iteration counting (no early stop).");
       }
+
+      ++cw_dec_start_idx;
+      cw_dec_start_idx %= i_cw_decoding_start_list.size();
     }
   }
 }

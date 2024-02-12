@@ -40,7 +40,14 @@ bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_it
 {
   e2sm_action_definition action_def =
       e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
-
+  if (action_def.service_model != e2sm_service_model_t::KPM) {
+    logger.error("Unknown service model {} -> do not admit action {}  (type {})",
+                 action_def.service_model,
+                 ric_action.ric_action_id,
+                 ric_action.ric_action_type);
+    return false;
+  }
+  logger.info("Admitting action {} (type {})", ric_action.ric_action_id, ric_action.ric_action_type);
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
       variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
 
@@ -225,7 +232,11 @@ bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_def
 std::unique_ptr<e2sm_report_service>
 e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
 {
-  e2sm_action_definition         action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  e2sm_action_definition action_def = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  if (action_def.service_model != e2sm_service_model_t::KPM) {
+    logger.info("Unknown service model {}", action_def.service_model);
+    return nullptr;
+  }
   e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
       variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;

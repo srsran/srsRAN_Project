@@ -47,7 +47,7 @@ public:
     if (!executor.execute(
             [this, context, &grid]() { data_flow_uplane->enqueue_section_type_1_message(context, grid); })) {
       srslog::fetch_basic_logger("OFH").warning(
-          "Failed to dispatch message in the downlink data flow User-Plane for slot={}", context.slot);
+          "Failed to dispatch message in the downlink data flow User-Plane for slot '{}'", context.slot);
     }
   }
 

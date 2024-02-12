@@ -231,7 +231,7 @@ public:
   /// \param[in] nof_re     Number of resource elements.
   /// \remark An assertion is triggered if the number of slices exceeds \c MaxNofSlices.
   /// \remark An assertion is triggered if the number of resource elements exceeds \c MaxNofRe.
-  static_re_buffer(unsigned nof_slices, unsigned nof_re) { resize(nof_slices, nof_re); }
+  static_re_buffer(unsigned nof_slices, unsigned nof_re) : data({nof_re, nof_slices}) {}
 
   /// \brief Resizes the number of coefficients to a desired number of slices and ports.
   /// \param[in] nof_slices Number of slices.

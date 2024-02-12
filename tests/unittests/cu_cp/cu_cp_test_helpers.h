@@ -84,8 +84,9 @@ protected:
 
   dummy_ngap_amf_notifier        ngap_amf_notifier;
   std::unique_ptr<timer_manager> timers = std::make_unique<timer_manager>(256);
+  manual_task_worker             ctrl_worker{128};
 
-  manual_task_worker ctrl_worker{128};
+  std::unique_ptr<ngap_message_handler> dummy_amf;
 
   std::unique_ptr<cu_cp_impl> cu_cp_obj;
 

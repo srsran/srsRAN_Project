@@ -24,6 +24,7 @@
 #include "../ue_context/f1ap_du_ue_manager.h"
 #include "f1ap_du_ue_context_common.h"
 #include "proc_logger.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;

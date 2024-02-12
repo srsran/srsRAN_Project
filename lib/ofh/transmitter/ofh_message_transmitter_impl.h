@@ -89,8 +89,8 @@ public:
   void on_new_symbol(slot_symbol_point symbol_point) override;
 
 private:
-  /// Transmits enqueued messages for the given slot symbol point, message type and direction.
-  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type, data_direction direction);
+  /// Transmits enqueued messages for the given interval of slot symbol points.
+  void transmit_enqueued_messages(const ether::frame_pool_interval& interval);
 
   /// Logs the messages that could not be sent due the transmission window closed.
   void log_late_messages_on_tx_window_close(slot_symbol_point symbol_point);

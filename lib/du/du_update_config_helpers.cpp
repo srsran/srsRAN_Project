@@ -96,3 +96,34 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
 
   return prach_f_start + pucch_to_prach_guardband;
 }
+
+void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params& user_params,
+                                                          unsigned              max_pucch_grants_per_slot,
+                                                          unsigned              sr_period_msec,
+                                                          optional<unsigned>    csi_period_msec)
+{
+  // [Implementation-defined] In the following, we compute the estimated number of PUCCH resources that are needed for
+  // SR and CSI; we assume we cannot allocate more than max_pucch_grants_per_slot - 1U (1 is reserved for HARQ-ACK)
+  // overall SR and CSI per slot, and the required resources are weighted based on CSI and SR period, respectively
+  // (i.e., if the SR period is half of the CSI's, we allocate twice the resources to SR).
+  // If the CSI is not enabled, we only allocate resources for SR.
+
+  const unsigned max_pucch_grants_per_sr_csi = max_pucch_grants_per_slot - 1U;
+
+  if (csi_period_msec.has_value()) {
+    const unsigned required_nof_sr_resources = static_cast<double>(
+        std::ceil(static_cast<double>(max_pucch_grants_per_sr_csi * csi_period_msec.value()) /
+                  (static_cast<double>(sr_period_msec) + static_cast<double>(csi_period_msec.value()))));
+
+    user_params.nof_sr_resources = std::min(required_nof_sr_resources, user_params.nof_sr_resources);
+
+    const unsigned required_nof_csi_resources = static_cast<double>(
+        std::ceil(static_cast<double>(max_pucch_grants_per_sr_csi * sr_period_msec) /
+                  (static_cast<double>(sr_period_msec) + static_cast<double>(csi_period_msec.value()))));
+
+    user_params.nof_csi_resources = std::min(required_nof_csi_resources, user_params.nof_csi_resources);
+  } else {
+    user_params.nof_sr_resources  = std::min(max_pucch_grants_per_sr_csi, user_params.nof_sr_resources);
+    user_params.nof_csi_resources = 0;
+  }
+}

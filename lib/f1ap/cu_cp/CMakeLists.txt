@@ -22,6 +22,7 @@
 add_library(srsran_f1ap_cu
         f1ap_cu_impl.cpp
         f1ap_cu_factory.cpp
+        procedures/f1_setup_procedure.cpp
         procedures/ue_context_setup_procedure.cpp
         procedures/ue_context_modification_procedure.cpp
         procedures/ue_context_release_procedure.cpp)

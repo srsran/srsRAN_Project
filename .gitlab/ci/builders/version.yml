@@ -1,10 +1,20 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 builder version:
   stage: ci
   image: ubuntu:22.04
   rules:
     - if: $ON_MR
     - if: $ON_WEB
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $ON_API
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
     - if: $CI_DESCRIPTION =~ /Weekly/
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   script:
@@ -20,10 +30,10 @@ builder version:
 
         # Clean up the temporary archive
         rm "$temp_archive"
-      }
+      } 
     - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders)
     - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
-    - echo $DOCKER_BUILDER_VERSION
+    - echo ${DOCKER_BUILDER_VERSION}
   artifacts:
     reports:
       dotenv: builder.env

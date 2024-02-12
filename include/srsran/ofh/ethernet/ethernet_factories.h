@@ -45,7 +45,6 @@ std::unique_ptr<gateway> create_gateway(const gw_config& config, srslog::basic_l
 std::unique_ptr<receiver> create_receiver(const std::string&    interface,
                                           bool                  is_promiscuous_mode_enabled,
                                           task_executor&        executor,
-                                          frame_notifier&       notifier,
                                           srslog::basic_logger& logger);
 
 /// Creates an Ethernet VLAN frame builder.

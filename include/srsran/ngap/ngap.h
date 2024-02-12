@@ -86,17 +86,16 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
-/// Interface to notify about NGAP connections to the CU-CP
-class ngap_cu_cp_connection_notifier
+/// Interface to notify the CU-CP about an NGAP UE creation.
+class ngap_cu_cp_ue_creation_notifier
 {
 public:
-  virtual ~ngap_cu_cp_connection_notifier() = default;
+  virtual ~ngap_cu_cp_ue_creation_notifier() = default;
 
-  /// \brief Notifies the CU-CP about a successful AMF connection.
-  virtual void on_amf_connection() = 0;
-
-  /// \brief Notifies the CU-CP about a dropped AMF connection.
-  virtual void on_amf_connection_drop() = 0;
+  /// \brief Notifies the CU-CP about a new NGAP UE.
+  /// \param[in] ue_index The index of the new NGAP UE.
+  /// \returns True if the UE was successfully created, false otherwise.
+  virtual bool on_new_ngap_ue(ue_index_t ue_index) = 0;
 };
 
 /// Interface to communication with the DU repository
@@ -139,8 +138,9 @@ public:
 
   /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
   /// \param[in] msg The ue context release request to transmit.
-  /// \returns True if successful, false otherwise.
-  virtual bool handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+  /// \returns True if if a UeContextReleaseRequest was sent to the AMF, false if the UeContextReleaseRequest could not
+  /// be sent e.g. because the UE didn't exist in the NGAP.
+  virtual async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
   virtual async_task<ngap_handover_preparation_response>
@@ -209,7 +209,7 @@ public:
   /// \param[in] command the UE Context Release Command.
   /// \returns The UE Context Release Complete.
   virtual async_task<cu_cp_ue_context_release_complete>
-  on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) = 0;
+  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
 };
 
 /// Interface to control the NGAP.
@@ -217,16 +217,6 @@ class ngap_ue_control_manager
 {
 public:
   virtual ~ngap_ue_control_manager() = default;
-
-  /// \brief Creates a NGAP UE.
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] rrc_ue_pdu_notifier The pdu notifier to the RRC UE.
-  /// \param[in] rrc_ue_ctrl_notifier The control notifier to the RRC UE.
-  /// \param[in] du_processor_ctrl_notifier The pdu notifier to the DU processor.
-  virtual void create_ngap_ue(ue_index_t                          ue_index,
-                              ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                              ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                              ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 
   /// \brief Updates the NGAP UE context with a new UE index.
   /// \param[in] new_ue_index The new index of the UE.

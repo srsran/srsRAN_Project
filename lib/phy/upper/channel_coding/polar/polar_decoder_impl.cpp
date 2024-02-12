@@ -63,7 +63,7 @@ static void vec_function_g(span<log_likelihood_ratio>       z,
 /// Vectorial form of soft-to-hard bit conversion.
 static void vec_hard_bit(span<log_likelihood_ratio> x, span<uint8_t> z)
 {
-  assert(x.size() == z.size());
+  srsran_assert(x.size() == z.size(), "Input span sizes must be identical");
 
   std::transform(x.begin(), x.end(), z.begin(), [](log_likelihood_ratio a) { return a.to_hard_bit(); });
 }

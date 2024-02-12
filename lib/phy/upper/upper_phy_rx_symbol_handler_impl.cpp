@@ -148,8 +148,11 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   // Determine the number of codeblocks from the TBS and base graph.
   unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(pdu.tb_size.to_bits(), proc_pdu.codeword->ldpc_base_graph);
 
+  // Extract new data flag.
+  bool new_data = proc_pdu.codeword->new_data;
+
   // Reserve receive buffer.
-  unique_rx_buffer buffer = rm_buffer_pool.reserve(slot, id, nof_codeblocks);
+  unique_rx_buffer buffer = rm_buffer_pool.reserve(slot, id, nof_codeblocks, new_data);
 
   // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
   if (!buffer.is_valid()) {

@@ -25,7 +25,7 @@
 // This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsLDPCRateMatcherUnittest.m"
 
-#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/support/file_vector.h"
 
 namespace srsran {

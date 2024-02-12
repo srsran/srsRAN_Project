@@ -43,6 +43,7 @@
 #include "lib/du_high/du_high_impl.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1u/du/f1u_gateway.h"
@@ -61,7 +62,7 @@ struct bench_params {
   /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
   unsigned nof_repetitions = 100;
   /// \brief Number to DU UEs to consider for benchmark.
-  unsigned nof_ues = 1;
+  std::vector<unsigned> nof_ues = {1};
   /// \brief Set duplex mode (FDD or TDD) to use for benchmark.
   duplex_mode dplx_mode = duplex_mode::FDD;
   /// \brief Set the number of bytes pushed to the DU DL F1-U interface per slot.
@@ -75,16 +76,18 @@ struct bench_params {
   /// \brief Maximum number of RBs per UE DL grant per slot.
   unsigned max_dl_rb_grant = MAX_NOF_PRBS;
   /// \brief Logical cores used by the "du_cell" thread.
-  std::vector<unsigned> du_cell_cores = {0, 1};
+  std::vector<unsigned> du_cell_cores = {};
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL bytes per slot] [-u UL BSR] [-r Max RBs "
-             "per UE DL grant]\n",
+             "per UE DL grant] [-a CPU affinity]\n",
              prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
-  fmt::print("\t-U Nof. DU UEs [Default {}]\n", params.nof_ues);
+  fmt::print("\t-U Nof. DU UEs for each simulation (e.g. \"1,5,10\" would run three benchmarks with 1, 5 and 10 UEs) "
+             "[Default {}]\n",
+             params.nof_ues);
   fmt::print("\t-D Duplex mode (FDD/TDD) [Default {}]\n", to_string(params.dplx_mode));
   fmt::print("\t-d Number of bytes pushed to the DU DL F1-U interface every slot. Setting this value to 0 will "
              "disable DL Tx. [Default {}]\n",
@@ -93,21 +96,34 @@ static void usage(const char* prog, const bench_params& params)
              "[Default {}]\n",
              params.ul_bsr_bytes);
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
-  fmt::print("\t-c \"du_cell\" cores that the benchmark should use [Default 0,1]\n");
+  fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
   fmt::print("\t-h Show this message\n");
+}
+
+template <typename Func, typename Ret = decltype(std::declval<Func>()(std::string{}))>
+static std::vector<Ret> tokenize(const std::string& s, Func&& func)
+{
+  std::vector<Ret>   tokens;
+  std::string        token;
+  std::istringstream tokenStream(s);
+  while (std::getline(tokenStream, token, ',')) {
+    tokens.push_back(func(token));
+  }
+  return tokens;
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:c:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
-      case 'U':
-        params.nof_ues = std::strtol(optarg, nullptr, 10);
-        break;
+      case 'U': {
+        params.nof_ues = tokenize(
+            optarg, [](const std::string& token) -> unsigned { return std::strtol(token.c_str(), nullptr, 10); });
+      } break;
       case 'D': {
         if (std::string(optarg) == "FDD") {
           params.dplx_mode = duplex_mode::FDD;
@@ -128,7 +144,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'r':
         params.max_dl_rb_grant = std::strtol(optarg, nullptr, 10);
         break;
-      case 'c': {
+      case 'a': {
         std::string optstr{optarg};
         if (optstr.find(",") != std::string::npos) {
           size_t pos = optstr.find(",");
@@ -344,8 +360,10 @@ struct du_high_single_cell_worker_manager {
   static os_sched_affinity_bitmask get_du_cell_affinity_mask(span<const unsigned> du_cell_cores)
   {
     os_sched_affinity_bitmask mask;
-    for (auto core : du_cell_cores) {
-      mask.set(core);
+    if (not du_cell_cores.empty()) {
+      for (auto core : du_cell_cores) {
+        mask.set(core);
+      }
     }
     return mask;
   }
@@ -353,9 +371,11 @@ struct du_high_single_cell_worker_manager {
   static os_sched_affinity_bitmask get_other_affinity_mask(span<const unsigned> du_cell_cores)
   {
     os_sched_affinity_bitmask mask;
-    for (unsigned i = 0; i != mask.size(); ++i) {
-      if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
-        mask.set(i);
+    if (not du_cell_cores.empty()) {
+      for (unsigned i = 0; i != mask.size(); ++i) {
+        if (std::find(du_cell_cores.begin(), du_cell_cores.end(), i) == du_cell_cores.end()) {
+          mask.set(i);
+        }
       }
     }
     return mask;
@@ -539,6 +559,7 @@ public:
     cfg.cells                      = {config_helpers::make_default_du_cell_config(params)};
     cfg.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
     cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
+    cfg.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.qos                        = config_helpers::make_default_du_qos_config_list(1000);
     cfg.mac_p                      = &mac_pcap;
     cfg.rlc_p                      = &rlc_pcap;
@@ -552,6 +573,9 @@ public:
     cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets = 4;
     cfg.cells[0].pucch_cfg.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
     cfg.cells[0].pucch_cfg.f1_params.occ_supported      = true;
+    cfg.sched_cfg.ue.max_pucchs_per_slot                = 61;
+    cfg.sched_cfg.ue.max_puschs_per_slot                = 61;
+    cfg.sched_cfg.ue.max_ul_grants_per_slot             = 64;
 
     du_hi = std::make_unique<du_high_impl>(cfg);
 
@@ -767,7 +791,7 @@ public:
                (sim_phy.metrics.nof_ul_grants ==
                 sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f1.sr_info.emplace();
-            f1.sr_info->sr_detected = true;
+            f1.sr_info->detected = true;
           }
           uci_pdu.pdu = f1;
         } break;
@@ -775,7 +799,7 @@ public:
           mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
           if (pucch.format_2.harq_ack_nof_bits > 0) {
             f2.harq_info.emplace();
-            f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+            f2.harq_info->is_valid = true;
             f2.harq_info->payload.resize(pucch.format_2.harq_ack_nof_bits);
             f2.harq_info->payload.fill(0, pucch.format_2.harq_ack_nof_bits, true);
           }
@@ -790,12 +814,10 @@ public:
             f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
           }
           if (pucch.csi_rep_cfg.has_value()) {
-            f2.uci_part1_or_csi_part1_info.emplace();
-            f2.uci_part1_or_csi_part1_info->status       = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-            f2.uci_part1_or_csi_part1_info->payload_type = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::
-                uci_payload_or_csi_information::payload_type_t::csi_part_payload;
-            f2.uci_part1_or_csi_part1_info->payload.resize(4);
-            f2.uci_part1_or_csi_part1_info->payload.fill(0, 4, true);
+            f2.csi_part1_info.emplace();
+            f2.csi_part1_info->is_valid = true;
+            f2.csi_part1_info->payload.resize(4);
+            f2.csi_part1_info->payload.fill(0, 4, true);
           }
           uci_pdu.pdu = f2;
         } break;
@@ -889,13 +911,13 @@ public:
         mac_uci_pdu::pusch_type push_uci{};
         if (pusch.uci->harq->harq_ack_nof_bits > 0) {
           push_uci.harq_info.emplace();
-          push_uci.harq_info->harq_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          push_uci.harq_info->is_valid = true;
           push_uci.harq_info->payload.resize(pusch.uci->harq->harq_ack_nof_bits);
           push_uci.harq_info->payload.fill(0, pusch.uci->harq->harq_ack_nof_bits, true);
         }
         if (pusch.uci->csi->csi_part1_nof_bits > 0) {
           push_uci.csi_part1_info.emplace();
-          push_uci.csi_part1_info->csi_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          push_uci.csi_part1_info->is_valid = true;
           push_uci.csi_part1_info->payload.resize(pusch.uci->csi->csi_part1_nof_bits);
           push_uci.csi_part1_info->payload.fill(0, pusch.uci->csi->csi_part1_nof_bits, true);
         }
@@ -928,7 +950,6 @@ public:
     for (const ul_sched_info& pusch : sim_phy.slot_ul_result.ul_res->puschs) {
       mac_crc_pdu& crc_pdu   = crc.crcs.emplace_back();
       crc_pdu.rnti           = pusch.pusch_cfg.rnti;
-      crc_pdu.rapid          = 0;
       crc_pdu.harq_id        = pusch.pusch_cfg.harq_id;
       crc_pdu.tb_crc_success = true;
       crc_pdu.ul_sinr_metric = 21.0;
@@ -1098,21 +1119,23 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
   }
 
   // Set main test thread to use same cores as du_cell.
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  for (unsigned i : du_cell_cores) {
-    CPU_SET(i, &cpuset);
-  }
-  int ret;
-  if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
-    fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
-    return;
+  if (not du_cell_cores.empty()) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    for (unsigned i : du_cell_cores) {
+      CPU_SET(i, &cpuset);
+    }
+    int ret;
+    if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
+      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
+      return;
+    }
   }
 }
 
 int main(int argc, char** argv)
 {
-  static const std::size_t byte_buffer_nof_segments = 1U << 18U;
+  static const std::size_t byte_buffer_nof_segments = 1U << 19U;
   static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
@@ -1146,13 +1169,17 @@ int main(int argc, char** argv)
   benchmarker bm("DU-High", params.nof_repetitions);
 
   // Run scenarios.
-  benchmark_dl_ul_only_rlc_um(bm,
-                              params.nof_ues,
-                              params.dplx_mode,
-                              params.dl_bytes_per_slot,
-                              params.ul_bsr_bytes,
-                              params.max_dl_rb_grant,
-                              params.du_cell_cores);
+  const unsigned nof_scenarios = params.nof_ues.size();
+
+  for (unsigned sim_idx = 0; sim_idx != nof_scenarios; ++sim_idx) {
+    benchmark_dl_ul_only_rlc_um(bm,
+                                params.nof_ues[sim_idx],
+                                params.dplx_mode,
+                                params.dl_bytes_per_slot,
+                                params.ul_bsr_bytes,
+                                params.max_dl_rb_grant,
+                                params.du_cell_cores);
+  }
 
   if (not tracing_filename.empty()) {
     fmt::print("Closing event tracer...\n");

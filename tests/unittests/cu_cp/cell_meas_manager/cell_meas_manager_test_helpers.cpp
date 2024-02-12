@@ -42,7 +42,7 @@ cell_meas_manager_test::~cell_meas_manager_test()
 void cell_meas_manager_test::create_empty_manager()
 {
   cell_meas_manager_cfg cfg = {};
-  manager                   = create_cell_meas_manager(cfg, mobility_manager);
+  manager                   = std::make_unique<cell_meas_manager>(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 
@@ -133,7 +133,7 @@ void cell_meas_manager_test::create_default_manager()
   a3_report_cfg.event_triggered = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
-  manager = create_cell_meas_manager(cfg, mobility_manager);
+  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 
@@ -183,7 +183,7 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   a3_report_cfg.event_triggered = event_trigger_cfg;
   cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
 
-  manager = create_cell_meas_manager(cfg, mobility_manager);
+  manager = std::make_unique<cell_meas_manager>(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 

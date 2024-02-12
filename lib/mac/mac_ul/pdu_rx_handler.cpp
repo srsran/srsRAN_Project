@@ -363,7 +363,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
         }
 
         // >> Notify scheduler of received C-RNTI CE.
-        sched.handle_crnti_ce_indication(new_ctx.ue_index);
+        sched.handle_crnti_ce_indication(new_ctx.ue_index, new_ctx.cell_index_rx);
 
         // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
         // procedure, as per TS 38.321, Section 5.1.5.

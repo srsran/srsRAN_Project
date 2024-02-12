@@ -22,6 +22,7 @@
 
 #include "lib/rlc/rlc_rx_tm_entity.h"
 #include "rlc_test_helpers.h"
+#include "srsran/rlc/rlc_srb_config_factory.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -62,7 +63,8 @@ protected:
     tester = std::make_unique<rlc_rx_tm_test_frame>();
 
     // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_rx_tm_entity>(0, du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, true, pcap);
+    rlc = std::make_unique<rlc_rx_tm_entity>(
+        0, du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, make_default_srb0_rlc_config().tm.rx, *tester, true, pcap);
   }
 
   void TearDown() override

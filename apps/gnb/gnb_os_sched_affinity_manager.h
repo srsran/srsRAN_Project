@@ -65,10 +65,12 @@ inline gnb_sched_affinity_mask_types to_affinity_mask_type(unsigned value)
 
 /// CPU affinity configuration in the gNB app.
 struct gnb_os_sched_affinity_config {
+  /// Affinity type.
+  gnb_sched_affinity_mask_types type = gnb_sched_affinity_mask_types::last;
   /// Affinity mask.
   os_sched_affinity_bitmask mask;
   /// Thread pinning policy.
-  gnb_sched_affinity_mask_policy pinning_policy = gnb_sched_affinity_mask_policy::mask;
+  gnb_sched_affinity_mask_policy pinning_policy = gnb_sched_affinity_mask_policy::last;
 };
 
 /// \brief Scheduler affinity mask manager.
@@ -130,23 +132,20 @@ class gnb_os_sched_affinity_manager
   };
 
 public:
-  gnb_os_sched_affinity_manager(const std::vector<gnb_os_sched_affinity_config>& entries)
+  gnb_os_sched_affinity_manager(const std::vector<gnb_os_sched_affinity_config>& entries) :
+    cpu_masks(to_unsigned(gnb_sched_affinity_mask_types::last))
   {
-    srsran_assert(entries.size() == to_unsigned(gnb_sched_affinity_mask_types::last),
-                  "Invalid number of CPU affinity masks received. Got '{}' while expected '{}' ",
-                  entries.size(),
-                  to_unsigned(gnb_sched_affinity_mask_types::last));
-
     for (const auto& entry : entries) {
+      srsran_assert(entry.type != gnb_sched_affinity_mask_types::last, "Invalid type '{}'", to_unsigned(entry.type));
       switch (entry.pinning_policy) {
         case gnb_sched_affinity_mask_policy::round_robin:
-          cpu_masks.push_back(std::make_unique<affinity_entry_rr>(entry.mask));
+          cpu_masks[to_unsigned(entry.type)] = std::make_unique<affinity_entry_rr>(entry.mask);
           break;
         case gnb_sched_affinity_mask_policy::mask:
-          cpu_masks.push_back(std::make_unique<affinity_entry_mask>(entry.mask));
+          cpu_masks[to_unsigned(entry.type)] = std::make_unique<affinity_entry_mask>(entry.mask);
           break;
         default:
-          srsran_assert(0, "Invalid affinity mask policy={}", entry.pinning_policy);
+          cpu_masks[to_unsigned(entry.type)] = nullptr;
       }
     }
   }
@@ -155,6 +154,7 @@ public:
   os_sched_affinity_bitmask calcute_affinity_mask(gnb_sched_affinity_mask_types type)
   {
     srsran_assert(type != gnb_sched_affinity_mask_types::last, "Invalid type '{}'", to_unsigned(type));
+    srsran_assert(cpu_masks[to_unsigned(type)], "Invalid manager for type '{}'", to_unsigned(type));
 
     return cpu_masks[to_unsigned(type)]->calculate_mask();
   }

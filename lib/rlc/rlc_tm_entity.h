@@ -34,6 +34,7 @@ public:
   rlc_tm_entity(uint32_t                             du_index_,
                 du_ue_index_t                        ue_index_,
                 rb_id_t                              rb_id_,
+                const rlc_tm_config&                 config,
                 timer_duration                       metrics_period_,
                 rlc_metrics_notifier*                rlc_metrics_notifier_,
                 rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
@@ -51,17 +52,18 @@ public:
                     rlc_metrics_notifier_,
                     timer_factory{timers, ue_executor})
   {
-    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(du_index_,
-                                                             ue_index_,
-                                                             rb_id_,
-                                                             tx_upper_dn,
-                                                             tx_upper_cn,
-                                                             tx_lower_dn,
-                                                             pcell_executor,
-                                                             metrics_period.count() != 0,
-                                                             pcap));
-    rx = std::unique_ptr<rlc_rx_entity>(
-        new rlc_rx_tm_entity(du_index_, ue_index_, rb_id_, rx_upper_dn, metrics_period.count() != 0, pcap));
+    tx = std::make_unique<rlc_tx_tm_entity>(du_index_,
+                                            ue_index_,
+                                            rb_id_,
+                                            config.tx,
+                                            tx_upper_dn,
+                                            tx_upper_cn,
+                                            tx_lower_dn,
+                                            pcell_executor,
+                                            metrics_period.count() != 0,
+                                            pcap);
+    rx = std::make_unique<rlc_rx_tm_entity>(
+        du_index_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_period.count() != 0, pcap);
   }
 };
 

@@ -131,21 +131,21 @@ static inline void convert_if_simd(const int16_t* x, float* z, float scale, unsi
 
 void srsran::srsvec::convert(span<const cf_t> x, float scale, span<int16_t> z)
 {
-  assert(2 * x.size() == z.size());
+  srsran_assert(2 * x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd((const float*)x.data(), z.data(), scale, z.size());
 }
 
 void srsran::srsvec::convert_round(span<const cf_t> x, float scale, span<int16_t> z)
 {
-  assert(2 * x.size() == z.size());
+  srsran_assert(2 * x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd</*ROUND =*/true>((const float*)x.data(), z.data(), scale, z.size());
 }
 
 void srsran::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t> z)
 {
-  assert(2 * x.size() == z.size());
+  srsran_assert(2 * x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd((const float*)x.data(), z.data(), scale, z.size());
 
@@ -159,14 +159,14 @@ void srsran::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t>
 
 void srsran::srsvec::convert(span<const int16_t> x, float scale, span<cf_t> z)
 {
-  assert(x.size() == 2 * z.size());
+  srsran_assert(x.size() == 2 * z.size(), "Invalid input or output span sizes");
 
   convert_if_simd(x.data(), (float*)z.data(), scale, x.size());
 }
 
 void srsran::srsvec::convert_swap(span<const int16_t> x, float scale, span<cf_t> z)
 {
-  assert(x.size() == 2 * z.size());
+  srsran_assert(x.size() == 2 * z.size(), "Invalid input or output span sizes");
 
   convert_if_simd(x.data(), (float*)z.data(), scale, x.size());
 
@@ -179,21 +179,21 @@ void srsran::srsvec::convert_swap(span<const int16_t> x, float scale, span<cf_t>
 
 void srsran::srsvec::convert(span<const float> x, float scale, span<int16_t> z)
 {
-  assert(x.size() == z.size());
+  srsran_assert(x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd(x.data(), z.data(), scale, z.size());
 }
 
 void srsran::srsvec::convert_round(span<const float> x, float scale, span<int16_t> z)
 {
-  assert(x.size() == z.size());
+  srsran_assert(x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd</*ROUND =*/true>(x.data(), z.data(), scale, z.size());
 }
 
 void srsran::srsvec::convert(span<const int16_t> x, float scale, span<float> z)
 {
-  assert(x.size() == z.size());
+  srsran_assert(x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_if_simd(x.data(), z.data(), scale, z.size());
 }

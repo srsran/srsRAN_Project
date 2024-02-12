@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cu_cp_metrics_handler.h"
 #include "cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_repository.h"
 #include "srsran/cu_cp/du_repository.h"
@@ -30,19 +31,6 @@
 
 namespace srsran {
 namespace srs_cu_cp {
-
-/// Interface to handle AMF connections
-class cu_cp_ngap_handler
-{
-public:
-  virtual ~cu_cp_ngap_handler() = default;
-
-  /// \brief Handles a AMF connection notification.
-  virtual void handle_amf_connection() = 0;
-
-  /// \brief Handles a AMF connection drop notification.
-  virtual void handle_amf_connection_drop() = 0;
-};
 
 class cu_cp_ngap_connection_interface
 {
@@ -89,13 +77,17 @@ public:
   virtual cu_up_repository& get_connected_cu_ups() = 0;
 
   /// \brief Get handler of the NG interface of the CU-CP.
-  virtual cu_cp_ngap_handler&              get_cu_cp_ngap_handler()              = 0;
   virtual cu_cp_ngap_connection_interface& get_cu_cp_ngap_connection_interface() = 0;
 
   /// \brief Get handler of the E1 interface of the CU-CP.
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
-  virtual void start() = 0;
+  /// \brief Get the metrics handler interface of the CU-CP.
+  virtual metrics_handler& get_metrics_handler() = 0;
+
+  /// \brief Initiate NG Setup Procedure and wait for AMF response.
+  /// \return Returns true if the connection to the AMF was successful. False, otherwise.
+  virtual bool start() = 0;
 
   /// \brief Stop the CU-CP operation.
   virtual void stop() = 0;

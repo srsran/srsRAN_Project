@@ -23,7 +23,9 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include "srsran/asn1/e1ap/common.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/support/error_handling.h"
 

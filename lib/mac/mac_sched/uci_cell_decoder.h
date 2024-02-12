@@ -46,7 +46,8 @@ public:
                    rlf_detector&                                   rlf_dt);
 
   /// \brief Store information relative to expected UCIs to be decoded.
-  void store_uci(slot_point uci_sl, span<const pucch_info> scheduled_pucchs);
+  void
+  store_uci(slot_point uci_sl, span<const pucch_info> scheduled_pucchs, span<const ul_sched_info> scheduled_puschs);
 
   /// \brief Decode received MAC UCI indication and convert it to scheduler UCI indication.
   uci_indication decode_uci(const mac_uci_indication_message& msg);

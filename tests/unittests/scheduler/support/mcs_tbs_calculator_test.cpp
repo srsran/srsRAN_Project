@@ -23,10 +23,10 @@
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
-#include "lib/scheduler/support/tbs_calculator.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/uci/uci_mapping.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -266,4 +266,41 @@ TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)
   ASSERT_TRUE(test.has_value());
   ASSERT_EQ(test_2_prb_mcs_0.final_mcs, test.value().mcs);
   ASSERT_EQ(test_2_prb_mcs_0.tbs_bytes, test.value().tbs);
+}
+
+class ul_mcs_tbs_prbs_calculator_with_harq_ack : public ::testing::Test
+{
+public:
+  ul_mcs_tbs_prbs_calculator_with_harq_ack() :
+    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
+    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
+    time_resource{0},
+    pusch_cfg(get_pusch_config_f0_1_c_rnti(
+        ue_cell_cfg,
+        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
+        1,
+        2,
+        false))
+  {
+  }
+
+protected:
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cell_cfg;
+  const ue_cell_configuration   ue_cell_cfg;
+  unsigned                      time_resource;
+  pusch_config_params           pusch_cfg;
+};
+
+TEST_F(ul_mcs_tbs_prbs_calculator_with_harq_ack, test_values_with_2_harq_bits)
+{
+  mcs_test_entry test_1_prb{.final_mcs = 27, .tbs_bytes = 88, .max_mcs = 28, .nof_prbs = 1};
+
+  // Run test function.
+  optional<sch_mcs_tbs> test =
+      compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, sch_mcs_index(test_1_prb.max_mcs), test_1_prb.nof_prbs);
+
+  ASSERT_TRUE(test.has_value());
+  ASSERT_EQ(test_1_prb.final_mcs, test.value().mcs);
+  ASSERT_EQ(test_1_prb.tbs_bytes, test.value().tbs);
 }

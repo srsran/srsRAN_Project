@@ -70,10 +70,8 @@ uci_status uci_decoder_impl::decode_codeword_polar(span<uint8_t> output, span<co
                                                    0,
                                                    crc);
 
-    // If the second codeblock is invalid, then the resultant status is invalid.
-    if (cb1_status != uci_status::valid) {
-      status = cb1_status;
-    }
+    // Set status to cb1_status if it's not valid, otherwise keep current status.
+    status = (cb1_status != uci_status::valid) ? cb1_status : status;
   }
 
   return status;

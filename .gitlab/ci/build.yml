@@ -1,21 +1,9 @@
 #
-# Copyright 2021-2023 Software Radio Systems Limited
+# Copyright 2013-2024 Software Radio Systems Limited
 #
-# This file is part of srsRAN
-#
-# srsRAN is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of
-# the License, or (at your option) any later version.
-#
-# srsRAN is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# A copy of the GNU Affero General Public License can be found in
-# the LICENSE file in the top-level directory of this distribution
-# and at http://www.gnu.org/licenses/.
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
 #
 
 include:
@@ -29,10 +17,14 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
+  AMD64_LIB_BUILDER_TAG: on-prem-amd64
 
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
+      - amd64
+      - amd64-avx2
+      - amd64-avx2-avx512
       - "on-prem-amd64"
       - "on-prem-arm64"
       - "aws-spot-amd64"
@@ -121,8 +113,10 @@ variables:
     AUTO_DETECT_ISA: ""
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_CPU_REQUEST: 7
+    KUBERNETES_MEMORY_LIMIT: 12Gi
     MAKE_ARGS: "-j${KUBERNETES_CPU_REQUEST}"
     GIT_STRATEGY: none
   needs:
@@ -195,11 +189,11 @@ variables:
 
         if [ -n "${DPDK_VERSION}" ]; then
           BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-          LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
         fi
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-          LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
         fi
         if [ -n "${CLEAN_BUILD}" ]; then
           BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
@@ -251,7 +245,7 @@ variables:
             ;;
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
-            ctest_extra="-T memcheck --timeout 10800"
+            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout 10800"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
@@ -266,6 +260,7 @@ variables:
             exit $ret
           fi
         fi
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
@@ -407,7 +402,7 @@ variables:
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    DPDK_VERSION: "23.07"
+    DPDK_VERSION: "23.11"
   tags: ["${AMD64_TAG}"]
 
 .smoke valgrind:
@@ -580,7 +575,7 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  timeout: 2h
+  timeout: 1h
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
@@ -608,15 +603,15 @@ valgrind changed tests:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
-###########
-# Nightly #
-###########
+#################
+# Build Nightly #
+#################
 
 check builders ubuntu versions:
   extends: .check image exists for all supported ubuntu versions
   stage: static
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   script:
     - check_if_image_exists ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu- :${DOCKER_BUILDER_VERSION}
 
@@ -625,7 +620,7 @@ check builders ubuntu versions:
 smoke release update cache:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
   retry: 2
@@ -642,37 +637,31 @@ smoke release update cache:
 smoke relwithdeb update cache:
   extends: .smoke relwithdeb
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
   retry: 2
   interruptible: false
-  variables:
-    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 1 day
 
 smoke tsan update cache:
   extends: .smoke tsan
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   retry: 2
-  variables:
-    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 1 day
 
 smoke rhel update cache:
   extends: .smoke rhel
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
   retry: 2
@@ -684,7 +673,7 @@ smoke rhel update cache:
 smoke archlinux update cache:
   extends: .smoke archlinux
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
   retry: 2
@@ -696,7 +685,7 @@ smoke archlinux update cache:
 smoke dpdk update cache:
   extends: .smoke dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
   retry: 2
@@ -708,24 +697,26 @@ smoke dpdk update cache:
 smoke valgrind update cache:
   extends: .smoke valgrind
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   retry: 2
-  variables:
-    SAVE_ARTIFACTS: "True"
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
+  variables:
+    SAVE_ARTIFACTS: "True" # Valgrind generates extra files
   artifacts:
     <<: *build_artifacts
     expire_in: 1 day
 
-# High priority smoke checks. Some of them save the binary for e2e tests
-
-basic asan:
+smoke asan:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
   retry: 2
   interruptible: false
   variables:
@@ -734,40 +725,10 @@ basic asan:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
-    TEST_MODE: default
+    TEST_MODE: asan
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 1 day
-
-basic avx512 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      when: delayed
-      start_in: 30 minutes
-  retry: 2
-  interruptible: false
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: RelWithDebInfo
-    TEST_MODE: default
-    ASSERT_LEVEL: PARANOID
-    ENABLE_UHD: "False"
-    ENABLE_ZEROMQ: "False"
-    ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.07"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "True"
-    SAVE_ARTIFACTS: "True"
-  tags: ["${AMD64_AVX512_TAG}"]
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 1 day
 
 # Packaging
 
@@ -775,14 +736,19 @@ package:
   extends: .deb-package
   stage: build and unit tests
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
+    KUBERNETES_CPU_REQUEST: 7
+    KUBERNETES_CPU_LIMIT: 7
     KUBERNETES_MEMORY_REQUEST: 12Gi
-  tags: ["${AMD64_AVX2_TAG}"]
+    KUBERNETES_MEMORY_LIMIT: 12Gi
+    DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
+    MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
+  tags: ["${AMD64_LIB_BUILDER_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
@@ -795,11 +761,11 @@ install-package:
   extends: .deb-install
   stage: build and unit tests
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["${AMD64_AVX2_TAG}"]
+  tags: ["${AMD64_LIB_BUILDER_TAG}"]
   script:
     - gnb --version
   parallel:
@@ -815,14 +781,14 @@ check package ubuntu versions:
   extends: .check packaging ubuntu images
   stage: static
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
 
 # Validate export on, enabled for test vector generation
 
 export on amd64:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 60 minutes
   interruptible: false
@@ -853,7 +819,7 @@ export on amd64 avx512:
 ubuntu-23.10 amd64 avx2:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 270 minutes
   interruptible: false
@@ -868,7 +834,7 @@ ubuntu-23.10 amd64 avx2:
 ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 120 minutes
   interruptible: false
@@ -883,7 +849,7 @@ ubuntu-22.04 amd64 avx2:
 ubuntu-20.04 amd64 avx2:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 210 minutes
   interruptible: false
@@ -898,7 +864,7 @@ ubuntu-20.04 amd64 avx2:
 rhel-8 amd64 avx2:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 180 minutes
   interruptible: false
@@ -915,7 +881,7 @@ rhel-8 amd64 avx2:
 ubuntu-22.04 amd64 no isa release:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 150 minutes
   interruptible: false
@@ -931,7 +897,7 @@ ubuntu-22.04 amd64 no isa release:
 ubuntu-22.04 amd64 avx512 release:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 120 minutes
   interruptible: false
@@ -950,7 +916,7 @@ ubuntu-22.04 amd64 avx512 release:
 ubuntu-22.04 arm no isa release:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 150 minutes
   interruptible: false
@@ -966,7 +932,7 @@ ubuntu-22.04 arm no isa release:
 ubuntu-22.04 arm neon release:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 120 minutes
   interruptible: false
@@ -984,7 +950,7 @@ ubuntu-22.04 arm neon release:
 smoke dpdk:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 90 minutes
   interruptible: false
@@ -1000,16 +966,16 @@ smoke dpdk:
     matrix:
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-23.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.2", "23.07"]
+        DPDK_VERSION: ["22.11.3", "23.11"]
 
 ###################
 # Alternative OSs #
@@ -1250,16 +1216,16 @@ build uhd alt:
     matrix:
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0"]
       - OS: ubuntu-23.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
 
@@ -1323,7 +1289,7 @@ ubuntu-23.10 arm neon:
 ubuntu-23.04 amd64 avx2:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 240 minutes
   interruptible: false
@@ -1571,7 +1537,7 @@ rhel-8 arm neon:
   ENABLE_ZEROMQ: "False"
   ENABLE_DPDK: "True"
   COMPILER: [gcc, clang]
-  DPDK_VERSION: ["22.11.2", "23.07"]
+  DPDK_VERSION: ["22.11.3", "23.11"]
 
 ubuntu-20.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1708,23 +1674,24 @@ check-affinity-manager-nocpu:
       optional: false
       artifacts: true
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+  timeout: 15 minutes
   script:
     - cd build/apps/gnb
-    - taskset -c 0-2 "./gnb" 2>&1 || true
     - |
       error_found=false
-      for (( i=1; i<=8; i++ ))
+      for (( i=3; i<=10; i++ ))
       do
-          echo "Checking for number of CPU = $i"
-          output=$(taskset -c 0-$i "./gnb" 2>&1 || true)
+          echo "Checking for number of CPU = $((i-2))"
+          output=$(taskset -c 2-$i bash -c "./gnb log --filename=stdout" 2>&1 || true)
+          echo "$output"
 
           if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
               error_found=true
               echo "**********************************************************************************"
               echo $output
               echo "**********************************************************************************"
-              echo "Error for number of CPU = $i"
+              echo "Error for number of CPU = $((i-2))"
               echo -e "\n\n\n\n\n" 
           fi
       done
@@ -1733,6 +1700,91 @@ check-affinity-manager-nocpu:
           exit 1
       fi
 
+###############
+# E2E Nightly #
+###############
+basic relwithdeb:
+  extends: .smoke relwithdeb
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    TEST_MODE: none
+    SAVE_ARTIFACTS: "True"
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+basic tsan:
+  extends: .smoke tsan
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    TEST_MODE: none
+    SAVE_ARTIFACTS: "True"
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+basic asan:
+  extends: smoke asan
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    TEST_MODE: none
+    SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX2_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+basic valgrind:
+  extends: .smoke valgrind
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    TEST_MODE: none
+    SAVE_ARTIFACTS: "True"
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
+basic avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 60 minutes
+  retry: 2
+  interruptible: false
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11"
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+    SAVE_ARTIFACTS: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
+    KUBERNETES_MEMORY_REQUEST: 20Gi
+    KUBERNETES_MEMORY_LIMIT: 20Gi
+  tags: ["on-prem-amd64-avx2-avx512"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
+
 #######
 # Web #
 #######
@@ -1740,6 +1792,7 @@ custom-build:
   extends: .build_and_unit
   rules:
     - if: $ON_WEB
+    - if: $ON_API
   interruptible: false # Web jobs are standalone
   variables:
     ENABLE_ZEROMQ: ""

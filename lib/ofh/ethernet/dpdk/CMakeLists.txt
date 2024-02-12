@@ -19,6 +19,7 @@
 #
 
 set(SOURCES
+        dpdk_ethernet_port_context.cpp
         dpdk_ethernet_transmitter.cpp
         dpdk_ethernet_factories.cpp
         dpdk_ethernet_receiver.cpp)

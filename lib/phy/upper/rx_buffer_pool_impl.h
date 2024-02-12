@@ -29,17 +29,21 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/srsran_assert.h"
+#include <algorithm>
 #include <vector>
 
 namespace srsran {
 
 /// Implements a PUSCH rate matcher buffer pool.
-class rx_buffer_pool_impl : public rx_buffer_pool
+class rx_buffer_pool_impl : public rx_buffer_pool_controller, private rx_buffer_pool
 {
 private:
   /// No expiration time value.
-  slot_point null_expiration = slot_point();
+  const slot_point null_expiration = slot_point();
 
+  /// Set to true when the buffer pool stopped.
+  std::atomic<bool> stopped = {false};
   /// Codeblock buffer pool.
   rx_buffer_codeblock_pool codeblock_pool;
   /// Actual buffer pool.
@@ -57,11 +61,18 @@ private:
   /// Logger.
   srslog::basic_logger& logger;
 
+  // See interface for documentation.
+  unique_rx_buffer
+  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) override;
+
+  // See interface for documentation.
+  void run_slot(const slot_point& slot) override;
+
 public:
   /// \brief Creates a generic receiver buffer pool.
   /// \param[in] config Provides the pool required parameters.
   rx_buffer_pool_impl(const rx_buffer_pool_config& config) :
-    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
+    codeblock_pool(config.nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
     buffers(config.nof_buffers, rx_buffer_impl(codeblock_pool)),
     identifiers(config.nof_buffers, trx_buffer_identifier::invalid()),
     expirations(config.nof_buffers, null_expiration),
@@ -70,11 +81,18 @@ public:
   {
   }
 
-  // See interface for documentation.
-  unique_rx_buffer reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks) override;
+  // See rx_buffer_pool_controller interface for documentation.
+  ~rx_buffer_pool_impl() override
+  {
+    srsran_assert(std::none_of(buffers.begin(), buffers.end(), [](const auto& buffer) { return buffer.is_locked(); }),
+                  "A buffer is still locked.");
+  }
 
-  // See interface for documentation.
-  void run_slot(const slot_point& slot) override;
+  // See rx_buffer_pool_controller interface for documentation.
+  rx_buffer_pool& get_pool() override;
+
+  // See rx_buffer_pool_controller interface for documentation.
+  void stop() override;
 };
 
 } // namespace srsran

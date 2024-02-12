@@ -31,14 +31,20 @@ io_broker_epoll::io_broker_epoll(io_broker_config config) : logger(srslog::fetch
   // Init epoll socket
   epoll_fd = ::epoll_create1(0);
   if (epoll_fd == -1) {
-    report_fatal_error("Failed to create epoll socket");
+    report_fatal_error("Failed to create an epoll file descriptor: {}", strerror(errno));
   }
 
   // register event to handle stop
   event_fd = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
-  register_fd(event_fd, [](int fd) {
+  if (event_fd == -1) {
+    report_fatal_error("Failed to create a file descriptor for event notification: {}", strerror(errno));
+  }
+  bool success = register_fd(event_fd, [](int fd) {
     // do nothing
   });
+  if (!success) {
+    report_fatal_error("Failed to register event file descriptor at IO broker. event_fd={}", event_fd);
+  }
 
   // start thread to handle epoll events
   thread = unique_thread(config.thread_name, config.thread_prio, config.cpu_mask, [this]() {
@@ -58,7 +64,7 @@ io_broker_epoll::~io_broker_epoll()
     uint64_t tmp = 1;
     ssize_t  ret = ::write(event_fd, &tmp, sizeof(tmp));
     if (ret == -1) {
-      logger.error("Error writing to event_fd");
+      logger.error("Error writing to event_fd={}: {}", event_fd, strerror(errno));
     }
   }
 
@@ -83,26 +89,29 @@ void io_broker_epoll::thread_loop()
 
   // handle event
   if (nof_events == -1) {
-    logger.error("epoll_wait(): {}", strerror(errno));
+    logger.error("epoll_wait failed: {}", strerror(errno));
     /// TODO: shall we raise a fatal error here?
     return;
   }
   if (nof_events == 0) {
-    logger.error("time out {} sec expired", epoll_timeout_ms / 1000.0);
+    logger.error("epoll_wait time out. timeout_ms={}", epoll_timeout_ms);
     return;
   }
 
   for (int i = 0; i < nof_events; ++i) {
+    int fd = events[i].data.fd;
     if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || (!(events[i].events & EPOLLIN))) {
       ///< An error has occured on this fd, or the socket is not ready for reading
       /// TODO: add notifier for events
-      logger.error("epoll error\n");
-      close(events[i].data.fd);
-      unregister_fd(events[i].data.fd);
+      logger.error("epoll error event. fd={} events={}", fd, uint32_t(events[i].events));
+      close(fd);
+      bool success = unregister_fd(fd);
+      if (!success) {
+        logger.error("Failed to unregister file descriptor from IO broker. fd={}", fd);
+      }
       return;
     }
 
-    int                         fd = events[i].data.fd;
     std::lock_guard<std::mutex> lock(event_handler_mutex);
     const auto&                 it = event_handler.find(fd);
     if (it != event_handler.end()) {
@@ -119,7 +128,7 @@ bool io_broker_epoll::register_fd(int fd, recv_callback_t handler)
   ev.data.fd            = fd;
   ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-    logger.error("epoll_ctl failed for fd={}", fd);
+    logger.error("epoll_ctl failed to register fd={}: {}", fd, strerror(errno));
     return false;
   }
 
@@ -136,7 +145,7 @@ bool io_broker_epoll::unregister_fd(int fd)
   ev.data.fd            = fd;
   ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, &ev) == -1) {
-    logger.error("epoll_ctl failed for fd={}", fd);
+    logger.error("epoll_ctl failed to unregister fd={}: {}", fd, strerror(errno));
     return false;
   }
 

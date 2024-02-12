@@ -49,14 +49,16 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ru_operating_bw                    = config.ru_operating_bw;
   rx_config.scs                                = config.scs;
   rx_config.cp                                 = config.cp;
-  rx_config.prach_eaxc                         = config.prach_eaxc;
-  rx_config.ul_eaxc                            = config.ul_eaxc;
   rx_config.is_uplink_static_compr_hdr_enabled = config.is_uplink_static_compr_hdr_enabled;
   rx_config.prach_compression_params           = config.prach_compression_params;
   rx_config.ul_compression_params              = config.ul_compression_params;
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
+
+  // For the rx eAxCs, configure only those that will be used, so the other eAxCs can be discarded as soon as possible.
+  rx_config.prach_eaxc.assign(config.prach_eaxc.begin(), config.prach_eaxc.begin() + config.nof_antennas_ul);
+  rx_config.ul_eaxc.assign(config.ul_eaxc.begin(), config.ul_eaxc.begin() + config.nof_antennas_ul);
 
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address  = config.mac_src_address;
@@ -100,18 +102,83 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   return tx_config;
 }
 
+#ifdef DPDK_FOUND
+static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receiver>>
+create_dpdk_txrx(const sector_configuration& sector_cfg, task_executor& rx_executor, srslog::basic_logger& logger)
+{
+  ether::gw_config eth_cfg;
+  eth_cfg.interface                   = sector_cfg.interface;
+  eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  eth_cfg.mtu_size                    = sector_cfg.mtu_size;
+  eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
+
+  return ether::create_dpdk_txrx(eth_cfg, rx_executor, logger);
+}
+#endif
+
+static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receiver>>
+create_socket_txrx(const sector_configuration& sector_cfg, task_executor& rx_executor, srslog::basic_logger& logger)
+{
+  auto rx = ether::create_receiver(sector_cfg.interface, sector_cfg.is_promiscuous_mode_enabled, rx_executor, logger);
+
+  ether::gw_config eth_cfg;
+  eth_cfg.interface                   = sector_cfg.interface;
+  eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  eth_cfg.mtu_size                    = sector_cfg.mtu_size;
+  eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
+  auto tx                             = ether::create_gateway(eth_cfg, logger);
+
+  return {std::move(tx), std::move(rx)};
+}
+
+static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receiver>>
+create_txrx(const sector_configuration&                sector_cfg,
+            optional<std::unique_ptr<ether::gateway>>  eth_gateway,
+            optional<std::unique_ptr<ether::receiver>> eth_receiver,
+            task_executor&                             rx_executor,
+            srslog::basic_logger&                      logger)
+{
+  if (eth_gateway && eth_receiver) {
+    // Do not proceed if both optionals are provided.
+    return {std::move(eth_gateway.value()), std::move(eth_receiver.value())};
+  }
+
+#ifdef DPDK_FOUND
+  auto eth_txrx = (sector_cfg.uses_dpdk) ? create_dpdk_txrx(sector_cfg, rx_executor, logger)
+                                         : create_socket_txrx(sector_cfg, rx_executor, logger);
+#else
+  auto eth_txrx = create_socket_txrx(sector_cfg, rx_executor, logger);
+#endif
+  if (eth_gateway) {
+    eth_txrx.first = std::move(eth_gateway.value());
+  }
+  if (eth_receiver) {
+    eth_txrx.second = std::move(eth_receiver.value());
+  }
+  return eth_txrx;
+}
+
 std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuration& sector_cfg,
                                                        sector_dependencies&&       sector_deps)
 {
   unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
 
-  auto cp_repo    = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_repo = std::make_shared<prach_context_repository>(repository_size, *sector_deps.logger);
-  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size, *sector_deps.logger);
+  srslog::basic_logger* repo_logger = sector_cfg.warn_unreceived_ru_frames ? sector_deps.logger : nullptr;
+  auto                  cp_repo     = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto                  prach_repo  = std::make_shared<prach_context_repository>(repository_size, repo_logger);
+  auto                  slot_repo   = std::make_shared<uplink_context_repository>(repository_size, repo_logger);
+
+  // Build the ethernet txrx.
+  auto eth_txrx = create_txrx(sector_cfg,
+                              std::move(sector_deps.eth_gateway),
+                              std::move(sector_deps.eth_receiver),
+                              *sector_deps.receiver_executor,
+                              *sector_deps.logger);
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
-  auto receiver = create_receiver(rx_config, *sector_deps.logger, sector_deps.notifier, prach_repo, slot_repo, cp_repo);
+  auto receiver  = create_receiver(
+      rx_config, *sector_deps.logger, std::move(eth_txrx.second), sector_deps.notifier, prach_repo, slot_repo, cp_repo);
 
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
@@ -119,31 +186,10 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                         *sector_deps.logger,
                                         *sector_deps.transmitter_executor,
                                         *sector_deps.downlink_executor,
-                                        std::move(sector_deps.eth_gateway),
+                                        std::move(eth_txrx.first),
                                         prach_repo,
                                         slot_repo,
                                         cp_repo);
-
-  // Build the ethernet receiver.
-#ifdef DPDK_FOUND
-  auto eth_receiver = (sector_cfg.uses_dpdk) ? ether::create_dpdk_receiver(*sector_deps.receiver_executor,
-                                                                           receiver->get_ethernet_frame_notifier(),
-                                                                           *sector_deps.logger)
-                                             : ether::create_receiver(sector_cfg.interface,
-                                                                      sector_cfg.is_promiscuous_mode_enabled,
-                                                                      *sector_deps.receiver_executor,
-                                                                      receiver->get_ethernet_frame_notifier(),
-                                                                      *sector_deps.logger);
-#else
-  auto eth_receiver = ether::create_receiver(sector_cfg.interface,
-                                             sector_cfg.is_promiscuous_mode_enabled,
-                                             *sector_deps.receiver_executor,
-                                             receiver->get_ethernet_frame_notifier(),
-                                             *sector_deps.logger);
-#endif
-
-  // OFH receiver manages the Ethernet receiver lifecycle.
-  receiver->set_ethernet_receiver(std::move(eth_receiver));
 
   return std::make_unique<sector_impl>(
       std::move(receiver), std::move(transmitter), std::move(cp_repo), std::move(prach_repo), std::move(slot_repo));

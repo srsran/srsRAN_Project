@@ -54,5 +54,10 @@ optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing             p
                                                 uint8_t                        zero_correlation_zone,
                                                 const tdd_ul_dl_config_common& tdd_cfg);
 
+/// \brief Checks whether the nof. SSB per RACH occasion and nof. contention based preambles per SSB is valid.
+/// \return In case config is not supported, a string with an error message is returned.
+error_type<std::string> nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(float   nof_ssb_per_ro,
+                                                                             uint8_t nof_cb_preambles_per_ssb);
+
 } // namespace prach_helper
 } // namespace srsran

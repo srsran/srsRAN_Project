@@ -27,7 +27,7 @@
 /// according to TS38.212 Section 5.3.2.
 #pragma once
 
-#include "srsran/ran/ldpc_base_graph.h"
+#include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/units.h"
 #include <array>
@@ -187,7 +187,7 @@ inline unsigned compute_lifting_size(units::bits tbs, ldpc_base_graph_type base_
       break;
     }
   }
-  assert(lifting_size != 0);
+  srsran_assert(lifting_size != 0, "Lifting size cannot be 0");
 
   return lifting_size;
 }
