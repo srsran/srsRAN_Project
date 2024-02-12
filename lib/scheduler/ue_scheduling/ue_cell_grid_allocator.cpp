@@ -193,6 +193,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     return alloc_outcome::invalid_params;
   }
 
+  // Verify only one PDSCH exists for a RNTI.
+  // Reason: Unable to distinguish/map HARQ acknowledge bits to HARQ Id if there are more than one PDSCH per UE per
+  // slot.
+  for (const dl_msg_alloc& pdsch : pdsch_alloc.result.dl.ue_grants) {
+    if (pdsch.pdsch_cfg.rnti == u.crnti) {
+      return alloc_outcome::skip_ue;
+    }
+  }
+
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch = nullptr;
   if (ue_cc->is_in_fallback_mode() or dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
@@ -529,6 +538,13 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                    u.crnti,
                    pusch_alloc.slot);
     return alloc_outcome::skip_slot;
+  }
+
+  // Verify only one PUSCH exists for a RNTI.
+  for (const ul_sched_info& pusch : pusch_alloc.result.ul.puschs) {
+    if (pusch.pusch_cfg.rnti == u.crnti) {
+      return alloc_outcome::skip_ue;
+    }
   }
 
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled over the same slot
