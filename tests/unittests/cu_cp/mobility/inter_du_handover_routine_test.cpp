@@ -166,16 +166,17 @@ protected:
 
   nr_cell_global_id_t get_target_cgi() { return target_cgi; }
 
-  size_t get_nof_ues_in_target_du()
-  {
-    return cu_cp_obj->get_dus().get_du(target_du_index).get_f1ap_statistics_handler().get_nof_ues();
-  }
-  size_t get_nof_ues_in_source_du()
-  {
-    return cu_cp_obj->get_dus().get_du(source_du_index).get_f1ap_statistics_handler().get_nof_ues();
-  }
+  size_t get_nof_ues_in_target_du() const { return nof_du_ues(target_du_index); }
+  size_t get_nof_ues_in_source_du() const { return nof_du_ues(source_du_index); }
 
 private:
+  size_t nof_du_ues(du_index_t idx) const
+  {
+    const metrics_report report = cu_cp_obj->get_metrics_handler().request_metrics_report();
+    gnb_du_id_t          du_id  = report.dus.at((size_t)idx).id;
+    return std::count_if(report.ues.begin(), report.ues.end(), [du_id](const auto& u) { return u.du_id == du_id; });
+  }
+
   // source DU parameters.
   du_index_t source_du_index = uint_to_du_index(0);
 

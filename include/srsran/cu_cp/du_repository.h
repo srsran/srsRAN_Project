@@ -31,10 +31,6 @@ public:
   /// \return The F1AP message handler interface of the DU processor object.
   virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
 
-  /// \brief Get the F1AP statistics handler interface of the DU processor object.
-  /// \return The F1AP statistics handler interface of the DU processor object.
-  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
-
   /// \brief Get the mobility handler.
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 

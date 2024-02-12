@@ -31,7 +31,7 @@ public:
   std::unique_ptr<metrics_report_session>
   create_periodic_report_session(const periodic_metric_report_request& request) override;
 
-  metrics_report request_metrics_report() override;
+  metrics_report request_metrics_report() const override;
 
 private:
   /// Context of a periodic metric report session
@@ -41,7 +41,7 @@ private:
   };
 
   // Generate new metrics report.
-  metrics_report create_report();
+  metrics_report create_report() const;
 
   unsigned create_periodic_session(const periodic_metric_report_request& request);
   void     request_session_reconfiguration(unsigned session_id, const periodic_metric_report_request& request);

@@ -85,7 +85,6 @@ private:
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
 
-    f1ap_statistics_handler&               get_f1ap_statistics_handler() override;
     f1ap_message_handler&                  get_f1ap_message_handler() override;
     du_processor_mobility_handler&         get_mobility_handler() override;
     du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override;

@@ -187,11 +187,6 @@ du_handler& du_processor_repository::get_du(du_index_t du_index)
   return du_db.at(du_index);
 }
 
-f1ap_statistics_handler& du_processor_repository::du_context::get_f1ap_statistics_handler()
-{
-  return du_processor->get_f1ap_statistics_handler();
-}
-
 f1ap_message_handler& du_processor_repository::du_context::get_f1ap_message_handler()
 {
   return du_processor->get_f1ap_message_handler();
