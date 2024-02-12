@@ -56,6 +56,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   // Verify if we are in conditions for a Reestablishment, or should opt for a RRC Setup.
   if (is_reestablishment_rejected()) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
+    logger.log_debug("\"{}\" for old_ue={} finalized", name(), reestablishment_context.ue_index);
     CORO_EARLY_RETURN();
   }
 
@@ -64,6 +65,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
                    cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index));
   if (not context_transfer_success) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
+    logger.log_debug("\"{}\" for old_ue={} finalized", name(), reestablishment_context.ue_index);
     CORO_EARLY_RETURN();
   }
 
