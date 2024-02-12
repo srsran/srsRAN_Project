@@ -92,92 +92,57 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point              sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
-    slot_descision_history& entry = sched_decision_history[sl_rx.to_uint() % sched_decision_history.size()];
+    slot_point                    sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    const slot_descision_history& entry = sched_decision_history[sl_rx.to_uint() % sched_decision_history.size()];
 
-    // Handle pending PUCCHs.
-    if (not entry.pucchs.empty()) {
-      mac_uci_indication_message uci_ind;
-      uci_ind.sl_rx = sl_rx;
-      for (const pucch_info& pucch : entry.pucchs) {
-        if (pucch.crnti == rnti_t::INVALID_RNTI) {
-          // PUCCH has been already handled (UL PHY operational case)
-          continue;
-        }
-
-        // Auto-generation of UCI indication in PUCCH.
-        mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-        pdu.rnti         = pucch.crnti;
-        switch (pucch.format) {
-          case pucch_format::FORMAT_1: {
-            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
-          } break;
-          case pucch_format::FORMAT_2: {
-            fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(), pucch);
-          } break;
-          default:
-            break;
-        }
-      }
-
-      // Update test mode state.
-      on_test_mode_uci_pdu(sl_rx, uci_ind);
-
-      // Forward MAC UCI to the real MAC.
-      adapted.handle_uci(uci_ind);
-    }
-
+    // Handle auto-generation of pending CRC indications.
     if (not entry.puschs.empty()) {
-      // In case there is UCI in the PUSCH, send an UCI indication to real MAC.
-      mac_uci_indication_message pusch_uci_ind{};
-      pusch_uci_ind.sl_rx = sl_rx;
-      // Handle pending CRC indications
       mac_crc_indication_message crc_ind{};
       crc_ind.sl_rx = sl_rx;
 
       for (const ul_sched_info& pusch : entry.puschs) {
-        if (pusch.uci.has_value()) {
-          // Auto-generation of UCI indication in PUSCH.
-          mac_uci_pdu& pdu = pusch_uci_ind.ucis.emplace_back();
-          pdu.rnti         = pusch.pusch_cfg.rnti;
-          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
-        }
-
-        if (pusch.pusch_cfg.harq_id != INVALID_HARQ_ID) {
-          // Auto-generation of CRC indication.
-          // We (ab)use the HARQ id == INVALID_HARQ_ID to indicate that we do not need to auto-generate a CRC
-          // indication.
-
-          auto& crc_pdu   = crc_ind.crcs.emplace_back();
-          crc_pdu.rnti    = pusch.pusch_cfg.rnti;
-          crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
-          // Force CRC=OK for test UE.
-          crc_pdu.tb_crc_success = true;
-          // Force UL SINR.
-          crc_pdu.ul_sinr_metric = 100;
-        }
+        auto& crc_pdu   = crc_ind.crcs.emplace_back();
+        crc_pdu.rnti    = pusch.pusch_cfg.rnti;
+        crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
+        // Force CRC=OK for test UE.
+        crc_pdu.tb_crc_success = true;
+        // Force UL SINR.
+        crc_pdu.ul_sinr_metric = 100;
       }
 
-      if (not pusch_uci_ind.ucis.empty()) {
-        on_test_mode_uci_pdu(sl_rx, pusch_uci_ind);
+      // Forward CRC to the real MAC.
+      forward_crc_ind_to_mac(crc_ind);
+    }
 
-        // Forward MAC UCI to the real MAC.
-        adapted.handle_uci(pusch_uci_ind);
-      }
+    // Handle auto-generation of pending UCI indications.
+    mac_uci_indication_message uci_ind;
+    uci_ind.sl_rx = sl_rx;
 
-      if (not crc_ind.crcs.empty()) {
-        // Forward CRC to the real MAC.
-        adapted.handle_crc(crc_ind);
-      }
-
-      if (test_ue_cfg.pusch_active) {
-        for (const auto& crc_pdu : crc_ind.crcs) {
-          // In case of PUSCH test mode is enabled, push a BSR.
-          pdu_handler.handle_rx_data_indication(
-              create_test_pdu_with_bsr(sl_rx, crc_pdu.rnti, to_harq_id(crc_pdu.harq_id)));
-        }
+    // > Handle pending PUCCHs.
+    for (const pucch_info& pucch : entry.pucchs) {
+      mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
+      pdu.rnti         = pucch.crnti;
+      switch (pucch.format) {
+        case pucch_format::FORMAT_1: {
+          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>(), pucch);
+        } break;
+        case pucch_format::FORMAT_2: {
+          fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(), pucch);
+        } break;
+        default:
+          break;
       }
     }
+
+    // > Handle pending PUSCHs.
+    for (const ul_sched_info& pusch : entry.puschs) {
+      mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
+      pdu.rnti         = pusch.pusch_cfg.rnti;
+      fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+    }
+
+    // Forward UCI indication to real MAC.
+    forward_uci_ind_to_mac(uci_ind);
   }
 
   slot_handler.handle_slot_indication(sl_tx);
@@ -204,27 +169,32 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
   for (const mac_crc_pdu& crc : msg.crcs) {
     if (ue_info_mgr.is_test_ue(crc.rnti)) {
       // test mode UE case.
+
+      // Find respective PUSCH PDU that was previously scheduled.
+      const slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
+      bool found = std::any_of(entry.puschs.begin(), entry.puschs.end(), [&](const ul_sched_info& pusch) {
+        return pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id;
+      });
+      if (not found) {
+        logger.warning(
+            "c-rnti={}: Mismatch between provided CRC and expected PUSCH for slot_rx={}", crc.rnti, msg.sl_rx);
+        continue;
+      }
+
       // Intercept the CRC indication and force crc=OK and UL SNR.
       mac_crc_pdu test_crc    = crc;
       test_crc.tb_crc_success = true;
       test_crc.ul_sinr_metric = 100;
       msg_copy.crcs.push_back(test_crc);
 
-      // Disable auto-generation of CRC indication for this UL HARQ.
-      slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
-      for (ul_sched_info& pusch : entry.puschs) {
-        if (pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id) {
-          pusch.pusch_cfg.harq_id = INVALID_HARQ_ID;
-        }
-      }
     } else {
       // non-test mode UE. Forward the original CRC PDU.
       msg_copy.crcs.push_back(crc);
     }
   }
-  if (not msg_copy.crcs.empty()) {
-    adapted.handle_crc(msg_copy);
-  }
+
+  // Forward resulting CRC indication to real MAC.
+  forward_crc_ind_to_mac(msg_copy);
 }
 
 void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& pucch_ind,
@@ -319,8 +289,16 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
   return false;
 }
 
-void mac_test_mode_cell_adapter::on_test_mode_uci_pdu(slot_point sl_rx, const mac_uci_indication_message& uci_msg)
+void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg)
 {
+  if (uci_msg.ucis.empty()) {
+    return;
+  }
+
+  // Forward UCI indication to real MAC.
+  adapted.handle_uci(uci_msg);
+
+  // Update buffer states.
   for (const mac_uci_pdu& pdu : uci_msg.ucis) {
     if (ue_info_mgr.is_test_ue(pdu.rnti) and variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu)) {
       auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
@@ -335,8 +313,8 @@ void mac_test_mode_cell_adapter::on_test_mode_uci_pdu(slot_point sl_rx, const ma
           }
 
           if (test_ue_cfg.pusch_active) {
-            // In case of PUSCH test mode is enabled, push a BSR.
-            pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(sl_rx, pdu.rnti, to_harq_id(0)));
+            // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
+            pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0)));
           }
           ue_info_mgr.msg4_rxed(pdu.rnti, true);
         }
@@ -345,9 +323,32 @@ void mac_test_mode_cell_adapter::on_test_mode_uci_pdu(slot_point sl_rx, const ma
   }
 }
 
+void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication_message& crc_msg)
+{
+  if (crc_msg.crcs.empty()) {
+    return;
+  }
+
+  // Forward CRC indication to real MAC.
+  adapted.handle_crc(crc_msg);
+
+  if (not test_ue_cfg.pusch_active) {
+    return;
+  }
+
+  for (const mac_crc_pdu& pdu : crc_msg.crcs) {
+    if (not ue_info_mgr.is_test_ue(pdu.rnti)) {
+      continue;
+    }
+
+    // In case of test mode UE, auto-forward a positive BSR.
+    pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id)));
+  }
+}
+
 void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& msg)
 {
-  slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
+  const slot_descision_history& entry = sched_decision_history[msg.sl_rx.to_uint() % sched_decision_history.size()];
 
   // Forward UCI to MAC, but alter the UCI for the test mode UE.
   mac_uci_indication_message msg_copy;
@@ -365,18 +366,15 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
 
     bool entry_found = false;
     if (variant_holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
-      for (ul_sched_info& pusch : entry.puschs) {
+      for (const ul_sched_info& pusch : entry.puschs) {
         if (pusch.pusch_cfg.rnti == pdu.rnti and pusch.uci.has_value()) {
           fill_uci_pdu(variant_get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
-
-          // Disable auto-generation of UCI indication in PUSCH for this DL HARQ.
-          pusch.uci.reset();
           entry_found = true;
         }
       }
     } else {
       // PUCCH case.
-      for (pucch_info& pucch : entry.pucchs) {
+      for (const pucch_info& pucch : entry.pucchs) {
         if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
           // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
           if (pucch.format == pucch_format::FORMAT_1) {
@@ -385,8 +383,6 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
             fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
           }
           entry_found = true;
-          // Disable auto-generation of UCI indication in PUCCH for this DL HARQ.
-          pucch.crnti = rnti_t::INVALID_RNTI;
         }
       }
     }
@@ -396,12 +392,9 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
       logger.warning("c-rnti={}: Mismatch between provided UCI and expected UCI for slot_rx={}", pdu.rnti, msg.sl_rx);
     }
   }
-  if (not msg_copy.ucis.empty()) {
-    // Update test mode UE.
-    on_test_mode_uci_pdu(msg_copy.sl_rx, msg_copy);
 
-    adapted.handle_uci(msg_copy);
-  }
+  // Forward UCI indication to real MAC.
+  forward_uci_ind_to_mac(msg_copy);
 }
 
 // Intercepts the UL results coming from the MAC.
