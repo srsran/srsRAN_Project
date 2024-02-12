@@ -432,8 +432,14 @@ disable current schedule:
   stage: .post
   extends: .enable-schedule-by-description
   rules:
-    - if: $GRADUATION_BRANCH
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: always
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: always
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: always
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: always                  
   interruptible: false
   variables:
     ENABLE: "false"
