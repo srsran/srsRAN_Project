@@ -75,3 +75,8 @@ cmake ../
 make
 make test
 ```
+
+How to deploy a 5G network?
+----------------------------------------------
+
+Check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html) that describe how to set up an end-to-end 5G SA system with srsRAN Project.
