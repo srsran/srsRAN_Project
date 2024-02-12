@@ -289,19 +289,27 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
   // Maximum number of candidates as per TS 38.331, "maxNrofUL-Allocations".
   static constexpr unsigned MAX_SIZE = 16;
 
+  const unsigned tdd_period_slots = nof_slots_per_tdd_period(tdd_cfg);
+
   // TODO: This algorithm may need to be revisited for partial UL slots to avoid that the partial slot is always picked.
   std::vector<pusch_time_domain_resource_allocation> result;
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg) and result.size() < MAX_SIZE; ++idx) {
     // For every slot containing DL symbols check for corresponding k2 value.
     if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
-      for (unsigned k2 = min_k2; k2 <= SCHEDULER_MAX_K2 and result.size() < MAX_SIZE; ++k2) {
+      for (unsigned k2 = min_k2; k2 <= SCHEDULER_MAX_K2 and result.size() < MAX_SIZE and k2 < tdd_period_slots; ++k2) {
         // TODO: Consider partial UL slots when scheduler supports it.
         if (get_active_tdd_ul_symbols(tdd_cfg, idx + k2, cp).length() == SYMBOLS_PER_SLOT) {
           if (std::none_of(result.begin(), result.end(), [k2](const auto& res) { return res.k2 == k2; })) {
             result.emplace_back(pusch_time_domain_resource_allocation{
                 k2, sch_mapping_type::typeA, ofdm_symbol_range{0, SYMBOLS_PER_SLOT}});
           }
-          break;
+          // [Implementation-defined] For DL heavy (nof. of DL slots greater than nof. UL slots) TDD configuration nof.
+          // k2 values are generated based on nof. DL slots i.e. one k2 value per DL slot. But whereas in the case of UL
+          // heavy TDD configuration, where we allow multiple UL PDCCH allocations in the same slot for same UE multiple
+          // k2 values per DL slot are generated.
+          if (nof_full_dl_slots_per_tdd_period(tdd_cfg) > nof_full_ul_slots_per_tdd_period(tdd_cfg)) {
+            break;
+          }
         }
       }
     }
