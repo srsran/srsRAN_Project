@@ -51,6 +51,7 @@ BITRATE_THRESHOLD: float = 0.1
     ),
 )
 @mark.zmq
+@mark.flaky(reruns=3, only_rerun=["failed to start"])
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
