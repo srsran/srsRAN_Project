@@ -45,7 +45,7 @@ struct du_repository_config {
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository,
+class du_processor_repository : public cu_cp_f1c_handler,
                                 public du_repository_ngap_handler,
                                 public du_repository_metrics_handler
 {

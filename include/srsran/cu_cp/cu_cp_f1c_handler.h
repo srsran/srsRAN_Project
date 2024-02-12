@@ -44,11 +44,13 @@ public:
   virtual du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() = 0;
 };
 
-/// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
-class du_repository
+/// \brief Handler of the F1-C interface of the CU-CP.
+///
+/// This interface is used to forward F1AP messages or DU connection updates to the CU-CP.
+class cu_cp_f1c_handler
 {
 public:
-  virtual ~du_repository() = default;
+  virtual ~cu_cp_f1c_handler() = default;
 
   /// \brief Handles the start of a new DU connection.
   ///

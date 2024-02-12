@@ -29,11 +29,13 @@ public:
   virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
-/// Interface used to access and interact with the context of the CU-UPs currently connected to the CU-CP.
-class cu_up_repository
+/// \brief Handler of the E1 interface of the CU-CP.
+///
+/// This interface is used to forward E1AP messages or CU-UP connection updates to the CU-CP.
+class cu_cp_e1_handler
 {
 public:
-  virtual ~cu_up_repository() = default;
+  virtual ~cu_cp_e1_handler() = default;
 
   /// \brief Handles the start of a new CU-UP connection.
   ///

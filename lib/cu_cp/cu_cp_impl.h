@@ -34,7 +34,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface, public cu_cp_ng_interface
+class cu_cp_impl final : public cu_cp, public cu_cp_impl_interface, public cu_cp_ng_handler
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
@@ -76,10 +76,10 @@ public:
   metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp interface
-  du_repository&                         get_dus() override { return du_db; }
-  cu_up_repository&                      get_cu_ups() override { return cu_up_db; }
+  cu_cp_f1c_handler&                     get_f1c_handler() override { return du_db; }
+  cu_cp_e1_handler&                      get_e1_handler() override { return cu_up_db; }
   cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ng_interface&                    get_ng_interface() override { return *this; }
+  cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
   cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }

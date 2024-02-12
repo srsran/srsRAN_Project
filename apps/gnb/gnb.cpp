@@ -440,24 +440,24 @@ int main(int argc, char** argv)
   cu_cp_cfg.timers                         = cu_timers;
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_interface().get_ngap_message_handler(),
-                              cu_cp_obj->get_ng_interface().get_ngap_event_handler());
+  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
+                              cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
-  e1ap_gw.attach_cu_cp(cu_cp_obj->get_cu_ups());
+  e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  f1c_gw.attach_cu_cp(cu_cp_obj->get_dus());
+  f1c_gw.attach_cu_cp(cu_cp_obj->get_f1c_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->get_ng_interface().amf_is_connected()) {
+  if (not cu_cp_obj->get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 

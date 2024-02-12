@@ -13,8 +13,8 @@
 #include "../adapters/e1ap_adapters.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/cu_up_task_scheduler.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_repository.h"
 #include "srsran/support/async/async_task.h"
 #include <unordered_map>
 
@@ -29,7 +29,7 @@ struct cu_up_repository_config {
   srslog::basic_logger&      logger;
 };
 
-class cu_up_processor_repository : public cu_up_repository
+class cu_up_processor_repository : public cu_cp_e1_handler
 {
 public:
   explicit cu_up_processor_repository(cu_up_repository_config cfg_);

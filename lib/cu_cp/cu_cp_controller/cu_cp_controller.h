@@ -13,7 +13,7 @@
 #include "amf_connection_manager.h"
 #include "node_connection_notifier.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_up_repository.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
 
 namespace srsran {
 namespace srs_cu_cp {

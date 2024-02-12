@@ -12,8 +12,8 @@
 
 #include "../du_processor/du_metrics_handler.h"
 #include "../ue_manager/ue_metrics_handler.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_metrics_handler.h"
-#include "srsran/cu_cp/du_repository.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 

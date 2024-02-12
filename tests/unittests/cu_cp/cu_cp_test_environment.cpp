@@ -67,17 +67,17 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cfg.ue_config.max_nof_supported_ues = params.max_nof_dus * MAX_NOF_UES_PER_DU;
 
   // create CU-CP instance.
-  cu_cp = create_cu_cp(cfg);
+  cu_cp_inst = create_cu_cp(cfg);
 
   // Pass CU-CP PDU handler to AMF.
-  amf_stub->attach_cu_cp_pdu_handler(cu_cp->get_ng_interface().get_ngap_message_handler());
+  amf_stub->attach_cu_cp_pdu_handler(cu_cp_inst->get_ng_handler().get_ngap_message_handler());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
   dus.clear();
   cu_ups.clear();
-  cu_cp->stop();
+  cu_cp_inst->stop();
   cu_cp_workers->stop();
 }
 
@@ -158,7 +158,7 @@ void cu_cp_test_environment::run_ng_setup()
 
 optional<unsigned> cu_cp_test_environment::connect_new_du()
 {
-  auto du_stub = create_mock_du({get_cu_cp().get_dus()});
+  auto du_stub = create_mock_du({get_cu_cp().get_f1c_handler()});
   if (not du_stub) {
     return nullopt;
   }
@@ -189,7 +189,7 @@ bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
 
 optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
 {
-  auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_cu_ups());
+  auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_e1_handler());
   if (not cu_up_obj) {
     return nullopt;
   }

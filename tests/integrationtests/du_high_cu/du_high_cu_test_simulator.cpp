@@ -109,10 +109,10 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   cu_cp_inst->start();
 
   // Connect AMF by injecting a ng_setup_response
-  cu_cp_inst->get_ng_interface().get_ngap_message_handler().handle_message(srs_cu_cp::generate_ng_setup_response());
+  cu_cp_inst->get_ng_handler().get_ngap_message_handler().handle_message(srs_cu_cp::generate_ng_setup_response());
 
   // Connect F1-C to CU-CP.
-  f1c_gw.attach_cu_cp_du_repo(cu_cp_inst->get_dus());
+  f1c_gw.attach_cu_cp_du_repo(cu_cp_inst->get_f1c_handler());
 }
 
 du_high_cu_test_simulator::~du_high_cu_test_simulator()

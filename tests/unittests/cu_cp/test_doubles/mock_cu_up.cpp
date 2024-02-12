@@ -22,7 +22,7 @@ namespace {
 class synchronized_mock_cu_up : public mock_cu_up
 {
 public:
-  synchronized_mock_cu_up(cu_up_repository& cu_cp_e1_handler_) : cu_cp_node(&cu_cp_e1_handler_)
+  synchronized_mock_cu_up(cu_cp_e1_handler& cu_cp_e1_handler_) : cu_cp_node(&cu_cp_e1_handler_)
   {
     tx_pdu_notifier = cu_cp_node->handle_new_cu_up_connection(std::make_unique<rx_pdu_notifier>(*this));
   }
@@ -76,7 +76,7 @@ private:
     report_fatal_error_if_not(rx_pdus.push_blocking(rx_pdu), "queue is full");
   }
 
-  cu_up_repository* cu_cp_node = nullptr;
+  cu_cp_e1_handler* cu_cp_node = nullptr;
 
   rx_pdu_queue rx_pdus{1024};
 
@@ -86,7 +86,7 @@ private:
 
 } // namespace
 
-std::unique_ptr<mock_cu_up> srsran::srs_cu_cp::create_mock_cu_up(cu_up_repository& cu_cp_e1_handler)
+std::unique_ptr<mock_cu_up> srsran::srs_cu_cp::create_mock_cu_up(cu_cp_e1_handler& cu_cp_e1_handler)
 {
   auto ptr = std::make_unique<synchronized_mock_cu_up>(cu_cp_e1_handler);
   if (not ptr->connected()) {

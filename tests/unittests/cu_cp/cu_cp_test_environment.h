@@ -37,10 +37,10 @@ public:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  cu_cp_interface& get_cu_cp() { return *cu_cp; }
-  mock_amf&        get_amf() { return *amf_stub; }
-  mock_du&         get_du(size_t du_index) { return *dus.at(du_index); }
-  mock_cu_up&      get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
+  cu_cp&      get_cu_cp() { return *cu_cp_inst; }
+  mock_amf&   get_amf() { return *amf_stub; }
+  mock_du&    get_du(size_t du_index) { return *dus.at(du_index); }
+  mock_cu_up& get_cu_up(size_t cu_up_index) { return *cu_ups.at(cu_up_index); }
 
   /// Start CU-CP connection to AMF and run NG setup procedure to completion.
   void run_ng_setup();
@@ -106,7 +106,7 @@ private:
   unsigned                                               next_du_idx = 0;
 
   /// CU-CP instance.
-  std::unique_ptr<cu_cp_interface> cu_cp;
+  std::unique_ptr<cu_cp> cu_cp_inst;
 };
 
 } // namespace srs_cu_cp

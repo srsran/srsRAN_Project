@@ -23,7 +23,7 @@ namespace {
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
-  f1ap_rx_pdu_notifier(du_repository& parent_, du_index_t du_index_) :
+  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_) :
     parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_f1ap_message_handler())
   {
   }
@@ -38,7 +38,7 @@ public:
   void on_new_message(const f1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
 
 private:
-  du_repository*        parent;
+  cu_cp_f1c_handler*    parent;
   du_index_t            du_index;
   f1ap_message_handler& cached_msg_handler;
 };

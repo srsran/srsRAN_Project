@@ -22,7 +22,7 @@ namespace {
 class e1ap_rx_pdu_notifier final : public e1ap_message_notifier
 {
 public:
-  e1ap_rx_pdu_notifier(cu_up_repository& parent_, cu_up_index_t cu_up_index_) :
+  e1ap_rx_pdu_notifier(cu_cp_e1_handler& parent_, cu_up_index_t cu_up_index_) :
     parent(&parent_),
     cu_up_index(cu_up_index_),
     cached_msg_handler(parent->get_cu_up(cu_up_index).get_e1ap_message_handler())
@@ -43,7 +43,7 @@ public:
   void on_new_message(const e1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
 
 private:
-  cu_up_repository*     parent;
+  cu_cp_e1_handler*     parent;
   cu_up_index_t         cu_up_index;
   e1ap_message_handler& cached_msg_handler;
 };

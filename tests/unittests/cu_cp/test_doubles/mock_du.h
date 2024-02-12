@@ -18,7 +18,7 @@ struct f1ap_message;
 
 namespace srs_cu_cp {
 
-class du_repository;
+class cu_cp_f1c_handler;
 
 /// Mock class for the interface between DU and CU-CP.
 class mock_du
@@ -41,7 +41,7 @@ struct mock_du_params {
   /// \brief CU-CP DU repository passed to mock DU.
   ///
   /// The mock DU will use this to forward messages to CU-CP.
-  du_repository& cu_cp;
+  cu_cp_f1c_handler& cu_cp;
 };
 
 /// Creates an emulator of a DU from the perspective of the CU-CP.

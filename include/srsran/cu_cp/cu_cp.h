@@ -10,55 +10,36 @@
 
 #pragma once
 
-#include "cu_cp_metrics_handler.h"
-#include "cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_repository.h"
-#include "srsran/cu_cp/du_repository.h"
-#include "srsran/e1ap/common/e1ap_common.h"
-#include "srsran/ngap/ngap.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
+#include "srsran/cu_cp/cu_cp_metrics_handler.h"
+#include "srsran/cu_cp/cu_cp_ng_handler.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Component of the CU-CP responsible for handling events and messages going through the NG interface.
-class cu_cp_ng_interface
+/// \brief Public interface for a CU-CP instance.
+class cu_cp
 {
 public:
-  virtual ~cu_cp_ng_interface() = default;
+  virtual ~cu_cp() = default;
 
-  /// \brief Get the NG message handler interface.
-  /// \return The NG message handler interface.
-  virtual ngap_message_handler& get_ngap_message_handler() = 0;
+  /// \brief Get handler of the F1-C interface of the CU-CP.
+  virtual cu_cp_f1c_handler& get_f1c_handler() = 0;
 
-  /// \brief Get the NG event handler interface.
-  /// \return The NG event handler interface.
-  virtual ngap_event_handler& get_ngap_event_handler() = 0;
-
-  /// \brief Get the state of the AMF connection.
-  /// \return True if AMF is connected, false otherwise.
-  virtual bool amf_is_connected() = 0;
-};
-
-class cu_cp_interface
-{
-public:
-  virtual ~cu_cp_interface() = default;
-
-  /// \brief Get repository of handlers for the DUs currently connected to the CU-CP.
-  virtual du_repository& get_dus() = 0;
-
-  /// \brief Get repository of handlers for the CU-UPs currently connected to the CU-CP.
-  virtual cu_up_repository& get_cu_ups() = 0;
+  /// \brief Get handler of the E1 interface of the CU-CP.
+  virtual cu_cp_e1_handler& get_e1_handler() = 0;
 
   /// \brief Get handler of the NG interface of the CU-CP.
-  virtual cu_cp_ng_interface& get_ng_interface() = 0;
+  virtual cu_cp_ng_handler& get_ng_handler() = 0;
 
   /// \brief Get the metrics handler interface of the CU-CP.
   virtual metrics_handler& get_metrics_handler() = 0;
 
   /// \brief Initiate AMF TNL connection and run NG Setup Procedure.
   ///
-  /// This function blocks until the procedure is complete.
+  /// This function blocks until the procedure is complete. Once completed, the CU-CP is in operational state.
   /// \return Returns true if the connection to the AMF and NG setup procedure were successful. False, otherwise.
   virtual bool start() = 0;
 

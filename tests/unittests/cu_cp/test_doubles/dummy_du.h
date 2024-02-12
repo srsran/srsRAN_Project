@@ -18,7 +18,7 @@ struct f1ap_message;
 
 namespace srs_cu_cp {
 
-class du_repository;
+class cu_cp_f1c_handler;
 
 class du_test_stub
 {
@@ -31,7 +31,7 @@ public:
 };
 
 struct du_stub_params {
-  du_repository& cu_cp_f1c_itf;
+  cu_cp_f1c_handler& cu_cp_f1c_itf;
 };
 
 /// Creates an emulator of a DU from the perspective of the CU-CP.

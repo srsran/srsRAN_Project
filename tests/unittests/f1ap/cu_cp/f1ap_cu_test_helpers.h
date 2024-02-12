@@ -37,7 +37,7 @@ class dummy_cu_cp_f1c_gateway
 public:
   dummy_cu_cp_f1c_gateway() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_cu_cp_du_repo(srs_cu_cp::du_repository& cu_cp_du_mng_)
+  void attach_cu_cp_du_repo(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_)
   {
     local_f1c_gw.attach_cu_cp_du_repo(cu_cp_du_mng_);
   }
@@ -196,7 +196,7 @@ private:
 class dummy_f1ap_du_management_notifier : public f1ap_du_management_notifier
 {
 public:
-  void attach_handler(du_repository* handler_) { handler = handler_; };
+  void attach_handler(cu_cp_f1c_handler* handler_) { handler = handler_; };
 
   void on_du_remove_request_received(du_index_t idx) override
   {
@@ -213,7 +213,7 @@ public:
 
 private:
   srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
-  du_repository*        handler = nullptr;
+  cu_cp_f1c_handler*    handler = nullptr;
 };
 
 class dummy_f1ap_task_scheduler : public f1ap_task_scheduler

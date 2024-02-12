@@ -15,7 +15,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_,
-                                   du_repository&              du_db_,
+                                   cu_cp_f1c_handler&          du_db_,
                                    du_processor_ue_manager&    ue_mng_) :
   cfg(cfg_), du_db(du_db_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {

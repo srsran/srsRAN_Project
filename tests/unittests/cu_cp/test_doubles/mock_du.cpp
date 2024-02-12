@@ -10,7 +10,7 @@
 
 #include "mock_du.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/cu_cp/du_repository.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/error_handling.h"
 
@@ -56,7 +56,7 @@ private:
     report_fatal_error_if_not(rx_pdus.push_blocking(msg), "queue is full");
   }
 
-  du_repository&                         cu_cp_f1c;
+  cu_cp_f1c_handler&                     cu_cp_f1c;
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
 
   concurrent_queue<f1ap_message,
