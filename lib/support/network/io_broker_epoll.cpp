@@ -93,9 +93,17 @@ void io_broker_epoll::thread_loop()
   for (int i = 0; i < nof_events; ++i) {
     int fd = events[i].data.fd;
     if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || (!(events[i].events & EPOLLIN))) {
-      ///< An error has occured on this fd, or the socket is not ready for reading
-      /// TODO: add notifier for events
-      logger.error("IO broker: epoll error event. fd={} events={}", fd, uint32_t(events[i].events));
+      // An error or hang up happend on this file descriptor, or the socket is not ready for reading
+      // TODO: add notifier for these events and let the subscriber decide on further actions (e.g. unregister fd)
+      if (events[i].events & EPOLLHUP) {
+        // Note: some container environments hang up stdin (fd=0) in case of non-interactive sessions
+        logger.warning("IO broker: hang up on file descriptor. fd={} events={:#x}", fd, uint32_t(events[i].events));
+      } else if (events[i].events & EPOLLERR) {
+        logger.error("IO broker: error on file descriptor. fd={} events={:#x}", fd, uint32_t(events[i].events));
+      } else {
+        logger.error("IO broker: unhandled epoll event. fd={} events={:#x}", fd, uint32_t(events[i].events));
+      }
+      // Unregister the faulty file descriptor from epoll
       bool success = unregister_fd(fd);
       if (!success) {
         logger.error("IO broker: failed to unregister file descriptor. fd={}", fd);
