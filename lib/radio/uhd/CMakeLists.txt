@@ -12,12 +12,7 @@ set(SOURCES_UHD
         radio_uhd_rx_stream.cpp
         radio_uhd_tx_stream.cpp)
 
-if (ENABLE_EXPORT)
-    add_library(srsran_radio_uhd SHARED ${SOURCES_UHD})
-    add_compile_definitions(ENABLE_DYNAMIC_FACTORY)
-else ()
-    add_library(srsran_radio_uhd STATIC ${SOURCES_UHD})
-endif ()
+add_library(srsran_radio_uhd STATIC ${SOURCES_UHD})
 
 target_link_libraries(srsran_radio_uhd ${UHD_LIBRARIES} fmt srslog)
 

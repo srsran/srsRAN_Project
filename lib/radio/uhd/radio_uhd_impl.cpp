@@ -499,12 +499,3 @@ std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_config
 }
 
 radio_config_uhd_config_validator radio_factory_uhd_impl::config_validator;
-
-#ifdef ENABLE_DYNAMIC_FACTORY
-
-std::unique_ptr<radio_factory> srsran::create_dynamic_radio_factory()
-{
-  return std::make_unique<radio_factory_uhd_impl>();
-}
-
-#endif // ENABLE_DYNAMIC_FACTORY

@@ -37,12 +37,3 @@ const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_
 {
   return config_validator;
 }
-
-#ifdef ENABLE_DYNAMIC_FACTORY
-
-std::unique_ptr<radio_factory> srsran::create_dynamic_radio_factory()
-{
-  return std::make_unique<radio_factory_zmq_impl>();
-}
-
-#endif // ENABLE_DYNAMIC_FACTORY
