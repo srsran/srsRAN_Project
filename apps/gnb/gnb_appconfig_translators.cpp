@@ -1632,8 +1632,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_rx_ports               = cell.nof_antennas_ul;
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
-    cfg.nof_dl_rg                  = dl_pipeline_depth;
-    cfg.dl_rg_expire_timeout_slots = dl_pipeline_depth - 2;
+    cfg.nof_dl_rg                  = dl_pipeline_depth + 2;
+    cfg.dl_rg_expire_timeout_slots = dl_pipeline_depth;
     cfg.nof_dl_processors          = dl_pipeline_depth;
     cfg.nof_ul_rg                  = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
