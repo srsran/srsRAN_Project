@@ -136,9 +136,11 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
 
     // > Handle pending PUSCHs.
     for (const ul_sched_info& pusch : entry.puschs) {
-      mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
-      pdu.rnti         = pusch.pusch_cfg.rnti;
-      fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+      if (pusch.uci.has_value()) {
+        mac_uci_pdu& pdu = uci_ind.ucis.emplace_back();
+        pdu.rnti         = pusch.pusch_cfg.rnti;
+        fill_uci_pdu(pdu.pdu.emplace<mac_uci_pdu::pusch_type>(), pusch);
+      }
     }
 
     // Forward UCI indication to real MAC.
