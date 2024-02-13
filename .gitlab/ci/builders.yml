@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -263,7 +263,7 @@ ubuntu-dpdk-builder:
     - !reference [.fetch_src_cache, cache]
 
 .alternative-tag:
-  extends: .docker manifest
+  extends: .docker copy
   stage: alt registries
   variables:
     OS_NAME: none
@@ -271,9 +271,6 @@ ubuntu-dpdk-builder:
     VERSION: $DOCKER_BUILDER_VERSION
     ALT_REGISTRY: ${GITLAB_REGISTRY_URI}
   script:
-    - |
-      DEBIAN_FRONTEND=noninteractive apt-get update && \
-        apt-get install -y --no-install-recommends skopeo
     - |
       skopeo copy \
         docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${VERSION} \
@@ -286,14 +283,9 @@ ubuntu-dpdk-builder:
     OS_NAME: none
     OS_VERSION: none
     VERSION: $DOCKER_BUILDER_VERSION
-    REGISTRY: ${CR_REGISTRY_URI}
-  script:
+  before_script:
     - |
-      docker manifest create \
-        ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION} \
-        --amend ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}-amd64 \
-        --amend ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}-arm64
-      docker manifest push ${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-${OS_NAME}-${OS_VERSION}:${VERSION}
+      export NAME=builder-${OS_NAME}-${OS_VERSION}
 
 ################################################################################
 # Codechecker
@@ -865,15 +857,12 @@ alternative-tag [archlinux, latest, amd64]:
     - image-build-publish [archlinux, latest, amd64]
 
 manifest [archlinux, latest]:
-  extends: .docker manifest
+  extends: .docker copy
   stage: manifest
   variables:
     OS_NAME: archlinux
     OS_VERSION: latest
   script:
-    - |
-      DEBIAN_FRONTEND=noninteractive apt-get update && \
-        apt-get install -y --no-install-recommends skopeo
     - |
       skopeo copy \
         docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}-amd64 \

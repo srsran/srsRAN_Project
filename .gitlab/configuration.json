@@ -34,10 +34,10 @@
     "container_expiration_policy": {
         "cadence": "1d",
         "enabled": true,
-        "keep_n": 9,
+        "keep_n": 25,
         "older_than": "7d",
         "name_regex": ".*",
-        "name_regex_keep": null
+        "name_regex_keep": ""
     },
     "container_registry_access_level": "enabled",
     "default_branch": "dev",
