@@ -68,6 +68,15 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
     bwp_crb_limits = ss_info->ul_crb_lims;
   }
 
+  // [Implementation-defined] Assume aggregation level 2 while computing nof. candidates that can be fit in CORESET.
+  const unsigned max_nof_candidates = ss_info->coreset->get_nof_cces() / to_nof_cces(aggregation_level::n2);
+  // [Implementation-defined] To avoid running out of PDCCH candidates in multi-UE scenario and short BW (e.g. TDD and
+  // 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot i.e. divide available PDCCH candidates evenly
+  // among DL and UL.
+  if (nof_ues_to_be_scheduled_per_slot >= max_nof_candidates) {
+    nof_ues_to_be_scheduled_per_slot = std::ceil(nof_ues_to_be_scheduled_per_slot / 2);
+  }
+
   return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);
 }
 
