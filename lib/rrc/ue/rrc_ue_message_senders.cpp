@@ -10,6 +10,8 @@
 
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

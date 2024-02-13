@@ -9,6 +9,7 @@
  */
 
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/asn1/asn1_ap_utils.h"
 
 using srsran::byte_buffer;

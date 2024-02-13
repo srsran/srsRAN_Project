@@ -10,6 +10,7 @@
 
 #include "rrc_reestablishment_procedure.h"
 #include "rrc_setup_procedure.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/nr_ue_variables.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/integrity.h"

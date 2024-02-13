@@ -9,7 +9,7 @@
  */
 
 #include "paging_pdu_assembler.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/pcch_msg.h"
 
 using namespace srsran;
 

@@ -9,11 +9,9 @@
  */
 
 #include "lib/du_manager/converters/f1ap_configuration_helpers.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/sys_info.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include <algorithm>
-#include <array>
-#include <cstdint>
 #include <gtest/gtest.h>
 #include <string>
 
