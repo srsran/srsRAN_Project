@@ -698,8 +698,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
       ss2_cfg.set_non_ss0_nof_candidates(base_cell.pdcch_cfg.dedicated.ss2_n_candidates);
     } else if (base_cell.pdcch_cfg.dedicated.ss2_type != search_space_configuration::type_t::common) {
-      ss2_cfg.set_non_ss0_nof_candidates(
-          {0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0});
+      ss2_cfg.set_non_ss0_nof_candidates({0,
+                                          config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset1_cfg),
+                                          config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg),
+                                          0,
+                                          0});
     }
 
     if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
@@ -708,7 +711,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates == auto_compute_ss2_n_candidates_cfg) {
         ss2_cfg.set_non_ss0_nof_candidates(
             {0,
-             0,
+             std::min(static_cast<uint8_t>(4U),
+                      config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset1_cfg)),
              std::min(static_cast<uint8_t>(4U),
                       config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
              0,
