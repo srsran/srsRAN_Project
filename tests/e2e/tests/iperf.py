@@ -199,7 +199,7 @@ def test_srsue(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
-        always_download_artifacts=True,
+        always_download_artifacts=False,
         common_search_space_enable=True,
         prach_config_index=1,
     )
@@ -381,7 +381,7 @@ def test_zmq_4x4_mimo(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
-        always_download_artifacts=True,
+        always_download_artifacts=False,
     )
 
 
@@ -476,7 +476,7 @@ def test_zmq_smoke(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start", "iperf did not achieve the expected data rate"])
+@mark.flaky(reruns=1, only_rerun=["failed to start", "iperf did not achieve the expected data rate"])
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

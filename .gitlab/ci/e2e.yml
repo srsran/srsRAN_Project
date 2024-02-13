@@ -188,7 +188,7 @@ smoke-zmq:
     TESTBED: zmq
     MARKERS: "smoke"
     PYTEST_ARGS: "-x"
-    RETINA_ARGS: "gnb.all.pcap=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
     E2E_LOG_LEVEL: "debug"
   needs:
     - job: "smoke relwithdeb cached"
@@ -247,7 +247,7 @@ zmq-alternative-configs:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -271,7 +271,7 @@ zmq-asan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
   interruptible: false
   needs:
     - job: "basic asan"
@@ -283,7 +283,7 @@ zmq-tsan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
   interruptible: false
   needs:
     - job: "basic tsan"
@@ -296,7 +296,7 @@ zmq-valgrind:
   variables:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: "gnb.all.pcap=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
   interruptible: false
   needs:
     - job: "basic valgrind"
@@ -405,7 +405,7 @@ viavi:
     MARKERS: "viavi"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
-    RETINA_ARGS: "gnb.all.pcap=False"
+    RETINA_ARGS: "gnb.all.pcap=True"
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true

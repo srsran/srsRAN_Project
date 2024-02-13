@@ -76,7 +76,7 @@ def test_multiple_configs_zmq(
     )
     configure_artifacts(
         retina_data=retina_data,
-        always_download_artifacts=True,
+        always_download_artifacts=False,
     )
 
     ue_attach_info_dict = start_and_attach((ue,), gnb, fivegc, gnb_post_cmd=config)
