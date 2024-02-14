@@ -345,6 +345,51 @@ test mode ue memcheck:
     - *txrx-lib
     - *retina-needs
 
+test mode ru:
+  stage: zmq
+  extends: .e2e-run
+  variables:
+    GROUP: "test_mode"
+    TESTBED: "test_mode"
+    MARKERS: "test_mode"
+    KEYWORD: "test_ru"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ru tsan:
+  extends: test mode ru
+  variables:
+    E2E_LOG_LEVEL: "warning"
+  needs:
+    - job: "basic tsan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ru asan:
+  extends: test mode ru
+  variables:
+    E2E_LOG_LEVEL: "warning"
+  needs:
+    - job: "basic asan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ru memcheck:
+  extends: test mode ru
+  variables:
+    E2E_LOG_LEVEL: "warning"
+  needs:
+    - job: "basic memcheck"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
 ################################################################################
 # RF
 ################################################################################
