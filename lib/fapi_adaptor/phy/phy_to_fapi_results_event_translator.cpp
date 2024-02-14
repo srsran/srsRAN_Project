@@ -384,13 +384,18 @@ static void fill_format_2_3_4_harq(fapi::uci_pucch_pdu_format_2_3_4_builder& bui
 /// Fills the SR parameters for PUCCH Format 2/3/4 using the given builder and message.
 static void fill_format_2_3_4_sr(fapi::uci_pucch_pdu_format_2_3_4_builder& builder, const pucch_uci_message& message)
 {
-  if (message.get_status() != uci_status::valid) {
+  units::bits sr_len = units::bits(message.get_expected_nof_sr_bits());
+  if (sr_len.value() == 0) {
     return;
   }
 
-  units::bits sr_len = units::bits(message.get_expected_nof_sr_bits());
+  uci_pusch_or_pucch_f2_3_4_detection_status status =
+      to_fapi_uci_detection_status(message.get_status(), message.get_expected_nof_bits_full_payload());
 
-  if (sr_len.value() == 0) {
+  // Set the payload to 0s on detection failure.
+  if (!is_fapi_uci_payload_valid(status)) {
+    builder.set_sr_parameters(sr_len.value(),
+                              bounded_bitset<fapi::sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE_BITS>(sr_len.value()));
     return;
   }
 
