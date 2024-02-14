@@ -102,14 +102,14 @@ bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_r
 {
   // Request UE creation in target cell.
 
-  cu_cp_ue_creation_message ue_creation_msg;
+  cu_cp_ue_creation_request ue_creation_msg;
   ue_creation_msg.ue_index               = ue_ctxt_setup_resp.ue_index;
   ue_creation_msg.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
   ue_creation_msg.cgi                    = request.sp_cell_id;
   ue_creation_msg.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
   ue_creation_msg.rrc_context            = std::move(rrc_context);
 
-  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
+  cu_cp_ue_creation_response ue_creation_complete_msg = du_processor_notifier.on_ue_creation_request(ue_creation_msg);
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
     logger.warning("Couldn't create UE in target cell");
     return false;

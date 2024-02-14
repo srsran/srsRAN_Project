@@ -35,7 +35,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
-  cu_cp_notifier(f1ap_cu_cp_notifier_),
   ctrl_exec(ctrl_exec_)
 {
 }
@@ -224,48 +223,41 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
 {
+  const gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
-  if (not srsran::config_helpers::is_valid(cgi)) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
+  if (not config_helpers::is_valid(cgi)) {
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialULRRCMessageTransfer. Invalid CGI", du_ue_id);
     return;
   }
 
   rnti_t crnti = to_rnti(msg->c_rnti);
   if (crnti == rnti_t::INVALID_RNTI) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialULRRCMessageTransfer. Cause: Invalid C-RNTI", du_ue_id);
     return;
   }
 
-  logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialUlRrcMessageTransfer",
-               msg->gnb_du_ue_f1ap_id,
+  logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialULRRCMessageTransfer",
+               du_ue_id,
                cgi.nci,
                crnti,
                cgi.plmn);
 
   if (msg->sul_access_ind_present) {
-    logger.debug("du_ue_f1ap_id={}: Ignoring SUL access indicator", msg->gnb_du_ue_f1ap_id);
+    logger.debug("du_ue_f1ap_id={}: Ignoring SUL access indicator", du_ue_id);
   }
 
-  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No CU UE F1AP ID available",
-                   msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialULRRCMessageTransfer. Cause: Failed to allocate CU-UE-F1AP-ID",
+                   du_ue_id);
     return;
   }
 
-  // Request UE index allocation
-  ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
-  if (ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available",
-                   msg->gnb_du_ue_f1ap_id);
-    return;
-  }
-
-  // Request UE creation
-  cu_cp_ue_creation_message ue_creation_msg = {};
-  ue_creation_msg.ue_index                  = ue_index;
+  // Request UE context creation to CU-CP.
+  cu_cp_ue_creation_request ue_creation_msg = {};
+  ue_creation_msg.cgi                       = cgi;
   ue_creation_msg.c_rnti                    = crnti;
-  ue_creation_msg.cgi                       = cgi_from_asn1(msg->nr_cgi);
   if (msg->du_to_cu_rrc_container_present) {
     ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
   } else {
@@ -273,26 +265,26 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     // We will forward an empty container to the RRC UE, that will trigger an RRC Reject
     logger.debug("du_ue_f1ap_id={}: Forwarding InitialUlRrcMessageTransfer to RRC to reject the UE. Cause: Missing DU "
                  "to CU container",
-                 msg->gnb_du_ue_f1ap_id);
+                 du_ue_id);
     ue_creation_msg.du_to_cu_rrc_container = byte_buffer{};
   }
 
-  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
+  // Request the creation of a UE context in the CU-CP.
+  const cu_cp_ue_creation_response cu_cp_resp = du_processor_notifier.on_ue_creation_request(ue_creation_msg);
 
   // Remove the UE if the creation was not successful
-  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+  if (cu_cp_resp.ue_index == ue_index_t::invalid) {
     logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed", msg->gnb_du_ue_f1ap_id);
-    cu_cp_notifier.on_ue_removal_required(ue_index);
     return;
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
-  ue_ctxt_list.add_du_ue_f1ap_id(cu_ue_f1ap_id, int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id));
-  ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
+  ue_ctxt_list.add_ue(cu_cp_resp.ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_du_ue_f1ap_id(cu_ue_f1ap_id, du_ue_id);
+  ue_ctxt_list.add_rrc_notifier(cu_cp_resp.ue_index, cu_cp_resp.f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
 
-  ue_ctxt.logger.log_debug("Added UE context");
+  ue_ctxt.logger.log_info("Added UE context");
 
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
@@ -302,7 +294,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  // Pass container to RRC
+  // Pass RRC container to RRC
   ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_ccch_pdu(msg->rrc_container.copy());
 }
 

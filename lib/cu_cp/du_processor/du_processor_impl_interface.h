@@ -46,7 +46,7 @@ public:
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
+  virtual cu_cp_ue_creation_response handle_ue_creation_request(const cu_cp_ue_creation_request& msg) = 0;
 
   /// \brief Update existing UE object.
   virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;

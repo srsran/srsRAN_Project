@@ -73,10 +73,10 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(du_setup_r
   setup_request = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-cu_cp_ue_creation_message
+cu_cp_ue_creation_request
 srsran::srs_cu_cp::generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id)
 {
-  cu_cp_ue_creation_message ue_creation_msg = {};
+  cu_cp_ue_creation_request ue_creation_msg = {};
   ue_creation_msg.ue_index                  = ue_index;
   ue_creation_msg.c_rnti                    = c_rnti;
   asn1::f1ap::nr_cgi_s asn1_cgi;

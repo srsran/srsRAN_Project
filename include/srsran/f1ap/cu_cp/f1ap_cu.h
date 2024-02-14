@@ -99,12 +99,8 @@ public:
   virtual void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
 };
 
-struct f1ap_srb_creation_message {
-  ue_index_t ue_index = ue_index_t::invalid;
-  srb_id_t   srb_id   = srb_id_t::nulltype;
-};
-
-struct ue_creation_complete_message {
+/// Response provided by the CU-CP to the F1AP-CU when a UE context creation in the CU-CP is requested.
+struct cu_cp_ue_creation_response {
   ue_index_t                 ue_index          = ue_index_t::invalid;
   f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
@@ -129,13 +125,10 @@ class f1ap_du_processor_notifier : public du_setup_notifier
 public:
   virtual ~f1ap_du_processor_notifier() = default;
 
-  /// \brief Request allocation of a new UE index.
-  virtual ue_index_t on_new_ue_index_required() = 0;
-
   /// \brief Notifies the DU processor to create a UE.
   /// \param[in] msg The ue creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) = 0;
+  virtual cu_cp_ue_creation_response on_ue_creation_request(const cu_cp_ue_creation_request& msg) = 0;
 
   /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
   /// section 8.3.2.
