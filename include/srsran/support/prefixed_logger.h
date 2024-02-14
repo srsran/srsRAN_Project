@@ -25,8 +25,8 @@ template <typename Prefix>
 class prefixed_logger
 {
 public:
-  prefixed_logger(const std::string& log_name, Prefix prefix_) :
-    logger(srslog::fetch_basic_logger(log_name, false)), prefix(prefix_)
+  prefixed_logger(const std::string& log_name, Prefix prefix_, const char* prefix_separator_ = "") :
+    logger(srslog::fetch_basic_logger(log_name, false)), prefix(prefix_), prefix_separator(prefix_separator_)
   {
   }
 
@@ -196,6 +196,7 @@ public:
 private:
   srslog::basic_logger& logger;
   Prefix                prefix;
+  const char*           prefix_separator;
 
   template <typename... Args>
   void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args) const
@@ -205,7 +206,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel("{}{}", prefix, to_c_str(buffer));
+    channel("{}{}{}", prefix, prefix_separator, to_c_str(buffer));
   }
 
   template <typename It, typename... Args>
@@ -216,7 +217,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(it_begin, it_end, "{}{}", prefix, to_c_str(buffer));
+    channel(it_begin, it_end, "{}{}{}", prefix, prefix_separator, to_c_str(buffer));
   }
 
   template <typename... Args>
@@ -227,7 +228,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(msg, len, "{}{}", prefix, to_c_str(buffer));
+    channel(msg, len, "{}{}{}", prefix, prefix_separator, to_c_str(buffer));
   }
 };
 

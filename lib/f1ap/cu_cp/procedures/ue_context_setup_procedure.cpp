@@ -10,6 +10,7 @@
 
 #include "ue_context_setup_procedure.h"
 #include "../f1ap_asn1_helpers.h"
+#include "cu_cp/ue_context/f1ap_ue_logger.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
@@ -88,7 +89,7 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
 
   // Create UE context and store it.
   f1ap_ue_context& ue_ctxt = ue_ctxt_list.add_ue(request.ue_index, tmp_cu_ue_f1ap_id);
-  logger.debug("ue={}: Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_ids.ue_index, tmp_cu_ue_f1ap_id);
+  logger.debug("{}: UE successfully created.", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
   // Store identifiers.
   new_cu_ue_f1ap_id = tmp_cu_ue_f1ap_id;

@@ -21,7 +21,7 @@ using namespace asn1::f1ap;
 ue_context_release_procedure::ue_context_release_procedure(const f1ap_ue_context_release_command& cmd_,
                                                            f1ap_ue_context&                       ue_ctxt_,
                                                            f1ap_message_notifier&                 f1ap_notif_) :
-  ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_)
+  ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(srslog::fetch_basic_logger("CU-CP-F1"))
 {
   command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
@@ -41,7 +41,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 {
   CORO_BEGIN(ctx);
 
-  ue_ctxt.logger.log_debug("\"{}\" initialized", name());
+  logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
@@ -69,7 +69,8 @@ void ue_context_release_procedure::send_ue_context_release_command()
   if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     f1ap_ue_ctxt_rel_msg.pdu.to_json(js);
-    ue_ctxt.logger.log_debug("Containerized UeContextReleaseCommand: {}", js.to_string());
+    logger.debug(
+        "{}: Containerized UEContextReleaseCommand: {}", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()}, js.to_string());
   }
 
   // send UE Context Release Command
@@ -79,15 +80,13 @@ void ue_context_release_procedure::send_ue_context_release_command()
 ue_index_t
 ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s& msg)
 {
-  ue_ctxt.logger.log_debug("Received UeContextReleaseComplete");
-
   ue_index_t ret = ue_index_t::invalid;
 
   if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_ids.ue_index;
-    ue_ctxt.logger.log_debug("\"{}\" finalized", name());
+    logger.info("{}: Procedure finished successfully.", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
   } else {
-    ue_ctxt.logger.log_error("\"{}\" failed", name());
+    logger.warning("{}: Procedure failed.", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
   }
 
   return ret;

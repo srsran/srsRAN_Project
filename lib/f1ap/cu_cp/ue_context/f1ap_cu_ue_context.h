@@ -19,12 +19,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct f1ap_ue_ids {
-  const ue_index_t          ue_index      = ue_index_t::invalid;
-  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
-  gnb_du_ue_f1ap_id_t       du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
-};
-
 struct f1ap_ue_context {
   f1ap_ue_ids                ue_ids;
   f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
@@ -35,7 +29,7 @@ struct f1ap_ue_context {
   f1ap_ue_logger                logger;
 
   f1ap_ue_context(ue_index_t ue_index_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_factory timers_) :
-    ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_index_, cu_ue_f1ap_id_})
+    ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_ids}, " ")
   {
   }
 };
