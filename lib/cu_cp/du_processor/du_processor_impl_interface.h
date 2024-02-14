@@ -371,6 +371,11 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// \brief Notify the CU-CP to push a UE context to a UE during handover.
+  /// \param[in] source_ue_index The index of the UE that is the source of the handover.
+  /// \param[in] target_ue_index The index of the UE that is the target of the handover.
+  virtual void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
 };
 
 /// DU processor Paging handler.

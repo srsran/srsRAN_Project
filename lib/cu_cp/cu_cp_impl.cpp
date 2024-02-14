@@ -259,6 +259,14 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
+void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
+{
+  // Transfer NGAP UE Context to new UE and remove the old context
+  ngap_entity->update_ue_index(target_ue_index, source_ue_index);
+  // Transfer E1AP UE Context to new UE and remove old context
+  cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(target_ue_index, source_ue_index);
+}
+
 optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(nr_cell_id_t           nci,
                                                                      optional<rrc_meas_cfg> current_meas_config)
 {

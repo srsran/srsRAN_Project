@@ -128,6 +128,11 @@ public:
     });
   }
 
+  void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
+  {
+    logger.info("Received handover ue context push");
+  }
+
 private:
   srslog::basic_logger&                             logger = srslog::fetch_basic_logger("TEST");
   std::unique_ptr<dummy_ngap_du_processor_notifier> ngap_notifier;

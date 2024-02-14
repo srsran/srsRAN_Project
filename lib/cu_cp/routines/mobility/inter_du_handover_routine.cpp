@@ -177,7 +177,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
     target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
     // Trigger RRC Reconfiguration
-    CORO_AWAIT_VALUE(bool reconf_result,
+    CORO_AWAIT_VALUE(reconf_result,
                      launch_async<handover_reconfiguration_routine>(rrc_reconfig_args, *source_ue, *target_ue, logger));
 
     if (!reconf_result) {
@@ -195,12 +195,9 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     target_ue->get_up_resource_manager().apply_config_update(result);
   }
 
-  // Transfer old UE context (NGAP and E1AP) to new UE context and remove old UE context.
-  CORO_AWAIT_VALUE(context_transfer_success,
-                   cu_cp_notifier.on_ue_transfer_required(target_ue->get_ue_index(), command.source_ue_index));
-  if (not context_transfer_success) {
-    logger.warning("ue={}: \"{}\" failed to transfer UE context", command.source_ue_index, name());
-    CORO_EARLY_RETURN(response_msg);
+  {
+    // Transfer old UE context (NGAP and E1AP) to new UE context and remove old UE context.
+    cu_cp_notifier.on_handover_ue_context_push(command.source_ue_index, target_ue->get_ue_index());
   }
 
   // Remove source UE context.

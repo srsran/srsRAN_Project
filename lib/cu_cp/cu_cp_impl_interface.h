@@ -202,6 +202,11 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request or is the target UE.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request or is the source UE.
   virtual async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// \brief Handle a UE context push during handover.
+  /// \param[in] source_ue_index The index of the UE that is the source of the handover.
+  /// \param[in] target_ue_index The index of the UE that is the target of the handover.
+  virtual void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
 };
 
 /// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments

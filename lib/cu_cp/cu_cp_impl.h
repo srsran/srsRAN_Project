@@ -59,6 +59,7 @@ public:
   rrc_reestablishment_ue_context_t
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
 
   // cu_cp_measurement_handler
   optional<rrc_meas_cfg> handle_measurement_config_request(nr_cell_id_t           nci,
