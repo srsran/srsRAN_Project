@@ -310,11 +310,37 @@ test mode ue:
   stage: zmq
   extends: .e2e-run
   variables:
-    TESTBED: "zmq_4x4_mimo"
-    MARKERS: "testmode"
-    E2E_LOG_LEVEL: "info"
+    GROUP: "test_mode"
+    TESTBED: "test_mode"
+    MARKERS: "test_mode"
+    KEYWORD: "test_ue"
+    E2E_LOG_LEVEL: "warning"
   needs:
     - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ue tsan:
+  extends: test mode ue
+  needs:
+    - job: "basic tsan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ue asan:
+  extends: test mode ue
+  needs:
+    - job: "basic asan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
+test mode ue memcheck:
+  extends: test mode ue
+  needs:
+    - job: "basic memcheck"
       artifacts: true
     - *txrx-lib
     - *retina-needs

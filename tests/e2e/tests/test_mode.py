@@ -39,9 +39,9 @@ from .steps.stub import FIVEGC_STARTUP_TIMEOUT, GNB_STARTUP_TIMEOUT, handle_star
         param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 4", 4, id="Test UE 4x4 Rank 4"),
     ),
 )
-@mark.testmode
+@mark.test_mode
 # pylint: disable=too-many-arguments
-def test_mode(
+def test_ue(
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -73,7 +73,7 @@ def test_mode(
                 "log_level": "warning",
                 "pcap": False,
             },
-            "templates": {"cell": str(Path(__file__).joinpath("../test_mode/config.yml").resolve())},
+            "templates": {"cell": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve())},
         },
     }
     retina_manager.parse_configuration(retina_data.test_config)
