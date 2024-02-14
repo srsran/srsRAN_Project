@@ -157,12 +157,6 @@ public:
     du_processor_ngap_handler = du_processor_ngap_handler_;
   }
 
-  ue_index_t on_new_ue_index_required() override
-  {
-    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-    return du_processor_ngap_handler->get_new_ue_index();
-  }
-
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {

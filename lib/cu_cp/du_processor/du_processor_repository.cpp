@@ -224,7 +224,7 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
 {
   for (auto& du : du_db) {
     if (du.second.du_processor->has_cell(cgi)) {
-      return du.second.du_processor->get_du_processor_ngap_interface().get_new_ue_index();
+      return du.second.du_processor->get_du_processor_ngap_interface().allocate_new_ue_index();
     }
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);

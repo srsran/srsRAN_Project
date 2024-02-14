@@ -56,7 +56,7 @@ public:
 
   // du_processor_f1ap_interface
   du_setup_result            handle_du_setup_request(const du_setup_request& req) override;
-  ue_index_t                 get_new_ue_index() override;
+  ue_index_t                 allocate_new_ue_index() override;
   cu_cp_ue_creation_response handle_ue_creation_request(const cu_cp_ue_creation_request& msg) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;

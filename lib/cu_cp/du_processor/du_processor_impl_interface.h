@@ -41,7 +41,7 @@ public:
   virtual du_index_t get_du_index() = 0;
 
   /// \brief Allocate a new UE index.
-  virtual ue_index_t get_new_ue_index() = 0;
+  virtual ue_index_t allocate_new_ue_index() = 0;
 
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
@@ -261,7 +261,7 @@ public:
   virtual ~du_processor_ngap_interface() = default;
 
   /// \brief Allocate a new UE index.
-  virtual ue_index_t get_new_ue_index() = 0;
+  virtual ue_index_t allocate_new_ue_index() = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>

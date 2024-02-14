@@ -178,9 +178,6 @@ class ngap_du_processor_control_notifier
 public:
   virtual ~ngap_du_processor_control_notifier() = default;
 
-  /// \brief Request allocation of a new UE index.
-  virtual ue_index_t on_new_ue_index_required() = 0;
-
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;

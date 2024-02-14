@@ -172,7 +172,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   return res;
 }
 
-ue_index_t du_processor_impl::get_new_ue_index()
+ue_index_t du_processor_impl::allocate_new_ue_index()
 {
   return ue_manager.allocate_new_ue_index(context.du_index);
 }
@@ -262,7 +262,7 @@ cu_cp_ue_creation_response du_processor_impl::handle_ue_creation_request(const c
   ue_index_t ue_index = msg.ue_index;
   if (ue_index == ue_index_t::invalid) {
     // It's a new UE. Allocate new UE index.
-    ue_index = get_new_ue_index();
+    ue_index = allocate_new_ue_index();
     if (ue_index == ue_index_t::invalid) {
       logger.warning("ue={}: Could not create UE context", ue_index);
       return {};

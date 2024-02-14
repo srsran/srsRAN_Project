@@ -183,12 +183,6 @@ public:
   dummy_ngap_du_processor_notifier(ngap_ue_context_removal_handler& ngap_handler_) :
     logger(srslog::fetch_basic_logger("TEST")), ngap_handler(ngap_handler_){};
 
-  ue_index_t on_new_ue_index_required() override
-  {
-    logger.info("Requested to allocate a new ue index.");
-    return allocate_ue_index();
-  }
-
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
