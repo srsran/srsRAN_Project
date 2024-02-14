@@ -82,7 +82,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   // Perform initial sanity checks on incoming message.
   if (!rrc_ue_up_resource_manager.validate_request(setup_msg.pdu_session_res_setup_items)) {
-    logger.warning("ue={}: \"{}\" Invalid PduSessionResourceSetup", setup_msg.ue_index, name());
+    logger.info("ue={}: \"{}\" Invalid PduSessionResourceSetup", setup_msg.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
 
@@ -389,7 +389,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
     }
     rrc_ue_up_resource_manager.apply_config_update(result);
   } else {
-    logger.warning("ue={}: \"{}\" failed", setup_msg.ue_index, name());
+    logger.info("ue={}: \"{}\" failed", setup_msg.ue_index, name());
 
     mark_all_sessions_as_failed(response_msg, setup_msg, cause_radio_network_t::unspecified);
   }
