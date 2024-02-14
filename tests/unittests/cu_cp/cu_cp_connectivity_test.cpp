@@ -333,7 +333,7 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   rnti_t              crnti      = to_rnti(0x4601);
   get_du(du_idx).push_tx_pdu(generate_init_ul_rrc_message_transfer(ue_f1ap_id, crnti));
 
-  // Verify F1AP DL RRC Message is sent with RRC Setup.
+  // TEST: F1AP UE Context Command is sent to DU.
   f1ap_message f1ap_pdu;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
   ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
@@ -343,6 +343,8 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(ue_rel->gnb_du_ue_f1ap_id), ue_f1ap_id);
   ASSERT_TRUE(ue_rel->srb_id_present);
   ASSERT_EQ(int_to_srb_id(ue_rel->srb_id), srb_id_t::srb0);
+
+  // TEST: RRC Reject is sent to UE.
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   {
     asn1::cbit_ref bref{ue_rel->rrc_container};
@@ -350,17 +352,17 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   }
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
 
-  // Check UE is created and is only destroyed when F1AP UE context release complete is received.
+  // TEST: UE is not destroyed in CU-CP until UE Context Release Complete is received.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1);
   ASSERT_EQ(report.ues[0].rnti, crnti);
 
-  // Send F1AP UE Context Release Complete.
+  // DU sends F1AP UE Context Release Complete.
   auto rel_complete =
       generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), ue_f1ap_id);
   get_du(du_idx).push_tx_pdu(rel_complete);
 
-  // Verify UE is removed.
+  // TEST: Verify UE is removed in CU-CP.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_TRUE(report.ues.empty());
 
@@ -386,14 +388,14 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
   unsigned cu_up_idx = ret.value();
   ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
 
-  // Send Initial UL RRC Message without DU-to-CU-RRC container.
+  // Event: DU sends Initial UL RRC Message without DU-to-CU-RRC container.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
   f1ap_message        init_rrc_msg  = generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti);
   init_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
   get_du(du_idx).push_tx_pdu(init_rrc_msg);
 
-  // Verify CU-CP sends a UE Context Release command over SRB0.
+  // TEST: CU-CP sends a UE Context Release command over SRB0.
   f1ap_message f1ap_pdu;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
   ASSERT_EQ(f1ap_pdu.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
@@ -405,7 +407,7 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
   ASSERT_TRUE(ue_rel->srb_id_present);
   ASSERT_EQ(ue_rel->srb_id, 0);
 
-  // Verify that the UE Context Release command contains an RRC Reject.
+  // TEST: UE Context Release command contains an RRC Reject.
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   {
     asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
@@ -413,17 +415,17 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
   }
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
 
-  // Verify UE is not removed until UE Context Release Complete.
+  // TEST: UE is not destroyed in CU-CP until UE Context Release Complete is received.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1);
   ASSERT_EQ(report.ues[0].rnti, to_rnti(0x4601));
 
-  // Send F1AP UE Context Release Complete.
+  // EVENT: DU sends F1AP UE Context Release Complete.
   auto rel_complete =
       generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
   get_du(du_idx).push_tx_pdu(rel_complete);
 
-  // Verify UE is removed.
+  // TEST: UE context removed from CU-CP.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_TRUE(report.ues.empty());
 }
