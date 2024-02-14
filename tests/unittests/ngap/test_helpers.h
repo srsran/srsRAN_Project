@@ -345,10 +345,10 @@ public:
     last_ue = ue_index;
 
     // Add NGAP UE to UE manager
-    ngap_ue* ue = ue_manager.add_ue(ue_index,
-                                    *ue_notifier.rrc_ue_pdu_notifier,
-                                    *ue_notifier.rrc_ue_ctrl_notifier,
-                                    *ue_notifier.du_processor_ctrl_notifier);
+    ngap_ue* ue = ue_manager.set_ue_ng_context(ue_index,
+                                               *ue_notifier.rrc_ue_pdu_notifier,
+                                               *ue_notifier.rrc_ue_ctrl_notifier,
+                                               *ue_notifier.du_processor_ctrl_notifier);
 
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);

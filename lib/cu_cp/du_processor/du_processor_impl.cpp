@@ -174,7 +174,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
 ue_index_t du_processor_impl::allocate_new_ue_index()
 {
-  return ue_manager.allocate_new_ue_index(context.du_index);
+  return ue_manager.add_ue(context.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -270,7 +270,7 @@ cu_cp_ue_creation_response du_processor_impl::handle_ue_creation_request(const c
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(ue_index, context.id, pci, msg.c_rnti);
+  du_ue* ue = ue_manager.set_ue_du_context(ue_index, context.id, pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.warning("ue={}: Could not create UE context", ue_index);
     return {};

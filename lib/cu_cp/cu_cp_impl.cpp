@@ -340,10 +340,10 @@ bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
     return false;
   }
 
-  return ue_mng.add_ue(ue_index,
-                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                       ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
+  return ue_mng.set_ue_ng_context(ue_index,
+                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
+                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
+                                  ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()

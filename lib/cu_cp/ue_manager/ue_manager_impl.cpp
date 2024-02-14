@@ -75,15 +75,17 @@ void ue_manager::remove_ue(ue_index_t ue_index)
 
 // du_processor_ue_manager
 
-ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
+ue_index_t ue_manager::add_ue(du_index_t du_index)
 {
   if (ues.size() == ue_config.max_nof_supported_ues) {
+    logger.warning("CU-CP UE creation Failed. Cause: Maximum number of UEs {} supported by the CU-CP has been reached",
+                   ue_config.max_nof_supported_ues);
     return ue_index_t::invalid;
   }
 
   ue_index_t new_ue_index = get_next_ue_index(du_index);
   if (new_ue_index == ue_index_t::invalid) {
-    logger.warning("No free UE index available");
+    logger.warning("CU-CP UE creation Failed. Cause: No free UE index available");
     return ue_index_t::invalid;
   }
 
@@ -95,7 +97,7 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
               std::forward_as_tuple(new_ue_index),
               std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
 
-  logger.debug("ue={}: Allocated new UE index", new_ue_index);
+  logger.info("ue={}: Created new CU-CP UE", new_ue_index);
 
   return new_ue_index;
 }
@@ -108,7 +110,7 @@ du_ue* ue_manager::find_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-du_ue* ue_manager::add_ue(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
+du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
@@ -147,10 +149,10 @@ du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 
 // ngap_ue_manager
 
-ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
-                            ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                            ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                            ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
+ngap_ue* ue_manager::set_ue_ng_context(ue_index_t                          ue_index,
+                                       ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                                       ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                                       ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
