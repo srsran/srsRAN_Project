@@ -23,6 +23,9 @@ namespace ofh {
 /// Message transmission is managed according the given transmission window.
 class message_transmitter_impl : public ota_symbol_boundary_notifier
 {
+  /// Maximum number of frames allowed to be transmitted in a single burst.
+  static constexpr unsigned MAX_BURST_SIZE = 32;
+
   /// Internal structure used to store transmission window timing parameters expressed in a number of symbols.
   struct tx_timing_parameters {
     /// Offset from the current OTA symbol to the first symbol at which DL Control-Plane message can be sent, or in
@@ -77,8 +80,12 @@ public:
   void on_new_symbol(slot_symbol_point symbol_point) override;
 
 private:
-  /// Transmits enqueued messages for the given interval of slot symbol points.
-  void transmit_enqueued_messages(const ether::frame_pool_interval& interval);
+  /// Transmits the given frame burst.
+  void transmit_frame_burst(span<span<const uint8_t>> frame_burst);
+
+  /// Enqueues pending frames that match the given interval into the output buffer.
+  void enqueue_messages_into_burst(const ether::frame_pool_interval&                   interval,
+                                   static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst);
 };
 
 } // namespace ofh
