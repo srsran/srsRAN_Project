@@ -68,6 +68,16 @@ realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger
   symbol_duration(1e9 / nof_symbols_per_sec),
   sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
 {
+  // The GPS time epoch starts on 1980.1.6 so make sure that the system time is set after this date.
+  // For simplicity reasons, only allow dates after 1981.
+  ::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  ::tm     utc_time;
+  ::gmtime_r(&tt, &utc_time);
+  int current_year = utc_time.tm_year + 1900;
+  report_error_if_not(current_year >= 1981,
+                      "The Open FrontHaul standard uses GPS time for synchronization. Make sure that system time is "
+                      "set after the year 1981 since the GPS time epoch starts on 1980.1.6");
+
   gps_offset = std::chrono::nanoseconds(static_cast<unsigned>(std::round(cfg.gps_Alpha / 1.2288))) +
                std::chrono::milliseconds(cfg.gps_Beta * 10) + std::chrono::seconds(UNIX_TO_GPS_SECONDS_OFFSET);
 }
