@@ -32,8 +32,6 @@ struct receiver_impl_dependencies {
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.
   std::unique_ptr<ether::vlan_frame_decoder> eth_frame_decoder;
-  /// Open Fronthaul User-Plane decoder.
-  std::unique_ptr<uplane_message_decoder> uplane_decoder;
   /// User-Plane uplink data flow.
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
