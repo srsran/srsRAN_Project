@@ -73,24 +73,24 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(du_setup_r
   setup_request = create_du_setup_request(f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-cu_cp_ue_creation_request
-srsran::srs_cu_cp::generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id)
+ue_rrc_context_creation_request
+srsran::srs_cu_cp::generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id)
 {
-  cu_cp_ue_creation_request ue_creation_msg = {};
-  ue_creation_msg.ue_index                  = ue_index;
-  ue_creation_msg.c_rnti                    = c_rnti;
+  ue_rrc_context_creation_request req = {};
+  req.ue_index                        = ue_index;
+  req.c_rnti                          = c_rnti;
   asn1::f1ap::nr_cgi_s asn1_cgi;
   asn1_cgi.nr_cell_id.from_number(nrcell_id);
   asn1_cgi.plmn_id.from_string("02f899");
-  ue_creation_msg.cgi = cgi_from_asn1(asn1_cgi);
+  req.cgi = cgi_from_asn1(asn1_cgi);
   asn1::unbounded_octstring<true> tmp;
   tmp.from_string(
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
       "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
       "c400");
-  ue_creation_msg.du_to_cu_rrc_container = {tmp.begin(), tmp.end()};
+  req.du_to_cu_rrc_container = {tmp.begin(), tmp.end()};
 
-  return ue_creation_msg;
+  return req;
 }
 
 cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)

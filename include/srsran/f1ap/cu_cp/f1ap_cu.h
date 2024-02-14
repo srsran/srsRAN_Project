@@ -99,9 +99,21 @@ public:
   virtual void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
 };
 
-/// Response provided by the CU-CP to the F1AP-CU when a UE context creation in the CU-CP is requested.
-struct cu_cp_ue_creation_response {
-  ue_index_t                 ue_index          = ue_index_t::invalid;
+/// \brief Request made by the F1AP-CU to create a RRC context for an existing UE context in the CU-CP.
+///
+/// This request should be made once the C-RNTI and cell of the UE is known. That generally corresponds to the moment
+/// a Initial UL RRC Message or a F1AP UE Context Setup Response are received.
+struct ue_rrc_context_creation_request {
+  ue_index_t                        ue_index;
+  rnti_t                            c_rnti;
+  nr_cell_global_id_t               cgi;
+  byte_buffer                       du_to_cu_rrc_container;
+  optional<rrc_ue_transfer_context> prev_context;
+};
+
+/// \brief Response by CU-CP to F1AP-CU request to create UE RRC context.
+struct ue_rrc_context_creation_response {
+  /// Notifier to be used by the F1AP to push new RRC PDUs to the UE RRC layer.
   f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
@@ -125,10 +137,12 @@ class f1ap_du_processor_notifier : public du_setup_notifier
 public:
   virtual ~f1ap_du_processor_notifier() = default;
 
-  /// \brief Notifies the DU processor to create a UE.
-  /// \param[in] msg The ue creation message.
-  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual cu_cp_ue_creation_response on_ue_creation_request(const cu_cp_ue_creation_request& msg) = 0;
+  /// \brief Notifies the CU-CP to create a new UE instance.
+  virtual ue_index_t on_new_cu_cp_ue_required() = 0;
+
+  /// \brief Notifies the CU-CP that an RRC context has been created for an existing CU-CP UE.
+  virtual ue_rrc_context_creation_response
+  on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
   /// section 8.3.2.

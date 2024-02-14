@@ -43,10 +43,13 @@ public:
   /// \brief Allocate a new UE index.
   virtual ue_index_t allocate_new_ue_index() = 0;
 
-  /// \brief Create a new UE context.
-  /// \param[in] msg The UE creation message.
-  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual cu_cp_ue_creation_response handle_ue_creation_request(const cu_cp_ue_creation_request& msg) = 0;
+  /// \brief Request to create a new UE RRC context.
+  ///
+  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
+  /// \param req
+  /// \return
+  virtual ue_rrc_context_creation_response
+  handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Update existing UE object.
   virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;

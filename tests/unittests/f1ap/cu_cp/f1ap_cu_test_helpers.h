@@ -135,23 +135,22 @@ public:
     return next_du_setup_resp;
   }
 
-  srs_cu_cp::cu_cp_ue_creation_response on_ue_creation_request(const cu_cp_ue_creation_request& msg) override
+  srs_cu_cp::ue_rrc_context_creation_response
+  on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& msg) override
   {
-    logger.info("Received UeCreationRequest");
+    logger.info("Received {}", __FUNCTION__);
     last_ue_creation_msg.ue_index               = msg.ue_index;
     last_ue_creation_msg.cgi                    = msg.cgi;
-    last_ue_creation_msg.tac                    = msg.tac;
     last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
     last_ue_creation_msg.c_rnti                 = msg.c_rnti;
 
-    srs_cu_cp::cu_cp_ue_creation_response ret = {};
-    ret.ue_index          = msg.ue_index == ue_index_t::invalid ? allocate_ue_index() : msg.ue_index;
-    ret.f1ap_rrc_notifier = f1ap_rrc_notifier.get();
+    srs_cu_cp::ue_rrc_context_creation_response ret = {};
+    ret.f1ap_rrc_notifier                           = f1ap_rrc_notifier.get();
 
     return ret;
   }
 
-  ue_index_t allocate_ue_index()
+  ue_index_t on_new_cu_cp_ue_required() override
   {
     ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
     if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
@@ -174,7 +173,7 @@ public:
   srs_cu_cp::du_setup_request last_f1_setup_request_msg;
   srs_cu_cp::du_setup_result  next_du_setup_resp;
 
-  srs_cu_cp::cu_cp_ue_creation_request             last_ue_creation_msg;
+  srs_cu_cp::ue_rrc_context_creation_request       last_ue_creation_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> f1ap_rrc_notifier =
       std::make_unique<dummy_f1ap_rrc_message_notifier>();

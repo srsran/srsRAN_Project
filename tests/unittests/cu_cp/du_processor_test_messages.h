@@ -36,7 +36,8 @@ void         generate_f1_setup_request_with_too_many_cells(du_setup_request& set
 /// \param[in] c_rnti The C-RNTI to use.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy UE Creation Message.
-cu_cp_ue_creation_request generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
+ue_rrc_context_creation_request
+generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
 
 /// \brief Generate a dummy UE Context Release Command.
 /// \param[in] ue_index The UE Index to use.

@@ -245,57 +245,45 @@ bool du_processor_impl::create_rrc_ue(du_ue&                            ue,
   return true;
 }
 
-cu_cp_ue_creation_response du_processor_impl::handle_ue_creation_request(const cu_cp_ue_creation_request& msg)
+ue_rrc_context_creation_response
+du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req)
 {
-  srsran_assert(config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
-  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.ue_index);
+  srsran_assert(req.ue_index != ue_index_t::invalid, "Invalid UE index");
+  srsran_assert(req.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", req.ue_index);
+  srsran_assert(config_helpers::is_valid(req.cgi), "ue={}: Invalid CGI", req.ue_index);
 
   // Check that creation message is valid
-  du_cell_index_t pcell_index = find_cell(msg.cgi.nci);
+  du_cell_index_t pcell_index = find_cell(req.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    logger.warning("ue={}: Could not find cell with cell_id={}", msg.ue_index, msg.cgi.nci);
+    logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
+    cu_cp_notifier.on_ue_removal_required(req.ue_index);
     return {};
   }
   const pci_t pci = cell_db.at(pcell_index).pci;
 
-  // Allocate new UE index.
-  ue_index_t ue_index = msg.ue_index;
-  if (ue_index == ue_index_t::invalid) {
-    // It's a new UE. Allocate new UE index.
-    ue_index = allocate_new_ue_index();
-    if (ue_index == ue_index_t::invalid) {
-      logger.warning("ue={}: Could not create UE context", ue_index);
-      return {};
-    }
-  }
-
-  // Create new UE context
-  du_ue* ue = ue_manager.set_ue_du_context(ue_index, context.id, pci, msg.c_rnti);
+  // Create new UE RRC context
+  du_ue* ue = ue_manager.set_ue_du_context(req.ue_index, context.id, pci, req.c_rnti);
   if (ue == nullptr) {
-    logger.warning("ue={}: Could not create UE context", ue_index);
+    logger.warning("ue={}: Could not create UE context", req.ue_index);
     return {};
   }
-
-  // Set parameters from creation message
   ue->set_pcell_index(pcell_index);
 
   // Create RRC UE. If the DU-to-CU-RRC-Container is empty, the UE will be rejected.
-  if (not create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), std::move(msg.rrc_context))) {
-    logger.warning("ue={}: Could not create RRC UE object", ue_index);
-    ue_manager.remove_ue(ue_index);
+  if (not create_rrc_ue(*ue, req.c_rnti, req.cgi, req.du_to_cu_rrc_container.copy(), std::move(req.prev_context))) {
+    logger.warning("ue={}: Could not create RRC UE object", req.ue_index);
     return {};
   }
-  rrc_ue_interface* rrc_ue       = rrc->find_ue(ue_index);
-  f1ap_rrc_ue_adapters[ue_index] = {};
-  f1ap_rrc_ue_adapters.at(ue_index).connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(),
-                                                   rrc_ue->get_ul_dcch_pdu_handler());
+  rrc_ue_interface* rrc_ue           = rrc->find_ue(req.ue_index);
+  f1ap_rrc_ue_adapters[req.ue_index] = {};
+  f1ap_rrc_ue_adapters.at(req.ue_index)
+      .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
 
   // Signal back to F1AP that the UE was successfully created.
-  cu_cp_ue_creation_response response;
-  response.ue_index          = ue_index;
-  response.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(ue_index);
+  ue_rrc_context_creation_response response;
+  response.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(req.ue_index);
 
-  logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), msg.c_rnti);
+  logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), req.c_rnti);
 
   return response;
 }

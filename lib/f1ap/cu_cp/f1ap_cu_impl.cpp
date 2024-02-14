@@ -254,34 +254,42 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  // Request UE context creation to CU-CP.
-  cu_cp_ue_creation_request ue_creation_msg = {};
-  ue_creation_msg.cgi                       = cgi;
-  ue_creation_msg.c_rnti                    = crnti;
+  // Create CU-CP UE instance.
+  const ue_index_t ue_index = du_processor_notifier.on_new_cu_cp_ue_required();
+  if (ue_index == ue_index_t::invalid) {
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialULRRCMessageTransfer. Cause: CU-CP UE creation failed",
+                   msg->gnb_du_ue_f1ap_id);
+    return;
+  }
+
+  // Update the UE RRC context (e.g. C-RNTI, PCell) in the CU-CP.
+  ue_rrc_context_creation_request req;
+  req.ue_index = ue_index;
+  req.c_rnti   = crnti;
+  req.cgi      = cgi;
   if (msg->du_to_cu_rrc_container_present) {
-    ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
+    req.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
   } else {
     // Assume the DU can't serve the UE, so the CU-CP should reject the UE, see TS 38.473 section 8.4.1.2.
     // We will forward an empty container to the RRC UE, that will trigger an RRC Reject
-    logger.debug("du_ue_f1ap_id={}: Forwarding InitialUlRrcMessageTransfer to RRC to reject the UE. Cause: Missing DU "
+    logger.debug("du_ue_f1ap_id={}: Forwarding InitialULRRCMessageTransfer to RRC to reject the UE. Cause: Missing DU "
                  "to CU container",
                  du_ue_id);
-    ue_creation_msg.du_to_cu_rrc_container = byte_buffer{};
+    req.du_to_cu_rrc_container = byte_buffer{};
   }
-
-  // Request the creation of a UE context in the CU-CP.
-  const cu_cp_ue_creation_response cu_cp_resp = du_processor_notifier.on_ue_creation_request(ue_creation_msg);
+  const ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
 
   // Remove the UE if the creation was not successful
-  if (cu_cp_resp.ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed", msg->gnb_du_ue_f1ap_id);
+  if (resp.f1ap_rrc_notifier == nullptr) {
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialULRRCMessageTransfer. Cause: UE RRC context creation failed",
+                   msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(cu_cp_resp.ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
   ue_ctxt_list.add_du_ue_f1ap_id(cu_ue_f1ap_id, du_ue_id);
-  ue_ctxt_list.add_rrc_notifier(cu_cp_resp.ue_index, cu_cp_resp.f1ap_rrc_notifier);
+  ue_ctxt_list.add_rrc_notifier(ue_index, resp.f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
 
   ue_ctxt.logger.log_info("Added UE context");

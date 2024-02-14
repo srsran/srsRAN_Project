@@ -69,10 +69,17 @@ public:
 
   du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
-  cu_cp_ue_creation_response on_ue_creation_request(const cu_cp_ue_creation_request& msg) override
+  ue_index_t on_new_cu_cp_ue_required() override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->handle_ue_creation_request(msg);
+    return du_f1ap_handler->allocate_new_ue_index();
+  }
+
+  ue_rrc_context_creation_response
+  on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
+  {
+    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+    return du_f1ap_handler->handle_ue_rrc_context_creation_request(req);
   }
 
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override

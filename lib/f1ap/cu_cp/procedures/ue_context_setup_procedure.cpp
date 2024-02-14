@@ -98,27 +98,34 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
   return true;
 }
 
-bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
+bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
 {
-  // Request UE creation in target cell.
-
-  cu_cp_ue_creation_request ue_creation_msg;
-  ue_creation_msg.ue_index               = ue_ctxt_setup_resp.ue_index;
-  ue_creation_msg.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
-  ue_creation_msg.cgi                    = request.sp_cell_id;
-  ue_creation_msg.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
-  ue_creation_msg.rrc_context            = std::move(rrc_context);
-
-  cu_cp_ue_creation_response ue_creation_complete_msg = du_processor_notifier.on_ue_creation_request(ue_creation_msg);
-  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+  if (not ue_ctxt_setup_resp.success or ue_ctxt_setup_resp.ue_index == ue_index_t::invalid) {
     logger.warning("Couldn't create UE in target cell");
     return false;
   }
 
-  // Add F1AP to RRC UE notifier to UE context.
-  ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
+  if (ue_ctxt_setup_resp.c_rnti.has_value()) {
+    // An C-RNTI has been allocated by the DU. In such case, we need to create a new UE RRC context in the CU-CP.
 
-  logger.debug("ue={} Added RRC UE notifier", ue_creation_complete_msg.ue_index);
+    ue_rrc_context_creation_request req;
+    req.ue_index               = ue_ctxt_setup_resp.ue_index;
+    req.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
+    req.cgi                    = request.sp_cell_id;
+    req.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
+    req.prev_context           = std::move(rrc_context);
+
+    ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
+    if (resp.f1ap_rrc_notifier == nullptr) {
+      logger.warning("Couldn't create UE RRC context in target cell");
+      return false;
+    }
+
+    // Add RRC notifier to F1AP UE context.
+    ue_ctxt_list.add_rrc_notifier(req.ue_index, resp.f1ap_rrc_notifier);
+
+    logger.debug("ue={} Added RRC UE notifier", req.ue_index);
+  }
 
   return true;
 }
@@ -167,8 +174,12 @@ void ue_context_setup_procedure::create_ue_context_setup_result()
                  ue_ctxt.ue_ids.cu_ue_f1ap_id,
                  ue_ctxt.ue_ids.du_ue_f1ap_id);
 
+    // Prepare procedure response.
     fill_f1ap_ue_context_setup_response(response, new_ue_index, transaction_sink.response());
-    response.success = create_ue_context(response);
+
+    // Create UE RRC context in CU-CP, if required.
+    response.success = create_ue_rrc_context(response);
+
   } else if (transaction_sink.failed()) {
     logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
     fill_f1ap_ue_context_setup_response(response, transaction_sink.failure());
