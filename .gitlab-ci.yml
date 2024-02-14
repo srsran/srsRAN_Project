@@ -34,7 +34,8 @@ stages:
   - ci
   - static
   - build and unit tests
-  - e2e
+  - zmq
+  - rf
   - manual
   - documentation
   - private

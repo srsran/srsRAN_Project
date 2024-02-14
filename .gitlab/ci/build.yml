@@ -1743,7 +1743,7 @@ basic asan:
     <<: *build_artifacts
     expire_in: 1 day
 
-basic valgrind:
+basic memcheck:
   extends: .smoke valgrind
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
@@ -1788,7 +1788,7 @@ basic avx512 dpdk:
 #######
 # Web #
 #######
-custom-build:
+custom build:
   extends: .build_and_unit
   rules:
     - if: $ON_WEB
