@@ -15,15 +15,14 @@ using namespace srsran;
 
 void ru_ofh_timing_notifier_impl::notify_new_slot(ofh::slot_symbol_point symbol_point)
 {
-  // First incoming slot, update the current slot and exit. Exiting in this point will make to notify to the upper
-  // layers when a new slot starts, instead of notifying in a random time point of the slot.
+  // For the first slot, update the current_slot member and return.
+  // Returning at this point will notify the upper layers on the next slot, instead of notifying a random one.
   if (!current_slot.valid()) {
     current_slot = symbol_point.get_slot();
-
     return;
   }
 
-  // Skip if the slot did not change.
+  // Nothing to do if the slot did not change.
   if (symbol_point.get_slot() == current_slot) {
     return;
   }
@@ -34,7 +33,6 @@ void ru_ofh_timing_notifier_impl::notify_new_slot(ofh::slot_symbol_point symbol_
 
 void ru_ofh_timing_notifier_impl::on_new_symbol(ofh::slot_symbol_point symbol_point)
 {
-  // First task, notify the new slot.
   notify_new_slot(symbol_point);
 
   if (symbol_point.get_symbol_index() == half_slot_symbol) {

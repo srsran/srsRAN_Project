@@ -29,7 +29,7 @@ public:
   void on_new_symbol(ofh::slot_symbol_point symbol_point) override;
 
 private:
-  /// Notifies new slot.
+  /// Notifies a new slot.
   void notify_new_slot(ofh::slot_symbol_point symbol_point);
 
 private:
