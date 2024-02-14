@@ -35,10 +35,8 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
   // [Implementation-defined] The following selection of nof. UEs to be scheduled per slot is based on simple heuristic
   // and to ensure multiple UEs are scheduler per slot rather than single UE hogging all the resource in a slot under
   // full buffer scenario.
-  if (nof_ue_with_new_tx <= 1) {
+  if (nof_ue_with_new_tx <= 3) {
     nof_ues_to_be_scheduled_per_slot = 1;
-  } else if (nof_ue_with_new_tx <= 3) {
-    nof_ues_to_be_scheduled_per_slot = 2;
   } else if (nof_ue_with_new_tx <= 7) {
     nof_ues_to_be_scheduled_per_slot = 3;
   } else if (nof_ue_with_new_tx <= 15) {
