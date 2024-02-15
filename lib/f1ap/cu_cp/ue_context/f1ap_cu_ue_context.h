@@ -80,6 +80,17 @@ public:
     return it != ues.end() ? &it->second : nullptr;
   }
 
+  const f1ap_ue_context* find(ue_index_t ue_idx) const
+  {
+    auto it = ue_index_to_ue_f1ap_id.find(ue_idx);
+    return it != ue_index_to_ue_f1ap_id.end() ? &ues.at(it->second) : nullptr;
+  }
+  f1ap_ue_context* find(ue_index_t ue_idx)
+  {
+    auto it = ue_index_to_ue_f1ap_id.find(ue_idx);
+    return it != ue_index_to_ue_f1ap_id.end() ? &ues.at(it->second) : nullptr;
+  }
+
   f1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
