@@ -53,9 +53,10 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     frame_burst.push_back(frame->data());
   }
 
-  logger.debug("Enqueueing '{}' frame(s) of type '{}' in interval '{}_{}':{}_{} for tx burst",
+  logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
                frame_buffers.size(),
                (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
+               (interval.type.direction == ofh::data_direction::downlink) ? "downlink" : "uplink",
                interval.start.get_slot(),
                interval.start.get_symbol_index(),
                interval.end.get_slot(),
