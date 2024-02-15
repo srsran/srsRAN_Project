@@ -313,7 +313,7 @@ test mode ue:
     GROUP: "test_mode"
     TESTBED: "test_mode"
     MARKERS: "test_mode"
-    KEYWORD: "test_ue"
+    KEYWORDS: "test_ue"
     E2E_LOG_LEVEL: "warning"
   needs:
     - job: "basic relwithdeb"
@@ -355,7 +355,7 @@ test mode ru:
     GROUP: "test_mode"
     TESTBED: "test_mode"
     MARKERS: "test_mode"
-    KEYWORD: "test_ru"
+    KEYWORDS: "test_ru"
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "basic relwithdeb"
