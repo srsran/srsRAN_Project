@@ -50,7 +50,7 @@ void message_transmitter_impl::enqueue_messages_into_burst(
   }
 
   for (const auto& frame : frame_buffers) {
-    frame_burst.push_back(frame->data());
+    frame_burst.emplace_back(frame->data());
   }
 
   logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",

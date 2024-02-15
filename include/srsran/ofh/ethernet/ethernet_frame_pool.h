@@ -183,7 +183,7 @@ public:
     aux_array.clear();
     for (auto& used_buf : used_buffers) {
       used_buf.buffer->status = frame_buffer::frame_buffer_status::marked_to_send;
-      aux_array.push_back(used_buf.buffer);
+      aux_array.emplace_back(used_buf.buffer);
     }
     used_buffers.clear();
     return aux_array;
@@ -367,7 +367,7 @@ public:
       pool_entry& p_entry        = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
       auto        symbol_buffers = p_entry.read_buffers(interval.type);
       for (const auto& buffer : symbol_buffers) {
-        aux_array.push_back(buffer);
+        aux_array.emplace_back(buffer);
       }
     }
     return aux_array;

@@ -24,7 +24,7 @@ namespace ofh {
 class message_transmitter_impl : public ota_symbol_boundary_notifier
 {
   /// Maximum number of frames allowed to be transmitted in a single burst.
-  static constexpr unsigned MAX_BURST_SIZE = 32;
+  static constexpr unsigned MAX_BURST_SIZE = 64;
 
   /// Internal structure used to store transmission window timing parameters expressed in a number of symbols.
   struct tx_timing_parameters {
