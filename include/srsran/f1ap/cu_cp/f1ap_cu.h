@@ -153,15 +153,6 @@ public:
   virtual du_index_t get_du_index() = 0;
 };
 
-class f1ap_task_scheduler
-{
-public:
-  virtual ~f1ap_task_scheduler() = default;
-
-  /// \brief Schedule Async task for a given UE.
-  virtual void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
-};
-
 /// Methods used by F1AP to notify about DU specific events.
 class f1ap_du_management_notifier
 {

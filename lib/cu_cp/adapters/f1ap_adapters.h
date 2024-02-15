@@ -43,7 +43,7 @@ class f1ap_du_repository_adapter : public f1ap_du_management_notifier
 public:
   void connect_du_repository(cu_cp_f1c_handler& du_handler_) { du_handler = &du_handler_; }
 
-  void on_du_remove_request_received(const du_index_t du_index) override
+  void on_du_remove_request_received(du_index_t du_index) override
   {
     srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
     du_handler->handle_du_remove_request(du_index);

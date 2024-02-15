@@ -60,7 +60,6 @@ public:
   ue_rrc_context_creation_response
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
-  ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   // du_processor_ue_context_notifier
   async_task<cu_cp_ue_context_release_complete>

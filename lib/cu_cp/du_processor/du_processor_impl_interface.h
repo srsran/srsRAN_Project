@@ -51,9 +51,6 @@ public:
   virtual ue_rrc_context_creation_response
   handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
-  /// \brief Update existing UE object.
-  virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
-
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
@@ -324,13 +321,14 @@ public:
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.
-class du_processor_ue_task_scheduler : public f1ap_task_scheduler
+class du_processor_ue_task_scheduler
 {
 public:
-  virtual ~du_processor_ue_task_scheduler()                       = default;
-  virtual void           clear_pending_tasks(ue_index_t ue_index) = 0;
-  virtual unique_timer   make_unique_timer()                      = 0;
-  virtual timer_manager& get_timer_manager()                      = 0;
+  virtual ~du_processor_ue_task_scheduler()                                              = default;
+  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
+  virtual void           clear_pending_tasks(ue_index_t ue_index)                        = 0;
+  virtual unique_timer   make_unique_timer()                                             = 0;
+  virtual timer_manager& get_timer_manager()                                             = 0;
 };
 
 /// \brief Handles incoming task scheduling requests associated with an UE.

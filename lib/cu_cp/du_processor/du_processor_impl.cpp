@@ -288,33 +288,6 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   return response;
 }
 
-ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_update_message& msg)
-{
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
-  ue_update_complete_message ue_update_complete_msg = {};
-
-  // Create RRC object if it doesn't already exist.
-  if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
-    if (!msg.cell_group_cfg.empty() && msg.c_rnti != rnti_t::INVALID_RNTI) {
-      if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy(), {} /* no previous context */)) {
-        logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
-        return ue_update_complete_msg;
-      }
-
-      rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-      f1ap_rrc_ue_adapters.at(msg.ue_index)
-          .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
-      ue_update_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
-    }
-  }
-
-  ue_update_complete_msg.ue_index = ue->get_ue_index();
-
-  return ue_update_complete_msg;
-}
-
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
   srsran_assert(request.ue_index != ue_index_t::invalid, "Invalid UE index", request.ue_index);

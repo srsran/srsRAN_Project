@@ -31,7 +31,7 @@ public:
 
   void connect_cu_cp(ue_task_scheduler_manager& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
-  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
+  void schedule_async_task(ue_index_t ue_index, async_task<void> task) override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
