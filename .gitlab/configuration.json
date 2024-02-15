@@ -37,7 +37,7 @@
         "keep_n": 25,
         "older_than": "7d",
         "name_regex": ".*",
-        "name_regex_keep": ""
+        "name_regex_keep": null
     },
     "container_registry_access_level": "enabled",
     "default_branch": "dev",
