@@ -265,7 +265,7 @@ void srsran_scheduler_adapter::cell_handler::handle_rach_indication(const mac_ra
     sched_occasion.start_symbol    = occasion.start_symbol;
     sched_occasion.frequency_index = occasion.frequency_index;
     for (const auto& preamble : occasion.preambles) {
-      rnti_t alloc_tc_rnti = parent->rnti_alloc.allocate();
+      rnti_t alloc_tc_rnti = parent->rnti_mng.allocate();
       if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
         parent->logger.warning(
             "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_idx, preamble.index);

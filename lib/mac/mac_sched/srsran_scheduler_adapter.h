@@ -109,7 +109,9 @@ private:
     srsran_scheduler_adapter& parent;
   };
 
+  // Allocator for TC-RNTIs.
   rnti_manager& rnti_mng;
+
   /// Detector of UE RLFs.
   rlf_detector          rlf_handler;
   task_executor&        ctrl_exec;
@@ -120,9 +122,6 @@ private:
 
   /// srsGNB scheduler.
   std::unique_ptr<mac_scheduler> sched_impl;
-
-  /// Allocator of TC-RNTI values.
-  rnti_manager rnti_alloc;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.
   struct ue_notification_context {
