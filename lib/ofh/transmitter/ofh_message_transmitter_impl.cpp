@@ -76,33 +76,4 @@ void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
   interval.start = symbol_point + timing_params.sym_up_dl_end;
   interval.end   = symbol_point + timing_params.sym_up_dl_start;
   transmit_enqueued_messages(interval);
-
-  // Log the late messages when the transmission window closes.
-  log_late_messages_on_tx_window_close(symbol_point);
-}
-
-void message_transmitter_impl::log_late_messages_on_tx_window_close(slot_symbol_point symbol_point)
-{
-  log_late_messages(symbol_point + timing_params.sym_cp_dl_end, message_type::control_plane, data_direction::downlink);
-  log_late_messages(symbol_point + timing_params.sym_cp_ul_end, message_type::control_plane, data_direction::uplink);
-  log_late_messages(symbol_point + timing_params.sym_up_dl_end, message_type::user_plane, data_direction::downlink);
-}
-
-void message_transmitter_impl::log_late_messages(slot_symbol_point late_point,
-                                                 message_type      type,
-                                                 data_direction    direction)
-{
-  const ether::frame_pool_context context{{type, direction}, late_point};
-  auto                            frame_buffers = pool.read_frame_buffers(context);
-
-  if (!frame_buffers.empty()) {
-    logger.warning("Detected '{}' late Ethernet frames in the transmitter queue for slot '{}', symbol '{}', type '{}', "
-                   "direction '{}'",
-                   frame_buffers.size(),
-                   late_point.get_slot(),
-                   late_point.get_symbol_index(),
-                   (type == message_type::control_plane) ? "control" : "user",
-                   (direction == data_direction::downlink) ? "downlink" : "uplink");
-    pool.clear_sent_frame_buffers(context);
-  }
 }

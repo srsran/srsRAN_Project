@@ -62,7 +62,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                 grid.get_nof_ports());
 
   // Clear any stale buffers associated with the context slot.
-  frame_pool.clear_slot(context.slot);
+  frame_pool.clear_downlink_slot(context.slot, logger);
 
   if (window_checker.is_late(context.slot)) {
     err_notifier.get().on_late_downlink_message({context.slot, sector_id});

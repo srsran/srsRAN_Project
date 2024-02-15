@@ -108,6 +108,11 @@ class frame_buffer_array
   };
 
 public:
+  struct used_buffer {
+    frame_buffer*          buffer;
+    ofh::slot_symbol_point timestamp;
+  };
+
   // Constructor receives number of buffers stored/read at a time, reserves storage for all eAxCs.
   frame_buffer_array(unsigned nof_buffers_to_return, unsigned buffer_size, unsigned nof_antennas) :
     increment_quant(nof_buffers_to_return),
@@ -140,14 +145,14 @@ public:
 
   // Stores actually used buffers in a list of buffers ready for sending.
   // Unused buffers state is changed to 'free'.
-  void push_buffers(span<frame_buffer> prepared_buffers)
+  void push_buffers(span<frame_buffer> prepared_buffers, ofh::slot_symbol_point symbol_point)
   {
     for (auto& buffer : prepared_buffers) {
       if (buffer.empty()) {
         buffer.status = frame_buffer::frame_buffer_status::free;
       } else {
         buffer.status = frame_buffer::frame_buffer_status::used;
-        used_buffers.push_back(&buffer);
+        used_buffers.push_back({&buffer, symbol_point});
       }
     }
   }
@@ -176,13 +181,15 @@ public:
   span<const frame_buffer*> find_buffers_ready_for_sending()
   {
     aux_array.clear();
-    for (auto& buffer : used_buffers) {
-      buffer->status = frame_buffer::frame_buffer_status::marked_to_send;
-      aux_array.push_back(buffer);
+    for (auto& used_buf : used_buffers) {
+      used_buf.buffer->status = frame_buffer::frame_buffer_status::marked_to_send;
+      aux_array.push_back(used_buf.buffer);
     }
     used_buffers.clear();
     return aux_array;
   }
+
+  span<const used_buffer> get_prepared_buffers() const { return used_buffers; }
 
 private:
   // Number of buffers accessed at a time.
@@ -192,7 +199,7 @@ private:
   // Data buffers.
   storage_array_type buffers_array;
   // Used buffers are added to this list.
-  static_vector<frame_buffer*, 128> used_buffers;
+  static_vector<used_buffer, 128> used_buffers;
   // Auxiliary array used as a list of ready-to-send buffers returned to a reader.
   std::vector<const frame_buffer*> aux_array;
   // Keeps track of the current write position.
@@ -202,8 +209,11 @@ private:
 /// Pool of Ethernet frames pre-allocated for each slot symbol.
 class eth_frame_pool
 {
+  /// Number of slots the pool can accommodate.
+  static constexpr size_t NUM_SLOTS = 20L;
+
   /// Maximum number of entries contained by the pool, one entry per OFDM symbol, sized to accommodate 20 slots.
-  static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * 20L;
+  static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * NUM_SLOTS;
 
   /// Number of symbols in an interval for which an auxiliary vector is pre-allocated to store buffer pointers.
   static constexpr size_t NUM_INTERVAL_SYMBOL = 14;
@@ -259,10 +269,10 @@ class eth_frame_pool
     }
 
     /// Push span of ready buffers to the array associated with the given OFH type.
-    void push_buffers(const ofh_pool_message_type& context, span<frame_buffer> prepared_buffers)
+    void push_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
     {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      entry_buf.push_buffers(prepared_buffers);
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type.type, context.type.direction);
+      entry_buf.push_buffers(prepared_buffers, context.symbol_point);
     }
 
     void clear_buffers(const ofh_pool_message_type& context)
@@ -275,6 +285,12 @@ class eth_frame_pool
     {
       frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.reset_buffers();
+    }
+
+    span<const frame_buffer_array::used_buffer> get_prepared_buffers(const ofh_pool_message_type& context) const
+    {
+      const frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
+      return entry_buf.get_prepared_buffers();
     }
 
     /// Returns a view over a next stored frame buffer for a given OFH type.
@@ -320,7 +336,7 @@ public:
     pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
     // Lock and update the pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    p_entry.push_buffers(context.type, prepared_buffers);
+    p_entry.push_buffers(context, prepared_buffers);
   }
 
   /// Returns data buffers from the pool to a reader thread given a specific symbol context.
@@ -385,8 +401,8 @@ public:
     }
   }
 
-  /// Clear stored buffers associated with the given slot.
-  void clear_slot(slot_point slot_point)
+  /// Clears stored buffers associated with the given slot and logs the messages that could not be sent.
+  void clear_downlink_slot(slot_point slot_point, srslog::basic_logger& logger)
   {
     // Lock before changing the pool entries.
     std::lock_guard<std::mutex> lock(mutex);
@@ -394,19 +410,66 @@ public:
     pool_entry& cp_entry = get_pool_entry(slot_point, 0);
     // Clear buffers with DL Control-Plane messages.
     ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::downlink};
-    cp_entry.reset_buffers(msg_type);
-    // Clear buffers with UL Control-Plane messages.
-    msg_type.direction = ofh::data_direction::uplink;
-    cp_entry.reset_buffers(msg_type);
+
+    auto dl_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
+    for (const auto& used_buf : dl_cp_buffers) {
+      if (used_buf.timestamp.get_slot() == slot_point) {
+        continue;
+      }
+      logger.warning("Detected '{}' late downlink C-Plane messages in the transmitter queue for slot '{}'",
+                     dl_cp_buffers.size(),
+                     used_buf.timestamp.get_slot());
+      cp_entry.reset_buffers(msg_type);
+      break;
+    }
 
     // Clear buffers with User-Plane messages.
     msg_type.type      = ofh::message_type::user_plane;
     msg_type.direction = ofh::data_direction::downlink;
-    for (unsigned symbol = 0; symbol != 14; ++symbol) {
+    for (unsigned symbol = 0; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
       pool_entry& up_entry = get_pool_entry(slot_point, symbol);
-      up_entry.reset_buffers(msg_type);
+
+      auto dl_up_buffers = up_entry.get_prepared_buffers(msg_type);
+      for (const auto& used_buf : dl_up_buffers) {
+        if (used_buf.timestamp.get_slot() == slot_point) {
+          continue;
+        }
+        logger.warning(
+            "Detected '{}' late downlink U-Plane messages in the transmitter queue for slot '{}', symbol '{}'",
+            dl_up_buffers.size(),
+            used_buf.timestamp.get_slot(),
+            used_buf.timestamp.get_symbol_index());
+        up_entry.reset_buffers(msg_type);
+        break;
+      }
     }
   }
+
+  /// Clears stored uplink C-Plane buffers associated with the given slot and logs the messages that could not be sent.
+  void clear_uplink_slot(slot_point slot_point, srslog::basic_logger& logger)
+  {
+    // Lock before changing the pool entries.
+    std::lock_guard<std::mutex> lock(mutex);
+
+    pool_entry& cp_entry = get_pool_entry(slot_point, 0);
+    // Clear buffers with UL Control-Plane messages.
+    ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::uplink};
+
+    auto ul_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
+    for (const auto& used_buf : ul_cp_buffers) {
+      if (used_buf.timestamp.get_slot() == slot_point) {
+        continue;
+      }
+      logger.warning("Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+                     ul_cp_buffers.size(),
+                     used_buf.timestamp.get_slot());
+      cp_entry.reset_buffers(msg_type);
+      break;
+    }
+  }
+
+  /// Returns number of slots the pool can accommodate.
+  size_t pool_size_in_slots() const { return NUM_SLOTS; }
 
 private:
   /// Buffer pool.
