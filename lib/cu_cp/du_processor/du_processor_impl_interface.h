@@ -46,8 +46,8 @@ public:
   /// \brief Request to create a new UE RRC context.
   ///
   /// This method should be called when a C-RNTI and PCell are assigned to a UE.
-  /// \param req
-  /// \return
+  /// \param req Request to setup a new UE RRC context.
+  /// \return Response to whether the request was successful or failed.
   virtual ue_rrc_context_creation_response
   handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 

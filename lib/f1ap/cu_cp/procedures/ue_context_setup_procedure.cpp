@@ -21,6 +21,193 @@ using namespace asn1::f1ap;
 /// \param[in] request The common type UE Context Setup Request.
 static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_request_s& asn1_request,
                                                const f1ap_ue_context_setup_request&    request,
+                                               const f1ap_ue_ids&                      ue_ids);
+
+/// \brief Convert the UE Context Setup Failure from ASN.1 to common type.
+/// \param[in] response The common type UE Context Setup Response.
+/// \param[in] ue_index UE index.
+/// \param[in] asn1_failure The ASN.1 struct to convert.
+static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response&            response,
+                                                ue_index_t                                 ue_index,
+                                                const asn1::f1ap::ue_context_setup_fail_s& asn1_failure);
+
+/// \brief Convert the UE Context Setup Response from ASN.1 to common type.
+/// \param[out] response  The common type struct to store the result.
+/// \param[in] ue_index UE index.
+/// \param[in] asn1_response The ASN.1 UE Context Setup Response.
+static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response&            response,
+                                                ue_index_t                                 ue_index,
+                                                const asn1::f1ap::ue_context_setup_resp_s& asn1_response);
+
+// ---- UE Context Setup Procedure ----
+
+ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_ue_context_setup_request& request_,
+                                                       f1ap_ue_context_list&                ue_ctxt_list_,
+                                                       f1ap_du_processor_notifier&          du_processor_notifier_,
+                                                       f1ap_message_notifier&               f1ap_notif_,
+                                                       srslog::basic_logger&                logger_,
+                                                       optional<rrc_ue_transfer_context>    rrc_context_) :
+  request(request_),
+  ue_ctxt_list(ue_ctxt_list_),
+  du_processor_notifier(du_processor_notifier_),
+  f1ap_notifier(f1ap_notif_),
+  logger(logger_),
+  rrc_context(rrc_context_)
+{
+  srsran_assert(request.ue_index != ue_index_t::invalid, "UE index of F1AP UeContextSetupRequest must not be invalid");
+}
+
+void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx)
+{
+  CORO_BEGIN(ctx);
+
+  logger.debug("ue={} proc=\"{}\": started...", request.ue_index, name());
+
+  // Create F1AP UE context if it doesn't exist.
+  if (not find_or_create_f1ap_ue_context()) {
+    CORO_EARLY_RETURN(handle_procedure_result());
+  }
+
+  // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
+  transaction_sink.subscribe_to(ue_ctxt->ev_mng.context_setup_outcome);
+
+  // Send command to DU.
+  send_ue_context_setup_request();
+
+  // Await CU response.
+  CORO_AWAIT(transaction_sink);
+
+  // Handle result of the transaction.
+  CORO_RETURN(handle_procedure_result());
+}
+
+bool ue_context_setup_procedure::find_or_create_f1ap_ue_context()
+{
+  // Check if F1AP UE context exists first.
+  ue_ctxt = ue_ctxt_list.find(request.ue_index);
+  if (ue_ctxt != nullptr) {
+    logger.debug("{}: UE context found", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
+    return true;
+  }
+
+  // F1AP UE context does not yet exist.
+  // Allocate gNB-CU-UE-F1AP-ID.
+  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    logger.warning("ue={} proc=\"{}\": No CU UE F1AP ID available", request.ue_index, name());
+    return false;
+  }
+
+  // Create F1AP UE context.
+  ue_ctxt = &ue_ctxt_list.add_ue(request.ue_index, tmp_cu_ue_f1ap_id);
+  logger.info("{}: UE successfully created.", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
+
+  return true;
+}
+
+bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
+{
+  if (not ue_ctxt_setup_resp.success or ue_ctxt_setup_resp.ue_index == ue_index_t::invalid) {
+    logger.warning("Couldn't create UE in target cell");
+    return false;
+  }
+
+  if (ue_ctxt_setup_resp.c_rnti.has_value()) {
+    // An C-RNTI has been allocated by the DU. In such case, we need to create a new UE RRC context in the CU-CP.
+
+    ue_rrc_context_creation_request req;
+    req.ue_index               = ue_ctxt_setup_resp.ue_index;
+    req.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
+    req.cgi                    = request.sp_cell_id;
+    req.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
+    req.prev_context           = std::move(rrc_context);
+
+    ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
+    if (resp.f1ap_rrc_notifier == nullptr) {
+      logger.warning("Couldn't create UE RRC context in target cell");
+      return false;
+    }
+
+    // Add RRC notifier to F1AP UE context.
+    ue_ctxt_list.add_rrc_notifier(req.ue_index, resp.f1ap_rrc_notifier);
+
+    logger.debug("ue={} Added RRC UE notifier", req.ue_index);
+  }
+
+  return true;
+}
+
+void ue_context_setup_procedure::send_ue_context_setup_request()
+{
+  // Pack message into PDU
+  f1ap_message f1ap_ue_ctxt_setup_request_msg;
+  f1ap_ue_ctxt_setup_request_msg.pdu.set_init_msg();
+  f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  ue_context_setup_request_s& req = f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request();
+
+  // Convert common type to asn1
+  fill_asn1_ue_context_setup_request(req, request, ue_ctxt->ue_ids);
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    f1ap_ue_ctxt_setup_request_msg.pdu.to_json(js);
+    logger.debug("Containerized UeContextSetupRequest: {}", js.to_string());
+  }
+
+  // send UE context setup request message
+  f1ap_notifier.on_new_message(f1ap_ue_ctxt_setup_request_msg);
+}
+
+f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_result()
+{
+  f1ap_ue_context_setup_response resp;
+  resp.ue_index = request.ue_index;
+  resp.success  = false;
+
+  if (ue_ctxt == nullptr) {
+    logger.warning("ue={} proc=\"{}\" failed", request.ue_index, name());
+    return resp;
+  }
+
+  if (transaction_sink.successful()) {
+    const auto& asn1_resp = transaction_sink.response();
+
+    // Update gNB DU F1AP ID in F1AP UE context.
+    ue_ctxt->ue_ids.du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(asn1_resp->gnb_du_ue_f1ap_id);
+    logger.debug("{}: Updated UE gNB-DU-UE-ID", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
+
+    // Fill response to the UE context setup procedure.
+    fill_f1ap_ue_context_setup_response(resp, request.ue_index, transaction_sink.response());
+
+    // Create UE RRC context in CU-CP, if required.
+    resp.success = create_ue_rrc_context(resp);
+
+    return resp;
+  }
+
+  // Procedure failed.
+
+  if (transaction_sink.failed()) {
+    logger.warning("{}: Procedure failed. Cause: {}",
+                   f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()},
+                   get_cause_str(transaction_sink.failure()->cause));
+
+    // Fill response to the UE context setup procedure.
+    fill_f1ap_ue_context_setup_response(resp, request.ue_index, transaction_sink.failure());
+
+  } else {
+    logger.warning("{}: Procedure failed. Cause: Timeout reached while waiting for DU response.",
+                   f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
+  }
+
+  // Delete created F1AP UE context.
+  ue_ctxt_list.remove_ue(request.ue_index);
+
+  return resp;
+}
+
+static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_request_s& asn1_request,
+                                               const f1ap_ue_context_setup_request&    request,
                                                const f1ap_ue_ids&                      ue_ids)
 {
   asn1_request->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ids.cu_ue_f1ap_id);
@@ -220,9 +407,6 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   }
 }
 
-/// \brief Convert the UE Context Setup Response from ASN.1 to common type.
-/// \param[out] response  The common type struct to store the result.
-/// \param[in] asn1_response The ASN.1 UE Context Setup Response.
 static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response&            response,
                                                 ue_index_t                                 ue_index,
                                                 const asn1::f1ap::ue_context_setup_resp_s& asn1_response)
@@ -320,169 +504,4 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
       response.srbs_setup_list.emplace(srbs_setup_item.srb_id, srbs_setup_item);
     }
   }
-}
-
-ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_ue_context_setup_request& request_,
-                                                       f1ap_ue_context_list&                ue_ctxt_list_,
-                                                       f1ap_du_processor_notifier&          du_processor_notifier_,
-                                                       f1ap_message_notifier&               f1ap_notif_,
-                                                       srslog::basic_logger&                logger_,
-                                                       optional<rrc_ue_transfer_context>    rrc_context_) :
-  request(request_),
-  ue_ctxt_list(ue_ctxt_list_),
-  du_processor_notifier(du_processor_notifier_),
-  f1ap_notifier(f1ap_notif_),
-  logger(logger_),
-  rrc_context(rrc_context_)
-{
-  srsran_assert(request.ue_index != ue_index_t::invalid, "UE index of F1AP UeContextSetupRequest must not be invalid");
-}
-
-void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx)
-{
-  CORO_BEGIN(ctx);
-
-  logger.debug("ue={} proc=\"{}\": started...", request.ue_index, name());
-
-  // Create F1AP UE context if it doesn't exist.
-  if (not find_or_create_f1ap_ue_context()) {
-    CORO_EARLY_RETURN(handle_procedure_result());
-  }
-
-  // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctxt->ev_mng.context_setup_outcome);
-
-  // Send command to DU.
-  send_ue_context_setup_request();
-
-  // Await CU response.
-  CORO_AWAIT(transaction_sink);
-
-  // Handle result of the transaction.
-  CORO_RETURN(handle_procedure_result());
-}
-
-bool ue_context_setup_procedure::find_or_create_f1ap_ue_context()
-{
-  // Check if F1AP UE context exists first.
-  ue_ctxt = ue_ctxt_list.find(request.ue_index);
-  if (ue_ctxt != nullptr) {
-    logger.debug("{}: UE context found", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
-    return true;
-  }
-
-  // F1AP UE context does not yet exist.
-  // Allocate gNB-CU-UE-F1AP-ID.
-  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
-  if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.warning("ue={} proc=\"{}\": No CU UE F1AP ID available", request.ue_index, name());
-    return false;
-  }
-
-  // Create F1AP UE context.
-  ue_ctxt = &ue_ctxt_list.add_ue(request.ue_index, tmp_cu_ue_f1ap_id);
-  logger.info("{}: UE successfully created.", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
-
-  return true;
-}
-
-bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
-{
-  if (not ue_ctxt_setup_resp.success or ue_ctxt_setup_resp.ue_index == ue_index_t::invalid) {
-    logger.warning("Couldn't create UE in target cell");
-    return false;
-  }
-
-  if (ue_ctxt_setup_resp.c_rnti.has_value()) {
-    // An C-RNTI has been allocated by the DU. In such case, we need to create a new UE RRC context in the CU-CP.
-
-    ue_rrc_context_creation_request req;
-    req.ue_index               = ue_ctxt_setup_resp.ue_index;
-    req.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
-    req.cgi                    = request.sp_cell_id;
-    req.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
-    req.prev_context           = std::move(rrc_context);
-
-    ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
-    if (resp.f1ap_rrc_notifier == nullptr) {
-      logger.warning("Couldn't create UE RRC context in target cell");
-      return false;
-    }
-
-    // Add RRC notifier to F1AP UE context.
-    ue_ctxt_list.add_rrc_notifier(req.ue_index, resp.f1ap_rrc_notifier);
-
-    logger.debug("ue={} Added RRC UE notifier", req.ue_index);
-  }
-
-  return true;
-}
-
-void ue_context_setup_procedure::send_ue_context_setup_request()
-{
-  // Pack message into PDU
-  f1ap_message f1ap_ue_ctxt_setup_request_msg;
-  f1ap_ue_ctxt_setup_request_msg.pdu.set_init_msg();
-  f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  ue_context_setup_request_s& req = f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request();
-
-  // Convert common type to asn1
-  fill_asn1_ue_context_setup_request(req, request, ue_ctxt->ue_ids);
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_ue_ctxt_setup_request_msg.pdu.to_json(js);
-    logger.debug("Containerized UeContextSetupRequest: {}", js.to_string());
-  }
-
-  // send UE context setup request message
-  f1ap_notifier.on_new_message(f1ap_ue_ctxt_setup_request_msg);
-}
-
-f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_result()
-{
-  f1ap_ue_context_setup_response resp;
-  resp.ue_index = request.ue_index;
-  resp.success  = false;
-
-  if (ue_ctxt == nullptr) {
-    logger.warning("ue={} proc=\"{}\" failed", request.ue_index, name());
-    return resp;
-  }
-
-  if (transaction_sink.successful()) {
-    const auto& asn1_resp = transaction_sink.response();
-
-    // Update gNB DU F1AP ID in F1AP UE context.
-    ue_ctxt->ue_ids.du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(asn1_resp->gnb_du_ue_f1ap_id);
-    logger.debug("{}: Updated UE gNB-DU-UE-ID", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
-
-    // Fill response to the UE context setup procedure.
-    fill_f1ap_ue_context_setup_response(resp, request.ue_index, transaction_sink.response());
-
-    // Create UE RRC context in CU-CP, if required.
-    resp.success = create_ue_rrc_context(resp);
-
-    return resp;
-  }
-
-  // Procedure failed.
-
-  if (transaction_sink.failed()) {
-    logger.warning("{}: Procedure failed. Cause: {}",
-                   f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()},
-                   get_cause_str(transaction_sink.failure()->cause));
-
-    // Fill response to the UE context setup procedure.
-    fill_f1ap_ue_context_setup_response(resp, request.ue_index, transaction_sink.failure());
-
-  } else {
-    logger.warning("{}: Procedure failed. Cause: Timeout reached while waiting for DU response.",
-                   f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
-  }
-
-  // Delete created F1AP UE context.
-  ue_ctxt_list.remove_ue(request.ue_index);
-
-  return resp;
 }
