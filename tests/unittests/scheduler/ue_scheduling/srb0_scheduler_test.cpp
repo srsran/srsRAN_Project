@@ -128,7 +128,7 @@ protected:
   slot_point                 current_slot{0, 0};
   srslog::basic_logger&      mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&      test_logger = srslog::fetch_basic_logger("TEST", true);
-  scheduler_result_logger    result_logger;
+  scheduler_result_logger    result_logger{false, 0};
   optional<test_bench>       bench;
   duplex_mode                duplx_mode;
   cell_config_builder_params builder_params;
