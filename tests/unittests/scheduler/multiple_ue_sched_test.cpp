@@ -480,6 +480,7 @@ protected:
       }
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
         pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
         // Auto ACK harqs.
         pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);

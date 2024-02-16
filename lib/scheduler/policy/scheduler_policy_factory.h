@@ -19,6 +19,7 @@ struct scheduler_strategy_params {
   srslog::basic_logger* logger;
 };
 
-std::unique_ptr<scheduler_policy> create_scheduler_strategy(const scheduler_strategy_params& params);
+std::unique_ptr<scheduler_policy> create_scheduler_strategy(const scheduler_strategy_params&  params,
+                                                            const scheduler_ue_expert_config& expert_cfg_);
 
 } // namespace srsran

@@ -30,6 +30,11 @@ public:
     return cell_res_grids[cell_index]->cfg;
   }
 
+  span<const pdcch_dl_information> get_dl_pdcch_sched_results(du_cell_index_t cell_index) const
+  {
+    return (*cell_res_grids[cell_index])[0].result.dl.dl_pdcchs;
+  }
+
   const cell_slot_resource_grid& get_pdcch_grid(du_cell_index_t cell_index) const
   {
     return (*cell_res_grids[cell_index])[0].dl_res_grid;

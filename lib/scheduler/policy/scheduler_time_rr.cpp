@@ -13,38 +13,42 @@
 
 using namespace srsran;
 
+struct scheduler_alloc_limits {
+  unsigned max_nof_ues_with_new_tx;
+  unsigned nof_ues_to_be_scheduled_per_slot;
+};
+
+// [Implementation-defined] The following lookup of nof. UEs to be scheduled per slot is based on simple heuristic
+// and to ensure multiple UEs are scheduled per slot rather than single UE hogging all the resource in a slot under
+// full buffer scenario.
+static const std::vector<scheduler_alloc_limits> scheduler_alloc_limits_lookup = {
+    {3, 1},
+    {7, 3},
+    {15, 4},
+    {32, 6},
+    {MAX_NOF_DU_UES, 8},
+};
+
 /// \brief Computes maximum nof. RBs to allocate per UE per slot for newTx.
 /// \param[in] ue_db map of ues.
 /// \param[in] is_dl Flag indicating whether the computation is DL or UL.
 /// \return Maximum nof. RBs to allocate per UE per slot for newTx.
-static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bool is_dl)
+static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&              ues,
+                                                    bool                              is_dl,
+                                                    const ue_resource_grid_view&      res_grid,
+                                                    const scheduler_ue_expert_config& expert_cfg)
 {
   if (ues.empty()) {
     return 0;
   }
 
-  unsigned nof_ue_with_new_tx = 0;
-  unsigned nof_ues_to_be_scheduled_per_slot;
+  unsigned nof_ue_with_new_tx               = 0;
+  unsigned nof_ues_to_be_scheduled_per_slot = 0;
 
   for (const auto& u : ues) {
     if ((is_dl and u->has_pending_dl_newtx_bytes()) or (not is_dl and u->pending_ul_newtx_bytes() > 0)) {
       ++nof_ue_with_new_tx;
     }
-  }
-
-  // [Implementation-defined] The following selection of nof. UEs to be scheduled per slot is based on simple heuristic
-  // and to ensure multiple UEs are scheduler per slot rather than single UE hogging all the resource in a slot under
-  // full buffer scenario.
-  if (nof_ue_with_new_tx <= 3) {
-    nof_ues_to_be_scheduled_per_slot = 1;
-  } else if (nof_ue_with_new_tx <= 7) {
-    nof_ues_to_be_scheduled_per_slot = 3;
-  } else if (nof_ue_with_new_tx <= 15) {
-    nof_ues_to_be_scheduled_per_slot = 4;
-  } else if (nof_ue_with_new_tx <= 32) {
-    nof_ues_to_be_scheduled_per_slot = 6;
-  } else {
-    nof_ues_to_be_scheduled_per_slot = 8;
   }
 
   // NOTE: All UEs use the same dedicated SearchSpace configuration.
@@ -66,13 +70,43 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
     bwp_crb_limits = ss_info->ul_crb_lims;
   }
 
-  // [Implementation-defined] Assume aggregation level 2 while computing nof. candidates that can be fit in CORESET.
-  const unsigned max_nof_candidates = ss_info->coreset->get_nof_cces() / to_nof_cces(aggregation_level::n2);
-  // [Implementation-defined] To avoid running out of PDCCH candidates in multi-UE scenario and short BW (e.g. TDD and
-  // 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot i.e. divide available PDCCH candidates evenly
-  // among DL and UL.
-  if (nof_ues_to_be_scheduled_per_slot >= max_nof_candidates) {
-    nof_ues_to_be_scheduled_per_slot = std::ceil(nof_ues_to_be_scheduled_per_slot / 2);
+  // > Fetch nof. UEs to be scheduled per slot based on the lookup.
+  for (const auto& lims : scheduler_alloc_limits_lookup) {
+    if (nof_ue_with_new_tx <= lims.max_nof_ues_with_new_tx) {
+      nof_ues_to_be_scheduled_per_slot = lims.nof_ues_to_be_scheduled_per_slot;
+      break;
+    }
+  }
+
+  // > Apply limits if passed to scheduler.
+  if (is_dl) {
+    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_pdschs_per_slot, nof_ues_to_be_scheduled_per_slot);
+  } else {
+    nof_ues_to_be_scheduled_per_slot = std::min(expert_cfg.max_puschs_per_slot, nof_ues_to_be_scheduled_per_slot);
+  }
+
+  // > Compute maximum nof. PDCCH candidates allowed for each direction.
+  // [Implementation-defined]
+  // - Assume aggregation level 2 while computing nof. candidates that can be fit in CORESET.
+  // - CORESET CCEs are divided by 2 to provide equal PDCCH resources to DL and UL.
+  unsigned max_nof_candidates = (ss_info->coreset->get_nof_cces() / 2) / to_nof_cces(aggregation_level::n2);
+
+  // > Subtract candidates used for DL retransmission since DL gets scheduled first over UL.
+  // [Implementation-defined] Assumes that retransmissions use PDCCH candidates of aggregation level 2.
+  if (is_dl) {
+    max_nof_candidates -= (res_grid.get_dl_pdcch_sched_results(u.get_pcell().cell_index).size() > max_nof_candidates)
+                              ? 0
+                              : res_grid.get_dl_pdcch_sched_results(u.get_pcell().cell_index).size();
+  }
+
+  // > Ensure fairness in PDCCH allocation between DL and UL.
+  // [Implementation-defined] To avoid running out of PDCCH candidates for UL allocation in multi-UE scenario and short
+  // BW (e.g. TDD and 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot.
+  nof_ues_to_be_scheduled_per_slot = std::min(max_nof_candidates, nof_ues_to_be_scheduled_per_slot);
+
+  if (nof_ues_to_be_scheduled_per_slot == 0) {
+    // Skip allocation.
+    return 0;
   }
 
   return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);
@@ -383,10 +417,11 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-scheduler_time_rr::scheduler_time_rr() :
+scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_) :
   logger(srslog::fetch_basic_logger("SCHED")),
   next_dl_ue_index(INVALID_DU_UE_INDEX),
-  next_ul_ue_index(INVALID_DU_UE_INDEX)
+  next_ul_ue_index(INVALID_DU_UE_INDEX),
+  expert_cfg(expert_cfg_)
 {
 }
 
@@ -401,11 +436,14 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
 
   // Then, schedule new transmissions.
-  const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot = compute_max_nof_rbs_per_ue_per_slot(ues, true);
-  auto           tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
-  };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
+  const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
+      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
+  if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+      return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
+    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
+  }
 }
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
@@ -425,9 +463,12 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
 
   // Finally, schedule UL data new transmissions.
-  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot = compute_max_nof_rbs_per_ue_per_slot(ues, false);
-  auto data_tx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
-  };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
+      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg);
+  if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    auto data_tx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+      return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
+    next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
+  }
 }
