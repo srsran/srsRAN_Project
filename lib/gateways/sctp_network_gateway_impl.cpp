@@ -51,6 +51,13 @@ bool sctp_network_gateway_impl::set_sockopts()
     return false;
   }
 
+  // Set SCTP_NODELAY to avoid concatenation beyond MTU size of 1500
+  int optval = 1;
+  if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
+    logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
+    return false;
+  }
+
   if (config.reuse_addr) {
     if (not set_reuse_addr()) {
       logger.error("Couldn't set reuseaddr for socket");
