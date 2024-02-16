@@ -145,6 +145,13 @@ public:
                    bool                              metrics_enabled,
                    rlc_pcap&                         pcap_);
 
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    status_prohibit_timer.stop();
+    reassembly_timer.stop();
+  };
+
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
   void set_status_notifier(rlc_tx_am_status_notifier* status_notifier_) { status_notifier = status_notifier_; }
