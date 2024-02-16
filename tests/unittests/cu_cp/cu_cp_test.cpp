@@ -57,6 +57,64 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
   ASSERT_TRUE(check_minimal_paging_result());
 }
 
+/// Test the handling of a valid Paging message for multiple DUs with only mandatory values set
+TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_to_du_with_matching_tac)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  this->f1c_gw.request_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+
+  // Connect second DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  this->f1c_gw.request_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg2 = generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 8);
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(1)).get_f1ap_message_handler().handle_message(f1setup_msg2);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_minimal_paging_result());
+}
+
+/// Test the handling of a valid Paging message for multiple DUs with only mandatory values set
+TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_to_du_with_matching_nci)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  this->f1c_gw.request_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+
+  // Connect second DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  this->f1c_gw.request_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg2 = generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 7);
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(1)).get_f1ap_message_handler().handle_message(f1setup_msg2);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_minimal_paging_result());
+}
+
 /// Test the handling of a valid Paging message with optional values set
 TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_paging_is_sent_to_du)
 {
