@@ -359,39 +359,39 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
     if (not ue_info_mgr.is_test_ue(pdu.rnti)) {
       // non-test mode UE. Forward the original UCI indication PDU.
       msg_copy.ucis.push_back(pdu);
-    }
-
-    // test mode UE.
-    // Intercept the UCI indication and force HARQ-ACK=ACK and CSI.
-    msg_copy.ucis.push_back(pdu);
-    mac_uci_pdu& test_uci = msg_copy.ucis.back();
-
-    bool entry_found = false;
-    if (variant_holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
-      for (const ul_sched_info& pusch : entry.puschs) {
-        if (pusch.pusch_cfg.rnti == pdu.rnti and pusch.uci.has_value()) {
-          fill_uci_pdu(variant_get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
-          entry_found = true;
-        }
-      }
     } else {
-      // PUCCH case.
-      for (const pucch_info& pucch : entry.pucchs) {
-        if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
-          // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
-          if (pucch.format == pucch_format::FORMAT_1) {
-            fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
-          } else {
-            fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
+      // test mode UE.
+      // Intercept the UCI indication and force HARQ-ACK=ACK and CSI.
+      msg_copy.ucis.push_back(pdu);
+      mac_uci_pdu& test_uci = msg_copy.ucis.back();
+
+      bool entry_found = false;
+      if (variant_holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
+        for (const ul_sched_info& pusch : entry.puschs) {
+          if (pusch.pusch_cfg.rnti == pdu.rnti and pusch.uci.has_value()) {
+            fill_uci_pdu(variant_get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
+            entry_found = true;
           }
-          entry_found = true;
+        }
+      } else {
+        // PUCCH case.
+        for (const pucch_info& pucch : entry.pucchs) {
+          if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
+            // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
+            if (pucch.format == pucch_format::FORMAT_1) {
+              fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
+            } else {
+              fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
+            }
+            entry_found = true;
+          }
         }
       }
-    }
 
-    if (not entry_found) {
-      msg_copy.ucis.pop_back();
-      logger.warning("c-rnti={}: Mismatch between provided UCI and expected UCI for slot_rx={}", pdu.rnti, msg.sl_rx);
+      if (not entry_found) {
+        msg_copy.ucis.pop_back();
+        logger.warning("c-rnti={}: Mismatch between provided UCI and expected UCI for slot_rx={}", pdu.rnti, msg.sl_rx);
+      }
     }
   }
 
