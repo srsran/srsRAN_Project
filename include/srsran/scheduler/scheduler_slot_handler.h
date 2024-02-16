@@ -57,7 +57,7 @@ struct pdsch_precoding_info {
 };
 
 struct tx_power_pdcch_information {
-  // TODO
+  // TODO: populate power offsets required for PDCCH.
 };
 
 struct dmrs_information {
@@ -150,6 +150,14 @@ struct pdsch_codeword {
   bool new_data;
 };
 
+struct tx_power_pdsch_information {
+  /// Ratio of PDSCH EPRE to NZP CSI-RS EPRE when UE derives CSI feedback. See 3GPP TS 38.214, clause 5.2.2.3.1. Values
+  /// {-8,...,15} dB with 1 dB step size.
+  int8_t pwr_ctrl_offset;
+  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
+  int8_t pwr_ctrl_offset_ss;
+};
+
 /// \brief Information relative to a PDSCH grant in a given slot.
 struct pdsch_information {
   rnti_t                                                 rnti;
@@ -171,6 +179,7 @@ struct pdsch_information {
   harq_id_t harq_id;
   /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.
   optional<pdsch_precoding_info> precoding;
+  tx_power_pdsch_information     tx_info;
 };
 
 /// Dummy MAC CE payload.
