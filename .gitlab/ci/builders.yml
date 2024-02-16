@@ -129,12 +129,12 @@ ubuntu-uhd-builder:
       - os_version: "22.04"
         arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
-      - os_version: "23.04"
-        arch_name: [amd64, arm64]
-        uhd_version: ["4.6.0.0", "4.4.0.0"] # "4.3.0.0" default
       - os_version: "23.10"
         arch_name: [amd64, arm64]
         uhd_version: ["4.6.0.0"] # "4.4.0.0" default
+      # - os_version: "24.04"
+      #   arch_name: [amd64, arm64]
+      #   uhd_version: [] # "4.6.0.0" default
 
 ################################################################################
 # DPDK builder
@@ -221,12 +221,12 @@ ubuntu-dpdk-builder:
       - os_version: "22.04"
         arch_name: [amd64, arm64]
         dpdk_version: ["21.08", "22.11.3", "23.11"]
-      - os_version: "23.04"
-        arch_name: [amd64, arm64]
-        dpdk_version: ["21.08", "22.11.3", "23.11"]
       - os_version: "23.10"
         arch_name: [amd64, arm64]
         dpdk_version: ["22.11.3", "23.11"]
+      - os_version: "24.04"
+        arch_name: [amd64, arm64]
+        dpdk_version: ["23.11"]
 
 ################################################################################
 # Common
@@ -324,6 +324,9 @@ alternative-tag [codechecker]:
       skopeo copy \
         docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION} \
         docker://${GITLAB_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION}
+  needs:
+    - builder version
+    - image-build-publish [codechecker]
 
 ################################################################################
 # Ubuntu 20.04
@@ -498,92 +501,6 @@ manifest [ubuntu, 22.04]:
       - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
-# Ubuntu 23.04
-################################################################################
-image-build-publish [ubuntu, 23.04, amd64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "23.04"
-    PLATFORM: amd64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder
-      parallel:
-        matrix:
-          - os_version: "23.04"
-            arch_name: amd64
-            uhd_version: ["4.6.0.0", "4.4.0.0"]
-    - job: ubuntu-dpdk-builder
-      parallel:
-        matrix:
-          - os_version: "23.04"
-            arch_name: amd64
-            dpdk_version: ["21.08", "22.11.3", "23.11"]
-
-alternative-tag [ubuntu, 23.04, amd64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.04"
-    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 23.04, amd64]
-
-image-build-publish [ubuntu, 23.04, arm64]:
-  extends:
-    - .image-build-publish
-  variables:
-    OS_FAMILY: debian
-    OS_NAME: ubuntu
-    OS_VERSION: "23.04"
-    PLATFORM: arm64
-  needs:
-    - builder version
-    - job: ubuntu-uhd-builder
-      parallel:
-        matrix:
-          - os_version: "23.04"
-            arch_name: arm64
-            uhd_version: ["4.6.0.0", "4.4.0.0"]
-    - job: ubuntu-dpdk-builder
-      parallel:
-        matrix:
-          - os_version: "23.04"
-            arch_name: arm64
-            dpdk_version: ["21.08", "22.11.3", "23.11"]
-
-alternative-tag [ubuntu, 23.04, arm64]:
-  extends:
-    - .alternative-tag
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.04"
-    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
-  needs:
-    - builder version
-    - image-build-publish [ubuntu, 23.04, arm64]
-
-manifest [ubuntu, 23.04]:
-  extends: .manifest
-  variables:
-    OS_NAME: ubuntu
-    OS_VERSION: "23.04"
-  needs:
-    - builder version
-    - job: alternative-tag [ubuntu, 23.04, amd64]
-      optional: false
-    - job: alternative-tag [ubuntu, 23.04, arm64]
-      optional: false
-  parallel:
-    matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
-
-################################################################################
 # Ubuntu 23.10
 ################################################################################
 image-build-publish [ubuntu, 23.10, amd64]:
@@ -664,6 +581,80 @@ manifest [ubuntu, 23.10]:
     - job: alternative-tag [ubuntu, 23.10, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 23.10, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
+# Ubuntu 24.04
+################################################################################
+image-build-publish [ubuntu, 24.04, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04"
+    PLATFORM: amd64
+  needs:
+    - builder version
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            arch_name: amd64
+            dpdk_version: ["23.11"]
+
+alternative-tag [ubuntu, 24.04, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.04, amd64]
+
+image-build-publish [ubuntu, 24.04, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-dpdk-builder
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            arch_name: arm64
+            dpdk_version: ["23.11"]
+
+alternative-tag [ubuntu, 24.04, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.04, arm64]
+
+manifest [ubuntu, 24.04]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 24.04, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 24.04, arm64]
       optional: false
   parallel:
     matrix:
