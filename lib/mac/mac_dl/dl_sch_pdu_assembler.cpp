@@ -197,7 +197,7 @@ public:
       nof_sdus         = 1;
       sum_bytes        = units::bytes{len};
     } else {
-      nof_sdus++;
+      ++nof_sdus;
       sum_bytes += units::bytes{len};
     }
   }
