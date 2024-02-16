@@ -177,7 +177,7 @@ private:
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
   std::atomic<uint16_t>                      next_du_cell_index{0};
 
-  std::map<uint32_t, nr_cell_global_id_t> tac_to_nr_cgi;
+  std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
 
   // timers associated with a given DU.
   timer_manager timer_db;
