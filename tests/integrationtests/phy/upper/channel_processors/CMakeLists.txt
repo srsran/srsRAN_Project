@@ -5,6 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(pxsch_chain_test pxsch_chain_test.cpp)
 target_link_libraries(pxsch_chain_test
@@ -15,4 +16,5 @@ target_link_libraries(pxsch_chain_test
         gtest
         gtest_main
 )
-gtest_discover_tests(pxsch_chain_test pxsch_chain_test)
+add_test(pxsch_chain_test pxsch_chain_test)
+set_tests_properties(pxsch_chain_test PROPERTIES LABELS "tsan;NO_MEMCHECK")

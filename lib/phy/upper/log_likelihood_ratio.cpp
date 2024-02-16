@@ -10,6 +10,7 @@
 
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/adt/optional.h"
+#include "srsran/srsvec/compare.h"
 #include <cmath>
 
 #ifdef __AVX2__
@@ -210,7 +211,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 }
 #endif // HAVE_NEON
 
-void srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
   srsran_assert(soft_bits.size() <= hard_bits.size(),
@@ -218,6 +219,11 @@ void srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
                 soft_bits.size(),
                 hard_bits.size());
 
+  // Early return if it finds a zero in the soft bits.
+  auto found = srsvec::find(soft_bits, log_likelihood_ratio(0));
+  if (found != soft_bits.end()) {
+    return false;
+  }
   unsigned nof_bits = soft_bits.size();
 
 #if defined(__AVX2__) || defined(HAVE_NEON)
@@ -233,4 +239,5 @@ void srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
     hard_bits.insert(hard_bit, i_bit, 1);
   }
 #endif // __AVX2__ or HAVE_NEON
+  return true;
 }

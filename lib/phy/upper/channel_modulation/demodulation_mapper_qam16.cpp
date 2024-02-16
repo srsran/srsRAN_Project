@@ -80,6 +80,15 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   l_value_23_0 = _mm256_mul_ps(l_value_23_0, rcp_noise_0_);
   l_value_23_1 = _mm256_mul_ps(l_value_23_1, rcp_noise_1_);
 
+  // Force zero values if the inputs are near zero.
+  __m256 zero_thr    = _mm256_set1_ps(0);
+  __m256 zero_mask_0 = _mm256_cmp_ps(mm256::abs_ps(symbols_0), zero_thr, _CMP_LE_OQ);
+  __m256 zero_mask_1 = _mm256_cmp_ps(mm256::abs_ps(symbols_1), zero_thr, _CMP_LE_OQ);
+  l_value_01_0       = _mm256_blendv_ps(l_value_01_0, _mm256_setzero_ps(), zero_mask_0);
+  l_value_01_1       = _mm256_blendv_ps(l_value_01_1, _mm256_setzero_ps(), zero_mask_1);
+  l_value_23_0       = _mm256_blendv_ps(l_value_23_0, _mm256_setzero_ps(), zero_mask_0);
+  l_value_23_1       = _mm256_blendv_ps(l_value_23_1, _mm256_setzero_ps(), zero_mask_1);
+
   // Re-collocate values.
   __m256 l_value_0 = _mm256_shuffle_ps(l_value_01_0, l_value_23_0, _MM_SHUFFLE(1, 0, 1, 0));
   __m256 l_value_1 = _mm256_shuffle_ps(l_value_01_0, l_value_23_0, _MM_SHUFFLE(3, 2, 3, 2));
@@ -225,6 +234,16 @@ void srsran::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
 #endif // HAVE_NEON
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
+    if (abs_sq(*symbols_it) < 1e-9) {
+      *llr_it++ = 0;
+      *llr_it++ = 0;
+      *llr_it++ = 0;
+      *llr_it++ = 0;
+      ++symbols_it;
+      ++noise_it;
+      continue;
+    }
+
     *llr_it++ = demod_16QAM_symbol_01(std::real(*symbols_it), *noise_it);
     *llr_it++ = demod_16QAM_symbol_01(std::imag(*symbols_it), *noise_it);
     *llr_it++ = demod_16QAM_symbol_23(std::real(*symbols_it), *noise_it);
