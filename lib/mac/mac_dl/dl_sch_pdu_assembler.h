@@ -110,16 +110,19 @@ public:
   span<const uint8_t> assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx, unsigned tbs_bytes);
 
 private:
-  class dl_sch_pdu_logger;
+  class pdu_log_builder;
 
   /// Assemble MAC SDUs for a given LCID.
-  void assemble_sdus(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, dl_sch_pdu_logger& pdu_logger);
+  void assemble_sdus(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, pdu_log_builder& pdu_logger);
 
   /// Assemble MAC subPDU with a CE.
-  void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, dl_sch_pdu_logger& pdu_logger);
+  void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, pdu_log_builder& pdu_logger);
 
-  mac_dl_ue_manager&    ue_mng;
+  mac_dl_ue_manager& ue_mng;
+
   srslog::basic_logger& logger;
+  // memory buffer to avoid allocations during formatting of pdus
+  fmt::memory_buffer fmtbuf;
 };
 
 } // namespace srsran
