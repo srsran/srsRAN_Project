@@ -323,7 +323,6 @@ test mode ue:
 
 test mode ue tsan:
   extends: test mode ue
-  allow_failure: true
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -332,7 +331,6 @@ test mode ue tsan:
 
 test mode ue asan:
   extends: test mode ue
-  allow_failure: true
   needs:
     - job: "basic asan"
       artifacts: true
@@ -341,7 +339,6 @@ test mode ue asan:
 
 test mode ue memcheck:
   extends: test mode ue
-  allow_failure: true
   needs:
     - job: "basic memcheck"
       artifacts: true

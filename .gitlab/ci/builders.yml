@@ -316,6 +316,15 @@ image-build-publish [codechecker]:
   cache:
     - !reference [.fetch_src_cache, cache]
 
+alternative-tag [codechecker]:
+  extends: .docker copy
+  stage: alt registries
+  script:
+    - |
+      skopeo copy \
+        docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION} \
+        docker://${GITLAB_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION}
+
 ################################################################################
 # Ubuntu 20.04
 ################################################################################
