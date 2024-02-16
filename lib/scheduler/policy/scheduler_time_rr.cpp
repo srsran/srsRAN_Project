@@ -138,26 +138,10 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
       return alloc_outcome::skip_ue;
     }
 
-    ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot};
-
-    if (candidates.dl_harqs().empty()) {
-      if (not is_retx) {
-        if (ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
-          // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
-          logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
-                       ue_cc.ue_index,
-                       ue_cc.rnti());
-        } else {
-          // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
-          // and HARQ-ACK.
-          logger.warning(
-              "ue={} rnti={} PDSCH allocation skipped. Cause: All the UE HARQs are busy waiting for their "
-              "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
-              "the scheduler.",
-              ue_cc.ue_index,
-              ue_cc.rnti());
-        }
-      }
+    // Create PDSCH param candidate search object.
+    ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot, logger};
+    if (candidates.empty()) {
+      // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available HARQs).
       continue;
     }
 
@@ -261,7 +245,7 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
     const ul_harq_process*    h = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
     if (h == nullptr) {
       // No HARQs available.
-      if (not is_retx) {
+      if (u.get_cell(to_ue_cell_index(i)).is_active() and not is_retx) {
         if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti) or ue_cc.harqs.find_ul_harq_waiting_ack() == nullptr) {
           // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
           logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",

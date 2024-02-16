@@ -126,11 +126,12 @@ public:
   };
 
   /// Create a searcher for UE PDSCH parameters.
-  ue_pdsch_param_candidate_searcher(const ue&       ue_ref_,
-                                    ue_cell_index_t cell_index,
-                                    bool            is_retx_,
-                                    slot_point      pdcch_slot_) :
-    ue_ref(ue_ref_), ue_cc(ue_ref.get_cell(cell_index)), is_retx(is_retx_), pdcch_slot(pdcch_slot_)
+  ue_pdsch_param_candidate_searcher(const ue&             ue_ref_,
+                                    ue_cell_index_t       cell_index,
+                                    bool                  is_retx_,
+                                    slot_point            pdcch_slot_,
+                                    srslog::basic_logger& logger_) :
+    ue_ref(ue_ref_), ue_cc(ue_ref.get_cell(cell_index)), is_retx(is_retx_), pdcch_slot(pdcch_slot_), logger(logger_)
   {
     if (is_retx) {
       // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
@@ -144,7 +145,7 @@ public:
           dl_harq_candidates.begin(),
           dl_harq_candidates.end(),
           [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
-    } else if (ue_ref.get_cell(cell_index).is_active()) {
+    } else if (ue_cc.is_active()) {
       // If there are no pending new Tx bytes, return.
       if (not ue_ref.has_pending_dl_newtx_bytes()) {
         return;
@@ -154,6 +155,23 @@ public:
       const dl_harq_process* h = ue_cc.harqs.find_empty_dl_harq();
       if (h != nullptr) {
         dl_harq_candidates.push_back(h);
+      } else {
+        // No empty HARQs are available. Log this occurrence.
+        if (ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
+          // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+          logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+                       ue_cc.ue_index,
+                       ue_cc.rnti());
+        } else {
+          // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
+          // and HARQ-ACK.
+          logger.warning(
+              "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
+              "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
+              "the scheduler.",
+              ue_cc.ue_index,
+              ue_cc.rnti());
+        }
       }
     }
   }
@@ -161,6 +179,13 @@ public:
   /// Get begin to the list of candidates.
   iterator begin() { return iterator{*this, dl_harq_candidates.begin(), ss_candidate_list.begin(), 0}; }
   iterator end() { return iterator{*this, dl_harq_candidates.end(), nullptr, 0}; }
+
+  /// Whether there are param candidates for allocation.
+  bool empty() const
+  {
+    return dl_harq_candidates.empty() or ss_candidate_list.empty() or
+           ss_candidate_list[0]->pdsch_time_domain_list.empty();
+  }
 
   /// List of DL HARQ candidates.
   const static_vector<const dl_harq_process*, MAX_NOF_HARQS>& dl_harqs() const { return dl_harq_candidates; }
@@ -278,6 +303,9 @@ private:
 
   // PDCCH slot point used to verify if the PDSCH fits a DL slot.
   slot_point pdcch_slot;
+
+  // Logger
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran
