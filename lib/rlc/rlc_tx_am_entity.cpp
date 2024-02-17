@@ -770,6 +770,23 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
                          sdu_length);
         return false;
       }
+      if (nack.so_start > sdu_info.next_so) {
+        logger.log_warning("Invalid NACK for sn_under_segmentation={}: so_start={} > next_so={}. nack={} sdu_length={}",
+                           sn_under_segmentation,
+                           nack.so_start,
+                           sdu_info.next_so,
+                           nack,
+                           sdu_length);
+        return false;
+      }
+      if (nack.so_start == sdu_info.next_so) {
+        // This NACK only marks the peak segment that has not yet been sent and can therefore be ignored.
+        logger.log_debug("Ignoring NACK for yet unsent rest of sn_under_segmentation={}: nack={} sdu_length={}",
+                         sn_under_segmentation,
+                         nack,
+                         sdu_length);
+        return false;
+      }
       nack.so_end = sdu_info.next_so - 1;
     }
   }
