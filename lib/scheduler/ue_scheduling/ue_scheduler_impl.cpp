@@ -152,7 +152,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   ue_alloc.slot_indication();
 
   // Schedule periodic UCI (SR and CSI) before any UL grants.
-  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
+  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
   // Run cell-specific SRB0 scheduler.
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);

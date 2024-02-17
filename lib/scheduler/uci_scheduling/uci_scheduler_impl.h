@@ -28,7 +28,7 @@ public:
 
   ~uci_scheduler_impl() override;
 
-  void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
+  void run_slot(cell_resource_allocator& res_alloc) override;
 
   void add_ue(const ue_cell_configuration& ue_cfg);
 
@@ -39,16 +39,16 @@ public:
 private:
   /// Information on currently configured UE UCI resource to periodically schedule.
   struct periodic_uci_info {
-    rnti_t   rnti;
-    bool     is_sr;
-    unsigned res_idx;
+    rnti_t rnti;
+    bool   is_sr;
   };
 
-  // Helper that schedules the SR and CSI for a given user at a given slot.
-  void schedule_uci(cell_slot_resource_allocator&           slot_alloc,
-                    rnti_t                                  crnti,
-                    const ue_cell&                          user,
-                    optional<std::pair<unsigned, unsigned>> csi_period_and_offset);
+  // Helper to fetch a UE cell config.
+  const ue_cell_configuration* get_ue_cfg(rnti_t rnti) const;
+  // Helper that schedules the SR and CSI for a given slot.
+  void schedule_slot_ucis(cell_slot_resource_allocator& slot_alloc);
+  // Helper that schedules the SR and CSI for UEs that were recently updated.
+  void schedule_updated_ues_ucis(cell_resource_allocator& res_alloc);
 
   // Cell configuration.
   const cell_configuration& cell_cfg;
@@ -60,6 +60,9 @@ private:
 
   // Storage of the periodic UCIs to be scheduled in the resource grid.
   std::vector<static_vector<periodic_uci_info, MAX_PUCCH_PDUS_PER_SLOT>> periodic_uci_slot_wheel;
+
+  // UEs whose configuration has been updated in between the last and current slot indications.
+  std::vector<rnti_t> updated_ues;
 };
 
 } // namespace srsran

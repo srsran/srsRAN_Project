@@ -23,48 +23,21 @@ uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
 {
   // Max size of the UCI resource slot wheel, dimensioned based on the UCI periods.
   periodic_uci_slot_wheel.resize(std::max(MAX_SR_PERIOD, MAX_CSI_REPORT_PERIOD));
+
+  // Pre-reserve space for the UEs that will be added.
+  updated_ues.reserve(MAX_NOF_DU_UES);
 }
 
 uci_scheduler_impl::~uci_scheduler_impl() = default;
 
-void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
+void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
 {
-  for (auto& user : ues) {
-    // At this point, we assume the config validator ensures there is pCell.
-    auto& ue_cell = user->get_pcell();
+  // Initial allocation: we allocate opportunities all over the grid.
+  schedule_updated_ues_ucis(cell_alloc);
 
-    if (not ue_cell.is_active() or not ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
-      continue;
-    }
-
-    optional<std::pair<unsigned, unsigned>> csi_period_and_offset;
-    if (ue_cell.cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
-      // We assume we only use the first CSI report configuration.
-      const unsigned csi_report_cfg_idx = 0;
-      const auto&    csi_report_cfg =
-          ue_cell.cfg().cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
-
-      csi_period_and_offset.emplace(std::pair<unsigned, unsigned>{
-          csi_report_periodicity_to_uint(variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                                             csi_report_cfg.report_cfg_type)
-                                             .report_slot_period),
-          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-              .report_slot_offset});
-    }
-
-    if (ue_cell.is_pucch_grid_inited()) {
-      // Only allocate in the farthest slot in the grid, as the previous part of the allocation grid has been completed
-      // at the first this function was called.
-      schedule_uci(cell_alloc[cell_alloc.max_ul_slot_alloc_delay], user->crnti, ue_cell, csi_period_and_offset);
-    }
-    // Initial allocation: we allocate opportunities all over the grid.
-    else {
-      for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay + 1; ++n) {
-        schedule_uci(cell_alloc[n], user->crnti, ue_cell, csi_period_and_offset);
-      }
-      ue_cell.set_pucch_grid_inited();
-    }
-  }
+  // Only allocate in the farthest slot in the grid, as the previous part of the allocation grid has been completed
+  // at the first this function was called.
+  schedule_slot_ucis(cell_alloc[cell_alloc.max_ul_slot_alloc_delay]);
 }
 
 void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
@@ -82,7 +55,7 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 
     unsigned period_slots = sr_periodicity_to_slot(sr_res.period);
     for (unsigned offset = sr_res.offset; offset < periodic_uci_slot_wheel.size(); offset += period_slots) {
-      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, true, i});
+      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, true});
     }
   }
 
@@ -96,9 +69,12 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
     unsigned period_slots = csi_report_periodicity_to_uint(period_pucch.report_slot_period);
     for (unsigned offset = period_pucch.report_slot_offset; offset < periodic_uci_slot_wheel.size();
          offset += period_slots) {
-      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, false, 0});
+      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, false});
     }
   }
+
+  // Register the UE in the list of recently configured UEs.
+  updated_ues.push_back(ue_cfg.crnti);
 }
 
 void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
@@ -161,33 +137,84 @@ void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
   }
 }
 
-void uci_scheduler_impl::schedule_uci(cell_slot_resource_allocator&           slot_alloc,
-                                      rnti_t                                  crnti,
-                                      const ue_cell&                          user,
-                                      optional<std::pair<unsigned, unsigned>> csi_period_and_offset)
+const ue_cell_configuration* uci_scheduler_impl::get_ue_cfg(rnti_t rnti) const
 {
-  if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
-    return;
+  auto* u = ues.find_by_rnti(rnti);
+  if (u != nullptr) {
+    auto* ue_cc = u->find_cell(cell_cfg.cell_index);
+    if (ue_cc != nullptr) {
+      return &ue_cc->cfg();
+    }
   }
+  return nullptr;
+}
 
-  // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
-  const auto& sr_resource_cfg_list =
-      user.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
-
+void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_alloc)
+{
+  // For the provided slot, check if there are any pending UCI resources to allocate, and allocate them.
   // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits and
   // the corresponding number of PRBs for the PUCCH Format 2 over a PUCCH F2 grant is within PUCCH capacity.
+  auto& slot_ucis = periodic_uci_slot_wheel[slot_alloc.slot.to_uint() % periodic_uci_slot_wheel.size()];
+  for (const periodic_uci_info& uci_info : slot_ucis) {
+    if (uci_info.is_sr) {
+      auto* ue_cfg = get_ue_cfg(uci_info.rnti);
+      if (ue_cfg != nullptr) {
+        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
+      } else {
+        logger.error("UE with RNTI {} and cell={} not found.", uci_info.rnti, cell_cfg.cell_index);
+      }
+    }
+  }
+  for (const periodic_uci_info& uci_info : slot_ucis) {
+    if (not uci_info.is_sr) {
+      auto* ue_cfg = get_ue_cfg(uci_info.rnti);
+      if (ue_cfg != nullptr) {
+        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
+      } else {
+        logger.error("UE with RNTI {} and cell={} not found.", uci_info.rnti, cell_cfg.cell_index);
+      }
+    }
+  }
+}
 
-  for (const auto& sr_res : sr_resource_cfg_list) {
-    srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
+void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell_alloc)
+{
+  // For all UEs whose config has been recently updated, schedule their UCIs up until one slot before the farthest
+  // slot in the resource grid.
+  // TODO: Remove UCIs from the list of updated UEs when the UE is removed, if they have no HARQ-ACK.
+  for (rnti_t rnti : updated_ues) {
+    auto* ue_cfg = get_ue_cfg(rnti);
+    if (ue_cfg == nullptr) {
+      logger.error("UE with RNTI {} and cell={} not found.", rnti, cell_cfg.cell_index);
+      continue;
+    }
 
-    if ((slot_alloc.slot - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
-      uci_alloc.uci_allocate_sr_opportunity(slot_alloc, crnti, user.cfg());
+    // Schedule UCI up to the farthest slot.
+    for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay; ++n) {
+      auto& slot_ucis = periodic_uci_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_uci_slot_wheel.size()];
+
+      // Schedule SRs first
+      // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits
+      // and the corresponding number of PRBs for the PUCCH Format 2 over a PUCCH F2 grant is within PUCCH capacity.
+      for (const periodic_uci_info& uci_info : slot_ucis) {
+        if (uci_info.rnti == rnti) {
+          if (uci_info.is_sr) {
+            uci_alloc.uci_allocate_sr_opportunity(cell_alloc[n], rnti, *ue_cfg);
+          }
+        }
+      }
+
+      // Schedule CSI
+      for (const periodic_uci_info& uci_info : slot_ucis) {
+        if (uci_info.rnti == rnti) {
+          if (not uci_info.is_sr) {
+            uci_alloc.uci_allocate_csi_opportunity(cell_alloc[n], rnti, *ue_cfg);
+          }
+        }
+      }
     }
   }
 
-  if (csi_period_and_offset.has_value()) {
-    if ((slot_alloc.slot - csi_period_and_offset->second).to_uint() % csi_period_and_offset->first == 0) {
-      uci_alloc.uci_allocate_csi_opportunity(slot_alloc, crnti, user.cfg());
-    }
-  }
+  // Clear the list of updated UEs.
+  updated_ues.clear();
 }
