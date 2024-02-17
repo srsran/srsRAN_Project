@@ -763,8 +763,11 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     } else {
       // The SDU is still under segmentation; RETX only what was already sent; avoid RETX overtaking the original
       if (sdu_info.next_so == 0) {
-        logger.log_error(
-            "Cannot RETX sn_under_segmentation={} with invalid next_so={}", sn_under_segmentation, sdu_info.next_so);
+        logger.log_error("Cannot RETX sn_under_segmentation={} with invalid next_so={}. nack={} sdu_length={}",
+                         sn_under_segmentation,
+                         sdu_info.next_so,
+                         nack,
+                         sdu_length);
         return false;
       }
       nack.so_end = sdu_info.next_so - 1;
