@@ -30,7 +30,7 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   ue_res_grid_view.add_cell(*params.cell_res_alloc);
   cells[params.cell_index] = std::make_unique<cell>(expert_cfg, params, ue_db);
-  event_mng.add_cell(*params.cell_res_alloc, cells[params.cell_index]->srb0_sched);
+  event_mng.add_cell(*params.cell_res_alloc, cells[params.cell_index]->srb0_sched, cells[params.cell_index]->uci_sched);
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 

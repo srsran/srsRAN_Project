@@ -21,6 +21,8 @@ uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
                                        ue_repository&            ues_) :
   cell_cfg(cell_cfg_), uci_alloc(uci_alloc_), ues(ues_), logger(srslog::fetch_basic_logger("SCHED"))
 {
+  // Max size of the UCI resource slot wheel, dimensioned based on the UCI periods.
+  periodic_uci_slot_wheel.resize(std::max(MAX_SR_PERIOD, MAX_CSI_REPORT_PERIOD));
 }
 
 uci_scheduler_impl::~uci_scheduler_impl() = default;
@@ -61,6 +63,100 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         schedule_uci(cell_alloc[n], user->crnti, ue_cell, csi_period_and_offset);
       }
       ue_cell.set_pucch_grid_inited();
+    }
+  }
+}
+
+void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
+{
+  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
+      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+    return;
+  }
+
+  // Save SR resources in the slot wheel.
+  const auto& sr_resource_cfg_list = ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
+  for (unsigned i = 0; i != sr_resource_cfg_list.size(); ++i) {
+    const auto& sr_res = sr_resource_cfg_list[i];
+    srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
+
+    unsigned period_slots = sr_periodicity_to_slot(sr_res.period);
+    for (unsigned offset = sr_res.offset; offset < periodic_uci_slot_wheel.size(); offset += period_slots) {
+      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, true, i});
+    }
+  }
+
+  if (ue_cfg.cfg_dedicated().csi_meas_cfg.has_value()) {
+    // We assume we only use the first CSI report configuration.
+    const unsigned csi_report_cfg_idx = 0;
+    const auto&    csi_report_cfg = ue_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+    const auto&    period_pucch =
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
+
+    unsigned period_slots = csi_report_periodicity_to_uint(period_pucch.report_slot_period);
+    for (unsigned offset = period_pucch.report_slot_offset; offset < periodic_uci_slot_wheel.size();
+         offset += period_slots) {
+      periodic_uci_slot_wheel[offset].push_back(periodic_uci_info{ue_cfg.crnti, false, 0});
+    }
+  }
+}
+
+void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
+{
+  // Detect differences.
+  if (new_ue_cfg.cfg_dedicated().ul_config.has_value() and old_ue_cfg.cfg_dedicated().ul_config.has_value() and
+      new_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
+      old_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+    // Both old and new UE config have PUCCH config.
+    const auto& new_pucch = new_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+    const auto& old_pucch = old_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+
+    if (new_pucch.sr_res_list == old_pucch.sr_res_list and
+        new_ue_cfg.cfg_dedicated().csi_meas_cfg == old_ue_cfg.cfg_dedicated().csi_meas_cfg) {
+      // Nothing changed.
+      return;
+    }
+  }
+
+  rem_ue(old_ue_cfg);
+  add_ue(new_ue_cfg);
+}
+
+void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
+{
+  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
+      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+    return;
+  }
+
+  const auto& sr_resource_cfg_list = ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
+  for (unsigned i = 0; i != sr_resource_cfg_list.size(); ++i) {
+    const auto& sr_res = sr_resource_cfg_list[i];
+
+    unsigned period_slots = sr_periodicity_to_slot(sr_res.period);
+    for (unsigned offset = sr_res.offset; offset < periodic_uci_slot_wheel.size(); offset += period_slots) {
+      // Removing without keeping order as it is not relevant.
+      auto rem_it = std::remove_if(periodic_uci_slot_wheel[offset].begin(),
+                                   periodic_uci_slot_wheel[offset].end(),
+                                   [&ue_cfg](const auto& e) { return e.rnti == ue_cfg.crnti; });
+      periodic_uci_slot_wheel[offset].erase(rem_it, periodic_uci_slot_wheel[offset].end());
+    }
+  }
+
+  if (ue_cfg.cfg_dedicated().csi_meas_cfg.has_value()) {
+    // We assume we only use the first CSI report configuration.
+    const unsigned csi_report_cfg_idx = 0;
+    const auto&    csi_report_cfg = ue_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+    const auto&    period_pucch =
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
+
+    unsigned period_slots = csi_report_periodicity_to_uint(period_pucch.report_slot_period);
+    for (unsigned offset = period_pucch.report_slot_offset; offset < periodic_uci_slot_wheel.size();
+         offset += period_slots) {
+      auto rem_it = std::remove_if(periodic_uci_slot_wheel[offset].begin(),
+                                   periodic_uci_slot_wheel[offset].end(),
+                                   [&ue_cfg](const auto& e) { return e.rnti == ue_cfg.crnti; });
+      periodic_uci_slot_wheel[offset].erase(rem_it, periodic_uci_slot_wheel[offset].end());
     }
   }
 }

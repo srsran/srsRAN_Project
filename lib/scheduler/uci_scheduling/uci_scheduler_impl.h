@@ -30,7 +30,20 @@ public:
 
   void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
 
+  void add_ue(const ue_cell_configuration& ue_cfg);
+
+  void reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg);
+
+  void rem_ue(const ue_cell_configuration& ue_cfg);
+
 private:
+  /// Information on currently configured UE UCI resource to periodically schedule.
+  struct periodic_uci_info {
+    rnti_t   rnti;
+    bool     is_sr;
+    unsigned res_idx;
+  };
+
   // Helper that schedules the SR and CSI for a given user at a given slot.
   void schedule_uci(cell_slot_resource_allocator&           slot_alloc,
                     rnti_t                                  crnti,
@@ -44,6 +57,9 @@ private:
   ue_repository& ues;
 
   srslog::basic_logger& logger;
+
+  // Storage of the periodic UCIs to be scheduled in the resource grid.
+  std::vector<static_vector<periodic_uci_info, MAX_PUCCH_PDUS_PER_SLOT>> periodic_uci_slot_wheel;
 };
 
 } // namespace srsran
