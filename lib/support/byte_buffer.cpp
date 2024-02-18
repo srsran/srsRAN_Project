@@ -139,7 +139,8 @@ void byte_buffer::control_block::destroy_node(node_t* node) const
 byte_buffer::control_block::~control_block()
 {
   // Destroy and return all segments back to the segment memory pool.
-  for (node_t* node = segments.head; node != nullptr; node = node->next) {
+  for (node_t *next_node = segments.head, *node = next_node; node != nullptr; node = next_node) {
+    next_node = node->next;
     destroy_node(node);
   }
 }
