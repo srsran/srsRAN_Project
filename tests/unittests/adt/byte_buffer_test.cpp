@@ -117,6 +117,34 @@ protected:
   std::vector<uint8_t> bytes3 = test_rgen::random_vector<uint8_t>(sz3);
 };
 
+/// Basic byte_buffer_view test that takes no parameters.
+class byte_buffer_view_tester : public ::testing::Test
+{
+public:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+};
+
+/// Basic byte_buffer_slice test that takes no parameters.
+class byte_buffer_slice_tester : public ::testing::Test
+{
+public:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+};
+
+/// Basic byte_buffer_reader test that takes no parameters.
+class byte_buffer_reader_tester : public ::testing::Test
+{
+public:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+};
+
+/// Basic byte_buffer_writer test that takes no parameters.
+class byte_buffer_writer_tester : public ::testing::Test
+{
+public:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+};
+
 } // namespace
 
 ///////////////////////// byte_buffer_test //////////////////////////////
@@ -758,7 +786,7 @@ INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
 
 ///////////////////////// byte_buffer_view_test //////////////////////////////
 
-TEST(byte_buffer_view_test, empty_byte_buffer_view_is_in_valid_state)
+TEST_F(byte_buffer_view_tester, empty_byte_buffer_view_is_in_valid_state)
 {
   byte_buffer_view view;
   ASSERT_EQ_LEN(view, 0);
@@ -773,7 +801,7 @@ TEST(byte_buffer_view_test, empty_byte_buffer_view_is_in_valid_state)
   ASSERT_EQ_LEN(view, 0);
 }
 
-TEST(byte_buffer_view_test, length)
+TEST_F(byte_buffer_view_tester, length)
 {
   byte_buffer          pdu;
   unsigned             len   = test_rgen::uniform_int<unsigned>(1, 100000);
@@ -790,7 +818,7 @@ TEST(byte_buffer_view_test, length)
   ASSERT_EQ(len2, view.view(offset, len2).length());
 }
 
-TEST(byte_buffer_view_test, segment_iterator)
+TEST_F(byte_buffer_view_tester, segment_iterator)
 {
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(random_vec_size());
   byte_buffer          pdu{bytes};
@@ -812,7 +840,7 @@ TEST(byte_buffer_view_test, segment_iterator)
 
 ///////////////////////// byte_buffer_slice_test //////////////////////////////
 
-TEST(byte_buffer_slice_test, empty_slice_is_in_valid_state)
+TEST_F(byte_buffer_slice_tester, empty_slice_is_in_valid_state)
 {
   byte_buffer_slice pkt;
 
@@ -821,7 +849,7 @@ TEST(byte_buffer_slice_test, empty_slice_is_in_valid_state)
   ASSERT_EQ(pkt.begin(), pkt.end());
 }
 
-TEST(byte_buffer_slice_test, ctor_with_span)
+TEST_F(byte_buffer_slice_tester, ctor_with_span)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
   byte_buffer_slice    slice(vec);
@@ -841,7 +869,7 @@ TEST(byte_buffer_slice_test, ctor_with_span)
   ASSERT_EQ(slice, vec);
 }
 
-TEST(byte_buffer_slice_test, shallow_copy)
+TEST_F(byte_buffer_slice_tester, shallow_copy)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
   byte_buffer          pdu(vec);
@@ -869,7 +897,7 @@ TEST(byte_buffer_slice_test, shallow_copy)
   // TODO: Fix.
 }
 
-TEST(byte_buffer_slice_test, deep_slice)
+TEST_F(byte_buffer_slice_tester, deep_slice)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
   byte_buffer          pdu{vec};
@@ -906,7 +934,7 @@ TEST(byte_buffer_slice_test, deep_slice)
   ASSERT_EQ(slice, vec);
 }
 
-TEST(byte_buffer_slice_test, move_ctor)
+TEST_F(byte_buffer_slice_tester, move_ctor)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
   byte_buffer          pdu{vec};
@@ -931,7 +959,7 @@ TEST(byte_buffer_slice_test, move_ctor)
   ASSERT_EQ(slice, vec);
 }
 
-TEST(byte_buffer_slice_test, formatter)
+TEST_F(byte_buffer_slice_tester, formatter)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
@@ -944,7 +972,7 @@ TEST(byte_buffer_slice_test, formatter)
 
 ///////////////////////// byte_buffer_reader_test //////////////////////////////
 
-TEST(byte_buffer_reader_test, split_advance)
+TEST_F(byte_buffer_reader_tester, split_advance)
 {
   // Test with small vector of bytes
   // Make initial vector
@@ -1001,7 +1029,7 @@ TEST(byte_buffer_reader_test, split_advance)
   TESTASSERT(view.end() == pdu_long_reader.begin());
 }
 
-TEST(byte_buffer_writer_test, all)
+TEST_F(byte_buffer_writer_tester, all)
 {
   byte_buffer        pdu;
   byte_buffer_writer writer{pdu};
