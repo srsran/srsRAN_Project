@@ -31,6 +31,7 @@ public:
   uint32_t            bsr             = 0;
   uint32_t            bsr_count       = 0;
   uint32_t            max_retx_count  = 0;
+  uint32_t            proto_err_count = 0;
 
   rlc_tx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
@@ -48,7 +49,7 @@ public:
   }
 
   // rlc_tx_upper_layer_control_notifier interface
-  void on_protocol_failure() override {}
+  void on_protocol_failure() override { proto_err_count++; }
   void on_max_retx() override { max_retx_count++; }
 
   // rlc_tx_buffer_state_update_notifier interface
@@ -655,6 +656,29 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
+}
+
+TEST_P(rlc_tx_am_test, invalid_status_report_ack_sn_larger_than_tx_next)
+{
+  const uint32_t    sdu_size = 3;
+  const uint32_t    n_pdus   = 5;
+  byte_buffer_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+
+  // NACK SN=3
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn       = n_pdus + 2;
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  status_pdu.push_nack(nack);
+  rlc->on_status_pdu(std::move(status_pdu));
+  pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
+  EXPECT_EQ(rlc->get_buffer_state(), 0); // invalid status report ignored
+
+  // Verify protocol error notification
+  ASSERT_EQ(tester->proto_err_count, 1);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
@@ -1868,3 +1892,9 @@ INSTANTIATE_TEST_SUITE_P(rlc_tx_am_test_each_sn_size,
                          rlc_tx_am_test,
                          ::testing::Values(rlc_am_sn_size::size12bits, rlc_am_sn_size::size18bits),
                          test_param_info_to_string);
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
