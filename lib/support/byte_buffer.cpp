@@ -426,8 +426,11 @@ void byte_buffer::trim_head(size_t nof_bytes)
     ctrl_blk_ptr->pkt_len -= to_trim;
     trimmed += to_trim;
     if (ctrl_blk_ptr->segments.head->length() == 0) {
+      // Head segment is empty.
       // Remove the first segment.
+      node_t* prev_head           = ctrl_blk_ptr->segments.head;
       ctrl_blk_ptr->segments.head = ctrl_blk_ptr->segments.head->next;
+      ctrl_blk_ptr->destroy_node(prev_head);
     }
   }
 }
@@ -452,6 +455,14 @@ void byte_buffer::trim_tail(size_t nof_bytes)
   node_t* seg     = ctrl_blk_ptr->segments.head;
   for (size_t count = 0; seg != nullptr; seg = seg->next) {
     if (count + seg->length() >= new_len) {
+      // We reached the new last segment.
+      // Destroy remaining segments.
+      for (auto *seg_next = seg->next, *to_destroy = seg_next; to_destroy != nullptr; to_destroy = seg_next) {
+        seg_next = to_destroy->next;
+        ctrl_blk_ptr->destroy_node(to_destroy);
+      }
+
+      // Set this node as tail.
       seg->next = nullptr;
       seg->resize(new_len - count);
       ctrl_blk_ptr->segments.tail = seg;

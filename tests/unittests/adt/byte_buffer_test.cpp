@@ -65,25 +65,30 @@ static std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const ui
   return ret;
 }
 
+void check_all_segments_have_been_destroyed()
+{
+  auto&    pool           = detail::get_default_byte_buffer_segment_pool();
+  unsigned blocks_in_pool = pool.get_local_cache_size() + pool.get_central_cache_approx_size();
+  report_fatal_error_if_not(blocks_in_pool == pool.nof_memory_blocks(),
+                            "Failed to deallocate all blocks. Total blocks={}, central cache={}, local cache={}",
+                            pool.nof_memory_blocks(),
+                            pool.get_central_cache_approx_size(),
+                            pool.get_local_cache_size());
+}
+
+/// Basic byte_buffer test that takes no parameters.
 class byte_buffer_tester : public ::testing::Test
 {
 public:
-  void TearDown() override
-  {
-    auto&    pool           = detail::get_default_byte_buffer_segment_pool();
-    unsigned blocks_in_pool = pool.get_local_cache_size() + pool.get_central_cache_approx_size();
-    report_fatal_error_if_not(blocks_in_pool == pool.nof_memory_blocks(),
-                              "Failed to deallocate all blocks. Total blocks={}, central cache={}, local cache={}",
-                              pool.nof_memory_blocks(),
-                              pool.get_central_cache_approx_size(),
-                              pool.get_local_cache_size());
-  }
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
 };
 
 /// Test fixture for tests involving a single array of bytes.
 class one_vector_size_param_test : public ::testing::TestWithParam<size_t>
 {
 protected:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+
   size_t               sz1   = GetParam();
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(sz1);
 };
@@ -91,6 +96,8 @@ protected:
 class two_vector_size_param_test : public ::testing::TestWithParam<std::tuple<size_t, size_t>>
 {
 protected:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+
   size_t               sz1    = std::get<0>(GetParam());
   size_t               sz2    = std::get<1>(GetParam());
   std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(sz1);
@@ -100,6 +107,8 @@ protected:
 class three_vector_size_param_test : public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t>>
 {
 protected:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+
   size_t               sz1    = std::get<0>(GetParam());
   size_t               sz2    = std::get<1>(GetParam());
   size_t               sz3    = std::get<2>(GetParam());
@@ -253,7 +262,7 @@ TEST_P(one_vector_size_param_test, clear)
   ASSERT_TRUE(pdu.empty());
 }
 
-TEST(byte_buffer_test, iterator)
+TEST_F(byte_buffer_tester, iterator)
 {
   byte_buffer pdu;
 
@@ -304,7 +313,7 @@ TEST(byte_buffer_test, iterator)
   ASSERT_EQ(bytes_concat.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 }
 
-TEST(byte_buffer_test, deep_copy_for_empty_byte_buffer)
+TEST_F(byte_buffer_tester, deep_copy_for_empty_byte_buffer)
 {
   byte_buffer pdu;
   byte_buffer pdu2;
@@ -371,7 +380,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append)
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
-TEST(byte_buffer_test, formatter)
+TEST_F(byte_buffer_tester, formatter)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
@@ -382,7 +391,7 @@ TEST(byte_buffer_test, formatter)
   ASSERT_EQ(result, "01 02 03 04 0f 10 ff");
 }
 
-TEST(byte_buffer_test, trim)
+TEST_F(byte_buffer_tester, trim)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -406,7 +415,7 @@ TEST(byte_buffer_test, trim)
   ASSERT_EQ(pdu, span<const uint8_t>{bytes2}.last(2));
 }
 
-TEST(byte_buffer_test, prepend_and_trim_tail)
+TEST_F(byte_buffer_tester, prepend_and_trim_tail)
 {
   byte_buffer        pdu;
   byte_buffer        sdu;
@@ -482,14 +491,14 @@ TEST_F(byte_buffer_tester, is_contiguous)
   ASSERT_TRUE(pdu.is_contiguous());
 }
 
-TEST(byte_buffer_test, hexdump)
+TEST_F(byte_buffer_tester, hexdump)
 {
   std::vector<uint8_t> bytes{0x1, 0x2, 0x3, 0x4, 0x5, 0xff};
   byte_buffer          pdu = make_byte_buffer("0102030405FF");
   ASSERT_EQ(pdu, bytes);
 }
 
-TEST(byte_buffer_test, copy_byte_buffer_to_span)
+TEST_F(byte_buffer_tester, copy_byte_buffer_to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -529,7 +538,7 @@ TEST(byte_buffer_test, copy_byte_buffer_to_span)
   ASSERT_EQ(dst_span.data()[len], 0xfe);
 }
 
-TEST(byte_buffer_test, copy_byte_buffer_view_to_span)
+TEST_F(byte_buffer_tester, copy_byte_buffer_view_to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -569,7 +578,7 @@ TEST(byte_buffer_test, copy_byte_buffer_view_to_span)
   ASSERT_EQ(dst_span.data()[len], 0xfe);
 }
 
-TEST(byte_buffer_test, to_span)
+TEST_F(byte_buffer_tester, to_span)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -597,7 +606,7 @@ TEST(byte_buffer_test, to_span)
   ASSERT_EQ(dst, span<const uint8_t>{tmp_mem});
 }
 
-TEST(byte_buffer_test, iterator_plus_equal_op)
+TEST_F(byte_buffer_tester, iterator_plus_equal_op)
 {
   // Test with small vector of bytes
   // Make initial vector
@@ -651,7 +660,7 @@ TEST(byte_buffer_test, iterator_plus_equal_op)
   ASSERT_EQ(it, pdu.cend());
 }
 
-TEST(byte_buffer_test, iterator_of_segments)
+TEST_F(byte_buffer_tester, iterator_of_segments)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> small_vec_bytes = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -677,7 +686,7 @@ TEST(byte_buffer_test, iterator_of_segments)
   ASSERT_EQ(seg_offset, total_bytes.size());
 }
 
-TEST(byte_buffer_test, reserve_prepend)
+TEST_F(byte_buffer_tester, reserve_prepend)
 {
   byte_buffer pdu;
 
@@ -701,7 +710,7 @@ TEST(byte_buffer_test, reserve_prepend)
   TESTASSERT(view2 == big_vec);
 }
 
-TEST(byte_buffer_test, append_rvalue_byte_buffer)
+TEST_F(byte_buffer_tester, append_rvalue_byte_buffer)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> big_vec       = test_rgen::random_vector<uint8_t>(large_vec_size);
