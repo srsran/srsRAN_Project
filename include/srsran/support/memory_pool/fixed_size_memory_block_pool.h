@@ -145,6 +145,7 @@ public:
     while (not w_ctx->local_cache.empty()) {
       node = w_ctx->local_cache.back().try_pop();
       if (node != nullptr) {
+        validate_node_address(node);
         return node;
       }
       w_ctx->local_cache.pop_back();
@@ -155,6 +156,7 @@ public:
     if (central_mem_cache.try_dequeue(w_ctx->consumer_token, batch)) {
       w_ctx->local_cache.push_back(batch);
       node = w_ctx->local_cache.back().try_pop();
+      validate_node_address(node);
     }
 
     return node;
@@ -164,22 +166,9 @@ public:
   void deallocate_node(void* p)
   {
     srsran_assert(p != nullptr, "Deallocated nodes must have valid address");
+    validate_node_address(p);
 
     worker_ctxt* w_ctx = get_worker_cache();
-
-    if (DebugSanitizeAddress) {
-      // For debug purposes.
-      std::lock_guard<std::mutex> lock(debug_mutex);
-      bool                        found = false;
-      for (unsigned i = 0; i != nof_blocks; ++i) {
-        if (allocated_memory.data() + i * mblock_size == static_cast<uint8_t*>(p)) {
-          found = true;
-        }
-      }
-      if (not found) {
-        report_fatal_error("Error dealloccating block with address {:#x}", p);
-      }
-    }
 
     // Verify if new batch needs to be created in local cache.
     if (w_ctx->local_cache.empty() or w_ctx->local_cache.back().size() >= block_batch_size) {
@@ -202,16 +191,22 @@ public:
 
   void print_all_buffers()
   {
-    auto*    worker = get_worker_cache();
-    unsigned count  = 0;
-    for (const auto& l : worker->local_cache) {
-      count += l.size();
-    }
-
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
                central_mem_cache.size_approx() * block_batch_size,
                nof_memory_blocks(),
-               count);
+               get_local_cache_size());
+  }
+
+  /// Get central cache current size in number of memory blocks.
+  size_t get_central_cache_approx_size() const { return central_mem_cache.size_approx() * block_batch_size; }
+  /// Get thread local cache current size in number of memory blocks.
+  size_t get_local_cache_size()
+  {
+    auto* w = get_worker_cache();
+    if (w->local_cache.empty()) {
+      return 0;
+    }
+    return (w->local_cache.size() - 1) * block_batch_size + w->local_cache.back().size();
   }
 
 private:
@@ -266,6 +261,22 @@ private:
   /// Number of batches of memory blocks stored in the pool.
   size_t nof_total_batches() const { return (nof_blocks + block_batch_size - 1) / block_batch_size; }
 
+  void validate_node_address(void* node)
+  {
+#ifdef ASSERTS_ENABLED
+    bool validation_enabled = true;
+#elif
+    bool validation_enabled = DebugSanitizeAddress;
+#endif
+    if (validation_enabled and node != nullptr) {
+      report_fatal_error_if_not(node >= allocated_memory.data() and
+                                    node < allocated_memory.data() + allocated_memory.size(),
+                                "Invalid memory block address");
+      report_fatal_error_if_not((static_cast<uint8_t*>(node) - allocated_memory.data()) % mblock_size == 0,
+                                "Misaligned memory block address");
+    }
+  }
+
   const size_t mblock_size;
   const size_t nof_blocks;
   const size_t max_local_batches;
@@ -278,8 +289,6 @@ private:
   // when other workers get deleted as well.
   std::mutex             incomplete_batch_mutex;
   free_memory_block_list incomplete_batch;
-
-  std::mutex debug_mutex;
 };
 
 } // namespace srsran

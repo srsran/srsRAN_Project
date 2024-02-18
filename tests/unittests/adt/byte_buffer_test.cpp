@@ -65,6 +65,21 @@ static std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const ui
   return ret;
 }
 
+class byte_buffer_tester : public ::testing::Test
+{
+public:
+  void TearDown() override
+  {
+    auto&    pool           = detail::get_default_byte_buffer_segment_pool();
+    unsigned blocks_in_pool = pool.get_local_cache_size() + pool.get_central_cache_approx_size();
+    report_fatal_error_if_not(blocks_in_pool == pool.nof_memory_blocks(),
+                              "Failed to deallocate all blocks. Total blocks={}, central cache={}, local cache={}",
+                              pool.nof_memory_blocks(),
+                              pool.get_central_cache_approx_size(),
+                              pool.get_local_cache_size());
+  }
+};
+
 /// Test fixture for tests involving a single array of bytes.
 class one_vector_size_param_test : public ::testing::TestWithParam<size_t>
 {
@@ -97,7 +112,7 @@ protected:
 
 ///////////////////////// byte_buffer_test //////////////////////////////
 
-TEST(byte_buffer_test, empty_byte_buffer_in_valid_state)
+TEST_F(byte_buffer_tester, empty_byte_buffer_in_valid_state)
 {
   byte_buffer pdu;
   ASSERT_EQ_LEN(pdu, 0);
@@ -182,7 +197,7 @@ TEST_P(one_vector_size_param_test, move_ctor)
   ASSERT_EQ_BUFFER(pdu2, bytes);
 }
 
-TEST(byte_buffer_test, initializer_list)
+TEST_F(byte_buffer_tester, initializer_list)
 {
   byte_buffer          pdu = {1, 2, 3, 4, 5, 6};
   std::vector<uint8_t> bytes{1, 2, 3, 4, 5, 6};
@@ -445,7 +460,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_reserve_prepend_and_append_kee
   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
 }
 
-TEST(byte_buffer_test, is_contiguous)
+TEST_F(byte_buffer_tester, is_contiguous)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);

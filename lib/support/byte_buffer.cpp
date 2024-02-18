@@ -206,7 +206,7 @@ bool byte_buffer::append(byte_buffer&& other)
   if (node == nullptr) {
     return false;
   }
-  node->append(span<uint8_t>{other.ctrl_blk_ptr->segments.head->data(),
+  node->append(span<uint8_t>{other.ctrl_blk_ptr->segment_in_cb_memory_block->data(),
                              other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
   ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
   node_t* last_tail           = ctrl_blk_ptr->segments.tail;
