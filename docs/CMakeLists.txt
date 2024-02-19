@@ -10,6 +10,8 @@
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 
 if (DOXYGEN_FOUND)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeGenerateTeXMacros.txt)
+
   # Configure doxygen
   set(DOXYGEN_PROJECT_NAME "srsRAN Project")
   set(DOXYGEN_PROJECT_NUMBER ${VERSION})
