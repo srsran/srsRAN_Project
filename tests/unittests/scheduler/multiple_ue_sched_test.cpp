@@ -229,9 +229,9 @@ protected:
         variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
             ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
             .report_slot_period);
-    if (params.tdd_ul_dl_cfg_common.has_value()) {
+    if (bench->cell_cfg.tdd_cfg_common.has_value()) {
       optional<unsigned> slot_offset =
-          find_next_tdd_full_ul_slot(params.tdd_ul_dl_cfg_common.value(), last_csi_report_offset + 1);
+          find_next_tdd_full_ul_slot(bench->cell_cfg.tdd_cfg_common.value(), last_csi_report_offset + 1);
       srsran_assert(slot_offset.has_value(), "Unable to find a valid CSI report slot offset UE={}", ue_index);
       srsran_assert(slot_offset.value() < csi_report_period_slots,
                     "Unable to find a valid CSI report slot offset UE={}",
@@ -566,7 +566,7 @@ struct multiple_ue_test_params {
 class multiple_ue_sched_tester : public scheduler_impl_tester, public ::testing::TestWithParam<multiple_ue_test_params>
 {
 public:
-  multiple_ue_sched_tester() : params{GetParam()} {};
+  multiple_ue_sched_tester() : params{GetParam()} {}
 
 protected:
   multiple_ue_test_params params;
