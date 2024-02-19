@@ -79,7 +79,7 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 
 void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
 {
-  // Detect differences.
+  // Detect whether there are any differences in the old and new UE cell config.
   if (new_ue_cfg.cfg_dedicated().ul_config.has_value() and old_ue_cfg.cfg_dedicated().ul_config.has_value() and
       new_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
       old_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
@@ -155,25 +155,31 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
   // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits and
   // the corresponding number of PRBs for the PUCCH Format 2 over a PUCCH F2 grant is within PUCCH capacity.
   auto& slot_ucis = periodic_uci_slot_wheel[slot_alloc.slot.to_uint() % periodic_uci_slot_wheel.size()];
-  for (const periodic_uci_info& uci_info : slot_ucis) {
+  for (auto it = slot_ucis.begin(); it != slot_ucis.end();) {
+    const periodic_uci_info& uci_info = *it;
     if (uci_info.is_sr) {
-      auto* ue_cfg = get_ue_cfg(uci_info.rnti);
+      const ue_cell_configuration* ue_cfg = get_ue_cfg(uci_info.rnti);
       if (ue_cfg != nullptr) {
         uci_alloc.uci_allocate_sr_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
       } else {
         logger.error("UE with RNTI {} and cell={} not found.", uci_info.rnti, cell_cfg.cell_index);
+        it = slot_ucis.erase(it);
       }
     }
+    ++it;
   }
-  for (const periodic_uci_info& uci_info : slot_ucis) {
+  for (auto it = slot_ucis.begin(); it != slot_ucis.end();) {
+    const periodic_uci_info& uci_info = *it;
     if (not uci_info.is_sr) {
-      auto* ue_cfg = get_ue_cfg(uci_info.rnti);
+      const ue_cell_configuration* ue_cfg = get_ue_cfg(uci_info.rnti);
       if (ue_cfg != nullptr) {
         uci_alloc.uci_allocate_csi_opportunity(slot_alloc, uci_info.rnti, *ue_cfg);
       } else {
         logger.error("UE with RNTI {} and cell={} not found.", uci_info.rnti, cell_cfg.cell_index);
+        it = slot_ucis.erase(it);
       }
     }
+    ++it;
   }
 }
 
@@ -183,7 +189,7 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
   // slot in the resource grid.
   // TODO: Remove UCIs from the list of updated UEs when the UE is removed, if they have no HARQ-ACK.
   for (rnti_t rnti : updated_ues) {
-    auto* ue_cfg = get_ue_cfg(rnti);
+    const ue_cell_configuration* ue_cfg = get_ue_cfg(rnti);
     if (ue_cfg == nullptr) {
       logger.error("UE with RNTI {} and cell={} not found.", rnti, cell_cfg.cell_index);
       continue;
