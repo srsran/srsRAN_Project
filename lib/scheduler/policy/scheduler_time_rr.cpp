@@ -140,7 +140,7 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
 
     // Create PDSCH param candidate search object.
     ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot, logger};
-    if (candidates.empty()) {
+    if (candidates.dl_harqs().empty()) {
       // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available HARQs).
       continue;
     }

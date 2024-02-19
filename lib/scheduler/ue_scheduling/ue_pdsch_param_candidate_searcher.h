@@ -180,13 +180,6 @@ public:
   iterator begin() { return iterator{*this, dl_harq_candidates.begin(), ss_candidate_list.begin(), 0}; }
   iterator end() { return iterator{*this, dl_harq_candidates.end(), nullptr, 0}; }
 
-  /// Whether there are param candidates for allocation.
-  bool empty() const
-  {
-    return dl_harq_candidates.empty() or ss_candidate_list.empty() or
-           ss_candidate_list[0]->pdsch_time_domain_list.empty();
-  }
-
   /// List of DL HARQ candidates.
   const static_vector<const dl_harq_process*, MAX_NOF_HARQS>& dl_harqs() const { return dl_harq_candidates; }
 
