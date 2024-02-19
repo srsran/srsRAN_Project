@@ -186,11 +186,15 @@ public:
   byte_buffer_chain& operator=(const byte_buffer_chain&) noexcept = delete;
 
   /// Performs a deep copy of this byte_buffer_chain into a byte_buffer.
+  /// In case of a failure an empty byte_buffer is returned.
   byte_buffer deep_copy() const
   {
     byte_buffer buf;
     for (const byte_buffer_slice& slice : slices()) {
-      buf.append(slice);
+      if (not buf.append(slice)) {
+        buf.clear();
+        break;
+      }
     }
     return buf;
   }
