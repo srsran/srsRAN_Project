@@ -11,6 +11,8 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/test_utils.h"
+#include "srsran/support/unique_thread.h"
+#include <condition_variable>
 #include <gtest/gtest.h>
 #include <list>
 
@@ -115,6 +117,15 @@ protected:
   std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(sz1);
   std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(sz2);
   std::vector<uint8_t> bytes3 = test_rgen::random_vector<uint8_t>(sz3);
+};
+
+/// Test fixture for tests with a probability parameter.
+class byte_buffer_stress_tester : public ::testing::TestWithParam<float>
+{
+protected:
+  void TearDown() override { check_all_segments_have_been_destroyed(); }
+
+  float P_alloc = GetParam();
 };
 
 /// Basic byte_buffer_view test that takes no parameters.
@@ -769,6 +780,78 @@ TEST_F(byte_buffer_tester, append_rvalue_byte_buffer)
   ASSERT_EQ(pdu, bytes_concat2);
 }
 
+TEST_P(byte_buffer_stress_tester, concurrent_alloc_dealloc_test)
+{
+  const static unsigned   MAX_COUNT   = 100000;
+  const unsigned          NOF_THREADS = 4;
+  std::mutex              mutex;
+  std::condition_variable cvar;
+  bool                    ready = false;
+  std::atomic<unsigned>   threads_ready{0};
+  const unsigned          max_buffer_size = memory_block_size * 16;
+  std::vector<uint8_t>    randbytes       = test_rgen::random_vector<uint8_t>(max_buffer_size);
+
+  // task to run in different threads.
+  auto task = [&]() {
+    std::vector<byte_buffer> allocated_buffers;
+    allocated_buffers.reserve(1000);
+    std::vector<unsigned> free_list;
+    allocated_buffers.reserve(1000);
+    std::uniform_real_distribution<float> rdist(0.0, 1.0);
+
+    {
+      threads_ready++;
+      std::unique_lock<std::mutex> lock(mutex);
+      cvar.wait(lock, [&ready]() { return ready; });
+    }
+
+    for (unsigned count = 0; count != MAX_COUNT; ++count) {
+      bool alloc_or_dealloc = rdist(test_rgen::get()) <= this->P_alloc;
+      if (alloc_or_dealloc) {
+        // Allocation of new buffer.
+        byte_buffer buf(span<const uint8_t>(randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)));
+        if (buf.empty()) {
+          // pool is depleted.
+          continue;
+        }
+        if (free_list.empty()) {
+          allocated_buffers.push_back(std::move(buf));
+        } else {
+          allocated_buffers[free_list.back()] = std::move(buf);
+          free_list.pop_back();
+        }
+      } else {
+        // Deallocation of existing buffer.
+        if (allocated_buffers.empty()) {
+          continue;
+        }
+        unsigned idx = test_rgen::uniform_int(0U, (unsigned)allocated_buffers.size() - 1);
+        allocated_buffers[idx].clear();
+        free_list.push_back(idx);
+      }
+    }
+  };
+
+  std::vector<std::unique_ptr<unique_thread>> workers;
+  for (unsigned i = 0; i != NOF_THREADS; ++i) {
+    workers.push_back(std::make_unique<unique_thread>(fmt::format("thread{}", i), task));
+  }
+
+  // Start running all threads at the same time.
+  {
+    while (threads_ready != NOF_THREADS) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
+    std::lock_guard<std::mutex> lock(mutex);
+    ready = true;
+    cvar.notify_all();
+  }
+
+  for (auto& worker : workers) {
+    worker->join();
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
                          one_vector_size_param_test,
                          ::testing::Values(small_vec_size, large_vec_size, random_vec_size()));
@@ -783,6 +866,8 @@ INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
                          ::testing::Combine(::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
                                             ::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
                                             ::testing::Values(small_vec_size, large_vec_size, random_vec_size())));
+
+INSTANTIATE_TEST_SUITE_P(byte_buffer_test, byte_buffer_stress_tester, ::testing::Values(0.01, 0.1, 0.5, 0.9, 0.99));
 
 ///////////////////////// byte_buffer_view_test //////////////////////////////
 
