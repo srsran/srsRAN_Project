@@ -272,7 +272,13 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
-    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length());
+    bool contains_dc = false;
+    if (cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.has_value()) {
+      contains_dc = dc_offset_helper::is_contained(
+          cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.value(), grant.crbs);
+    }
+
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length(), contains_dc);
   } else {
     // It is a retx.
     mcs_tbs_info.emplace(
@@ -633,7 +639,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
+    bool contains_dc =
+        dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, grant.crbs);
+
+    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length(), contains_dc);
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {
