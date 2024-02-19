@@ -219,11 +219,6 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
                 soft_bits.size(),
                 hard_bits.size());
 
-  // Early return if it finds a zero in the soft bits.
-  auto found = srsvec::find(soft_bits, log_likelihood_ratio(0));
-  if (found != soft_bits.end()) {
-    return false;
-  }
   unsigned nof_bits = soft_bits.size();
 
 #if defined(__AVX2__) || defined(HAVE_NEON)
@@ -239,5 +234,7 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
     hard_bits.insert(hard_bit, i_bit, 1);
   }
 #endif // __AVX2__ or HAVE_NEON
-  return true;
+
+  // Return false if it finds a zero in the soft bits.
+  return srsvec::find(soft_bits, log_likelihood_ratio(0)) == soft_bits.end();
 }

@@ -45,10 +45,6 @@ inline float interval_function(float        value,
                                const Table& slopes,
                                const Table& intercepts)
 {
-  if (std::abs(value) < 1e-9) {
-    return 0.0;
-  }
-
   unsigned idx     = compute_interval_idx(value, interval_width, nof_intervals);
   float    l_value = slopes[idx] * value + intercepts[idx];
   l_value *= rcp_noise;
