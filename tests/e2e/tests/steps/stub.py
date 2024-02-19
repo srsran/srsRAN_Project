@@ -615,9 +615,8 @@ def ue_reestablishment(
     """
     Reestablishment an array of UEs from already running gnb and 5gc
     """
-    for index, ue_stub in enumerate(ue_array):
-        name = f"UE_{index+1}"
-        logging.info("Reestablishment %s", name)
+    for ue_stub in ue_array:
+        logging.info("Reestablishment UE [%s]", id(ue_stub))
         ue_stub.Reestablishment(Empty())
 
 
