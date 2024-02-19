@@ -265,7 +265,7 @@ private:
   {
 #ifdef ASSERTS_ENABLED
     bool validation_enabled = true;
-#elif
+#else
     bool validation_enabled = DebugSanitizeAddress;
 #endif
     if (validation_enabled and node != nullptr) {
