@@ -148,7 +148,7 @@ private:
   /// \brief Converts soft bits into hard bits and returns the decoded message.
   ///
   /// \param[out] out Destination bit buffer.
-  /// \return True none of the soft bits is zero. Otherise, false.
+  /// \return True if none of the soft bits is zero. Otherwise, false.
   virtual bool get_hard_bits(bit_buffer& out) = 0;
 
   /// \brief Helper function for \ref update_variable_to_check_messages().
