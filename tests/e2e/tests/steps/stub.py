@@ -238,6 +238,16 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
     """
     Ping command between an UE and a 5GC
     """
+    ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count, time_step)
+    ping_wait_until_finish(ping_task_array)
+
+
+def ping_start(
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 1
+) -> List[grpc.Future]:
+    """
+    Ping command between an UE and a 5GC
+    """
 
     # Launch ping (ue -> 5gc and 5gc -> ue) for each attached ue in parallel
 
@@ -257,6 +267,13 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
         ping_task_array.append(fivegc_to_ue)
         sleep(time_step)
 
+    return ping_task_array
+
+
+def ping_wait_until_finish(ping_task_array: List[grpc.Future]) -> None:
+    """
+    Wait until the requested ping has finished.
+    """
     ping_success = True
     for ping_task in ping_task_array:
         ping_success &= ping_task.result().status
@@ -266,6 +283,9 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
 
 
 def _print_ping_result(msg: str, result: PingResponse):
+    """
+    Print ping result
+    """
     log_fn = logging.info
     if not result.status:
         log_fn = logging.error
@@ -599,6 +619,18 @@ def _stop_stub(
             logging.info("%s has stopped", name)
 
     return error_msg
+
+
+def ue_reestablishment(
+    ue_array: Sequence[UEStub],
+):
+    """
+    Reestablishment an array of UEs from already running gnb and 5gc
+    """
+    for index, ue_stub in enumerate(ue_array):
+        name = f"UE_{index+1}"
+        logging.info("Reestablishment %s", name)
+        ue_stub.Reestablishment(Empty())
 
 
 def _get_metrics(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:

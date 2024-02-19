@@ -152,6 +152,7 @@ def test_android_hp(
     ),
 )
 @mark.zmq
+@mark.flaky(reruns=2, only_rerun=["Some packages got lost"])
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

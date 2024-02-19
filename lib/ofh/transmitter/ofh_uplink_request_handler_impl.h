@@ -26,6 +26,7 @@
 #include "../support/uplink_context_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
@@ -54,6 +55,8 @@ struct uplink_request_handler_impl_dependencies {
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> ul_prach_repo;
+  /// Ethernet frame pool.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool_ptr;
   /// Data flow for Control-Plane scheduling commands.
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
 };
@@ -83,6 +86,8 @@ private:
   uplink_context_repository&                            ul_slot_repo;
   prach_context_repository&                             ul_prach_repo;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
+  std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;
+  ether::eth_frame_pool&                                frame_pool;
 };
 
 } // namespace ofh

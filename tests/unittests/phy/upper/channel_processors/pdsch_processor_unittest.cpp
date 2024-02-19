@@ -22,7 +22,6 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
-#include "../tx_buffer_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
@@ -214,11 +213,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
   dmrs_spy->reset();
   notifier.reset();
 
-  tx_buffer_spy    rm_buffer_spy(0, 0);
-  unique_tx_buffer rm_buffer(rm_buffer_spy);
-
   // Process PDU.
-  pdsch->process(mapper_dummy, std::move(rm_buffer), notifier, data, pdu);
+  pdsch->process(mapper_dummy, notifier, data, pdu);
 
   // Wait for the processor to finish.
   notifier.wait_for_finished();

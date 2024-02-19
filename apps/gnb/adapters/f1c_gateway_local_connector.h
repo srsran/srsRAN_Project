@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_repository.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
 
 namespace srsran {
@@ -35,15 +35,15 @@ class f1c_gateway_local_connector final : public srs_du::f1c_connection_client
 public:
   explicit f1c_gateway_local_connector(dlt_pcap& f1ap_pcap_writer_);
 
-  void attach_cu_cp(srs_cu_cp::du_repository& cu_cp_du_mng_);
+  void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_);
 
   // DU interface.
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override;
 
 private:
-  dlt_pcap&                 f1ap_pcap_writer;
-  srs_cu_cp::du_repository* cu_cp_du_mng = nullptr;
+  dlt_pcap&                     f1ap_pcap_writer;
+  srs_cu_cp::cu_cp_f1c_handler* cu_cp_du_mng = nullptr;
 };
 
 } // namespace srsran

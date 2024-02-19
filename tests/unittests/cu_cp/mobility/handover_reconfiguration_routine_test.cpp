@@ -37,14 +37,14 @@ protected:
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
-    ue_index_t source_ue_index = get_ue_manager()->allocate_new_ue_index(source_du_index);
-    source_ue                  = get_ue_manager()->add_ue(source_ue_index, source_pci, source_rnti);
+    ue_index_t source_ue_index = get_ue_manager()->add_ue(source_du_index);
+    source_ue = get_ue_manager()->set_ue_du_context(source_ue_index, int_to_gnb_du_id(0), source_pci, source_rnti);
     ASSERT_NE(source_ue, nullptr);
     source_rrc_ue_notifier.set_transaction_id(transaction_id_);
     source_ue->set_rrc_ue_notifier(source_rrc_ue_notifier);
 
-    ue_index_t target_ue_index = get_ue_manager()->allocate_new_ue_index(target_du_index);
-    target_ue                  = get_ue_manager()->add_ue(target_ue_index, target_pci, target_rnti);
+    ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index);
+    target_ue = get_ue_manager()->set_ue_du_context(target_ue_index, int_to_gnb_du_id(0), target_pci, target_rnti);
     ASSERT_NE(target_ue, nullptr);
     target_rrc_ue_notifier.set_rrc_reconfiguration_outcome(procedure_outcome);
     target_ue->set_rrc_ue_notifier(target_rrc_ue_notifier);

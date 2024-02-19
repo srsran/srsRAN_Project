@@ -65,7 +65,7 @@ asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_
   return served_cells_item;
 }
 
-f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(unsigned gnb_du_id, unsigned nrcell_id, pci_t pci)
+f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci)
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -73,7 +73,7 @@ f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(unsigned gnb_du_id, un
 
   auto& setup_req                = msg.pdu.init_msg().value.f1_setup_request();
   setup_req->transaction_id      = 99;
-  setup_req->gnb_du_id           = gnb_du_id;
+  setup_req->gnb_du_id           = (uint64_t)gnb_du_id;
   setup_req->gnb_du_name_present = true;
   setup_req->gnb_du_name.from_string("srsDU");
   setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(1);

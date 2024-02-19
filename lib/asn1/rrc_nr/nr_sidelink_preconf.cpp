@@ -21,8 +21,6 @@
  */
 
 #include "srsran/asn1/rrc_nr/nr_sidelink_preconf.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::rrc_nr;
 

@@ -29,6 +29,8 @@ class resource_grid_reader;
 
 namespace ofh {
 
+class error_notifier;
+
 /// Open Fronthaul downlink handler.
 class downlink_handler
 {
@@ -41,6 +43,9 @@ public:
   /// \param[in] context Resource grid context.
   /// \param[in] grid Downlink data to transmit.
   virtual void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
+
+  /// Sets the error notifier of this sector to the given one.
+  virtual void set_error_notifier(error_notifier& notifier) = 0;
 };
 
 } // namespace ofh

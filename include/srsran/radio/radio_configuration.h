@@ -170,9 +170,6 @@ public:
   virtual ~validator() = default;
 
   /// \brief Determines whether a radio configuration is valid.
-  ///
-  /// The call mi
-  ///
   /// \param[in] config Configuration parameters.
   /// \return True if the given radio configuration is valid for the given device, otherwise false.
   virtual bool is_configuration_valid(const radio& config) const = 0;

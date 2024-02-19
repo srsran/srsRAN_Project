@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/phy/upper/downlink_processor.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 
 namespace srsran {
 
@@ -48,8 +47,7 @@ public:
 
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
 
-  void process_pdsch(unique_tx_buffer                                                                     rm_buffer,
-                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
   }

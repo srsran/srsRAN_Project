@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_up_repository.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 
@@ -67,11 +67,11 @@ class e1ap_test_local_gateway : public srs_cu_up::e1ap_connection_client
 {
 public:
   e1ap_test_local_gateway() = default;
-  explicit e1ap_test_local_gateway(srs_cu_cp::cu_up_repository& cu_cp_cu_up_mng_) : cu_cp_cu_up_mng(&cu_cp_cu_up_mng_)
+  explicit e1ap_test_local_gateway(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_) : cu_cp_cu_up_mng(&cu_cp_cu_up_mng_)
   {
   }
 
-  void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_up_repository& cu_cp_cu_up_mng_) { cu_cp_cu_up_mng = &cu_cp_cu_up_mng_; }
+  void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_) { cu_cp_cu_up_mng = &cu_cp_cu_up_mng_; }
 
   std::unique_ptr<e1ap_message_notifier>
   handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier) override
@@ -114,7 +114,7 @@ private:
     std::vector<e1ap_message> last_cu_up_rx_pdus;
   };
 
-  srs_cu_cp::cu_up_repository* cu_cp_cu_up_mng = nullptr;
+  srs_cu_cp::cu_cp_e1_handler* cu_cp_cu_up_mng = nullptr;
 
   std::vector<std::unique_ptr<cu_up_connection_test_context>> connections;
 };

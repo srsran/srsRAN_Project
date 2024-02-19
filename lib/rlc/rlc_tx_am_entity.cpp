@@ -159,8 +159,8 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
       pcap.push_pdu(pcap_context, rlc_pdu_buf.subspan(0, pdu_len));
       return pdu_len;
     }
-    sn_under_segmentation = INVALID_RLC_SN;
     logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
+    sn_under_segmentation = INVALID_RLC_SN;
     // attempt to send next SDU
   }
 
@@ -757,16 +757,27 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     return false;
   }
 
-  uint32_t sdu_length = (*tx_window)[nack.nack_sn].sdu.length();
+  const rlc_tx_am_sdu_info& sdu_info   = (*tx_window)[nack.nack_sn];
+  uint32_t                  sdu_length = sdu_info.sdu.length();
 
   // Convert NACK for full SDUs into NACK with segment offset and length
   if (!nack.has_so) {
     nack.so_start = 0;
     nack.so_end   = sdu_length - 1;
   }
-  // Replace "end"-mark with actual SDU length
   if (nack.so_end == rlc_am_status_nack::so_end_of_sdu) {
-    nack.so_end = sdu_length - 1;
+    if (nack.nack_sn != sn_under_segmentation) {
+      // Replace "end"-mark with actual SDU length
+      nack.so_end = sdu_length - 1;
+    } else {
+      // The SDU is still under segmentation; RETX only what was already sent; avoid RETX overtaking the original
+      if (sdu_info.next_so == 0) {
+        logger.log_error(
+            "Cannot RETX sn_under_segmentation={} with invalid next_so={}", sn_under_segmentation, sdu_info.next_so);
+        return false;
+      }
+      nack.so_end = sdu_info.next_so - 1;
+    }
   }
   // Sanity checks
   if (nack.so_start > nack.so_end) {

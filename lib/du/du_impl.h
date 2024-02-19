@@ -41,15 +41,23 @@ class du_impl final : public du
 public:
   du_impl(const du_config& du_cfg);
 
+  // See interface for documentation.
   void start() override;
 
+  // See interface for documentation.
   void stop() override;
 
+  // See interface for documentation.
   f1ap_message_handler& get_f1ap_message_handler() override { return du_hi->get_f1ap_message_handler(); }
 
+  // See interface for documentation.
   upper_phy_rx_symbol_handler& get_rx_symbol_handler() override { return du_lo->get_rx_symbol_handler(); }
 
+  // See interface for documentation.
   upper_phy_timing_handler& get_timing_handler() override { return du_lo->get_timing_handler(); }
+
+  // See interface for documentation.
+  upper_phy_error_handler& get_error_handler() override { return du_lo->get_error_handler(); }
 
 private:
   srslog::basic_logger& logger;

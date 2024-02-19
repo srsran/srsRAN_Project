@@ -91,12 +91,6 @@ public:
 private:
   /// Transmits enqueued messages for the given interval of slot symbol points.
   void transmit_enqueued_messages(const ether::frame_pool_interval& interval);
-
-  /// Logs the messages that could not be sent due the transmission window closed.
-  void log_late_messages_on_tx_window_close(slot_symbol_point symbol_point);
-
-  /// Logs the late messages for the given late slot symbol point, message type and direction.
-  void log_late_messages(slot_symbol_point late_point, message_type type, data_direction direction);
 };
 
 } // namespace ofh

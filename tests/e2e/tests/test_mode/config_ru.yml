@@ -1,0 +1,74 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+ru_dummy:
+
+cell_cfg:
+  dl_arfcn: 381500
+  band: 39
+  channel_bandwidth_MHz: 100
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
+  nof_antennas_dl: 4
+  nof_antennas_ul: 4
+  pdsch:
+    min_ue_mcs: 27
+    mcs_table: qam256
+    max_rb_size: 16
+  pusch:
+    min_ue_mcs: 27
+    mcs_table: qam256
+    rv_sequence: 0
+
+cells:
+  - pci: 1
+
+test_mode:
+  test_ue:
+    rnti: 0x1234
+    pdsch_active: true
+    pusch_active: true
+    ri: 4
+    nof_ues: 16
+
+expert_execution:
+  affinities:
+    low_priority_cpus: 10-11
+    low_priority_pinning: round-robin
+  cell_affinities:
+    - l2_cell_cpus: 0
+      l1_dl_cpus: 1-4
+      l1_ul_cpus: 5-6
+      ru_cpus: 7-9
+      l1_dl_pinning: round-robin
+      l1_ul_pinning: round-robin
+      l2_cell_pinning: round-robin
+      ru_pinning: round-robin
+  threads:
+    upper_phy:
+      nof_dl_threads: 2
+      nof_ul_threads: 2
+      nof_pusch_decoder_threads: 4
+
+expert_phy:
+  max_proc_delay: 6
+  pusch_dec_max_iterations: 6

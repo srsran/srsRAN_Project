@@ -37,13 +37,11 @@
 
 using namespace srsran;
 
-using dl_bsr_lc_report_list = static_vector<dl_buffer_state_indication_message, MAX_NOF_RB_LCIDS>;
-
 struct sched_test_ue {
-  rnti_t                            crnti;
-  ul_bsr_lcg_report_list            ul_bsr_list;
-  dl_bsr_lc_report_list             dl_bsr_list;
-  sched_ue_creation_request_message msg;
+  rnti_t                                                         crnti;
+  std::unordered_map<lcg_id_t, ul_bsr_lcg_report>                ul_bsr_list;
+  std::unordered_map<lcid_t, dl_buffer_state_indication_message> dl_bsr_list;
+  sched_ue_creation_request_message                              msg;
 };
 
 unsigned allocate_rnti()
@@ -72,6 +70,16 @@ struct test_bench {
   {
     sch.handle_cell_configuration_request(cell_req);
   }
+
+  du_ue_index_t rnti_to_du_ue_index(rnti_t rnti)
+  {
+    for (const auto& u : ues) {
+      if (u.second.crnti == rnti) {
+        return u.first;
+      }
+    }
+    return du_ue_index_t::INVALID_DU_UE_INDEX;
+  }
 };
 
 class scheduler_impl_tester
@@ -81,6 +89,8 @@ protected:
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>  bench;
+
+  unsigned last_csi_report_offset = 0;
 
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
@@ -208,7 +218,12 @@ protected:
   void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode)
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(mode);
-    auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
+    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params);
+  }
+
+  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, const cell_config_builder_params& params)
+  {
+    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(params);
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
@@ -221,6 +236,35 @@ protected:
       it = ue_creation_req.cfg.lc_config_list->end() - 1;
     }
     it->lc_group = lcgid_;
+
+    const unsigned csi_report_period_slots = csi_report_periodicity_to_uint(
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+            ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+            .report_slot_period);
+    if (params.tdd_ul_dl_cfg_common.has_value()) {
+      optional<unsigned> slot_offset =
+          find_next_tdd_full_ul_slot(params.tdd_ul_dl_cfg_common.value(), last_csi_report_offset + 1);
+      srsran_assert(slot_offset.has_value(), "Unable to find a valid CSI report slot offset UE={}", ue_index);
+      srsran_assert(slot_offset.value() < csi_report_period_slots,
+                    "Unable to find a valid CSI report slot offset UE={}",
+                    ue_index);
+      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+          ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+          .report_slot_offset = *slot_offset;
+      last_csi_report_offset  = *slot_offset;
+    } else {
+      srsran_assert(
+          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+              ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+                      .report_slot_offset +
+                  ue_index <
+              csi_report_period_slots,
+          "Unable to find a valid CSI report slot offset UE={}",
+          ue_index);
+      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+          ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+          .report_slot_offset += ue_index;
+    }
 
     bench->sch.handle_ue_creation_request(ue_creation_req);
 
@@ -243,7 +287,7 @@ protected:
     const dl_buffer_state_indication_message msg{ue_index, lcid, buffer_size};
 
     // Store to keep track of DL buffer status.
-    test_ue.dl_bsr_list.push_back(msg);
+    test_ue.dl_bsr_list[lcid] = msg;
 
     bench->sch.handle_dl_buffer_state_indication(msg);
   }
@@ -258,7 +302,7 @@ protected:
     msg.reported_lcgs.push_back(ul_bsr_lcg_report{lcg_id, buffer_size});
 
     // Store to keep track of current buffer status in UE.
-    test_ue.ul_bsr_list.push_back(ul_bsr_lcg_report{lcg_id, buffer_size});
+    test_ue.ul_bsr_list[lcg_id] = ul_bsr_lcg_report{lcg_id, buffer_size};
 
     bench->sch.handle_ul_bsr_indication(msg);
   }
@@ -423,6 +467,71 @@ protected:
     return uci_ind;
   }
 
+  uci_indication::uci_pdu build_pucch_uci_pdu(const pucch_info& pucch)
+  {
+    uci_indication::uci_pdu pdu{};
+    pdu.crnti    = pucch.crnti;
+    pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
+
+    switch (pucch.format) {
+      case pucch_format::FORMAT_0:
+      case pucch_format::FORMAT_1: {
+        uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
+        if (pucch.format == pucch_format::FORMAT_0) {
+          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_0.sr_bits) > 0;
+          // Auto ACK harqs.
+          pucch_pdu.harqs.resize(pucch.format_0.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+        } else {
+          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_1.sr_bits) > 0;
+          // Auto ACK harqs.
+          pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+        }
+        pucch_pdu.ul_sinr = 55;
+        pdu.pdu           = pucch_pdu;
+        break;
+      }
+      case pucch_format::FORMAT_2: {
+        uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
+        // Auto ACK harqs.
+        pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+        if (pucch.csi_rep_cfg.has_value()) {
+          pucch_pdu.csi.emplace();
+          // Fill with dummy values.
+          pucch_pdu.csi->ri                    = 1;
+          pucch_pdu.csi->first_tb_wideband_cqi = 15;
+        }
+        pucch_pdu.ul_sinr = 55;
+        pdu.pdu           = pucch_pdu;
+        break;
+      }
+      default:
+        srsran_assertion_failure("Unsupported PUCCH format");
+    }
+    return pdu;
+  }
+
+  uci_indication::uci_pdu build_pusch_uci_pdu(const ul_sched_info& pusch)
+  {
+    uci_indication::uci_pdu pdu{};
+    pdu.crnti    = pusch.pusch_cfg.rnti;
+    pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
+
+    uci_indication::uci_pdu::uci_pusch_pdu pusch_pdu{};
+    // Auto ACK harqs.
+    if (pusch.uci->harq.has_value()) {
+      pusch_pdu.harqs.resize(pusch.uci->harq->harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+    }
+    if (pusch.uci->csi.has_value()) {
+      pusch_pdu.csi.emplace();
+      // Fill with dummy values.
+      pusch_pdu.csi->ri                    = 1;
+      pusch_pdu.csi->first_tb_wideband_cqi = 15;
+    }
+    pdu.pdu = pusch_pdu;
+    return pdu;
+  }
+
   ul_crc_pdu_indication build_success_crc_pdu_indication(const du_ue_index_t ue_idx, const uint8_t harq_id)
   {
     const sched_test_ue& u = get_ue(ue_idx);
@@ -432,6 +541,7 @@ protected:
     pdu.rnti           = u.crnti;
     pdu.harq_id        = (harq_id_t)harq_id;
     pdu.tb_crc_success = true;
+    pdu.ul_sinr_metric = 55;
 
     return pdu;
   }
@@ -478,6 +588,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   // Used to track BSR 0.
   std::map<unsigned, bool>                 is_bsr_zero_sent;
   std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
+
+  const lcid_t lcid = LCID_MIN_DRB;
 
   // Vector to keep track of ACKs to send.
   std::vector<uci_indication> uci_ind_to_send;
@@ -532,21 +644,21 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
         continue;
       }
 
-      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
-      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 &&
+      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, lcid);
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.at(lcid).bs == 0 &&
           pdsch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pdsch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
-        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
+        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, lcid);
       }
 
       if (grant != nullptr && grant->pdsch_cfg.codewords[0].new_data) {
-        if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
+        if (tbs_sched_bytes > test_ue.dl_bsr_list.at(lcid).bs) {
           // Accounting for MAC headers.
-          test_ue.dl_bsr_list.back().bs = 0;
+          test_ue.dl_bsr_list.at(lcid).bs = 0;
         } else {
-          test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
+          test_ue.dl_bsr_list.at(lcid).bs -= tbs_sched_bytes;
         }
       }
     }
@@ -554,7 +666,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0) << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
+    ASSERT_EQ(test_ue.dl_bsr_list.at(lcid).bs, 0)
+        << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
   }
 }
 
@@ -563,6 +676,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
   // Used to track BSR 0.
   std::map<unsigned, bool>                 is_bsr_zero_sent;
   std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
+
+  const lcg_id_t lcgid = uint_to_lcg_id(0);
 
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
@@ -606,7 +721,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
       }
 
       const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
-      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 &&
+      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.at(lcgid).nof_bytes == 0 &&
           pusch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pusch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
@@ -616,11 +731,11 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
       if (pusch != nullptr && pusch->pusch_cfg.new_data) {
         crc_ind.crcs.push_back(build_success_crc_pdu_indication(to_du_ue_index(idx), pusch->pusch_cfg.harq_id));
-        if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
+        if (tbs_sched_bytes > test_ue.ul_bsr_list.at(lcgid).nof_bytes) {
           // Accounting for MAC headers.
-          test_ue.ul_bsr_list.back().nof_bytes = 0;
+          test_ue.ul_bsr_list.at(lcgid).nof_bytes = 0;
         } else {
-          test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
+          test_ue.ul_bsr_list.at(lcgid).nof_bytes -= tbs_sched_bytes;
         }
       }
     }
@@ -632,8 +747,140 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.ul_bsr_list.back().nof_bytes, 0)
+    ASSERT_EQ(test_ue.ul_bsr_list.at(lcgid).nof_bytes, 0)
         << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
+  }
+}
+
+TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither_pdsch_and_pusch_must_be_starved)
+{
+  const unsigned max_test_run_slots = 100;
+  const lcid_t   lcid               = LCID_MIN_DRB;
+  const lcg_id_t lcgid              = uint_to_lcg_id(0);
+
+  // Make custom cell configuration for TDD and FDD i.e. 10 Mhz for TDD and 5Mhz for FDD.
+  auto builder_params           = create_custom_cell_cfg_builder_params(params.duplx_mode);
+  builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz5;
+  if (params.duplx_mode == duplex_mode::TDD) {
+    builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz10;
+  }
+  builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      builder_params.channel_bw_mhz,
+      builder_params.scs_common,
+      builder_params.band.has_value() ? band_helper::get_freq_range(builder_params.band.value())
+                                      : frequency_range::FR1);
+
+  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+      band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
+                                                  *builder_params.band,
+                                                  nof_crbs,
+                                                  builder_params.scs_common,
+                                                  builder_params.scs_common,
+                                                  builder_params.search_space0_index,
+                                                  builder_params.max_coreset0_duration);
+  builder_params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+  builder_params.k_ssb             = ssb_freq_loc->k_ssb;
+  builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
+
+  config_helpers::cell_config_builder_params_extended extended_params{builder_params};
+  setup_sched(create_expert_config(10), test_helpers::make_default_sched_cell_configuration_request(extended_params));
+
+  // NOTE: The buffer size must be high enough for the scheduler to keep allocating resources to the UE. In order to
+  // avoid failing of test we ignore the min_buffer_size_in_bytes and max_buffer_size_in_bytes set in params.
+  const unsigned dl_buffer_size = 10000;
+  const unsigned ul_buffer_size = 10000;
+
+  // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in
+  // params. Assumption: LCID is DRB1.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    add_ue(to_du_ue_index(idx), lcid, lcgid, extended_params);
+    push_buffer_state_to_dl_ue(to_du_ue_index(idx), dl_buffer_size, lcid);
+    notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size, lcgid);
+  }
+
+  bool     first_pdsch_scheduled = false;
+  bool     first_pusch_scheduled = false;
+  unsigned nof_cqi_reported      = 0;
+
+  for (unsigned i = 0; i != max_test_run_slots; ++i) {
+    run_slot();
+
+    if (bench->sched_res == nullptr) {
+      continue;
+    }
+
+    uci_indication uci_ind{};
+    uci_ind.slot_rx    = current_slot;
+    uci_ind.cell_index = to_du_cell_index(0);
+
+    ul_crc_indication crc_ind{};
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = current_slot;
+
+    for (const auto& pucch : bench->sched_res->ul.pucchs) {
+      uci_ind.ucis.push_back(build_pucch_uci_pdu(pucch));
+      if (pucch.format == srsran::pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
+        // For now CSI report is only sent in PUCCH format 2.
+        ++nof_cqi_reported;
+      }
+    }
+    for (const auto& pusch : bench->sched_res->ul.puschs) {
+      if (pusch.uci.has_value()) {
+        uci_ind.ucis.push_back(build_pusch_uci_pdu(pusch));
+        if (pusch.uci->csi.has_value()) {
+          ++nof_cqi_reported;
+        }
+      }
+      crc_ind.crcs.push_back(
+          build_success_crc_pdu_indication(bench->rnti_to_du_ue_index(pusch.pusch_cfg.rnti), pusch.pusch_cfg.harq_id));
+      first_pusch_scheduled = true;
+
+      auto& test_ue = get_ue(bench->rnti_to_du_ue_index(pusch.pusch_cfg.rnti));
+      // Keep track of nof. bytes scheduled and nof. bytes to be alloced.
+      if (pusch.pusch_cfg.tb_size_bytes < test_ue.ul_bsr_list.at(lcgid).nof_bytes) {
+        test_ue.ul_bsr_list.at(lcgid).nof_bytes -= pusch.pusch_cfg.tb_size_bytes;
+      }
+    }
+    if (not uci_ind.ucis.empty()) {
+      bench->sch.handle_uci_indication(uci_ind);
+    }
+    if (not crc_ind.crcs.empty()) {
+      bench->sch.handle_crc_indication(crc_ind);
+    }
+
+    for (const auto& pdsch : bench->sched_res->dl.ue_grants) {
+      first_pdsch_scheduled = true;
+      // Keep track of nof. bytes scheduled and nof. bytes to be alloced.
+      auto& test_ue = get_ue(bench->rnti_to_du_ue_index(pdsch.pdsch_cfg.rnti));
+      if (pdsch.pdsch_cfg.codewords[0].tb_size_bytes < test_ue.dl_bsr_list.at(lcid).bs) {
+        test_ue.dl_bsr_list.at(lcid).bs -= pdsch.pdsch_cfg.codewords[0].tb_size_bytes;
+      }
+    }
+
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      auto& test_ue = get_ue(to_du_ue_index(idx));
+      // Kep pushing buffer status and UL BSR to ensure scheduler keeps scheduling UE.
+      push_buffer_state_to_dl_ue(
+          to_du_ue_index(to_du_ue_index(idx)), dl_buffer_size + test_ue.dl_bsr_list.at(lcid).bs, lcid);
+      notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size + test_ue.ul_bsr_list.at(lcgid).nof_bytes, lcgid);
+    }
+
+    // Ensure there is atleast one PDSCH scheduled in each DL slot and one PUSCH scheduled in each UL slot.
+    if (first_pusch_scheduled and first_pdsch_scheduled and nof_cqi_reported >= params.nof_ues) {
+      if (bench->cell_cfg.tdd_cfg_common.has_value()) {
+        if (has_active_tdd_dl_symbols(bench->cell_cfg.tdd_cfg_common.value(), current_slot.slot_index())) {
+          ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1);
+        } else if (is_tdd_full_ul_slot(bench->cell_cfg.tdd_cfg_common.value(), current_slot.slot_index())) {
+          ASSERT_GE(bench->sched_res->ul.puschs.size(), 1);
+        }
+      } else {
+        // FDD.
+        ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1);
+        ASSERT_GE(bench->sched_res->ul.puschs.size(), 1);
+      }
+    }
   }
 }
 
@@ -666,6 +913,8 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
   std::map<unsigned, bool>                 is_bsr_zero_sent;
   std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
 
+  const lcid_t lcid = LCID_MIN_DRB;
+
   // Vector to keep track of ACKs to send.
   std::vector<uci_indication> uci_ind_to_send;
 
@@ -675,9 +924,9 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
 
   auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
                          ue_creation_req.cfg.lc_config_list->end(),
-                         [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
+                         [](const auto& l) { return l.lcid == lcid; });
   if (it == ue_creation_req.cfg.lc_config_list->end()) {
-    ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     it = ue_creation_req.cfg.lc_config_list->end() - 1;
   }
   it->lc_group = static_cast<lcg_id_t>(0);
@@ -771,22 +1020,22 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
       }
 
       // Send Buffer status 0 upon receiving grants for all requested bytes.
-      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
-      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 &&
+      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, lcid);
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.at(lcid).bs == 0 &&
           pdsch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pdsch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
-        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
+        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, lcid);
       }
 
       // Update Buffer status maintained in test UE.
       if (grant != nullptr && grant->pdsch_cfg.codewords[0].new_data) {
-        if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
+        if (tbs_sched_bytes > test_ue.dl_bsr_list.at(lcid).bs) {
           // Accounting for MAC headers.
-          test_ue.dl_bsr_list.back().bs = 0;
+          test_ue.dl_bsr_list.at(lcid).bs = 0;
         } else {
-          test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
+          test_ue.dl_bsr_list.at(lcid).bs -= tbs_sched_bytes;
         }
       }
     }
@@ -798,6 +1047,8 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
   // Used to track BSR 0.
   std::map<unsigned, bool>                 is_bsr_zero_sent;
   std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
+
+  const lcg_id_t lcgid = uint_to_lcg_id(0);
 
   // Pre-populate common UE creation request parameters.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
@@ -893,7 +1144,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
 
       // Send BSR 0 upon receiving grants for all requested bytes.
       const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
-      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 &&
+      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.at(lcgid).nof_bytes == 0 &&
           pusch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pusch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
@@ -904,11 +1155,11 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
       // Update Buffer status maintained in test UE.
       if (pusch != nullptr && pusch->pusch_cfg.new_data) {
         crc_ind.crcs.push_back(build_success_crc_pdu_indication(to_du_ue_index(idx), pusch->pusch_cfg.harq_id));
-        if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
+        if (tbs_sched_bytes > test_ue.ul_bsr_list.at(lcgid).nof_bytes) {
           // Accounting for MAC headers.
-          test_ue.ul_bsr_list.back().nof_bytes = 0;
+          test_ue.ul_bsr_list.at(lcgid).nof_bytes = 0;
         } else {
-          test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
+          test_ue.ul_bsr_list.at(lcgid).nof_bytes -= tbs_sched_bytes;
         }
       }
     }

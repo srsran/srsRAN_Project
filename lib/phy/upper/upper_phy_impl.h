@@ -23,6 +23,7 @@
 #pragma once
 
 #include "uplink_request_processor_impl.h"
+#include "upper_phy_error_handler_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
@@ -31,7 +32,6 @@
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
@@ -59,8 +59,6 @@ struct upper_phy_impl_config {
   std::unique_ptr<resource_grid_pool> ul_rg_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Symbol request notifier.
@@ -115,6 +113,9 @@ public:
   explicit upper_phy_impl(upper_phy_impl_config&& config);
 
   // See interface for documentation.
+  upper_phy_error_handler& get_error_handler() override;
+
+  // See interface for documentation.
   upper_phy_rx_symbol_handler& get_rx_symbol_handler() override;
 
   // See interface for documentation.
@@ -125,9 +126,6 @@ public:
 
   // See interface for documentation.
   resource_grid_pool& get_downlink_resource_grid_pool() override;
-
-  // See interface for documentation.
-  tx_buffer_pool& get_tx_buffer_pool() override;
 
   // See interface for documentation.
   resource_grid_pool& get_uplink_resource_grid_pool() override;
@@ -145,6 +143,9 @@ public:
   const uplink_pdu_validator& get_uplink_pdu_validator() const override;
 
   // See interface for documentation.
+  void set_error_notifier(upper_phy_error_notifier& notifier) override;
+
+  // See interface for documentation.
   void set_timing_notifier(upper_phy_timing_notifier& notifier) override;
 
   // See interface for documentation.
@@ -157,8 +158,6 @@ private:
   srslog::basic_logger& logger;
   /// Base station sector identifier.
   const unsigned sector_id;
-  /// Transmit buffer pool.
-  std::unique_ptr<tx_buffer_pool_controller> tx_buf_pool;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.
@@ -185,6 +184,8 @@ private:
   std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
   /// Timing events handler.
   upper_phy_timing_handler_impl timing_handler;
+  /// Error events handler.
+  upper_phy_error_handler_impl error_handler;
 };
 
 } // namespace srsran

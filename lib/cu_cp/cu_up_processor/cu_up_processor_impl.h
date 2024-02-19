@@ -44,7 +44,6 @@ public:
                        e1ap_cu_cp_notifier&           e1ap_cu_cp_notif_,
                        cu_up_task_scheduler&          task_sched_,
                        task_executor&                 ctrl_exec_);
-  ~cu_up_processor_impl() = default;
 
   // message handlers
   void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;

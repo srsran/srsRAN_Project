@@ -35,7 +35,7 @@ namespace {
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
-  f1ap_rx_pdu_notifier(du_repository& parent_, du_index_t du_index_) :
+  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_) :
     parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_f1ap_message_handler())
   {
   }
@@ -50,7 +50,7 @@ public:
   void on_new_message(const f1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
 
 private:
-  du_repository*        parent;
+  cu_cp_f1c_handler*    parent;
   du_index_t            du_index;
   f1ap_message_handler& cached_msg_handler;
 };
@@ -192,30 +192,11 @@ du_index_t du_processor_repository::find_du(pci_t pci)
   return index;
 }
 
-size_t du_processor_repository::get_nof_dus() const
-{
-  return du_db.size();
-}
-
-size_t du_processor_repository::get_nof_ues() const
-{
-  size_t nof_ues = 0;
-  for (auto& du : du_db) {
-    nof_ues += du.second.du_processor->get_nof_ues();
-  }
-  return nof_ues;
-}
-
 du_handler& du_processor_repository::get_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return du_db.at(du_index);
-}
-
-f1ap_statistics_handler& du_processor_repository::du_context::get_f1ap_statistics_handler()
-{
-  return du_processor->get_f1ap_statistics_handler();
 }
 
 f1ap_message_handler& du_processor_repository::du_context::get_f1ap_message_handler()
@@ -255,7 +236,7 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
 {
   for (auto& du : du_db) {
     if (du.second.du_processor->has_cell(cgi)) {
-      return du.second.du_processor->get_du_processor_ngap_interface().get_new_ue_index();
+      return du.second.du_processor->get_du_processor_ngap_interface().allocate_new_ue_index();
     }
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
@@ -277,4 +258,13 @@ void du_processor_repository::handle_inactivity_notification(du_index_t         
 {
   // Forward message to DU processor
   du_db.at(du_index).du_processor->handle_inactivity_notification(msg);
+}
+
+std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
+{
+  std::vector<metrics_report::du_info> du_reports;
+  for (auto& du : du_db) {
+    du_reports.emplace_back(du.second.du_processor->get_metrics_handler().handle_du_metrics_report_request());
+  }
+  return du_reports;
 }

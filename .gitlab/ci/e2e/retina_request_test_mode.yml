@@ -1,0 +1,43 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  resources:
+    - type: zmq
+      nof_ant: 4
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
+
+- name: open5gs
+  type: 5gc
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "4G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}

@@ -23,7 +23,8 @@
 #pragma once
 
 #include "rrc_ue_srb_context.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/ul_ccch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_ue.h"

@@ -72,7 +72,7 @@ e1ap_gateway_local_connector::e1ap_gateway_local_connector(dlt_pcap& e1ap_pcap_w
 {
 }
 
-void e1ap_gateway_local_connector::attach_cu_cp(srs_cu_cp::cu_up_repository& cu_cp_cu_up_mng_)
+void e1ap_gateway_local_connector::attach_cu_cp(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_)
 {
   cu_cp_cu_up_mng = &cu_cp_cu_up_mng_;
 }

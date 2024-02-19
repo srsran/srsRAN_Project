@@ -74,10 +74,10 @@ void du_processor_test::attach_ue()
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Generate ue_creation message
-  ue_index_t                ue_index        = ue_index_t::min;
-  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, rnti_t::MIN_CRNTI, 6576);
+  ue_index_t                      ue_index = ue_index_t::min;
+  ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 6576);
   // Pass message to DU processor
-  du_processor_obj->handle_ue_creation_request(ue_creation_msg);
+  du_processor_obj->handle_ue_rrc_context_creation_request(req);
 }
 
 void du_processor_test::receive_rrc_reconfig_complete()

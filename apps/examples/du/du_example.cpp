@@ -26,7 +26,8 @@
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
-#include "srsran/asn1/rrc_nr/msg_common.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -731,7 +732,6 @@ int main(int argc, char** argv)
       generate_carrier_config_tlv(),
       std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
       std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
-      upper->get_tx_buffer_pool(),
       {0});
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());

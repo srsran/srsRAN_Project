@@ -23,9 +23,6 @@
 #include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
-#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
@@ -99,7 +96,6 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static bool     new_data                                                                             = true;
 static unsigned nof_pdsch_processor_concurrent_threads                                               = 4;
 static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
@@ -297,7 +293,6 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
-  fmt::print("\t-N New data, set to 0 for false [Default {}]\n", new_data);
   fmt::print("\t-D LDPC encoder type. [Default {}]\n", ldpc_encoder_type);
   fmt::print("\t-t PDSCH processor type (generic, concurrent:nof_threads). [Default {}]\n", pdsch_processor_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
@@ -349,7 +344,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:N:T:B:D:P:m:t:xyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:xyz:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -359,9 +354,6 @@ static int parse_args(int argc, char** argv)
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
-        break;
-      case 'N':
-        new_data = (std::strtol(optarg, nullptr, 10) > 0);
         break;
       case 'D':
         ldpc_encoder_type = std::string(optarg);
@@ -456,7 +448,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          nof_prb,
                                          0,
                                          profile.cp,
-                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv, new_data}},
+                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
                                          0,
                                          pdsch_processor::pdu_t::CRB0,
                                          dmrs_symbol_mask,
@@ -683,19 +675,6 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
       create_resource_grid(config.precoding.get_nof_ports(), MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
   TESTASSERT(grid);
 
-  // Compute the number of codeblocks.
-  unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.ldpc_base_graph);
-
-  tx_buffer_pool_config buffer_pool_config;
-  buffer_pool_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-  buffer_pool_config.nof_buffers          = 1;
-  buffer_pool_config.nof_codeblocks       = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
-  buffer_pool_config.expire_timeout_slots = 0;
-  buffer_pool_config.external_soft_bits   = false;
-  std::shared_ptr<tx_buffer_pool_controller> buffer_pool = create_tx_buffer_pool(buffer_pool_config);
-
-  trx_buffer_identifier buffer_id(0, 0);
-
   // Notify finish count.
   {
     std::unique_lock<std::mutex> lock(mutex_finish_count);
@@ -723,17 +702,14 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Reset any notification.
     notifier.reset();
 
-    unique_tx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
-
     // Process PDU.
     if (worker_pool) {
-      bool success =
-          worker_pool->push_task([&proc, &grid, sb = std::move(rm_buffer), &notifier, &data, &config]() mutable {
-            proc.process(grid->get_mapper(), std::move(sb), notifier, {data}, config);
-          });
+      bool success = worker_pool->push_task([&proc, &grid, &notifier, &data, &config]() mutable {
+        proc.process(grid->get_mapper(), notifier, {data}, config);
+      });
       (void)success;
     } else {
-      proc.process(grid->get_mapper(), std::move(rm_buffer), notifier, {data}, config);
+      proc.process(grid->get_mapper(), notifier, {data}, config);
     }
 
     // Wait for the processor to finish.

@@ -39,11 +39,11 @@ private:
   /// Wait at most 1s for external clock locking.
   static constexpr int CLOCK_TIMEOUT_MS = 1000;
   /// Enumerates possible UHD session states.
-  enum class states { UNINITIALIZED, SUCCESSFUL_INIT, STOP };
+  enum class states { UNINITIALIZED = 0, SUCCESSFUL_INIT, STOP };
   /// Maps ports to stream and channel indexes.
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
   /// Indicates the current state.
-  std::atomic<states> state;
+  std::atomic<states> state = {states::UNINITIALIZED};
   /// Wraps the UHD device functions.
   radio_uhd_device device;
   /// Indexes the transmitter port indexes into stream and channel index as first and second.

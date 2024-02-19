@@ -21,6 +21,7 @@
  */
 
 #include "rrc_ue_context.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

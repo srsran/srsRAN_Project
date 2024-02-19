@@ -54,6 +54,7 @@ private:
   f1ap_ue_context&                     ue_ctxt;
   asn1::f1ap::ue_context_release_cmd_s command;
   f1ap_message_notifier&               f1ap_notifier;
+  srslog::basic_logger&                logger;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_release_complete_s> transaction_sink;
 };

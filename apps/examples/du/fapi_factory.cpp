@@ -41,7 +41,6 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
                                const fapi::carrier_config&                                        carrier_cfg,
                                std::unique_ptr<precoding_matrix_repository>                       pm_repo,
                                std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository> part2_repo,
-                               tx_buffer_pool&                                                    buffer_pool,
                                std::vector<uint8_t>                                               prach_ports)
 {
   std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory();
@@ -62,7 +61,6 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   phy_fapi_dependencies.dl_processor_pool    = &dl_processor_pool;
   phy_fapi_dependencies.dl_rg_pool           = &dl_rg_pool;
   phy_fapi_dependencies.dl_pdu_validator     = &dl_pdu_validator;
-  phy_fapi_dependencies.buffer_pool          = &buffer_pool;
   phy_fapi_dependencies.ul_request_processor = &ul_request_processor;
   phy_fapi_dependencies.ul_rg_pool           = &ul_rg_pool;
   phy_fapi_dependencies.ul_pdu_repository    = &ul_pdu_repository;

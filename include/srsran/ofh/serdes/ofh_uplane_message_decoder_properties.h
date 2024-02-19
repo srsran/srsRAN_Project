@@ -32,7 +32,7 @@ namespace srsran {
 namespace ofh {
 
 /// Maximum number of supported sections.
-static constexpr unsigned MAX_NOF_SUPPORTED_SECTIONS = 2U;
+static constexpr unsigned MAX_NOF_SUPPORTED_SECTIONS = 1U;
 
 /// Open Fronthaul User-Plane section parameters.
 struct uplane_section_params {
@@ -59,10 +59,13 @@ struct uplane_section_params {
 
 /// Open Fronthaul User-Plane message decoder results.
 struct uplane_message_decoder_results {
+  /// Maximum number of sections supported by this result.
+  static constexpr unsigned RESULTS_MAX_NOF_SUPPORTED_SECTIONS = 2U;
+
   /// Open Fronthaul User-Plane message parameters.
   uplane_message_params params;
   /// User-Plane message sections.
-  static_vector<uplane_section_params, MAX_NOF_SUPPORTED_SECTIONS> sections;
+  static_vector<uplane_section_params, RESULTS_MAX_NOF_SUPPORTED_SECTIONS> sections;
 };
 
 } // namespace ofh

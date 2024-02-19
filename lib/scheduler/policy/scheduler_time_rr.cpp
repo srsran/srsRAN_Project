@@ -48,10 +48,8 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
   // [Implementation-defined] The following selection of nof. UEs to be scheduled per slot is based on simple heuristic
   // and to ensure multiple UEs are scheduler per slot rather than single UE hogging all the resource in a slot under
   // full buffer scenario.
-  if (nof_ue_with_new_tx <= 1) {
+  if (nof_ue_with_new_tx <= 3) {
     nof_ues_to_be_scheduled_per_slot = 1;
-  } else if (nof_ue_with_new_tx <= 3) {
-    nof_ues_to_be_scheduled_per_slot = 2;
   } else if (nof_ue_with_new_tx <= 7) {
     nof_ues_to_be_scheduled_per_slot = 3;
   } else if (nof_ue_with_new_tx <= 15) {
@@ -79,6 +77,15 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository& ues, bo
                                                      *ss_info->coreset);
   } else {
     bwp_crb_limits = ss_info->ul_crb_lims;
+  }
+
+  // [Implementation-defined] Assume aggregation level 2 while computing nof. candidates that can be fit in CORESET.
+  const unsigned max_nof_candidates = ss_info->coreset->get_nof_cces() / to_nof_cces(aggregation_level::n2);
+  // [Implementation-defined] To avoid running out of PDCCH candidates in multi-UE scenario and short BW (e.g. TDD and
+  // 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot i.e. divide available PDCCH candidates evenly
+  // among DL and UL.
+  if (nof_ues_to_be_scheduled_per_slot >= max_nof_candidates) {
+    nof_ues_to_be_scheduled_per_slot = std::ceil(nof_ues_to_be_scheduled_per_slot / 2);
   }
 
   return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);

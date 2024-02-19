@@ -26,6 +26,7 @@
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"

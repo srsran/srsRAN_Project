@@ -23,6 +23,7 @@
 #pragma once
 
 #include "fapi_to_phy_translator.h"
+#include "phy_to_fapi_error_event_translator.h"
 #include "phy_to_fapi_results_event_translator.h"
 #include "phy_to_fapi_time_event_translator.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
@@ -65,8 +66,6 @@ struct phy_fapi_adaptor_impl_dependencies {
   resource_grid_pool* dl_rg_pool;
   /// Downlink PDU validator.
   const downlink_pdu_validator* dl_pdu_validator;
-  /// Transmit buffer pool.
-  tx_buffer_pool* buffer_pool;
   /// Uplink request processor.
   uplink_request_processor* ul_request_processor;
   /// Uplink resource grid pool.
@@ -87,6 +86,8 @@ class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 public:
   /// Constructor for the PHY&ndash;FAPI bidirectional adaptor.
   phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config, phy_fapi_adaptor_impl_dependencies&& dependencies);
+
+  upper_phy_error_notifier& get_error_notifier() override;
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;
@@ -113,6 +114,8 @@ private:
   fapi_to_phy_translator fapi_translator;
   /// PHY-to-FAPI time events translator.
   phy_to_fapi_time_event_translator time_translator;
+  /// PHY-to-FAPI error events translator.
+  phy_to_fapi_error_event_translator error_translator;
 };
 
 } // namespace fapi_adaptor

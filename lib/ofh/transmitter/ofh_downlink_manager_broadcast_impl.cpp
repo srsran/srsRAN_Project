@@ -21,6 +21,7 @@
  */
 
 #include "ofh_downlink_manager_broadcast_impl.h"
+#include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -33,4 +34,9 @@ downlink_handler& downlink_manager_broadcast_impl::get_downlink_handler()
 ota_symbol_boundary_notifier& downlink_manager_broadcast_impl::get_ota_symbol_boundary_notifier()
 {
   return handler.get_ota_symbol_boundary_notifier();
+}
+
+void downlink_manager_broadcast_impl::set_error_notifier(error_notifier& notifier)
+{
+  handler.set_error_notifier(notifier);
 }

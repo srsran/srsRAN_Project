@@ -132,6 +132,16 @@ bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_res
     if (!decode_section(results, deserializer)) {
       break;
     }
+
+    if (results.sections.full()) {
+      logger.info("Dropped received Open Fronthaul message as this deserializer only supports '{}' section for slot "
+                  "'{}' and symbol '{}'",
+                  MAX_NOF_SUPPORTED_SECTIONS,
+                  results.params.slot,
+                  results.params.symbol_id);
+
+      return false;
+    }
   }
 
   bool is_result_valid = !results.sections.empty();
@@ -337,7 +347,7 @@ filter_index_type uplane_message_decoder_impl::peek_filter_index(span<const uint
   }
 
   // Filter index is codified in the first byte, the 4 LSB.
-  return to_filter_index_type((message[0] & 0xf));
+  return to_filter_index_type(message[0] & 0xf);
 }
 
 slot_symbol_point uplane_message_decoder_impl::peek_slot_symbol_point(span<const uint8_t> message) const

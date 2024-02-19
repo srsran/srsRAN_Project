@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_repository.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/cu_cp/ue_manager.h"
 
@@ -44,7 +44,7 @@ public:
 class mobility_manager final : public mobility_manager_measurement_handler
 {
 public:
-  mobility_manager(const mobility_manager_cfg& cfg, du_repository& du_db_, du_processor_ue_manager& ue_mng_);
+  mobility_manager(const mobility_manager_cfg& cfg, cu_cp_f1c_handler& du_db_, du_processor_ue_manager& ue_mng_);
   ~mobility_manager() = default;
 
   void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override;
@@ -59,7 +59,7 @@ private:
 
   mobility_manager_cfg cfg;
 
-  du_repository&           du_db;
+  cu_cp_f1c_handler&       du_db;
   du_processor_ue_manager& ue_mng;
 
   srslog::basic_logger& logger;

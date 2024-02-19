@@ -139,12 +139,12 @@ du_impl::du_impl(const du_config& du_cfg) :
       generate_carrier_config_tlv(du_cell),
       std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
       std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
-      du_lo->get_tx_buffer_pool(),
       du_cfg.fapi.prach_ports);
 
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());
+  du_lo->set_error_notifier(du_low_adaptor->get_error_notifier());
 
   if (du_cfg.fapi.log_level == "debug") {
     // Create gateway loggers and intercept MAC adaptor calls.

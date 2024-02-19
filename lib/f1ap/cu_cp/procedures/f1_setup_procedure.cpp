@@ -52,7 +52,7 @@ du_setup_request srsran::srs_cu_cp::create_du_setup_request(const asn1::f1ap::f1
   du_setup_request request;
 
   // GNB DU ID
-  request.gnb_du_id = asn1_request->gnb_du_id;
+  request.gnb_du_id = static_cast<gnb_du_id_t>(asn1_request->gnb_du_id);
 
   // GNB DU name
   if (asn1_request->gnb_du_name_present) {

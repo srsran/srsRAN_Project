@@ -26,7 +26,6 @@
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
@@ -65,7 +64,6 @@ public:
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
@@ -81,7 +79,6 @@ private:
 
   /// Saves process() parameters for future uses during an asynchronous execution.
   void save_inputs(resource_grid_mapper&                                        mapper,
-                   unique_tx_buffer                                             rm_buffer,
                    pdsch_processor_notifier&                                    notifier,
                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                    const pdu_t&                                                 pdu);
@@ -105,7 +102,6 @@ private:
   pdsch_processor_notifier* notifier;
   span<const uint8_t>       data;
   pdsch_processor::pdu_t    config;
-  unique_tx_buffer          unique_rm_buffer;
 
   /// Transport block size of the current transmission.
   units::bits tbs;

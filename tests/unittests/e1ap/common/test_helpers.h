@@ -221,10 +221,10 @@ private:
 class dummy_cu_cp_e1ap_pdu_notifier : public e1ap_message_notifier
 {
 public:
-  dummy_cu_cp_e1ap_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_, e1ap_message_handler* handler_) :
+  dummy_cu_cp_e1ap_pdu_notifier(srs_cu_cp::cu_cp* cu_cp_, e1ap_message_handler* handler_) :
     logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
 
-  void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, e1ap_message_handler* handler_)
+  void attach_handler(srs_cu_cp::cu_cp* cu_cp_, e1ap_message_handler* handler_)
   {
     cu_cp   = cu_cp_;
     handler = handler_;
@@ -242,9 +242,9 @@ public:
   e1ap_message last_e1ap_msg;
 
 private:
-  srslog::basic_logger&       logger;
-  srs_cu_cp::cu_cp_interface* cu_cp   = nullptr;
-  e1ap_message_handler*       handler = nullptr;
+  srslog::basic_logger& logger;
+  srs_cu_cp::cu_cp*     cu_cp   = nullptr;
+  e1ap_message_handler* handler = nullptr;
 };
 
 /// Dummy handler just printing the received PDU.

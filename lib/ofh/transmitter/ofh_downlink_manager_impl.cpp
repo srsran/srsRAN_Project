@@ -34,3 +34,8 @@ ota_symbol_boundary_notifier& downlink_manager_impl::get_ota_symbol_boundary_not
 {
   return handler.get_ota_symbol_boundary_notifier();
 }
+
+void downlink_manager_impl::set_error_notifier(error_notifier& notifier)
+{
+  handler.set_error_notifier(notifier);
+}

@@ -85,10 +85,7 @@ public:
   }
 
   // See interface for the documentation.
-  void encode(span<uint8_t>        codeword,
-              tx_buffer&           softbuffer,
-              span<const uint8_t>  transport_block,
-              const configuration& config) override;
+  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const configuration& config) override;
 
 private:
   /// Defines if the PDSCH encoder operates in CB mode (true) or TB mode (false).

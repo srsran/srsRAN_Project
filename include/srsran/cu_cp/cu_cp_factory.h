@@ -29,6 +29,6 @@
 namespace srsran {
 
 /// Creates an instance of an CU-CP.
-std::unique_ptr<srs_cu_cp::cu_cp_interface> create_cu_cp(const srs_cu_cp::cu_cp_configuration& cfg_);
+std::unique_ptr<srs_cu_cp::cu_cp> create_cu_cp(const srs_cu_cp::cu_cp_configuration& cfg_);
 
 } // namespace srsran

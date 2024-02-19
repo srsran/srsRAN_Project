@@ -2397,6 +2397,18 @@ using band_combination_list_v1550_l = dyn_array<band_combination_v1550_s>;
 // BandCombinationList-v1560 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v1560
 using band_combination_list_v1560_l = dyn_array<band_combination_v1560_s>;
 
+// BandCombinationList-v1570 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v1570
+using band_combination_list_v1570_l = dyn_array<band_combination_v1570_s>;
+
+// BandCombinationList-v1580 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v1580
+using band_combination_list_v1580_l = dyn_array<band_combination_v1580_s>;
+
+// BandCombinationList-v1590 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v1590
+using band_combination_list_v1590_l = dyn_array<band_combination_v1590_s>;
+
+// BandCombinationList-v15g0 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v15g0
+using band_combination_list_v15g0_l = dyn_array<band_combination_v15g0_s>;
+
 // BandCombinationList-v1610 ::= SEQUENCE (SIZE (1..65536)) OF BandCombination-v1610
 using band_combination_list_v1610_l = dyn_array<band_combination_v1610_s>;
 
@@ -9753,6 +9765,27 @@ struct meas_and_mob_params_mrdc_s {
   void        to_json(json_writer& j) const;
 };
 
+// MeasAndMobParametersMRDC-XDD-Diff-v1560 ::= SEQUENCE
+struct meas_and_mob_params_mrdc_xdd_diff_v1560_s {
+  bool sftd_meas_pscell_nedc_present = false;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasAndMobParametersMRDC-v1560 ::= SEQUENCE
+struct meas_and_mob_params_mrdc_v1560_s {
+  bool                                      meas_and_mob_params_mrdc_xdd_diff_v1560_present = false;
+  meas_and_mob_params_mrdc_xdd_diff_v1560_s meas_and_mob_params_mrdc_xdd_diff_v1560;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // MeasAndMobParametersMRDC-Common-v1610 ::= SEQUENCE
 struct meas_and_mob_params_mrdc_common_v1610_s {
   struct cond_pscell_change_params_common_r16_s_ {
@@ -9814,6 +9847,37 @@ struct meas_and_mob_params_mrdc_common_v1700_s {
 struct meas_and_mob_params_mrdc_v1700_s {
   bool                                    meas_and_mob_params_mrdc_common_v1700_present = false;
   meas_and_mob_params_mrdc_common_v1700_s meas_and_mob_params_mrdc_common_v1700;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasAndMobParametersMRDC-Common-v1730 ::= SEQUENCE
+struct meas_and_mob_params_mrdc_common_v1730_s {
+  struct independent_gap_cfg_max_cc_r17_s_ {
+    bool    fr1_only_r17_present    = false;
+    bool    fr2_only_r17_present    = false;
+    bool    fr1_and_fr2_r17_present = false;
+    uint8_t fr1_only_r17            = 1;
+    uint8_t fr2_only_r17            = 1;
+    uint8_t fr1_and_fr2_r17         = 1;
+  };
+
+  // member variables
+  independent_gap_cfg_max_cc_r17_s_ independent_gap_cfg_max_cc_r17;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasAndMobParametersMRDC-v1730 ::= SEQUENCE
+struct meas_and_mob_params_mrdc_v1730_s {
+  bool                                    meas_and_mob_params_mrdc_common_v1730_present = false;
+  meas_and_mob_params_mrdc_common_v1730_s meas_and_mob_params_mrdc_common_v1730;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -10799,6 +10863,67 @@ struct pdcp_params_s {
   void        to_json(json_writer& j) const;
 };
 
+// NAICS-Capability-Entry ::= SEQUENCE
+struct naics_cap_entry_s {
+  struct nof_aggr_prb_opts {
+    enum options {
+      n50,
+      n75,
+      n100,
+      n125,
+      n150,
+      n175,
+      n200,
+      n225,
+      n250,
+      n275,
+      n300,
+      n350,
+      n400,
+      n450,
+      n500,
+      spare,
+      nulltype
+    } value;
+    typedef uint16_t number_type;
+
+    const char* to_string() const;
+    uint16_t    to_number() const;
+  };
+  using nof_aggr_prb_e_ = enumerated<nof_aggr_prb_opts>;
+
+  // member variables
+  bool            ext                  = false;
+  uint8_t         nof_naics_capable_cc = 1;
+  nof_aggr_prb_e_ nof_aggr_prb;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// Phy-ParametersMRDC ::= SEQUENCE
+struct phy_params_mrdc_s {
+  using naics_cap_list_l_ = dyn_array<naics_cap_entry_s>;
+
+  // member variables
+  bool              ext = false;
+  naics_cap_list_l_ naics_cap_list;
+  // ...
+  // group 0
+  copy_ptr<carrier_aggregation_variant_s> sp_cell_placement;
+  // group 1
+  bool tdd_pcell_ul_tx_all_ul_sf_r16_present = false;
+  bool fdd_pcell_ul_tx_all_ul_sf_r16_present = false;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // PowSav-ParametersCommon-r16 ::= SEQUENCE
 struct pow_sav_params_common_r16_s {
   bool ext                               = false;
@@ -10934,6 +11059,88 @@ struct rf_params_s {
   void        to_json(json_writer& j) const;
 };
 
+// RF-ParametersMRDC ::= SEQUENCE
+struct rf_params_mrdc_s {
+  struct supported_band_combination_list_nedc_only_v15a0_s_ {
+    band_combination_list_v1540_l supported_band_combination_list_v1540;
+    band_combination_list_v1560_l supported_band_combination_list_v1560;
+    band_combination_list_v1570_l supported_band_combination_list_v1570;
+    band_combination_list_v1580_l supported_band_combination_list_v1580;
+    band_combination_list_v1590_l supported_band_combination_list_v1590;
+  };
+  struct supported_band_combination_list_nedc_only_v1720_s_ {
+    band_combination_list_v1700_l supported_band_combination_list_v1700;
+    band_combination_list_v1720_l supported_band_combination_list_v1720;
+  };
+
+  // member variables
+  bool                    ext = false;
+  band_combination_list_l supported_band_combination_list;
+  freq_band_list_l        applied_freq_band_list_filt;
+  // ...
+  // group 0
+  bool                                    srs_switching_time_requested_present = false;
+  copy_ptr<band_combination_list_v1540_l> supported_band_combination_list_v1540;
+  // group 1
+  copy_ptr<band_combination_list_v1550_l> supported_band_combination_list_v1550;
+  // group 2
+  copy_ptr<band_combination_list_v1560_l> supported_band_combination_list_v1560;
+  copy_ptr<band_combination_list_l>       supported_band_combination_list_nedc_only;
+  // group 3
+  copy_ptr<band_combination_list_v1570_l> supported_band_combination_list_v1570;
+  // group 4
+  copy_ptr<band_combination_list_v1580_l> supported_band_combination_list_v1580;
+  // group 5
+  copy_ptr<band_combination_list_v1590_l> supported_band_combination_list_v1590;
+  // group 6
+  copy_ptr<supported_band_combination_list_nedc_only_v15a0_s_> supported_band_combination_list_nedc_only_v15a0;
+  // group 7
+  copy_ptr<band_combination_list_v1610_l>            supported_band_combination_list_v1610;
+  copy_ptr<band_combination_list_v1610_l>            supported_band_combination_list_nedc_only_v1610;
+  copy_ptr<band_combination_list_ul_tx_switch_r16_l> supported_band_combination_list_ul_tx_switch_r16;
+  // group 8
+  copy_ptr<band_combination_list_v1630_l>              supported_band_combination_list_v1630;
+  copy_ptr<band_combination_list_v1630_l>              supported_band_combination_list_nedc_only_v1630;
+  copy_ptr<band_combination_list_ul_tx_switch_v1630_l> supported_band_combination_list_ul_tx_switch_v1630;
+  // group 9
+  copy_ptr<band_combination_list_v1640_l>              supported_band_combination_list_v1640;
+  copy_ptr<band_combination_list_v1640_l>              supported_band_combination_list_nedc_only_v1640;
+  copy_ptr<band_combination_list_ul_tx_switch_v1640_l> supported_band_combination_list_ul_tx_switch_v1640;
+  // group 10
+  copy_ptr<band_combination_list_ul_tx_switch_v1670_l> supported_band_combination_list_ul_tx_switch_v1670;
+  // group 11
+  copy_ptr<band_combination_list_v1700_l>              supported_band_combination_list_v1700;
+  copy_ptr<band_combination_list_ul_tx_switch_v1700_l> supported_band_combination_list_ul_tx_switch_v1700;
+  // group 12
+  copy_ptr<band_combination_list_v1720_l>                      supported_band_combination_list_v1720;
+  copy_ptr<supported_band_combination_list_nedc_only_v1720_s_> supported_band_combination_list_nedc_only_v1720;
+  copy_ptr<band_combination_list_ul_tx_switch_v1720_l>         supported_band_combination_list_ul_tx_switch_v1720;
+  // group 13
+  copy_ptr<band_combination_list_v1730_l>              supported_band_combination_list_v1730;
+  copy_ptr<band_combination_list_v1730_l>              supported_band_combination_list_nedc_only_v1730;
+  copy_ptr<band_combination_list_ul_tx_switch_v1730_l> supported_band_combination_list_ul_tx_switch_v1730;
+  // group 14
+  copy_ptr<band_combination_list_v1740_l>              supported_band_combination_list_v1740;
+  copy_ptr<band_combination_list_v1740_l>              supported_band_combination_list_nedc_only_v1740;
+  copy_ptr<band_combination_list_ul_tx_switch_v1740_l> supported_band_combination_list_ul_tx_switch_v1740;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// RF-ParametersMRDC-v15g0 ::= SEQUENCE
+struct rf_params_mrdc_v15g0_s {
+  band_combination_list_v15g0_l supported_band_combination_list_v15g0;
+  band_combination_list_v15g0_l supported_band_combination_list_nedc_only_v15g0;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // RLC-ParametersSidelink-r16 ::= SEQUENCE
 struct rlc_params_sidelink_r16_s {
   bool ext                                  = false;
@@ -11023,6 +11230,152 @@ struct sidelink_params_r16_s {
   bool                        sidelink_params_eutra_r16_present = false;
   sidelink_params_nr_r16_s    sidelink_params_nr_r16;
   sidelink_params_eutra_r16_s sidelink_params_eutra_r16;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability-v1730 ::= SEQUENCE
+struct ue_mrdc_cap_v1730_s {
+  bool                             meas_and_mob_params_mrdc_v1730_present = false;
+  bool                             non_crit_ext_present                   = false;
+  meas_and_mob_params_mrdc_v1730_s meas_and_mob_params_mrdc_v1730;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// GeneralParametersMRDC-v1610 ::= SEQUENCE
+struct general_params_mrdc_v1610_s {
+  bool f1c_over_eutra_r16_present = false;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// PDCP-ParametersMRDC-v1610 ::= SEQUENCE
+struct pdcp_params_mrdc_v1610_s {
+  bool scg_drb_nr_iab_r16_present = false;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability-v1700 ::= SEQUENCE
+struct ue_mrdc_cap_v1700_s {
+  bool                             non_crit_ext_present = false;
+  meas_and_mob_params_mrdc_v1700_s meas_and_mob_params_mrdc_v1700;
+  ue_mrdc_cap_v1730_s              non_crit_ext;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability-v1610 ::= SEQUENCE
+struct ue_mrdc_cap_v1610_s {
+  bool                             meas_and_mob_params_mrdc_v1610_present = false;
+  bool                             general_params_mrdc_v1610_present      = false;
+  bool                             pdcp_params_mrdc_v1610_present         = false;
+  bool                             non_crit_ext_present                   = false;
+  meas_and_mob_params_mrdc_v1610_s meas_and_mob_params_mrdc_v1610;
+  general_params_mrdc_v1610_s      general_params_mrdc_v1610;
+  pdcp_params_mrdc_v1610_s         pdcp_params_mrdc_v1610;
+  ue_mrdc_cap_v1700_s              non_crit_ext;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-CapabilityAddXDD-Mode-v1560 ::= SEQUENCE
+struct ue_mrdc_cap_add_xdd_mode_v1560_s {
+  bool                                      meas_and_mob_params_mrdc_xdd_diff_v1560_present = false;
+  meas_and_mob_params_mrdc_xdd_diff_v1560_s meas_and_mob_params_mrdc_xdd_diff_v1560;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// PDCP-ParametersMRDC ::= SEQUENCE
+struct pdcp_params_mrdc_s {
+  bool pdcp_dupl_split_srb_present = false;
+  bool pdcp_dupl_split_drb_present = false;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability-v1560 ::= SEQUENCE
+struct ue_mrdc_cap_v1560_s {
+  bool                             meas_and_mob_params_mrdc_v1560_present = false;
+  bool                             fdd_add_ue_mrdc_cap_v1560_present      = false;
+  bool                             tdd_add_ue_mrdc_cap_v1560_present      = false;
+  bool                             non_crit_ext_present                   = false;
+  dyn_octstring                    rx_filts;
+  meas_and_mob_params_mrdc_v1560_s meas_and_mob_params_mrdc_v1560;
+  ue_mrdc_cap_add_xdd_mode_v1560_s fdd_add_ue_mrdc_cap_v1560;
+  ue_mrdc_cap_add_xdd_mode_v1560_s tdd_add_ue_mrdc_cap_v1560;
+  ue_mrdc_cap_v1610_s              non_crit_ext;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability ::= SEQUENCE
+struct ue_mrdc_cap_s {
+  using feature_set_combinations_l_ = dyn_array<feature_set_combination_l>;
+
+  // member variables
+  bool                           meas_and_mob_params_mrdc_present = false;
+  bool                           phy_params_mrdc_v1530_present    = false;
+  bool                           general_params_mrdc_present      = false;
+  bool                           fdd_add_ue_mrdc_cap_present      = false;
+  bool                           tdd_add_ue_mrdc_cap_present      = false;
+  bool                           fr1_add_ue_mrdc_cap_present      = false;
+  bool                           fr2_add_ue_mrdc_cap_present      = false;
+  bool                           pdcp_params_mrdc_v1530_present   = false;
+  bool                           non_crit_ext_present             = false;
+  meas_and_mob_params_mrdc_s     meas_and_mob_params_mrdc;
+  phy_params_mrdc_s              phy_params_mrdc_v1530;
+  rf_params_mrdc_s               rf_params_mrdc;
+  general_params_mrdc_xdd_diff_s general_params_mrdc;
+  ue_mrdc_cap_add_xdd_mode_s     fdd_add_ue_mrdc_cap;
+  ue_mrdc_cap_add_xdd_mode_s     tdd_add_ue_mrdc_cap;
+  ue_mrdc_cap_add_frx_mode_s     fr1_add_ue_mrdc_cap;
+  ue_mrdc_cap_add_frx_mode_s     fr2_add_ue_mrdc_cap;
+  feature_set_combinations_l_    feature_set_combinations;
+  pdcp_params_mrdc_s             pdcp_params_mrdc_v1530;
+  dyn_octstring                  late_non_crit_ext;
+  ue_mrdc_cap_v1560_s            non_crit_ext;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UE-MRDC-Capability-v15g0 ::= SEQUENCE
+struct ue_mrdc_cap_v15g0_s {
+  bool                   rf_params_mrdc_v15g0_present = false;
+  bool                   non_crit_ext_present         = false;
+  rf_params_mrdc_v15g0_s rf_params_mrdc_v15g0;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

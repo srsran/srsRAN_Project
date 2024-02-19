@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "ul_dcch_msg.h"
+#include "ul_dcch_msg_ies.h"
 
 namespace asn1 {
 namespace rrc_nr {
@@ -36,40 +36,6 @@ namespace rrc_nr {
 /*******************************************************************************
  *                              Struct Definitions
  ******************************************************************************/
-
-// SNPN-AccessInfo-r17 ::= SEQUENCE
-struct sn_pn_access_info_r17_s {
-  bool ext_ch_supported_r17_present                = false;
-  bool ext_ch_without_cfg_allowed_r17_present      = false;
-  bool onboarding_enabled_r17_present              = false;
-  bool ims_emergency_support_for_sn_pn_r17_present = false;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// CellAccessRelatedInfo ::= SEQUENCE
-struct cell_access_related_info_s {
-  using snpn_access_info_list_r17_l_ = dyn_array<sn_pn_access_info_r17_s>;
-
-  // member variables
-  bool                ext                                 = false;
-  bool                cell_reserved_for_other_use_present = false;
-  plmn_id_info_list_l plmn_id_info_list;
-  // ...
-  // group 0
-  bool                             cell_reserved_for_future_use_r16_present = false;
-  copy_ptr<npn_id_info_list_r16_l> npn_id_info_list_r16;
-  // group 1
-  copy_ptr<snpn_access_info_list_r17_l_> snpn_access_info_list_r17;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
 
 // BandCombinationParametersSidelinkNR-r16 ::= SEQUENCE (SIZE (1..32)) OF BandParametersSidelink-r16
 using band_combination_params_sidelink_nr_r16_l = dyn_array<band_params_sidelink_r16_s>;

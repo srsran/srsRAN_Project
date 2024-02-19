@@ -28,6 +28,7 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
+#include "du_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
@@ -56,7 +57,9 @@ struct du_repository_config {
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository, public du_repository_ngap_handler
+class du_processor_repository : public cu_cp_f1c_handler,
+                                public du_repository_ngap_handler,
+                                public du_repository_metrics_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
@@ -65,10 +68,8 @@ public:
 
   // DU interface
   std::unique_ptr<f1ap_message_notifier>
-         handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
-  void   handle_du_remove_request(du_index_t du_index) override;
-  size_t get_nof_dus() const override;
-  size_t get_nof_ues() const override;
+       handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
+  void handle_du_remove_request(du_index_t du_index) override;
 
   du_handler& get_du(du_index_t du_index) override;
   du_index_t  find_du(pci_t pci) override;
@@ -80,6 +81,8 @@ public:
   handle_ngap_handover_request(const ngap_handover_request& request) override;
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
+
+  std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
 private:
   struct du_context final : public du_handler {
@@ -94,7 +97,6 @@ private:
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
 
-    f1ap_statistics_handler&               get_f1ap_statistics_handler() override;
     f1ap_message_handler&                  get_f1ap_message_handler() override;
     du_processor_mobility_handler&         get_mobility_handler() override;
     du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override;

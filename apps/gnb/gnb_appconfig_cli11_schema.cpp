@@ -842,7 +842,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_sr_resources,
                  "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
-      ->check(CLI::Range(1, 30));
+      ->check(CLI::Range(1, 50));
   app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
       ->capture_default_str()
       ->check(CLI::Range(4, 14));
@@ -871,7 +871,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_csi_resources,
                  "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
-      ->check(CLI::Range(0, 30));
+      ->check(CLI::Range(0, 50));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 2));
@@ -2338,28 +2338,40 @@ static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cf
   }
 }
 
-static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
+/// Sets the request headroom size to the max processing delay value if the request headroom property was not parsed,
+static void manage_max_request_headroom_size(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
-  // If max proc delay property is present in the config, do nothing.
+  // If max request headroom slots property is present in the config, do nothing.
   CLI::App* expert_cmd = app.get_subcommand("expert_phy");
-  if (expert_cmd->count_all() >= 1 && expert_cmd->count("--max_proc_delay") >= 1) {
+  if (expert_cmd->count_all() >= 1 && expert_cmd->count("--max_request_headroom_slots") >= 1) {
     return;
   }
 
-  // As processing delay is not cell related, use the first cell to update the value.
-  const auto& cell = gnb_cfg.cells_cfg.front().cell;
-  nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_arfcn);
+  gnb_cfg.expert_phy_cfg.nof_slots_request_headroom = gnb_cfg.expert_phy_cfg.max_processing_delay_slots;
+}
 
-  switch (band_helper::get_duplex_mode(band)) {
-    case duplex_mode::TDD:
-      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 5;
-      break;
-    case duplex_mode::FDD:
-      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 2;
-      break;
-    default:
-      break;
+static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // If max proc delay property is not present in the config, configure the default value.
+  CLI::App* expert_cmd = app.get_subcommand("expert_phy");
+  if (expert_cmd->count_all() == 0 || expert_cmd->count("--max_proc_delay") == 0) {
+    // As processing delay is not cell related, use the first cell to update the value.
+    const auto& cell = gnb_cfg.cells_cfg.front().cell;
+    nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_arfcn);
+
+    switch (band_helper::get_duplex_mode(band)) {
+      case duplex_mode::TDD:
+        gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 5;
+        break;
+      case duplex_mode::FDD:
+        gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 2;
+        break;
+      default:
+        break;
+    }
   }
+
+  manage_max_request_headroom_size(app, gnb_cfg);
 }
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)

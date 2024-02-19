@@ -21,8 +21,12 @@
  */
 
 #include "rrc_ue_helpers.h"
-#include "srsran/asn1/rrc_nr/msg_common.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_ccch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

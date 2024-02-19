@@ -26,6 +26,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/crit_diagnostics.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include <cstdint>
@@ -36,8 +37,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct du_setup_request {
-  uint64_t                                gnb_du_id;
-  optional<std::string>                   gnb_du_name;
+  gnb_du_id_t                             gnb_du_id;
+  std::string                             gnb_du_name;
   std::vector<cu_cp_du_served_cells_item> gnb_du_served_cells_list;
   uint8_t                                 gnb_du_rrc_version;
   // TODO: Add optional fields

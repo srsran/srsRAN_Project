@@ -43,10 +43,6 @@ public:
   /// \return The F1AP message handler interface of the DU processor object.
   virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
 
-  /// \brief Get the F1AP statistics handler interface of the DU processor object.
-  /// \return The F1AP statistics handler interface of the DU processor object.
-  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
-
   /// \brief Get the mobility handler.
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
@@ -60,19 +56,13 @@ public:
   virtual du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() = 0;
 };
 
-/// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
-class du_repository
+/// \brief Handler of the F1-C interface of the CU-CP.
+///
+/// This interface is used to forward F1AP messages or DU connection updates to the CU-CP.
+class cu_cp_f1c_handler
 {
 public:
-  virtual ~du_repository() = default;
-
-  /// \brief Get the number of DUs connected to the CU-CP.
-  /// \return The number of DUs.
-  virtual size_t get_nof_dus() const = 0;
-
-  /// \brief Get the number of UEs connected to the all DUs of the CU-CP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
+  virtual ~cu_cp_f1c_handler() = default;
 
   /// \brief Handles the start of a new DU connection.
   ///

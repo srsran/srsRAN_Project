@@ -44,7 +44,7 @@ class dummy_cu_cp_e1ap_gateway
 public:
   dummy_cu_cp_e1ap_gateway() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_up_repository& cu_cp_cu_up_mng_)
+  void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_)
   {
     local_e1ap_gw.attach_cu_cp_cu_up_repo(cu_cp_cu_up_mng_);
   }

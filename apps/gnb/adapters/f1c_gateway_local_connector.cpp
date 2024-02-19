@@ -71,7 +71,7 @@ f1c_gateway_local_connector::f1c_gateway_local_connector(dlt_pcap& f1ap_pcap_wri
 {
 }
 
-void f1c_gateway_local_connector::attach_cu_cp(srs_cu_cp::du_repository& cu_cp_du_mng_)
+void f1c_gateway_local_connector::attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_)
 {
   cu_cp_du_mng = &cu_cp_du_mng_;
 }

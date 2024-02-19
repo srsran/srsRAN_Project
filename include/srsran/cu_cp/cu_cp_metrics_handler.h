@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/ran/gnb_du_id.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include <chrono>
@@ -30,18 +32,28 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct ue_metrics_report {
-  struct ue_context {
-    rnti_t rnti;
-    pci_t  pci;
-  };
-
-  std::vector<ue_context> ues;
-};
-
 /// CU-CP Metrics report.
 struct metrics_report {
-  ue_metrics_report ue_metrics;
+  struct ue_info {
+    /// Current C-RNTI of the UE.
+    rnti_t rnti;
+    /// ID of the DU the UE is connected to.
+    gnb_du_id_t du_id;
+    /// PCI of the UE's PCell.
+    pci_t pci;
+  };
+  struct cell_info {
+    nr_cell_global_id_t cgi;
+    pci_t               pci;
+  };
+  struct du_info {
+    /// ID of the DU connected to the CU-CP.
+    gnb_du_id_t            id;
+    std::vector<cell_info> cells;
+  };
+
+  std::vector<ue_info> ues;
+  std::vector<du_info> dus;
 };
 
 /// Interface used by the CU-CP to report metrics.
@@ -92,7 +104,7 @@ public:
   ///
   /// Note: Given its blocking nature, avoid calling this method in contexts other than unit tests.
   /// \return The metrics report.
-  virtual metrics_report request_metrics_report() = 0;
+  virtual metrics_report request_metrics_report() const = 0;
 };
 
 } // namespace srs_cu_cp

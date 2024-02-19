@@ -56,10 +56,16 @@ sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 
 </details>
 
-The srsRAN Project supports split-8 and split-7.2 fronthaul. Split-8 fronthaul is supported via UHD for USRP devices:
+The srsRAN Project supports split-8 and split-7.2 fronthaul.
+
+Split-8 fronthaul is supported via UHD for USRP devices.
 
 * UHD:                 <https://github.com/EttusResearch/uhd>
   * See UHD documentation for installation instructions.
+
+Split-7.2 is supported via DPDK:
+
+* DPDK:                <https://www.dpdk.org/>
 
 Build Instructions
 ------------------
@@ -77,3 +83,8 @@ make test
 ```
 
 PHY layer tests use binary test vectors and are not built by default. To enable, see the [docs](https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html).
+
+How to deploy a 5G network?
+----------------------------------------------
+
+Check our [tutorials](https://docs.srsran.com/projects/project/en/latest/tutorials/source/index.html) that describe how to set up an end-to-end 5G SA system with srsRAN Project.

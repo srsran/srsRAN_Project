@@ -44,6 +44,9 @@ public:
 
   // See interface for documentation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
+
+  // See interface for documentation.
+  void set_error_notifier(error_notifier& notifier) override;
 };
 
 } // namespace ofh

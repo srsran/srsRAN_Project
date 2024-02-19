@@ -29,6 +29,8 @@
 namespace srsran {
 namespace ofh {
 
+class error_notifier;
+
 /// Open Fronthaul transmitter interface.
 class transmitter
 {
@@ -44,6 +46,9 @@ public:
 
   /// Returns the OTA symbol boundary notifier of this Open Fronthaul transmitter.
   virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;
+
+  /// Sets the error notifier of this sector to the given one.
+  virtual void set_error_notifier(error_notifier& notifier) = 0;
 };
 
 } // namespace ofh

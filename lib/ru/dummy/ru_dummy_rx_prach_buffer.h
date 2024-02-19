@@ -75,7 +75,13 @@ public:
     unsigned nof_fd_occasions = context.nof_fd_occasions;
 
     // Resize data to match context specifications.
-    data.resize({sequence_length, nof_symbols, nof_fd_occasions, nof_td_occasions, nof_ports});
+    if ((sequence_length != data.get_dimension_size(dims::re)) ||
+        (nof_symbols != data.get_dimension_size(dims::symbol)) ||
+        (nof_fd_occasions != data.get_dimension_size(dims::fd_occasion)) ||
+        (nof_td_occasions != data.get_dimension_size(dims::td_occasion)) ||
+        (nof_ports != data.get_dimension_size(dims::port))) {
+      data.resize({sequence_length, nof_symbols, nof_fd_occasions, nof_td_occasions, nof_ports});
+    }
 
     return *this;
   }

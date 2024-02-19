@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_up_repository.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 
 namespace srsran {
@@ -35,7 +35,7 @@ class e1ap_gateway_local_connector final : public srs_cu_up::e1ap_connection_cli
 public:
   explicit e1ap_gateway_local_connector(dlt_pcap& e1ap_pcap_writer_);
 
-  void attach_cu_cp(srs_cu_cp::cu_up_repository& cu_cp_du_mng_);
+  void attach_cu_cp(srs_cu_cp::cu_cp_e1_handler& cu_cp_du_mng_);
 
   // CU-UP interface.
   std::unique_ptr<e1ap_message_notifier>
@@ -43,7 +43,7 @@ public:
 
 private:
   dlt_pcap&                    e1ap_pcap_writer;
-  srs_cu_cp::cu_up_repository* cu_cp_cu_up_mng = nullptr;
+  srs_cu_cp::cu_cp_e1_handler* cu_cp_cu_up_mng = nullptr;
 };
 
 } // namespace srsran

@@ -53,10 +53,7 @@ struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_schedu
 public:
   dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
 
-  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
-  {
-    ctrl_loop.schedule(std::move(task));
-  }
+  void schedule_async_task(ue_index_t ue_index, async_task<void> task) override { ctrl_loop.schedule(std::move(task)); }
 
   void clear_pending_tasks(ue_index_t ue_index) override { ctrl_loop.clear_pending_tasks(); }
 
@@ -138,6 +135,11 @@ public:
       CORO_BEGIN(ctx);
       CORO_RETURN(ue_transfer_outcome);
     });
+  }
+
+  void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
+  {
+    logger.info("Received handover ue context push");
   }
 
 private:

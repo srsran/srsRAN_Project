@@ -23,7 +23,6 @@
 #pragma once
 
 #include "epoll_helper.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker.h"
 #include <mutex>
 #include <unordered_map>
@@ -34,7 +33,7 @@ namespace srsran {
 class io_broker_epoll : public io_broker
 {
 public:
-  explicit io_broker_epoll(io_broker_config config);
+  explicit io_broker_epoll(const io_broker_config& config);
   ~io_broker_epoll();
 
   SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler) override;

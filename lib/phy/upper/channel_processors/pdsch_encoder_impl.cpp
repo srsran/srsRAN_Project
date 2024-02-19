@@ -21,13 +21,11 @@
  */
 
 #include "pdsch_encoder_impl.h"
-#include "srsran/phy/upper/tx_buffer.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 
 void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
-                                tx_buffer&           buffer,
                                 span<const uint8_t>  transport_block,
                                 const configuration& config)
 {
@@ -45,24 +43,16 @@ void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
   // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
   segmenter->segment(d_segments, transport_block, segmenter_cfg);
 
-  // Make sure the number of codeblocks match the number of segments.
-  srsran_assert(buffer.get_nof_codeblocks() == d_segments.size(),
-                "The number of codeblocks in the buffer (i.e., {}) are not equal to the number of segments (i.e., {}).",
-                buffer.get_nof_codeblocks(),
-                d_segments.size());
-
   unsigned offset = 0;
   for (unsigned i_cb = 0, i_cb_end = d_segments.size(); i_cb != i_cb_end; ++i_cb) {
     // Select segment description.
     const described_segment& descr_seg = d_segments[i_cb];
 
-    // Get rate matching buffer from the buffer.
-    bit_buffer rm_buffer = buffer.get_codeblock(i_cb, descr_seg.get_metadata().cb_specific.full_length);
+    // Prepare rate matching buffer.
+    rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
 
-    if (config.new_data) {
-      // Encode the segment into a codeblock.
-      encoder->encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
-    }
+    // Encode the segment into a codeblock.
+    encoder->encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
 
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;

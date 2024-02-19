@@ -1743,7 +1743,7 @@ basic asan:
     <<: *build_artifacts
     expire_in: 1 day
 
-basic valgrind:
+basic memcheck:
   extends: .smoke valgrind
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
@@ -1760,8 +1760,8 @@ basic avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: delayed
-      start_in: 60 minutes
+      when: manual
+      allow_failure: true
   retry: 2
   interruptible: false
   variables:
@@ -1775,6 +1775,7 @@ basic avx512 dpdk:
     DPDK_VERSION: "23.11"
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
+    ASSERT_LEVEL: MINIMAL
     SAVE_ARTIFACTS: "True"
     KUBERNETES_CPU_REQUEST: 14
     KUBERNETES_CPU_LIMIT: 14
@@ -1788,7 +1789,7 @@ basic avx512 dpdk:
 #######
 # Web #
 #######
-custom-build:
+custom build:
   extends: .build_and_unit
   rules:
     - if: $ON_WEB

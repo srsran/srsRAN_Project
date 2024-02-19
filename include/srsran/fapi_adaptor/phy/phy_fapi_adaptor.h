@@ -31,6 +31,7 @@ class slot_message_gateway;
 class slot_time_message_notifier;
 } // namespace fapi
 
+class upper_phy_error_notifier;
 class upper_phy_timing_notifier;
 class upper_phy_rx_results_notifier;
 
@@ -47,22 +48,25 @@ class phy_fapi_adaptor
 public:
   virtual ~phy_fapi_adaptor() = default;
 
-  /// \brief Returns a reference to the timing notifier used by the adaptor.
+  /// Returns a reference to the error notifier used by the adaptor.
+  virtual upper_phy_error_notifier& get_error_notifier() = 0;
+
+  /// Returns a reference to the timing notifier used by the adaptor.
   virtual upper_phy_timing_notifier& get_timing_notifier() = 0;
 
-  /// \brief Returns a reference to the slot-based message gateway used by the adaptor.
-  virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
-
-  /// \brief Returns a reference to the results notifier used by the adaptor.
+  /// Returns a reference to the results notifier used by the adaptor.
   virtual upper_phy_rx_results_notifier& get_rx_results_notifier() = 0;
 
-  /// \brief Configures the slot-based, time-specific message notifier to the given one.
+  /// Returns a reference to the slot-based message gateway used by the adaptor.
+  virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
+
+  /// Configures the slot-based, time-specific message notifier to the given one.
   virtual void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
 
-  /// \brief Configures the slot-based, error-specific message notifier to the given one.
+  /// Configures the slot-based, error-specific message notifier to the given one.
   virtual void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier) = 0;
 
-  /// \brief Configures the slot-based, data-specific message notifier to the given one.
+  /// Configures the slot-based, data-specific message notifier to the given one.
   virtual void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
 };
 

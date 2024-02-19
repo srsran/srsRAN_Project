@@ -66,7 +66,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   routine_mng(ue_mng.get_task_sched()),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
-  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng))
+  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -152,16 +152,6 @@ void cu_cp_impl::stop()
       });
 
   logger.info("CU-CP stopped successfully.");
-}
-
-size_t cu_cp_impl::get_nof_cu_ups() const
-{
-  return cu_up_db.get_nof_cu_ups();
-}
-
-e1ap_message_handler& cu_cp_impl::get_e1ap_message_handler(cu_up_index_t cu_up_index)
-{
-  return cu_up_db.get_cu_up(cu_up_index).get_e1ap_message_handler();
 }
 
 ngap_message_handler& cu_cp_impl::get_ngap_message_handler()
@@ -281,6 +271,14 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
+void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
+{
+  // Transfer NGAP UE Context to new UE and remove the old context
+  ngap_entity->update_ue_index(target_ue_index, source_ue_index);
+  // Transfer E1AP UE Context to new UE and remove old context
+  cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(target_ue_index, source_ue_index);
+}
+
 optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(nr_cell_id_t           nci,
                                                                      optional<rrc_meas_cfg> current_meas_config)
 {
@@ -354,10 +352,10 @@ bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
     return false;
   }
 
-  return ue_mng.add_ue(ue_index,
-                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                       ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                       ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
+  return ue_mng.set_ue_ng_context(ue_index,
+                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
+                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
+                                  ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()

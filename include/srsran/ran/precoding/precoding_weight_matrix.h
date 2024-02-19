@@ -63,6 +63,21 @@ public:
     srsvec::zero(data.get_data());
   }
 
+  /// \brief Constructs a precoding weight matrix with the desired number of layers and ports.
+  ///
+  /// Creates a precoding weight matrix with the specified dimensions, and sets its contents to the provided weight
+  /// values.
+  ///
+  /// \param[in] weights Precoding weight list, arranged by i) layer and ii) antenna port.
+  /// \param[in] nof_layers Number of layers.
+  /// \param[in] nof_ports  Number of ports.
+  /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
+  /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
+  precoding_weight_matrix(const std::initializer_list<cf_t>& weights, unsigned nof_layers, unsigned nof_ports) :
+    precoding_weight_matrix(span<const cf_t>(weights.begin(), weights.end()), nof_layers, nof_ports)
+  {
+  }
+
   /// \brief Constructs a weight matrix with the desired number of layers and ports.
   ///
   /// Creates a precoding weight matrix with the specified dimensions, and sets its contents to the provided weight

@@ -128,6 +128,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
     dl_config.scs                = tx_config.scs;
     dl_config.dl_processing_time = tx_config.dl_processing_time;
     dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
+    dl_config.sector             = tx_config.sector;
 
     downlink_handler_broadcast_impl_dependencies dl_dependencies;
     dl_dependencies.logger           = &logger;
@@ -145,6 +146,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
   dl_config.scs                = tx_config.scs;
   dl_config.dl_processing_time = tx_config.dl_processing_time;
   dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
+  dl_config.sector             = tx_config.sector;
 
   downlink_handler_impl_dependencies dl_dependencies;
   dl_dependencies.logger           = &logger;
@@ -171,10 +173,11 @@ create_uplink_request_handler(const transmitter_config&                         
   config.cp                  = tx_config.cp;
 
   uplink_request_handler_impl_dependencies dependencies;
-  dependencies.logger        = &logger;
-  dependencies.ul_slot_repo  = ul_slot_context_repo;
-  dependencies.ul_prach_repo = prach_context_repo;
-  dependencies.data_flow     = create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo);
+  dependencies.logger         = &logger;
+  dependencies.ul_slot_repo   = ul_slot_context_repo;
+  dependencies.ul_prach_repo  = prach_context_repo;
+  dependencies.frame_pool_ptr = frame_pool;
+  dependencies.data_flow      = create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo);
 
   return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
 }

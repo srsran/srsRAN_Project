@@ -19,10 +19,7 @@ private:
   std::mt19937         rgen;
 
 public:
-  void encode(span<uint8_t>        codeword,
-              tx_buffer&           rm_buffer,
-              span<const uint8_t>  transport_block,
-              const configuration& cfg) override
+  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const configuration& cfg) override
   { // Generate new entry.
     entry_t entry = {};
     entry.config  = cfg;

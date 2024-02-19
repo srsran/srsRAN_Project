@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/security/security.h"

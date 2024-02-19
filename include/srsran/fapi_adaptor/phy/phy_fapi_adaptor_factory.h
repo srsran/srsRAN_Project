@@ -26,7 +26,6 @@
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -70,8 +69,6 @@ struct phy_fapi_adaptor_factory_dependencies {
   resource_grid_pool* dl_rg_pool;
   /// Downlink PDU validator.
   const downlink_pdu_validator* dl_pdu_validator;
-  /// Transmit buffer pool.
-  tx_buffer_pool* buffer_pool;
   /// Uplink request processor.
   uplink_request_processor* ul_request_processor;
   /// Uplink resource grid pool.

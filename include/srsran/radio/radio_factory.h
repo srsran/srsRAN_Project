@@ -22,17 +22,18 @@
 
 #pragma once
 
+#include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsran {
 
-/// Describes a radio session factory for a determined radio driver.
+/// Describes a radio session factory for a determined radio implementation.
 class radio_factory : public radio_base
 {
 public:
-  /// Returns a reference to .
+  /// Returns the reference to the radio configuration validator for the given factory.
   virtual const radio_configuration::validator& get_configuration_validator() = 0;
 
   /// \brief Creates a new radio session with the given configuration parameters.
@@ -45,13 +46,29 @@ public:
                                                 radio_notification_handler&       notifier) = 0;
 };
 
-/// \brief Creates a radio factory.
+/// \brief Dynamic library radio factory creation entry point.
+///
+/// Implement a radio factory with this function for loading the radio factory through a dynamic library.
+std::unique_ptr<radio_factory> create_dynamic_radio_factory();
+
+/// \brief Creates a radio factory by selecting an existent factory or loading the appropriate dynamic library.
+///
+/// By default, this function creates a radio factory from the statically linked ones (i.e., \c uhd).
+///
+/// If the driver_name does not match with one of the statically linked factories, this function dynamically loads a
+/// shared library corresponding to the specified driver name and retrieves the factory creation function from it.
+///
+/// The naming convention for the shared library is as follows: if the driver name is \c custom, the library name is
+/// expected to be \c libsrsran_radio_custom.so. The factory creation function within the dynamic library is expected to
+/// implement the function prototype \ref create_dynamic_radio_factory.
+///
+/// Ensure that the LD_LIBRARY_PATH environment variable includes the path where the dynamic libraries are located.
 ///
 /// \param[in] driver_name Selects the type of radio factory for example \e uhd or \e zmq.
-/// \return A valid radio factory if the provided driver name are valid.
+/// \return A valid radio factory if the factory is successfully created, otherwise \c nullptr.
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
-/// \brief Helper function to print all available radio factories to stdout.
+/// \brief Helper function to print all statically linked available radio factories to \c stdout.
 void print_available_radio_factories();
 
 } // namespace srsran

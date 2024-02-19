@@ -23,9 +23,11 @@
 #pragma once
 
 #include "ru_downlink_plane.h"
+#include "ru_error_notifier.h"
 #include "ru_timing_notifier.h"
 #include "ru_uplink_plane.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/upper/upper_phy_error_handler.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
@@ -58,14 +60,14 @@ public:
   // See interface for documentation.
   void on_prach_capture_request(const prach_buffer_context& context, prach_buffer& buffer) override
   {
-    srsran_assert(ul_handler, "Adapter is not connected.");
+    srsran_assert(ul_handler, "Adapter is not connected");
     ul_handler->handle_prach_occasion(context, buffer);
   }
 
   // See interface for documentation.
   void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override
   {
-    srsran_assert(ul_handler, "Adapter is not connected.");
+    srsran_assert(ul_handler, "Adapter is not connected");
     ul_handler->handle_new_uplink_slot(context, grid);
   }
 
@@ -124,7 +126,7 @@ public:
   // See interface for documentation.
   void on_tti_boundary(slot_point slot) override
   {
-    srsran_assert(!handlers.empty(), "Adapter is not connected.");
+    srsran_assert(!handlers.empty(), "Adapter is not connected");
     for (auto& handler : handlers) {
       handler->handle_tti_boundary({slot});
     }
@@ -133,7 +135,7 @@ public:
   // See interface for documentation.
   void on_ul_half_slot_boundary(slot_point slot) override
   {
-    srsran_assert(!handlers.empty(), "Adapter is not connected.");
+    srsran_assert(!handlers.empty(), "Adapter is not connected");
     for (auto& handler : handlers) {
       handler->handle_ul_half_slot_boundary({slot});
     }
@@ -142,7 +144,7 @@ public:
   // See interface for documentation.
   void on_ul_full_slot_boundary(slot_point slot) override
   {
-    srsran_assert(!handlers.empty(), "Adapter is not connected.");
+    srsran_assert(!handlers.empty(), "Adapter is not connected");
     for (auto& handler : handlers) {
       handler->handle_ul_full_slot_boundary({slot});
     }
@@ -158,6 +160,33 @@ public:
 
 private:
   std::vector<upper_phy_timing_handler*> handlers;
+};
+
+/// Upper PHY - Radio Unit error adapter.
+class upper_ru_error_adapter : public ru_error_notifier
+{
+public:
+  explicit upper_ru_error_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
+
+  // See interface for documentation.
+  void on_late_downlink_message(const ru_error_context& context) override
+  {
+    srsran_assert(context.sector < handlers.size(), "Invalid sector '{}'", context.sector);
+    srsran_assert(handlers[context.sector], "Adapter for sector '{}' is not connected", context.sector);
+
+    handlers[context.sector]->handle_late_downlink_message(context.slot);
+  }
+
+  /// Maps the given upper PHY error handler and sector to this adapter.
+  void map_handler(unsigned sector, upper_phy_error_handler& hndlr)
+  {
+    srsran_assert(sector < handlers.size(), "Unsupported sector {}", sector);
+
+    handlers[sector] = &hndlr;
+  }
+
+private:
+  std::vector<upper_phy_error_handler*> handlers;
 };
 
 } // namespace srsran

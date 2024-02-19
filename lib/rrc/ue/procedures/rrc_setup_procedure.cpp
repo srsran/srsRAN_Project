@@ -22,6 +22,7 @@
 
 #include "rrc_setup_procedure.h"
 #include "../rrc_asn1_helpers.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

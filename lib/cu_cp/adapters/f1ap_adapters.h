@@ -53,16 +53,16 @@ private:
 class f1ap_du_repository_adapter : public f1ap_du_management_notifier
 {
 public:
-  void connect_du_repository(du_repository& du_handler_) { du_handler = &du_handler_; }
+  void connect_du_repository(cu_cp_f1c_handler& du_handler_) { du_handler = &du_handler_; }
 
-  void on_du_remove_request_received(const du_index_t du_index) override
+  void on_du_remove_request_received(du_index_t du_index) override
   {
     srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
     du_handler->handle_du_remove_request(du_index);
   }
 
 private:
-  du_repository* du_handler = nullptr;
+  cu_cp_f1c_handler* du_handler = nullptr;
 };
 
 /// Adapter between F1AP and DU processor
@@ -81,16 +81,17 @@ public:
 
   du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
-  ue_index_t on_new_ue_index_required() override
+  ue_index_t on_new_cu_cp_ue_required() override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->get_new_ue_index();
+    return du_f1ap_handler->allocate_new_ue_index();
   }
 
-  ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) override
+  ue_rrc_context_creation_response
+  on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->handle_ue_creation_request(msg);
+    return du_f1ap_handler->handle_ue_rrc_context_creation_request(req);
   }
 
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override

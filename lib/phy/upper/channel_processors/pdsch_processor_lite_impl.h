@@ -30,7 +30,6 @@
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
 
@@ -50,14 +49,10 @@ public:
   }
 
   /// \brief Configures a new transmission.
-  /// \param[in,out] rm_buffer  Rate matcher buffer.
   /// \param[in]     data       Transport block data.
   /// \param[in]     i_cw       Codeword index.
   /// \param[in]     pdu        PDSCH transmission parameters.
-  void configure_new_transmission(unique_tx_buffer              rm_buffer,
-                                  span<const uint8_t>           data,
-                                  unsigned                      i_cw,
-                                  const pdsch_processor::pdu_t& pdu);
+  void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
   // See interface for documentation.
   unsigned get_max_block_size() const override;
@@ -90,14 +85,12 @@ private:
   static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock;
   /// Current transmission modulation.
   modulation_scheme modulation;
-  /// Set to true if it is a new transmission.
-  bool new_data;
   /// Current codeblock index.
   unsigned next_i_cb = 0;
   /// Temporary storage of codeblock symbols.
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> rm_buffer;
+  /// Temporary storage of codeblock symbols.
   std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
-  /// Rate matching soft buffer.
-  unique_tx_buffer unique_rm_buffer;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
 
@@ -131,7 +124,6 @@ public:
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
-               unique_tx_buffer                                             rm_buffer,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;

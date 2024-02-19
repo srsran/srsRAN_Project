@@ -21,213 +21,12 @@
  */
 
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::rrc_nr;
 
 /*******************************************************************************
  *                                Struct Methods
  ******************************************************************************/
-
-// TA-Info-r17 ::= SEQUENCE
-SRSASN_CODE ta_info_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(ta_common_drift_r17_present, 1));
-  HANDLE_CODE(bref.pack(ta_common_drift_variant_r17_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, ta_common_r17, (uint32_t)0u, (uint32_t)66485757u));
-  if (ta_common_drift_r17_present) {
-    HANDLE_CODE(pack_integer(bref, ta_common_drift_r17, (int32_t)-257303, (int32_t)257303));
-  }
-  if (ta_common_drift_variant_r17_present) {
-    HANDLE_CODE(pack_integer(bref, ta_common_drift_variant_r17, (uint16_t)0u, (uint16_t)28949u));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ta_info_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(ta_common_drift_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ta_common_drift_variant_r17_present, 1));
-
-  HANDLE_CODE(unpack_integer(ta_common_r17, bref, (uint32_t)0u, (uint32_t)66485757u));
-  if (ta_common_drift_r17_present) {
-    HANDLE_CODE(unpack_integer(ta_common_drift_r17, bref, (int32_t)-257303, (int32_t)257303));
-  }
-  if (ta_common_drift_variant_r17_present) {
-    HANDLE_CODE(unpack_integer(ta_common_drift_variant_r17, bref, (uint16_t)0u, (uint16_t)28949u));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ta_info_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("ta-Common-r17", ta_common_r17);
-  if (ta_common_drift_r17_present) {
-    j.write_int("ta-CommonDrift-r17", ta_common_drift_r17);
-  }
-  if (ta_common_drift_variant_r17_present) {
-    j.write_int("ta-CommonDriftVariant-r17", ta_common_drift_variant_r17);
-  }
-  j.end_obj();
-}
-
-// NTN-Config-r17 ::= SEQUENCE
-SRSASN_CODE ntn_cfg_r17_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(epoch_time_r17_present, 1));
-  HANDLE_CODE(bref.pack(ntn_ul_sync_validity_dur_r17_present, 1));
-  HANDLE_CODE(bref.pack(cell_specific_koffset_r17_present, 1));
-  HANDLE_CODE(bref.pack(kmac_r17_present, 1));
-  HANDLE_CODE(bref.pack(ta_info_r17_present, 1));
-  HANDLE_CODE(bref.pack(ntn_polarization_dl_r17_present, 1));
-  HANDLE_CODE(bref.pack(ntn_polarization_ul_r17_present, 1));
-  HANDLE_CODE(bref.pack(ephemeris_info_r17_present, 1));
-  HANDLE_CODE(bref.pack(ta_report_r17_present, 1));
-
-  if (epoch_time_r17_present) {
-    HANDLE_CODE(epoch_time_r17.pack(bref));
-  }
-  if (ntn_ul_sync_validity_dur_r17_present) {
-    HANDLE_CODE(ntn_ul_sync_validity_dur_r17.pack(bref));
-  }
-  if (cell_specific_koffset_r17_present) {
-    HANDLE_CODE(pack_integer(bref, cell_specific_koffset_r17, (uint16_t)1u, (uint16_t)1023u));
-  }
-  if (kmac_r17_present) {
-    HANDLE_CODE(pack_integer(bref, kmac_r17, (uint16_t)1u, (uint16_t)512u));
-  }
-  if (ta_info_r17_present) {
-    HANDLE_CODE(ta_info_r17.pack(bref));
-  }
-  if (ntn_polarization_dl_r17_present) {
-    HANDLE_CODE(ntn_polarization_dl_r17.pack(bref));
-  }
-  if (ntn_polarization_ul_r17_present) {
-    HANDLE_CODE(ntn_polarization_ul_r17.pack(bref));
-  }
-  if (ephemeris_info_r17_present) {
-    HANDLE_CODE(ephemeris_info_r17.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ntn_cfg_r17_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(epoch_time_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ntn_ul_sync_validity_dur_r17_present, 1));
-  HANDLE_CODE(bref.unpack(cell_specific_koffset_r17_present, 1));
-  HANDLE_CODE(bref.unpack(kmac_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ta_info_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ntn_polarization_dl_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ntn_polarization_ul_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ephemeris_info_r17_present, 1));
-  HANDLE_CODE(bref.unpack(ta_report_r17_present, 1));
-
-  if (epoch_time_r17_present) {
-    HANDLE_CODE(epoch_time_r17.unpack(bref));
-  }
-  if (ntn_ul_sync_validity_dur_r17_present) {
-    HANDLE_CODE(ntn_ul_sync_validity_dur_r17.unpack(bref));
-  }
-  if (cell_specific_koffset_r17_present) {
-    HANDLE_CODE(unpack_integer(cell_specific_koffset_r17, bref, (uint16_t)1u, (uint16_t)1023u));
-  }
-  if (kmac_r17_present) {
-    HANDLE_CODE(unpack_integer(kmac_r17, bref, (uint16_t)1u, (uint16_t)512u));
-  }
-  if (ta_info_r17_present) {
-    HANDLE_CODE(ta_info_r17.unpack(bref));
-  }
-  if (ntn_polarization_dl_r17_present) {
-    HANDLE_CODE(ntn_polarization_dl_r17.unpack(bref));
-  }
-  if (ntn_polarization_ul_r17_present) {
-    HANDLE_CODE(ntn_polarization_ul_r17.unpack(bref));
-  }
-  if (ephemeris_info_r17_present) {
-    HANDLE_CODE(ephemeris_info_r17.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ntn_cfg_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (epoch_time_r17_present) {
-    j.write_fieldname("epochTime-r17");
-    epoch_time_r17.to_json(j);
-  }
-  if (ntn_ul_sync_validity_dur_r17_present) {
-    j.write_str("ntn-UlSyncValidityDuration-r17", ntn_ul_sync_validity_dur_r17.to_string());
-  }
-  if (cell_specific_koffset_r17_present) {
-    j.write_int("cellSpecificKoffset-r17", cell_specific_koffset_r17);
-  }
-  if (kmac_r17_present) {
-    j.write_int("kmac-r17", kmac_r17);
-  }
-  if (ta_info_r17_present) {
-    j.write_fieldname("ta-Info-r17");
-    ta_info_r17.to_json(j);
-  }
-  if (ntn_polarization_dl_r17_present) {
-    j.write_str("ntn-PolarizationDL-r17", ntn_polarization_dl_r17.to_string());
-  }
-  if (ntn_polarization_ul_r17_present) {
-    j.write_str("ntn-PolarizationUL-r17", ntn_polarization_ul_r17.to_string());
-  }
-  if (ephemeris_info_r17_present) {
-    j.write_fieldname("ephemerisInfo-r17");
-    ephemeris_info_r17.to_json(j);
-  }
-  if (ta_report_r17_present) {
-    j.write_str("ta-Report-r17", "enabled");
-  }
-  j.end_obj();
-}
-
-const char* ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::to_string() const
-{
-  static const char* names[] = {"s5",
-                                "s10",
-                                "s15",
-                                "s20",
-                                "s25",
-                                "s30",
-                                "s35",
-                                "s40",
-                                "s45",
-                                "s50",
-                                "s55",
-                                "s60",
-                                "s120",
-                                "s180",
-                                "s240",
-                                "s900"};
-  return convert_enum_idx(names, 16, value, "ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_e_");
-}
-uint16_t ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::to_number() const
-{
-  static const uint16_t numbers[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900};
-  return map_enum_number(numbers, 16, value, "ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_e_");
-}
-
-const char* ntn_cfg_r17_s::ntn_polarization_dl_r17_opts::to_string() const
-{
-  static const char* names[] = {"rhcp", "lhcp", "linear"};
-  return convert_enum_idx(names, 3, value, "ntn_cfg_r17_s::ntn_polarization_dl_r17_e_");
-}
-
-const char* ntn_cfg_r17_s::ntn_polarization_ul_r17_opts::to_string() const
-{
-  static const char* names[] = {"rhcp", "lhcp", "linear"};
-  return convert_enum_idx(names, 3, value, "ntn_cfg_r17_s::ntn_polarization_ul_r17_e_");
-}
 
 // T-Reassembly ::= ENUMERATED
 const char* t_reassembly_opts::to_string() const
@@ -419,6 +218,12 @@ uint16_t drx_cfg_ptm_r17_s::drx_on_dur_timer_ptm_r17_c_::milli_seconds_opts::to_
   static const uint16_t numbers[] = {1,  2,  3,   4,   5,   6,   8,   10,  20,  30,   40,   50,
                                      60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 1200, 1600};
   return map_enum_number(numbers, 24, value, "drx_cfg_ptm_r17_s::drx_on_dur_timer_ptm_r17_c_::milli_seconds_e_");
+}
+
+const char* drx_cfg_ptm_r17_s::drx_on_dur_timer_ptm_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"subMilliSeconds", "milliSeconds"};
+  return convert_enum_idx(names, 2, value, "drx_cfg_ptm_r17_s::drx_on_dur_timer_ptm_r17_c_::types");
 }
 
 const char* drx_cfg_ptm_r17_s::drx_inactivity_timer_ptm_r17_opts::to_string() const
@@ -916,6 +721,20 @@ SRSASN_CODE drx_cfg_ptm_r17_s::drx_long_cycle_start_offset_ptm_r17_c_::unpack(cb
   return SRSASN_SUCCESS;
 }
 
+const char* drx_cfg_ptm_r17_s::drx_long_cycle_start_offset_ptm_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ms10",   "ms20",   "ms32",   "ms40",   "ms60",   "ms64",   "ms70",
+                                "ms80",   "ms128",  "ms160",  "ms256",  "ms320",  "ms512",  "ms640",
+                                "ms1024", "ms1280", "ms2048", "ms2560", "ms5120", "ms10240"};
+  return convert_enum_idx(names, 20, value, "drx_cfg_ptm_r17_s::drx_long_cycle_start_offset_ptm_r17_c_::types");
+}
+uint16_t drx_cfg_ptm_r17_s::drx_long_cycle_start_offset_ptm_r17_c_::types_opts::to_number() const
+{
+  static const uint16_t numbers[] = {10,  20,  32,  40,  60,   64,   70,   80,   128,  160,
+                                     256, 320, 512, 640, 1024, 1280, 2048, 2560, 5120, 10240};
+  return map_enum_number(numbers, 20, value, "drx_cfg_ptm_r17_s::drx_long_cycle_start_offset_ptm_r17_c_::types");
+}
+
 // BH-LogicalChannelIdentity-r16 ::= CHOICE
 void bh_lc_ch_id_r16_c::destroy_() {}
 void bh_lc_ch_id_r16_c::set(types::options e)
@@ -1018,6 +837,12 @@ SRSASN_CODE bh_lc_ch_id_r16_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* bh_lc_ch_id_r16_c::types_opts::to_string() const
+{
+  static const char* names[] = {"bh-LogicalChannelIdentity-r16", "bh-LogicalChannelIdentityExt-r16"};
+  return convert_enum_idx(names, 2, value, "bh_lc_ch_id_r16_c::types");
 }
 
 // T-StatusProhibit ::= ENUMERATED
@@ -1776,6 +1601,12 @@ SRSASN_CODE rlc_cfg_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* rlc_cfg_c::types_opts::to_string() const
+{
+  static const char* names[] = {"am", "um-Bi-Directional", "um-Uni-Directional-UL", "um-Uni-Directional-DL"};
+  return convert_enum_idx(names, 4, value, "rlc_cfg_c::types");
+}
+
 // BH-RLC-ChannelConfig-r16 ::= SEQUENCE
 SRSASN_CODE bh_rlc_ch_cfg_r16_s::pack(bit_ref& bref) const
 {
@@ -1900,6 +1731,12 @@ SRSASN_CODE carrier_state_r17_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* carrier_state_r17_c::types_opts::to_string() const
+{
+  static const char* names[] = {"deActivated-r17", "activeBWP-r17"};
+  return convert_enum_idx(names, 2, value, "carrier_state_r17_c::types");
 }
 
 // CC-State-r17 ::= SEQUENCE
@@ -2278,6 +2115,12 @@ SRSASN_CODE cfra_s::res_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* cfra_s::res_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ssb", "csirs"};
+  return convert_enum_idx(names, 2, value, "cfra_s::res_c_::types");
 }
 
 // CFRA-TwoStep-r16 ::= SEQUENCE
@@ -3777,6 +3620,12 @@ SRSASN_CODE serving_cell_cfg_common_s::ssb_positions_in_burst_c_::unpack(cbit_re
   return SRSASN_SUCCESS;
 }
 
+const char* serving_cell_cfg_common_s::ssb_positions_in_burst_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"shortBitmap", "mediumBitmap", "longBitmap"};
+  return convert_enum_idx(names, 3, value, "serving_cell_cfg_common_s::ssb_positions_in_burst_c_::types");
+}
+
 const char* serving_cell_cfg_common_s::ssb_periodicity_serving_cell_opts::to_string() const
 {
   static const char* names[] = {"ms5", "ms10", "ms20", "ms40", "ms80", "ms160", "spare2", "spare1"};
@@ -3858,6 +3707,12 @@ SRSASN_CODE serving_cell_cfg_common_s::ch_access_mode_r16_c_::unpack(cbit_ref& b
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* serving_cell_cfg_common_s::ch_access_mode_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"dynamic", "semiStatic"};
+  return convert_enum_idx(names, 2, value, "serving_cell_cfg_common_s::ch_access_mode_r16_c_::types");
 }
 
 const char* serving_cell_cfg_common_s::discovery_burst_win_len_r16_opts::to_string() const
@@ -3961,709 +3816,6 @@ void d_cp_cfg_r16_s::to_json(json_writer& j) const
     j.write_str("ps-TransmitOtherPeriodicCSI-r16", "true");
   }
   j.end_obj();
-}
-
-// DRX-Config ::= SEQUENCE
-SRSASN_CODE drx_cfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(short_drx_present, 1));
-
-  HANDLE_CODE(drx_on_dur_timer.pack(bref));
-  HANDLE_CODE(drx_inactivity_timer.pack(bref));
-  HANDLE_CODE(pack_integer(bref, drx_harq_rtt_timer_dl, (uint8_t)0u, (uint8_t)56u));
-  HANDLE_CODE(pack_integer(bref, drx_harq_rtt_timer_ul, (uint8_t)0u, (uint8_t)56u));
-  HANDLE_CODE(drx_retx_timer_dl.pack(bref));
-  HANDLE_CODE(drx_retx_timer_ul.pack(bref));
-  HANDLE_CODE(drx_long_cycle_start_offset.pack(bref));
-  if (short_drx_present) {
-    HANDLE_CODE(short_drx.drx_short_cycle.pack(bref));
-    HANDLE_CODE(pack_integer(bref, short_drx.drx_short_cycle_timer, (uint8_t)1u, (uint8_t)16u));
-  }
-  HANDLE_CODE(pack_integer(bref, drx_slot_offset, (uint8_t)0u, (uint8_t)31u));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE drx_cfg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(short_drx_present, 1));
-
-  HANDLE_CODE(drx_on_dur_timer.unpack(bref));
-  HANDLE_CODE(drx_inactivity_timer.unpack(bref));
-  HANDLE_CODE(unpack_integer(drx_harq_rtt_timer_dl, bref, (uint8_t)0u, (uint8_t)56u));
-  HANDLE_CODE(unpack_integer(drx_harq_rtt_timer_ul, bref, (uint8_t)0u, (uint8_t)56u));
-  HANDLE_CODE(drx_retx_timer_dl.unpack(bref));
-  HANDLE_CODE(drx_retx_timer_ul.unpack(bref));
-  HANDLE_CODE(drx_long_cycle_start_offset.unpack(bref));
-  if (short_drx_present) {
-    HANDLE_CODE(short_drx.drx_short_cycle.unpack(bref));
-    HANDLE_CODE(unpack_integer(short_drx.drx_short_cycle_timer, bref, (uint8_t)1u, (uint8_t)16u));
-  }
-  HANDLE_CODE(unpack_integer(drx_slot_offset, bref, (uint8_t)0u, (uint8_t)31u));
-
-  return SRSASN_SUCCESS;
-}
-void drx_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("drx-onDurationTimer");
-  drx_on_dur_timer.to_json(j);
-  j.write_str("drx-InactivityTimer", drx_inactivity_timer.to_string());
-  j.write_int("drx-HARQ-RTT-TimerDL", drx_harq_rtt_timer_dl);
-  j.write_int("drx-HARQ-RTT-TimerUL", drx_harq_rtt_timer_ul);
-  j.write_str("drx-RetransmissionTimerDL", drx_retx_timer_dl.to_string());
-  j.write_str("drx-RetransmissionTimerUL", drx_retx_timer_ul.to_string());
-  j.write_fieldname("drx-LongCycleStartOffset");
-  drx_long_cycle_start_offset.to_json(j);
-  if (short_drx_present) {
-    j.write_fieldname("shortDRX");
-    j.start_obj();
-    j.write_str("drx-ShortCycle", short_drx.drx_short_cycle.to_string());
-    j.write_int("drx-ShortCycleTimer", short_drx.drx_short_cycle_timer);
-    j.end_obj();
-  }
-  j.write_int("drx-SlotOffset", drx_slot_offset);
-  j.end_obj();
-}
-
-void drx_cfg_s::drx_on_dur_timer_c_::destroy_() {}
-void drx_cfg_s::drx_on_dur_timer_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-drx_cfg_s::drx_on_dur_timer_c_::drx_on_dur_timer_c_(const drx_cfg_s::drx_on_dur_timer_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::sub_milli_seconds:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::milli_seconds:
-      c.init(other.c.get<milli_seconds_e_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_on_dur_timer_c_");
-  }
-}
-drx_cfg_s::drx_on_dur_timer_c_& drx_cfg_s::drx_on_dur_timer_c_::operator=(const drx_cfg_s::drx_on_dur_timer_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::sub_milli_seconds:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::milli_seconds:
-      c.set(other.c.get<milli_seconds_e_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_on_dur_timer_c_");
-  }
-
-  return *this;
-}
-uint8_t& drx_cfg_s::drx_on_dur_timer_c_::set_sub_milli_seconds()
-{
-  set(types::sub_milli_seconds);
-  return c.get<uint8_t>();
-}
-drx_cfg_s::drx_on_dur_timer_c_::milli_seconds_e_& drx_cfg_s::drx_on_dur_timer_c_::set_milli_seconds()
-{
-  set(types::milli_seconds);
-  return c.get<milli_seconds_e_>();
-}
-void drx_cfg_s::drx_on_dur_timer_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::sub_milli_seconds:
-      j.write_int("subMilliSeconds", c.get<uint8_t>());
-      break;
-    case types::milli_seconds:
-      j.write_str("milliSeconds", c.get<milli_seconds_e_>().to_string());
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_on_dur_timer_c_");
-  }
-  j.end_obj();
-}
-SRSASN_CODE drx_cfg_s::drx_on_dur_timer_c_::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::sub_milli_seconds:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)31u));
-      break;
-    case types::milli_seconds:
-      HANDLE_CODE(c.get<milli_seconds_e_>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_on_dur_timer_c_");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE drx_cfg_s::drx_on_dur_timer_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::sub_milli_seconds:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)31u));
-      break;
-    case types::milli_seconds:
-      HANDLE_CODE(c.get<milli_seconds_e_>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_on_dur_timer_c_");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* drx_cfg_s::drx_on_dur_timer_c_::milli_seconds_opts::to_string() const
-{
-  static const char* names[] = {"ms1",    "ms2",    "ms3",    "ms4",    "ms5",    "ms6",    "ms8",    "ms10",
-                                "ms20",   "ms30",   "ms40",   "ms50",   "ms60",   "ms80",   "ms100",  "ms200",
-                                "ms300",  "ms400",  "ms500",  "ms600",  "ms800",  "ms1000", "ms1200", "ms1600",
-                                "spare8", "spare7", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 32, value, "drx_cfg_s::drx_on_dur_timer_c_::milli_seconds_e_");
-}
-uint16_t drx_cfg_s::drx_on_dur_timer_c_::milli_seconds_opts::to_number() const
-{
-  static const uint16_t numbers[] = {1,  2,  3,   4,   5,   6,   8,   10,  20,  30,   40,   50,
-                                     60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 1200, 1600};
-  return map_enum_number(numbers, 24, value, "drx_cfg_s::drx_on_dur_timer_c_::milli_seconds_e_");
-}
-
-const char* drx_cfg_s::drx_inactivity_timer_opts::to_string() const
-{
-  static const char* names[] = {"ms0",    "ms1",    "ms2",    "ms3",    "ms4",    "ms5",    "ms6",    "ms8",
-                                "ms10",   "ms20",   "ms30",   "ms40",   "ms50",   "ms60",   "ms80",   "ms100",
-                                "ms200",  "ms300",  "ms500",  "ms750",  "ms1280", "ms1920", "ms2560", "spare9",
-                                "spare8", "spare7", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 32, value, "drx_cfg_s::drx_inactivity_timer_e_");
-}
-uint16_t drx_cfg_s::drx_inactivity_timer_opts::to_number() const
-{
-  static const uint16_t numbers[] = {0,  1,  2,  3,   4,   5,   6,   8,   10,   20,   30,  40,
-                                     50, 60, 80, 100, 200, 300, 500, 750, 1280, 1920, 2560};
-  return map_enum_number(numbers, 23, value, "drx_cfg_s::drx_inactivity_timer_e_");
-}
-
-const char* drx_cfg_s::drx_retx_timer_dl_opts::to_string() const
-{
-  static const char* names[] = {"sl0",    "sl1",     "sl2",     "sl4",     "sl6",     "sl8",     "sl16",    "sl24",
-                                "sl33",   "sl40",    "sl64",    "sl80",    "sl96",    "sl112",   "sl128",   "sl160",
-                                "sl320",  "spare15", "spare14", "spare13", "spare12", "spare11", "spare10", "spare9",
-                                "spare8", "spare7",  "spare6",  "spare5",  "spare4",  "spare3",  "spare2",  "spare1"};
-  return convert_enum_idx(names, 32, value, "drx_cfg_s::drx_retx_timer_dl_e_");
-}
-uint16_t drx_cfg_s::drx_retx_timer_dl_opts::to_number() const
-{
-  static const uint16_t numbers[] = {0, 1, 2, 4, 6, 8, 16, 24, 33, 40, 64, 80, 96, 112, 128, 160, 320};
-  return map_enum_number(numbers, 17, value, "drx_cfg_s::drx_retx_timer_dl_e_");
-}
-
-const char* drx_cfg_s::drx_retx_timer_ul_opts::to_string() const
-{
-  static const char* names[] = {"sl0",    "sl1",     "sl2",     "sl4",     "sl6",     "sl8",     "sl16",    "sl24",
-                                "sl33",   "sl40",    "sl64",    "sl80",    "sl96",    "sl112",   "sl128",   "sl160",
-                                "sl320",  "spare15", "spare14", "spare13", "spare12", "spare11", "spare10", "spare9",
-                                "spare8", "spare7",  "spare6",  "spare5",  "spare4",  "spare3",  "spare2",  "spare1"};
-  return convert_enum_idx(names, 32, value, "drx_cfg_s::drx_retx_timer_ul_e_");
-}
-uint16_t drx_cfg_s::drx_retx_timer_ul_opts::to_number() const
-{
-  static const uint16_t numbers[] = {0, 1, 2, 4, 6, 8, 16, 24, 33, 40, 64, 80, 96, 112, 128, 160, 320};
-  return map_enum_number(numbers, 17, value, "drx_cfg_s::drx_retx_timer_ul_e_");
-}
-
-void drx_cfg_s::drx_long_cycle_start_offset_c_::destroy_() {}
-void drx_cfg_s::drx_long_cycle_start_offset_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-drx_cfg_s::drx_long_cycle_start_offset_c_::drx_long_cycle_start_offset_c_(
-    const drx_cfg_s::drx_long_cycle_start_offset_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ms10:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms20:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms32:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms40:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms60:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms64:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms70:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms80:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms128:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms160:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::ms256:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms320:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms512:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms640:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms1024:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms1280:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms2048:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms2560:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms5120:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::ms10240:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_long_cycle_start_offset_c_");
-  }
-}
-drx_cfg_s::drx_long_cycle_start_offset_c_&
-drx_cfg_s::drx_long_cycle_start_offset_c_::operator=(const drx_cfg_s::drx_long_cycle_start_offset_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ms10:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms20:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms32:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms40:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms60:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms64:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms70:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms80:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms128:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms160:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::ms256:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms320:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms512:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms640:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms1024:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms1280:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms2048:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms2560:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms5120:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::ms10240:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_long_cycle_start_offset_c_");
-  }
-
-  return *this;
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms10()
-{
-  set(types::ms10);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms20()
-{
-  set(types::ms20);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms32()
-{
-  set(types::ms32);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms40()
-{
-  set(types::ms40);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms60()
-{
-  set(types::ms60);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms64()
-{
-  set(types::ms64);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms70()
-{
-  set(types::ms70);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms80()
-{
-  set(types::ms80);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms128()
-{
-  set(types::ms128);
-  return c.get<uint8_t>();
-}
-uint8_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms160()
-{
-  set(types::ms160);
-  return c.get<uint8_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms256()
-{
-  set(types::ms256);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms320()
-{
-  set(types::ms320);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms512()
-{
-  set(types::ms512);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms640()
-{
-  set(types::ms640);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms1024()
-{
-  set(types::ms1024);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms1280()
-{
-  set(types::ms1280);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms2048()
-{
-  set(types::ms2048);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms2560()
-{
-  set(types::ms2560);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms5120()
-{
-  set(types::ms5120);
-  return c.get<uint16_t>();
-}
-uint16_t& drx_cfg_s::drx_long_cycle_start_offset_c_::set_ms10240()
-{
-  set(types::ms10240);
-  return c.get<uint16_t>();
-}
-void drx_cfg_s::drx_long_cycle_start_offset_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ms10:
-      j.write_int("ms10", c.get<uint8_t>());
-      break;
-    case types::ms20:
-      j.write_int("ms20", c.get<uint8_t>());
-      break;
-    case types::ms32:
-      j.write_int("ms32", c.get<uint8_t>());
-      break;
-    case types::ms40:
-      j.write_int("ms40", c.get<uint8_t>());
-      break;
-    case types::ms60:
-      j.write_int("ms60", c.get<uint8_t>());
-      break;
-    case types::ms64:
-      j.write_int("ms64", c.get<uint8_t>());
-      break;
-    case types::ms70:
-      j.write_int("ms70", c.get<uint8_t>());
-      break;
-    case types::ms80:
-      j.write_int("ms80", c.get<uint8_t>());
-      break;
-    case types::ms128:
-      j.write_int("ms128", c.get<uint8_t>());
-      break;
-    case types::ms160:
-      j.write_int("ms160", c.get<uint8_t>());
-      break;
-    case types::ms256:
-      j.write_int("ms256", c.get<uint16_t>());
-      break;
-    case types::ms320:
-      j.write_int("ms320", c.get<uint16_t>());
-      break;
-    case types::ms512:
-      j.write_int("ms512", c.get<uint16_t>());
-      break;
-    case types::ms640:
-      j.write_int("ms640", c.get<uint16_t>());
-      break;
-    case types::ms1024:
-      j.write_int("ms1024", c.get<uint16_t>());
-      break;
-    case types::ms1280:
-      j.write_int("ms1280", c.get<uint16_t>());
-      break;
-    case types::ms2048:
-      j.write_int("ms2048", c.get<uint16_t>());
-      break;
-    case types::ms2560:
-      j.write_int("ms2560", c.get<uint16_t>());
-      break;
-    case types::ms5120:
-      j.write_int("ms5120", c.get<uint16_t>());
-      break;
-    case types::ms10240:
-      j.write_int("ms10240", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_long_cycle_start_offset_c_");
-  }
-  j.end_obj();
-}
-SRSASN_CODE drx_cfg_s::drx_long_cycle_start_offset_c_::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::ms10:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)9u));
-      break;
-    case types::ms20:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)19u));
-      break;
-    case types::ms32:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)31u));
-      break;
-    case types::ms40:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)39u));
-      break;
-    case types::ms60:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)59u));
-      break;
-    case types::ms64:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::ms70:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)69u));
-      break;
-    case types::ms80:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)79u));
-      break;
-    case types::ms128:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u));
-      break;
-    case types::ms160:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)159u));
-      break;
-    case types::ms256:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u));
-      break;
-    case types::ms320:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)319u));
-      break;
-    case types::ms512:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)511u));
-      break;
-    case types::ms640:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)639u));
-      break;
-    case types::ms1024:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1023u));
-      break;
-    case types::ms1280:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1279u));
-      break;
-    case types::ms2048:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)2047u));
-      break;
-    case types::ms2560:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)2559u));
-      break;
-    case types::ms5120:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)5119u));
-      break;
-    case types::ms10240:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)10239u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_long_cycle_start_offset_c_");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE drx_cfg_s::drx_long_cycle_start_offset_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::ms10:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)9u));
-      break;
-    case types::ms20:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)19u));
-      break;
-    case types::ms32:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)31u));
-      break;
-    case types::ms40:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)39u));
-      break;
-    case types::ms60:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)59u));
-      break;
-    case types::ms64:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::ms70:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)69u));
-      break;
-    case types::ms80:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)79u));
-      break;
-    case types::ms128:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)127u));
-      break;
-    case types::ms160:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)159u));
-      break;
-    case types::ms256:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u));
-      break;
-    case types::ms320:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)319u));
-      break;
-    case types::ms512:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)511u));
-      break;
-    case types::ms640:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)639u));
-      break;
-    case types::ms1024:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)1023u));
-      break;
-    case types::ms1280:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)1279u));
-      break;
-    case types::ms2048:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)2047u));
-      break;
-    case types::ms2560:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)2559u));
-      break;
-    case types::ms5120:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)5119u));
-      break;
-    case types::ms10240:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)10239u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drx_cfg_s::drx_long_cycle_start_offset_c_");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* drx_cfg_s::short_drx_s_::drx_short_cycle_opts::to_string() const
-{
-  static const char* names[] = {"ms2",    "ms3",    "ms4",    "ms5",    "ms6",    "ms7",    "ms8",    "ms10",
-                                "ms14",   "ms16",   "ms20",   "ms30",   "ms32",   "ms35",   "ms40",   "ms64",
-                                "ms80",   "ms128",  "ms160",  "ms256",  "ms320",  "ms512",  "ms640",  "spare9",
-                                "spare8", "spare7", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 32, value, "drx_cfg_s::short_drx_s_::drx_short_cycle_e_");
-}
-uint16_t drx_cfg_s::short_drx_s_::drx_short_cycle_opts::to_number() const
-{
-  static const uint16_t numbers[] = {2,  3,  4,  5,  6,  7,   8,   10,  14,  16,  20, 30,
-                                     32, 35, 40, 64, 80, 128, 160, 256, 320, 512, 640};
-  return map_enum_number(numbers, 23, value, "drx_cfg_s::short_drx_s_::drx_short_cycle_e_");
 }
 
 // DRX-ConfigExt-v1700 ::= SEQUENCE
@@ -4871,6 +4023,12 @@ uint16_t drx_cfg_secondary_group_r16_s::drx_on_dur_timer_r16_c_::milli_seconds_o
                                      60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 1200, 1600};
   return map_enum_number(
       numbers, 24, value, "drx_cfg_secondary_group_r16_s::drx_on_dur_timer_r16_c_::milli_seconds_e_");
+}
+
+const char* drx_cfg_secondary_group_r16_s::drx_on_dur_timer_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"subMilliSeconds", "milliSeconds"};
+  return convert_enum_idx(names, 2, value, "drx_cfg_secondary_group_r16_s::drx_on_dur_timer_r16_c_::types");
 }
 
 const char* drx_cfg_secondary_group_r16_s::drx_inactivity_timer_r16_opts::to_string() const
@@ -5173,6 +4331,12 @@ SRSASN_CODE mbs_rnti_specific_cfg_r17_s::group_common_rnti_r17_c_::unpack(cbit_r
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* mbs_rnti_specific_cfg_r17_s::group_common_rnti_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"g-RNTI", "g-CS-RNTI"};
+  return convert_enum_idx(names, 2, value, "mbs_rnti_specific_cfg_r17_s::group_common_rnti_r17_c_::types");
 }
 
 const char* mbs_rnti_specific_cfg_r17_s::harq_feedback_enabler_multicast_r17_opts::to_string() const
@@ -5520,6 +4684,12 @@ SRSASN_CODE pdsch_harq_ack_enh_type3_r17_s::applicable_r17_c_::unpack(cbit_ref& 
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* pdsch_harq_ack_enh_type3_r17_s::applicable_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"perCC", "perHARQ"};
+  return convert_enum_idx(names, 2, value, "pdsch_harq_ack_enh_type3_r17_s::applicable_r17_c_::types");
 }
 
 // PHR-Config ::= SEQUENCE
@@ -6068,6 +5238,12 @@ SRSASN_CODE recfg_with_sync_s::rach_cfg_ded_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* recfg_with_sync_s::rach_cfg_ded_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"uplink", "supplementaryUplink"};
+  return convert_enum_idx(names, 2, value, "recfg_with_sync_s::rach_cfg_ded_c_::types");
 }
 
 // SchedulingRequestConfig ::= SEQUENCE
@@ -7764,6 +6940,12 @@ SRSASN_CODE rlc_bearer_cfg_s::served_radio_bearer_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* rlc_bearer_cfg_s::served_radio_bearer_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"srb-Identity", "drb-Identity"};
+  return convert_enum_idx(names, 2, value, "rlc_bearer_cfg_s::served_radio_bearer_c_::types");
 }
 
 // SCellConfig ::= SEQUENCE

@@ -23,6 +23,7 @@
 #include "rrc_ue_impl.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
 #include "rrc_ue_helpers.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

@@ -49,7 +49,7 @@ struct ngap_ue_t {
   }
 };
 
-class cu_cp_ue : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
+class cu_cp_ue final : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
 {
 public:
   cu_cp_ue(const ue_index_t              ue_index_,
@@ -111,10 +111,12 @@ public:
   rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the PCI of the UE.
-  pci_t get_pci() override { return pci; };
+  pci_t get_pci() const override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() override { return c_rnti; }
+  rnti_t get_c_rnti() const override { return c_rnti; }
+
+  gnb_du_id_t get_du_id() const { return du_id; }
 
   /// \brief Get the DU index of the UE.
   du_index_t get_du_index() override { return du_index; }
@@ -123,8 +125,14 @@ public:
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(pci_t pci_ = INVALID_PCI, rnti_t c_rnti_ = rnti_t::INVALID_RNTI) override
+  void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
+                    pci_t       pci_    = INVALID_PCI,
+                    rnti_t      c_rnti_ = rnti_t::INVALID_RNTI) override
   {
+    if (du_id_ != gnb_du_id_t::invalid) {
+      du_id = du_id_;
+    }
+
     if (pci_ != INVALID_PCI) {
       pci = pci_;
     }
@@ -206,6 +214,7 @@ private:
 
   // du ue context
   du_index_t      du_index    = du_index_t::invalid;
+  gnb_du_id_t     du_id       = gnb_du_id_t::invalid;
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
@@ -254,21 +263,17 @@ public:
 
   // du_processor_ue_manager
 
-  /// \brief Allocate and return the UE index of a new UE.
-  ue_index_t allocate_new_ue_index(du_index_t du_index) override;
+  /// \brief Allocate resources for the UE in the CU-CP.
+  ///
+  /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
+  ue_index_t add_ue(du_index_t du_index) override;
 
   /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the UE if found, nullptr otherwise.
   du_ue* find_ue(ue_index_t ue_index) override;
 
-  /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE
-  /// index was already setup, nulltpr is returned.
-  /// \param[in] ue_index Index of the UE to add the notifiers to.
-  /// \param[in] pci PCI of the cell that the UE is connected to.
-  /// \param[in] rnti RNTI of the UE to be added.
-  /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) override;
+  du_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti) override;
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
@@ -299,10 +304,10 @@ public:
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
   /// \param[in] du_processor_ctrl_notifier DU processor control notifier for the UE.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  ngap_ue* add_ue(ue_index_t                          ue_index,
-                  ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                  ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                  ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
+  ngap_ue* set_ue_ng_context(ue_index_t                          ue_index,
+                             ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                             ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                             ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
@@ -350,7 +355,7 @@ public:
     return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
   }
 
-  ue_metrics_report handle_ue_metrics_report_request() override;
+  std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override;
 
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "du_metrics_handler.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
@@ -52,15 +53,15 @@ public:
   virtual du_index_t get_du_index() = 0;
 
   /// \brief Allocate a new UE index.
-  virtual ue_index_t get_new_ue_index() = 0;
+  virtual ue_index_t allocate_new_ue_index() = 0;
 
-  /// \brief Create a new UE context.
-  /// \param[in] msg The UE creation message.
-  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
-
-  /// \brief Update existing UE object.
-  virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
+  /// \brief Request to create a new UE RRC context.
+  ///
+  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
+  /// \param req Request to setup a new UE RRC context.
+  /// \return Response to whether the request was successful or failed.
+  virtual ue_rrc_context_creation_response
+  handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
@@ -272,7 +273,7 @@ public:
   virtual ~du_processor_ngap_interface() = default;
 
   /// \brief Allocate a new UE index.
-  virtual ue_index_t get_new_ue_index() = 0;
+  virtual ue_index_t allocate_new_ue_index() = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
@@ -332,13 +333,14 @@ public:
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.
-class du_processor_ue_task_scheduler : public f1ap_task_scheduler
+class du_processor_ue_task_scheduler
 {
 public:
-  virtual ~du_processor_ue_task_scheduler()                       = default;
-  virtual void           clear_pending_tasks(ue_index_t ue_index) = 0;
-  virtual unique_timer   make_unique_timer()                      = 0;
-  virtual timer_manager& get_timer_manager()                      = 0;
+  virtual ~du_processor_ue_task_scheduler()                                              = default;
+  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
+  virtual void           clear_pending_tasks(ue_index_t ue_index)                        = 0;
+  virtual unique_timer   make_unique_timer()                                             = 0;
+  virtual timer_manager& get_timer_manager()                                             = 0;
 };
 
 /// \brief Handles incoming task scheduling requests associated with an UE.
@@ -382,6 +384,11 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// \brief Notify the CU-CP to push a UE context to a UE during handover.
+  /// \param[in] source_ue_index The index of the UE that is the source of the handover.
+  /// \param[in] target_ue_index The index of the UE that is the target of the handover.
+  virtual void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
 };
 
 /// DU processor Paging handler.
@@ -457,6 +464,7 @@ public:
   virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
   virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
   virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
+  virtual du_metrics_handler&                    get_metrics_handler()                       = 0;
 };
 
 } // namespace srs_cu_cp

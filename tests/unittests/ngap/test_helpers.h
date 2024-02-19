@@ -195,12 +195,6 @@ public:
   dummy_ngap_du_processor_notifier(ngap_ue_context_removal_handler& ngap_handler_) :
     logger(srslog::fetch_basic_logger("TEST")), ngap_handler(ngap_handler_){};
 
-  ue_index_t on_new_ue_index_required() override
-  {
-    logger.info("Requested to allocate a new ue index.");
-    return allocate_ue_index();
-  }
-
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
@@ -363,10 +357,10 @@ public:
     last_ue = ue_index;
 
     // Add NGAP UE to UE manager
-    ngap_ue* ue = ue_manager.add_ue(ue_index,
-                                    *ue_notifier.rrc_ue_pdu_notifier,
-                                    *ue_notifier.rrc_ue_ctrl_notifier,
-                                    *ue_notifier.du_processor_ctrl_notifier);
+    ngap_ue* ue = ue_manager.set_ue_ng_context(ue_index,
+                                               *ue_notifier.rrc_ue_pdu_notifier,
+                                               *ue_notifier.rrc_ue_ctrl_notifier,
+                                               *ue_notifier.du_processor_ctrl_notifier);
 
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);

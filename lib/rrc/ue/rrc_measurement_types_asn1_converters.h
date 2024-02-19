@@ -26,7 +26,6 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
-#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"

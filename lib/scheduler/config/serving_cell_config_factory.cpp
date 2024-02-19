@@ -729,7 +729,11 @@ pdcch_config srsran::config_helpers::make_ue_dedicated_pdcch_config(const cell_c
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].set_non_ss0_nof_candidates(
-      {0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0});
+      {0,
+       compute_max_nof_candidates(aggregation_level::n2, pdcch_cfg.coresets[0]),
+       compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]),
+       0,
+       0});
 
   return pdcch_cfg;
 }

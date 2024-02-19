@@ -28,7 +28,6 @@
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/support/executors/task_executor.h"
 #include <atomic>
 
@@ -72,8 +71,6 @@ struct fapi_to_phy_translator_dependencies {
   resource_grid_pool* dl_rg_pool;
   /// Downlink PDU validator.
   const downlink_pdu_validator* dl_pdu_validator;
-  /// Transmit buffer pool.
-  tx_buffer_pool* buffer_pool;
   /// Uplink request processor.
   uplink_request_processor* ul_request_processor;
   /// Uplink resource grid pool.
@@ -260,8 +257,6 @@ private:
   srslog::basic_logger& logger;
   /// Downlink PDU validator.
   const downlink_pdu_validator& dl_pdu_validator;
-  /// PDSCH buffer pool.
-  tx_buffer_pool& buffer_pool;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
   /// Uplink resource grid pool.

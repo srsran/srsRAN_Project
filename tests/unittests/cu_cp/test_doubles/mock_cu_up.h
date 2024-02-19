@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/cu_cp/cu_up_repository.h"
+#include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 
 namespace srsran {
@@ -46,7 +46,7 @@ public:
 };
 
 /// Create a mock of the CU-UP for CU-CP testing.
-std::unique_ptr<mock_cu_up> create_mock_cu_up(cu_up_repository& cu_cp_e1_handler);
+std::unique_ptr<mock_cu_up> create_mock_cu_up(cu_cp_e1_handler& cu_cp_e1_handler);
 
 } // namespace srs_cu_cp
 } // namespace srsran

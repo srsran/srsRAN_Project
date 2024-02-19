@@ -48,9 +48,9 @@ struct du_cell_context {
 };
 
 struct du_processor_context {
-  du_index_t  du_index = du_index_t::invalid; /// Index assisgned by CU-CP
-  uint64_t    id;                             /// the gNB-DU-ID
-  std::string name = "none";                  /// gNB-DU-Name
+  du_index_t  du_index = du_index_t::invalid;  /// Index assisgned by CU-CP
+  gnb_du_id_t id       = gnb_du_id_t::invalid; /// the gNB-DU-ID
+  std::string name     = "none";               /// gNB-DU-Name
 };
 
 } // namespace srs_cu_cp

@@ -25,16 +25,16 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "16"
+    ref: "17"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -46,7 +46,8 @@ stages:
   - ci
   - static
   - build and unit tests
-  - e2e
+  - zmq
+  - rf
   - manual
   - documentation
   - private
@@ -155,10 +156,10 @@ full-code-format:
     ANALYZER: ""
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
-    KUBERNETES_CPU_REQUEST: "3.5"
-    KUBERNETES_CPU_LIMIT: "3.5"
-    KUBERNETES_MEMORY_REQUEST: 6Gi
-    KUBERNETES_MEMORY_LIMIT: 6Gi
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
   before_script:
     - |
       echo "
@@ -180,7 +181,7 @@ full-code-format:
       cmake -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=False -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
       make srsran_build_info # needed to generate hashes.h
   script:
-    - static-analyzer.sh -i /tmp/codechecker_skip --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
+    - static-analyzer.sh -i /tmp/codechecker_skip --jobs ${KUBERNETES_CPU_REQUEST} --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
     - mv codechecker_html codechecker-${ANALYZER}-html
   artifacts: &codechecker_artifacts
@@ -212,7 +213,7 @@ cppcheck:
   interruptible: false
   variables:
     ANALYZER: cppcheck
-    ANALYZER_ARGS: --cppcheck-max-template-recursion 10
+    ANALYZER_ARGS: --cppcheck-max-template-recursion 5
   artifacts:
     <<: *codechecker_artifacts
     expire_in: 1 day
@@ -444,8 +445,14 @@ disable current schedule:
   stage: .post
   extends: .enable-schedule-by-description
   rules:
-    - if: $GRADUATION_BRANCH
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: always
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: always
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: always
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: always                  
   interruptible: false
   variables:
     ENABLE: "false"

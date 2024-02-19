@@ -66,6 +66,9 @@ public:
   // See interface for documentation.
   controller& get_controller() override;
 
+  // See interface for documentation.
+  void set_error_notifier(error_notifier& notifier) override;
+
 private:
   std::shared_ptr<uplink_cplane_context_repository> cp_repo;
   std::shared_ptr<prach_context_repository>         prach_repo;

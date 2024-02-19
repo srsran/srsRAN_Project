@@ -173,7 +173,8 @@ private:
   void fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& pucch_ind, const pucch_info& pucch) const;
   void fill_uci_pdu(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch_ind, const pucch_info& pucch) const;
   void fill_uci_pdu(mac_uci_pdu::pusch_type& pusch_ind, const ul_sched_info& ul_grant) const;
-  void on_test_mode_uci_pdu(slot_point sl_rx, const mac_uci_indication_message& uci_msg);
+  void forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg);
+  void forward_crc_ind_to_mac(const mac_crc_indication_message& crc_msg);
 
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;
   mac_cell_control_information_handler&         adapted;

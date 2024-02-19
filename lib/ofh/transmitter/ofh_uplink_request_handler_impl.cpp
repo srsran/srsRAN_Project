@@ -60,16 +60,21 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   ul_prach_repo_ptr(dependencies.ul_prach_repo),
   ul_slot_repo(*ul_slot_repo_ptr),
   ul_prach_repo(*ul_prach_repo_ptr),
-  data_flow(std::move(dependencies.data_flow))
+  data_flow(std::move(dependencies.data_flow)),
+  frame_pool_ptr(dependencies.frame_pool_ptr),
+  frame_pool(*frame_pool_ptr)
 {
   srsran_assert(ul_slot_repo_ptr, "Invalid uplink repository");
   srsran_assert(ul_prach_repo_ptr, "Invalid PRACH repository");
   srsran_assert(data_flow, "Invalid data flow");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
 void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer)
 {
   logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
+
+  frame_pool.clear_uplink_slot(context.slot, logger);
 
   // Sampling rate defining the \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$ parameter, see 3GPP TS38.211,
   // clause 4.1.
@@ -93,10 +98,10 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
         static_cast<double>(get_nof_slots_per_subframe(context.pusch_scs) * nof_symbols_per_slot);
 
     double   len_msecs   = (preamble_info.cp_length.to_seconds() + preamble_info.symbol_length.to_seconds()) * 1000;
-    unsigned nof_symbols = ceil(len_msecs / symbol_duration_msec);
+    unsigned nof_symbols = std::ceil(len_msecs / symbol_duration_msec);
 
-    unsigned prach_length_slots = static_cast<unsigned>(std::ceil(
-        static_cast<double>(context.start_symbol + nof_symbols) / (static_cast<double>(nof_symbols_per_slot))));
+    unsigned prach_length_slots =
+        std::ceil(static_cast<double>(context.start_symbol + nof_symbols) / static_cast<double>(nof_symbols_per_slot));
 
     // Subtract one to account for the current slot.
     slot_point slot = context.slot + (prach_length_slots - 1);
@@ -147,6 +152,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
   logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
+
+  frame_pool.clear_uplink_slot(context.slot, logger);
 
   // Store the context in the repository.
   ul_slot_repo.add(context, grid);

@@ -1,0 +1,24 @@
+#   This file contains the PUCCH configuration for the gNB to support:
+#   - SR period 20ms or 40ms.
+#   - CSI period 20ms or 40ms.
+#   - Max 64 UEs.
+
+#   NOTE: This configuration is optimized for TDD 7D-2U configuration, but it still works for TDD configurations
+#         with more than 2 UL slots.
+
+cell_cfg:
+  pucch:
+    sr_period_ms: 20   # This can be set either 20 or 40 ms.
+    f1_nof_cell_res_sr: 31
+    f2_nof_cell_res_csi: 31
+  csi:
+    csi_rs_period: 40  # This can be set either 20 or 40 ms.
+  ul_common:
+    max_ul_grants_per_slot: 32
+    max_pucchs_per_slot: 31
+  pusch:
+    max_puschs_per_slot: 1
+  tdd_ul_dl_cfg:
+    nof_dl_symbols: 7
+    nof_dl_slots: 7
+    nof_ul_slots: 2

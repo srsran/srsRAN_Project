@@ -21,8 +21,6 @@
  */
 
 #include "srsran/asn1/rrc_nr/common.h"
-#include <sstream>
-
 using namespace asn1;
 using namespace asn1::rrc_nr;
 
@@ -482,6 +480,33 @@ SRSASN_CODE srs_periodicity_and_offset_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srs_periodicity_and_offset_c::types_opts::to_string() const
+{
+  static const char* names[] = {"sl1",
+                                "sl2",
+                                "sl4",
+                                "sl5",
+                                "sl8",
+                                "sl10",
+                                "sl16",
+                                "sl20",
+                                "sl32",
+                                "sl40",
+                                "sl64",
+                                "sl80",
+                                "sl160",
+                                "sl320",
+                                "sl640",
+                                "sl1280",
+                                "sl2560"};
+  return convert_enum_idx(names, 17, value, "srs_periodicity_and_offset_c::types");
+}
+uint16_t srs_periodicity_and_offset_c::types_opts::to_number() const
+{
+  static const uint16_t numbers[] = {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560};
+  return map_enum_number(numbers, 17, value, "srs_periodicity_and_offset_c::types");
+}
+
 // SRS-SpatialRelationInfo ::= SEQUENCE
 SRSASN_CODE srs_spatial_relation_info_s::pack(bit_ref& bref) const
 {
@@ -666,6 +691,12 @@ SRSASN_CODE srs_spatial_relation_info_s::ref_sig_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* srs_spatial_relation_info_s::ref_sig_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ssb-Index", "csi-RS-Index", "srs"};
+  return convert_enum_idx(names, 3, value, "srs_spatial_relation_info_s::ref_sig_c_::types");
 }
 
 // ServingCellAndBWP-Id-r17 ::= SEQUENCE
@@ -886,6 +917,12 @@ SRSASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ssb-Index", "csi-RS-Index", "dl-PRS-PDC", "srs"};
+  return convert_enum_idx(names, 4, value, "spatial_relation_info_pdc_r17_s::ref_sig_c_::types");
 }
 
 // SRS-Resource ::= SEQUENCE
@@ -1308,6 +1345,17 @@ SRSASN_CODE srs_res_s::tx_comb_c_::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srs_res_s::tx_comb_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"n2", "n4"};
+  return convert_enum_idx(names, 2, value, "srs_res_s::tx_comb_c_::types");
+}
+uint8_t srs_res_s::tx_comb_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {2, 4};
+  return map_enum_number(numbers, 2, value, "srs_res_s::tx_comb_c_::types");
+}
+
 const char* srs_res_s::res_map_s_::nrof_symbols_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n4"};
@@ -1503,6 +1551,12 @@ SRSASN_CODE srs_res_s::res_type_c_::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srs_res_s::res_type_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"aperiodic", "semi-persistent", "periodic"};
+  return convert_enum_idx(names, 3, value, "srs_res_s::res_type_c_::types");
+}
+
 const char* srs_res_s::res_map_r16_s_::nrof_symbols_r16_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n4"};
@@ -1653,6 +1707,17 @@ SRSASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::unpa
   return SRSASN_SUCCESS;
 }
 
+const char* srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"startRBIndexAndFreqScalingFactor2-r17", "startRBIndexAndFreqScalingFactor4-r17"};
+  return convert_enum_idx(names, 2, value, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types");
+}
+uint8_t srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {2, 4};
+  return map_enum_number(numbers, 2, value, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types");
+}
+
 void srs_res_s::srs_tci_state_r17_c_::destroy_() {}
 void srs_res_s::srs_tci_state_r17_c_::set(types::options e)
 {
@@ -1755,6 +1820,12 @@ SRSASN_CODE srs_res_s::srs_tci_state_r17_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* srs_res_s::srs_tci_state_r17_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"srs-UL-TCI-State", "srs-DLorJointTCI-State"};
+  return convert_enum_idx(names, 2, value, "srs_res_s::srs_tci_state_r17_c_::types");
 }
 
 // SSB-Configuration-r16 ::= SEQUENCE
@@ -2417,6 +2488,20 @@ SRSASN_CODE srs_periodicity_and_offset_r16_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
+const char* srs_periodicity_and_offset_r16_c::types_opts::to_string() const
+{
+  static const char* names[] = {"sl1",   "sl2",    "sl4",    "sl5",    "sl8",     "sl10",    "sl16",
+                                "sl20",  "sl32",   "sl40",   "sl64",   "sl80",    "sl160",   "sl320",
+                                "sl640", "sl1280", "sl2560", "sl5120", "sl10240", "sl40960", "sl81920"};
+  return convert_enum_idx(names, 21, value, "srs_periodicity_and_offset_r16_c::types");
+}
+uint32_t srs_periodicity_and_offset_r16_c::types_opts::to_number() const
+{
+  static const uint32_t numbers[] = {1,  2,   4,   5,   8,    10,   16,   20,    32,    40,   64,
+                                     80, 160, 320, 640, 1280, 2560, 5120, 10240, 40960, 81920};
+  return map_enum_number(numbers, 21, value, "srs_periodicity_and_offset_r16_c::types");
+}
+
 // SRS-PeriodicityAndOffsetExt-r16 ::= CHOICE
 void srs_periodicity_and_offset_ext_r16_c::destroy_() {}
 void srs_periodicity_and_offset_ext_r16_c::set(types::options e)
@@ -2561,6 +2646,17 @@ SRSASN_CODE srs_periodicity_and_offset_ext_r16_c::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* srs_periodicity_and_offset_ext_r16_c::types_opts::to_string() const
+{
+  static const char* names[] = {"sl128", "sl256", "sl512", "sl20480"};
+  return convert_enum_idx(names, 4, value, "srs_periodicity_and_offset_ext_r16_c::types");
+}
+uint16_t srs_periodicity_and_offset_ext_r16_c::types_opts::to_number() const
+{
+  static const uint16_t numbers[] = {128, 256, 512, 20480};
+  return map_enum_number(numbers, 4, value, "srs_periodicity_and_offset_ext_r16_c::types");
 }
 
 // SRS-SpatialRelationInfoPos-r16 ::= CHOICE
@@ -3019,6 +3115,30 @@ SRSASN_CODE srs_spatial_relation_info_pos_r16_c::serving_rs_r16_s_::ref_sig_r16_
   return SRSASN_SUCCESS;
 }
 
+const char* srs_spatial_relation_info_pos_r16_c::serving_rs_r16_s_::ref_sig_r16_c_::srs_spatial_relation_r16_s_::
+    res_sel_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"srs-ResourceId-r16", "srs-PosResourceId-r16"};
+  return convert_enum_idx(names,
+                          2,
+                          value,
+                          "srs_spatial_relation_info_pos_r16_c::serving_rs_r16_s_::ref_sig_r16_c_::srs_spatial_"
+                          "relation_r16_s_::res_sel_r16_c_::types");
+}
+
+const char* srs_spatial_relation_info_pos_r16_c::serving_rs_r16_s_::ref_sig_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ssb-IndexServing-r16", "csi-RS-IndexServing-r16", "srs-SpatialRelation-r16"};
+  return convert_enum_idx(
+      names, 3, value, "srs_spatial_relation_info_pos_r16_c::serving_rs_r16_s_::ref_sig_r16_c_::types");
+}
+
+const char* srs_spatial_relation_info_pos_r16_c::types_opts::to_string() const
+{
+  static const char* names[] = {"servingRS-r16", "ssb-Ncell-r16", "dl-PRS-r16"};
+  return convert_enum_idx(names, 3, value, "srs_spatial_relation_info_pos_r16_c::types");
+}
+
 // SRS-PosResource-r16 ::= SEQUENCE
 SRSASN_CODE srs_pos_res_r16_s::pack(bit_ref& bref) const
 {
@@ -3259,6 +3379,17 @@ SRSASN_CODE srs_pos_res_r16_s::tx_comb_r16_c_::unpack(cbit_ref& bref)
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
+}
+
+const char* srs_pos_res_r16_s::tx_comb_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"n2-r16", "n4-r16", "n8-r16"};
+  return convert_enum_idx(names, 3, value, "srs_pos_res_r16_s::tx_comb_r16_c_::types");
+}
+uint8_t srs_pos_res_r16_s::tx_comb_r16_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {2, 4, 8};
+  return map_enum_number(numbers, 3, value, "srs_pos_res_r16_s::tx_comb_r16_c_::types");
 }
 
 const char* srs_pos_res_r16_s::res_map_r16_s_::nrof_symbols_r16_opts::to_string() const
@@ -3556,6 +3687,12 @@ void srs_pos_res_r16_s::res_type_r16_c_::periodic_r16_s_::to_json(json_writer& j
     }
   }
   j.end_obj();
+}
+
+const char* srs_pos_res_r16_s::res_type_r16_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"aperiodic-r16", "semi-persistent-r16", "periodic-r16"};
+  return convert_enum_idx(names, 3, value, "srs_pos_res_r16_s::res_type_r16_c_::types");
 }
 
 // SRS-PosResourceAP-r16 ::= SEQUENCE

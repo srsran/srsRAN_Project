@@ -33,64 +33,6 @@ using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* AMF connection handling                                                          */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the UE rejection if DU can't serve the UE
-TEST_F(cu_cp_test, when_du_sends_empty_du_to_cu_container_then_ue_is_rejected)
-{
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
-
-  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
-
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  this->f1c_gw.request_new_du_connection();
-  // Connect CU-UP
-  this->e1ap_gw.request_new_cu_up_connection();
-
-  // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
-
-  du_index_t du_index = uint_to_du_index(0);
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
-
-  {
-    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
-    rnti_t              crnti    = to_rnti(0x4601);
-
-    // Inject Initial UL RRC message with empty DU-to-CU container
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer_without_du_to_cu_container(du_ue_id, crnti);
-    test_logger.info("Injecting Initial UL RRC message without DU to CU container");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
-
-    // check that the UE Context Release Command with RRC Container was sent to the DU
-    span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
-    ASSERT_FALSE(last_f1ap_msgs.empty());
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.type().value,
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
-    ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
-    // check that the SRB ID is set if the RRC Container is included
-    ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
-    ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id, 0);
-
-    // Inject UE Context Release Complete message
-    f1ap_message ue_context_release_complete_msg = generate_ue_context_release_complete(cu_ue_id, du_ue_id);
-    test_logger.info("Injecting UE Context Release Complete message");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(
-        ue_context_release_complete_msg);
-  }
-
-  // check that UE has not been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0U);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 /* Paging handling                                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -117,7 +59,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Generate Paging
   ngap_message paging_msg = generate_valid_minimal_paging_message();
@@ -136,7 +78,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Generate Paging
   ngap_message paging_msg = generate_valid_paging_message();
@@ -155,7 +97,7 @@ TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Generate Paging with unknown tac
   ngap_message paging_msg = generate_valid_minimal_paging_message();
@@ -175,7 +117,7 @@ TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Generate Paging with unknown tac but assist data for paging
   ngap_message paging_msg = generate_valid_paging_message();
@@ -195,7 +137,7 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
-  cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
   // Generate Paging
   ngap_message paging_msg = generate_invalid_paging_message();
@@ -358,7 +300,7 @@ TEST_F(cu_cp_test,
       generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
 
   // Inject F1AP UE Context Release Complete
-  cu_cp_obj->get_connected_dus()
+  cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
       .handle_message(generate_ue_context_release_complete(cu_ue_id, du_ue_id));
@@ -387,7 +329,7 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Request
-  cu_cp_obj->get_connected_dus()
+  cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
       .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
@@ -417,10 +359,10 @@ TEST_F(
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 1);
 
   // Inject UE Context Release Request
-  cu_cp_obj->get_connected_dus()
+  cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
       .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
@@ -435,13 +377,13 @@ TEST_F(
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
 
   // Inject UE Context Release Complete
-  cu_cp_obj->get_connected_dus()
+  cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
       .handle_message(generate_ue_context_release_complete(cu_ue_id, du_ue_id));
 
   // Check that the UE was removed
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -476,13 +418,13 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 
     // Inject Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
 
     // Inject UL RRC message containing RRC Setup Complete
     f1ap_message ul_rrc_msg =
         generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, generate_rrc_setup_complete());
     test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
     // check that the UE Context Release Request was sent to the AMF
     ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
@@ -494,7 +436,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   }
 
   // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 2U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
 }
 
 TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
@@ -524,13 +466,13 @@ TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
 
     // Inject Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message (RRC Reestablishment Request)");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
 
     // Inject UL RRC message containing RRC Setup Complete
     f1ap_message ul_rrc_msg =
         generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, generate_rrc_setup_complete());
     test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
     // check that the UE Context Release Request was sent to the AMF
     ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
@@ -542,7 +484,7 @@ TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
   }
 
   // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 2U);
+  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
 }
 
 TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
@@ -576,13 +518,13 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
 
     // Inject Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message (RRC Reestablishment Request)");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
 
     // Inject UL RRC message containing RRC Reestablishment Complete
     f1ap_message ul_rrc_msg =
         generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, make_byte_buffer("00001800df0061cd"));
     test_logger.info("Injecting UL RRC message (RRC Reestablishment Complete)");
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
     // check that the Bearer Context Modification Request Message was sent to the CU-UP
     ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -592,8 +534,9 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     // Inject Bearer Context Modification Response
     e1ap_message bearer_context_mod_resp =
         generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-    cu_cp_obj->get_cu_cp_cu_up_connection_interface()
-        .get_e1ap_message_handler(uint_to_cu_up_index(0))
+    cu_cp_obj->get_e1_handler()
+        .get_cu_up(uint_to_cu_up_index(0))
+        .get_e1ap_message_handler()
         .handle_message(bearer_context_mod_resp);
 
     // check that the UE Context Modification Request Message was sent to the DU
@@ -603,7 +546,7 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
 
     // Inject UE Context Modification Response
     f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(cu_ue_id_2, du_ue_id_2);
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
 
     // check that the Bearer Context Modification was sent to the CU-UP
     ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -611,8 +554,9 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
               asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 
     // Inject Bearer Context Modification Response
-    cu_cp_obj->get_cu_cp_cu_up_connection_interface()
-        .get_e1ap_message_handler(uint_to_cu_up_index(0))
+    cu_cp_obj->get_e1_handler()
+        .get_cu_up(uint_to_cu_up_index(0))
+        .get_e1ap_message_handler()
         .handle_message(bearer_context_mod_resp);
 
     // check that the RRC Reconfiguration was sent to the DU
@@ -649,7 +593,10 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject E1AP Bearer Context Setup Response
   e1ap_message bearer_ctxt_setup_resp =
       generate_bearer_context_setup_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-  cu_cp_obj->get_e1ap_message_handler(uint_to_cu_up_index(0)).handle_message(bearer_ctxt_setup_resp);
+  cu_cp_obj->get_e1_handler()
+      .get_cu_up(uint_to_cu_up_index(0))
+      .get_e1ap_message_handler()
+      .handle_message(bearer_ctxt_setup_resp);
 
   // Check that the UE Context Setup Request Message was sent to the DU
   ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
@@ -660,7 +607,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject F1AP UE Context Setup Response
   f1ap_message ue_ctxt_setup_resp =
       generate_ue_context_setup_response(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_ctxt_setup_resp);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ue_ctxt_setup_resp);
 
   // Check that the Bearer Context Modification Request Message was sent to the CU-UP
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -671,7 +618,10 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject E1AP Bearer Context Modification Response
   e1ap_message bearer_ctxt_mod_resp =
       generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-  cu_cp_obj->get_e1ap_message_handler(uint_to_cu_up_index(0)).handle_message(bearer_ctxt_mod_resp);
+  cu_cp_obj->get_e1_handler()
+      .get_cu_up(uint_to_cu_up_index(0))
+      .get_e1ap_message_handler()
+      .handle_message(bearer_ctxt_mod_resp);
 
   // Check that the Handover Request Ack was sent to the AMF
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
@@ -684,7 +634,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject RRC Reconfiguration Complete with transaction_id=0
   f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
       int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("800008004e17dae3"));
-  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(rrc_recfg_complete);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(rrc_recfg_complete);
 
   // Check that the Handover Notify was sent to the AMF
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);

@@ -28,7 +28,6 @@
 namespace srsran {
 
 class task_executor;
-class tx_buffer_pool;
 
 std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
 build_phy_fapi_adaptor(unsigned                                                           sector_id,
@@ -45,7 +44,6 @@ build_phy_fapi_adaptor(unsigned                                                 
                        const fapi::carrier_config&                                        carrier_cfg,
                        std::unique_ptr<fapi_adaptor::precoding_matrix_repository>         pm_repo,
                        std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository> part2_repo,
-                       tx_buffer_pool&                                                    buffer_pool,
                        std::vector<uint8_t>                                               prach_ports);
 
 std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>

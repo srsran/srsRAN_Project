@@ -38,6 +38,8 @@ namespace ofh {
 
 /// Downlink handler implementation configuration.
 struct downlink_handler_impl_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Downlink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Optional TDD configuration.
@@ -73,10 +75,14 @@ public:
   // See interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
 
+  // See interface for documentation.
+  void set_error_notifier(error_notifier& notifier) override { err_notifier = std::ref(notifier); }
+
   /// Returns the OTA symbol boundary notifier of this downlink handler implementation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() { return window_checker; }
 
 private:
+  const unsigned                                        sector_id;
   srslog::basic_logger&                                 logger;
   const cyclic_prefix                                   cp;
   const optional<tdd_ul_dl_config_common>               tdd_config;
@@ -86,6 +92,7 @@ private:
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;
   ether::eth_frame_pool&                                frame_pool;
+  std::reference_wrapper<error_notifier>                err_notifier;
 };
 
 } // namespace ofh

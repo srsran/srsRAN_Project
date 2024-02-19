@@ -30,6 +30,8 @@
 #include "zmq/radio_factory_zmq_impl.h"
 #endif // ENABLE_ZMQ
 
+#include "plugin_radio_factory.h"
+
 using namespace srsran;
 
 namespace {
@@ -39,8 +41,6 @@ struct radio_factory_entry {
   std::function<std::unique_ptr<radio_factory>()> make;
 };
 
-} // namespace
-
 static const std::vector<radio_factory_entry> radio_factory_available_factories = {
 #ifdef ENABLE_UHD
     {"uhd", []() { return std::make_unique<radio_factory_uhd_impl>(); }},
@@ -49,6 +49,8 @@ static const std::vector<radio_factory_entry> radio_factory_available_factories 
     {"zmq", []() { return std::make_unique<radio_factory_zmq_impl>(); }},
 #endif // ENABLE_ZMQ
 };
+
+} // namespace
 
 void srsran::print_available_radio_factories()
 {
@@ -73,11 +75,6 @@ void srsran::print_available_radio_factories()
 
 std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_name)
 {
-  if (radio_factory_available_factories.empty()) {
-    fmt::print("No radio devices available.\n");
-    return nullptr;
-  }
-
   // Convert driver name to lower case.
   for (char& c : driver_name) {
     c = std::tolower(c);
@@ -88,6 +85,12 @@ std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_n
     if (entry.name == driver_name) {
       return entry.make();
     }
+  }
+
+  // Try creating a plugin radio factory.
+  auto factory = create_plugin_radio_factory(driver_name);
+  if (factory) {
+    return factory;
   }
 
   // No match, print available factories.

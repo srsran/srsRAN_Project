@@ -1882,8 +1882,6 @@ inline slot_indication_message build_slot_indication_message(unsigned sfn, unsig
 inline error_indication_message
 build_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id, error_code_id error_id)
 {
-  srsran_assert(error_id != error_code_id::out_of_sync, "OUT OF SYNC error is not allowed in this builder");
-
   error_indication_message msg;
 
   msg.message_type  = message_type_id::error_indication;

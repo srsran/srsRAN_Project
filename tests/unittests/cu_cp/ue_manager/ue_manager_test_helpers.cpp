@@ -42,10 +42,10 @@ ue_manager_test::~ue_manager_test()
   srslog::flush();
 }
 
-ue_index_t ue_manager_test::create_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
+ue_index_t ue_manager_test::create_ue(du_index_t du_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {
-  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
-  auto*      ue       = ue_mng.add_ue(ue_index, pci, rnti);
+  ue_index_t ue_index = ue_mng.add_ue(du_index);
+  auto*      ue       = ue_mng.set_ue_du_context(ue_index, du_id, pci, rnti);
   if (ue == nullptr) {
     test_logger.error("Failed to create UE with pci={} and rnti={}", pci, rnti);
     return ue_index_t::invalid;

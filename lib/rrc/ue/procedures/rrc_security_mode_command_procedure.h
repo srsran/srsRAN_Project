@@ -25,7 +25,7 @@
 #include "../rrc_ue_context.h"
 #include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/async_task.h"

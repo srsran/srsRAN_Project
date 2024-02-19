@@ -29,6 +29,7 @@ using namespace srsran;
 
 ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependencies&& dependencies) :
   timing_notifier(config.nof_slot_offset_du_ru, config.nof_symbols_per_slot, *dependencies.timing_notifier),
+  error_handler(*dependencies.error_notifier),
   sectors(std::move(dependencies.sectors)),
   ofh_timing_mngr(std::move(dependencies.timing_mngr)),
   controller(*dependencies.logger,
@@ -61,6 +62,8 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
                 "Invalid sector");
   srsran_assert(dependencies.timing_notifier, "Invalid timing notifier");
   srsran_assert(ofh_timing_mngr, "Invalid Open Fronthaul timing manager");
+  srsran_assert(dependencies.timing_notifier, "Invalid timing notifier");
+  srsran_assert(dependencies.error_notifier, "Invalid error notifier");
 
   // Subscribe the OTA symbol boundary notifiers.
   std::vector<ofh::ota_symbol_boundary_notifier*> notifiers;
@@ -72,6 +75,9 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
   for (auto& sector : sectors) {
     notifiers.push_back(&sector->get_transmitter().get_ota_symbol_boundary_notifier());
     notifiers.push_back(&sector->get_receiver().get_ota_symbol_boundary_notifier());
+
+    // Configure the error handler for the OFH sectors.
+    sector->set_error_notifier(error_handler);
   }
 
   ofh_timing_mngr->get_ota_symbol_boundary_notifier_manager().subscribe(notifiers);

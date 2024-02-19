@@ -71,7 +71,7 @@ public:
   ///
   /// \param slot[in]    Current slot
   /// \param cp[in]      Cyclic prefix type
-  /// \param n_id[in]    Higher layer parameter hopingID if configured, physical cell id otherwise
+  /// \param n_id[in]    Higher layer parameter hoppingID if configured, physical cell id otherwise
   /// \param symbol[in]  OFDM symbol index in the slot
   /// \param m0[in]      Initial cyclic shift
   /// \param m_cs[in]    Cyclic shift

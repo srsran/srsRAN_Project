@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/support/async/event_signal.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
 

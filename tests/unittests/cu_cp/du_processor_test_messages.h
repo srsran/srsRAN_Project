@@ -32,7 +32,7 @@ namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
 void generate_valid_f1_setup_request(du_setup_request& setup_request,
-                                     unsigned          gnb_du_id = 0x11,
+                                     gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
                                      unsigned          nrcell_id = 6576,
                                      pci_t             pci       = 0);
 
@@ -48,7 +48,8 @@ void         generate_f1_setup_request_with_too_many_cells(du_setup_request& set
 /// \param[in] c_rnti The C-RNTI to use.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy UE Creation Message.
-cu_cp_ue_creation_message generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
+ue_rrc_context_creation_request
+generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
 
 /// \brief Generate a dummy UE Context Release Command.
 /// \param[in] ue_index The UE Index to use.

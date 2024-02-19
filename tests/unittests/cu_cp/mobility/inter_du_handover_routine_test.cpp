@@ -71,20 +71,20 @@ protected:
                                          srb_id_t::srb1,
                                          make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699"));
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
-    cu_cp_obj->get_connected_dus().get_du(source_du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
   }
 
   /// \brief Start the inter-DU handover procedure.
   void start_procedure(const cu_cp_inter_du_handover_request& msg)
   {
     // Not needed anymore
-    t = cu_cp_obj->get_connected_dus()
+    t = cu_cp_obj->get_f1c_handler()
             .get_du(source_du_index)
             .get_mobility_handler()
             .handle_inter_du_handover_request(
                 msg,
-                cu_cp_obj->get_connected_dus().get_du(target_du_index).get_f1ap_ue_context_notifier(),
-                cu_cp_obj->get_connected_dus().get_du(target_du_index).get_du_processor_ue_context_notifier());
+                cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_f1ap_ue_context_notifier(),
+                cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_du_processor_ue_context_notifier());
     t_launcher.emplace(t);
   }
 
@@ -93,7 +93,7 @@ protected:
   {
     f1ap_message ue_context_setup_fail =
         generate_ue_context_setup_failure(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_connected_dus()
+    cu_cp_obj->get_f1c_handler()
         .get_du(target_du_index)
         .get_f1ap_message_handler()
         .handle_message(ue_context_setup_fail);
@@ -115,7 +115,7 @@ protected:
             "38ffd294a5294f28160000219760000000000005000001456aa28023800c00041000710804e20070101084000e21009c200e040220"
             "8001c420138401c0c042100038840270c038200882000710804e18004000000410c04080c100e0d0000e388000000400800100c001"
             "0120044014c00004620090e3800c"));
-    cu_cp_obj->get_connected_dus()
+    cu_cp_obj->get_f1c_handler()
         .get_du(target_du_index)
         .get_f1ap_message_handler()
         .handle_message(ue_context_setup_fail);
@@ -126,7 +126,7 @@ protected:
   {
     e1ap_message bearer_context_modification_fail =
         generate_bearer_context_modification_failure(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_connected_cu_ups()
+    cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
         .get_e1ap_message_handler()
         .handle_message(bearer_context_modification_fail);
@@ -137,7 +137,7 @@ protected:
   {
     e1ap_message bearer_context_modification_resp =
         generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_connected_cu_ups()
+    cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
         .get_e1ap_message_handler()
         .handle_message(bearer_context_modification_resp);
@@ -148,7 +148,7 @@ protected:
   {
     e1ap_message bearer_context_release_complete =
         generate_bearer_context_release_complete(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_connected_cu_ups()
+    cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
         .get_e1ap_message_handler()
         .handle_message(bearer_context_release_complete);
@@ -159,10 +159,7 @@ protected:
   {
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));
-    cu_cp_obj->get_connected_dus()
-        .get_du(target_du_index)
-        .get_f1ap_message_handler()
-        .handle_message(rrc_recfg_complete);
+    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_f1ap_message_handler().handle_message(rrc_recfg_complete);
   }
 
   /// \brief Inject UE Context Release Complete.
@@ -170,7 +167,7 @@ protected:
   {
     f1ap_message ue_context_release_complete =
         generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(
         ue_context_release_complete);
   }
 
@@ -188,22 +185,23 @@ protected:
 
   nr_cell_global_id_t get_target_cgi() { return target_cgi; }
 
-  size_t get_nof_ues_in_target_du()
-  {
-    return cu_cp_obj->get_connected_dus().get_du(target_du_index).get_f1ap_statistics_handler().get_nof_ues();
-  }
-  size_t get_nof_ues_in_source_du()
-  {
-    return cu_cp_obj->get_connected_dus().get_du(source_du_index).get_f1ap_statistics_handler().get_nof_ues();
-  }
+  size_t get_nof_ues_in_target_du() const { return nof_du_ues(target_du_index); }
+  size_t get_nof_ues_in_source_du() const { return nof_du_ues(source_du_index); }
 
 private:
+  size_t nof_du_ues(du_index_t idx) const
+  {
+    const metrics_report report = cu_cp_obj->get_metrics_handler().request_metrics_report();
+    gnb_du_id_t          du_id  = report.dus.at((size_t)idx).id;
+    return std::count_if(report.ues.begin(), report.ues.end(), [du_id](const auto& u) { return u.du_id == du_id; });
+  }
+
   // source DU parameters.
   du_index_t source_du_index = uint_to_du_index(0);
 
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
-  unsigned            target_du_id     = 0x22;
+  gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
   nr_cell_id_t        target_nrcell_id = 34;
   nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x22};
   unsigned            target_pci       = 2;

@@ -66,6 +66,8 @@ struct symbol_handler_config {
 
 /// Open Fronthaul transmitter configuration.
 struct transmitter_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Channel bandwidth.
   bs_channel_bandwidth_fr1 bw;
   /// Subcarrier spacing.

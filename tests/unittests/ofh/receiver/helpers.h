@@ -35,10 +35,11 @@ class prach_buffer_dummy : public prach_buffer
 {
   unsigned                 nof_symbols;
   static_vector<cf_t, 839> buffer;
+  mutable bool             symbol_out_of_bounds;
 
 public:
   prach_buffer_dummy(unsigned nof_symbols_, bool long_format = true) :
-    nof_symbols((nof_symbols_ == 0) ? 1 : nof_symbols_), buffer(long_format ? 839 : 139)
+    nof_symbols((nof_symbols_ == 0) ? 1 : nof_symbols_), buffer(long_format ? 839 : 139), symbol_out_of_bounds(false)
   {
   }
 
@@ -60,8 +61,13 @@ public:
   span<const cf_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
+    if (i_symbol >= nof_symbols) {
+      symbol_out_of_bounds = true;
+    }
     return buffer;
   }
+
+  bool correct_symbols_requested() const { return !symbol_out_of_bounds; }
 };
 
 /// Spy implementation of the resource grid writer that returns if the functions were called.

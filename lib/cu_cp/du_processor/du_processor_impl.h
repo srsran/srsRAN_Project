@@ -39,7 +39,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor_impl_interface, public du_setup_handler
+class du_processor_impl : public du_processor_impl_interface, public du_setup_handler, public du_metrics_handler
 {
 public:
   du_processor_impl(const du_processor_config_t&        du_processor_config_,
@@ -67,11 +67,11 @@ public:
   size_t get_nof_ues() const override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
-  du_setup_result              handle_du_setup_request(const du_setup_request& req) override;
-  ue_index_t                   get_new_ue_index() override;
-  ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) override;
+  du_setup_result handle_du_setup_request(const du_setup_request& req) override;
+  ue_index_t      allocate_new_ue_index() override;
+  ue_rrc_context_creation_response
+       handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
-  ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   // du_processor_ue_context_notifier
   async_task<cu_cp_ue_context_release_complete>
@@ -114,6 +114,8 @@ public:
     task_sched.schedule_async_task(ue_index, std::move(task));
   }
 
+  metrics_report::du_info handle_du_metrics_report_request() const override;
+
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
@@ -133,6 +135,7 @@ public:
   {
     return f1ap_ue_context_notifier;
   }
+  du_metrics_handler& get_metrics_handler() override { return *this; }
 
 private:
   /// \brief Create RRC UE object for given UE.

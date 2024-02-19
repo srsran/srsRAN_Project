@@ -23,6 +23,7 @@ Validate Test Mode
 """
 
 import logging
+import tempfile
 from pathlib import Path
 from time import sleep
 
@@ -51,9 +52,9 @@ from .steps.stub import FIVEGC_STARTUP_TIMEOUT, GNB_STARTUP_TIMEOUT, handle_star
         param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 4", 4, id="Test UE 4x4 Rank 4"),
     ),
 )
-@mark.testmode
+@mark.test_mode
 # pylint: disable=too-many-arguments
-def test_mode(
+def test_ue(
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -85,7 +86,7 @@ def test_mode(
                 "log_level": "warning",
                 "pcap": False,
             },
-            "templates": {"cell": str(Path(__file__).joinpath("../test_mode/config.yml").resolve())},
+            "templates": {"cell": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve())},
         },
     }
     retina_manager.parse_configuration(retina_data.test_config)
@@ -130,6 +131,85 @@ def test_mode(
         tuple(),
         gnb,
         fivegc,
+        retina_data,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        warning_as_errors=warning_as_errors,
+        fail_if_kos=fail_if_kos,
+    )
+
+
+@mark.test_mode
+# pylint: disable=too-many-arguments
+def test_ru(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+    # Test
+    nof_ant: int = 4,
+    duration: int = 5 * 60,
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
+    fail_if_kos: bool = True,
+):  # pylint: disable=too-many-locals
+    """
+    Run gnb in test mode.
+    """
+
+    # Configuration
+    with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
+        tmp_file.write(" ")  # Make it not empty to overwrite default one
+        tmp_file.flush()
+        retina_data.test_config = {
+            "gnb": {
+                "parameters": {
+                    "gnb_id": 1,
+                    "log_level": "warning",
+                    "pcap": False,
+                },
+                "templates": {
+                    "cell": str(Path(__file__).joinpath("../test_mode/config_ru.yml").resolve()),
+                    "ru": tmp_file.name,
+                },
+            },
+        }
+        retina_manager.parse_configuration(retina_data.test_config)
+        retina_manager.push_all_config()
+
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+    )
+
+    # GNB Start
+    with handle_start_error(name=f"GNB [{id(gnb)}]"):
+        gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
+        gnb.Start(
+            GNBStartInfo(
+                plmn=PLMN(mcc="001", mnc="01"),
+                ue_definition=UEDefinition(zmq_ip=gnb_def.zmq_ip, zmq_port_array=gnb_def.zmq_port_array[:nof_ant]),
+                fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
+                start_info=StartInfo(
+                    timeout=gnb_startup_timeout,
+                    post_commands="amf --no_core 1",
+                ),
+            )
+        )
+
+    logging.info("Running Test Mode for %s seconds", duration)
+    sleep(duration)
+
+    # Stop
+    stop(
+        tuple(),
+        gnb,
+        None,
         retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,

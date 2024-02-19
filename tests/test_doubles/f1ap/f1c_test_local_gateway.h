@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/du_repository.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
 
@@ -67,9 +67,9 @@ class f1c_test_local_gateway : public srs_du::f1c_connection_client
 {
 public:
   f1c_test_local_gateway() = default;
-  explicit f1c_test_local_gateway(srs_cu_cp::du_repository& cu_cp_du_mng_) : cu_cp_du_mng(&cu_cp_du_mng_) {}
+  explicit f1c_test_local_gateway(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_) : cu_cp_du_mng(&cu_cp_du_mng_) {}
 
-  void attach_cu_cp_du_repo(srs_cu_cp::du_repository& cu_cp_du_mng_) { cu_cp_du_mng = &cu_cp_du_mng_; }
+  void attach_cu_cp_du_repo(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_) { cu_cp_du_mng = &cu_cp_du_mng_; }
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override
@@ -112,7 +112,7 @@ private:
     std::vector<f1ap_message> last_du_rx_pdus;
   };
 
-  srs_cu_cp::du_repository* cu_cp_du_mng = nullptr;
+  srs_cu_cp::cu_cp_f1c_handler* cu_cp_du_mng = nullptr;
 
   std::vector<std::unique_ptr<du_connection_test_context>> connections;
 };

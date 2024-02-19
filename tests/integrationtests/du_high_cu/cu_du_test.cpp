@@ -71,14 +71,14 @@ protected:
     cu_cp_obj = create_cu_cp(cu_cfg);
 
     // Create AMF response to NG Setup.
-    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_cu_cp_ngap_connection_interface().get_ngap_message_handler());
+    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_ng_handler().get_ngap_message_handler());
     amf->enqueue_next_tx_pdu(srs_cu_cp::generate_ng_setup_response());
 
     // Start CU-CP.
     cu_cp_obj->start();
 
     // Attach F1-C gateway to CU-CP.
-    f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
+    f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_f1c_handler());
 
     // create and start DU
     phy_dummy phy;
@@ -105,14 +105,16 @@ public:
   srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
   f1c_test_local_gateway f1c_gw{};
 
-  std::unique_ptr<srs_cu_cp::mock_amf>        amf{srs_cu_cp::create_mock_amf()};
-  std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
-  std::unique_ptr<du_high>                    du_obj;
+  std::unique_ptr<srs_cu_cp::mock_amf> amf{srs_cu_cp::create_mock_amf()};
+  std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_obj;
+  std::unique_ptr<du_high>             du_obj;
 };
 
 /// Test the f1 setup procedure was successful
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
   // check that DU has been added
-  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1);
+  auto report = cu_cp_obj->get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus.size(), 1);
+  ASSERT_EQ(report.dus[0].cells.size(), 1);
 }

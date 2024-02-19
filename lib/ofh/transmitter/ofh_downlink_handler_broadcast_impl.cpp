@@ -22,15 +22,31 @@
 
 #include "ofh_downlink_handler_broadcast_impl.h"
 #include "helpers.h"
+#include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 
 using namespace srsran;
 using namespace ofh;
 
+namespace {
+
+/// Open Fronthaul error notifier dummy implementation.
+class error_notifier_dummy : public error_notifier
+{
+public:
+  void on_late_downlink_message(const error_context& context) override {}
+};
+
+} // namespace
+
+/// Dummy error notifier for the downlink handler construction.
+static error_notifier_dummy dummy_err_notifier;
+
 downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
     const downlink_handler_broadcast_impl_config&  config,
     downlink_handler_broadcast_impl_dependencies&& dependencies) :
+  sector_id(config.sector),
   logger(*dependencies.logger),
   cp(config.cp),
   tdd_config(config.tdd_config),
@@ -43,7 +59,8 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
       get_nsymb_per_slot(config.cp),
       to_numerology_value(config.scs)),
   frame_pool_ptr(dependencies.frame_pool_ptr),
-  frame_pool(*frame_pool_ptr)
+  frame_pool(*frame_pool_ptr),
+  err_notifier(dummy_err_notifier)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
@@ -54,9 +71,10 @@ void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context
                                                      const resource_grid_reader&  grid)
 {
   // Clear any stale buffers associated with the context slot.
-  frame_pool.clear_slot(context.slot);
+  frame_pool.clear_downlink_slot(context.slot, logger);
 
   if (window_checker.is_late(context.slot)) {
+    err_notifier.get().on_late_downlink_message({context.slot, sector_id});
     logger.warning(
         "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",
         context.slot,

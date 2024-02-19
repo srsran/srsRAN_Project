@@ -469,6 +469,11 @@ TEST_P(EthFramePoolFixture, pool_should_have_enough_space)
 
 TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("OFH_TEST", false);
+  logger.set_level(srslog::basic_levels::debug);
+
+  size_t pool_size_slots = pool.pool_size_in_slots();
+
   slot_point slot(to_numerology_value(scs), 0);
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
@@ -490,8 +495,9 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
         }
         pool.push_frame_buffers(ctx, frame_buffers);
       }
-      // Clear full slot in the pool and try to get buffers again.
-      pool.clear_slot(slot);
+      // Increase slot by pool size, clear stale buffers in the pool and try to get buffers again.
+      auto wrapped_slot = slot + pool_size_slots;
+      pool.clear_downlink_slot(wrapped_slot, logger);
       for (unsigned i = 0; i != nof_requested_buffers; ++i) {
         span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
         ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
@@ -518,7 +524,7 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
         pool.push_frame_buffers(ctx, frame_buffers);
       }
       // Clear full slot in the pool and try to get buffers again.
-      pool.clear_slot(slot);
+      pool.clear_uplink_slot(wrapped_slot, logger);
       for (unsigned i = 0; i != nof_requested_buffers; ++i) {
         span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
         ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";

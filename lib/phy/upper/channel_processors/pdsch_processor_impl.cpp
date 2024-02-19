@@ -22,14 +22,12 @@
 
 #include "pdsch_processor_impl.h"
 #include "pdsch_processor_validator_impl.h"
-#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 
 void pdsch_processor_impl::process(resource_grid_mapper&                                        mapper,
-                                   unique_tx_buffer                                             rm_buffer,
                                    pdsch_processor_notifier&                                    notifier,
                                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                    const pdsch_processor::pdu_t&                                pdu)
@@ -59,7 +57,7 @@ void pdsch_processor_impl::process(resource_grid_mapper&                        
   // Encode each codeword.
   for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
     unsigned          nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
-    const bit_buffer& codeword = encode(*rm_buffer, data[codeword_id], codeword_id, nof_layers_cw, nof_re_pdsch, pdu);
+    const bit_buffer& codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, nof_re_pdsch, pdu);
 
     codewords.emplace_back(codeword);
   }
@@ -98,8 +96,7 @@ unsigned pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
   return nof_grid_re - nof_reserved_re;
 }
 
-const bit_buffer& pdsch_processor_impl::encode(tx_buffer&          rm_buffer,
-                                               span<const uint8_t> data,
+const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
                                                unsigned            codeword_id,
                                                unsigned            nof_layers,
                                                unsigned            Nre,
@@ -112,7 +109,6 @@ const bit_buffer& pdsch_processor_impl::encode(tx_buffer&          rm_buffer,
 
   // Prepare encoder configuration.
   pdsch_encoder::configuration encoder_config;
-  encoder_config.new_data       = pdu.codewords[codeword_id].new_data;
   encoder_config.base_graph     = pdu.ldpc_base_graph;
   encoder_config.rv             = rv;
   encoder_config.mod            = modulation;
@@ -124,7 +120,7 @@ const bit_buffer& pdsch_processor_impl::encode(tx_buffer&          rm_buffer,
   span<uint8_t> codeword = tmp_codeword.first(Nre * nof_layers * get_bits_per_symbol(modulation));
 
   // Encode codeword.
-  encoder->encode(codeword, rm_buffer, data, encoder_config);
+  encoder->encode(codeword, data, encoder_config);
 
   // Pack encoded bits.
   temp_packed_codewords[codeword_id].resize(codeword.size());

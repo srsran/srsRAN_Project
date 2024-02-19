@@ -96,6 +96,7 @@ public:
     buffer_context.nof_td_occasions = 1;
     buffer_context.nof_fd_occasions = 1;
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
+    buffer_context.start_symbol     = 0;
 
     repo->add(buffer_context, buffer);
 

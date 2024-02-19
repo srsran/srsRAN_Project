@@ -34,7 +34,8 @@ namespace srs_cu_cp {
 asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcell_id, pci_t nrpci);
 
 /// \brief Generates dummy F1AP SETUP REQUEST message.
-f1ap_message generate_f1_setup_request(unsigned gnb_du_id = 0x11, unsigned nrcell_id = 6576, pci_t pci = 0);
+f1ap_message
+generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(0x11), unsigned nrcell_id = 6576, pci_t pci = 0);
 
 /// \brief Generates dummy F1AP Initial UL RRC Transfer message without DU to CU container.
 f1ap_message generate_init_ul_rrc_message_transfer_without_du_to_cu_container(gnb_du_ue_f1ap_id_t du_ue_id,

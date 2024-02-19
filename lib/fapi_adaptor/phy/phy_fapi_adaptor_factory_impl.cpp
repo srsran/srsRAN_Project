@@ -44,7 +44,6 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
   adaptor_dependencies.dl_processor_pool    = dependencies.dl_processor_pool;
   adaptor_dependencies.dl_rg_pool           = dependencies.dl_rg_pool;
   adaptor_dependencies.dl_pdu_validator     = dependencies.dl_pdu_validator;
-  adaptor_dependencies.buffer_pool          = dependencies.buffer_pool;
   adaptor_dependencies.ul_request_processor = dependencies.ul_request_processor;
   adaptor_dependencies.ul_rg_pool           = dependencies.ul_rg_pool;
   adaptor_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;

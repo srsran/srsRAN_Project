@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/any.h"
-#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"

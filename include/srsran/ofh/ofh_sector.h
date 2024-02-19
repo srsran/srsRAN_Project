@@ -26,6 +26,7 @@ namespace srsran {
 namespace ofh {
 
 class controller;
+class error_notifier;
 class receiver;
 class transmitter;
 
@@ -45,6 +46,9 @@ public:
 
   /// Returns the Open Fronthaul controller of this sector.
   virtual controller& get_controller() = 0;
+
+  /// Sets the error notifier of this sector to the given one.
+  virtual void set_error_notifier(error_notifier& notifier) = 0;
 };
 
 } // namespace ofh

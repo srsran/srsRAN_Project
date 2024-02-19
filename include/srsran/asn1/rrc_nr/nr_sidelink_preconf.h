@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "dl_dcch_msg.h"
+#include "dl_ccch_msg_ies.h"
 
 namespace asn1 {
 namespace rrc_nr {

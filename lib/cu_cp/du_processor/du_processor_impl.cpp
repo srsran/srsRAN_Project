@@ -91,10 +91,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   du_setup_result res;
 
   // Set DU context
-  context.id = request.gnb_du_id;
-  if (request.gnb_du_name.has_value()) {
-    context.name = request.gnb_du_name.value();
-  }
+  context.id   = request.gnb_du_id;
+  context.name = request.gnb_du_name;
 
   // Check if CU-CP is in a state to accept a new DU connection.
   if (not cfg.du_setup_notif->on_du_setup_request(request)) {
@@ -186,9 +184,9 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   return res;
 }
 
-ue_index_t du_processor_impl::get_new_ue_index()
+ue_index_t du_processor_impl::allocate_new_ue_index()
 {
-  return ue_manager.allocate_new_ue_index(context.du_index);
+  return ue_manager.add_ue(context.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -259,82 +257,47 @@ bool du_processor_impl::create_rrc_ue(du_ue&                            ue,
   return true;
 }
 
-ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const cu_cp_ue_creation_message& msg)
+ue_rrc_context_creation_response
+du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req)
 {
-  srsran_assert(msg.ue_index != ue_index_t::invalid, "Invalid UE index", msg.ue_index);
-  srsran_assert(srsran::config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
-  srsran_assert(msg.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.ue_index);
-
-  ue_creation_complete_message ue_creation_complete_msg = {};
-  ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
+  srsran_assert(req.ue_index != ue_index_t::invalid, "Invalid UE index");
+  srsran_assert(req.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", req.ue_index);
+  srsran_assert(config_helpers::is_valid(req.cgi), "ue={}: Invalid CGI", req.ue_index);
 
   // Check that creation message is valid
-  du_cell_index_t pcell_index = find_cell(msg.cgi.nci);
+  du_cell_index_t pcell_index = find_cell(req.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    logger.warning("ue={}: Could not find cell with cell_id={}", msg.ue_index, msg.cgi.nci);
-    return ue_creation_complete_msg;
+    logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
+    cu_cp_notifier.on_ue_removal_required(req.ue_index);
+    return {};
   }
+  const pci_t pci = cell_db.at(pcell_index).pci;
 
-  // Check that the PCI is valid
-  pci_t pci = cell_db.at(pcell_index).pci;
-  if (pci == INVALID_PCI) {
-    logger.warning("ue={} pci={}: Invalid PCI", msg.ue_index, pci);
-    return ue_creation_complete_msg;
-  }
-
-  // Create new UE context
-  du_ue* ue = ue_manager.add_ue(msg.ue_index, pci, msg.c_rnti);
+  // Create new UE RRC context
+  du_ue* ue = ue_manager.set_ue_du_context(req.ue_index, context.id, pci, req.c_rnti);
   if (ue == nullptr) {
-    logger.warning("ue={}: Could not create UE context", msg.ue_index);
-    return ue_creation_complete_msg;
+    logger.warning("ue={}: Could not create UE context", req.ue_index);
+    return {};
   }
-
-  // Set parameters from creation message
   ue->set_pcell_index(pcell_index);
 
   // Create RRC UE. If the DU-to-CU-RRC-Container is empty, the UE will be rejected.
-  if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), std::move(msg.rrc_context)) == false) {
-    logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
-    return ue_creation_complete_msg;
+  if (not create_rrc_ue(*ue, req.c_rnti, req.cgi, req.du_to_cu_rrc_container.copy(), std::move(req.prev_context))) {
+    logger.warning("ue={}: Could not create RRC UE object", req.ue_index);
+    return {};
   }
-  rrc_ue_interface* rrc_ue           = rrc->find_ue(msg.ue_index);
-  f1ap_rrc_ue_adapters[msg.ue_index] = {};
-  f1ap_rrc_ue_adapters.at(msg.ue_index)
+  rrc_ue_interface* rrc_ue           = rrc->find_ue(req.ue_index);
+  f1ap_rrc_ue_adapters[req.ue_index] = {};
+  f1ap_rrc_ue_adapters.at(req.ue_index)
       .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
-  ue_creation_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
 
-  logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), msg.c_rnti);
+  // Signal back to F1AP that the UE was successfully created.
+  ue_rrc_context_creation_response response;
+  response.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(req.ue_index);
 
-  ue_creation_complete_msg.ue_index = ue->get_ue_index();
+  logger.info("ue={} c-rnti={}: UE created", ue->get_ue_index(), req.c_rnti);
 
-  return ue_creation_complete_msg;
-}
-
-ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_update_message& msg)
-{
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
-  ue_update_complete_message ue_update_complete_msg = {};
-
-  // Create RRC object if it doesn't already exist.
-  if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
-    if (!msg.cell_group_cfg.empty() && msg.c_rnti != rnti_t::INVALID_RNTI) {
-      if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy(), {} /* no previous context */)) {
-        logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
-        return ue_update_complete_msg;
-      }
-
-      rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-      f1ap_rrc_ue_adapters.at(msg.ue_index)
-          .connect_rrc_ue(rrc_ue->get_ul_ccch_pdu_handler(), rrc_ue->get_ul_dcch_pdu_handler());
-      ue_update_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
-    }
-  }
-
-  ue_update_complete_msg.ue_index = ue->get_ue_index();
-
-  return ue_update_complete_msg;
+  return response;
 }
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
@@ -601,4 +564,16 @@ async_task<ngap_handover_resource_allocation_response>
 du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
 {
   return routine_mng->start_inter_cu_handover_target_routine(request, cu_cp_notifier);
+}
+
+metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
+{
+  metrics_report::du_info report;
+  report.id = context.id;
+  for (const auto& cell : cell_db) {
+    report.cells.emplace_back();
+    report.cells.back().cgi = cell.second.cgi;
+    report.cells.back().pci = cell.second.pci;
+  }
+  return report;
 }

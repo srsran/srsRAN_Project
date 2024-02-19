@@ -1,4 +1,3 @@
-
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
@@ -25,11 +24,7 @@ target_compile_options(asn1_utils PRIVATE -fno-exceptions)
 target_link_libraries(asn1_utils srslog srsran_support)
 
 # RRC NR ASN1
-add_library(rrc_nr_asn1 STATIC rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp
-        rrc_nr/msg_common.cpp rrc_nr/dl_dcch_msg.cpp rrc_nr/ul_dcch_msg.cpp rrc_nr/cell_group_config.cpp
-        rrc_nr/nr_ue_variables.cpp rrc_nr/pc5_rrc_definitions.cpp rrc_nr/nr_sidelink_preconf.cpp rrc_nr/rrc_nr.cpp)
-target_compile_options(rrc_nr_asn1 PRIVATE -Os -fno-exceptions)
-target_link_libraries(rrc_nr_asn1 asn1_utils)
+add_subdirectory(rrc_nr)
 
 # F1AP ASN1
 add_library(f1ap_asn1 STATIC f1ap/common.cpp f1ap/f1ap_ies.cpp f1ap/f1ap_pdu_items.cpp f1ap/f1ap_pdu_contents_ue.cpp

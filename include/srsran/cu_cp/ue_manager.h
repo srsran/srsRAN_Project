@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -69,10 +70,10 @@ public:
   virtual rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() = 0;
 
   /// \brief Get the PCI of the UE.
-  virtual pci_t get_pci() = 0;
+  virtual pci_t get_pci() const = 0;
 
   /// \brief Get the C-RNTI of the UE.
-  virtual rnti_t get_c_rnti() = 0;
+  virtual rnti_t get_c_rnti() const = 0;
 
   /// \brief Get the DU index of the UE.
   virtual du_index_t get_du_index() = 0;
@@ -80,8 +81,8 @@ public:
   /// \brief Get the PCell index of the UE.
   virtual du_cell_index_t get_pcell_index() = 0;
 
-  /// \brief Update a UE with PCI and/or C-RNTI.
-  virtual void update_du_ue(pci_t pci_, rnti_t c_rnti_) = 0;
+  /// \brief Update a UE with DU-Id, PCI and/or C-RNTI.
+  virtual void update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_) = 0;
 
   /// \brief Set the PCell infox of the UE.
   /// \param[in] pcell_index PCell index of the UE.
@@ -117,6 +118,9 @@ public:
   /// \param[in] c_rnti The RNTI of the UE.
   virtual ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) = 0;
 
+  /// \brief Allocate and return the UE index of a new UE.
+  virtual ue_index_t add_ue(du_index_t du_index) = 0;
+
   /// \brief Remove the UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
   virtual void remove_ue(ue_index_t ue_index) = 0;
@@ -132,9 +136,6 @@ class du_processor_ue_manager : public common_ue_manager
 public:
   virtual ~du_processor_ue_manager() = default;
 
-  /// \brief Allocate and return the UE index of a new UE.
-  virtual ue_index_t allocate_new_ue_index(du_index_t du_index) = 0;
-
   /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the UE if found, nullptr otherwise.
@@ -143,10 +144,11 @@ public:
   /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE index
   /// was already setup, nulltpr is returned.
   /// \param[in] ue_index Index of the UE to add the notifiers to.
+  /// \param[in] du_id gNB-DU Id of the DU to which UE connected to.
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  virtual du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) = 0;
+  virtual du_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti) = 0;
 
   /// \brief Find the DU UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
@@ -187,10 +189,10 @@ public:
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
   /// \param[in] du_processor_ctrl_notifier DU processor control notifier for the UE.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  virtual ngap_ue* add_ue(ue_index_t                          ue_index,
-                          ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                          ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                          ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
+  virtual ngap_ue* set_ue_ng_context(ue_index_t                          ue_index,
+                                     ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                                     ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                                     ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
