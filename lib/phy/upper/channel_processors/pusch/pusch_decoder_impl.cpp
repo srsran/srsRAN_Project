@@ -248,31 +248,31 @@ void pusch_decoder_impl::on_end_softbits()
 
 void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
 {
-  span<const log_likelihood_ratio> cb_llrs = codeblock_llrs[cb_id].first;
-  const codeblock_metadata&        cb_meta = codeblock_llrs[cb_id].second;
-  srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
+  auto cb_process_task = [this, cb_id]() {
+    span<const log_likelihood_ratio> cb_llrs = codeblock_llrs[cb_id].first;
+    const codeblock_metadata&        cb_meta = codeblock_llrs[cb_id].second;
+    srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
 
-  // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
-  // bits - may contain zero-padding).
-  unsigned cb_length = 0, msg_length = 0, nof_data_bits = 0;
-  std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
+    // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
+    // bits - may contain zero-padding).
+    unsigned cb_length = 0, msg_length = 0, nof_data_bits = 0;
+    std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
 
-  // Get data bits from previous transmissions, if any.
-  // Messages are written on a dedicated buffer associated to the softbuffer. By doing this, we keep the decoded
-  // message in memory and we don't need to compute it again if there is a retransmission.
-  bit_buffer message = unique_rm_buffer->get_codeblock_data_bits(cb_id, msg_length);
+    // Get data bits from previous transmissions, if any.
+    // Messages are written on a dedicated buffer associated to the softbuffer. By doing this, we keep the decoded
+    // message in memory and we don't need to compute it again if there is a retransmission.
+    bit_buffer message = unique_rm_buffer->get_codeblock_data_bits(cb_id, msg_length);
 
-  // Get the LLRs from previous transmissions, if any, or a clean buffer.
-  span<log_likelihood_ratio> rm_buffer = unique_rm_buffer->get_codeblock_soft_bits(cb_id, cb_length);
+    // Get the LLRs from previous transmissions, if any, or a clean buffer.
+    span<log_likelihood_ratio> rm_buffer = unique_rm_buffer->get_codeblock_soft_bits(cb_id, cb_length);
 
-  span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
+    span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
 
-  // Code block processing task.
-  auto cb_process_task = [this, cb_meta, rm_buffer, cb_llrs, &cb_crc = cb_crcs[cb_id], message]() {
+    // Code block processing task.
     trace_point tp = l1_tracer.now();
 
     // Check current CRC status.
-    if (cb_crc) {
+    if (cb_crcs[cb_id]) {
       // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime,
       // including when the CRC for the codeblock is OK (from previous retransmissions), because we may need to
       // decode it again if, eventually, we find out that the CRC of the entire transport block is KO.
@@ -296,7 +296,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
 
     if (nof_iters.has_value()) {
       // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
-      cb_crc = true;
+      cb_crcs[cb_id] = true;
       cb_stats.push_blocking(nof_iters.value());
     } else {
       cb_stats.push_blocking(current_config.nof_ldpc_iterations);
