@@ -81,8 +81,8 @@ struct du_ue_srb {
 
   lcid_t lcid() const { return srb_id_to_lcid(srb_id); }
 
-  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
-  void disconnect();
+  /// \brief Stops SRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
+  void stop();
 };
 
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
@@ -99,8 +99,8 @@ struct du_ue_drb {
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
 
-  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
-  void disconnect();
+  /// \brief Stops DRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
+  void stop();
 };
 
 /// \brief Creates a DRB instance for the whole DU.

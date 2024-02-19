@@ -54,9 +54,10 @@ void du_srb_connector::disconnect()
   rlc_tx_buffer_state_notif.disconnect();
 }
 
-void du_ue_srb::disconnect()
+void du_ue_srb::stop()
 {
   connector.disconnect();
+  rlc_bearer->stop();
 }
 
 void du_drb_connector::connect(du_ue_index_t                       ue_index,
@@ -97,9 +98,10 @@ void du_drb_connector::disconnect()
   rlc_tx_buffer_state_notif.disconnect();
 }
 
-void du_ue_drb::disconnect()
+void du_ue_drb::stop()
 {
   connector.disconnect();
+  rlc_bearer->stop();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                        ue_index,
