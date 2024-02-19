@@ -199,9 +199,10 @@ optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pd
                                                                      .tb_scaling_field = pdsch_params.tb_scaling_field,
                                                                      .n_prb            = nof_prbs});
 
-    dlsch_info.tbs       = static_cast<units::bits>(tbs_bits);
-    dlsch_info.mcs_descr = mcs_info;
-    effective_code_rate  = get_dlsch_information(dlsch_info).get_effective_code_rate();
+    dlsch_info.tbs         = static_cast<units::bits>(tbs_bits);
+    dlsch_info.mcs_descr   = mcs_info;
+    dlsch_info.contains_dc = contains_dc;
+    effective_code_rate    = get_dlsch_information(dlsch_info).get_effective_code_rate();
   }
 
   // If no MCS such that effective code rate <= 0.95, return an empty optional object.
