@@ -272,6 +272,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
+    // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c txDirectCurrentLocation)
+    // is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB, the UE assumes the default
+    // value of 3300 (i.e. "Outside the carrier")".
     bool contains_dc = false;
     if (cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.has_value()) {
       contains_dc = dc_offset_helper::is_contained(

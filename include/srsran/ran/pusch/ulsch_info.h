@@ -85,7 +85,7 @@ struct ulsch_information {
   unsigned nof_csi_part1_re;
   /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\textup{CSI-2}\f$.
   unsigned nof_csi_part2_re;
-  /// Number of bits that are are affected by overlapping with the direct current.
+  /// Number of bits that are affected by overlapping with the direct current.
   units::bits nof_dc_overlap_bits;
 
   /// \brief Calculates the effective code rate normalized between 0 and 1.
@@ -128,9 +128,10 @@ struct ulsch_information {
 
     // Adjust the effective rate matched UL-SCH bits considering the bits overlapped with the DC position.
     if (nof_dc_overlap_bits > 0_bits) {
-      // Ensure the subtraction of overlapped DC bits  does not result in zero or negative.
+      // Ensure the subtraction of overlapped DC bits does not result in zero or a negative value.
       srsran_assert(effective_ul_sch_bits > nof_dc_overlap_bits.value(),
-                    "UL-SCH rate match length bits) must be greater than the bits overlapped with DC position ({}).",
+                    "UL-SCH rate match length bits (i.e. {}) must be greater than the bits overlapped with DC position "
+                    "(i.e. {}).",
                     effective_ul_sch_bits,
                     nof_dc_overlap_bits);
 

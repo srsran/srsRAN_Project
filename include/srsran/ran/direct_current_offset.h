@@ -61,7 +61,7 @@ inline uint16_t pack(dc_offset_t offset, unsigned carrier_nof_rbs)
 /// \param[in] offset          DC offset parameter.
 /// \param[in] carrier_nof_rbs Carrier bandwidth in resource blocks.
 /// \param[in] rbs             Resource block allocation.
-/// \return \c true if the DC position is contained. Otherwise \c false.
+/// \return \c true if the DC position is contained within the allocated CRBs. Otherwise \c false.
 inline bool is_contained(dc_offset_t offset, unsigned carrier_nof_rbs, crb_interval rbs)
 {
   if (offset == dc_offset_t::undetermined) {
@@ -81,7 +81,7 @@ inline bool is_contained(dc_offset_t offset, unsigned carrier_nof_rbs, crb_inter
 /// \brief Checks if the DC position is contained in a CRB interval.
 /// \param[in] dc_position     DC position in subcarriers within the grid relative to PointA.
 /// \param[in] rbs             Resource block allocation.
-/// \return \c true if the DC position is contained. Otherwise \c false.
+/// \return \c true if the DC position is contained within the allocated CRBs. Otherwise \c false.
 inline bool is_contained(unsigned dc_position, crb_interval rbs)
 {
   return rbs.contains(dc_position / NOF_SUBCARRIERS_PER_RB);

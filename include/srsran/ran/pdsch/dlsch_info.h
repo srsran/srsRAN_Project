@@ -50,7 +50,7 @@ struct dlsch_information {
   sch_information sch;
   /// Number of encoded and rate-matched DL-SCH data bits.
   units::bits nof_dl_sch_bits;
-  /// Number of bits that are are affected by overlapping with the direct current.
+  /// Number of bits that are affected by overlapping with the direct current.
   units::bits nof_dc_overlap_bits;
 
   /// \brief Calculates the effective code rate normalized between 0 and 1.
