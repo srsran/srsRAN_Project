@@ -65,10 +65,9 @@ static const std::unordered_map<five_qi_t, qos_characteristics> five_qi_to_qos_m
     // clang-format on
 };
 
-qos_characteristics get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi)
+qos_characteristics srsran::get_5qi_to_qos_characteristics_mapping(five_qi_t five_qi)
 {
   const auto qos_char = five_qi_to_qos_mapping.find(five_qi);
-  srsran_assert(
-      qos_char != five_qi_to_qos_mapping.end(), "5QI={} to QoS characteristics mapping not defined.", five_qi);
+  srsran_assert(qos_char != five_qi_to_qos_mapping.end(), "Undefined QoS characteristics for 5QI={}", five_qi);
   return qos_char->second;
 }

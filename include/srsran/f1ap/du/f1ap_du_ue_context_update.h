@@ -15,6 +15,7 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/qos/qos_info.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
@@ -37,24 +38,6 @@ struct f1ap_ue_context_creation_response {
   rnti_t crnti;
 };
 
-/// \brief QoS parameters for a GBR QoS flow or GBR bearer for downlink and uplink. See TS 38.473, clause 9.3.1.46.
-struct f1ap_gbr_qos_flow_info {
-  /// Maximum Bit Rate in DL.
-  uint64_t max_flow_dl_bitrate;
-  /// Maximum Bit Rate in UL.
-  uint64_t max_flow_ul_bitrate;
-  /// Guaranteed Bit Rate (provided there is data to deliver) in DL.
-  uint64_t guaranteed_flow_dl_bitrate;
-  /// Guaranteed Bit Rate (provided there is data to deliver) in UL.
-  uint64_t guaranteed_flow_ul_bitrate;
-  /// Indicates the maximum rate for lost packets that can be tolerated in the DL. Expressed in ratio of lost packets
-  /// per number of packets sent, expressed in tenth of percent.Values {0,...,1000}.
-  optional<uint16_t> max_packet_loss_rate_dl;
-  /// Indicates the maximum rate for lost packets that can be tolerated in the UL. Expressed in ratio of lost packets
-  /// per number of packets sent, expressed in tenth of percent.Values {0,...,1000}.
-  optional<uint16_t> max_packet_loss_rate_ul;
-};
-
 /// \brief DRB to be setup in the UE context.
 struct f1ap_drb_to_setup {
   drb_id_t         drb_id;
@@ -63,7 +46,7 @@ struct f1ap_drb_to_setup {
   five_qi_t        five_qi;
   uint8_t          arp_priority_level;
   /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
-  optional<f1ap_gbr_qos_flow_info>     gbr_flow_info;
+  optional<gbr_qos_info_t>             gbr_flow_info;
   std::vector<up_transport_layer_info> uluptnl_info_list;
 };
 
