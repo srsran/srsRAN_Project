@@ -25,7 +25,7 @@ struct ngap_context_t {
   unsigned             tac;
   std::vector<guami_t> served_guami_list;
   guami_t              current_guami;
-  std::chrono::seconds pdu_session_setup_timeout_s; // timeout for PDU context setup in seconds
+  std::chrono::seconds pdu_session_setup_timeout; // timeout for PDU context setup in seconds
 };
 
 } // namespace srs_cu_cp

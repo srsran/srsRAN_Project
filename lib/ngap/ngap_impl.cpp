@@ -47,11 +47,11 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
-  context.gnb_id                      = ngap_cfg_.gnb_id;
-  context.ran_node_name               = ngap_cfg_.ran_node_name;
-  context.plmn                        = ngap_cfg_.plmn;
-  context.tac                         = ngap_cfg_.tac;
-  context.pdu_session_setup_timeout_s = ngap_cfg_.pdu_session_setup_timeout;
+  context.gnb_id                    = ngap_cfg_.gnb_id;
+  context.ran_node_name             = ngap_cfg_.ran_node_name;
+  context.plmn                      = ngap_cfg_.plmn;
+  context.tac                       = ngap_cfg_.tac;
+  context.pdu_session_setup_timeout = ngap_cfg_.pdu_session_setup_timeout;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -139,7 +139,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
   // Start PDU session setup timer
-  ue_ctxt.pdu_session_setup_timer.set(context.pdu_session_setup_timeout_s, [this, msg](timer_id_t /*tid*/) {
+  ue_ctxt.pdu_session_setup_timer.set(context.pdu_session_setup_timeout, [this, msg](timer_id_t /*tid*/) {
     on_pdu_session_setup_timer_expired(msg.ue_index);
   });
   ue_ctxt.pdu_session_setup_timer.run();
