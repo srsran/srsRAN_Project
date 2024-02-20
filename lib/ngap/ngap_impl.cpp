@@ -47,11 +47,11 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
-  context.gnb_id                     = ngap_cfg_.gnb_id;
-  context.ran_node_name              = ngap_cfg_.ran_node_name;
-  context.plmn                       = ngap_cfg_.plmn;
-  context.tac                        = ngap_cfg_.tac;
-  context.ue_context_setup_timeout_s = ngap_cfg_.ue_context_setup_timeout;
+  context.gnb_id                      = ngap_cfg_.gnb_id;
+  context.ran_node_name               = ngap_cfg_.ran_node_name;
+  context.plmn                        = ngap_cfg_.plmn;
+  context.tac                         = ngap_cfg_.tac;
+  context.pdu_session_setup_timeout_s = ngap_cfg_.pdu_session_setup_timeout;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -138,14 +138,14 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
-  // Start UE context setup timer
-  ue_ctxt.ue_context_setup_timer.set(context.ue_context_setup_timeout_s, [this, msg](timer_id_t /*tid*/) {
-    on_ue_context_setup_timer_expired(msg.ue_index);
+  // Start PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.set(context.pdu_session_setup_timeout_s, [this, msg](timer_id_t /*tid*/) {
+    on_pdu_session_setup_timer_expired(msg.ue_index);
   });
-  ue_ctxt.ue_context_setup_timer.run();
+  ue_ctxt.pdu_session_setup_timer.run();
 
-  ue_ctxt.logger.log_debug("Sending InitialUeMessage (timeout={}ms)",
-                           ue_ctxt.ue_context_setup_timer.duration().count());
+  ue_ctxt.logger.log_debug("Sending InitialUeMessage (PDU session timeout={}ms)",
+                           ue_ctxt.pdu_session_setup_timer.duration().count());
 
   // Forward message to AMF
   ngap_notifier.on_new_message(ngap_msg);
@@ -313,8 +313,10 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
 
-  // Stop UE context setup timer
-  ue_ctxt.ue_context_setup_timer.stop();
+  // If InitialContextSetupRequest contains PDU Session Setup list, stop pdu session setup timer
+  if (request->pdu_session_res_setup_list_cxt_req_present) {
+    ue_ctxt.pdu_session_setup_timer.stop();
+  }
 
   ue_ctxt.logger.log_info("Received InitialContextSetupRequest");
 
@@ -381,6 +383,9 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                 ue_ctxt.ue_ids.ue_index,
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
+
+  // Stop PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.stop();
 
   if (!ue->get_rrc_ue_control_notifier().on_security_enabled()) {
     ue_ctxt.logger.log_warning("Dropping PduSessionResourceSetupRequest. Security context does not exist");
@@ -878,31 +883,44 @@ void ngap_impl::schedule_error_indication(ue_index_t ue_index, cause_t cause, op
       }));
 }
 
-void ngap_impl::on_ue_context_setup_timer_expired(ue_index_t ue_index)
+void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
 {
   if (ue_ctxt_list.contains(ue_index)) {
     ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
-    ue_ctxt.logger.log_warning("UE context setup timer expired after {}ms. Releasing UE from DU",
-                               ue_ctxt.ue_context_setup_timer.duration().count());
+    if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
+      // AMF never responded to InitialUEMessage, so we only remove the UE from the DU
+      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Releasing UE from DU",
+                                 ue_ctxt.pdu_session_setup_timer.duration().count());
 
-    auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
-    srsran_assert(ue != nullptr,
-                  "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
-                  ue_ctxt.ue_ids.ue_index,
-                  ue_ctxt.ue_ids.ran_ue_id,
-                  ue_ctxt.ue_ids.amf_ue_id);
+      auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
+      srsran_assert(ue != nullptr,
+                    "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
+                    ue_ctxt.ue_ids.ue_index,
+                    ue_ctxt.ue_ids.ran_ue_id,
+                    ue_ctxt.ue_ids.amf_ue_id);
 
-    task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
-                                     CORO_BEGIN(ctx);
-                                     CORO_AWAIT(
-                                         ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
-                                             {ue_index, cause_nas_t::unspecified}));
-                                     CORO_RETURN();
-                                   }));
+      task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
+                                       CORO_BEGIN(ctx);
+                                       CORO_AWAIT(
+                                           ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
+                                               {ue_index, cause_nas_t::unspecified}));
+                                       CORO_RETURN();
+                                     }));
+    } else {
+      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Requesting UE release",
+                                 ue_ctxt.pdu_session_setup_timer.duration().count());
 
+      // Request UE release
+      task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+                                       CORO_BEGIN(ctx);
+                                       CORO_AWAIT(handle_ue_context_release_request(
+                                           cu_cp_ue_context_release_request{ue_index, {}, cause_nas_t::unspecified}));
+                                       CORO_RETURN();
+                                     }));
+    }
   } else {
-    logger.debug("ue={}: Ignoring expired UE context setup timer. UE context not found", ue_index);
+    logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);
     return;
   }
 }

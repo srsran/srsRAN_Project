@@ -27,7 +27,7 @@ struct ngap_ue_ids {
 struct ngap_ue_context {
   ngap_ue_ids    ue_ids;
   uint64_t       aggregate_maximum_bit_rate_dl = 0;
-  unique_timer   ue_context_setup_timer        = {};
+  unique_timer   pdu_session_setup_timer       = {};
   bool           release_requested             = false;
   bool           release_scheduled             = false;
   byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
@@ -36,7 +36,7 @@ struct ngap_ue_context {
   ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
     ue_ids({ue_index_, ran_ue_id_}), logger("NGAP", {ue_index_, ran_ue_id_})
   {
-    ue_context_setup_timer = timers_.create_unique_timer(task_exec_);
+    pdu_session_setup_timer = timers_.create_unique_timer(task_exec_);
   }
 };
 

@@ -127,7 +127,8 @@ private:
   /// \param[in] amf_ue_id The AMF UE ID.
   void schedule_error_indication(ue_index_t ue_index, cause_t cause, optional<amf_ue_id_t> amf_ue_id = {});
 
-  void on_ue_context_setup_timer_expired(ue_index_t ue_index);
+  /// \brief Callback for the PDU Session Setup Timer expiration. Triggers the release of the UE.
+  void on_pdu_session_setup_timer_expired(ue_index_t ue_index);
 
   ngap_context_t context;
 

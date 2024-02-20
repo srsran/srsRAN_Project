@@ -422,11 +422,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
-  app.add_option(
-         "--ue_context_setup_timeout_s",
-         cu_cp_params.ue_context_setup_timeout_s,
-         "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
-         "core, in seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
+  app.add_option("--pdu_session_setup_timeout_s",
+                 cu_cp_params.pdu_session_setup_timeout_s,
+                 "Timeout for the setup of a PDU session after an InitialUeMessage was sent to the core, in "
+                 "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");

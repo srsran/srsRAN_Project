@@ -610,10 +610,10 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
 {
-  // only check if the ue_context_setup_timout is larger than T310
-  if (config.ue_context_setup_timeout_s * 1000 < sib_cfg.ue_timers_and_constants.t310) {
-    fmt::print("ue_context_setup_timeout_s ({}ms) must be larger than T310 ({}ms)\n",
-               config.ue_context_setup_timeout_s * 1000,
+  // only check if the pdu_session_setup_timout is larger than T310
+  if (config.pdu_session_setup_timeout_s * 1000 < sib_cfg.ue_timers_and_constants.t310) {
+    fmt::print("pdu_session_setup_timeout_s ({}ms) must be larger than T310 ({}ms)\n",
+               config.pdu_session_setup_timeout_s * 1000,
                sib_cfg.ue_timers_and_constants.t310);
     return false;
   }
