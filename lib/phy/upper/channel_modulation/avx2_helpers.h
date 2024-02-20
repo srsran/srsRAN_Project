@@ -232,7 +232,7 @@ inline __m256 interval_function(__m256       value,
 
   __m256 result = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(slope, value), intercept), rcp_noise);
 
-  __m256 zero_thr  = _mm256_set1_ps(1e-9);
+  __m256 zero_thr  = _mm256_set1_ps(near_zero);
   __m256 zero_mask = _mm256_cmp_ps(abs_ps(value), zero_thr, _CMP_LE_OQ);
 
   return _mm256_blendv_ps(result, _mm256_setzero_ps(), zero_mask);

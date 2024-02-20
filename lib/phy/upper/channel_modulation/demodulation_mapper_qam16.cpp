@@ -81,7 +81,7 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   l_value_23_1 = _mm256_mul_ps(l_value_23_1, rcp_noise_1_);
 
   // Force zero values if the inputs are near zero.
-  __m256 zero_thr    = _mm256_set1_ps(1e-9);
+  __m256 zero_thr    = _mm256_set1_ps(near_zero);
   __m256 zero_mask_0 = _mm256_cmp_ps(mm256::abs_ps(symbols_0), zero_thr, _CMP_LE_OQ);
   __m256 zero_mask_1 = _mm256_cmp_ps(mm256::abs_ps(symbols_1), zero_thr, _CMP_LE_OQ);
   l_value_01_0       = _mm256_blendv_ps(l_value_01_0, _mm256_setzero_ps(), zero_mask_0);
@@ -158,7 +158,7 @@ static void demod_QAM16_neon(log_likelihood_ratio* llr, const cf_t* symbol, cons
   l_value_23_0 = vmulq_f32(l_value_23_0, rcp_noise_0_);
   l_value_23_1 = vmulq_f32(l_value_23_1, rcp_noise_1_);
 
-  float32x4_t threshold = vdupq_n_f32(1e-9f);
+  float32x4_t threshold = vdupq_n_f32(near_zero);
   float32x4_t zero      = vdupq_n_f32(0.0f);
   l_value_01_0          = vbslq_f32(vcgeq_f32(abs_symbols_0, threshold), l_value_01_0, zero);
   l_value_01_1          = vbslq_f32(vcgeq_f32(abs_symbols_1, threshold), l_value_01_1, zero);
@@ -243,7 +243,7 @@ void srsran::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     //  Set all LLR to zero if the symbol is near zero.
-    if (abs_sq(*symbols_it) < 1e-9) {
+    if (is_near_zero(*symbols_it)) {
       for (unsigned i_bit = 0; i_bit != 4; ++i_bit) {
         *llr_it++ = 0;
       }

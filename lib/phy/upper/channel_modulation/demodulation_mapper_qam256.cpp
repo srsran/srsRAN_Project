@@ -320,7 +320,7 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     //  Set all LLR to zero if the symbol is near zero.
-    if (abs_sq(*symbols_it) < 1e-9) {
+    if (is_near_zero(*symbols_it)) {
       for (unsigned i_bit = 0; i_bit != 8; ++i_bit) {
         *llr_it++ = 0;
       }
