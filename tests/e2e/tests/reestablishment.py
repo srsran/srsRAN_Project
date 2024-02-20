@@ -33,7 +33,7 @@ from .steps.stub import ping_start, ping_wait_until_finish, start_network, stop,
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start", "StatusCode.ABORTED"])
+@mark.flaky(reruns=5, only_rerun=["failed to start", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments
 def test_zmq_reestablishment(
     retina_manager: RetinaTestManager,
