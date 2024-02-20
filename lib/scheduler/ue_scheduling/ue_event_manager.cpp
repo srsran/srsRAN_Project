@@ -9,7 +9,6 @@
  */
 
 #include "ue_event_manager.h"
-#include "../config/sched_config_manager.h"
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
@@ -183,7 +182,7 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
       auto* ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
       if (ue_cc == nullptr) {
-        // new UE carrier is being added.
+        // New UE carrier is being added.
         du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
       }
     }

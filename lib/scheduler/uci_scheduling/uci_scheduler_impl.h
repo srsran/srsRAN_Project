@@ -39,8 +39,9 @@ public:
 private:
   /// Information on currently configured UE UCI resource to periodically schedule.
   struct periodic_uci_info {
-    rnti_t rnti;
-    bool   is_sr;
+    rnti_t   rnti        = rnti_t::INVALID_RNTI;
+    unsigned sr_counter  = 0;
+    unsigned csi_counter = 0;
   };
 
   // Helper to fetch a UE cell config.
@@ -50,6 +51,9 @@ private:
   // Helper that schedules the SR and CSI for UEs that were recently updated.
   void schedule_updated_ues_ucis(cell_resource_allocator& res_alloc);
 
+  void add_resource(rnti_t crnti, unsigned offset, unsigned period, bool is_sr);
+  void rem_resource(rnti_t crnti, unsigned offset, unsigned period, bool is_sr);
+
   // Cell configuration.
   const cell_configuration& cell_cfg;
   // Reference to PUCCH resource allocator object.
@@ -58,7 +62,9 @@ private:
 
   srslog::basic_logger& logger;
 
-  // Storage of the periodic UCIs to be scheduled in the resource grid.
+  // Storage of the periodic UCIs to be scheduled in the resource grid. Each position of the vector represents a slot
+  // in a ring-like structure (ie slot % WHEEL_SIZE). Each of these vector indexes/slots contains a list of periodic
+  // UCI information to be scheduled in the respective slot.
   std::vector<static_vector<periodic_uci_info, MAX_PUCCH_PDUS_PER_SLOT>> periodic_uci_slot_wheel;
 
   // UEs whose configuration has been updated in between the last and current slot indications.
