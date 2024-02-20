@@ -273,7 +273,7 @@ protected:
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
 
     // Notify scheduler of DL buffer state.
-    bench->srb0_sched.handle_dl_buffer_state_indication(ue_idx);
+    bench->srb0_sched.handle_dl_buffer_state_indication_srb(ue_idx, true);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx].pending_dl_srb0_newtx_bytes(); }

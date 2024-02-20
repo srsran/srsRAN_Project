@@ -80,7 +80,12 @@ public:
       u.handle_dl_buffer_state_indication(dl_bo);
       if (dl_bo.lcid == LCID_SRB0) {
         // Signal SRB0 scheduler with the new SRB0 buffer state.
-        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(dl_bo.ue_index);
+        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication_srb(dl_bo.ue_index,
+                                                                                                    true);
+      } else if (dl_bo.lcid == LCID_SRB1) {
+        // Signal SRB0 scheduler with the new SRB0 buffer state.
+        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication_srb(dl_bo.ue_index,
+                                                                                                    false);
       }
 
       // Log event.

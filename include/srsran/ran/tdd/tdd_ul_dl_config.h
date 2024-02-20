@@ -78,6 +78,12 @@ ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, 
 ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp);
 
 /// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
+optional<unsigned> find_next_tdd_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+
+/// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
+optional<unsigned> find_next_tdd_full_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+
+/// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
 optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
