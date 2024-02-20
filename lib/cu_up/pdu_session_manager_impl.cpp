@@ -33,7 +33,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    gtpu_teid_pool&                      f1u_teid_allocator_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_,
-                                                   task_executor&                       ue_exec_,
+                                                   task_executor&                       ue_dl_exec_,
                                                    dlt_pcap&                            gtpu_pcap_) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
@@ -46,7 +46,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_tx_notifier(gtpu_tx_notifier_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
-  ue_exec(ue_exec_),
+  ue_dl_exec(ue_dl_exec_),
   gtpu_pcap(gtpu_pcap_),
   f1u_gw(f1u_gw_)
 {
@@ -267,7 +267,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
-  if (!gtpu_rx_demux.add_tunnel(new_session->local_teid, ue_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+  if (!gtpu_rx_demux.add_tunnel(
+          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;

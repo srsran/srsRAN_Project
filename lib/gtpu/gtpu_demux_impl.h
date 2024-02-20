@@ -47,7 +47,6 @@ private:
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;
 
-  ///< TODO: revisit mapping of TEID to executors, one executor per UE should be doable.
   std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
 
   srslog::basic_logger& logger;
