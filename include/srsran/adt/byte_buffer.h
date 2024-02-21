@@ -403,7 +403,7 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  SRSRAN_NODISCARD node_t* create_head_segment(size_t headroom, bool use_fallback = false);
+  SRSRAN_NODISCARD node_t* add_head_segment(size_t headroom, bool use_fallback = false);
 
   SRSRAN_NODISCARD node_t* create_segment(size_t headroom);
 

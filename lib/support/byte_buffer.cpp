@@ -79,8 +79,8 @@ void byte_buffer::control_block::destroy_cb()
 byte_buffer::byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other) noexcept
 {
   // Append new head segment to linked list with fallback allocator mode.
-  node_t* n = create_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
-  ctrl_blk_ptr->segments.push_back(*n);
+  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
+  srsran_sanity_check(n != nullptr, "Should never fail to append segment if fallback is enabled");
 
   bool var = this->append(other);
   srsran_sanity_check(var, "Should never fail to append segment if fallback is enabled");
@@ -90,8 +90,8 @@ byte_buffer::byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other)
 byte_buffer::byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept
 {
   // Append new head segment to linked list with fallback allocator mode.
-  node_t* n = create_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
-  ctrl_blk_ptr->segments.push_back(*n);
+  node_t* n = add_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
+  srsran_sanity_check(n != nullptr, "Should never fail to append segment if fallback is enabled");
 
   for (span<const uint8_t> seg : other.segments()) {
     bool var = this->append(seg);
@@ -192,7 +192,7 @@ bool byte_buffer::append(byte_buffer&& other)
   return true;
 }
 
-byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom, bool use_fallback)
+byte_buffer::node_t* byte_buffer::add_head_segment(size_t headroom, bool use_fallback)
 {
   auto&        pool       = detail::get_default_byte_buffer_segment_pool();
   const size_t block_size = pool.memory_block_size();
@@ -229,6 +229,9 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom, bool use_
   // Register segment as sharing the same memory block with control block.
   ctrl_blk_ptr->segment_in_cb_memory_block = node;
 
+  // Append new segment to linked list.
+  ctrl_blk_ptr->segments.push_back(*node);
+
   return node;
 }
 
@@ -260,12 +263,13 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
 
 bool byte_buffer::append_segment(size_t headroom_suggestion)
 {
-  node_t* segment =
-      not has_ctrl_block() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
+  if (not has_ctrl_block()) {
+    return add_head_segment(headroom_suggestion) != nullptr;
+  }
+  node_t* segment = create_segment(headroom_suggestion);
   if (segment == nullptr) {
     return false;
   }
-
   // Append new segment to linked list.
   ctrl_blk_ptr->segments.push_back(*segment);
   return true;
@@ -273,13 +277,13 @@ bool byte_buffer::append_segment(size_t headroom_suggestion)
 
 bool byte_buffer::prepend_segment(size_t headroom_suggestion)
 {
-  // Note: Add HEADROOM for first segment.
-  node_t* segment =
-      not has_ctrl_block() ? create_head_segment(headroom_suggestion) : create_segment(headroom_suggestion);
+  if (not has_ctrl_block()) {
+    return add_head_segment(headroom_suggestion) != nullptr;
+  }
+  node_t* segment = create_segment(headroom_suggestion);
   if (segment == nullptr) {
     return false;
   }
-
   // Prepend new segment to linked list.
   ctrl_blk_ptr->segments.push_front(*segment);
   return true;
@@ -472,7 +476,7 @@ bool byte_buffer::resize(size_t new_sz)
   }
   if (new_sz > prev_len) {
     for (size_t to_add = new_sz - prev_len; to_add > 0;) {
-      if (empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
+      if (not has_ctrl_block() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
         if (not append_segment(0)) {
           return false;
         }
