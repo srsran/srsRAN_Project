@@ -189,9 +189,11 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb =
+      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
+              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
+          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
+          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
@@ -251,9 +253,11 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb =
+      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
+              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
+          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
+          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
