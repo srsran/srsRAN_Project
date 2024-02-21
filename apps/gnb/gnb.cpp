@@ -506,6 +506,9 @@ int main(int argc, char** argv)
         variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
 
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
+
+    // Set the generic RU controller for the GNB console.
+    console.set_ru_controller(ru_object->get_controller());
   } else {
     ru_dummy_dependencies ru_dependencies;
     configure_ru_dummy_executors_and_notifiers(variant_get<ru_dummy_configuration>(ru_cfg.config),

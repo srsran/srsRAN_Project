@@ -15,11 +15,35 @@
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/io/io_broker.h"
 #include <fcntl.h>
-#include <list>
 #include <signal.h>
 #include <unistd.h>
 
 using namespace srsran;
+
+// Parses integer values from a console command.
+template <typename Integer>
+static expected<Integer, std::string> parse_int(const std::string& value)
+{
+  try {
+    return std::stoi(value);
+  } catch (const std::invalid_argument& e) {
+    return {e.what()};
+  } catch (const std::out_of_range& e) {
+    return {e.what()};
+  }
+}
+
+// Parses floating point values from a console command and attempts to store them in a double.
+static expected<double, std::string> parse_double(const std::string& value)
+{
+  try {
+    return std::stod(value);
+  } catch (const std::invalid_argument& e) {
+    return {e.what()};
+  } catch (const std::out_of_range& e) {
+    return {e.what()};
+  }
+}
 
 gnb_console_helper::gnb_console_helper(io_broker&           io_broker_,
                                        srslog::log_channel& log_chan_,
@@ -89,12 +113,92 @@ void gnb_console_helper::stdin_handler(int fd)
   }
 }
 
+void gnb_console_helper::handle_tx_gain_command(const std::list<std::string>& gain_args)
+{
+  if (!radio_controller.has_value()) {
+    fmt::print("Interactive radio control is not supported for the current GNB configuration.\n");
+    return;
+  }
+
+  if (gain_args.size() != 2) {
+    fmt::print("Invalid TX gain command structure. Usage: tx_gain <port_id> <gain_dB>\n");
+    return;
+  }
+
+  expected<unsigned, std::string> port_id = parse_int<unsigned>(gain_args.front());
+  if (port_id.is_error()) {
+    fmt::print("Invalid port ID.\n");
+    return;
+  }
+  expected<double, std::string> gain_dB = parse_double(gain_args.back());
+  if (gain_dB.is_error()) {
+    fmt::print("Invalid gain value.\n");
+    return;
+  }
+
+  if (!radio_controller.value()->set_tx_gain(port_id.value(), gain_dB.value())) {
+    fmt::print("Setting TX gain was not successful. The radio may not support this feature.\n");
+    return;
+  }
+
+  fmt::print("Tx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
+}
+
+void gnb_console_helper::handle_rx_gain_command(const std::list<std::string>& gain_args)
+{
+  if (!radio_controller.has_value()) {
+    fmt::print("Interactive radio control is not supported for the current GNB configuration.\n");
+    return;
+  }
+
+  if (gain_args.size() != 2) {
+    fmt::print("Invalid RX gain command structure. Usage: rx_gain <port_id> <gain_dB>\n");
+    return;
+  }
+
+  expected<unsigned, std::string> port_id = parse_int<unsigned>(gain_args.front());
+  if (port_id.is_error()) {
+    fmt::print("Invalid port ID.\n");
+    return;
+  }
+  expected<double, std::string> gain_dB = parse_double(gain_args.back());
+  if (gain_dB.is_error()) {
+    fmt::print("Invalid gain value.\n");
+    return;
+  }
+
+  if (!radio_controller.value()->set_rx_gain(port_id.value(), gain_dB.value())) {
+    fmt::print("Setting RX gain was not successful. The radio may not support this feature.\n");
+    return;
+  }
+
+  fmt::print("Rx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
+}
+
 void gnb_console_helper::handle_command(const std::string& command)
 {
+  // Print help message if the command is empty.
+  if (command.empty()) {
+    print_help();
+    return;
+  }
+
+  // Break the command into a list of arguments.
+  std::list<std::string> arg_list;
+  srsran::string_parse_list(command, ' ', arg_list);
+
+  srsran_assert(!arg_list.empty(), "Parsing empty command argument list");
+
   if (command == "q") {
     raise(SIGTERM);
   } else if (command == "t") {
     metrics_plotter.toggle_print();
+  } else if (arg_list.front() == "tx_gain") {
+    arg_list.pop_front();
+    handle_tx_gain_command(arg_list);
+  } else if (arg_list.front() == "rx_gain") {
+    arg_list.pop_front();
+    handle_rx_gain_command(arg_list);
   } else {
     print_help();
   }
@@ -103,14 +207,21 @@ void gnb_console_helper::handle_command(const std::string& command)
 void gnb_console_helper::print_help()
 {
   fmt::print("Available commands:\n");
-  fmt::print("\tt: start/stop console trace\n");
-  fmt::print("\tq: quit application\n");
+  fmt::print("\tt:                     start/stop console trace\n");
+  fmt::print("\tq:                     quit application\n");
+  fmt::print("\ttx_gain <port> <gain>: set Tx gain\n");
+  fmt::print("\trx_gain <port> <gain>: set Rx gain\n");
   fmt::print("\n");
 }
 
 void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 {
   cells = {cells_.begin(), cells_.end()};
+}
+
+void gnb_console_helper::set_ru_controller(ru_controller& controller)
+{
+  radio_controller.emplace(&controller);
 }
 
 void gnb_console_helper::on_app_starting()
