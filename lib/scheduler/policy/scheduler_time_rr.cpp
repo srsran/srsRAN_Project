@@ -209,11 +209,18 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
                                  const ue_resource_grid_view& res_grid,
                                  ue_pdsch_allocator&          pdsch_alloc,
                                  bool                         is_retx,
+                                 bool                         ue_with_srb_data_only,
                                  srslog::basic_logger&        logger,
                                  optional<unsigned>           dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
-  if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
-    return alloc_outcome::skip_ue;
+  if (not is_retx) {
+    if (not u.has_pending_dl_newtx_bytes()) {
+      return alloc_outcome::skip_ue;
+    }
+    if (ue_with_srb_data_only and not u.has_pending_dl_newtx_bytes(LCID_SRB1) and
+        not u.has_pending_dl_newtx_bytes(LCID_SRB2)) {
+      return alloc_outcome::skip_ue;
+    }
   }
 
   // Prioritize PCell over SCells.
@@ -486,16 +493,22 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 {
   // First schedule re-transmissions.
   auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger);
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, false, logger);
   };
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
+
+  // Second, schedule UEs with SRB data.
+  auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger);
+  };
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
 
   // Then, schedule new transmissions.
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-      return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
+      return alloc_dl_ue(u, res_grid, pdsch_alloc, false, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };
     next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
   }
