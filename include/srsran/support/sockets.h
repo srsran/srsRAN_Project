@@ -104,6 +104,27 @@ inline bool sctp_set_init_msg_opts(int                   fd,
   return true;
 }
 
+/// Set or unset SCTP_NODELAY. With NODELAY enabled, SCTP messages are sent as soon as possible with no unnecessary
+/// delay, at the cost of transmitting more packets over the network. Otherwise their transmission might be delayed and
+/// concatenated with subsequent messages in order to transmit them in one big PDU.
+///
+/// Note: If the local interface supports jumbo frames (MTU size > 1500) but not the receiver, then the receiver might
+/// discard big PDUs and the stream might get stuck.
+inline bool sctp_set_nodelay(int fd, optional<bool> nodelay, srslog::basic_logger& logger)
+{
+  if (not nodelay.has_value()) {
+    // no need to change anything
+    return true;
+  }
+
+  int optval = nodelay.value() == true ? 1 : 0;
+  if (::setsockopt(fd, IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
+    logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
+    return false;
+  }
+  return true;
+}
+
 inline bool sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, srslog::basic_logger& logger)
 {
   char addr_str[INET6_ADDRSTRLEN] = {};

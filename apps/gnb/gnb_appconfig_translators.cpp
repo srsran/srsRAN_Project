@@ -93,6 +93,7 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   if (config.amf_cfg.sctp_max_init_timeo >= 0) {
     out_cfg.max_init_timeo = config.amf_cfg.sctp_max_init_timeo;
   }
+  out_cfg.nodelay = config.amf_cfg.sctp_nodelay;
 
   return out_cfg;
 }

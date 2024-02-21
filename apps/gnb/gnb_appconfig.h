@@ -637,6 +637,7 @@ struct amf_appconfig {
   int         sctp_rto_max           = 500;
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo    = 500;
+  bool        sctp_nodelay           = false;
   int         udp_rx_max_msgs        = 256;
   bool        no_core                = false;
 };

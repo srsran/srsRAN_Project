@@ -51,10 +51,8 @@ bool sctp_network_gateway_impl::set_sockopts()
     return false;
   }
 
-  // Set SCTP_NODELAY to avoid concatenation beyond MTU size of 1500
-  int optval = 1;
-  if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
-    logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
+  // Set SCTP NODELAY option
+  if (not sctp_set_nodelay(sock_fd, config.nodelay, logger)) {
     return false;
   }
 
