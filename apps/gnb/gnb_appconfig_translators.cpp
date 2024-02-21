@@ -76,7 +76,8 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   } else {
     out_cfg.bind_address = config.amf_cfg.n2_bind_addr;
   }
-  out_cfg.ppid = NGAP_PPID;
+  out_cfg.bind_interface = config.amf_cfg.n2_bind_interface;
+  out_cfg.ppid           = NGAP_PPID;
 
   if (config.amf_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;

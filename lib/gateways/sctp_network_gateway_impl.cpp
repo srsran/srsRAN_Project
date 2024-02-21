@@ -158,6 +158,12 @@ bool sctp_network_gateway_impl::create_and_bind()
       continue;
     }
 
+    // Bind socket to interface (if requested)
+    if (not sctp_bind_interface(sock_fd, config.bind_interface, logger)) {
+      close_socket();
+      continue;
+    }
+
     char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
     getnameinfo(
         result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);

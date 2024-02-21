@@ -12,6 +12,7 @@
 
 #include "srsran/gateways/sctp_network_gateway.h"
 #include <arpa/inet.h>
+#include <net/if.h>
 #include <netdb.h>
 #include <netinet/sctp.h>
 #include <sys/socket.h>
@@ -120,6 +121,24 @@ inline bool sctp_set_nodelay(int fd, optional<bool> nodelay, srslog::basic_logge
   int optval = nodelay.value() == true ? 1 : 0;
   if (::setsockopt(fd, IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
     logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+inline bool sctp_bind_interface(int fd, std::string& interface, srslog::basic_logger& logger)
+{
+  if (interface.empty() || interface == "auto") {
+    // no need to change anything
+    return true;
+  }
+
+  ifreq ifr;
+  std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ);
+  ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
+
+  if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
+    logger.error("Could not bind socket to interface. interface={} error={}", ifr.ifr_ifrn.ifrn_name, strerror(errno));
     return false;
   }
   return true;
