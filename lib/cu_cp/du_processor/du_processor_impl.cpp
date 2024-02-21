@@ -315,8 +315,10 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 
         // Notify NGAP to request a release from the AMF
         CORO_AWAIT_VALUE(ngap_release_successful,
-                         ngap_ctrl_notifier.on_ue_context_release_request(cu_cp_ue_context_release_request{
-                             request.ue_index, ue->get_up_resource_manager().get_pdu_sessions(), request.cause}));
+                         ngap_ctrl_notifier.on_ue_context_release_request(
+                             cu_cp_ue_context_release_request{request.ue_index,
+                                                              ue->get_up_resource_manager().get_pdu_sessions(),
+                                                              cause_radio_network_t::radio_conn_with_ue_lost}));
         if (!ngap_release_successful) {
           // Release UE from DU, if it doesn't exist in the NGAP
           logger.debug("ue={}: Releasing UE from DU. ReleaseRequest not sent to AMF", request.ue_index);
