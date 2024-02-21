@@ -155,10 +155,18 @@ public:
   byte_buffer_chain(const byte_buffer_chain&) = delete;
 
   /// Conversion from byte_buffer to byte_buffer_chain.
-  explicit byte_buffer_chain(byte_buffer buf_) : byte_buffer_chain() { append(std::move(buf_)); }
+  explicit byte_buffer_chain(byte_buffer buf_) : byte_buffer_chain()
+  {
+    bool ret = append(std::move(buf_));
+    (void)ret;
+  }
 
   /// Conversion from byte_buffer_slice to byte_buffer_chain.
-  byte_buffer_chain(byte_buffer_slice&& buf_) : byte_buffer_chain() { append(std::move(buf_)); }
+  byte_buffer_chain(byte_buffer_slice&& buf_) : byte_buffer_chain()
+  {
+    bool ret = append(std::move(buf_));
+    (void)ret;
+  }
 
   /// Conversion from byte_buffer with specified offset and size to byte_buffer_chain.
   byte_buffer_chain(byte_buffer buf_, size_t start, size_t sz) :
@@ -221,7 +229,7 @@ public:
   ///
   /// \param obj Slice to append to the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  bool append(byte_buffer_slice obj) noexcept
+  SRSRAN_NODISCARD bool append(byte_buffer_slice obj) noexcept
   {
     if (obj.empty()) {
       return true;
@@ -237,11 +245,11 @@ public:
 
   /// Appends a byte_buffer to the end of the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  bool append(byte_buffer buf) { return append(byte_buffer_slice{std::move(buf)}); }
+  SRSRAN_NODISCARD bool append(byte_buffer buf) { return append(byte_buffer_slice{std::move(buf)}); }
 
   /// Appends the contents of another byte_buffer_chain to the end of this byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  bool append(byte_buffer_chain other)
+  SRSRAN_NODISCARD bool append(byte_buffer_chain other)
   {
     if (nof_slices() + other.nof_slices() > max_nof_slices()) {
       return false;
@@ -257,7 +265,7 @@ public:
 
   /// Prepends a byte_buffer_slice to the beginning of the byte_buffer_chain. This operation has O(N) complexity.
   /// \return true if operation was successful, false otherwise.
-  bool prepend(byte_buffer_slice slice)
+  SRSRAN_NODISCARD bool prepend(byte_buffer_slice slice)
   {
     if (slice.empty()) {
       return true;
@@ -276,14 +284,14 @@ public:
     }
     byte_count += slice.length();
     slice_count++;
-    // Store slice in the first (now empty) position
+    // Store slice in the first (now empty) position.
     *slices_ptr = std::move(slice);
     return true;
   }
 
   /// Prepends a byte_buffer to the beginning of the byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  bool prepend(byte_buffer buf) { return prepend(byte_buffer_slice{std::move(buf)}); }
+  SRSRAN_NODISCARD bool prepend(byte_buffer buf) { return prepend(byte_buffer_slice{std::move(buf)}); }
 
   /// Release all the byte buffer slices held by the byte_buffer_chain.
   void clear()
@@ -348,15 +356,15 @@ private:
     void operator()(void* p);
   };
 
-  // Total number of bytes stored in this container.
+  /// Total number of bytes stored in this container.
   size_t byte_count = 0;
-  // Memory block managed by a memory pool, where the slices are stored.
+  /// Memory block managed by a memory pool, where the slices are stored.
   std::unique_ptr<void, block_deleter> mem_block;
-  // Maximum number of byte_buffer_slices that this container can hold.
+  /// Maximum number of byte_buffer_slices that this container can hold.
   size_t max_slices = 0;
-  // Total number of byte_buffer_slices stored in this container.
+  /// Total number of byte_buffer_slices stored in this container.
   size_t slice_count = 0;
-  // Array where byte_buffer_slices are stored. This array is a view to the \c mem_block.
+  /// Array where byte_buffer_slices are stored. This array is a view to the \c mem_block.
   byte_buffer_slice* slices_ptr = nullptr;
 };
 

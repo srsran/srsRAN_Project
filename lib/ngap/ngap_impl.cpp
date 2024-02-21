@@ -442,10 +442,10 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
     ue_ctxt.logger.log_warning("Received duplicate PduSessionResourceModifyRequest");
     schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unspecified);
     return;
-  } else {
-    // Store last PDU session resource modify request
-    ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
   }
+
+  // Store last PDU session resource modify request
+  ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
   srsran_assert(ue != nullptr,
@@ -463,7 +463,11 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // Convert to common type
   cu_cp_pdu_session_resource_modify_request msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
-  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req);
+  if (!fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req)) {
+    ue_ctxt.logger.log_warning("Unable to fill ASN1 contents for PduSessionResourceModifyRequest");
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unspecified);
+    return;
+  }
 
   // start routine
   task_sched.schedule_async_task(
@@ -507,7 +511,11 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   // Handle optional NAS PDU
   if (command->nas_pdu_present) {
     byte_buffer nas_pdu;
-    nas_pdu.resize(command->nas_pdu.size());
+    if (!nas_pdu.resize(command->nas_pdu.size())) {
+      ue_ctxt.logger.log_warning("Unable to resize the storage for the PduSessionResourceReleaseCommand PDU");
+      schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unspecified);
+      return;
+    }
     std::copy(command->nas_pdu.begin(), command->nas_pdu.end(), nas_pdu.begin());
     ue_ctxt.logger.log_debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
 
@@ -553,9 +561,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     ue_ctxt.logger.log_info("Dropping UeContextReleaseCommand. UE is already scheduled for release");
     schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
     return;
-  } else {
-    ue_ctxt.release_scheduled = true;
   }
+
+  ue_ctxt.release_scheduled = true;
 
   if (ran_ue_id == ran_ue_id_t::invalid) {
     ran_ue_id = ue_ctxt.ue_ids.ran_ue_id;
@@ -592,7 +600,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   logger.info("Received Paging");
 
   if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
-    logger.warning("Dropping PDU. Unsupportet UE Paging ID");
+    logger.warning("Dropping PDU. Unsupported UE Paging ID");
     send_error_indication(ngap_notifier, logger);
     return;
   }
@@ -661,7 +669,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   ue_index_t  ue_index  = ue_index_t::invalid;
-  std::string msg_cause = "";
+  std::string msg_cause;
 
   if (msg->cause_present) {
     msg_cause = asn1_cause_to_string(msg->cause);

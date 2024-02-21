@@ -97,7 +97,11 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   pdu_session_res_modify_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
   pdu_session_res_modify_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
-  fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response);
+  // TODO: needs more handling in the coro above?
+  if (!fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {
+    logger.log_warning("Unable to fill ASN1 contents of PDUSessionResourceModifyResponse", name());
+    return;
+  }
 
   logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);

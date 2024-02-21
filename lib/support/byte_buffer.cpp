@@ -22,7 +22,7 @@ size_t srsran::byte_buffer_segment_pool_default_segment_size()
 detail::byte_buffer_segment_pool& srsran::detail::get_default_byte_buffer_segment_pool()
 {
   // Initialize byte buffer segment pool, if not yet initialized.
-  // Note: In case of unit tests, this function will be called rather than init_byte_buffer_segment_pool(...)
+  // Note: In case of unit tests, this function will be called rather than init_byte_buffer_segment_pool(...).
   constexpr static size_t default_byte_buffer_segment_pool_size = 16384;
   static auto&            pool = detail::byte_buffer_segment_pool::get_instance(default_byte_buffer_segment_pool_size,
                                                                      byte_buffer_segment_pool_default_segment_size());
@@ -75,7 +75,7 @@ public:
 
   template <typename U>
   struct rebind {
-    typedef control_block_allocator<U> other;
+    using other = control_block_allocator<U>;
   };
 
   control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_), mem_block(arena->mem_block)
@@ -180,7 +180,7 @@ bool byte_buffer::append(const byte_buffer& other)
     return false;
   }
   for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
-    auto other_it = seg->begin();
+    auto* other_it = seg->begin();
     while (other_it != seg->end()) {
       if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0)) {
         return false;
@@ -262,9 +262,9 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   // For first segment of byte_buffer, add a headroom.
   void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
   srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-  size_t  segment_size  = block_size - arena.offset;
-  void*   payload_start = arena.allocate(segment_size, 1);
-  node_t* node          = new (segment_start)
+  size_t segment_size  = block_size - arena.offset;
+  void*  payload_start = arena.allocate(segment_size, 1);
+  auto*  node          = new (segment_start)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
 
   // Register segment as sharing the same memory block with control block.
@@ -377,8 +377,7 @@ bool byte_buffer::prepend(byte_buffer&& other)
   }
   if (not other.ctrl_blk_ptr.unique()) {
     // Deep copy of segments.
-    prepend(other);
-    return true;
+    return prepend(other);
   }
 
   // This is the last reference to "other". Shallow copy, except control segment.

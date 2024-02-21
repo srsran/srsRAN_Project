@@ -734,7 +734,10 @@ public:
           }
           if (i == nof_dl_pdus_per_slot - 1 and last_dl_pdu_size != 0) {
             // If it is last DL PDU.
-            pdu_copy.resize(last_dl_pdu_size);
+            if (!pdu_copy.resize(last_dl_pdu_size)) {
+              test_logger.warning("Unable to resize PDU to {} bytes", last_dl_pdu_size);
+              return;
+            }
           }
           du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy), .pdcp_sn = pdcp_sn_list[bearer_idx]});
         }

@@ -168,7 +168,7 @@ TEST_F(byte_buffer_tester, empty_byte_buffer_in_valid_state)
   ASSERT_EQ(pdu, std::list<uint8_t>{}) << "Comparison with empty non-span type failed";
   ASSERT_EQ(pdu.segments().begin(), pdu.segments().end());
   ASSERT_TRUE(pdu.is_contiguous());
-  pdu.resize(0);
+  ASSERT_TRUE(pdu.resize(0));
   ASSERT_EQ_LEN(pdu, 0);
   pdu.clear();
   ASSERT_EQ_LEN(pdu, 0);
@@ -277,12 +277,12 @@ TEST_P(two_vector_size_param_test, prepend)
   byte_buffer pdu;
 
   // prepend in empty byte_buffer.
-  pdu.prepend(bytes1);
+  ASSERT_TRUE(pdu.prepend(bytes1));
   ASSERT_EQ(pdu.length(), bytes1.size());
   ASSERT_EQ(pdu, bytes1);
 
   // prepend in non-empty byte_buffer.
-  pdu.prepend(bytes2);
+  ASSERT_TRUE(pdu.prepend(bytes2));
   ASSERT_EQ(pdu.length(), bytes1.size() + bytes2.size());
   ASSERT_EQ(pdu, concat_vec(bytes2, bytes1));
 }
@@ -408,7 +408,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append)
     byte_buffer pdu2 = pdu.copy();
     ASSERT_EQ_BUFFER(pdu2, pdu);
     ASSERT_EQ_BUFFER(pdu2, bytes1);
-    pdu2.prepend(bytes2);
+    ASSERT_TRUE(pdu2.prepend(bytes2));
     ASSERT_EQ(pdu2, pdu);
     ASSERT_TRUE(pdu2.append(bytes3));
     ASSERT_EQ(pdu2, pdu);
@@ -468,7 +468,7 @@ TEST_F(byte_buffer_tester, prepend_and_trim_tail)
   ASSERT_TRUE(sdu.append(pdu.begin() + prefix_len, pdu.end()));
   std::array<uint8_t, prefix_len> hdr_buf;
   std::copy(pdu.begin(), pdu.begin() + prefix_len, hdr_buf.begin());
-  sdu.prepend(hdr_buf);
+  ASSERT_TRUE(sdu.prepend(hdr_buf));
 
   ASSERT_EQ(sdu.length(), pdu_len);
   ASSERT_EQ(std::distance(sdu.begin(), sdu.end()), pdu_len);
@@ -485,7 +485,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_valid
   byte_buffer pdu{bytes1};
 
   byte_buffer pdu2{pdu.copy()};
-  pdu.prepend(bytes2);
+  ASSERT_TRUE(pdu.prepend(bytes2));
   ASSERT_TRUE(pdu.append(bytes3));
 
   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
@@ -760,14 +760,14 @@ TEST_F(byte_buffer_tester, append_rvalue_byte_buffer)
   // Chain small vector to empty buffer
   byte_buffer pdu2(small_vec);
   ASSERT_EQ(pdu2, small_vec);
-  pdu.prepend(std::move(pdu2));
+  ASSERT_TRUE(pdu.prepend(std::move(pdu2)));
   ASSERT_FALSE(pdu.empty());
   ASSERT_EQ(pdu, small_vec);
   ASSERT_TRUE(pdu2.empty());
 
   // Chain byte_buffer before another non-empty byte_buffer.
   ASSERT_TRUE(pdu2.append(big_vec));
-  pdu.prepend(std::move(pdu2));
+  ASSERT_TRUE(pdu.prepend(std::move(pdu2)));
   ASSERT_TRUE(pdu2.empty());
   ASSERT_EQ_LEN(pdu, big_vec.size() + small_vec.size());
   ASSERT_EQ(pdu, bytes_concat);

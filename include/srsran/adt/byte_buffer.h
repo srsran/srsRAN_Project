@@ -28,6 +28,7 @@ void init_byte_buffer_segment_pool(std::size_t nof_segments,
                                    std::size_t memory_block_size = byte_buffer_segment_pool_default_segment_size());
 
 /// \brief Non-owning view to a byte sequence.
+///
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
 /// byte buffer segments, where each segment contains a span of bytes.
 class byte_buffer_view
@@ -97,8 +98,7 @@ public:
   const_byte_buffer_segment_span_range segments() const { return {it, length()}; }
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
-  /// The segments are not const, so that the callee can modify the bytes,
-  /// but not layout of the buffer.
+  /// The segments are not const, so that the callee can modify the bytes, but not layout of the buffer.
   byte_buffer_segment_span_range modifiable_segments() { return {it, length()}; };
 
   /// \brief Equality comparison between byte buffer view and another range.
@@ -131,6 +131,7 @@ protected:
 class byte_buffer_slice;
 
 /// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.
+///
 /// This container is not contiguous in memory.
 /// Default copy ctor and assignment is disabled in this container. The user should instead std::move to transfer
 /// ownership, .copy() for shallow copies with shared ownership and .deep_copy() for byte-wise copies.
@@ -176,7 +177,7 @@ public:
     }
   }
 
-  /// Creates a byte_buffer with data intialized via a initializer list.
+  /// Creates a byte_buffer with data initialized via a initializer list.
   byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
 
   /// Creates a byte_buffer with data assigned from a range of bytes.
@@ -191,7 +192,7 @@ public:
   /// Move constructor.
   byte_buffer(byte_buffer&& other) noexcept = default;
 
-  /// copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
+  /// Copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
 
   /// Move assignment of byte_buffer. It avoids unnecessary reference counting increment.
@@ -271,9 +272,9 @@ public:
   }
 
   /// Appends a view of bytes into current byte buffer.
-  bool append(const byte_buffer_view& view)
+  SRSRAN_NODISCARD bool append(const byte_buffer_view& view)
   {
-    // append segment by segment.
+    // Append segment by segment.
     auto view_segs = view.segments();
     for (span<const uint8_t> seg : view_segs) {
       if (not append(seg)) {
@@ -284,17 +285,17 @@ public:
   }
 
   /// Appends an owning view of bytes into current byte buffer.
-  bool append(const byte_buffer_slice& view);
+  SRSRAN_NODISCARD bool append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
-  bool prepend(span<const uint8_t> bytes);
+  SRSRAN_NODISCARD bool prepend(span<const uint8_t> bytes);
 
   /// \brief Prepend data of byte buffer to this byte buffer.
-  bool prepend(const byte_buffer& other);
+  SRSRAN_NODISCARD bool prepend(const byte_buffer& other);
 
   /// \brief Prepend data of r-value byte buffer to this byte buffer. The segments of the provided byte buffer can get
   /// "stolen" if the byte buffer is the last reference to the segments.
-  bool prepend(byte_buffer&& other);
+  SRSRAN_NODISCARD bool prepend(byte_buffer&& other);
 
   /// Prepends space in byte_buffer. This function may allocate new segments.
   /// \param nof_bytes Number of bytes to reserve at header.
@@ -341,20 +342,19 @@ public:
   bool is_contiguous() const { return empty() or ctrl_blk_ptr->segments.head == ctrl_blk_ptr->segments.tail; }
 
   /// Moves the bytes stored in different segments of the byte_buffer into first segment.
-  bool linearize();
+  SRSRAN_NODISCARD bool linearize();
 
   /// Set byte_buffer length. Note: It doesn't initialize newly created bytes.
-  bool resize(size_t new_sz);
+  SRSRAN_NODISCARD bool resize(size_t new_sz);
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
   byte_buffer_segment_span_range segments()
   {
-    return byte_buffer_segment_span_range(ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->segments.head : nullptr, 0, length());
+    return {ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->segments.head : nullptr, 0, length()};
   }
   const_byte_buffer_segment_span_range segments() const
   {
-    return const_byte_buffer_segment_span_range(
-        ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->segments.head : nullptr, 0, length());
+    return {ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->segments.head : nullptr, 0, length()};
   }
 
   /// \brief Equality comparison between byte buffer view and another range.
@@ -417,11 +417,12 @@ private:
 };
 
 /// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
+///
 /// Like byte_buffer and byte_buffer_view, the represented bytes by this class are not contiguous in memory.
-/// Contrarily to byte_buffer_view, this class retains shared ownership of the segments held by the byte_buffer
-/// which it references.
-/// Due to the shared ownership model, the usage of this class may involve additional overhead associated with
-/// reference counting, which does not take place when using byte_buffer_view.
+/// Contrarily to byte_buffer_view, this class retains shared ownership of the segments held by the byte_buffer which it
+/// references.
+/// Due to the shared ownership model, the usage of this class may involve additional overhead associated with reference
+/// counting, which does not take place when using byte_buffer_view.
 class byte_buffer_slice
 {
 public:
@@ -599,13 +600,14 @@ public:
   /// Appends span of bytes.
   SRSRAN_NODISCARD bool append(span<const uint8_t> bytes) { return buffer->append(bytes); }
 
-  /// Appends single byte.
+  /// Appends a single byte.
   SRSRAN_NODISCARD bool append(uint8_t byte) { return buffer->append(byte); }
 
+  /// Appends the specified amount of zeros.
   SRSRAN_NODISCARD bool append_zeros(size_t nof_zeros)
   {
     // TODO: optimize.
-    for (size_t i = 0; i < nof_zeros; ++i) {
+    for (size_t i = 0; i != nof_zeros; ++i) {
       if (not buffer->append(0)) {
         return false;
       }
@@ -630,10 +632,11 @@ private:
 inline byte_buffer make_byte_buffer(const std::string& hex_str)
 {
   srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+
   byte_buffer ret;
-  for (size_t i = 0; i < hex_str.size(); i += 2) {
+  for (size_t i = 0, e = hex_str.size(); i != e; i += 2) {
     uint8_t val;
-    sscanf(hex_str.data() + i, "%02hhX", &val);
+    std::sscanf(hex_str.data() + i, "%02hhX", &val);
     if (not ret.append(val)) {
       ret.clear();
       break;
@@ -642,7 +645,7 @@ inline byte_buffer make_byte_buffer(const std::string& hex_str)
   return ret;
 }
 
-/// Perfoms a segment-wise copy of the byte_buffer into a span<uint8_t> object.
+/// Performs a segment-wise copy of the byte_buffer into a span<uint8_t> object.
 /// The length is limited by the length of src and dst, whichever is smaller.
 ///
 /// \param src Source byte_buffer.
@@ -679,16 +682,17 @@ inline size_t copy_segments(const ByteBufferType& src, span<uint8_t> dst)
 /// \return A contiguous view of the byte_buffer
 inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem)
 {
-  // empty buffer
+  // Empty buffer.
   if (src.empty()) {
     return {};
   }
 
-  // is contiguous: shortcut without copy
+  // Is contiguous: shortcut without copy.
   if (src.is_contiguous()) {
     return *src.segments().begin();
   }
-  // non-contiguous: copy required
+
+  // Non-contiguous: copy required.
   srsran_assert(src.length() <= tmp_mem.size(),
                 "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
                 src.length(),

@@ -121,7 +121,10 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
   init_ctxt_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   init_ctxt_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
+  if (!fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg)) {
+    logger.log_warning("Unable to fill ASN1 contents for InitialContextSetupResponse");
+    return;
+  }
 
   logger.log_info("Sending InitialContextSetupResponse");
   amf_notifier.on_new_message(ngap_msg);

@@ -91,7 +91,7 @@ cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp
 /// \param cu_cp_qos_flow_info The CU-CP QoS Flow Per TNL Info.
 /// \return The NGAP QoS Flow Per TNL Info.
 inline asn1::ngap::qos_flow_per_tnl_info_s
-cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl_information cu_cp_qos_flow_info)
+cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(const cu_cp_qos_flow_per_tnl_information& cu_cp_qos_flow_info)
 {
   asn1::ngap::qos_flow_per_tnl_info_s ngap_qos_flow_info;
 
@@ -213,7 +213,7 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
 /// \return The humand-readable string.
 inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
 {
-  std::string cause_str = "";
+  std::string cause_str;
 
   switch (cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
@@ -239,13 +239,13 @@ inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
   return cause_str;
 }
 
-/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
-/// message.
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response message.
 /// \param[out] resp The ASN1 NGAP Initial Context Setup Response message.
 /// \param[in] cu_cp_resp The CU-CP Initial Context Setup Response message.
+/// \return True on success, otherwise false.
 template <typename template_asn1_item>
-inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&                             asn1_resp,
-                                                        const cu_cp_pdu_session_res_setup_response_item resp)
+inline bool pdu_session_res_setup_response_item_to_asn1(template_asn1_item&                              asn1_resp,
+                                                        const cu_cp_pdu_session_res_setup_response_item& resp)
 {
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
@@ -281,16 +281,21 @@ inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&     
   // Pack pdu_session_res_setup_resp_transfer_s
   byte_buffer pdu = pack_into_pdu(response_transfer);
 
-  asn1_resp.pdu_session_res_setup_resp_transfer.resize(pdu.length());
+  if (!asn1_resp.pdu_session_res_setup_resp_transfer.resize(pdu.length())) {
+    return false;
+  }
   std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_setup_resp_transfer.begin());
+
+  return true;
 }
 
 /// \brief Convert common type modify response item to ASN1 type message.
 /// \param[out] asn1_resp The ASN1 NGAP struct.
 /// \param[in] resp The common type struct.
+/// \return True on success, otherwise false.
 template <typename template_asn1_item>
-inline void pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn1_resp,
-                                                         const cu_cp_pdu_session_resource_modify_response_item resp)
+inline bool pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn1_resp,
+                                                         const cu_cp_pdu_session_resource_modify_response_item& resp)
 {
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
@@ -315,16 +320,21 @@ inline void pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn
   // Pack pdu_session_res_modify_resp_transfer_s
   byte_buffer pdu = pack_into_pdu(response_transfer);
 
-  asn1_resp.pdu_session_res_modify_resp_transfer.resize(pdu.length());
+  if (!asn1_resp.pdu_session_res_modify_resp_transfer.resize(pdu.length())) {
+    return false;
+  }
   std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_modify_resp_transfer.begin());
+
+  return true;
 }
 
 /// \brief Convert common type modify response item to ASN1 type message.
 /// \param[out] asn1_resp The ASN1 NGAP struct.
 /// \param[in] resp The common type struct.
+/// \return True on success, otherwise false.
 template <typename template_asn1_item>
-inline void pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& asn1_resp,
-                                                          const cu_cp_pdu_session_resource_failed_to_modify_item resp)
+inline bool pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& asn1_resp,
+                                                          const cu_cp_pdu_session_resource_failed_to_modify_item& resp)
 {
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
@@ -334,17 +344,21 @@ inline void pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
 
-  asn1_resp.pdu_session_res_modify_unsuccessful_transfer.resize(pdu.length());
+  if (!asn1_resp.pdu_session_res_modify_unsuccessful_transfer.resize(pdu.length())) {
+    return false;
+  }
   std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_modify_unsuccessful_transfer.begin());
+
+  return true;
 }
 
-/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
-/// message.
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response message.
 /// \param[out] resp The ASN1 NGAP Initial Context Setup Response message.
 /// \param[in] cu_cp_resp The CU-CP Initial Context Setup Response message.
+/// \return True on success, otherwise false.
 template <typename template_asn1_item>
-inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&                           asn1_resp,
-                                                      const cu_cp_pdu_session_res_setup_failed_item resp)
+inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&                            asn1_resp,
+                                                      const cu_cp_pdu_session_res_setup_failed_item& resp)
 {
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
@@ -356,8 +370,12 @@ inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   // Pack pdu_session_res_setup_unsuccessful_transfer_s
   byte_buffer pdu = pack_into_pdu(setup_unsuccessful_transfer);
 
-  asn1_resp.pdu_session_res_setup_unsuccessful_transfer.resize(pdu.length());
+  if (!asn1_resp.pdu_session_res_setup_unsuccessful_transfer.resize(pdu.length())) {
+    return false;
+  }
   std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_setup_unsuccessful_transfer.begin());
+
+  return true;
 }
 
 /// \brief Convert ASN.1 GUAMI to a common type.

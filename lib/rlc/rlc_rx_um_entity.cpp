@@ -274,7 +274,11 @@ bool rlc_rx_um_entity::handle_segment_data_sdu(const rlc_um_pdu_header& header, 
     // Assemble SDU from segments
     for (const rlc_rx_um_sdu_segment& segm : rx_sdu.segments) {
       logger.log_debug("Chaining segment. so={} len={}", segm.so, segm.payload.length());
-      rx_sdu.sdu.append(segm.payload.copy());
+      if (not rx_sdu.sdu.append(segm.payload.copy())) {
+        logger.log_error("Unable to append segment in byte_buffer_chain");
+        // Drop SDU if any of the segments failed to be appended.
+        return false;
+      }
     }
     rx_sdu.segments.clear();
     logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
