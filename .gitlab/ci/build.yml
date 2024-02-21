@@ -41,7 +41,7 @@ variables:
       - "debian-11"
       - "archlinux-latest"
       - "rhel-8"
-    value: "ubuntu-22.04"
+    value: "ubuntu-24.04"
   COMPILER:
     description: Compiler to use
     options:
@@ -343,7 +343,7 @@ variables:
 .smoke relwithdeb:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
@@ -1712,7 +1712,6 @@ basic relwithdeb:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04  
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
   artifacts:
@@ -1726,7 +1725,6 @@ basic tsan:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
   artifacts:
@@ -1740,7 +1738,6 @@ basic asan:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
@@ -1755,7 +1752,6 @@ basic memcheck:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
   artifacts:
@@ -1771,7 +1767,7 @@ basic avx512 dpdk:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: Release
     TEST_MODE: none
