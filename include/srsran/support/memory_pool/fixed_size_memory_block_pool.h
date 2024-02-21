@@ -209,6 +209,13 @@ public:
     return (w->local_cache.size() - 1) * block_batch_size + w->local_cache.back().size();
   }
 
+  /// Check if the memory pool owns the given memory segment.
+  bool owns_segment(void* segment) const
+  {
+    uint8_t* ptr = static_cast<uint8_t*>(segment);
+    return ptr >= allocated_memory.data() and ptr < allocated_memory.data() + allocated_memory.size();
+  }
+
 private:
   struct worker_ctxt {
     /// Thread ID of the worker.

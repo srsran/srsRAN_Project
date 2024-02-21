@@ -10,6 +10,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/detail/byte_buffer_segment_pool.h"
+#include "srsran/support/memory_pool/linear_memory_allocator.h"
 
 using namespace srsran;
 
@@ -39,94 +40,7 @@ void srsran::init_byte_buffer_segment_pool(std::size_t nof_segments, std::size_t
   report_fatal_error_if_not(memory_block_size > 64U, "memory blocks must be larger than the segment control header");
 }
 
-namespace {
-
-/// \brief Linear allocator for memory_block obtained from byte_buffer_segment_pool.
-struct memory_arena_linear_allocator {
-  /// Pointer to the memory block obtained from byte_buffer_segment_pool.
-  void* mem_block = nullptr;
-  /// Size of the memory block in bytes.
-  size_t mem_block_size;
-  /// Offset in bytes from the beginning of the memory block, determining where the next allocation will be made.
-  size_t offset = 0;
-
-  memory_arena_linear_allocator(void* mem_block_, size_t mem_block_size_) noexcept :
-    mem_block(mem_block_), mem_block_size(mem_block_size_)
-  {
-  }
-
-  void* allocate(size_t sz, size_t al) noexcept
-  {
-    void* p = align_next(static_cast<char*>(mem_block) + offset, al);
-    offset  = (static_cast<char*>(p) - static_cast<char*>(mem_block)) + sz;
-    return p;
-  }
-
-  bool empty() const { return mem_block == nullptr; }
-
-  size_t space_left() const { return mem_block_size - offset; }
-};
-
-/// Allocator for byte_buffer control_block that will leverage the \c memory_arena_linear_allocator.
-template <typename T>
-struct control_block_allocator {
-public:
-  using value_type = T;
-
-  template <typename U>
-  struct rebind {
-    using other = control_block_allocator<U>;
-  };
-
-  control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_), mem_block(arena->mem_block)
-  {
-  }
-
-  control_block_allocator(const control_block_allocator<T>& other) noexcept = default;
-
-  template <typename U, std::enable_if_t<not std::is_same<U, T>::value, int> = 0>
-  control_block_allocator(const control_block_allocator<U>& other) noexcept :
-    arena(other.arena), mem_block(other.mem_block)
-  {
-  }
-
-  control_block_allocator& operator=(const control_block_allocator<T>& other) noexcept = default;
-
-  value_type* allocate(size_t n) noexcept
-  {
-    srsran_sanity_check(n == 1, "control_block_allocator can only allocate one control block at a time.");
-    srsran_sanity_check(arena != nullptr and not arena->empty(), "Memory arena is empty");
-    srsran_assert(arena->space_left() >= sizeof(value_type), "control_block_allocator memory block size is too small.");
-    memory_arena_linear_allocator* arena_ptr = arena;
-    // This allocator is only used for one single allocation (the shared_ptr control block). The arena may become
-    // dangling after we exit the head_segment alloc function as well. So, it is safer to just set this pointer to null.
-    arena = nullptr;
-
-    return static_cast<value_type*>(arena_ptr->allocate(sizeof(value_type), alignof(std::max_align_t)));
-  }
-
-  void deallocate(value_type* p, size_t n) noexcept
-  {
-    // Note: at this stage the arena ptr is probably dangling. Do not touch it.
-    srsran_sanity_check(n == 1, "control_block_allocator can only deallocate one control block at a time.");
-
-    // Note: The pointer p, while within the memory block, might be misaligned. For this reason, we stored the
-    // original memory block pointer, which we now use for the deallocation.
-    detail::get_default_byte_buffer_segment_pool().deallocate_node(mem_block);
-  }
-
-  bool operator==(const control_block_allocator& other) const { return mem_block == other.mem_block; }
-  bool operator!=(const control_block_allocator& other) const { return !(*this == other); }
-
-private:
-  template <typename U>
-  friend struct control_block_allocator;
-
-  memory_arena_linear_allocator* arena     = nullptr;
-  void*                          mem_block = nullptr;
-};
-
-} // namespace
+// ------- byte_buffer class -------
 
 void byte_buffer::control_block::destroy_node(node_t* node) const
 {
@@ -257,7 +171,7 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   }
 
   // Construct linear allocator pointing to allocated segment memory block.
-  memory_arena_linear_allocator arena{mem_block, block_size};
+  linear_memory_allocator arena{mem_block, block_size};
 
   // Create control block using allocator.
   void* cb_region = arena.allocate(sizeof(control_block), alignof(control_block));
@@ -269,11 +183,10 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   }
 
   // For first segment of byte_buffer, add a headroom.
-  void* segment_header_region = arena.allocate(sizeof(node_t), alignof(node_t));
-  srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-  size_t  segment_size  = block_size - arena.offset;
-  void*   payload_start = arena.allocate(segment_size, 1);
-  node_t* node          = new (segment_header_region)
+  void*   segment_header_region = arena.allocate(sizeof(node_t), alignof(node_t));
+  size_t  segment_size          = arena.nof_bytes_left();
+  void*   payload_start         = arena.allocate(segment_size, 1);
+  node_t* node                  = new (segment_header_region)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
 
   // Register segment as sharing the same memory block with control block.
@@ -284,8 +197,8 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
 
 byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
 {
-  static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-  static const size_t block_size = pool.memory_block_size();
+  static auto& pool       = detail::get_default_byte_buffer_segment_pool();
+  const size_t block_size = pool.memory_block_size();
 
   // Allocate memory block.
   void* mem_block = pool.allocate_node(block_size);
@@ -294,10 +207,11 @@ byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
     return nullptr;
   }
 
-  memory_arena_linear_allocator arena{mem_block, block_size};
-  void*                         segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
-  srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-  size_t segment_size  = block_size - arena.offset;
+  // Create a linear allocator pointing to the allocated memory block.
+  linear_memory_allocator arena{mem_block, block_size};
+
+  void*  segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+  size_t segment_size  = arena.nof_bytes_left();
   void*  payload_start = arena.allocate(segment_size, 1);
   return new (segment_start)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
