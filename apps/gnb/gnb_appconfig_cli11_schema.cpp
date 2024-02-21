@@ -233,6 +233,8 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
       ->check(CLI::ValidIPV4);
   app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
+  app.add_option("--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
+      ->capture_default_str();
   app.add_option("--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");

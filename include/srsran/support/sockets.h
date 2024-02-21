@@ -126,7 +126,7 @@ inline bool sctp_set_nodelay(int fd, optional<bool> nodelay, srslog::basic_logge
   return true;
 }
 
-inline bool sctp_bind_interface(int fd, std::string& interface, srslog::basic_logger& logger)
+inline bool bind_to_interface(int fd, std::string& interface, srslog::basic_logger& logger)
 {
   if (interface.empty() || interface == "auto") {
     // no need to change anything

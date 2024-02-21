@@ -159,7 +159,7 @@ bool sctp_network_gateway_impl::create_and_bind()
     }
 
     // Bind socket to interface (if requested)
-    if (not sctp_bind_interface(sock_fd, config.bind_interface, logger)) {
+    if (not bind_to_interface(sock_fd, config.bind_interface, logger)) {
       close_socket();
       continue;
     }

@@ -34,6 +34,9 @@ struct network_interface_config {
   /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   std::string n3_bind_addr = "127.0.1.1";
 
+  /// Interface name to bind the N3. `auto` does not force a specific interface and uses a normal `bind()`.
+  std::string n3_bind_interface = "auto";
+
   /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   int n3_bind_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
