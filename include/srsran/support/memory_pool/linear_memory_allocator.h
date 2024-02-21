@@ -25,7 +25,7 @@ public:
   linear_memory_allocator(void* memory_resource, std::size_t memory_resource_size) :
     mem_start(static_cast<uint8_t*>(memory_resource)), mem_res_size(memory_resource_size)
   {
-    srsran_sanity_check(mem_start != nullptr or mem_res_size == 0, "Invalid memory resource");
+    srsran_sanity_check(mem_start != nullptr and mem_res_size != 0, "Invalid memory resource");
   }
 
   std::size_t size() const { return mem_res_size; }

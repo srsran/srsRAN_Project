@@ -76,12 +76,28 @@ void byte_buffer::control_block::destroy_cb()
 
 // ----- byte_buffer -----
 
-byte_buffer::byte_buffer(fallback_allocation_tag tag) noexcept
+byte_buffer::byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other) noexcept
 {
+  // Append new head segment to linked list with fallback allocator mode.
   node_t* n = create_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
-
-  // Append new segment to linked list.
   ctrl_blk_ptr->segments.push_back(*n);
+
+  bool var = this->append(other);
+  srsran_sanity_check(var, "Should never fail to append segment if fallback is enabled");
+  (void)var;
+}
+
+byte_buffer::byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept
+{
+  // Append new head segment to linked list with fallback allocator mode.
+  node_t* n = create_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
+  ctrl_blk_ptr->segments.push_back(*n);
+
+  for (span<const uint8_t> seg : other.segments()) {
+    bool var = this->append(seg);
+    srsran_sanity_check(var, "Should never fail to append segment if fallback is enabled");
+    (void)var;
+  }
 }
 
 bool byte_buffer::append(span<const uint8_t> bytes)

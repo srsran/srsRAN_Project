@@ -817,7 +817,7 @@ public:
   {
     HANDLE_CODE(pack_length(bref, size(), LB, UB, aligned));
     if (aligned) {
-      bref.align_bytes_zero();
+      HANDLE_CODE(bref.align_bytes_zero());
     }
     for (uint32_t i = 0; i < size(); ++i) {
       HANDLE_CODE(bref.pack(octets_[i], 8));
@@ -830,7 +830,7 @@ public:
     HANDLE_CODE(unpack_length(len, bref, LB, UB, aligned));
     resize(len);
     if (aligned) {
-      bref.align_bytes();
+      HANDLE_CODE(bref.align_bytes());
     }
     for (uint32_t i = 0; i < size(); ++i) {
       HANDLE_CODE(bref.unpack(octets_[i], 8));

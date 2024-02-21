@@ -852,6 +852,38 @@ TEST_P(byte_buffer_stress_tester, concurrent_alloc_dealloc_test)
   }
 }
 
+TEST_F(byte_buffer_tester, concurrent_alloc_dealloc_test)
+{
+  const unsigned           max_buffer_size = memory_block_size * 16;
+  std::vector<uint8_t>     randbytes       = test_rgen::random_vector<uint8_t>(max_buffer_size);
+  std::vector<byte_buffer> allocated_buffers;
+
+  // Deplete the pool
+  while (true) {
+    byte_buffer pdu = byte_buffer{span<const uint8_t>{randbytes.data(), 10U}};
+    if (pdu.empty()) {
+      break;
+    }
+    allocated_buffers.push_back(std::move(pdu));
+  }
+
+  // Pool is still empty.
+  byte_buffer pdu = byte_buffer{span<const uint8_t>{randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)}};
+  ASSERT_TRUE(pdu.empty());
+
+  // Test if a span can be added to a byte_buffer with heap as fallback allocator.
+  size_t sz = test_rgen::uniform_int(1U, max_buffer_size);
+  pdu       = byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>{randbytes.data(), sz}};
+  ASSERT_EQ(pdu.length(), sz);
+  span<const uint8_t> expected_bytes{randbytes.data(), sz};
+  ASSERT_EQ(pdu, expected_bytes);
+
+  // Test if a byte_buffer can be added to a byte_buffer with heap as fallback allocator.
+  pdu = byte_buffer{byte_buffer::fallback_allocation_tag{}, allocated_buffers.front()};
+  ASSERT_EQ(pdu.length(), allocated_buffers.front().length());
+  ASSERT_EQ(pdu, allocated_buffers.front());
+}
+
 INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
                          one_vector_size_param_test,
                          ::testing::Values(small_vec_size, large_vec_size, random_vec_size()));

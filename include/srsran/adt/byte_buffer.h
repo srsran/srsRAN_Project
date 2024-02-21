@@ -184,8 +184,6 @@ public:
   /// Creates an empty byte_buffer.
   byte_buffer() noexcept = default;
 
-  byte_buffer(fallback_allocation_tag tag) noexcept;
-
   /// Explicit copy ctor. User should use copy() method for copy assignments.
   explicit byte_buffer(const byte_buffer&) noexcept = default;
 
@@ -211,6 +209,9 @@ public:
 
   /// Move constructor.
   byte_buffer(byte_buffer&& other) noexcept = default;
+
+  byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other = {}) noexcept;
+  byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept;
 
   /// Copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
