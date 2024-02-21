@@ -260,6 +260,16 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
       // Limit the grant PRBs.
       if (not is_retx and dl_new_tx_max_nof_rbs_per_ue_per_slot.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, dl_new_tx_max_nof_rbs_per_ue_per_slot.value());
+        // [Implementation-defined]
+        // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs for
+        // which dl_new_tx_max_nof_rbs_per_ue_per_slot was computed. One way is by checking if the emtpy interval is
+        // less than 2 times the required RBs. If so, allocate all remaining RBs. NOTE: This approach won't hold good in
+        // case of low traffic scenario.
+        const unsigned twice_grant_crbs_length =
+            rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
+        if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
+          mcs_prbs.n_prbs = twice_grant_crbs_length;
+        }
       }
 
       if (mcs_prbs.n_prbs == 0) {
@@ -413,6 +423,14 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // Limit the grant PRBs.
       if (not is_retx and not schedule_sr_only and ul_new_tx_max_nof_rbs_per_ue_per_slot.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ul_new_tx_max_nof_rbs_per_ue_per_slot.value());
+        // [Implementation-defined]
+        // Check whether it's the last UE to be scheduled in this slot i.e. if the emtpy interval is less than 2 times
+        // the required RBs. If so, allocate all remaining RBs.
+        const unsigned twice_grant_crbs_length =
+            rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
+        if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
+          mcs_prbs.n_prbs = twice_grant_crbs_length;
+        }
       }
       // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
       if (mcs_prbs.n_prbs == 0) {
