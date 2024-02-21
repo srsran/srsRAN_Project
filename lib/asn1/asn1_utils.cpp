@@ -1014,10 +1014,27 @@ void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string&
 ************************/
 
 template <bool Al>
+unbounded_octstring<Al>::unbounded_octstring(const unbounded_octstring& other) noexcept :
+  srsran::byte_buffer(fallback_allocation_tag{})
+{
+  for (span<const uint8_t> seg : other.segments()) {
+    bool success = append(seg);
+    // Since fallback_allocation_tag is used, the buffer should not fail to allocate
+    (void)success;
+  }
+}
+
+template <bool Al>
 unbounded_octstring<Al>& unbounded_octstring<Al>::operator=(const unbounded_octstring& other) noexcept
 {
   if (this != &other) {
-    *static_cast<byte_buffer*>(this) = other.deep_copy();
+    clear();
+    *this = byte_buffer{fallback_allocation_tag{}};
+    for (span<const uint8_t> seg : other.segments()) {
+      bool success = append(seg);
+      // Since fallback_allocation_tag is used, the buffer should not fail to allocate
+      (void)success;
+    }
   }
   return *this;
 }

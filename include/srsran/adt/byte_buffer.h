@@ -152,6 +152,8 @@ class byte_buffer
     node_t* segment_in_cb_memory_block = nullptr;
     /// Intrusive ptr reference counter.
     intrusive_ptr_atomic_ref_counter ref_count;
+    /// Whether failures to allocate segments using pool should fallback to malloc.
+    bool malloc_fallback = false;
 
     void destroy_node(node_t* node) const;
 
@@ -177,8 +179,12 @@ public:
   using iterator       = detail::byte_buffer_segment_list_byte_iterator;
   using const_iterator = detail::byte_buffer_segment_list_byte_const_iterator;
 
+  struct fallback_allocation_tag {};
+
   /// Creates an empty byte_buffer.
   byte_buffer() noexcept = default;
+
+  byte_buffer(fallback_allocation_tag tag) noexcept;
 
   /// Explicit copy ctor. User should use copy() method for copy assignments.
   explicit byte_buffer(const byte_buffer&) noexcept = default;
@@ -396,9 +402,9 @@ public:
 private:
   bool has_ctrl_block() const { return ctrl_blk_ptr != nullptr; }
 
-  SRSRAN_NODISCARD node_t* create_head_segment(size_t headroom);
+  SRSRAN_NODISCARD node_t* create_head_segment(size_t headroom, bool use_fallback = false);
 
-  static SRSRAN_NODISCARD node_t* create_segment(size_t headroom);
+  SRSRAN_NODISCARD node_t* create_segment(size_t headroom);
 
   SRSRAN_NODISCARD bool append_segment(size_t headroom_suggestion);
 

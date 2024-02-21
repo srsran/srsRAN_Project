@@ -857,7 +857,7 @@ public:
 
   using srsran::byte_buffer::byte_buffer;
   unbounded_octstring(byte_buffer other) noexcept : srsran::byte_buffer(std::move(other)) {}
-  unbounded_octstring(const unbounded_octstring& other) noexcept : srsran::byte_buffer(other.deep_copy()) {}
+  unbounded_octstring(const unbounded_octstring& other) noexcept;
   unbounded_octstring(unbounded_octstring&& other) noexcept : srsran::byte_buffer(std::move(other)) {}
 
   unbounded_octstring& operator=(byte_buffer other) noexcept

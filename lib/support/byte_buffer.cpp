@@ -46,7 +46,11 @@ void byte_buffer::control_block::destroy_node(node_t* node) const
 {
   node->~node_t();
   if (node != segment_in_cb_memory_block) {
-    detail::byte_buffer_segment_pool::get_instance().deallocate_node(node);
+    if (not this->malloc_fallback or detail::byte_buffer_segment_pool::get_instance().owns_segment(node)) {
+      detail::byte_buffer_segment_pool::get_instance().deallocate_node(node);
+    } else {
+      delete[] reinterpret_cast<uint8_t*>(node);
+    }
   }
 }
 
@@ -61,8 +65,23 @@ byte_buffer::control_block::~control_block()
 
 void byte_buffer::control_block::destroy_cb()
 {
+  bool pool_used = not this->malloc_fallback or detail::byte_buffer_segment_pool::get_instance().owns_segment(this);
   this->~control_block();
-  detail::get_default_byte_buffer_segment_pool().deallocate_node(this);
+  if (pool_used) {
+    detail::get_default_byte_buffer_segment_pool().deallocate_node(this);
+  } else {
+    delete[] reinterpret_cast<uint8_t*>(this);
+  }
+}
+
+// ----- byte_buffer -----
+
+byte_buffer::byte_buffer(fallback_allocation_tag tag) noexcept
+{
+  node_t* n = create_head_segment(DEFAULT_FIRST_SEGMENT_HEADROOM, true);
+
+  // Append new segment to linked list.
+  ctrl_blk_ptr->segments.push_back(*n);
 }
 
 bool byte_buffer::append(span<const uint8_t> bytes)
@@ -157,7 +176,7 @@ bool byte_buffer::append(byte_buffer&& other)
   return true;
 }
 
-byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
+byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom, bool use_fallback)
 {
   auto&        pool       = detail::get_default_byte_buffer_segment_pool();
   const size_t block_size = pool.memory_block_size();
@@ -165,9 +184,13 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   // Allocate new node.
   void* mem_block = pool.allocate_node(block_size);
   if (mem_block == nullptr) {
-    // Pool is depleted.
-    byte_buffer::warn_alloc_failure();
-    return nullptr;
+    if (not use_fallback) {
+      // Pool is depleted.
+      byte_buffer::warn_alloc_failure();
+      return nullptr;
+    }
+    // Use heap as fallback.
+    mem_block = new uint8_t[block_size];
   }
 
   // Construct linear allocator pointing to allocated segment memory block.
@@ -176,11 +199,8 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   // Create control block using allocator.
   void* cb_region = arena.allocate(sizeof(control_block), alignof(control_block));
   ctrl_blk_ptr    = new (cb_region) control_block{};
-  if (ctrl_blk_ptr == nullptr) {
-    byte_buffer::warn_alloc_failure();
-    pool.deallocate_node(mem_block);
-    return nullptr;
-  }
+  srsran_sanity_check(ctrl_blk_ptr != nullptr, "Something went wrong with the creation of the control block");
+  ctrl_blk_ptr->malloc_fallback = use_fallback;
 
   // For first segment of byte_buffer, add a headroom.
   void*   segment_header_region = arena.allocate(sizeof(node_t), alignof(node_t));
@@ -188,6 +208,7 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   void*   payload_start         = arena.allocate(segment_size, 1);
   node_t* node                  = new (segment_header_region)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
+  srsran_sanity_check(node != nullptr, "Something went wrong with the creation of the segment");
 
   // Register segment as sharing the same memory block with control block.
   ctrl_blk_ptr->segment_in_cb_memory_block = node;
@@ -197,14 +218,18 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
 
 byte_buffer::node_t* byte_buffer::create_segment(size_t headroom)
 {
-  static auto& pool       = detail::get_default_byte_buffer_segment_pool();
+  auto&        pool       = detail::get_default_byte_buffer_segment_pool();
   const size_t block_size = pool.memory_block_size();
 
   // Allocate memory block.
   void* mem_block = pool.allocate_node(block_size);
   if (mem_block == nullptr) {
-    byte_buffer::warn_alloc_failure();
-    return nullptr;
+    if (not ctrl_blk_ptr->malloc_fallback) {
+      byte_buffer::warn_alloc_failure();
+      return nullptr;
+    }
+    // Use malloc as fallback.
+    mem_block = new uint8_t[block_size];
   }
 
   // Create a linear allocator pointing to the allocated memory block.
