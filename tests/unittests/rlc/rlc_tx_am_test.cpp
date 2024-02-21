@@ -975,7 +975,125 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
-TEST_P(rlc_tx_am_test, retx_sn_under_segmentation)
+TEST_P(rlc_tx_am_test, retx_of_sn_under_segmentation_is_trimmed_to_already_sent_bytes)
+{
+  const uint32_t n_sdus   = 5;
+  const uint32_t sdu_size = 9;
+
+  const uint32_t n_splits = 3;
+
+  const uint32_t    n_pdus      = n_sdus * n_splits - 1;
+  const uint32_t    header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t    so_size     = 2;
+  const uint32_t    pdu_size    = header_size + so_size + (sdu_size / n_splits);
+  byte_buffer_chain pdus[n_pdus];
+
+  const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
+  tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
+
+  // The rest of the SDU under segmentation is waiting for transmission
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+
+  // NACK SN=4 2:65535 => this SN is currently under segmentation; ReTx only the parts that haven't been sent yet.
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 4;
+  nack.has_so             = true;
+  nack.so_start           = so_size + (sdu_size / n_splits); // assume 1st segment is received properly
+  nack.so_end             = nack.so_end_of_sdu;              // the rest is missing
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = n_sdus;
+    status_pdu.push_nack(nack);
+    rlc->on_status_pdu(std::move(status_pdu));
+  }
+  pcell_worker.run_pending_tasks();
+
+  const uint32_t retx_bytes = sdu_size - nack.so_start - unsent_sdu_bytes;
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size + header_size + so_size + retx_bytes);
+
+  // Read the ReTx segment which shall only include bytes that were already sent
+  std::vector<uint8_t> pdu_buf;
+  size_t               pdu_len;
+  pdu_buf.resize(header_size + so_size + retx_bytes);
+  pdu_len = rlc->pull_pdu(pdu_buf);
+  pdu_buf.resize(pdu_len);
+  EXPECT_EQ(pdu_len, header_size + so_size + retx_bytes);
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+
+  // Read the rest of the SDU under segmentation that was not yet sent
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+  pdu_buf.resize(unsent_sdu_bytes + header_size + so_size);
+  pdu_len = rlc->pull_pdu(pdu_buf);
+  pdu_buf.resize(pdu_len);
+
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_tx_am_test, retx_of_sn_under_segmentation_is_ignored_for_unsent_bytes)
+{
+  const uint32_t n_sdus   = 5;
+  const uint32_t sdu_size = 9;
+
+  const uint32_t n_splits = 3;
+
+  const uint32_t    n_pdus      = n_sdus * n_splits - 1;
+  const uint32_t    header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t    so_size     = 2;
+  const uint32_t    pdu_size    = header_size + so_size + (sdu_size / n_splits);
+  byte_buffer_chain pdus[n_pdus];
+
+  const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
+  tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
+
+  // The rest of the SDU under segmentation is waiting for transmission
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+
+  // NACK SN=4 8:65535 => this SN is currently under segmentation; Ignore NACK of parts that haven't been sent yet.
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 4;
+  nack.has_so             = true;
+  nack.so_start           = sdu_size - unsent_sdu_bytes; // assume 1st segment is received properly
+  nack.so_end             = nack.so_end_of_sdu;          // the rest is missing
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = n_sdus;
+    status_pdu.push_nack(nack);
+    rlc->on_status_pdu(std::move(status_pdu));
+  }
+  pcell_worker.run_pending_tasks();
+
+  // Expect no ReTx was added
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+
+  // NACK SN=4 99:65535 => Ignore NACK of out-of-bounds bytes of SDu under segmentation.
+  nack          = {};
+  nack.nack_sn  = 4;
+  nack.has_so   = true;
+  nack.so_start = 99;                 // out-of-bounds
+  nack.so_end   = nack.so_end_of_sdu; // the rest is missing
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = n_sdus;
+    status_pdu.push_nack(nack);
+    rlc->on_status_pdu(std::move(status_pdu));
+  }
+  pcell_worker.run_pending_tasks();
+
+  // Expect no ReTx was added
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+
+  // Read the rest of the SDU under segmentation that was not yet sent
+  std::vector<uint8_t> pdu_buf;
+  size_t               pdu_len;
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
+  pdu_buf.resize(unsent_sdu_bytes + header_size + so_size);
+  pdu_len = rlc->pull_pdu(pdu_buf);
+  pdu_buf.resize(pdu_len);
+
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_tx_am_test, retx_only_sent_bytes_of_sn_under_segmentation)
 {
   const uint32_t n_sdus   = 5;
   const uint32_t sdu_size = 9;
@@ -1015,6 +1133,7 @@ TEST_P(rlc_tx_am_test, retx_sn_under_segmentation)
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
   EXPECT_EQ(pdu_len, header_size + so_size + retx_bytes);
+  EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
 
   // read the rest of the SDU under segmentation that was not yet sent
   EXPECT_EQ(rlc->get_buffer_state(), unsent_sdu_bytes + header_size + so_size);
