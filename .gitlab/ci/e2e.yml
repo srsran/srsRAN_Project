@@ -365,13 +365,13 @@ test mode ru:
   when: manual
   allow_failure: true
   variables:
-    GROUP: "zmq"
-    TESTBED: "test_mode"
+    GROUP: "viavi"
+    TESTBED: "viavi"
     MARKERS: "test_mode"
     KEYWORDS: "test_ru"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "basic relwithdeb"
+    - job: "basic avx512 dpdk"
       artifacts: true
     - *txrx-lib
     - *retina-needs
