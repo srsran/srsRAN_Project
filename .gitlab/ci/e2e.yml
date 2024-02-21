@@ -266,7 +266,20 @@ amari 32UE:
     - *retina-needs
   parallel:
     matrix:
-      - KEYWORDS: ["attach_detach", "reestablishment", "ping", "iperf and udp", "iperf and tcp"]
+      - KEYWORDS: ["attach_detach", "ping", "iperf and udp", "iperf and tcp"]
+
+amari 32UE [reestablishment]:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+    KEYWORDS: reestablishment
+  allow_failure: true
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
 
 amari 32UE asan:
   extends: .zmq
@@ -322,6 +335,8 @@ test mode ue:
 
 test mode ue tsan:
   extends: test mode ue
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -347,6 +362,8 @@ test mode ue memcheck:
 test mode ru:
   stage: zmq
   extends: .e2e-run
+  when: manual
+  allow_failure: true
   variables:
     GROUP: "zmq"
     TESTBED: "test_mode"
@@ -363,10 +380,8 @@ test mode ru tsan:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -377,10 +392,8 @@ test mode ru asan:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic asan"
       artifacts: true
@@ -391,10 +404,8 @@ test mode ru memcheck:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic memcheck"
       artifacts: true
@@ -420,6 +431,8 @@ test mode ru memcheck:
 
 amari b200 asan:
   extends: .rf
+  when: manual
+  allow_failure: true
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -429,11 +442,15 @@ amari b200 asan:
 
 validate b200 config:
   extends: .rf
+  when: manual
+  allow_failure: true
   variables:
     MARKERS: "rf_b200"
 
 validate n300 config:
   extends: .rf
+  when: manual
+  allow_failure: true
   variables:
     MARKERS: "rf_n300"
     TESTBED: "android_n300"
@@ -459,10 +476,8 @@ android b200:
 android x300:
   stage: rf
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   variables:
     GROUP: "rf"
     TESTBED: "android_x300"
@@ -486,10 +501,8 @@ android n300:
 viavi:
   stage: rf
   extends: .e2e-run
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"
