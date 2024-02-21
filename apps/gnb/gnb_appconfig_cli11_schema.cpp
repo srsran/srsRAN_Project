@@ -404,7 +404,6 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
                  config.nia_preference_list,
                  "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
       ->capture_default_str();
-  ;
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)

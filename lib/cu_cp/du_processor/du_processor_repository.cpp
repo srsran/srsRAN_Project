@@ -92,7 +92,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
-    logger.warning("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
+    logger.warning("DU connection failed - maximum number of DUs connected ({})", cfg.cu_cp.max_nof_dus);
     return du_index_t::invalid;
   }
 

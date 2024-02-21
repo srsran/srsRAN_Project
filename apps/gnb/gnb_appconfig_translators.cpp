@@ -102,7 +102,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 {
   const base_cell_appconfig& cell = config.cells_cfg.front().cell;
 
-  srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
+  srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
+  out_cfg.max_nof_dus                    = config.cu_cp_cfg.max_nof_dus;
+  out_cfg.max_nof_cu_ups                 = config.cu_cp_cfg.max_nof_cu_ups;
+
   out_cfg.ngap_config.gnb_id               = config.gnb_id;
   out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
   out_cfg.ngap_config.plmn                 = cell.plmn;
