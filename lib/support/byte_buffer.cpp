@@ -145,6 +145,12 @@ byte_buffer::control_block::~control_block()
   }
 }
 
+void byte_buffer::control_block::destroy_cb()
+{
+  this->~control_block();
+  detail::get_default_byte_buffer_segment_pool().deallocate_node(this);
+}
+
 bool byte_buffer::append(span<const uint8_t> bytes)
 {
   if (bytes.empty()) {
@@ -205,7 +211,7 @@ bool byte_buffer::append(byte_buffer&& other)
     *this = std::move(other);
     return true;
   }
-  if (not other.ctrl_blk_ptr.unique()) {
+  if (not other.ctrl_blk_ptr->ref_count.unique()) {
     // Use lvalue append.
     return append(other);
   }
@@ -239,8 +245,8 @@ bool byte_buffer::append(byte_buffer&& other)
 
 byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
 {
-  static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
-  static const size_t block_size = pool.memory_block_size();
+  auto&        pool       = detail::get_default_byte_buffer_segment_pool();
+  const size_t block_size = pool.memory_block_size();
 
   // Allocate new node.
   void* mem_block = pool.allocate_node(block_size);
@@ -250,9 +256,12 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
     return nullptr;
   }
 
-  // Create control block using allocator.
+  // Construct linear allocator pointing to allocated segment memory block.
   memory_arena_linear_allocator arena{mem_block, block_size};
-  ctrl_blk_ptr = std::allocate_shared<control_block>(control_block_allocator<control_block>{arena});
+
+  // Create control block using allocator.
+  void* cb_region = arena.allocate(sizeof(control_block), alignof(control_block));
+  ctrl_blk_ptr    = new (cb_region) control_block{};
   if (ctrl_blk_ptr == nullptr) {
     byte_buffer::warn_alloc_failure();
     pool.deallocate_node(mem_block);
@@ -260,11 +269,11 @@ byte_buffer::node_t* byte_buffer::create_head_segment(size_t headroom)
   }
 
   // For first segment of byte_buffer, add a headroom.
-  void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+  void* segment_header_region = arena.allocate(sizeof(node_t), alignof(node_t));
   srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
-  size_t segment_size  = block_size - arena.offset;
-  void*  payload_start = arena.allocate(segment_size, 1);
-  auto*  node          = new (segment_start)
+  size_t  segment_size  = block_size - arena.offset;
+  void*   payload_start = arena.allocate(segment_size, 1);
+  node_t* node          = new (segment_header_region)
       node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
 
   // Register segment as sharing the same memory block with control block.
@@ -375,7 +384,7 @@ bool byte_buffer::prepend(byte_buffer&& other)
     // the byte buffer is empty. Prepending is the same as appending.
     return append(std::move(other));
   }
-  if (not other.ctrl_blk_ptr.unique()) {
+  if (not other.ctrl_blk_ptr->ref_count.unique()) {
     // Deep copy of segments.
     return prepend(other);
   }

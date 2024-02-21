@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/detail/byte_buffer_range_helpers.h"
+#include "srsran/adt/detail/intrusive_ptr.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -149,10 +150,23 @@ class byte_buffer
     size_t pkt_len = 0;
     /// One of the segments shares the same memory block with the byte_buffer control block.
     node_t* segment_in_cb_memory_block = nullptr;
+    /// Intrusive ptr reference counter.
+    intrusive_ptr_atomic_ref_counter ref_count;
 
     void destroy_node(node_t* node) const;
 
     ~control_block();
+
+  private:
+    friend void intrusive_ptr_inc_ref(control_block* ptr) { ptr->ref_count.inc_ref(); }
+    friend void intrusive_ptr_dec_ref(control_block* ptr)
+    {
+      if (ptr->ref_count.dec_ref()) {
+        ptr->destroy_cb();
+      }
+    }
+
+    void destroy_cb();
   };
 
   /// Headroom given to the first segment of the byte_buffer.
@@ -411,9 +425,7 @@ private:
 
   static void warn_alloc_failure();
 
-  // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need. It is also hard to determine the size
-  // of the shared_ptr control block allocation and how much we need to discount in the segment.
-  std::shared_ptr<control_block> ctrl_blk_ptr = nullptr;
+  intrusive_ptr<control_block> ctrl_blk_ptr;
 };
 
 /// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
