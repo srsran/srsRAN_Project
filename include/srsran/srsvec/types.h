@@ -15,14 +15,14 @@
 #include "srsran/support/srsran_assert.h"
 #include <cstdint>
 
-// The supported vector data types are:
-// - srsran::span<cf_t>: For complex float vectors
-// - srsran::span<float>: For float vectors
-// - srsran::span<int16_t>: For signed 16 bit integer vectors
-// - srsran::span<int8_t>: For signed 8 bit integer vectors
-// - srsran::span<uint8_t>: For unsigned 8 bit integer vectors
-//
-// To make the span constant use srsran::span<const T>.
+/// The supported vector data types are:
+/// - srsran::span<cf_t>: For complex float vectors
+/// - srsran::span<float>: For float vectors
+/// - srsran::span<int16_t>: For signed 16 bit integer vectors
+/// - srsran::span<int8_t>: For signed 8 bit integer vectors
+/// - srsran::span<uint8_t>: For unsigned 8 bit integer vectors
+///
+/// To make the span constant use srsran::span<const T>.
 
 #define srsran_srsvec_assert_size(X, Y)                                                                                \
   srsran_assert(                                                                                                       \

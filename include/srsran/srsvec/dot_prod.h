@@ -17,7 +17,6 @@
 #include "srsran/srsvec/detail/traits.h"
 #include "srsran/srsvec/types.h"
 #include "srsran/support/srsran_assert.h"
-
 #include <numeric>
 
 namespace srsran {

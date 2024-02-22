@@ -13,7 +13,6 @@
 #include "srsran/srsvec/types.h"
 
 namespace srsran {
-
 namespace srsvec {
 
 /// \brief Element-wise division between two sequences.
