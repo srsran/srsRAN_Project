@@ -104,7 +104,6 @@ def _ping_and_reestablishment_multi_ues(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        pcap=False,
     )
 
     configure_artifacts(
