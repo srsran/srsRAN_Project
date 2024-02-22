@@ -143,6 +143,7 @@ e2e request validation:
     - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
     # Add extra secret env variables to the .env file
     - |
+      echo "" >> .gitlab/ci/e2e/.env
       cat $RETINA_SECRET_ENV >> .gitlab/ci/e2e/.env
     # Set username for retina
     - |

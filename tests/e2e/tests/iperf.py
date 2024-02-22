@@ -348,6 +348,7 @@ def test_android_hp(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_4x4_mimo
+@mark.flaky(reruns=1, only_rerun=["5GC crashed"])
 # pylint: disable=too-many-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
