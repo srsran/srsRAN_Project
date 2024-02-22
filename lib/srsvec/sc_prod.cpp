@@ -39,7 +39,7 @@ static void sc_prod_fff_simd(const float* x, float h, float* z, std::size_t len)
   }
 #endif
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] * h;
   }
 }
@@ -69,7 +69,7 @@ static void sc_prod_ccc_simd(const cf_t* x, cf_t h, cf_t* z, std::size_t len)
   }
 #endif
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] * h;
   }
 }

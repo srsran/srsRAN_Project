@@ -214,7 +214,7 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t> bits)
 
   unsigned value = 0;
 
-  for (unsigned i = 0, nof_bits = bits.size(); i != nof_bits; i++) {
+  for (unsigned i = 0, nof_bits = bits.size(); i != nof_bits; ++i) {
     value |= (unsigned)bits[i] << (nof_bits - i - 1U);
   }
 

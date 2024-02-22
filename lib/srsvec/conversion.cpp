@@ -47,7 +47,7 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
   }
 #endif /* SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE */
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = static_cast<int16_t>(std::round(x[i] * scale));
   }
 }
@@ -112,7 +112,7 @@ static inline void convert_if_simd(float* z, const int16_t* x, float scale, unsi
   }
 #endif // defined(__AVX__) && defined(__AVX2__)
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = static_cast<float>(x[i]) * gain;
   }
 }

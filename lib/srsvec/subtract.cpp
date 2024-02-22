@@ -40,7 +40,7 @@ static void subtract_fff_simd(float* z, const float* x, const float* y, std::siz
   }
 #endif
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] - y[i];
   }
 }
@@ -71,7 +71,7 @@ static void subtract_sss_simd(int16_t* z, const int16_t* x, const int16_t* y, st
   }
 #endif /* SRSRAN_SIMD_S_SIZE */
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] - y[i];
   }
 }
@@ -102,7 +102,7 @@ static void subtract_bbb_simd(int8_t* z, const int8_t* x, const int8_t* y, std::
   }
 #endif /* SRSRAN_SIMD_S_SIZE */
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] - y[i];
   }
 }

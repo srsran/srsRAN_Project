@@ -40,7 +40,7 @@ static void add_fff_simd(const float* x, const float* y, float* z, std::size_t l
   }
 #endif
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] + y[i];
   }
 }
@@ -71,7 +71,7 @@ static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::si
   }
 #endif /* SRSRAN_SIMD_S_SIZE */
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] + y[i];
   }
 }
@@ -102,7 +102,7 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
   }
 #endif /* SRSRAN_SIMD_S_SIZE */
 
-  for (; i != len; i++) {
+  for (; i != len; ++i) {
     z[i] = x[i] + y[i];
   }
 }
