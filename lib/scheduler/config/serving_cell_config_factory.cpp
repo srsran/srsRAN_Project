@@ -374,7 +374,7 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::FDD) {
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
-        pusch_time_domain_resource_allocation{4, sch_mapping_type::typeA, ofdm_symbol_range{0, 14}}};
+        pusch_time_domain_resource_allocation{params.min_k2, sch_mapping_type::typeA, ofdm_symbol_range{0, 14}}};
   } else {
     // TDD
     // - [Implementation-defined] Ensure k2 value which is less than or equal to minimum value of k1(s) exist in the
