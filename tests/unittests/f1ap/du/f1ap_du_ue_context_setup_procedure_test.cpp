@@ -72,7 +72,8 @@ protected:
         du_to_f1_resp.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
         du_to_f1_resp.drbs_setup[i].lcid   = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
         du_to_f1_resp.drbs_setup[i].dluptnl_info_list.resize(1);
-        du_to_f1_resp.drbs_setup[i].dluptnl_info_list[0] = up_transport_layer_info{{"127.0.0.1"}, int_to_gtpu_teid(1)};
+        du_to_f1_resp.drbs_setup[i].dluptnl_info_list[0] =
+            up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)};
       }
     }
 

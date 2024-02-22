@@ -154,8 +154,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.rlc_p                          = &rlc_p;
     du_hi_cfg.gnb_du_id                      = du_insts.size() + 1;
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
-    du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
-    du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
+    du_hi_cfg.du_bind_addr =
+        transport_layer_address::create_from_string(fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id));
+    du_hi_cfg.mac_cfg = generate_mac_expert_config(gnb_cfg);
     // Assign different initial C-RNTIs to different DUs.
     du_hi_cfg.mac_cfg.initial_crnti     = to_rnti(0x4601 + (0x1000 * du_insts.size()));
     du_hi_cfg.sched_ue_metrics_notifier = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(i));

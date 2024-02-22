@@ -455,7 +455,8 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_sessio
 
   auto& dlqos_flow_per_tnl_info =
       pdu_session_setup_response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info;
-  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
+  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("0.0.0.0"),
+                                              int_to_gtpu_teid(0)};
   cu_cp_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
   dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), assoc_qos_flow);
@@ -620,7 +621,8 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_modify_response(pdu_sessi
   pdu_session_modify_response_item.pdu_session_id = pdu_session_id;
 
   cu_cp_qos_flow_per_tnl_information qos_flow_per_tnl_info;
-  qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid(1)};
+  qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("127.0.0.1"),
+                                            int_to_gtpu_teid(1)};
 
   cu_cp_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = qos_flow_id;

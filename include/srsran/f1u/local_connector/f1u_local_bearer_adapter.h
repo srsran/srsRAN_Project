@@ -59,8 +59,8 @@ public:
 
 private:
   srs_cu_up::f1u_bearer_logger      logger;
-  srs_du::f1u_rx_pdu_handler*       handler     = nullptr;
-  optional<up_transport_layer_info> dl_tnl_info = {};
+  srs_du::f1u_rx_pdu_handler*       handler = nullptr;
+  optional<up_transport_layer_info> dl_tnl_info;
 };
 
 class f1u_tx_delivery_local_adapter : public srs_cu_up::f1u_rx_delivery_notifier

@@ -96,7 +96,7 @@ protected:
   null_rlc_pcap                          rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
-  du_manager_params params{{"srsgnb", 1, 1, {"127.0.0.1"}, cells},
+  du_manager_params params{{"srsgnb", 1, 1, transport_layer_address::create_from_string("127.0.0.1"), cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},

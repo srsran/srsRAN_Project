@@ -38,7 +38,7 @@ std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
   static dummy_rlc_rlf_notifier rlf_notifier;
 
   std::array<up_transport_layer_info, 1> ul_tnls = {
-      up_transport_layer_info{transport_layer_address{"127.0.0.1"}, gtpu_teid_t{0}}};
+      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{0}}};
   return create_drb(to_du_ue_index(0),
                     to_du_cell_index(0),
                     drb_id,

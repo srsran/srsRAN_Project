@@ -92,16 +92,18 @@ protected:
       ue_inactivity_triggered = true;
     });
     ue_inactivity_timer.run();
-    f1u = std::make_unique<f1u_bearer_impl>(0,
-                                            drb_id,
-                                            up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{ul_teid_next.value()++}},
-                                            *tester,
-                                            *tester,
-                                            *tester,
-                                            ue_timer_factory,
-                                            ue_inactivity_timer,
-                                            ue_worker,
-                                            *tester);
+    f1u = std::make_unique<f1u_bearer_impl>(
+        0,
+        drb_id,
+        up_transport_layer_info(transport_layer_address::create_from_string("127.0.0.1"),
+                                gtpu_teid_t{ul_teid_next.value()++}),
+        *tester,
+        *tester,
+        *tester,
+        ue_timer_factory,
+        ue_inactivity_timer,
+        ue_worker,
+        *tester);
   }
 
   void TearDown() override

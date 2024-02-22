@@ -536,16 +536,16 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.gnb_du_id                  = 1;
-    cfg.gnb_du_name                = fmt::format("srsgnb{}", cfg.gnb_du_id);
-    cfg.du_bind_addr               = fmt::format("127.0.0.{}", cfg.gnb_du_id);
-    cfg.exec_mapper                = &workers.du_high_exec_mapper;
-    cfg.f1c_client                 = &sim_cu_cp;
-    cfg.f1u_gw                     = &sim_cu_up;
-    cfg.phy_adapter                = &sim_phy;
-    cfg.timers                     = &timers;
-    cfg.cells                      = {config_helpers::make_default_du_cell_config(params)};
-    cfg.sched_cfg                  = config_helpers::make_default_scheduler_expert_config();
+    cfg.gnb_du_id    = 1;
+    cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
+    cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", cfg.gnb_du_id));
+    cfg.exec_mapper  = &workers.du_high_exec_mapper;
+    cfg.f1c_client   = &sim_cu_cp;
+    cfg.f1u_gw       = &sim_cu_up;
+    cfg.phy_adapter  = &sim_phy;
+    cfg.timers       = &timers;
+    cfg.cells        = {config_helpers::make_default_du_cell_config(params)};
+    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
     cfg.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.qos                        = config_helpers::make_default_du_qos_config_list(1000);

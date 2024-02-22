@@ -114,8 +114,8 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl{{"127.0.0.2"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
@@ -164,8 +164,8 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl{{"127.0.0.2"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
@@ -214,9 +214,9 @@ TEST_F(f1u_connector_test, update_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl1{{"127.0.0.2"}, gtpu_teid_t{2}};
-  up_transport_layer_info dl_tnl2{{"127.0.0.3"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl1{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+  up_transport_layer_info dl_tnl2{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
