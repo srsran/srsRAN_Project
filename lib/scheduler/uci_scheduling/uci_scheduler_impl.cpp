@@ -28,7 +28,17 @@ uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
   updated_ues.reserve(MAX_NOF_DU_UES);
 }
 
-uci_scheduler_impl::~uci_scheduler_impl() = default;
+uci_scheduler_impl::~uci_scheduler_impl()
+{
+  for (auto& slot_entry : periodic_uci_slot_wheel) {
+    if (not slot_entry.empty()) {
+      logger.error("cell={} c-rnti={}: UCI resources were not correctly cleaned up from UCI scheduler",
+                   cell_cfg.cell_index,
+                   slot_entry[0].rnti);
+      break;
+    }
+  }
+}
 
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
 {
