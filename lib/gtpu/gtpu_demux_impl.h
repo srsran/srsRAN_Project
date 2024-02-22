@@ -15,6 +15,7 @@
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace srsran {
@@ -47,6 +48,9 @@ private:
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;
 
+  // The map is modified by accessed the io_broker (to get the right executor)
+  // and the modified by UE executors when setting up/tearing down.
+  std::mutex                                                                   map_mutex;
   std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
 
   srslog::basic_logger& logger;

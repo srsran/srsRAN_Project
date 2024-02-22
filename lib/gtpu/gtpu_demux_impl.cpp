@@ -24,6 +24,7 @@ bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                           teid,
                                  task_executor&                        tunnel_exec,
                                  gtpu_tunnel_rx_upper_layer_interface* tunnel)
 {
+  std::lock_guard<std::mutex> guard(map_mutex);
   if (teid_to_tunnel.find(teid) != teid_to_tunnel.end()) {
     logger.error("Tunnel already exists. teid={}", teid);
     return false;
@@ -35,6 +36,7 @@ bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                           teid,
 
 bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
 {
+  std::lock_guard<std::mutex> guard(map_mutex);
   if (teid_to_tunnel.find(teid) == teid_to_tunnel.end()) {
     logger.error("Tunnel not found. teid={}", teid);
     return false;
@@ -53,7 +55,8 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
   }
   gtpu_teid_t teid{read_teid};
 
-  const auto& it = teid_to_tunnel.find(teid);
+  std::lock_guard<std::mutex> guard(map_mutex);
+  const auto&                 it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
     logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
     return;
