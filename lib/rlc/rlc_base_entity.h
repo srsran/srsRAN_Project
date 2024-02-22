@@ -63,6 +63,22 @@ public:
   rlc_base_entity(const rlc_base_entity&&)            = delete;
   rlc_base_entity& operator=(const rlc_base_entity&&) = delete;
 
+  void stop() final
+  {
+    if (tx != nullptr) {
+      logger.log_debug("Stopping TX entity");
+      tx->stop();
+    } else {
+      logger.log_error("No TX entity to stop");
+    }
+    if (rx != nullptr) {
+      logger.log_debug("Stopping RX entity");
+      rx->stop();
+    } else {
+      logger.log_error("No RX entity to stop");
+    }
+  }
+
   rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() final { return tx.get(); };
   rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface() final { return tx.get(); };
   rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface() final { return rx.get(); };

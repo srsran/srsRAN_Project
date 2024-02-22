@@ -220,6 +220,7 @@ public:
   }
 
   /// Performs a deep copy (byte by bytes) of this byte_buffer.
+  /// In case of a failure an empty byte_buffer is returned.
   byte_buffer deep_copy() const
   {
     byte_buffer buf;

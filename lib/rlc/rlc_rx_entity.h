@@ -50,6 +50,16 @@ protected:
   rlc_pcap&                         pcap;
 
 public:
+  /// \brief Stops all internal timers.
+  ///
+  /// This function is inteded to be called upon removal of the bearer before destroying it.
+  /// It stops all timers with handlers that may delegate tasks to another executor that could face a deleted object at
+  /// a later execution time.
+  /// Before this function is called, the adjacent layers should already be disconnected so that no timer is restarted.
+  ///
+  /// Note: This function shall only be called from ue_executor.
+  virtual void stop() = 0;
+
   rlc_rx_metrics get_metrics() { return metrics.get_metrics(); }
   void           reset_metrics() { return metrics.reset_metrics(); }
 };

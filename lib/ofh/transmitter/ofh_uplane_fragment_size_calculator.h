@@ -37,7 +37,7 @@ class ofh_uplane_fragment_size_calculator
 public:
   ofh_uplane_fragment_size_calculator(unsigned                     start_prb_,
                                       unsigned                     nof_prbs_,
-                                      const ru_compression_params& comp_params);
+                                      const ru_compression_params& compr_params);
 
   /// \brief Calculates the fragment size of the configured PRBs that will fit in the given frame size.
   ///
@@ -51,12 +51,12 @@ public:
   ///
   /// \param[in] frame_size   Frame size.
   /// \param[in] nof_prbs     Number of PRBs in a resource grid.
-  /// \param[in] comp_params  Compression parameters for the I and Q samples.
+  /// \param[in] compr_params  Compression parameters for the I and Q samples.
   /// \param[in] headers_size Size of the headers stored in a frame alongside the I and Q samples.
   /// \return Number of segments.
   static unsigned calculate_nof_segments(units::bytes                 frame_size,
                                          unsigned                     nof_prbs,
-                                         const ru_compression_params& comp_params,
+                                         const ru_compression_params& compr_params,
                                          units::bytes                 headers_size);
 
 private:

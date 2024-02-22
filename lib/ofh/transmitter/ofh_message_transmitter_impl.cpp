@@ -26,8 +26,6 @@
 using namespace srsran;
 using namespace ofh;
 
-static constexpr unsigned MAX_FRAMES = 64;
-
 message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&                  logger_,
                                                    const symbol_handler_config&           cfg,
                                                    std::unique_ptr<ether::gateway>        gw,
@@ -44,48 +42,66 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
   srsran_assert(pool_ptr, "Invalid frame pool");
 }
 
-void message_transmitter_impl::transmit_enqueued_messages(const ether::frame_pool_interval& interval)
+void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> frame_burst)
+{
+  if (frame_burst.empty()) {
+    return;
+  }
+
+  gateway->send(frame_burst);
+  logger.debug("Sending an Ethernet frame burst of size '{}'", frame_burst.size());
+}
+
+void message_transmitter_impl::enqueue_messages_into_burst(
+    const ether::frame_pool_interval&                   interval,
+    static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst)
 {
   auto frame_buffers = pool.read_frame_buffers(interval);
   if (frame_buffers.empty()) {
     return;
   }
 
-  static_vector<span<const uint8_t>, MAX_FRAMES> frames;
   for (const auto& frame : frame_buffers) {
-    frames.push_back(frame->data());
+    frame_burst.emplace_back(frame->data());
   }
 
-  gateway->send(frames);
-  logger.debug(
-      "Sending an Ethernet frame burst of size '{}' frames through gateway in interval '{}_{}':{}_{} and type '{}'",
-      frames.size(),
-      interval.start.get_slot(),
-      interval.start.get_symbol_index(),
-      interval.end.get_slot(),
-      interval.end.get_symbol_index(),
-      (interval.type.type == message_type::control_plane) ? "control" : "user");
-
-  pool.clear_sent_frame_buffers(interval);
+  logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
+               frame_buffers.size(),
+               (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
+               (interval.type.direction == ofh::data_direction::downlink) ? "downlink" : "uplink",
+               interval.start.get_slot(),
+               interval.start.get_symbol_index(),
+               interval.end.get_slot(),
+               interval.end.get_symbol_index());
 }
 
 void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
 {
-  // Transmit pending DL Control-Plane messages.
-  ether::frame_pool_interval interval{{message_type::control_plane, data_direction::downlink},
-                                      symbol_point + timing_params.sym_cp_dl_end,
-                                      symbol_point + timing_params.sym_cp_dl_start};
-  transmit_enqueued_messages(interval);
+  static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
 
-  // Transmit pending UL Control-Plane messages.
-  interval.type  = {message_type::control_plane, data_direction::uplink};
-  interval.start = symbol_point + timing_params.sym_cp_ul_end;
-  interval.end   = symbol_point + timing_params.sym_cp_ul_start;
-  transmit_enqueued_messages(interval);
+  // Enqueue pending DL Control-Plane messages.
+  ether::frame_pool_interval interval_cp_dl{{message_type::control_plane, data_direction::downlink},
+                                            symbol_point + timing_params.sym_cp_dl_end,
+                                            symbol_point + timing_params.sym_cp_dl_start};
+  enqueue_messages_into_burst(interval_cp_dl, frame_burst);
 
-  // Transmit pending User-Plane messages.
-  interval.type  = {message_type::user_plane, data_direction::downlink};
-  interval.start = symbol_point + timing_params.sym_up_dl_end;
-  interval.end   = symbol_point + timing_params.sym_up_dl_start;
-  transmit_enqueued_messages(interval);
+  // Enqueue pending UL Control-Plane messages.
+  ether::frame_pool_interval interval_cp_ul{{message_type::control_plane, data_direction::uplink},
+                                            symbol_point + timing_params.sym_cp_ul_end,
+                                            symbol_point + timing_params.sym_cp_ul_start};
+  enqueue_messages_into_burst(interval_cp_ul, frame_burst);
+
+  // Enqueue pending User-Plane messages.
+  ether::frame_pool_interval interval_up{{message_type::user_plane, data_direction::downlink},
+                                         symbol_point + timing_params.sym_up_dl_end,
+                                         symbol_point + timing_params.sym_up_dl_start};
+  enqueue_messages_into_burst(interval_up, frame_burst);
+
+  // Transmit the data.
+  transmit_frame_burst(frame_burst);
+
+  // Clear sent buffers.
+  pool.clear_sent_frame_buffers(interval_cp_dl);
+  pool.clear_sent_frame_buffers(interval_cp_ul);
+  pool.clear_sent_frame_buffers(interval_up);
 }

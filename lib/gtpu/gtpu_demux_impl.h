@@ -27,33 +27,43 @@
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace srsran {
 
+struct gtpu_demux_tunnel_ctx_t {
+  task_executor*                        tunnel_exec;
+  gtpu_tunnel_rx_upper_layer_interface* tunnel;
+};
+
 class gtpu_demux_impl final : public gtpu_demux
 {
 public:
-  explicit gtpu_demux_impl(gtpu_demux_cfg_t cfg_, task_executor& cu_up_exec, dlt_pcap& gtpu_pcap_);
+  explicit gtpu_demux_impl(gtpu_demux_cfg_t cfg_, dlt_pcap& gtpu_pcap_);
   ~gtpu_demux_impl() = default;
 
   // gtpu_demux_rx_upper_layer_interface
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
   // gtpu_demux_ctrl
-  bool add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override;
+  bool add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(gtpu_teid_t teid) override;
 
 private:
   // Actual demuxing, to be run in CU-UP executor.
-  void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr);
+  void handle_pdu_impl(gtpu_teid_t                           teid,
+                       gtpu_tunnel_rx_upper_layer_interface* tunnel,
+                       byte_buffer                           pdu,
+                       const sockaddr_storage&               src_addr);
 
   const gtpu_demux_cfg_t cfg;
-  task_executor&         cu_up_exec;
   dlt_pcap&              gtpu_pcap;
 
-  ///< TODO: revisit mapping of TEID to executors, one executor per UE should be doable.
-  std::unordered_map<gtpu_teid_t, gtpu_tunnel_rx_upper_layer_interface*, gtpu_teid_hasher_t> teid_to_tunnel;
+  // The map is modified by accessed the io_broker (to get the right executor)
+  // and the modified by UE executors when setting up/tearing down.
+  std::mutex                                                                   map_mutex;
+  std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
 
   srslog::basic_logger& logger;
 };

@@ -19,7 +19,7 @@
 #
 
 add_executable(pdcch_type0_css_occassions_test pdcch/pdcch_type0_css_occassions_test.cpp)
-target_link_libraries(pdcch_type0_css_occassions_test srsran_sched srslog)
+target_link_libraries(pdcch_type0_css_occassions_test srsran_sched srslog gtest gtest_main)
 add_test(pdcch_type0_css_occassions_test pdcch_type0_css_occassions_test)
 
 add_executable(pdsch_default_time_allocation_test pdsch/pdsch_default_time_allocation_test.cpp)

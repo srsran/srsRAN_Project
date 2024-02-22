@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   srslog::init();
 
   // init GW logger
+  srslog::fetch_basic_logger("IO-EPOLL", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UDP-GW", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UDP-GW", true).set_hex_dump_max_size(100);
 

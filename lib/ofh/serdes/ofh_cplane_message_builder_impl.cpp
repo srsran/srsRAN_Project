@@ -161,7 +161,7 @@ cplane_message_builder_impl::build_dl_ul_radio_channel_message(span<uint8_t>    
   serializer.write(section_type);
 
   // Compression header (1 Byte).
-  serialize_compression_header(serializer, msg_params.comp_params, msg_params.radio_hdr.direction);
+  serialize_compression_header(serializer, msg_params.compr_params, msg_params.radio_hdr.direction);
 
   // Reserved (1 Byte).
   static constexpr uint8_t reserved = 0U;
@@ -315,7 +315,7 @@ cplane_message_builder_impl::build_prach_mixed_numerology_message(span<uint8_t> 
   serializer.write(uint16_t(msg_params.cpLength));
 
   // Compression header (1 Byte).
-  serialize_compression_header(serializer, msg_params.comp_params, msg_params.radio_hdr.direction);
+  serialize_compression_header(serializer, msg_params.compr_params, msg_params.radio_hdr.direction);
 
   // Write the section fields. Only one section supported.
   serialize_section_3(serializer, msg_params.section_fields);

@@ -25,6 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
@@ -53,7 +54,8 @@ public:
   virtual ~gtpu_demux_ctrl() = default;
 
   /// Add a new TEID to GTP-U tunnel mapping.
-  virtual bool add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) = 0;
+  virtual bool
+  add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_rx_upper_layer_interface* tunnel) = 0;
 
   /// \brief Remove TEID from mapping.
   virtual bool remove_tunnel(gtpu_teid_t teid) = 0;

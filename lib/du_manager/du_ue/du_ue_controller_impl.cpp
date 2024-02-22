@@ -252,12 +252,12 @@ async_task<void> du_ue_controller_impl::disconnect_notifiers()
     // > Disconnect DRBs.
     for (auto& drb_pair : bearers.drbs()) {
       du_ue_drb& drb = *drb_pair.second;
-      drb.disconnect();
+      drb.stop();
     }
 
     // > Disconnect SRBs.
     for (du_ue_srb& srb : bearers.srbs()) {
-      srb.disconnect();
+      srb.stop();
     }
   });
 }
@@ -282,7 +282,7 @@ void du_ue_controller_impl::stop_drb_traffic()
         // > Disconnect DRBs.
         for (auto& drb_pair : bearers.drbs()) {
           du_ue_drb& drb = *drb_pair.second;
-          drb.disconnect();
+          drb.stop();
         }
 
         logger.info("ue={}: DRB traffic stopped", ue_index);

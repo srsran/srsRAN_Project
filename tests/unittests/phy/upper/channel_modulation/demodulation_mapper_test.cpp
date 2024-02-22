@@ -29,6 +29,7 @@
 
 #include "demodulation_mapper_test_data.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -36,12 +37,24 @@
 using namespace srsran;
 
 namespace srsran {
+
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   return os << fmt::format("{} modulation, {} symbols", to_string(tc.scheme), tc.nsymbols);
 }
 
+std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> data)
+{
+  return os << fmt::format("[{}]", data);
+}
+
+bool operator==(span<const log_likelihood_ratio> left, span<const log_likelihood_ratio> right)
+{
+  return std::equal(left.begin(), left.end(), right.begin(), right.end());
+}
+
 } // namespace srsran
+
 namespace {
 
 class DemodulatorFixture : public ::testing::TestWithParam<test_case_t>
@@ -288,6 +301,35 @@ TEST_P(DemodulatorFixture, DemodulatorSymbolInfinity)
   }
   ASSERT_TRUE(are_infinity_ok) << "Dealing with NaN symbols went wrong.";
   ASSERT_TRUE(are_others_ok) << "Infinite symbols should not affect other soft bits.";
+}
+
+// Check that zero symbols are translated to zero bits.
+TEST_P(DemodulatorFixture, DemodulatorSymbolZero)
+{
+  // Random generator to select the symbols that will become zero.
+  std::mt19937                            rgen(symbols.size());
+  std::uniform_int_distribution<unsigned> i_symbol_dist(0, symbols.size() - 1);
+
+  unsigned bits_per_symbol = get_bits_per_symbol(mod);
+
+  // Set one of every 12 symbols to zero.
+  unsigned nof_zero_symbols = divide_ceil(symbols.size(), 12);
+  for (unsigned i = 0; i != nof_zero_symbols; ++i) {
+    // Select a random symbol.
+    unsigned i_symbol = i_symbol_dist(rgen);
+
+    // Set symbol to zero.
+    symbols[i_symbol] = cf_t();
+
+    // The expected bits must be zero.
+    srsvec::zero(span<log_likelihood_ratio>(soft_bits_expected).subspan(bits_per_symbol * i_symbol, bits_per_symbol));
+  }
+
+  std::vector<log_likelihood_ratio> soft_bits(symbols.size() * bits_per_symbol);
+
+  demodulator->demodulate_soft(soft_bits, symbols, noise_var, mod);
+
+  ASSERT_EQ(span<const log_likelihood_ratio>(soft_bits), span<const log_likelihood_ratio>(soft_bits_expected));
 }
 
 // Check that a NaN symbol doesn't crash the demodulator.

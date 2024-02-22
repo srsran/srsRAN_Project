@@ -444,7 +444,7 @@ protected:
   cell_resource_allocator        res_grid{cell_cfg};
   dummy_pdcch_resource_allocator pdcch_sch;
   ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger};
-  scheduler_result_logger        result_logger;
+  scheduler_result_logger        result_logger{false, cell_cfg.pci};
 
   slot_point next_slot{to_numerology_value(params.scs),
                        test_rgen::uniform_int<unsigned>(0, (10240 << to_numerology_value(params.scs)) - 1)};

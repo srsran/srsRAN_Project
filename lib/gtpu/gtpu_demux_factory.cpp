@@ -27,7 +27,6 @@ using namespace srsran;
 
 std::unique_ptr<gtpu_demux> srsran::create_gtpu_demux(const gtpu_demux_creation_request& msg)
 {
-  report_fatal_error_if_not(msg.cu_up_exec, "CU-UP exec is uninitialized");
-  report_fatal_error_if_not(msg.gtpu_pcap, "CU-UP exec is uninitialized");
-  return std::make_unique<gtpu_demux_impl>(msg.cfg, *msg.cu_up_exec, *msg.gtpu_pcap);
+  report_fatal_error_if_not(msg.gtpu_pcap, "CU-UP pcap is uninitialized");
+  return std::make_unique<gtpu_demux_impl>(msg.cfg, *msg.gtpu_pcap);
 }

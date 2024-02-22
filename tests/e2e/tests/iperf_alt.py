@@ -84,7 +84,6 @@ def test_multiple_configs_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        pcap=False,
     )
     configure_artifacts(
         retina_data=retina_data,

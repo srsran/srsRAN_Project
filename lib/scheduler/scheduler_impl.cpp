@@ -43,6 +43,9 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     return false;
   }
 
+  // Update logger with new cell index.
+  sched_ev_logger.enqueue(scheduler_event_logger::cell_creation_event{msg.cell_index, cell_cfg->pci});
+
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.

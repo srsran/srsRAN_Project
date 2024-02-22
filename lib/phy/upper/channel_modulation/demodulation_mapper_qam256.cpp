@@ -331,6 +331,16 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
 #endif // HAVE_NEON
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
+    //  Set all LLR to zero if the symbol is near zero.
+    if (is_near_zero(*symbols_it)) {
+      for (unsigned i_bit = 0; i_bit != 8; ++i_bit) {
+        *llr_it++ = 0;
+      }
+      ++symbols_it;
+      ++noise_it;
+      continue;
+    }
+
     float rcp_noise = 0;
     // Note: "noise_var > 0" is false also when "noise_var" is NaN.
     if (*noise_it > 0) {

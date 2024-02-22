@@ -40,7 +40,7 @@ private:
                          span<const log_likelihood_ratio> this_var_to_check,
                          span<const log_likelihood_ratio> this_check_to_var) override;
 
-  void get_hard_bits(bit_buffer& out) override;
+  bool get_hard_bits(bit_buffer& out) override;
 
   void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
                                  span<const log_likelihood_ratio> this_soft_bits,

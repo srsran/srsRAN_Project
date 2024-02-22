@@ -24,6 +24,7 @@
 #include "lib/cu_up/ue_manager.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -45,6 +46,7 @@ protected:
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     e1ap               = std::make_unique<dummy_e1ap>();
 
+    cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_pool>(&worker);
     // Create UE cfg
     ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, 0};
 
@@ -57,8 +59,8 @@ protected:
                                           *gtpu_tx_notifier,
                                           *gtpu_rx_demux,
                                           *gtpu_f1u_allocator,
+                                          *cu_up_exec_mapper,
                                           gtpu_pcap,
-                                          worker,
                                           test_logger);
   }
 
@@ -72,6 +74,7 @@ protected:
   std::unique_ptr<gtpu_teid_pool>                      gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
+  std::unique_ptr<cu_up_executor_pool>                 cu_up_exec_mapper;
   dummy_inner_f1u_bearer                               f1u_bearer;
   null_dlt_pcap                                        gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;

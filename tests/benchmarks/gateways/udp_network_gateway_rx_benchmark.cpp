@@ -86,6 +86,7 @@ int main(int argc, char** argv)
              "iperf -c 127.0.0.1 -u -b 5G -p 56701  -P 2 -t 3600 --no-udp-fin\n");
 
   // init GW logger
+  srslog::fetch_basic_logger("IO-EPOLL", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UDP-GW", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UDP-GW", true).set_hex_dump_max_size(100);
 

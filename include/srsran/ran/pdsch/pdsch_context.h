@@ -39,6 +39,13 @@ public:
   {
   }
 
+  /// Comparison operators.
+  bool operator==(const pdsch_context& other) const
+  {
+    return h_id == other.h_id && k1 == other.k1 && nof_retxs == other.nof_retxs;
+  }
+  bool operator!=(const pdsch_context& other) const { return !(*this == other); }
+
   /// Gets the HARQ process identifier.
   harq_id_t get_h_id() const { return h_id; }
 

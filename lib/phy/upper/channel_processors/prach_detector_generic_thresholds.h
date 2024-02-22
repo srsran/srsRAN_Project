@@ -573,7 +573,10 @@ static const auto all_threshold_and_margins = to_array<threshold_and_margin_find
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz15, prach_format_type::B4, /* ZCZ */ 13, /* combine symbols */ true}, {0.130F, 12}, th_flag::orange},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz15, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.104F, 12}, th_flag::orange},
     {{/* nof_rx_ports */ 4, prach_subcarrier_spacing::kHz15, prach_format_type::B4, /* ZCZ */ 15, /* combine symbols */ true}, {0.080F, 12}, th_flag::orange},
-    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.229F, 12}, th_flag::orange},
+    // The following commented value is the calibrated one - however, we noticed that in synthetic environments with no
+    // noise/interference, the resulting false-alarm probability is a bit too high. We increase a bit the threshold.
+    // {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.229F, 12}, th_flag::orange},
+    {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.458F, 12}, th_flag::orange},
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 1, /* combine symbols */ true}, {1.000F, 12}, th_flag::red},
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 2, /* combine symbols */ true}, {1.000F, 12}, th_flag::red},
     {{/* nof_rx_ports */ 1, prach_subcarrier_spacing::kHz30, prach_format_type::B4, /* ZCZ */ 3, /* combine symbols */ true}, {1.000F, 12}, th_flag::orange},

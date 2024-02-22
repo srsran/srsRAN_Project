@@ -85,9 +85,9 @@ public:
     if (!nof_symbols) {
       nof_symbols = 1;
     }
-    // Initialize statistic.
+    // Initialize statistics.
     for (unsigned i = 0; i != nof_symbols; ++i) {
-      buffer_stats.push_back({buffer.get_max_nof_ports(), preamble_info.sequence_length});
+      buffer_stats.emplace_back(buffer.get_max_nof_ports(), preamble_info.sequence_length);
     }
   }
 

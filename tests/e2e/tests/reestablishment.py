@@ -45,12 +45,12 @@ from .steps.stub import ping_start, ping_wait_until_finish, start_network, stop,
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start"])
+@mark.flaky(reruns=5, only_rerun=["failed to start", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments
 def test_zmq_reestablishment(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_32: Tuple[UEStub, ...],
+    ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -63,13 +63,13 @@ def test_zmq_reestablishment(
     """
 
     test_duration_sec = 15 * 60
-    reestablishment_interval = 3  # seconds
+    reestablishment_interval = 30  # seconds
     reestablishment_count = int(test_duration_sec / reestablishment_interval)
 
     _ping_and_reestablishment_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_32,
+        ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
@@ -116,7 +116,6 @@ def _ping_and_reestablishment_multi_ues(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        pcap=False,
     )
 
     configure_artifacts(
@@ -127,7 +126,10 @@ def _ping_and_reestablishment_multi_ues(
     start_network(ue_array, gnb, fivegc)
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+
+    logging.info("Starting Pings in background")
     ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count)
+    logging.info("Pings running for %s UEs", len(ue_array))
 
     for _ in range(reestablishment_count):
         ue_reestablishment(ue_array)

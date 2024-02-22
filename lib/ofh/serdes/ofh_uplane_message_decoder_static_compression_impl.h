@@ -39,18 +39,15 @@ public:
                                                           unsigned                         nof_symbols_,
                                                           unsigned                         ru_nof_prbs_,
                                                           std::unique_ptr<iq_decompressor> decompressor_,
-                                                          const ru_compression_params&     compression_params_,
-                                                          const ru_compression_params&     prach_compression_params_);
+                                                          const ru_compression_params&     compression_params_);
 
 private:
   // See parent for documentation.
-  bool decode_compression_header(uplane_section_params&             results,
-                                 network_order_binary_deserializer& deserializer,
-                                 bool                               is_a_prach_msg) override;
+  decoded_section_status decode_compression_header(decoder_uplane_section_params&     results,
+                                                   network_order_binary_deserializer& deserializer) override;
 
 private:
   const ru_compression_params compression_params;
-  const ru_compression_params prach_compression_params;
 };
 
 } // namespace ofh

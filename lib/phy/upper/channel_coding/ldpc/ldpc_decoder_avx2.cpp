@@ -233,7 +233,7 @@ void ldpc_decoder_avx2::compute_soft_bits(span<log_likelihood_ratio>       this_
   }
 }
 
-void ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
+bool ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
 {
   // Buffer to hold the soft bits.
   std::array<log_likelihood_ratio, MAX_LIFTING_SIZE * MAX_BG_K> temp_llr;
@@ -261,5 +261,5 @@ void ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
   span<const log_likelihood_ratio> llr_read_buffer(temp_llr.begin(), llr_write_buffer.begin());
 
   // Convert to hard bits.
-  hard_decision(out, llr_read_buffer);
+  return hard_decision(out, llr_read_buffer);
 }

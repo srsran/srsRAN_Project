@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -44,6 +45,9 @@ struct network_interface_config {
 
   /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   std::string n3_bind_addr = "127.0.1.1";
+
+  /// Interface name to bind the N3. `auto` does not force a specific interface and uses a normal `bind()`.
+  std::string n3_bind_interface = "auto";
 
   /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   int n3_bind_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
@@ -70,16 +74,15 @@ struct e1ap_config_params {
 
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  task_executor*     ctrl_executor  = nullptr; ///< CU-UP executor for control
-  task_executor*     dl_executor    = nullptr; ///< CU-UP executor for DL data flow
-  task_executor*     ul_executor    = nullptr; ///< CU-UP executor for UL data flow
-  task_executor*     io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
-  task_executor*     cu_up_e2_exec  = nullptr;
-  e1ap_config_params e1ap;
-  f1u_cu_up_gateway* f1u_gateway  = nullptr;
-  io_broker*         epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
-  timer_manager*     timers       = nullptr;
-  dlt_pcap*          gtpu_pcap    = nullptr;
+  cu_up_executor_pool* ue_exec_pool   = nullptr;
+  task_executor*       ctrl_executor  = nullptr; ///< CU-UP executor for control
+  task_executor*       io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
+  task_executor*       cu_up_e2_exec  = nullptr;
+  e1ap_config_params   e1ap;
+  f1u_cu_up_gateway*   f1u_gateway  = nullptr;
+  io_broker*           epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
+  timer_manager*       timers       = nullptr;
+  dlt_pcap*            gtpu_pcap    = nullptr;
 
   std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 

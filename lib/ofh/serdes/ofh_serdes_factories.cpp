@@ -61,11 +61,10 @@ srsran::ofh::create_static_compr_method_ofh_user_plane_packet_decoder(srslog::ba
                                                                       cyclic_prefix                    cp,
                                                                       unsigned                         ru_nof_prbs,
                                                                       std::unique_ptr<iq_decompressor> decompressor,
-                                                                      const ru_compression_params&     compr_params,
-                                                                      const ru_compression_params& prach_compr_params)
+                                                                      const ru_compression_params&     compr_params)
 {
   return std::make_unique<uplane_message_decoder_static_compression_impl>(
-      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, std::move(decompressor), compr_params, prach_compr_params);
+      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, std::move(decompressor), compr_params);
 }
 
 std::unique_ptr<uplane_message_decoder>

@@ -20,7 +20,7 @@
  *
  */
 
-#include "helpers.h"
+#include "message_builder_helpers.h"
 #include "srsran/adt/bitmap_utils.h"
 #include <random>
 
@@ -182,18 +182,19 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
 {
   dl_pdcch_pdu pdu;
 
-  pdu.coreset_bwp_size     = generate_bwp_size();
-  pdu.coreset_bwp_start    = generate_bwp_start();
-  pdu.scs                  = subcarrier_spacing::kHz240;
-  pdu.cp                   = generate_cyclic_prefix();
-  pdu.start_symbol_index   = generate_start_symbol_index();
-  pdu.duration_symbols     = 2;
-  pdu.cce_reg_mapping_type = cce_to_reg_mapping_type::interleaved;
-  pdu.reg_bundle_size      = 2;
-  pdu.interleaver_size     = 3;
-  pdu.coreset_type         = static_cast<pdcch_coreset_type>(generate_bool());
-  pdu.shift_index          = 129;
-  pdu.precoder_granularity = static_cast<coreset_configuration::precoder_granularity_type>(generate_bool());
+  pdu.coreset_bwp_size               = generate_bwp_size();
+  pdu.coreset_bwp_start              = generate_bwp_start();
+  pdu.scs                            = subcarrier_spacing::kHz240;
+  pdu.cp                             = generate_cyclic_prefix();
+  pdu.start_symbol_index             = generate_start_symbol_index();
+  pdu.duration_symbols               = 2;
+  pdu.cce_reg_mapping_type           = cce_to_reg_mapping_type::interleaved;
+  pdu.reg_bundle_size                = 2;
+  pdu.interleaver_size               = 3;
+  pdu.coreset_type                   = static_cast<pdcch_coreset_type>(generate_bool());
+  pdu.shift_index                    = 129;
+  pdu.precoder_granularity           = static_cast<coreset_configuration::precoder_granularity_type>(generate_bool());
+  pdu.maintenance_v3.pdcch_pdu_index = generate_uint16();
 
   for (unsigned i = 0, e = pdu.freq_domain_resource.max_size(); i != e; ++i) {
     pdu.freq_domain_resource.push_back(generate_bool());
@@ -1105,6 +1106,7 @@ ul_tti_request_message unittest::build_valid_ul_tti_request()
   msg.slot       = generate_slot();
   msg.sfn        = generate_sfn();
   msg.num_groups = 2000;
+  msg.num_pdus_of_each_type.fill(1);
 
   {
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(ul_tti_request_message::pdu_type::PRACH)];
@@ -1189,8 +1191,9 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   tx_data_request_message msg;
   msg.message_type = message_type_id::tx_data_request;
 
-  msg.sfn  = generate_sfn();
-  msg.slot = generate_slot();
+  msg.sfn            = generate_sfn();
+  msg.slot           = generate_slot();
+  msg.control_length = generate_uint16();
 
   // NOTE: Set to 0 temporarily.
   msg.control_length = 0U;
@@ -1198,6 +1201,7 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   msg.pdus.emplace_back();
   tx_data_req_pdu& pdu = msg.pdus.back();
 
+  pdu.pdu_length        = units::bytes(generate_uint16());
   pdu.cw_index          = generate_bool();
   pdu.pdu_index         = 4231;
   pdu.tlv_custom.length = units::bytes{12};

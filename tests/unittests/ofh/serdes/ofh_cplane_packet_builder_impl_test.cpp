@@ -46,7 +46,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_control_packet_shou
   section.nof_prb                               = 0;
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
-  packet_params.comp_params                     = {compression_type::none, 16};
+  packet_params.compr_params                    = {compression_type::none, 16};
 
   cplane_message_builder_static_compression_impl builder;
 
@@ -77,7 +77,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_control_pa
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
 
-  packet_params.comp_params = {compression_type::none, 16};
+  packet_params.compr_params = {compression_type::none, 16};
 
   cplane_message_builder_static_compression_impl builder;
 
@@ -128,7 +128,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_prach_mixed_num_pac
   std::vector<uint8_t> result_packet(packet.size(), 0);
 
   cplane_section_type3_parameters packet_params;
-  packet_params.comp_params                     = {compression_type::none, 16};
+  packet_params.compr_params                    = {compression_type::none, 16};
   packet_params.scs                             = cplane_scs::kHz30;
   packet_params.time_offset                     = 484;
   packet_params.cpLength                        = 0;

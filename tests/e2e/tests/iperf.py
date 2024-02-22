@@ -630,7 +630,6 @@ def _iperf(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        pcap=False,
         common_search_space_enable=common_search_space_enable,
         prach_config_index=prach_config_index,
     )

@@ -42,6 +42,10 @@ class rx_window_checker;
 
 /// Message receiver configuration.
 struct message_receiver_config {
+  /// Number of symbols
+  unsigned nof_symbols;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
   /// VLAN ethernet frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Uplink PRACH eAxC.
@@ -62,8 +66,6 @@ struct message_receiver_dependencies {
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.
   std::unique_ptr<ether::vlan_frame_decoder> eth_frame_decoder;
-  /// Open Fronthaul User-Plane decoder.
-  std::unique_ptr<uplane_message_decoder> uplane_decoder;
   /// User-Plane uplink data flow.
   std::unique_ptr<data_flow_uplane_uplink_data> data_flow_uplink;
   /// User-Plane uplink PRACH data flow.
@@ -96,6 +98,8 @@ private:
 
 private:
   srslog::basic_logger&                                 logger;
+  const unsigned                                        nof_symbols;
+  const subcarrier_spacing                              scs;
   const ether::vlan_frame_params                        vlan_params;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
@@ -103,7 +107,6 @@ private:
   std::unique_ptr<sequence_id_checker>                  seq_id_checker;
   std::unique_ptr<ether::vlan_frame_decoder>            vlan_decoder;
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;
-  std::unique_ptr<uplane_message_decoder>               uplane_decoder;
   std::unique_ptr<data_flow_uplane_uplink_data>         data_flow_uplink;
   std::unique_ptr<data_flow_uplane_uplink_prach>        data_flow_prach;
   std::unique_ptr<ether::receiver>                      eth_receiver;

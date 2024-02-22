@@ -61,3 +61,4 @@ target_link_libraries(prach_detector_benchmark
         srslog
         srsvec)
 add_test(prach_detector_benchmark prach_detector_benchmark -R 1)
+

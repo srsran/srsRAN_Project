@@ -142,6 +142,8 @@ public:
   message_receiver_config generate_config()
   {
     message_receiver_config config;
+    config.nof_symbols = 14;
+    config.scs         = subcarrier_spacing::kHz30;
     config.vlan_params = vlan_params;
     config.ul_eaxc     = ul_eaxc;
     config.prach_eaxc  = ul_prach_eaxc;
@@ -154,13 +156,6 @@ public:
     message_receiver_dependencies dependencies;
     dependencies.logger         = &srslog::fetch_basic_logger("TEST");
     dependencies.window_checker = &window_checker;
-
-    dependencies.uplane_decoder =
-        create_dynamic_compr_method_ofh_user_plane_packet_decoder(*dependencies.logger,
-                                                                  srsran::subcarrier_spacing::kHz30,
-                                                                  cyclic_prefix::NORMAL,
-                                                                  MAX_NOF_PRBS,
-                                                                  std::make_unique<iq_decompressor_dummy>());
 
     {
       auto temp                    = std::make_unique<data_flow_uplane_uplink_prach_spy>();

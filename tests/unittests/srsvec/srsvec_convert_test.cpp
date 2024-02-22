@@ -47,31 +47,8 @@ void test_convert_ci(std::size_t N)
   srsvec::convert(x, scale, z);
 
   for (size_t i = 0; i != N; i++) {
-    int16_t gold_re = static_cast<int16_t>(x[i].real() * scale);
-    int16_t gold_im = static_cast<int16_t>(x[i].imag() * scale);
-    TESTASSERT_EQ(gold_re, z[2 * i + 0]);
-    TESTASSERT_EQ(gold_im, z[2 * i + 1]);
-  }
-}
-
-void test_convert_ci_swap(std::size_t N)
-{
-  std::uniform_real_distribution<float> dist(-1.0, 1.0);
-
-  srsvec::aligned_vec<cf_t> x(N);
-  for (cf_t& v : x) {
-    v = cf_t(dist(rgen), dist(rgen));
-  }
-
-  srsvec::aligned_vec<int16_t> z(2 * N);
-
-  float scale = 1000.0F;
-
-  srsvec::convert_swap(x, scale, z);
-
-  for (size_t i = 0; i != N; i++) {
-    int16_t gold_re = static_cast<int16_t>(x[i].imag() * scale);
-    int16_t gold_im = static_cast<int16_t>(x[i].real() * scale);
+    int16_t gold_re = static_cast<int16_t>(std::round(x[i].real() * scale));
+    int16_t gold_im = static_cast<int16_t>(std::round(x[i].imag() * scale));
     TESTASSERT_EQ(gold_re, z[2 * i + 0]);
     TESTASSERT_EQ(gold_im, z[2 * i + 1]);
   }
@@ -99,28 +76,6 @@ void test_convert_ic(std::size_t N)
   }
 }
 
-void test_convert_ic_swap(std::size_t N)
-{
-  std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
-
-  srsvec::aligned_vec<int16_t> x(2 * N);
-  for (int16_t& v : x) {
-    v = dist(rgen);
-  }
-
-  srsvec::aligned_vec<cf_t> z(N);
-
-  float scale = 1000.0F;
-
-  srsvec::convert_swap(x, scale, z);
-
-  for (size_t i = 0; i != N; i++) {
-    cf_t  gold = {static_cast<float>(x[2 * i + 1]) / scale, static_cast<float>(x[2 * i]) / scale};
-    float err  = std::abs(gold - z[i]);
-    TESTASSERT(err < ASSERT_CF_MAX_ERROR);
-  }
-}
-
 void test_convert_fi(std::size_t N)
 {
   std::uniform_real_distribution<float> dist(-1, 1);
@@ -137,7 +92,7 @@ void test_convert_fi(std::size_t N)
   srsvec::convert(x, scale, z);
 
   for (size_t i = 0; i != N; i++) {
-    int16_t gold = static_cast<int16_t>(x[i] * scale);
+    int16_t gold = static_cast<int16_t>(std::round(x[i] * scale));
     TESTASSERT(gold == z[i]);
   }
 }
@@ -170,9 +125,7 @@ int main()
 
   for (std::size_t N : sizes) {
     test_convert_ci(N);
-    test_convert_ci_swap(N);
     test_convert_ic(N);
-    test_convert_ic_swap(N);
     test_convert_fi(N);
     test_convert_if(N);
   }

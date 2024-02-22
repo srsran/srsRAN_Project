@@ -35,7 +35,7 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   // See above for the documentation.
   void specific_init() override { node_size_byte = lifting_size; }
 
-  void get_hard_bits(bit_buffer& out) override;
+  bool get_hard_bits(bit_buffer& out) override;
 
   void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
                                  span<const log_likelihood_ratio> this_soft_bits,

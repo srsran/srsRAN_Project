@@ -45,6 +45,7 @@ struct sctp_network_gateway_config : common_network_gateway_config {
   optional<int32_t> rto_max;
   optional<int32_t> init_max_attempts;
   optional<int32_t> max_init_timeo;
+  optional<bool>    nodelay;
 };
 
 /// \brief Interface to inject PDUs into gateway entity.

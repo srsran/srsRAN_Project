@@ -62,7 +62,7 @@ generate_section1_control_parameters(const data_flow_cplane_type_1_context& cont
 {
   cplane_section_type1_parameters msg_params;
 
-  msg_params.comp_params = comp;
+  msg_params.compr_params = comp;
 
   // Initialize radio application header.
   init_radio_app_header_parameters(
@@ -97,10 +97,10 @@ generate_prach_control_parameters(const data_flow_cplane_scheduling_prach_contex
 {
   cplane_section_type3_parameters msg_params;
 
-  msg_params.comp_params = comp;
-  msg_params.scs         = cplane_convert_scs(context.prach_scs);
-  msg_params.time_offset = context.time_offset;
-  msg_params.cpLength    = 0;
+  msg_params.compr_params = comp;
+  msg_params.scs          = cplane_convert_scs(context.prach_scs);
+  msg_params.time_offset  = context.time_offset;
+  msg_params.cpLength     = 0;
   // TODO: see if this parameter needs to be derived from the PRACH context.
   msg_params.fft_size = cplane_fft_size::fft_4096;
 

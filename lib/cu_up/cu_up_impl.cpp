@@ -36,9 +36,7 @@ using namespace srs_cu_up;
 
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
-  srsran_assert(cfg.ctrl_executor != nullptr, "Invalid CU-UP control executor");
-  srsran_assert(cfg.dl_executor != nullptr, "Invalid CU-UP DL executor");
-  srsran_assert(cfg.ul_executor != nullptr, "Invalid CU-UP UL executor");
+  srsran_assert(cfg.ue_exec_pool != nullptr, "Invalid CU-UP UE executor pool");
   srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
   srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
@@ -58,6 +56,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   udp_network_gateway_config ngu_gw_config = {};
   ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
   ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
+  ngu_gw_config.bind_interface             = cfg.net_cfg.n3_bind_interface;
   ngu_gw_config.rx_max_mmsg                = cfg.net_cfg.n3_rx_max_mmsg;
   // other params
   udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter, *cfg.io_ul_executor};
@@ -66,16 +65,18 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
   demux_msg.cfg.warn_on_drop            = cfg.n3_cfg.warn_on_drop;
-  demux_msg.cu_up_exec                  = cfg.dl_executor;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
+
+  dl_exec = cfg.ue_exec_pool->create_dl_pdu_executor();
+  report_error_if_not(dl_exec != nullptr, "Could not create CU-UP executor for control TEID");
 
   // Create GTP-U echo and register it at demux
   gtpu_echo_creation_message ngu_echo_msg = {};
   ngu_echo_msg.gtpu_pcap                  = cfg.gtpu_pcap;
   ngu_echo_msg.tx_upper                   = &gtpu_gw_adapter;
   ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
-  ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
+  ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, *dl_exec, ngu_echo->get_rx_upper_layer_interface());
 
   // Connect layers
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
@@ -110,8 +111,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         gtpu_gw_adapter,
                                         *ngu_demux,
                                         *f1u_teid_allocator,
+                                        *cfg.ue_exec_pool,
                                         *cfg.gtpu_pcap,
-                                        *cfg.ctrl_executor,
                                         logger);
 
   // Start statistics report timer

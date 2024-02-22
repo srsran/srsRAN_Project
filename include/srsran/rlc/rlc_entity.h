@@ -40,6 +40,16 @@ public:
   rlc_entity(const rlc_entity&&)            = delete;
   rlc_entity& operator=(const rlc_entity&&) = delete;
 
+  /// \brief Stops all internal timers.
+  ///
+  /// This function is inteded to be called upon removal of the bearer before destroying it.
+  /// It stops all timers with handlers that may delegate tasks to another executor that could face a deleted object at
+  /// a later execution time.
+  /// Before this function is called, the adjacent layers should already be disconnected so that no timer is restarted.
+  ///
+  /// Note: This function shall only be called from ue_executor.
+  virtual void stop() = 0;
+
   virtual rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() = 0;
   virtual rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface()      = 0;
   virtual rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface()      = 0;

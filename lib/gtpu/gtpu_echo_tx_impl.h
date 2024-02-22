@@ -76,7 +76,12 @@ public:
 
     // Add information element for "recovery" for backward compatibility. See TS 29.281 Sec. 8.2
     gtpu_ie_recovery ie_recovery = {};
-    gtpu_write_ie_recovery(buf, ie_recovery, logger);
+
+    bool write_ok = gtpu_write_ie_recovery(buf, ie_recovery, logger);
+    if (!write_ok) {
+      logger.log_error("Dropped SDU, error writing IE recovery to echo response. sn={}", sn);
+      return;
+    }
 
     // TODO: Add optional IE for "private extension"
 
@@ -91,7 +96,7 @@ public:
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn; // responses copy the SN of the request, TS 29.281 Sec. 4.3.1
 
-    bool write_ok = gtpu_write_header(buf, hdr, logger);
+    write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
       logger.log_error("Discarded SDU. Cause: Error writing GTP-U header of echo response. sn={}", sn);

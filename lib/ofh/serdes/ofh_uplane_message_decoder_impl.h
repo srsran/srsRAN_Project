@@ -32,9 +32,34 @@ namespace ofh {
 class iq_decompressor;
 class network_order_binary_deserializer;
 
+/// Open Fronthaul User-Plane section parameter for this decoder implementation.
+struct decoder_uplane_section_params {
+  /// Section identifier.
+  unsigned section_id;
+  /// Resource block indicator.
+  bool is_every_rb_used;
+  /// Symbol number increment command.
+  bool use_current_symbol_number;
+  /// Start PRB.
+  unsigned start_prb;
+  /// Number of PRBs.
+  unsigned nof_prbs;
+  /// User data compression header.
+  ru_compression_params ud_comp_hdr;
+  /// User data compression length.
+  optional<unsigned> ud_comp_len;
+  /// User data compression parameter.
+  /// \note For simplicity, all the PRBs use the same compression parameters.
+  optional<unsigned> ud_comp_param;
+};
+
 /// Open Fronthaul User-Plane message decoder implementation.
 class uplane_message_decoder_impl : public uplane_message_decoder
 {
+protected:
+  /// Decoded status of a section.
+  enum class decoded_section_status { ok, incomplete, malformed };
+
 public:
   uplane_message_decoder_impl(srslog::basic_logger&            logger_,
                               subcarrier_spacing               scs_,
@@ -51,12 +76,6 @@ public:
   }
 
   // See interface for documentation.
-  filter_index_type peek_filter_index(span<const uint8_t> message) const override;
-
-  // See interface for documentation.
-  slot_symbol_point peek_slot_symbol_point(span<const uint8_t> message) const override;
-
-  // See interface for documentation.
   bool decode(uplane_message_decoder_results& results, span<const uint8_t> message) override;
 
 private:
@@ -66,26 +85,27 @@ private:
   /// Decodes all sections and returns true on success, otherwise false.
   bool decode_all_sections(uplane_message_decoder_results& results, network_order_binary_deserializer& deserializer);
 
-  /// Decodes a single section and returns true on success, otherwise false.
-  bool decode_section(uplane_message_decoder_results& results, network_order_binary_deserializer& deserializer);
+  /// Decodes a single section and returns the decoded section status.
+  decoded_section_status decode_section(uplane_message_decoder_results&    results,
+                                        network_order_binary_deserializer& deserializer);
 
-  /// Decodes the section header and returns true on success, otherwise false.
-  bool decode_section_header(uplane_section_params& results, network_order_binary_deserializer& deserializer);
+  /// Decodes the section header and returns the decoded section status.
+  decoded_section_status decode_section_header(decoder_uplane_section_params&     results,
+                                               network_order_binary_deserializer& deserializer);
 
-  /// Decodes the compression length field. Returns true on success, otherwise false.
-  bool decode_compression_length(uplane_section_params&             results,
-                                 network_order_binary_deserializer& deserializer,
-                                 const ru_compression_params&       compression_params);
+  /// Decodes the compression length field and returns the decoded section status.
+  decoded_section_status decode_compression_length(decoder_uplane_section_params&     results,
+                                                   network_order_binary_deserializer& deserializer,
+                                                   const ru_compression_params&       compression_params);
 
-  /// Decodes the IQ data from the given deserializer. Returns true on success, otherwise false.
-  bool decode_iq_data(uplane_section_params&             results,
+  /// Decodes the IQ data from the given deserializer.
+  void decode_iq_data(uplane_section_params&             results,
                       network_order_binary_deserializer& deserializer,
                       const ru_compression_params&       compression_params);
 
-  /// Decodes the compression header. Returns true on success, otherwise false.
-  virtual bool decode_compression_header(uplane_section_params&             results,
-                                         network_order_binary_deserializer& deserializer,
-                                         bool                               is_a_prach_msg) = 0;
+  /// Decodes the compression header and returns the decoded section status.
+  virtual decoded_section_status decode_compression_header(decoder_uplane_section_params&     results,
+                                                           network_order_binary_deserializer& deserializer) = 0;
 
 protected:
   srslog::basic_logger&            logger;

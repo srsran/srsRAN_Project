@@ -49,6 +49,12 @@ public:
   void on_last_message(slot_point slot) override {}
 };
 
+class slot_time_message_notifier_dummy : public fapi::slot_time_message_notifier
+{
+public:
+  void on_slot_indication(const fapi::slot_indication_message& msg) override {}
+};
+
 } // namespace
 
 static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
@@ -147,44 +153,35 @@ du_impl::du_impl(const du_config& du_cfg) :
   du_lo->set_error_notifier(du_low_adaptor->get_error_notifier());
 
   if (du_cfg.fapi.log_level == "debug") {
-    // Create gateway loggers and intercept MAC adaptor calls.
-    logging_slot_gateway = fapi::create_logging_slot_gateway(du_low_adaptor->get_slot_message_gateway());
-    report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    du_high_adaptor = build_mac_fapi_adaptor(
-        sector,
-        scs,
-        *logging_slot_gateway,
-        *last_msg_notifier,
-        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
-        get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
-
-    // Create notification loggers.
-    logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(du_high_adaptor->get_slot_time_notifier());
-    report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
-    logging_slot_error_notifier = fapi::create_logging_slot_error_notifier(du_high_adaptor->get_slot_error_notifier());
-    report_error_if_not(logging_slot_error_notifier, "Unable to create logger for slot error notifications.");
-    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
-    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
-
-    // Connect the PHY adaptor with the loggers to intercept PHY notifications.
-    du_low_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
-    du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
-    du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
+    if (du_cfg.fapi.l2_nof_slots_ahead == 0) {
+      build_fapi_adaptors_with_loggers(
+          du_cfg,
+          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)));
+    } else {
+      srsran_assert(du_cfg.fapi.executor && *du_cfg.fapi.executor, "Invalid executor for the FAPI buffered module");
+      build_fapi_adaptors_with_message_buffering_and_loggers(
+          du_cfg,
+          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
+          *(du_cfg.fapi.executor.value()));
+    }
   } else {
-    du_high_adaptor = build_mac_fapi_adaptor(
-        0,
-        scs,
-        du_low_adaptor->get_slot_message_gateway(),
-        *last_msg_notifier,
-        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
-        get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
-    report_error_if_not(du_high_adaptor, "Unable to create MAC adaptor.");
-    du_low_adaptor->set_slot_time_message_notifier(du_high_adaptor->get_slot_time_notifier());
-    du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());
-    du_low_adaptor->set_slot_data_message_notifier(du_high_adaptor->get_slot_data_notifier());
+    if (du_cfg.fapi.l2_nof_slots_ahead == 0) {
+      build_fapi_adaptors(
+          du_cfg,
+          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)));
+    } else {
+      srsran_assert(du_cfg.fapi.executor && *du_cfg.fapi.executor, "Invalid executor for the FAPI buffered module");
+      build_fapi_adaptors_with_message_buffering(
+          du_cfg,
+          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
+          *(du_cfg.fapi.executor.value()));
+    }
   }
+
   logger.debug("FAPI adaptors created successfully");
 
   du_high_result_notifier = std::make_unique<phy_dummy>(du_high_adaptor->get_cell_result_notifier());
@@ -219,4 +216,152 @@ void du_impl::stop()
   du_lo->stop();
   du_hi->stop();
   logger.info("DU stopped successfully");
+}
+
+void du_impl::build_fapi_adaptors(const du_config&                                               du_cfg,
+                                  std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>         pm_mapper,
+                                  std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper> part2_mapper)
+{
+  const du_cell_config&    du_cell = du_cfg.du_hi.cells.front();
+  const unsigned           sector  = du_cfg.fapi.sector;
+  const subcarrier_spacing scs     = du_cell.scs_common;
+
+  du_high_adaptor = build_mac_fapi_adaptor(sector,
+                                           scs,
+                                           du_low_adaptor->get_slot_message_gateway(),
+                                           *last_msg_notifier,
+                                           std::move(pm_mapper),
+                                           std::move(part2_mapper),
+                                           get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, frequency_range::FR1));
+
+  report_error_if_not(du_high_adaptor, "Unable to create MAC adaptor.");
+  du_low_adaptor->set_slot_time_message_notifier(du_high_adaptor->get_slot_time_notifier());
+  du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());
+  du_low_adaptor->set_slot_data_message_notifier(du_high_adaptor->get_slot_data_notifier());
+}
+
+void du_impl::build_fapi_adaptors_with_loggers(
+    const du_config&                                               du_cfg,
+    std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>         pm_mapper,
+    std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper> part2_mapper)
+{
+  const du_cell_config&    du_cell = du_cfg.du_hi.cells.front();
+  const unsigned           sector  = du_cfg.fapi.sector;
+  const subcarrier_spacing scs     = du_cell.scs_common;
+
+  // Create gateway loggers and intercept MAC adaptor calls.
+  logging_slot_gateway = fapi::create_logging_slot_gateway(du_low_adaptor->get_slot_message_gateway());
+  report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
+  du_high_adaptor =
+      build_mac_fapi_adaptor(sector,
+                             scs,
+                             *logging_slot_gateway,
+                             *last_msg_notifier,
+                             std::move(pm_mapper),
+                             std::move(part2_mapper),
+                             get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
+
+  // Create notification loggers.
+  logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(du_high_adaptor->get_slot_time_notifier());
+  report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+  logging_slot_error_notifier = fapi::create_logging_slot_error_notifier(du_high_adaptor->get_slot_error_notifier());
+  report_error_if_not(logging_slot_error_notifier, "Unable to create logger for slot error notifications.");
+  logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
+  report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
+
+  // Connect the PHY adaptor with the loggers to intercept PHY notifications.
+  du_low_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
+  du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
+  du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
+}
+
+void du_impl::build_fapi_adaptors_with_message_buffering(
+    const du_config&                                               du_cfg,
+    std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>         pm_mapper,
+    std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper> part2_mapper,
+    task_executor&                                                 executor)
+{
+  const du_cell_config&    du_cell = du_cfg.du_hi.cells.front();
+  const unsigned           sector  = du_cfg.fapi.sector;
+  const subcarrier_spacing scs     = du_cell.scs_common;
+
+  buffered_modules = fapi::create_buffered_decorator_modules(du_cfg.fapi.l2_nof_slots_ahead,
+                                                             du_cell.scs_common,
+                                                             du_low_adaptor->get_slot_message_gateway(),
+                                                             executor,
+                                                             time_notifier_adaptor);
+
+  du_high_adaptor =
+      build_mac_fapi_adaptor(sector,
+                             scs,
+                             *buffered_modules->gateway,
+                             *last_msg_notifier,
+                             std::move(pm_mapper),
+                             std::move(part2_mapper),
+                             get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
+
+  time_notifier_adaptor.set_notifier(du_high_adaptor->get_slot_time_notifier());
+
+  du_low_adaptor->set_slot_time_message_notifier(*buffered_modules->notifier);
+  du_low_adaptor->set_slot_error_message_notifier(du_high_adaptor->get_slot_error_notifier());
+  du_low_adaptor->set_slot_data_message_notifier(du_high_adaptor->get_slot_data_notifier());
+}
+
+void du_impl::build_fapi_adaptors_with_message_buffering_and_loggers(
+    const du_config&                                               du_cfg,
+    std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>         pm_mapper,
+    std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper> part2_mapper,
+    task_executor&                                                 executor)
+{
+  const du_cell_config&    du_cell = du_cfg.du_hi.cells.front();
+  const unsigned           sector  = du_cfg.fapi.sector;
+  const subcarrier_spacing scs     = du_cell.scs_common;
+
+  // Create gateway loggers and intercept MAC adaptor calls.
+  logging_slot_gateway = fapi::create_logging_slot_gateway(du_low_adaptor->get_slot_message_gateway());
+  report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
+
+  buffered_modules = fapi::create_buffered_decorator_modules(
+      du_cfg.fapi.l2_nof_slots_ahead, du_cell.scs_common, *logging_slot_gateway, executor, time_notifier_adaptor);
+
+  du_high_adaptor =
+      build_mac_fapi_adaptor(sector,
+                             scs,
+                             *buffered_modules->gateway,
+                             *last_msg_notifier,
+                             std::move(pm_mapper),
+                             std::move(part2_mapper),
+                             get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
+
+  time_notifier_adaptor.set_notifier(du_high_adaptor->get_slot_time_notifier());
+
+  // Create notification loggers.
+  logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(*buffered_modules->notifier);
+  report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+  logging_slot_error_notifier = fapi::create_logging_slot_error_notifier(du_high_adaptor->get_slot_error_notifier());
+  report_error_if_not(logging_slot_error_notifier, "Unable to create logger for slot error notifications.");
+  logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(du_high_adaptor->get_slot_data_notifier());
+  report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
+
+  // Connect the PHY adaptor with the loggers to intercept PHY notifications.
+  du_low_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
+  du_low_adaptor->set_slot_error_message_notifier(*logging_slot_error_notifier);
+  du_low_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
+}
+
+void du_impl_slot_time_message_notifier_adaptor::on_slot_indication(const fapi::slot_indication_message& msg)
+{
+  notifier.get().on_slot_indication(msg);
+}
+
+void du_impl_slot_time_message_notifier_adaptor::set_notifier(fapi::slot_time_message_notifier& notif)
+{
+  notifier = std::ref(notif);
+}
+
+static slot_time_message_notifier_dummy dummy_slot_time_notifier;
+
+du_impl_slot_time_message_notifier_adaptor::du_impl_slot_time_message_notifier_adaptor() :
+  notifier(dummy_slot_time_notifier)
+{
 }

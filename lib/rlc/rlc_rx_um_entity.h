@@ -110,6 +110,12 @@ public:
                    bool                              metrics_enabled_,
                    rlc_pcap&                         pcap_);
 
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    reassembly_timer.stop();
+  };
+
   void on_expired_reassembly_timer();
 
   void handle_pdu(byte_buffer_slice buf) override;

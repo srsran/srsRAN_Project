@@ -33,6 +33,9 @@ namespace srsran {
 /// Defines two times Pi.
 static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 
+/// Floating point near zero value.
+static constexpr float near_zero = 1e-9;
+
 /// \brief Performs an integer division rounding up.
 ///
 /// \param[in]  num Numerator.
@@ -71,6 +74,18 @@ inline constexpr float abs_sq(cf_t x)
 {
   // Equivalent to but computationally simpler than std::pow(std::abs(x),2).
   return x.real() * x.real() + x.imag() * x.imag();
+}
+
+/// Determines whether a floating point value is near zero.
+inline bool is_near_zero(float value)
+{
+  return std::abs(value) < near_zero;
+}
+
+/// Determines whether a complex floating point value is near zero.
+inline bool is_near_zero(cf_t value)
+{
+  return abs_sq(value) < near_zero;
 }
 
 /// \brief Calculates \f$\left \lceil log_2(n) \right \rceil\f$.

@@ -24,6 +24,7 @@
 
 #include "srsran/gateways/sctp_network_gateway.h"
 #include <arpa/inet.h>
+#include <net/if.h>
 #include <netdb.h>
 #include <netinet/sctp.h>
 #include <sys/socket.h>
@@ -112,6 +113,45 @@ inline bool sctp_set_init_msg_opts(int                   fd,
   if (::setsockopt(fd, SOL_SCTP, SCTP_INITMSG, &init_opts, init_sz) < 0) {
     logger.error("Error setting SCTP_INITMSG sockopts. errno={}\n", strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
+  }
+  return true;
+}
+
+/// Set or unset SCTP_NODELAY. With NODELAY enabled, SCTP messages are sent as soon as possible with no unnecessary
+/// delay, at the cost of transmitting more packets over the network. Otherwise their transmission might be delayed and
+/// concatenated with subsequent messages in order to transmit them in one big PDU.
+///
+/// Note: If the local interface supports jumbo frames (MTU size > 1500) but not the receiver, then the receiver might
+/// discard big PDUs and the stream might get stuck.
+inline bool sctp_set_nodelay(int fd, optional<bool> nodelay, srslog::basic_logger& logger)
+{
+  if (not nodelay.has_value()) {
+    // no need to change anything
+    return true;
+  }
+
+  int optval = nodelay.value() == true ? 1 : 0;
+  if (::setsockopt(fd, IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
+    logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+inline bool bind_to_interface(int fd, std::string& interface, srslog::basic_logger& logger)
+{
+  if (interface.empty() || interface == "auto") {
+    // no need to change anything
+    return true;
+  }
+
+  ifreq ifr;
+  std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ);
+  ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
+
+  if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
+    logger.error("Could not bind socket to interface. interface={} error={}", ifr.ifr_ifrn.ifrn_name, strerror(errno));
+    return false;
   }
   return true;
 }

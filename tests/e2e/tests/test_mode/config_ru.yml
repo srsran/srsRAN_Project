@@ -50,25 +50,24 @@ test_mode:
     ri: 4
     nof_ues: 16
 
+buffer_pool:
+  nof_segments: 1048576
+
 expert_execution:
   affinities:
-    low_priority_cpus: 10-11
-    low_priority_pinning: round-robin
+    isolated_cpus: 2-9,14-21
+    low_priority_cpus: 4-9,16-21
+    low_priority_pinning: mask
   cell_affinities:
-    - l2_cell_cpus: 0
-      l1_dl_cpus: 1-4
-      l1_ul_cpus: 5-6
-      ru_cpus: 7-9
-      l1_dl_pinning: round-robin
-      l1_ul_pinning: round-robin
-      l2_cell_pinning: round-robin
-      ru_pinning: round-robin
-  threads:
-    upper_phy:
-      nof_dl_threads: 2
-      nof_ul_threads: 2
-      nof_pusch_decoder_threads: 4
+    - l1_dl_cpus: 4-9,16-21
+      l1_dl_pinning: mask
+      l1_ul_cpus: 4-9,16-21
+      l1_ul_pinning: mask
+      l2_cell_cpus: 3
+      l2_cell_pinning: mask
+      ru_cpus: 4-9,16-21
+      ru_pinning: mask
 
 expert_phy:
+  max_request_headroom_slots: 3
   max_proc_delay: 6
-  pusch_dec_max_iterations: 6

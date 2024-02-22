@@ -34,6 +34,12 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class rnti_manager : public du_rnti_table
 {
 public:
+  rnti_manager(rnti_t initial_rnti = to_rnti(0x4601)) :
+    rnti_counter(to_value(initial_rnti) - to_value(rnti_t::MIN_CRNTI))
+  {
+    srsran_assert(is_crnti(initial_rnti), "Invalid initial c-rnti={}", initial_rnti);
+  }
+
   /// \brief Allocates new unique TC-RNTI.
   rnti_t allocate()
   {
@@ -51,10 +57,9 @@ public:
   }
 
 private:
-  static constexpr int    CRNTI_RANGE  = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
-  static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
+  static constexpr int CRNTI_RANGE = to_value(rnti_t::MAX_CRNTI) + 1 - to_value(rnti_t::MIN_CRNTI);
 
-  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter{to_value(INITIAL_RNTI) - to_value(rnti_t::MIN_CRNTI)};
+  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter;
 };
 
 } // namespace srsran

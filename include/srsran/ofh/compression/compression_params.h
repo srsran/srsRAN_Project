@@ -52,7 +52,9 @@ enum class compression_type {
   /// BFP + selective RE sending.
   bfp_selective,
   /// Modulation compression + selective RE sending.
-  mod_selective
+  mod_selective,
+  /// Reserved value.
+  reserved
 };
 
 /// Converts and returns the given compression type into an integer.
@@ -71,9 +73,8 @@ struct ru_compression_params {
 
 inline compression_type to_compression_type(unsigned compr_value)
 {
-  srsran_assert(compr_value < NOF_COMPRESSION_TYPES_SUPPORTED, "Unsupported compression type={}", compr_value);
-
-  return static_cast<compression_type>(compr_value);
+  return (compr_value < static_cast<unsigned>(compression_type::reserved)) ? static_cast<compression_type>(compr_value)
+                                                                           : compression_type::reserved;
 }
 
 inline compression_type to_compression_type(const std::string& compr)

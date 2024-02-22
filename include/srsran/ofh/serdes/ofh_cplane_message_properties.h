@@ -81,7 +81,7 @@ struct cplane_section_type1_parameters {
   /// Control-Plane DL/UL radio channel section fields.
   cplane_dl_ul_radio_channel_section_fields section_fields;
   /// Compression parameters.
-  ru_compression_params comp_params;
+  ru_compression_params compr_params;
 };
 
 /// FFT/iFFT size being used for IQ data processing, part of frameStructure field.
@@ -143,7 +143,7 @@ struct cplane_section_type3_parameters {
   /// Control-Plane PRACH/mixed-numerology section fields.
   cplane_prach_mixed_num_section_fields section_fields;
   /// Compression parameters.
-  ru_compression_params comp_params;
+  ru_compression_params compr_params;
   /// Subcarrier spacing.
   cplane_scs scs;
   /// FFT/iFFT size being used for all IQ data processing related to this message.

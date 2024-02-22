@@ -50,6 +50,7 @@ target_link_libraries(srsran_upper_phy
         srsran_channel_equalizer)
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
+target_link_libraries(log_likelihood_ratio srsvec)
 
 add_library(srsran_upper_phy_support
         rb_allocation.cpp

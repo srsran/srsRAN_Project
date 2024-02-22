@@ -245,11 +245,18 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
       ->check(CLI::ValidIPV4);
   app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
+  app.add_option("--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
+      ->capture_default_str();
+  app.add_option("--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
+      ->capture_default_str();
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
   app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
   app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
   app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--sctp_nodelay",
+                 amf_params.sctp_nodelay,
+                 "Send SCTP messages as soon as possible without any Nagle-like algorithm");
   app.add_option("--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
@@ -413,7 +420,6 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
                  config.nia_preference_list,
                  "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
       ->capture_default_str();
-  ;
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
@@ -2374,6 +2380,13 @@ static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
   manage_max_request_headroom_size(app, gnb_cfg);
 }
 
+static void configure_cli11_fapi_args(CLI::App& app, fapi_appconfig& config)
+{
+  app.add_option("--l2_nof_slots_ahead", config.l2_nof_slots_ahead, "Number of slots the L2 is running ahead of the L1")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 5));
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
   gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
@@ -2407,11 +2420,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
-  // CU-UP section
+  // CU-UP section.
   CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
 
-  /// NTN section
+  // NTN section.
   CLI::App*                    ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();
   static ecef_coordinates_t    ecef_coordinates;
   static orbital_coordinates_t orbital_coordinates;
@@ -2433,7 +2446,11 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   CLI::App* ru_dummy_subcmd = app.add_subcommand("ru_dummy", "Dummy Radio Unit configuration")->configurable();
   configure_cli11_ru_dummy_args(*ru_dummy_subcmd, dummy_cfg);
 
-  // Common cell parameters.
+  // FAPI section.
+  CLI::App* fapi_subcmd = app.add_subcommand("fapi", "FAPI configuration")->configurable();
+  configure_cli11_fapi_args(*fapi_subcmd, gnb_cfg.fapi_cfg);
+
+  // Common cell section.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_parsed_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
@@ -2447,7 +2464,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
     }
   });
 
-  // Cell parameters.
+  // Cell section.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
       [&gnb_parsed_cfg](const std::vector<std::string>& values) {
@@ -2471,7 +2488,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
       },
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 
-  // QoS parameters.
+  // QoS section.
   auto qos_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
     gnb_cfg.qos_cfg.resize(values.size());
@@ -2489,7 +2506,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   app.add_option_function<std::vector<std::string>>(
       "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 
-  // SRB parameters.
+  // SRB section.
   auto srb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
     // Format every SRB setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
@@ -2505,7 +2522,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   };
   app.add_option_function<std::vector<std::string>>("--srbs", srb_lambda, "Configures signaling radio bearers.");
 
-  // Slicing parameters.
+  // Slicing section.
   auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
     gnb_cfg.slice_cfg.resize(values.size());
@@ -2538,6 +2555,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   CLI::App* expert_subcmd = app.add_subcommand("expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, gnb_cfg.expert_execution_cfg);
 
+  // HAL section.
   CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 

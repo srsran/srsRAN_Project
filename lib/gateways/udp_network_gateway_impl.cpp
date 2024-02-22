@@ -152,6 +152,12 @@ bool udp_network_gateway_impl::create_and_bind()
       continue;
     }
 
+    // Bind socket to interface (if requested)
+    if (not bind_to_interface(sock_fd, config.bind_interface, logger)) {
+      close_socket();
+      continue;
+    }
+
     // store client address
     memcpy(&local_addr, result->ai_addr, result->ai_addrlen);
     local_addrlen     = result->ai_addrlen;

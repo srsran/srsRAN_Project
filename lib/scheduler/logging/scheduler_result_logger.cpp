@@ -25,6 +25,11 @@
 
 using namespace srsran;
 
+scheduler_result_logger::scheduler_result_logger(bool log_broadcast_, pci_t pci_) :
+  logger(srslog::fetch_basic_logger("SCHED")), log_broadcast(log_broadcast_), enabled(logger.info.enabled()), pci(pci_)
+{
+}
+
 void scheduler_result_logger::log_debug(const sched_result& result)
 {
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
@@ -287,8 +292,8 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
-    logger.debug("Slot decisions cell={} t={}us ({} PDSCH{}, {} PUSCH{}):{}",
-                 cell_index,
+    logger.debug("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}):{}",
+                 pci,
                  decision_latency.count(),
                  nof_pdschs,
                  nof_pdschs == 1 ? "" : "s",
@@ -375,8 +380,8 @@ void scheduler_result_logger::log_info(const sched_result& result)
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
-    logger.info("Slot decisions cell={} t={}us ({} PDSCH{}, {} PUSCH{}): {}",
-                cell_index,
+    logger.info("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}): {}",
+                pci,
                 decision_latency.count(),
                 nof_pdschs,
                 nof_pdschs == 1 ? "" : "s",

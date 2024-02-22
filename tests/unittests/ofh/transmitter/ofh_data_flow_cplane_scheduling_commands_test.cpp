@@ -200,8 +200,8 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   const cplane_section_type1_parameters& cplane_params = cplane_builder->get_type1_param();
 
   // As it is downlink, assert downlink compression parameters.
-  ASSERT_EQ(cplane_params.comp_params.type, dl_compr_params.type);
-  ASSERT_EQ(cplane_params.comp_params.data_width, dl_compr_params.data_width);
+  ASSERT_EQ(cplane_params.compr_params.type, dl_compr_params.type);
+  ASSERT_EQ(cplane_params.compr_params.data_width, dl_compr_params.data_width);
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;
@@ -239,8 +239,8 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   const cplane_section_type1_parameters& cplane_params = cplane_builder->get_type1_param();
 
   // Assert uplink compression parameters.
-  ASSERT_EQ(cplane_params.comp_params.type, ul_compr_params.type);
-  ASSERT_EQ(cplane_params.comp_params.data_width, ul_compr_params.data_width);
+  ASSERT_EQ(cplane_params.compr_params.type, ul_compr_params.type);
+  ASSERT_EQ(cplane_params.compr_params.data_width, ul_compr_params.data_width);
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;
@@ -357,8 +357,8 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   const cplane_section_type3_parameters& cplane_params = cplane_builder->get_type3_param();
 
   // Assert PRACH compression parameters.
-  ASSERT_EQ(cplane_params.comp_params.type, prach_compr_params.type);
-  ASSERT_EQ(cplane_params.comp_params.data_width, prach_compr_params.data_width);
+  ASSERT_EQ(cplane_params.compr_params.type, prach_compr_params.type);
+  ASSERT_EQ(cplane_params.compr_params.data_width, prach_compr_params.data_width);
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;

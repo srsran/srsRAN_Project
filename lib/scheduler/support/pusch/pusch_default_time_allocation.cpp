@@ -130,7 +130,7 @@ srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarr
       pusch_default_time_allocation_config cfg = pusch_default_time_allocation_default_A_get(cp_, i, scs_);
       table[i].k2                              = cfg.k2;
       table[i].map_type                        = cfg.mapping_type;
-      table[i].symbols                         = {cfg.start_symbol, cfg.duration};
+      table[i].symbols                         = {cfg.start_symbol, cfg.start_symbol + cfg.duration};
     }
     return table;
   };

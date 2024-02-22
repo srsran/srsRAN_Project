@@ -38,6 +38,13 @@ public:
   {
   }
 
+  /// Comparison operators.
+  bool operator==(const pdcch_context& other) const
+  {
+    return ss_id == other.ss_id && dci_format == other.dci_format && harq_feedback_timing == other.harq_feedback_timing;
+  }
+  bool operator!=(const pdcch_context& other) const { return !(*this == other); }
+
 private:
   friend struct fmt::formatter<pdcch_context>;
   search_space_id    ss_id      = MAX_NOF_SEARCH_SPACES;

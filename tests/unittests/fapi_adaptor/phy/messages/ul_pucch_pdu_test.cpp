@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../../fapi/validators/helpers.h"
+#include "../../../fapi/message_builder_helpers.h"
 #include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include <gtest/gtest.h>
 

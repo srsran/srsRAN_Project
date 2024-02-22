@@ -89,7 +89,7 @@ protected:
 
     switch (policy) {
       case policy_type::time_rr:
-        sched = std::make_unique<scheduler_time_rr>();
+        sched = std::make_unique<scheduler_time_rr>(expert_cfg);
         break;
       default:
         report_fatal_error("Invalid policy");

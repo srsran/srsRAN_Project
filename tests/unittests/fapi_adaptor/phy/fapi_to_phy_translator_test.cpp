@@ -21,7 +21,7 @@
  */
 
 #include "../../../lib/fapi_adaptor/phy/fapi_to_phy_translator.h"
-#include "../../fapi/validators/helpers.h"
+#include "../../fapi/message_builder_helpers.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"

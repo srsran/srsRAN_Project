@@ -133,7 +133,9 @@ public:
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 4U;
+  /// \brief Timeout value to use when the HARQ has been ACKed/NACKed, but it is expecting another PUCCH before being
+  /// cleared (implementation-defined).
+  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 8U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;

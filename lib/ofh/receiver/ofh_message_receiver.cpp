@@ -29,6 +29,8 @@ using namespace ofh;
 message_receiver::message_receiver(const message_receiver_config&  config,
                                    message_receiver_dependencies&& dependencies) :
   logger(*dependencies.logger),
+  nof_symbols(config.nof_symbols),
+  scs(config.scs),
   vlan_params(config.vlan_params),
   ul_prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_eaxc),
@@ -36,14 +38,12 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   seq_id_checker(std::move(dependencies.seq_id_checker)),
   vlan_decoder(std::move(dependencies.eth_frame_decoder)),
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
-  uplane_decoder(std::move(dependencies.uplane_decoder)),
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
   data_flow_prach(std::move(dependencies.data_flow_prach)),
   eth_receiver(std::move(dependencies.eth_receiver))
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
-  srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
   srsran_assert(data_flow_uplink, "Invalid uplink IQ data flow");
   srsran_assert(data_flow_prach, "Invalid uplink PRACH IQ data flow");
   srsran_assert(seq_id_checker, "Invalid sequence id checker");
@@ -78,7 +78,7 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
     logger.warning("Potentially lost '{}' messages sent by the RU", nof_skipped_seq_id);
   }
 
-  slot_symbol_point slot_point = uplane_decoder->peek_slot_symbol_point(ofh_pdu);
+  slot_symbol_point slot_point = uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
   if (!slot_point.get_slot().valid()) {
     logger.info("Dropped received Open Fronthaul User-Plane packet as the slot field is invalid");
 
@@ -88,7 +88,16 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   // Fill the reception window statistics.
   window_checker.update_rx_window_statistics(slot_point);
 
-  if (is_a_prach_message(uplane_decoder->peek_filter_index(ofh_pdu))) {
+  // Peek the filter index and check that it is valid.
+  filter_index_type filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
+  if (filter_type == filter_index_type::reserved) {
+    logger.info("Dropped received Open Fronthaul User-Plane message as the filter index field '{}' is invalid",
+                to_value(filter_type));
+
+    return;
+  }
+
+  if (is_a_prach_message(filter_type)) {
     data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
 
     return;

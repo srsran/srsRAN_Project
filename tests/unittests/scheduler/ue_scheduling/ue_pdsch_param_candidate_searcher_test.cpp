@@ -98,13 +98,13 @@ protected:
 
 TEST_F(ue_pdsch_param_candidate_searcher_test, when_no_pending_newtx_bytes_then_zero_candidates)
 {
-  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), false, slot_point{0, 0});
+  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), false, slot_point{0, 0}, logger);
   EXPECT_EQ(searcher.begin(), searcher.end());
 }
 
 TEST_F(ue_pdsch_param_candidate_searcher_test, when_no_pending_retxs_then_zero_candidates)
 {
-  ue_pdsch_param_candidate_searcher searcher2(*ue_ptr, to_ue_cell_index(0), true, slot_point{0, 0});
+  ue_pdsch_param_candidate_searcher searcher2(*ue_ptr, to_ue_cell_index(0), true, slot_point{0, 0}, logger);
   EXPECT_EQ(searcher2.begin(), searcher2.end());
 }
 
@@ -112,7 +112,7 @@ TEST_F(ue_pdsch_param_candidate_searcher_test, when_pending_newtx_bytes_then_the
 {
   ue_ptr->handle_dl_buffer_state_indication(dl_buffer_state_indication_message{ue_ptr->ue_index, uint_to_lcid(4), 100});
 
-  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), false, next_slot);
+  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), false, next_slot, logger);
   EXPECT_NE(searcher.begin(), searcher.end());
 
   std::set<harq_id_t>                                    harqs_visited;
@@ -142,7 +142,7 @@ TEST_F(ue_pdsch_param_candidate_searcher_test, when_harqs_with_pending_retx_exis
 
   while (first_h.slot_ack() != next_slot) {
     // Status: There shouldn't be candidates for reTx.
-    ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), true, next_slot);
+    ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), true, next_slot, logger);
     EXPECT_EQ(searcher.begin(), searcher.end());
 
     run_slot();
@@ -155,7 +155,7 @@ TEST_F(ue_pdsch_param_candidate_searcher_test, when_harqs_with_pending_retx_exis
   }
 
   // Status: There should be candidates for reTx.
-  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), true, next_slot);
+  ue_pdsch_param_candidate_searcher searcher(*ue_ptr, to_ue_cell_index(0), true, next_slot, logger);
   EXPECT_NE(searcher.begin(), searcher.end());
 
   std::set<harq_id_t>                                    harqs_visited;

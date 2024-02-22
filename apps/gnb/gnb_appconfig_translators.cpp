@@ -88,7 +88,8 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   } else {
     out_cfg.bind_address = config.amf_cfg.n2_bind_addr;
   }
-  out_cfg.ppid = NGAP_PPID;
+  out_cfg.bind_interface = config.amf_cfg.n2_bind_interface;
+  out_cfg.ppid           = NGAP_PPID;
 
   if (config.amf_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;
@@ -105,6 +106,7 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   if (config.amf_cfg.sctp_max_init_timeo >= 0) {
     out_cfg.max_init_timeo = config.amf_cfg.sctp_max_init_timeo;
   }
+  out_cfg.nodelay = config.amf_cfg.sctp_nodelay;
 
   return out_cfg;
 }
@@ -113,7 +115,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 {
   const base_cell_appconfig& cell = config.cells_cfg.front().cell;
 
-  srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
+  srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
+  out_cfg.max_nof_dus                    = config.cu_cp_cfg.max_nof_dus;
+  out_cfg.max_nof_cu_ups                 = config.cu_cp_cfg.max_nof_cu_ups;
+
   out_cfg.ngap_config.gnb_id               = config.gnb_id;
   out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
   out_cfg.ngap_config.plmn                 = cell.plmn;
@@ -281,8 +286,9 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   } else {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
   }
-  out_cfg.net_cfg.n3_rx_max_mmsg = config.amf_cfg.udp_rx_max_msgs;
-  out_cfg.net_cfg.f1u_bind_addr  = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
+  out_cfg.net_cfg.n3_bind_interface = config.amf_cfg.n3_bind_interface;
+  out_cfg.net_cfg.n3_rx_max_mmsg    = config.amf_cfg.udp_rx_max_msgs;
+  out_cfg.net_cfg.f1u_bind_addr = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
   return out_cfg;
 }
 

@@ -163,7 +163,12 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
     cell_db.emplace(cell_index, std::move(du_cell));
 
     // Add cell to lookup
-    tac_to_nr_cgi.emplace(cell_db.at(cell_index).tac, cell_db.at(cell_index).cgi);
+    auto& cell = cell_db.at(cell_index);
+    if (tac_to_nr_cgi.find(cell.tac) == tac_to_nr_cgi.end()) {
+      tac_to_nr_cgi.emplace(cell.tac, std::vector<nr_cell_global_id_t>{cell.cgi});
+    } else {
+      tac_to_nr_cgi.at(cell.tac).push_back(cell.cgi);
+    }
   }
 
   // connect paging f1ap paging adapter
@@ -322,8 +327,10 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 
         // Notify NGAP to request a release from the AMF
         CORO_AWAIT_VALUE(ngap_release_successful,
-                         ngap_ctrl_notifier.on_ue_context_release_request(cu_cp_ue_context_release_request{
-                             request.ue_index, ue->get_up_resource_manager().get_pdu_sessions(), request.cause}));
+                         ngap_ctrl_notifier.on_ue_context_release_request(
+                             cu_cp_ue_context_release_request{request.ue_index,
+                                                              ue->get_up_resource_manager().get_pdu_sessions(),
+                                                              cause_radio_network_t::radio_conn_with_ue_lost}));
         if (!ngap_release_successful) {
           // Release UE from DU, if it doesn't exist in the NGAP
           logger.debug("ue={}: Releasing UE from DU. ReleaseRequest not sent to AMF", request.ue_index);
@@ -412,57 +419,59 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
     nr_cgi_for_tac_found = true;
 
-    // Setup recommended cell item to add in case it doesn't exist
-    cu_cp_recommended_cell_item cell_item;
-    cell_item.ngran_cgi = tac_to_nr_cgi.at(tai_list_item.tai.tac);
+    for (const auto& cgi : tac_to_nr_cgi.at(tai_list_item.tai.tac)) {
+      // Setup recommended cell item to add in case it doesn't exist
+      cu_cp_recommended_cell_item cell_item;
+      cell_item.ngran_cgi = cgi;
 
-    // Check if assist data for paging is already present
-    if (msg.assist_data_for_paging.has_value()) {
-      // Check if assist data for recommended cells is already present
-      if (msg.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
-        // Check if recommended cell list already contains values
-        if (!msg.assist_data_for_paging.value()
-                 .assist_data_for_recommended_cells.value()
-                 .recommended_cells_for_paging.recommended_cell_list.empty()) {
-          // Check if NR CGI already present
-          bool is_present = false;
-          for (const auto& present_cell_item : msg.assist_data_for_paging.value()
-                                                   .assist_data_for_recommended_cells.value()
-                                                   .recommended_cells_for_paging.recommended_cell_list) {
-            if (present_cell_item.ngran_cgi.nci == tac_to_nr_cgi.at(tai_list_item.tai.tac).nci) {
-              is_present = true;
+      // Check if assist data for paging is already present
+      if (msg.assist_data_for_paging.has_value()) {
+        // Check if assist data for recommended cells is already present
+        if (msg.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
+          // Check if recommended cell list already contains values
+          if (!msg.assist_data_for_paging.value()
+                   .assist_data_for_recommended_cells.value()
+                   .recommended_cells_for_paging.recommended_cell_list.empty()) {
+            // Check if NR CGI already present
+            bool is_present = false;
+            for (const auto& present_cell_item : msg.assist_data_for_paging.value()
+                                                     .assist_data_for_recommended_cells.value()
+                                                     .recommended_cells_for_paging.recommended_cell_list) {
+              if (present_cell_item.ngran_cgi.nci == cgi.nci) {
+                is_present = true;
+                continue;
+              }
+            }
+            if (is_present) {
+              // NR CGI for TAC is already present
               continue;
             }
           }
-          if (is_present) {
-            // NR CGI for TAC is already present
-            continue;
-          }
-        }
 
-        // NR CGI for TAC is not present so we add it
-        msg.assist_data_for_paging.value()
-            .assist_data_for_recommended_cells.value()
-            .recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+          // NR CGI for TAC is not present so we add it
+          msg.assist_data_for_paging.value()
+              .assist_data_for_recommended_cells.value()
+              .recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+        } else {
+          // Assist data for recommended cells is not present, we need to add it
+          cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+          assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+
+          msg.assist_data_for_paging.value().assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+        }
       } else {
-        // Assist data for recommended cells is not present, we need to add it
+        // Assist data for paging is not present, we need to add it
+        cu_cp_assist_data_for_paging assist_data_for_paging;
+
+        // Add assist data for recommended cells
         cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+        // Add cell item
         assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
 
-        msg.assist_data_for_paging.value().assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+        assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+
+        msg.assist_data_for_paging = assist_data_for_paging;
       }
-    } else {
-      // Assist data for paging is not present, we need to add it
-      cu_cp_assist_data_for_paging assist_data_for_paging;
-
-      // Add assist data for recommended cells
-      cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
-      // Add cell item
-      assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
-
-      assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
-
-      msg.assist_data_for_paging = assist_data_for_paging;
     }
   }
 

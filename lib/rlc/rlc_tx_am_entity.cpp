@@ -593,6 +593,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
     logger.log_error("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
+    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+      logger.log_error("Could not trigger protocol failure on invalid ACK_SN");
+    }
     return;
   }
 
@@ -772,8 +775,28 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     } else {
       // The SDU is still under segmentation; RETX only what was already sent; avoid RETX overtaking the original
       if (sdu_info.next_so == 0) {
-        logger.log_error(
-            "Cannot RETX sn_under_segmentation={} with invalid next_so={}", sn_under_segmentation, sdu_info.next_so);
+        logger.log_error("Cannot RETX sn_under_segmentation={} with invalid next_so={}. nack={} sdu_length={}",
+                         sn_under_segmentation,
+                         sdu_info.next_so,
+                         nack,
+                         sdu_length);
+        return false;
+      }
+      if (nack.so_start > sdu_info.next_so) {
+        logger.log_warning("Invalid NACK for sn_under_segmentation={}: so_start={} > next_so={}. nack={} sdu_length={}",
+                           sn_under_segmentation,
+                           nack.so_start,
+                           sdu_info.next_so,
+                           nack,
+                           sdu_length);
+        return false;
+      }
+      if (nack.so_start == sdu_info.next_so) {
+        // This NACK only marks the peak segment that has not yet been sent and can therefore be ignored.
+        logger.log_debug("Ignoring NACK for yet unsent rest of sn_under_segmentation={}: nack={} sdu_length={}",
+                         sn_under_segmentation,
+                         nack,
+                         sdu_length);
         return false;
       }
       nack.so_end = sdu_info.next_so - 1;
@@ -783,14 +806,24 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   if (nack.so_start > nack.so_end) {
     logger.log_warning("Invalid NACK with so_start > so_end. nack={}, sdu_length={}", nack, sdu_length);
     nack.so_start = 0;
+    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+      logger.log_error("Could not trigger protocol failure on invalid NACK");
+    }
   }
   if (nack.so_start >= sdu_length) {
     logger.log_warning("Invalid NACK with so_start >= sdu_length. nack={} sdu_length={}.", nack, sdu_length);
     nack.so_start = 0;
+    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+      logger.log_error("Could not trigger protocol failure on invalid NACK");
+    }
   }
   if (nack.so_end >= sdu_length) {
     logger.log_warning("Invalid NACK: so_end >= sdu_length. nack={}, sdu_length={}.", nack, sdu_length);
     nack.so_end = sdu_length - 1;
+    upper_cn.on_protocol_failure();
+    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+      logger.log_error("Could not trigger protocol failure on invalid NACK");
+    }
   }
 
   // Enqueue RETX
@@ -1137,6 +1170,9 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
   // NACK_SN >= tx_next
   if (tx_mod_base(nack.nack_sn) > tx_mod_base(st.tx_next)) {
     logger.log_error("Ignoring status report with nack_sn={} >= tx_next. {}", nack.nack_sn, st);
+    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+      logger.log_error("Could not trigger protocol failure on invalid NACK");
+    }
     return false;
   }
   // NACK_SN + range >= tx_next
@@ -1146,6 +1182,9 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
                        nack.nack_sn,
                        nack.nack_range,
                        st);
+      if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+        logger.log_error("Could not trigger protocol failure on invalid NACK");
+      }
       return false;
     }
   }

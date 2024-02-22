@@ -21,6 +21,7 @@
  */
 
 #include "srsran/adt/byte_buffer_chain.h"
+#include "srsran/adt/detail/byte_buffer_segment_pool.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -30,7 +31,25 @@ static_assert(std::is_same<byte_buffer_chain::value_type, uint8_t>::value, "Inva
 static_assert(std::is_same<byte_buffer_chain::iterator::value_type, uint8_t>::value, "Invalid valid_type");
 static_assert(std::is_same<byte_buffer_chain::const_iterator::value_type, uint8_t>::value, "Invalid valid_type");
 
-TEST(byte_buffer_chain_test, empty_container_in_valid_state)
+namespace {
+
+class byte_buffer_chain_test : public testing::Test
+{
+  void TearDown() override
+  {
+    auto&    pool           = detail::get_default_byte_buffer_segment_pool();
+    unsigned blocks_in_pool = pool.get_local_cache_size() + pool.get_central_cache_approx_size();
+    report_fatal_error_if_not(blocks_in_pool == pool.nof_memory_blocks(),
+                              "Failed to deallocate all blocks. Total blocks={}, central cache={}, local cache={}",
+                              pool.nof_memory_blocks(),
+                              pool.get_central_cache_approx_size(),
+                              pool.get_local_cache_size());
+  }
+};
+
+} // namespace
+
+TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
 {
   byte_buffer_chain chain;
   ASSERT_TRUE(chain.empty());
@@ -55,7 +74,7 @@ TEST(byte_buffer_chain_test, empty_container_in_valid_state)
   ASSERT_TRUE(chain.slices().empty());
 }
 
-TEST(byte_buffer_chain_test, append_byte_buffer)
+TEST_F(byte_buffer_chain_test, append_byte_buffer)
 {
   byte_buffer_chain buf;
 
@@ -93,7 +112,7 @@ TEST(byte_buffer_chain_test, append_byte_buffer)
   ASSERT_EQ(buf_copy, buf_concat);
 }
 
-TEST(byte_buffer_chain_test, prepend_buffer)
+TEST_F(byte_buffer_chain_test, prepend_buffer)
 {
   std::vector<uint8_t> vec = {1, 2, 3};
   byte_buffer_chain    buf;
@@ -139,7 +158,7 @@ TEST(byte_buffer_chain_test, prepend_buffer)
   ASSERT_EQ(buf, vec);
 }
 
-TEST(byte_buffer_chain_test, prepend_header_and_append_payload)
+TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
 {
   byte_buffer_chain buf;
 
@@ -171,7 +190,7 @@ TEST(byte_buffer_chain_test, prepend_header_and_append_payload)
   ASSERT_EQ(all_bytes.size(), count);
 }
 
-TEST(byte_buffer_chain_test, payload_lifetime)
+TEST_F(byte_buffer_chain_test, payload_lifetime)
 {
   byte_buffer_chain buf;
 
@@ -194,7 +213,7 @@ TEST(byte_buffer_chain_test, payload_lifetime)
   ASSERT_EQ(buf, all_bytes);
 }
 
-TEST(byte_buffer_chain_test, slice_chain_formatter)
+TEST_F(byte_buffer_chain_test, slice_chain_formatter)
 {
   byte_buffer          pdu, pdu2;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};

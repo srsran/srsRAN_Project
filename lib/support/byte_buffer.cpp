@@ -90,12 +90,15 @@ public:
     typedef control_block_allocator<U> other;
   };
 
-  control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_) {}
+  control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_), mem_block(arena->mem_block)
+  {
+  }
 
   control_block_allocator(const control_block_allocator<T>& other) noexcept = default;
 
   template <typename U, std::enable_if_t<not std::is_same<U, T>::value, int> = 0>
-  control_block_allocator(const control_block_allocator<U>& other) noexcept : arena(other.arena)
+  control_block_allocator(const control_block_allocator<U>& other) noexcept :
+    arena(other.arena), mem_block(other.mem_block)
   {
   }
 
@@ -104,31 +107,35 @@ public:
   value_type* allocate(size_t n) noexcept
   {
     srsran_sanity_check(n == 1, "control_block_allocator can only allocate one control block at a time.");
-    srsran_sanity_check(not arena->empty(), "Memory arena is empty");
+    srsran_sanity_check(arena != nullptr and not arena->empty(), "Memory arena is empty");
     srsran_assert(arena->space_left() >= sizeof(value_type), "control_block_allocator memory block size is too small.");
+    memory_arena_linear_allocator* arena_ptr = arena;
+    // This allocator is only used for one single allocation (the shared_ptr control block). The arena may become
+    // dangling after we exit the head_segment alloc function as well. So, it is safer to just set this pointer to null.
+    arena = nullptr;
 
-    return static_cast<value_type*>(arena->allocate(sizeof(value_type), alignof(std::max_align_t)));
+    return static_cast<value_type*>(arena_ptr->allocate(sizeof(value_type), alignof(std::max_align_t)));
   }
 
   void deallocate(value_type* p, size_t n) noexcept
   {
     // Note: at this stage the arena ptr is probably dangling. Do not touch it.
+    srsran_sanity_check(n == 1, "control_block_allocator can only deallocate one control block at a time.");
 
-    static auto& pool = detail::get_default_byte_buffer_segment_pool();
-
-    srsran_assert(n == 1, "control_block_allocator can only deallocate one control block at a time.");
-
-    pool.deallocate_node(static_cast<void*>(p));
+    // Note: The pointer p, while within the memory block, might be misaligned. For this reason, we stored the
+    // original memory block pointer, which we now use for the deallocation.
+    detail::get_default_byte_buffer_segment_pool().deallocate_node(mem_block);
   }
 
-  bool operator==(const control_block_allocator& other) const { return arena == other.arena; }
+  bool operator==(const control_block_allocator& other) const { return mem_block == other.mem_block; }
   bool operator!=(const control_block_allocator& other) const { return !(*this == other); }
 
 private:
   template <typename U>
   friend struct control_block_allocator;
 
-  memory_arena_linear_allocator* arena;
+  memory_arena_linear_allocator* arena     = nullptr;
+  void*                          mem_block = nullptr;
 };
 
 } // namespace
@@ -144,7 +151,8 @@ void byte_buffer::control_block::destroy_node(node_t* node) const
 byte_buffer::control_block::~control_block()
 {
   // Destroy and return all segments back to the segment memory pool.
-  for (node_t* node = segments.head; node != nullptr; node = node->next) {
+  for (node_t *next_node = segments.head, *node = next_node; node != nullptr; node = next_node) {
+    next_node = node->next;
     destroy_node(node);
   }
 }
@@ -218,7 +226,7 @@ bool byte_buffer::append(byte_buffer&& other)
   if (node == nullptr) {
     return false;
   }
-  node->append(span<uint8_t>{other.ctrl_blk_ptr->segments.head->data(),
+  node->append(span<uint8_t>{other.ctrl_blk_ptr->segment_in_cb_memory_block->data(),
                              other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
   ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
   node_t* last_tail           = ctrl_blk_ptr->segments.tail;
@@ -438,8 +446,11 @@ void byte_buffer::trim_head(size_t nof_bytes)
     ctrl_blk_ptr->pkt_len -= to_trim;
     trimmed += to_trim;
     if (ctrl_blk_ptr->segments.head->length() == 0) {
+      // Head segment is empty.
       // Remove the first segment.
+      node_t* prev_head           = ctrl_blk_ptr->segments.head;
       ctrl_blk_ptr->segments.head = ctrl_blk_ptr->segments.head->next;
+      ctrl_blk_ptr->destroy_node(prev_head);
     }
   }
 }
@@ -464,6 +475,14 @@ void byte_buffer::trim_tail(size_t nof_bytes)
   node_t* seg     = ctrl_blk_ptr->segments.head;
   for (size_t count = 0; seg != nullptr; seg = seg->next) {
     if (count + seg->length() >= new_len) {
+      // We reached the new last segment.
+      // Destroy remaining segments.
+      for (auto *seg_next = seg->next, *to_destroy = seg_next; to_destroy != nullptr; to_destroy = seg_next) {
+        seg_next = to_destroy->next;
+        ctrl_blk_ptr->destroy_node(to_destroy);
+      }
+
+      // Set this node as tail.
       seg->next = nullptr;
       seg->resize(new_len - count);
       ctrl_blk_ptr->segments.tail = seg;

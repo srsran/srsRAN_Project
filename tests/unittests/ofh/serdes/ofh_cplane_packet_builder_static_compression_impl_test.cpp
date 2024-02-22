@@ -48,7 +48,7 @@ TEST(ofh_control_plane_packet_builder_static_compression_impl_test, downlink_pac
   section.nof_prb                               = 0;
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
-  packet_params.comp_params                     = {compression_type::BFP, 9};
+  packet_params.compr_params                    = {compression_type::BFP, 9};
 
   cplane_message_builder_static_compression_impl builder;
 
@@ -80,7 +80,7 @@ TEST(ofh_control_plane_packet_builder_static_compression_impl_test, uplink_packe
   section.nof_prb                               = 0;
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
-  packet_params.comp_params                     = {compression_type::BFP, 9};
+  packet_params.compr_params                    = {compression_type::BFP, 9};
 
   cplane_message_builder_static_compression_impl builder;
 

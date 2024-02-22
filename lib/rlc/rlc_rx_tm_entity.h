@@ -43,6 +43,10 @@ public:
                    bool                              metrics_enabled,
                    rlc_pcap&                         pcap_);
 
+  void stop() final{
+      // There are no timers to be stopped here.
+  };
+
   // Interfaces for higher layers
   void handle_pdu(byte_buffer_slice buf) override;
 };

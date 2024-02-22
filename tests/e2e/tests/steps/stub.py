@@ -37,7 +37,6 @@ from retina.protocol.base_pb2 import (
     Empty,
     Metrics,
     PingRequest,
-    PingResponse,
     PLMN,
     StartInfo,
     StopResponse,
@@ -257,11 +256,11 @@ def ping_start(
             PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
         )
         ue_to_fivegc.add_done_callback(
-            lambda _task, _msg=f"[{ue_attached_info.ipv4}] UE -> 5GC": _print_ping_result(_msg, _task.result())
+            lambda _task, _msg=f"[{ue_attached_info.ipv4}] UE -> 5GC": _print_ping_result(_msg, _task)
         )
         fivegc_to_ue: grpc.Future = fivegc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
         fivegc_to_ue.add_done_callback(
-            lambda _task, _msg=f"[{ue_attached_info.ipv4}] 5GC -> UE": _print_ping_result(_msg, _task.result())
+            lambda _task, _msg=f"[{ue_attached_info.ipv4}] 5GC -> UE": _print_ping_result(_msg, _task)
         )
         ping_task_array.append(ue_to_fivegc)
         ping_task_array.append(fivegc_to_ue)
@@ -282,14 +281,20 @@ def ping_wait_until_finish(ping_task_array: List[grpc.Future]) -> None:
         pytest.fail("Ping. Some packages got lost.")
 
 
-def _print_ping_result(msg: str, result: PingResponse):
+def _print_ping_result(msg: str, task: grpc.Future):
     """
     Print ping result
     """
     log_fn = logging.info
-    if not result.status:
+    try:
+        result = task.result()
+        if not result.status:
+            log_fn = logging.error
+    except (grpc.RpcError, grpc.FutureCancelledError, grpc.FutureTimeoutError) as err:
         log_fn = logging.error
-    log_fn("Ping %s: %s", msg, result)
+        result = ErrorReportedByAgent(err)
+    finally:
+        log_fn("Ping %s: %s", msg, result)
 
 
 def iperf_parallel(
@@ -627,9 +632,8 @@ def ue_reestablishment(
     """
     Reestablishment an array of UEs from already running gnb and 5gc
     """
-    for index, ue_stub in enumerate(ue_array):
-        name = f"UE_{index+1}"
-        logging.info("Reestablishment %s", name)
+    for ue_stub in ue_array:
+        logging.info("Reestablishment UE [%s]", id(ue_stub))
         ue_stub.Reestablishment(Empty())
 
 

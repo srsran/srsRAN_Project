@@ -34,6 +34,8 @@ namespace srsran {
 
 /// \brief Implementation-specific parameters used to tune MAC operation.
 struct mac_expert_config {
+  /// Initial C-RNTI to assign to created UEs.
+  rnti_t initial_crnti = to_rnti(0x4601);
   /// \brief Implementation-specific parameters used to tune MAC operation per cell.
   struct mac_expert_cell_config {
     /// \brief Maximum number of consecutive DL KOs before an RLF is reported.

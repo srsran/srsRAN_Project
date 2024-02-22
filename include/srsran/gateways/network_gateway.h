@@ -34,6 +34,7 @@ namespace srsran {
 /// implementations will further specify parameters according to their
 /// needs.
 struct common_network_gateway_config {
+  std::string bind_interface;
   std::string bind_address;
   int         bind_port         = 0;
   bool        non_blocking_mode = false;

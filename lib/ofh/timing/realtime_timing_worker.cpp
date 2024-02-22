@@ -80,6 +80,16 @@ realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger
   symbol_duration(1e9 / nof_symbols_per_sec),
   sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
 {
+  // The GPS time epoch starts on 1980.1.6 so make sure that the system time is set after this date.
+  // For simplicity reasons, only allow dates after 1981.
+  ::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  ::tm     utc_time;
+  ::gmtime_r(&tt, &utc_time);
+  int current_year = utc_time.tm_year + 1900;
+  report_error_if_not(current_year >= 1981,
+                      "The Open FrontHaul standard uses GPS time for synchronization. Make sure that system time is "
+                      "set after the year 1981 since the GPS time epoch starts on 1980.1.6");
+
   gps_offset = std::chrono::nanoseconds(static_cast<unsigned>(std::round(cfg.gps_Alpha / 1.2288))) +
                std::chrono::milliseconds(cfg.gps_Beta * 10) + std::chrono::seconds(UNIX_TO_GPS_SECONDS_OFFSET);
 }
@@ -132,18 +142,17 @@ void realtime_timing_worker::stop()
 
 void realtime_timing_worker::timing_loop()
 {
-  if (status.load(std::memory_order_relaxed) == worker_status::stop_requested) {
-    // Clear the subscribed notifiers.
-    ota_notifiers.clear();
-    status.store(worker_status::stopped, std::memory_order_release);
-    return;
-  }
+  while (true) {
+    if (SRSRAN_UNLIKELY(status.load(std::memory_order_relaxed) == worker_status::stop_requested)) {
+      // Clear the subscribed notifiers.
+      ota_notifiers.clear();
+      // Release semantics - The destructor of this class accesses the ota_notifiers vector from a different thread from
+      // where we call clear() just above.
+      status.store(worker_status::stopped, std::memory_order_release);
+      return;
+    }
 
-  poll();
-
-  // Retry the task deferring when it fails.
-  while (!executor.defer([this]() { timing_loop(); })) {
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
+    poll();
   }
 }
 
@@ -183,10 +192,10 @@ void realtime_timing_worker::poll()
   }
 
   // Check if we have missed more than one symbol.
-  if (delta > 1) {
+  if (SRSRAN_UNLIKELY(delta > 1)) {
     logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
   }
-  if (delta >= nof_symbols_per_slot) {
+  if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
     logger.warning("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
                    std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
                    delta);

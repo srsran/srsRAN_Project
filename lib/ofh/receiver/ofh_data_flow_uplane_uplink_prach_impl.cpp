@@ -65,11 +65,12 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
       ul_cplane_context_repo.get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
   if (!ex_cp_context) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', symbol '{}' "
-                "and eAxC '{}'",
-                params.slot,
-                params.symbol_id,
-                eaxc);
+    logger.info(
+        "Dropped received Open Fronthaul User-Plane PRACH packet as no data was expected for slot '{}', symbol '{}' "
+        "and eAxC '{}'",
+        params.slot,
+        params.symbol_id,
+        eaxc);
 
     return true;
   }

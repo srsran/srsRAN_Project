@@ -27,10 +27,11 @@ using namespace srsran;
 pdcch_type0_css_occasion_pattern1_description
 srsran::pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config)
 {
-  srsran_assert((!config.is_fr2 && config.ss_zero_index < 16) || (config.is_fr2 && config.ss_zero_index < 14),
-                "SearchSpaceZero ({}) must be (0...{}) for {}.",
+  interval<unsigned, true> ss_zero_index_range(0, config.is_fr2 ? 13 : 15);
+  srsran_assert(ss_zero_index_range.contains(config.ss_zero_index),
+                "SearchSpaceZero ({}) must be {} for {}.",
                 config.ss_zero_index,
-                config.is_fr2 ? 13 : 15,
+                ss_zero_index_range,
                 config.is_fr2 ? "FR2" : "FR1");
 
   static const unsigned N_SYMB_CORESET = UINT32_MAX;

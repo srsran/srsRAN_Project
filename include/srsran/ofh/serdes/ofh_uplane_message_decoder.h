@@ -28,24 +28,27 @@
 
 namespace srsran {
 namespace ofh {
+namespace uplane_peeker {
+/// Peeks and returns the filter index of the given message.
+///
+/// \param[in] message Message to peek.
+/// \return Message filter index or reserved if the filter index cannot be peeked.
+filter_index_type peek_filter_index(span<const uint8_t> message);
+
+/// Peeks and returns the slot symbol point of the given message.
+///
+/// \param[in] message Message to peek.
+/// \param[in] nof_symbols Number of symbols.
+/// \param[in] scs Subcarrier spacing.
+/// \return Message slot symbol point or invalid slot if the slot symbol point cannot be peeked.
+slot_symbol_point peek_slot_symbol_point(span<const uint8_t> message, unsigned nof_symbols, subcarrier_spacing scs);
+} // namespace uplane_peeker
 
 /// Open Fronthaul User-Plane message decoder interface.
 class uplane_message_decoder
 {
 public:
   virtual ~uplane_message_decoder() = default;
-
-  /// Peeks and returns the filter index of the given message.
-  ///
-  /// \param[in] message Message to peek.
-  /// \return Message filter index or reserved if the filter index cannot be peeked.
-  virtual filter_index_type peek_filter_index(span<const uint8_t> message) const = 0;
-
-  /// Peeks and returns the slot symbol point of the given message.
-  ///
-  /// \param[in] message Message to peek.
-  /// \return Message slot symbol point or invalid slot if the slot symbol point cannot be peeked.
-  virtual slot_symbol_point peek_slot_symbol_point(span<const uint8_t> message) const = 0;
 
   /// Decodes the given message into results and returns true on success, false otherwise.
   ///

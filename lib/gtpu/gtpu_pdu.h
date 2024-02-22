@@ -248,14 +248,16 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
 /// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
 /// \param[in] ie_recovery The information element "recovery".
 /// \param[in] logger Access to the logger.
-void gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger);
+/// \return True if write was successful, False otherwise.
+bool gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger);
 
 /// Append the "private extension" information element to a GTP-U PDU.
 /// Ref: TS 29.281 Sec. 8.6.
 /// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
 /// \param[in] ie_recovery The information element "private extension".
 /// \param[in] logger Access to the logger.
-void gtpu_write_ie_private_extension(byte_buffer&               pdu,
+/// \return True if write was successful, False otherwise.
+bool gtpu_write_ie_private_extension(byte_buffer&               pdu,
                                      gtpu_ie_private_extension& ie_priv_ext,
                                      gtpu_tunnel_logger&        logger);
 

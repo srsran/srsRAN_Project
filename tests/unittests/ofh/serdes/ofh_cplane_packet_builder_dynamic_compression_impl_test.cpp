@@ -48,7 +48,7 @@ TEST(ofh_control_plane_packet_builder_dynamic_compression_impl_test, downlink_pa
   section.nof_prb                               = 0;
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
-  packet_params.comp_params                     = {compression_type::BFP, 9};
+  packet_params.compr_params                    = {compression_type::BFP, 9};
 
   cplane_message_builder_dynamic_compression_impl builder;
 
@@ -80,7 +80,7 @@ TEST(ofh_control_plane_packet_builder_dynamic_compression_impl_test, uplink_pack
   section.nof_prb                               = 0;
   section.re_mask                               = 0xfff;
   section.nof_symbols                           = 14;
-  packet_params.comp_params                     = {compression_type::BFP, 9};
+  packet_params.compr_params                    = {compression_type::BFP, 9};
 
   cplane_message_builder_dynamic_compression_impl builder;
 
@@ -89,6 +89,6 @@ TEST(ofh_control_plane_packet_builder_dynamic_compression_impl_test, uplink_pack
   ASSERT_EQ(packet, result_packet);
   ASSERT_EQ(nof_bytes, packet.size());
   // Check that the udCompHdr is 0.
-  ASSERT_EQ(packet_params.comp_params.data_width, result_packet[UD_COMP_HEADER_BYTE] >> 4);
-  ASSERT_EQ(packet_params.comp_params.type, to_compression_type(result_packet[UD_COMP_HEADER_BYTE] & 0xf));
+  ASSERT_EQ(packet_params.compr_params.data_width, result_packet[UD_COMP_HEADER_BYTE] >> 4);
+  ASSERT_EQ(packet_params.compr_params.type, to_compression_type(result_packet[UD_COMP_HEADER_BYTE] & 0xf));
 }

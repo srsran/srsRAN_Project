@@ -195,6 +195,29 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     }
   }
 
+  // FAPI message buffering executors.
+  fapi_exec.resize(cells_cfg.size());
+  std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
+  if (appcfg.fapi_cfg.l2_nof_slots_ahead != 0) {
+    for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
+      const std::string name      = "fapi#" + std::to_string(cell_id);
+      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
+
+      const single_worker buffered_worker{
+          name,
+          {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
+          {{exec_name}},
+          std::chrono::microseconds{50},
+          os_thread_realtime_priority::max() - 6,
+          affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
+      if (!exec_mng.add_execution_context(create_execution_context(buffered_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", buffered_worker.name);
+      }
+
+      fapi_exec[cell_id] = exec_mng.executors().at(exec_name);
+    }
+  }
+
   // Update executor pointer mapping
   cu_cp_exec       = exec_map.at("ctrl_exec");
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");

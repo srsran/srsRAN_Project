@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/srsran_project_packaging
-    ref: "2"
+    ref: "3"
     file: .gitlab/ci-shared/package.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -33,15 +33,15 @@ variables:
   OS:
     description: Operating system
     options:
+      - "ubuntu-24.04"
       - "ubuntu-23.10"
-      - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
       - "debian-12"
       - "debian-11"
       - "archlinux-latest"
       - "rhel-8"
-    value: "ubuntu-22.04"
+    value: "ubuntu-24.04"
   COMPILER:
     description: Compiler to use
     options:
@@ -269,7 +269,7 @@ variables:
         if [[ $TEST_MODE = "coverage" ]]; then 
           common_options="-j${KUBERNETES_CPU_REQUEST} \
             --exclude-unreachable-branches \
-            --gcov-ignore-parse-errors \
+            --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
             --exclude=${CI_PROJECT_DIR}/tests/* \
             --exclude=${CI_PROJECT_DIR}/apps/examples/* \
             --exclude=${CI_PROJECT_DIR}/external/* \
@@ -286,8 +286,8 @@ variables:
             --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
             --root=${CI_PROJECT_DIR}"
 
-          gcovr $common_options --keep >/dev/null
-          gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml
+          gcovr $common_options --keep >/dev/null 2>&1
+          gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml >/dev/null 2>&1
 
           filesize=$(stat -c%s coverage.xml)
           maxsize=$((10*1204*1024))
@@ -330,7 +330,7 @@ variables:
 .smoke release:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
@@ -343,7 +343,7 @@ variables:
 .smoke relwithdeb:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
@@ -355,7 +355,7 @@ variables:
 .smoke tsan:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: clang
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -393,7 +393,7 @@ variables:
 .smoke dpdk:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-23.10
+    OS: ubuntu-24.04
     COMPILER: clang
     BUILD_TYPE: Release
     ENABLE_UHD: "False"
@@ -408,7 +408,7 @@ variables:
 .smoke valgrind:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -720,7 +720,7 @@ smoke asan:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: clang
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -753,8 +753,8 @@ package:
     matrix:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
-      - OS_VERSION: "23.04"
       - OS_VERSION: "23.10"
+      - OS_VERSION: "24.04"
   needs: []
 
 install-package:
@@ -772,8 +772,8 @@ install-package:
     matrix:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
-      - OS_VERSION: "23.04"
       - OS_VERSION: "23.10"
+      - OS_VERSION: "24.04"
   needs:
     - package
 
@@ -799,9 +799,9 @@ export on amd64:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "False"
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -810,18 +810,33 @@ export on amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
 # Build + unit tests combinations
+
+ubuntu-24.04 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 270 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
 
 ubuntu-23.10 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 270 minutes
+      start_in: 120 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
@@ -836,27 +851,12 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 120 minutes
-  interruptible: false
-  tags: ["${AMD64_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-22.04
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "False"
-
-ubuntu-20.04 amd64 avx2:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: delayed
       start_in: 210 minutes
   interruptible: false
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
-      - OS: ubuntu-20.04
+      - OS: ubuntu-22.04
         <<: *basic_combinations
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
@@ -878,7 +878,7 @@ rhel-8 amd64 avx2:
 
 # Basic AMD NO_ISA / AVX512
 
-ubuntu-22.04 amd64 no isa release:
+ubuntu-24.04 amd64 no isa release:
   extends: .smoke release
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -894,7 +894,7 @@ ubuntu-22.04 amd64 no isa release:
     matrix:
       - COMPILER: [gcc, clang]
 
-ubuntu-22.04 amd64 avx512 release:
+ubuntu-24.04 amd64 avx512 release:
   extends: .smoke release
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -913,7 +913,7 @@ ubuntu-22.04 amd64 avx512 release:
 
 # Basic ARM NO_ISA / NEON
 
-ubuntu-22.04 arm no isa release:
+ubuntu-24.04 arm no isa release:
   extends: .smoke release
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -929,7 +929,7 @@ ubuntu-22.04 arm no isa release:
     matrix:
       - COMPILER: [gcc, clang]
 
-ubuntu-22.04 arm neon release:
+ubuntu-24.04 arm neon release:
   extends: .smoke release
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -964,10 +964,10 @@ smoke dpdk:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
-      - OS: ubuntu-23.10
+      - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3", "23.11"]
-      - OS: ubuntu-23.04
+        DPDK_VERSION: ["23.11"]
+      - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.3", "23.11"]
       - OS: ubuntu-22.04
@@ -1130,7 +1130,7 @@ debian 11 amd64 avx512:
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1140,12 +1140,12 @@ debian 11 amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.10, ubuntu-23.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
@@ -1171,7 +1171,7 @@ sanitizers amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1181,7 +1181,7 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.10, ubuntu-23.04]
+      - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1214,12 +1214,12 @@ build uhd alt:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
+      - OS: ubuntu-24.04
+        COMPILER: [gcc, clang]
+        UHD_VERSION: ["4.6.0.0"]
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.6.0.0", "4.4.0.0"]
-      - OS: ubuntu-23.04
-        COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
@@ -1228,6 +1228,63 @@ build uhd alt:
         UHD_VERSION: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
+
+ubuntu-24.04 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-24.04 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-24.04 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-24.04 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
 
 ubuntu-23.10 amd64 no isa:
   extends: .build_and_unit
@@ -1283,78 +1340,6 @@ ubuntu-23.10 arm neon:
   parallel:
     matrix:
       - OS: ubuntu-23.10
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "True"
-
-ubuntu-23.04 amd64 avx2:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 240 minutes
-  interruptible: false
-  tags: ["${AMD64_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "False"
-
-ubuntu-23.04 amd64 no isa:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  tags: ["${AMD64_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "False"
-
-ubuntu-23.04 amd64 avx512:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "True"
-
-ubuntu-23.04 arm no isa:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  tags: ["${ARM64_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations
-        AUTO_DETECT_ISA: "False"
-
-ubuntu-23.04 arm neon:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 30 minutes
-  interruptible: false
-  tags: ["${ARM64_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
         <<: *basic_combinations
         AUTO_DETECT_ISA: "True"
 
@@ -1428,6 +1413,21 @@ ubuntu-20.04 amd64 no isa:
       - OS: ubuntu-20.04
         <<: *basic_combinations
         AUTO_DETECT_ISA: "False"
+
+ubuntu-20.04 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 240 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
 
 ubuntu-20.04 amd64 avx512:
   extends: .build_and_unit
@@ -1599,42 +1599,12 @@ ubuntu-22.04 amd64 avx512 dpdk:
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
-ubuntu-23.04 amd64 avx2 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 300 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX2_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations_dpdk
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "False"
-
-ubuntu-23.04 amd64 avx512 dpdk:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: delayed
-      start_in: 330 minutes
-  interruptible: false
-  tags: ["${AMD64_AVX512_TAG}"]
-  parallel:
-    matrix:
-      - OS: ubuntu-23.04
-        <<: *basic_combinations_dpdk
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "True"
-
 ubuntu-23.10 amd64 avx2 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 360 minutes
+      start_in: 300 minutes
   interruptible: false
   tags: ["${AMD64_AVX2_TAG}"]
   parallel:
@@ -1649,7 +1619,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 390 minutes
+      start_in: 330 minutes
   interruptible: false
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
@@ -1659,12 +1629,44 @@ ubuntu-23.10 amd64 avx512 dpdk:
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
+ubuntu-24.04 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 360 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations_dpdk
+        DPDK_VERSION: "23.11"
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-24.04 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 390 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-24.04
+        <<: *basic_combinations_dpdk
+        DPDK_VERSION: "23.11"
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
 #############
 # Run check #
 #############
 
 check-affinity-manager-nocpu:
-  image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-22.04:${DOCKER_BUILDER_VERSION}
+  image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-24.04:${DOCKER_BUILDER_VERSION}
   tags: ["${AMD64_TAG}"]
   stage: build and unit tests
   needs:
@@ -1765,7 +1767,7 @@ basic avx512 dpdk:
   retry: 2
   interruptible: false
   variables:
-    OS: ubuntu-22.04
+    OS: ubuntu-24.04
     COMPILER: gcc
     BUILD_TYPE: Release
     TEST_MODE: none

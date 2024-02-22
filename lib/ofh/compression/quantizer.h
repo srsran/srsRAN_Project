@@ -62,7 +62,7 @@ public:
   void to_fixed_point(span<int16_t> z, span<const float> x, float in_scale) const
   {
     float scale = gain * in_scale;
-    srsvec::convert_round(x, scale, z);
+    srsvec::convert(x, scale, z);
   }
 
   /// \brief Converts fixed point value to floating point.

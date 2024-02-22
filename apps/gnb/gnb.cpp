@@ -479,8 +479,7 @@ int main(int argc, char** argv)
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg = generate_cu_up_config(gnb_cfg);
   cu_up_cfg.ctrl_executor                          = workers.cu_up_ctrl_exec;
   cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
-  cu_up_cfg.dl_executor                            = workers.cu_up_dl_exec;
-  cu_up_cfg.ul_executor                            = workers.cu_up_ul_exec;
+  cu_up_cfg.ue_exec_pool                           = workers.cu_up_exec_mapper.get();
   cu_up_cfg.io_ul_executor                         = workers.cu_up_ul_exec; // Optionally select separate exec for UL IO
   cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
   cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();

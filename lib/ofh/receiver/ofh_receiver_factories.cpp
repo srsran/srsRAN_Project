@@ -34,8 +34,9 @@
 using namespace srsran;
 using namespace ofh;
 
-static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const receiver_config& receiver_cfg,
-                                                                     srslog::basic_logger&  logger)
+static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const receiver_config&       receiver_cfg,
+                                                                     srslog::basic_logger&        logger,
+                                                                     const ru_compression_params& compr_params)
 {
   // Comrpessors.
   std::array<std::unique_ptr<ofh::iq_decompressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> decompr;
@@ -54,8 +55,7 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
                    receiver_cfg.cp,
                    nof_prbs_ru,
                    create_iq_decompressor_selector(std::move(decompr)),
-                   receiver_cfg.ul_compression_params,
-                   receiver_cfg.prach_compression_params)
+                   compr_params)
              : ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(
                    logger,
                    receiver_cfg.scs,
@@ -80,7 +80,7 @@ create_uplink_prach_data_flow(const receiver_config&                            
   dependencies.notifier                   = notifier;
   dependencies.ul_cplane_context_repo_ptr = ul_cp_context_repo;
   dependencies.prach_context_repo         = prach_context_repo;
-  dependencies.uplane_decoder             = create_uplane_decoder(receiver_cfg, logger);
+  dependencies.uplane_decoder = create_uplane_decoder(receiver_cfg, logger, receiver_cfg.prach_compression_params);
 
   return std::make_unique<data_flow_uplane_uplink_prach_impl>(config, std::move(dependencies));
 }
@@ -100,7 +100,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
   dependencies.notifier                   = notifier;
   dependencies.ul_cplane_context_repo_ptr = ul_cp_context_repo;
   dependencies.ul_context_repo            = ul_slot_context_repo;
-  dependencies.uplane_decoder             = create_uplane_decoder(receiver_cfg, logger);
+  dependencies.uplane_decoder = create_uplane_decoder(receiver_cfg, logger, receiver_cfg.ul_compression_params);
 
   return std::make_unique<data_flow_uplane_uplink_data_impl>(config, std::move(dependencies));
 }
@@ -116,8 +116,7 @@ resolve_receiver_dependencies(const receiver_config&                            
 {
   receiver_impl_dependencies dependencies;
 
-  dependencies.logger         = &logger;
-  dependencies.uplane_decoder = create_uplane_decoder(receiver_cfg, logger);
+  dependencies.logger = &logger;
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
     dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);

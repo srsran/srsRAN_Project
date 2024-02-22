@@ -29,7 +29,7 @@ namespace srsran {
 class scheduler_time_rr : public scheduler_policy
 {
 public:
-  scheduler_time_rr();
+  scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
   void
   dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) override;
@@ -40,6 +40,8 @@ public:
 private:
   srslog::basic_logger& logger;
   du_ue_index_t         next_dl_ue_index, next_ul_ue_index;
+
+  const scheduler_ue_expert_config& expert_cfg;
 };
 
 } // namespace srsran

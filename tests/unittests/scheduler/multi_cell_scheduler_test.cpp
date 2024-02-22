@@ -68,9 +68,10 @@ protected:
     // Add Cells.
     for (unsigned cell_idx = 0; cell_idx < test_params.nof_cells; ++cell_idx) {
       cell_cfg_builder_params_list.emplace_back(params);
-      cell_cfg_builder_params_list.back().pci = cell_idx + 1;
+      auto& added_cell = cell_cfg_builder_params_list.back();
+      added_cell.pci   = cell_idx + 1;
 
-      auto sched_cell_cfg_req             = test_helpers::make_default_sched_cell_configuration_request(params);
+      auto sched_cell_cfg_req             = test_helpers::make_default_sched_cell_configuration_request(added_cell);
       sched_cell_cfg_req.cell_group_index = static_cast<du_cell_group_index_t>(cell_idx);
       sched_cell_cfg_req.cell_index       = to_du_cell_index(cell_idx);
       this->add_cell(sched_cell_cfg_req);

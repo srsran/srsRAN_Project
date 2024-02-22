@@ -19,15 +19,9 @@
 #
 
 set(SOURCES
-        dl_csi_pdu.cpp
-        dl_pdcch_pdu.cpp
-        dl_pdsch_pdu.cpp
-        dl_ssb_pdu.cpp
-        tx_precoding_and_beamforming_pdu.cpp
-        uci_pdus.cpp
-        ul_prach_pdu.cpp
-        ul_pucch_pdu.cpp
-        ul_pusch_pdu.cpp)
+        buffered_decorator_factories.cpp
+        buffered_slot_gateway_impl.cpp
+        buffered_slot_gateway_task_dispatcher.cpp
+        buffered_slot_time_notifier_decorator.cpp)
 
-add_library(srsran_fapi_pdu_validators STATIC ${SOURCES})
-target_link_libraries(srsran_fapi_pdu_validators srslog)
+add_library(srsran_fapi_message_buffering STATIC ${SOURCES})

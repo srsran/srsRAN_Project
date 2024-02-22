@@ -122,12 +122,13 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
       update_soft_bits(i_layer);
     }
 
-    // If a CRC calculator was passed with the configuration parameters
+    // If a CRC calculator was passed with the configuration parameters.
     if (crc != nullptr) {
-      get_hard_bits(output);
+      // Get hard bits.
+      bool success = get_hard_bits(output);
 
-      // Early stop
-      if (crc->calculate(output.first(nof_significant_bits)) == 0) {
+      // Early stop. The hard bits must be successful.
+      if (success && crc->calculate(output.first(nof_significant_bits)) == 0) {
         return i_iteration + 1;
       }
     }

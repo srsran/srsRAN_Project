@@ -78,7 +78,7 @@ public:
   optional<paging_sched_test_bench> bench;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned                max_k_value = 0;
-  scheduler_result_logger sched_res_logger;
+  scheduler_result_logger sched_res_logger{false, 0};
 
   base_paging_sched_tester() = default;
 

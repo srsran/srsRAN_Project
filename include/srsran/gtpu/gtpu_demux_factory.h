@@ -30,9 +30,8 @@
 namespace srsran {
 
 struct gtpu_demux_creation_request {
-  gtpu_demux_cfg_t cfg        = {};
-  task_executor*   cu_up_exec = nullptr;
-  dlt_pcap*        gtpu_pcap  = nullptr;
+  gtpu_demux_cfg_t cfg       = {};
+  dlt_pcap*        gtpu_pcap = nullptr;
 };
 
 /// Creates an instance of an GTP-U demux object.

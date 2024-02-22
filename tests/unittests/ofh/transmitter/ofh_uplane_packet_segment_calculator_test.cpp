@@ -28,9 +28,9 @@ using namespace srsran;
 using namespace ofh;
 
 /// Returns number of segments after segmenting the given number of PRBs into frames of given size.
-static unsigned segment_prbs(const ru_compression_params& comp_params, unsigned nof_prbs, units::bytes frame_size)
+static unsigned segment_prbs(const ru_compression_params& compr_params, unsigned nof_prbs, units::bytes frame_size)
 {
-  ofh_uplane_fragment_size_calculator calculator(0, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(0, nof_prbs, compr_params);
 
   bool     calculate_segments_finished = false;
   unsigned nof_segments                = 0;
@@ -47,13 +47,13 @@ static unsigned segment_prbs(const ru_compression_params& comp_params, unsigned 
 
 TEST(ofh_uplane_packet_fragment_calculator, prbs_fit_in_one_segment_passes)
 {
-  ru_compression_params comp_params;
-  comp_params.type       = compression_type::none;
-  comp_params.data_width = 16;
-  unsigned start_prb     = 0;
-  unsigned nof_prbs      = 10;
+  ru_compression_params compr_params;
+  compr_params.type       = compression_type::none;
+  compr_params.data_width = 16;
+  unsigned start_prb      = 0;
+  unsigned nof_prbs       = 10;
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
   unsigned                            nof_segments = 1;
 
   unsigned jumbo_frame_size  = 9600;
@@ -70,13 +70,13 @@ TEST(ofh_uplane_packet_fragment_calculator, prbs_fit_in_one_segment_passes)
 
 TEST(ofh_uplane_packet_fragment_calculator, whole_prb_range_compressed_passes)
 {
-  ru_compression_params comp_params;
-  comp_params.type       = compression_type::BFP;
-  comp_params.data_width = 9;
-  unsigned start_prb     = 0;
-  unsigned nof_prbs      = 273;
+  ru_compression_params compr_params;
+  compr_params.type       = compression_type::BFP;
+  compr_params.data_width = 9;
+  unsigned start_prb      = 0;
+  unsigned nof_prbs       = 273;
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
   unsigned                            nof_segments = 1;
 
   unsigned jumbo_frame_size  = 9600;
@@ -93,13 +93,13 @@ TEST(ofh_uplane_packet_fragment_calculator, whole_prb_range_compressed_passes)
 
 TEST(ofh_uplane_packet_fragment_calculator, whole_prb_range_uncompressed_generates_two_segments)
 {
-  ru_compression_params comp_params;
-  comp_params.type       = compression_type::none;
-  comp_params.data_width = 16;
-  unsigned start_prb     = 0;
-  unsigned nof_prbs      = 273;
+  ru_compression_params compr_params;
+  compr_params.type       = compression_type::none;
+  compr_params.data_width = 16;
+  unsigned start_prb      = 0;
+  unsigned nof_prbs       = 273;
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
   unsigned                            nof_segments = 0;
 
   unsigned jumbo_frame_size  = 9600;
@@ -119,13 +119,13 @@ TEST(ofh_uplane_packet_fragment_calculator, whole_prb_range_uncompressed_generat
 
 TEST(ofh_uplane_packet_fragment_calculator, smaller_frame_size_than_prb_returns_zero_prbs)
 {
-  ru_compression_params comp_params;
-  comp_params.type       = compression_type::none;
-  comp_params.data_width = 16;
-  unsigned start_prb     = 33;
-  unsigned nof_prbs      = 3;
+  ru_compression_params compr_params;
+  compr_params.type       = compression_type::none;
+  compr_params.data_width = 16;
+  unsigned start_prb      = 33;
+  unsigned nof_prbs       = 3;
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
 
   unsigned frame_size        = 24;
   unsigned segment_start_prb = 0;
@@ -138,14 +138,14 @@ TEST(ofh_uplane_packet_fragment_calculator, smaller_frame_size_than_prb_returns_
 
 TEST(ofh_uplane_packet_fragment_calculator, segmented_packets_covers_whole_prb_range)
 {
-  ru_compression_params comp_params;
-  comp_params.type              = compression_type::none;
-  comp_params.data_width        = 16;
+  ru_compression_params compr_params;
+  compr_params.type             = compression_type::none;
+  compr_params.data_width       = 16;
   unsigned            start_prb = 0;
   unsigned            nof_prbs  = 273;
   bounded_bitset<273> used_prbs(273);
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
   unsigned                            nof_segments                = 0;
   bool                                calculate_segments_finished = false;
 
@@ -168,14 +168,14 @@ TEST(ofh_uplane_packet_fragment_calculator, segmented_packets_covers_whole_prb_r
 
 TEST(ofh_uplane_packet_fragment_calculator, different_frame_size_segments)
 {
-  ru_compression_params comp_params;
-  comp_params.type              = compression_type::none;
-  comp_params.data_width        = 16;
+  ru_compression_params compr_params;
+  compr_params.type             = compression_type::none;
+  compr_params.data_width       = 16;
   unsigned            start_prb = 10;
   unsigned            nof_prbs  = 127;
   bounded_bitset<273> used_prbs(273);
 
-  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, comp_params);
+  ofh_uplane_fragment_size_calculator calculator(start_prb, nof_prbs, compr_params);
   unsigned                            nof_segments                = 0;
   bool                                calculate_segments_finished = false;
 
@@ -203,19 +203,19 @@ TEST(ofh_uplane_packet_fragment_calculator, different_frame_size_segments)
 
 TEST(ofh_uplane_packet_fragment_calculator, correct_number_of_segments_calculated)
 {
-  ru_compression_params comp_params;
-  comp_params.type       = compression_type::none;
-  comp_params.data_width = 16;
-  unsigned     nof_prbs  = 273;
+  ru_compression_params compr_params;
+  compr_params.type       = compression_type::none;
+  compr_params.data_width = 16;
+  unsigned     nof_prbs   = 273;
   units::bytes headers_size{36};
 
   // Test jumbo frames, medium size frames and normal frames.
   units::bytes test_frame_sizes[] = {units::bytes{9000}, units::bytes{6600}, units::bytes{3200}, units::bytes{1500}};
 
   for (auto frame_size : test_frame_sizes) {
-    unsigned nof_segments_processed = segment_prbs(comp_params, nof_prbs, frame_size - headers_size);
+    unsigned nof_segments_processed = segment_prbs(compr_params, nof_prbs, frame_size - headers_size);
     unsigned nof_segments_calculated =
-        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, comp_params, headers_size);
+        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, compr_params, headers_size);
     ASSERT_EQ(nof_segments_processed, nof_segments_calculated);
   }
 }

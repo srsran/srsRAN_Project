@@ -33,7 +33,7 @@ static constexpr unsigned build_prb_data_size_lut_index(unsigned bitwidth)
 }
 
 /// Returns the PRB data size in bytes for the given compression parameters.
-static units::bytes get_prb_data_size(const ru_compression_params& comp_params)
+static units::bytes get_prb_data_size(const ru_compression_params& compr_params)
 {
   static constexpr std::array<unsigned, 17> prb_data_size = {build_prb_data_size_lut_index(0),
                                                              build_prb_data_size_lut_index(1),
@@ -53,19 +53,19 @@ static units::bytes get_prb_data_size(const ru_compression_params& comp_params)
                                                              build_prb_data_size_lut_index(15),
                                                              build_prb_data_size_lut_index(16)};
 
-  srsran_assert(comp_params.data_width < prb_data_size.size(), "Invalid data width");
+  srsran_assert(compr_params.data_width < prb_data_size.size(), "Invalid data width");
 
-  return units::bytes((comp_params.type == compression_type::none || comp_params.type == compression_type::modulation)
-                          ? prb_data_size[comp_params.data_width]
-                          : prb_data_size[comp_params.data_width] + 1U);
+  return units::bytes((compr_params.type == compression_type::none || compr_params.type == compression_type::modulation)
+                          ? prb_data_size[compr_params.data_width]
+                          : prb_data_size[compr_params.data_width] + 1U);
 }
 
 ofh_uplane_fragment_size_calculator::ofh_uplane_fragment_size_calculator(unsigned                     start_prb_,
                                                                          unsigned                     nof_prbs_,
-                                                                         const ru_compression_params& comp_params) :
+                                                                         const ru_compression_params& compr_params) :
   start_prb(start_prb_),
   nof_prbs(nof_prbs_),
-  prb_size(get_prb_data_size(comp_params)),
+  prb_size(get_prb_data_size(compr_params)),
   next_fragment_start_prb_index(start_prb_)
 {
 }
@@ -105,10 +105,10 @@ bool ofh_uplane_fragment_size_calculator::calculate_fragment_size(unsigned& frag
 unsigned
 ofh_uplane_fragment_size_calculator::calculate_nof_segments(units::bytes                              frame_size,
                                                             unsigned                                  nof_prbs,
-                                                            const srsran::ofh::ru_compression_params& comp_params,
+                                                            const srsran::ofh::ru_compression_params& compr_params,
                                                             units::bytes                              headers_size)
 {
-  units::bytes prb_size              = get_prb_data_size(comp_params);
+  units::bytes prb_size              = get_prb_data_size(compr_params);
   units::bytes frame_size_data       = frame_size - headers_size;
   unsigned     nof_prbs_fit_in_frame = frame_size_data.value() / prb_size.value();
 

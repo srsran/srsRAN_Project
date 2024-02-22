@@ -37,9 +37,19 @@ public:
 
   slot_point get_pdcch_slot(du_cell_index_t cell_index) const { return cell_res_grids[cell_index]->slot_tx(); }
 
+  slot_point get_pusch_slot(du_cell_index_t cell_index, unsigned k2) const
+  {
+    return (*cell_res_grids[cell_index])[k2].slot;
+  }
+
   const cell_configuration& get_cell_cfg_common(du_cell_index_t cell_index) const
   {
     return cell_res_grids[cell_index]->cfg;
+  }
+
+  span<const pdcch_dl_information> get_dl_pdcch_sched_results(du_cell_index_t cell_index) const
+  {
+    return (*cell_res_grids[cell_index])[0].result.dl.dl_pdcchs;
   }
 
   const cell_slot_resource_grid& get_pdcch_grid(du_cell_index_t cell_index) const

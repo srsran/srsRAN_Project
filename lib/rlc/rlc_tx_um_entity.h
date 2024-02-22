@@ -93,6 +93,10 @@ public:
                    bool                                 metrics_enabled,
                    rlc_pcap&                            pcap_);
 
+  void stop() final{
+      // There are no timers to be stopped here.
+  };
+
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu_) override;
   void discard_sdu(uint32_t pdcp_sn) override;
