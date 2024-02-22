@@ -190,12 +190,6 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     // Configure existing UE.
     ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
 
-    // Update UCI scheduler with new resources.
-    for (unsigned i = 0; i != u.nof_cells(); ++i) {
-      auto& ue_cc = u.get_cell(to_ue_cell_index(i));
-      du_cells[ue_cc.cell_index].uci_sched->rem_ue(ue_cc.cfg());
-    }
-
     // Log event.
     ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, ue_db[ue_idx].crnti});
   });
