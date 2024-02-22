@@ -754,6 +754,9 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
+  // Stop PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.stop();
+
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. UE does not have an AMF UE ID");
     return launch_async([](coro_context<async_task<bool>>& ctx) {
