@@ -929,7 +929,7 @@ uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
 void octet_string_helper::to_octet_string(srsran::span<uint8_t> buf, uint64_t number)
 {
   uint64_t nbytes = buf.size();
-  if ((static_cast<uint64_t>(1U) << (8U * nbytes)) <= number) {
+  if (nbytes < 8 and (static_cast<uint64_t>(1U) << (8U * nbytes)) <= number) {
     log_error("Integer={} does not fit in an OCTET STRING of size={}", number, nbytes);
     return;
   }
