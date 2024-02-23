@@ -12,6 +12,7 @@
 
 #include "srsran/adt/detail/byte_buffer_range_helpers.h"
 #include "srsran/adt/detail/intrusive_ptr.h"
+#include "srsran/adt/expected.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -134,8 +135,9 @@ class byte_buffer_slice;
 /// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.
 ///
 /// This container is not contiguous in memory.
-/// Default copy ctor and assignment is disabled in this container. The user should instead std::move to transfer
-/// ownership, .copy() for shallow copies with shared ownership and .deep_copy() for byte-wise copies.
+/// Default copy ctor, assignment and explicit construction is disabled in this container. The user should use the
+/// provided factory methods to create objects, use std::move to transfer ownership, .copy() for shallow copies with
+/// shared ownership and .deep_copy() for byte-wise copies.
 class byte_buffer
 {
   /// Node of linked list of byte buffer segments.
@@ -194,9 +196,23 @@ public:
       clear();
     }
   }
+  /// Creates a byte_buffer with contents provided by a span of bytes.
+  static expected<byte_buffer> create(span<const uint8_t> bytes)
+  {
+    byte_buffer buf;
+    if (not buf.append(bytes)) {
+      return default_error_t{};
+    }
+    return buf;
+  }
 
   /// Creates a byte_buffer with data initialized via a initializer list.
   byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
+  /// Creates a byte_buffer with data initialized via a initializer list.
+  static expected<byte_buffer> create(std::initializer_list<uint8_t> lst)
+  {
+    return create(span<const uint8_t>(lst.begin(), lst.size()));
+  }
 
   /// Creates a byte_buffer with data assigned from a range of bytes.
   template <typename It>
@@ -205,6 +221,16 @@ public:
     if (not append(other_begin, other_end)) {
       clear();
     }
+  }
+  /// Creates a byte_buffer with data assigned from a range of bytes.
+  template <typename It>
+  static expected<byte_buffer> create(It other_begin, It other_end)
+  {
+    byte_buffer buf;
+    if (not buf.append(other_begin, other_end)) {
+      return default_error_t{};
+    }
+    return buf;
   }
 
   /// Move constructor.
@@ -270,7 +296,7 @@ public:
   /// Appends an initializer list of bytes.
   SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes)
   {
-    return append(span<const uint8_t>{bytes.begin(), bytes.size()});
+    return append(span<const uint8_t>(bytes.begin(), bytes.size()));
   }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
@@ -456,8 +482,26 @@ public:
   explicit byte_buffer_slice(const byte_buffer_slice&) noexcept = default;
 
   byte_buffer_slice(byte_buffer_slice&&) noexcept = default;
+
   byte_buffer_slice(span<const uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  static expected<byte_buffer_slice> create(span<const uint8_t> bytes)
+  {
+    auto buf = byte_buffer::create(bytes);
+    if (not buf) {
+      return default_error_t{};
+    }
+    return byte_buffer_slice(std::move(buf.value()));
+  }
+
   byte_buffer_slice(std::initializer_list<uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  static expected<byte_buffer_slice> create(std::initializer_list<uint8_t> bytes)
+  {
+    auto buf = byte_buffer::create(bytes);
+    if (not buf) {
+      return default_error_t{};
+    }
+    return byte_buffer_slice(std::move(buf.value()));
+  }
 
   /// Conversion from byte_buffer to byte_buffer_slice via move.
   byte_buffer_slice(byte_buffer&& buf_) : buf(std::move(buf_)), sliced_view(buf) {}

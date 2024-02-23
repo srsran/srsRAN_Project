@@ -131,8 +131,9 @@ public:
   using iterator       = iter_impl<uint8_t>;
   using const_iterator = iter_impl<const uint8_t>;
 
-  /// \brief Creates an empty byte_buffer_chain.
+  /// Creates an empty byte_buffer_chain.
   byte_buffer_chain();
+  static expected<byte_buffer_chain> create() { return byte_buffer_chain{}; }
 
   ~byte_buffer_chain()
   {
@@ -160,6 +161,15 @@ public:
     bool ret = append(std::move(buf_));
     (void)ret;
   }
+  /// Creates a byte_buffer_chain from a byte_buffer.
+  static expected<byte_buffer_chain> create(byte_buffer buf_)
+  {
+    byte_buffer_chain buf;
+    if (not buf.append(std::move(buf_))) {
+      return default_error_t{};
+    }
+    return buf;
+  }
 
   /// Conversion from byte_buffer_slice to byte_buffer_chain.
   byte_buffer_chain(byte_buffer_slice&& buf_) : byte_buffer_chain()
@@ -167,11 +177,25 @@ public:
     bool ret = append(std::move(buf_));
     (void)ret;
   }
+  /// Creates a byte_buffer_chain from a byte_buffer_slice.
+  static expected<byte_buffer_chain> create(byte_buffer_slice buf_)
+  {
+    byte_buffer_chain buf;
+    if (not buf.append(std::move(buf_))) {
+      return default_error_t{};
+    }
+    return buf;
+  }
 
   /// Conversion from byte_buffer with specified offset and size to byte_buffer_chain.
   byte_buffer_chain(byte_buffer buf_, size_t start, size_t sz) :
     byte_buffer_chain(byte_buffer_slice(std::move(buf_), start, sz))
   {
+  }
+  /// Creates a byte_buffer_chain from byte_buffer with specified offset and size to byte_buffer_chain.
+  static expected<byte_buffer_chain> create(byte_buffer buf_, size_t start, size_t sz)
+  {
+    return create(byte_buffer_slice(std::move(buf_), start, sz));
   }
 
   /// Default move assignment operator.
@@ -371,6 +395,7 @@ private:
 } // namespace srsran
 
 namespace fmt {
+
 /// \brief Custom formatter for byte_buffer_chain.
 template <>
 struct formatter<srsran::byte_buffer_chain> : public formatter<srsran::byte_buffer_view> {
