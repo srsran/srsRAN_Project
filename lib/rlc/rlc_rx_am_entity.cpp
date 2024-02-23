@@ -200,10 +200,15 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      *   the reassembled RLC SDU to upper layer;
      */
     rlc_rx_am_sdu_info& rx_sdu = (*rx_window)[header.sn];
-    logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
-    metrics.metrics_add_sdus(1, rx_sdu.sdu.length());
-    upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
-
+    if (rx_sdu.sdu.empty()) {
+      logger.log_error("RX SDU failed: SDU is empty. sn={}", header.sn);
+      metrics.metrics_add_lost_pdus(1);
+      // Do not pass empty SDU to upper layers and continue as normal to maintain state
+    } else {
+      logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
+      metrics.metrics_add_sdus(1, rx_sdu.sdu.length());
+      upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
+    }
     /*
      * - if x = RX_Highest_Status,
      *   - update RX_Highest_Status to the SN of the first RLC SDU with SN > current RX_Highest_Status for which not
@@ -353,19 +358,25 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
 
   // Check whether all segments have been received
   update_segment_inventory(rx_sdu);
-  logger.log_debug("Updated segment inventory. {}", rx_sdu);
+  logger.log_debug("Updated segment inventory. sn={} {}", header.sn, rx_sdu);
   if (rx_sdu.fully_received) {
     // Assemble SDU from segments
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
-      logger.log_debug("Chaining segment. so={} len={}", segm.so, segm.payload.length());
+      logger.log_debug("Chaining segment. sn={} so={} len={}", header.sn, segm.so, segm.payload.length());
       if (not rx_sdu.sdu.append(segm.payload.copy())) {
-        logger.log_error("Unable to append segment in byte_buffer_chain");
-        // Drop SDU if any of the segments failed to be appended.
-        return false;
+        logger.log_error("Unable to append segment in byte_buffer_chain. sn={} {}", header.sn, rx_sdu);
+        // Clear the incomplete SDU to be discarded later before passing it to upper layers.
+        rx_sdu.sdu.clear();
+        break;
       }
     }
+    if (not rx_sdu.sdu.empty()) {
+      logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
+    } else {
+      logger.log_error("Failed to assemble SDU from segments. sn={} {}", header.sn, rx_sdu);
+    }
+    // Release segments
     rx_sdu.segments.clear();
-    logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
   }
   return stored;
 }
