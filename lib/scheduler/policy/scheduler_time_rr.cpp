@@ -497,15 +497,15 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   };
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
 
+  const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
+      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
   // Second, schedule UEs with SRB data.
-  auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger);
+  auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
   };
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
 
   // Then, schedule new transmissions.
-  const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(u, res_grid, pdsch_alloc, false, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
