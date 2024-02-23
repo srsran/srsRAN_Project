@@ -1634,44 +1634,25 @@ inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
 
 #ifdef HAVE_AVX512
 struct simd_c16_t {
-  union {
-    __m512i m512;
-    int16_t i16[32];
-  } re;
-  union {
-    __m512i m512;
-    int16_t i16[32];
-  } im;
+  __m512i re;
+  __m512i im;
 };
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
 struct simd_c16_t {
-  union {
-    __m256i m256;
-    int16_t i16[16];
-  } re;
-  union {
-    __m256i m256;
-    int16_t i16[16];
-  } im;
+  __m256i re;
+  __m256i im;
 };
 #else
 #ifdef HAVE_SSE
 struct simd_c16_t {
-  union {
-    __m128i m128;
-    int16_t i16[8];
-  } re;
-  union {
-    __m128i m128;
-    int16_t i16[8];
-  } im;
+  __m128i re;
+  __m128i im;
 };
 #else
 #ifdef HAVE_NEON
-union simd_c16_t {
+struct simd_c16_t {
   int16x8x2_t m128;
-  int16_t     i16[16];
 };
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
@@ -1688,24 +1669,24 @@ inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
 #ifdef HAVE_AVX512
   __m512i in1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(ptr));
   __m512i in2 = _mm512_load_si512(reinterpret_cast<const __m512i*>(ptr + 8));
-  ret.re.m512 = _mm512_mask_blend_epi16(
+  ret.re      = _mm512_mask_blend_epi16(
       0xaaaaaaaa, in1, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in2, 0b10100000), 0b10100000));
-  ret.im.m512 = _mm512_mask_blend_epi16(
+  ret.im = _mm512_mask_blend_epi16(
       0xaaaaaaaa, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_AVX2
   __m256i in1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr));
   __m256i in2 = _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr + 8));
-  ret.re.m256 =
+  ret.re =
       _mm256_blend_epi16(in1, _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
-  ret.im.m256 =
+  ret.im =
       _mm256_blend_epi16(_mm256_shufflelo_epi16(_mm256_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
   __m128i in1 = _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
   __m128i in2 = _mm_load_si128(reinterpret_cast<const __m128i*>(ptr + 8));
-  ret.re.m128 = _mm_blend_epi16(in1, _mm_shufflelo_epi16(_mm_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
-  ret.im.m128 = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
+  ret.re      = _mm_blend_epi16(in1, _mm_shufflelo_epi16(_mm_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
+  ret.im      = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
   ret.m128     = vld2q_s16(reinterpret_cast<const int16_t*>(ptr));
@@ -1720,12 +1701,12 @@ inline simd_c16_t srsran_simd_c16_load(const int16_t* re, const int16_t* im)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_load_si256(reinterpret_cast<const __m256i*>(re));
-  ret.im.m256 = _mm256_load_si256(reinterpret_cast<const __m256i*>(im));
+  ret.re = _mm256_load_si256(reinterpret_cast<const __m256i*>(re));
+  ret.im = _mm256_load_si256(reinterpret_cast<const __m256i*>(im));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128   = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
-  ret.im.m128   = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
+  ret.re        = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im        = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
   ret.m128.val[0] = vld1q_s16(re);
@@ -1740,12 +1721,12 @@ inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(re));
-  ret.im.m256 = _mm256_loadu_si256(reinterpret_cast<const__m256i*>(im));
+  ret.re = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(re));
+  ret.im = _mm256_loadu_si256(reinterpret_cast<const__m256i*>(im));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128   = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
-  ret.im.m128   = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
+  ret.re        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
   ret.m128.val[0] = vld1q_s16(re);
@@ -1759,16 +1740,16 @@ inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
 inline void srsran_simd_c16i_store(c16_t* ptr, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re.m256, 0b10110001), 0b10110001);
-  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im.m256, 0b10110001), 0b10110001);
-  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re.m256, im_sw, 0b10101010));
-  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im.m256, 0b10101010));
+  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else
 #ifdef HAVE_SSE
-  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re.m128, 0b10110001), 0b10110001);
-  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im.m128, 0b10110001), 0b10110001);
-  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re.m128, im_sw, 0b10101010));
-  _mm_store_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im.m128, 0b10101010));
+  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else /* HAVE_NEON */
 #ifdef HAVE_NEON
   vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
@@ -1780,16 +1761,16 @@ inline void srsran_simd_c16i_store(c16_t* ptr, simd_c16_t simdreg)
 inline void srsran_simd_c16i_storeu(c16_t* ptr, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re.m256, 0b10110001), 0b10110001);
-  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im.m256, 0b10110001), 0b10110001);
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re.m256, im_sw, 0b10101010));
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im.m256, 0b10101010));
+  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else
 #ifdef HAVE_SSE
-  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re.m128, 0b10110001), 0b10110001);
-  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im.m128, 0b10110001), 0b10110001);
-  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re.m128, im_sw, 0b10101010));
-  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im.m128, 0b10101010));
+  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else /* HAVE_NEON */
 #ifdef HAVE_NEON
   vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
@@ -1801,12 +1782,12 @@ inline void srsran_simd_c16i_storeu(c16_t* ptr, simd_c16_t simdreg)
 inline void srsran_simd_c16_store(int16_t* re, int16_t* im, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  _mm256_store_si256(reinterpret_cast<__m256i*>(re), simdreg.re.m256);
-  _mm256_store_si256(reinterpret_cast<__m256i*>(im), simdreg.im.m256);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(re), simdreg.re);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(im), simdreg.im);
 #else
 #ifdef HAVE_SSE
-  _mm_store_si128(reinterpret_cast<__m128i*>(re), simdreg.re.m128);
-  _mm_store_si128(reinterpret_cast<__m128i*>(im), simdreg.im.m128);
+  _mm_store_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
+  _mm_store_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
 #ifdef HAVE_NEON
   vst1q_s16(re, simdreg.m128.val[0]);
@@ -1819,12 +1800,12 @@ inline void srsran_simd_c16_store(int16_t* re, int16_t* im, simd_c16_t simdreg)
 inline void srsran_simd_c16_storeu(int16_t* re, int16_t* im, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(re), simdreg.re.m256);
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(im), simdreg.im.m256);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(re), simdreg.re);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(im), simdreg.im);
 #else
 #ifdef HAVE_SSE
-  _mm_storeu_si128(reinterpret_cast<__m128i*>(re), simdreg.re.m128);
-  _mm_storeu_si128(reinterpret_cast<__m128i*>(im), simdreg.im.m128);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
 #ifdef HAVE_NEON
   vst1q_s16(re, simdreg.m128.val[0]);
@@ -1838,16 +1819,16 @@ inline simd_c16_t srsran_simd_c16_prod(simd_c16_t a, simd_c16_t b)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_sub_epi16(_mm256_mulhrs_epi16(a.re.m256, _mm256_slli_epi16(b.re.m256, 1)),
-                                 _mm256_mulhrs_epi16(a.im.m256, _mm256_slli_epi16(b.im.m256, 1)));
-  ret.im.m256 = _mm256_add_epi16(_mm256_mulhrs_epi16(a.re.m256, _mm256_slli_epi16(b.im.m256, 1)),
-                                 _mm256_mulhrs_epi16(a.im.m256, _mm256_slli_epi16(b.re.m256, 1)));
+  ret.re = _mm256_sub_epi16(_mm256_mulhrs_epi16(a.re, _mm256_slli_epi16(b.re, 1)),
+                            _mm256_mulhrs_epi16(a.im, _mm256_slli_epi16(b.im, 1)));
+  ret.im = _mm256_add_epi16(_mm256_mulhrs_epi16(a.re, _mm256_slli_epi16(b.im, 1)),
+                            _mm256_mulhrs_epi16(a.im, _mm256_slli_epi16(b.re, 1)));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_sub_epi16(_mm_mulhrs_epi16(a.re.m128, _mm_slli_epi16(b.re.m128, 1)),
-                              _mm_mulhrs_epi16(a.im.m128, _mm_slli_epi16(b.im.m128, 1)));
-  ret.im.m128 = _mm_add_epi16(_mm_mulhrs_epi16(a.re.m128, _mm_slli_epi16(b.im.m128, 1)),
-                              _mm_mulhrs_epi16(a.im.m128, _mm_slli_epi16(b.re.m128, 1)));
+  ret.re =
+      _mm_sub_epi16(_mm_mulhrs_epi16(a.re, _mm_slli_epi16(b.re, 1)), _mm_mulhrs_epi16(a.im, _mm_slli_epi16(b.im, 1)));
+  ret.im =
+      _mm_add_epi16(_mm_mulhrs_epi16(a.re, _mm_slli_epi16(b.im, 1)), _mm_mulhrs_epi16(a.im, _mm_slli_epi16(b.re, 1)));
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
   return ret;
@@ -1857,12 +1838,12 @@ inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_add_epi16(a.re.m256, b.re.m256);
-  ret.im.m256 = _mm256_add_epi16(a.im.m256, b.im.m256);
+  ret.re = _mm256_add_epi16(a.re, b.re);
+  ret.im = _mm256_add_epi16(a.im, b.im);
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_add_epi16(a.re.m128, b.re.m128);
-  ret.im.m128 = _mm_add_epi16(a.im.m128, b.im.m128);
+  ret.re     = _mm_add_epi16(a.re, b.re);
+  ret.im     = _mm_add_epi16(a.im, b.im);
 #else
 #ifdef HAVE_NEON
   ret.m128.val[0] = vaddq_s16(a.m128.val[0], a.m128.val[0]);
@@ -1877,12 +1858,12 @@ inline simd_c16_t srsran_simd_c16_zero()
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_setzero_si256();
-  ret.im.m256 = _mm256_setzero_si256();
+  ret.re = _mm256_setzero_si256();
+  ret.im = _mm256_setzero_si256();
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_setzero_si128();
-  ret.im.m128 = _mm_setzero_si128();
+  ret.re     = _mm_setzero_si128();
+  ret.im     = _mm_setzero_si128();
 #else
 #ifdef HAVE_NEON
   ret.m128.val[0] = vdupq_n_s16(0);
@@ -1913,10 +1894,10 @@ inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
   return _mm512_packs_epi32(ai, bi);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  __m256  aa  = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x20), _MM_FROUND_NINT);
-  __m256  bb  = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x31), _MM_FROUND_NINT);
-  __m256i ai  = _mm256_cvtps_epi32(aa);
-  __m256i bi  = _mm256_cvtps_epi32(bb);
+  __m256  aa = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x20), _MM_FROUND_NINT);
+  __m256  bb = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x31), _MM_FROUND_NINT);
+  __m256i ai = _mm256_cvtps_epi32(aa);
+  __m256i bi = _mm256_cvtps_epi32(bb);
   return _mm256_packs_epi32(ai, bi);
 #else
 #ifdef HAVE_SSE
