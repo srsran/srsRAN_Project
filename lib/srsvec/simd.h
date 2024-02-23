@@ -831,7 +831,7 @@ inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
 #endif /* HAVE_NEON */
 #ifndef HAVE_AVX512
 #ifdef HAVE_AVX2
-  // Permute for AVX registers (miss SSE registers).
+  // Permute for AVX registers (reorders data across 128-bit registers).
   const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
   out               = _mm256_permutevar8x32_ps(out, idx);
 #endif /* HAVE_AVX2 */
@@ -848,7 +848,7 @@ inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
 #endif /* HAVE_NEON */
 #ifndef HAVE_AVX512
 #ifdef HAVE_AVX2
-  // Permute for AVX registers (miss SSE registers).
+  // Permute for AVX registers (reorders data across 128-bit registers).
   const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
   out               = _mm256_permutevar8x32_ps(out, idx);
 #endif /* HAVE_AVX2 */

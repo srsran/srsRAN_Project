@@ -15,6 +15,8 @@
 #include "srsran/support/srsran_assert.h"
 #include <cstdint>
 
+/// \brief The srsvec library provides optimized SIMD commonly used operations.
+///
 /// The supported vector data types are:
 /// - srsran::span<cf_t>: For complex float vectors
 /// - srsran::span<float>: For float vectors
@@ -24,6 +26,7 @@
 ///
 /// To make the span constant use srsran::span<const T>.
 
+/// Asserts that both objects have the same size.
 #define srsran_srsvec_assert_size(X, Y)                                                                                \
   srsran_assert(                                                                                                       \
       X.size() == Y.size(), "The size " #X " (i.e., {}) and " #Y " (i.e., {}) must be equal.", X.size(), Y.size())
