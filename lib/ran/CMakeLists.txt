@@ -43,6 +43,7 @@ add_library(srsran_ran
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
         srs/srs_bandwidth_configuration.cpp
+        srs/srs_information.cpp
         ssb_freq_position_generator.cpp
         ssb_gscn.cpp
         ssb_mapping.cpp

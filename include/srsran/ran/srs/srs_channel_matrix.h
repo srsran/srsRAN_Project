@@ -124,10 +124,11 @@ public:
     return *this;
   }
 
-  /// \brief Overload equality comparison operator.
-  /// \param[in] other Channel matrix to compare against.
+  /// \brief Near equal comparison method.
+  /// \param[in] other     Channel matrix to compare against.
+  /// \param[in] tolerance Maximum absolute error tolerated for considering two propagation channel coefficients equal.
   /// \return \c true if both channel matrices are exactly the same, \c false otherwise.
-  bool operator==(const srs_channel_matrix& other) const
+  bool is_near_equal_to(const srs_channel_matrix& other, float tolerance) const
   {
     unsigned nof_rx_ports = get_nof_rx_ports();
     unsigned nof_tx_ports = get_nof_tx_ports();
@@ -139,9 +140,10 @@ public:
       return false;
     }
 
-    for (unsigned i_layer = 0; i_layer != nof_rx_ports; ++i_layer) {
-      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-        if (get_coefficient(i_layer, i_port) != other.get_coefficient(i_layer, i_port)) {
+    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+      for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
+        float error = std::abs(get_coefficient(i_rx_port, i_tx_port) - other.get_coefficient(i_rx_port, i_tx_port));
+        if (error > tolerance) {
           return false;
         }
       }
@@ -149,9 +151,6 @@ public:
 
     return true;
   }
-
-  /// Overload inequality comparison operator.
-  bool operator!=(const srs_channel_matrix& other) const { return !(*this == other); }
 
   /// Gets the current number of receive ports.
   unsigned get_nof_rx_ports() const { return data.get_dimension_size(dims::rx_port); }
