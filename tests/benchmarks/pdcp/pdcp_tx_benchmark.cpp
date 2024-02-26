@@ -44,7 +44,7 @@ struct app_params {
   std::string log_filename = "stdout";
 };
 
-static void usage(const char* prog, const bench_params& params, const app_params app)
+static void usage(const char* prog, const bench_params& params, const app_params& app)
 {
   fmt::print("Usage: {} [-R repetitions] [-t timing information]\n", prog);
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);

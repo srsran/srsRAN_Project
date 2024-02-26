@@ -62,31 +62,45 @@ struct bench_params {
   bool     print_timing_info = false;
 };
 
-static void usage(const char* prog, const bench_params& params, int algo)
+struct app_params {
+  int         algo         = -1;
+  std::string log_level    = "error";
+  std::string log_filename = "stdout";
+};
+
+static void usage(const char* prog, const bench_params& params, const app_params& app)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
-  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", algo);
+  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
+  fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
 }
 
-static void parse_args(int argc, char** argv, bench_params& params, int& algo)
+static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
-        algo = std::strtol(optarg, nullptr, 10);
+        app.algo = std::strtol(optarg, nullptr, 10);
         break;
       case 't':
         params.print_timing_info = true;
         break;
+      case 'l':
+        app.log_level = std::string(optarg);
+        break;
+      case 'f':
+        app.log_filename = std::string(optarg);
+        break;
       case 'h':
       default:
-        usage(argv[0], params, algo);
+        usage(argv[0], params, app);
         exit(0);
     }
   }
@@ -252,20 +266,27 @@ int run_benchmark(bench_params params, int algo)
 
 int main(int argc, char** argv)
 {
-  srslog::init();
-  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::error);
-
-  int          algo = -1;
   bench_params params{};
-  parse_args(argc, argv, params, algo);
+  app_params   app_params{};
+  parse_args(argc, argv, params, app_params);
 
-  if (algo != -1 && algo != 0 && algo != 1 && algo != 2 && algo != 3) {
+  srslog::init();
+  srslog::sink* log_sink = (app_params.log_filename == "stdout") ? srslog::create_stdout_sink()
+                                                                 : srslog::create_file_sink(app_params.log_filename);
+  if (log_sink == nullptr) {
+    return -1;
+  }
+  srslog::set_default_sink(*log_sink);
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::str_to_basic_level(app_params.log_level));
+
+  if (app_params.algo != -1 && app_params.algo != 0 && app_params.algo != 1 && app_params.algo != 2 &&
+      app_params.algo != 3) {
     fmt::print("Unsupported algorithm. Use -1, 0, 1, 2 or 3.\n");
     return -1;
   }
 
-  if (algo != -1) {
-    run_benchmark(params, algo);
+  if (app_params.algo != -1) {
+    run_benchmark(params, app_params.algo);
   } else {
     for (unsigned i = 0; i < 4; i++) {
       run_benchmark(params, i);
