@@ -534,12 +534,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                 expert_cfg.max_puschs_per_slot);
     return alloc_outcome::skip_slot;
   }
-  if (pusch_alloc.result.ul.puschs.size() >=
-      expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())) {
-    logger.info("Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
-                expert_cfg.max_puschs_per_slot);
-    return alloc_outcome::skip_slot;
-  }
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
@@ -556,22 +550,33 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     }
   }
 
+  const unsigned nof_pucch_grants =
+      std::count_if(pusch_alloc.result.ul.pucchs.begin(),
+                    pusch_alloc.result.ul.pucchs.end(),
+                    [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
+
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled over the same slot
   // and the UE is in fallback mode.
   // NOTE: This is due to the lack of clarity of the TS when it comes to define what \c betaOffsets to use for PUSCH
   // when the UE does not have a dedicated configuration.
   if (ue_cc->is_in_fallback_mode()) {
-    const auto* pucch_grant_it =
-        std::find_if(pusch_alloc.result.ul.pucchs.begin(),
-                     pusch_alloc.result.ul.pucchs.end(),
-                     [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
-    if (pucch_grant_it != pusch_alloc.result.ul.pucchs.end()) {
+    if (nof_pucch_grants != 0) {
       logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
                    "PUCCH grants scheduled",
                    u.crnti,
                    pusch_alloc.slot);
       return alloc_outcome::skip_ue;
     }
+  }
+
+  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
+  // removed when multiplexing the UCI on PUSCH.
+  if (pusch_alloc.result.ul.puschs.size() >=
+      expert_cfg.max_ul_grants_per_slot -
+          (static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size()) - nof_pucch_grants)) {
+    logger.info("Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
+                expert_cfg.max_puschs_per_slot);
+    return alloc_outcome::skip_slot;
   }
 
   // Verify CRBs allocation.
