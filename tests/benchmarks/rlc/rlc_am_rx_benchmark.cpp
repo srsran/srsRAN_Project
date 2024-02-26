@@ -69,6 +69,8 @@ public:
 
 struct bench_params {
   unsigned nof_repetitions = 10000;
+  unsigned sdu_size        = 1500;
+  unsigned pdu_size        = 1550;
 };
 
 enum class rx_order {
@@ -82,16 +84,24 @@ static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-s SDU size [Default {}]\n", params.sdu_size);
+  fmt::print("\t-p PDU size [Default {}]\n", params.pdu_size);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:s:p:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 's':
+        params.sdu_size = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'p':
+        params.pdu_size = std::strtol(optarg, nullptr, 10);
         break;
       case 'h':
       default:
@@ -148,7 +158,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   // Prepare SDU list for benchmark
   std::vector<byte_buffer> sdu_list  = {};
   int                      num_sdus  = params.nof_repetitions + 1; // +1 to expire t_reassembly on setup
-  int                      num_bytes = 1500;
+  int                      num_bytes = params.sdu_size;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu_buf = {};
     for (int j = 0; j < num_bytes; ++j) {
@@ -157,6 +167,8 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
     sdu_list.push_back(std::move(sdu_buf));
   }
 
+  int num_pdus = 0;
+  int pdu_size = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
     rlc_sdu     sdu;
     byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
@@ -165,11 +177,14 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
     sdu.buf                  = std::move(pdcp_hdr_buf);
     report_error_if_not(sdu.buf.append(std::move(sdu_buf)), "Failed to allocate SDU");
     rlc_tx->handle_sdu(std::move(sdu));
-    std::vector<uint8_t> pdu_buf;
-    pdu_buf.resize(1550);
-    size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
-    pdu_buf.resize(pdu_len);
-    pdus.push_back(byte_buffer{pdu_buf});
+    while (rlc_tx->get_buffer_state() > 0) {
+      std::vector<uint8_t> pdu_buf;
+      pdu_buf.resize(pdu_size);
+      size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
+      pdu_buf.resize(pdu_len);
+      pdus.emplace_back(pdu_buf);
+      num_pdus++;
+    }
   }
 
   // shuffle PDUs according to requested order
