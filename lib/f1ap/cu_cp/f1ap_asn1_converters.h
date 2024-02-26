@@ -57,6 +57,8 @@ inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
 
+  // TODO: Fix cause mapping
+
   if (variant_holds_alternative<cause_radio_network_t>(cause)) {
     f1ap_cause.set_radio_network() =
         static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
@@ -67,7 +69,12 @@ inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
     f1ap_cause.set_protocol() =
         static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    // The mapping is not 1:1, so we need to handle the unspecified case separately
+    if (variant_get<cause_misc_t>(cause) == cause_misc_t::unspecified) {
+      f1ap_cause.set_misc() = asn1::f1ap::cause_misc_opts::unspecified;
+    } else {
+      f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    }
   } else {
     report_fatal_error("Cannot convert cause to F1AP type");
   }
