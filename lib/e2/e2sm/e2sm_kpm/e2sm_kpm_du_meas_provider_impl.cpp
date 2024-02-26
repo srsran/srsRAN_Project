@@ -228,14 +228,38 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
     const asn1::e2sm::matching_cond_list_l& matching_cond_list,
     std::vector<asn1::e2sm::ue_id_c>&       ues)
 {
-  return false;
+  // TODO: add test condition checking, now return all UEs
+  for (const auto& ue : ue_aggr_rlc_metrics) {
+    du_ue_index_t       ue_index = to_du_ue_index(ue.first);
+    ue_id_c             ueid;
+    ue_id_gnb_du_s      ueid_gnb_du{};
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
+    ueid_gnb_du.gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id);
+    ueid_gnb_du.ran_ue_id_present         = false;
+    ueid.set_gnb_du_ue_id()               = ueid_gnb_du;
+    ues.push_back(ueid);
+  }
+
+  return true;
 }
 
 bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
     const asn1::e2sm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
     std::vector<asn1::e2sm::ue_id_c>&                  ues)
 {
-  return false;
+  // TODO: add test condition checking, now return all UEs
+  for (const auto& ue : ue_aggr_rlc_metrics) {
+    du_ue_index_t       ue_index = to_du_ue_index(ue.first);
+    ue_id_c             ueid;
+    ue_id_gnb_du_s      ueid_gnb_du{};
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
+    ueid_gnb_du.gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id);
+    ueid_gnb_du.ran_ue_id_present         = false;
+    ueid.set_gnb_du_ue_id()               = ueid_gnb_du;
+    ues.push_back(ueid);
+  }
+
+  return true;
 }
 
 bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c&               meas_type,
