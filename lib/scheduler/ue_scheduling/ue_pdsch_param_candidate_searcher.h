@@ -35,7 +35,7 @@ class ue_pdsch_param_candidate_searcher
   using ss_iter = static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>::const_iterator;
 
 public:
-  struct iterator;
+  // struct iterator;
 
   /// Parameters for a given PDSCH candidate.
   struct candidate {
@@ -137,7 +137,7 @@ public:
       // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
       for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
         const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-        if (h.has_pending_retx()) {
+        if ((not h.last_alloc_params().is_fallback) and h.has_pending_retx()) {
           dl_harq_candidates.push_back(&h);
         }
       }

@@ -43,7 +43,8 @@ public:
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
-        ue_cell_cfg,
+        cell_cfg,
+        &ue_cell_cfg,
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource]))
   {
   }
@@ -62,7 +63,7 @@ TEST_P(dl_mcs_tbs_calculator_test_bench, test_values)
 
   // Run test function.
   optional<sch_mcs_tbs> test =
-      compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
+      compute_dl_mcs_tbs(pdsch_cfg, sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
   ASSERT_EQ(GetParam().final_mcs, test.value().mcs);

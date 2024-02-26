@@ -149,11 +149,10 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
-optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
-                                                 const ue_cell_configuration& ue_cell_cfg,
-                                                 sch_mcs_index                max_mcs,
-                                                 unsigned                     nof_prbs,
-                                                 bool                         contains_dc)
+optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params& pdsch_params,
+                                                 sch_mcs_index              max_mcs,
+                                                 unsigned                   nof_prbs,
+                                                 bool                       contains_dc)
 {
   // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.

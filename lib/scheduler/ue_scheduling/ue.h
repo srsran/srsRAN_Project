@@ -134,7 +134,11 @@ public:
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
   /// is used to derive the required transport block size for an DL grant.
-  unsigned pending_dl_srb0_newtx_bytes() const;
+  unsigned pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const;
+
+  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
+  /// is used to derive the required transport block size for an DL grant.
+  unsigned pending_dl_srb1_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
@@ -146,12 +150,12 @@ public:
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
-  unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
+  unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid = INVALID_LCID);
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
   /// SRB0.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  unsigned build_dl_srb0_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
+  unsigned build_dl_srb0_srb1_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid);
 
 private:
   /// Expert config parameters used for UE scheduler.

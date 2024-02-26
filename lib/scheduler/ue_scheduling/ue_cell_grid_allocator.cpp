@@ -265,7 +265,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index]);
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, &ue_cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
       pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index], grant.nof_layers);
@@ -301,7 +301,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
           cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.value(), grant.crbs);
     }
 
-    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length(), contains_dc);
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, adjusted_mcs, grant.crbs.length(), contains_dc);
   } else {
     // It is a retx.
     mcs_tbs_info.emplace(
@@ -366,8 +366,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
-                            ue_cell_cfg,
-                            grant.ss_id,
+                            ue_cell_cfg.search_space(grant.ss_id),
+                            cell_cfg.dl_cfg_common.init_dl_bwp,
                             grant.crbs,
                             grant.time_res_index,
                             k1,
@@ -420,8 +420,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                               pdsch_cfg,
                               mcs_tbs_info.value().tbs,
                               u.crnti,
-                              ue_cell_cfg,
-                              grant.ss_id,
+                              cell_cfg,
+                              ue_cell_cfg.search_space(grant.ss_id),
                               pdcch->dci.c_rnti_f1_0,
                               grant.crbs,
                               h_dl.tb(0).nof_retxs == 0);

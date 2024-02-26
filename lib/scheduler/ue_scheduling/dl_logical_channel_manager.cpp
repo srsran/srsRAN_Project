@@ -37,12 +37,12 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
   }
 }
 
-unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes)
+unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
 {
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
 
-  lcid_t lcid = get_max_prio_lcid();
+  lcid = lcid == lcid_t::INVALID_LCID ? get_max_prio_lcid() : lcid;
   if (lcid == lcid_t::INVALID_LCID) {
     return 0;
   }
@@ -130,7 +130,8 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   return alloc_bytes;
 }
 
-unsigned srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+unsigned
+srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs, lcid_t lcid)
 {
   unsigned rem_tbs = total_tbs;
 
@@ -138,7 +139,7 @@ unsigned srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_m
   // Note: We assume upper layer accounts for its own subheaders when updating the buffer state.
   while (rem_tbs > MAX_MAC_SDU_SUBHEADER_SIZE and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
-    unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs);
+    unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs, lcid);
     if (alloc_bytes == 0) {
       break;
     }
