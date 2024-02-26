@@ -198,14 +198,14 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
       std::reverse(pdus.begin(), pdus.end());
       break;
     case rx_order::even_odd:
-      std::vector<byte_buffer> sdu_list_mod;
-      for (int i = 0; i < num_sdus; i += 2) {
-        sdu_list_mod.push_back(std::move(sdu_list[i]));
+      std::vector<byte_buffer> pdus_mod;
+      for (int i = 0; i < num_pdus; i += 2) {
+        pdus_mod.push_back(std::move(pdus[i]));
       }
-      for (int i = 1; i < num_sdus; i += 2) {
-        sdu_list_mod.push_back(std::move(sdu_list[i]));
+      for (int i = 1; i < num_pdus; i += 2) {
+        pdus_mod.push_back(std::move(pdus[i]));
       }
-      sdu_list = std::move(sdu_list_mod);
+      pdus = std::move(pdus_mod);
       break;
   }
 
