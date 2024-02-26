@@ -45,7 +45,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
     // Load 16 consecutive words starting at index.
     int8x16_t simd_input = vld1q_s8(reinterpret_cast<const int8_t*>(input.data() + index));
     // Compare the 16 words with the value.
-    uint8x16_t mask_u8 = vceqq_s8(vdupq_n_s8((int8_t)value), simd_input);
+    uint8x16_t mask_u8 = vceqq_s8(vdupq_n_s8(int8_t(v)), simd_input);
     uint8_t    mask    = vmaxvq_u8(mask_u8);
     if (mask != 0) {
       found = true;
@@ -57,7 +57,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
     // Load 8 consecutive words starting at index.
     int8x8_t simd_input = vld1_s8(reinterpret_cast<const int8_t*>(input.data() + index));
     // Compare the 8 words with the value.
-    uint8x8_t mask_u8 = vceq_s8(vdup_n_s8((int8_t)value), simd_input);
+    uint8x8_t mask_u8 = vceq_s8(vdup_n_s8(int8_t(v)), simd_input);
     uint8_t   mask    = vmaxv_u8(mask_u8);
     if (mask != 0) {
       break;
