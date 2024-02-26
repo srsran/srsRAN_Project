@@ -11,10 +11,34 @@
 #include "e2sm_kpm_report_service_impl.h"
 #include "e2sm_kpm_utils.h"
 #include <algorithm>
+#include <chrono>
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace srsran;
+
+uint64_t get_ntp_timestamp()
+{
+  // Offset between Unix and NTP epochs (1900-1970 in seconds).
+  constexpr uint64_t ntp_epoch_offset = 2208988800ULL;
+
+  auto now = std::chrono::system_clock::now();
+
+  // Get the duration since the Unix epoch.
+  auto duration_since_epoch = now.time_since_epoch();
+
+  // Convert the duration to seconds and microseconds.
+  uint64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(duration_since_epoch).count();
+  uint64_t microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count() % 1000000;
+
+  // Calculate the fractional part of the NTP timestamp.
+  uint64_t fractional_part = static_cast<uint64_t>((microseconds * ((1ULL << 32) / 1000000ULL)));
+
+  // Calculate the NTP timestamp.
+  uint64_t ntp_timestamp = ((seconds_since_epoch + ntp_epoch_offset) << 32) | fractional_part;
+
+  return ntp_timestamp;
+}
 
 e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2sm_kpm_action_definition_s action_def_,
                                                            e2sm_kpm_meas_provider&      meas_provider_) :
@@ -28,7 +52,7 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2sm_kpm_action_defin
   ric_ind_header.sender_name_present        = false;
   ric_ind_header.sender_type_present        = false;
   ric_ind_header.file_formatversion_present = false;
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   is_ind_msg_ready_ = false;
 }
@@ -100,7 +124,7 @@ void e2sm_kpm_report_service_style1::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
 }
@@ -153,7 +177,7 @@ void e2sm_kpm_report_service_style2::clear_collect_measurements()
   ric_ind_message.meas_data.clear();
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
@@ -230,7 +254,7 @@ void e2sm_kpm_report_service_style3::clear_collect_measurements()
   }
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
@@ -339,7 +363,7 @@ void e2sm_kpm_report_service_style4::clear_collect_measurements()
   ric_ind_message.ue_meas_report_list.clear();
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
@@ -464,7 +488,7 @@ void e2sm_kpm_report_service_style5::clear_collect_measurements()
   }
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
