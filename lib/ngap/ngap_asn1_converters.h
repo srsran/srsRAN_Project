@@ -146,7 +146,12 @@ inline cause_t asn1_to_cause(asn1::ngap::cause_c ngap_cause)
       cause = static_cast<cause_radio_network_t>(ngap_cause.radio_network().value);
       break;
     case asn1::ngap::cause_c::types_opts::transport:
-      cause = static_cast<cause_transport_t>(ngap_cause.transport().value);
+      // The mapping is not 1:1, so we need to handle some cases separately
+      if (ngap_cause.transport().value == asn1::ngap::cause_transport_opts::options::transport_res_unavailable) {
+        cause = cause_transport_t::transport_res_unavailable;
+      } else {
+        cause = cause_transport_t::unspecified;
+      }
       break;
     case asn1::ngap::cause_c::types_opts::nas:
       cause = static_cast<cause_nas_t>(ngap_cause.nas().value);

@@ -14,8 +14,8 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
+#include "srsran/ran/cause.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 #include <vector>
@@ -35,9 +35,20 @@ inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
       cause = static_cast<cause_radio_network_t>(f1ap_cause.radio_network().value);
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
+      // The mapping is not 1:1, so we need to handle most cases separately
+      switch (f1ap_cause.transport().value) {
+        case asn1::f1ap::cause_transport_opts::transport_res_unavailable:
+          cause = cause_transport_t::transport_res_unavailable;
+          break;
+        case asn1::f1ap::cause_transport_opts::unspecified:
+          cause = cause_transport_t::unspecified;
+          break;
+        default:
+          cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
+      }
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
+      // The mapping is 1:1 so we can directly convert the value
       cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
@@ -68,9 +79,20 @@ inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
     f1ap_cause.set_radio_network() =
         static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
   } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    f1ap_cause.set_transport() =
-        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+    // The mapping is not 1:1, so we need to handle most cases separately
+    switch (variant_get<cause_transport_t>(cause)) {
+      case cause_transport_t::transport_res_unavailable:
+        f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::transport_res_unavailable;
+        break;
+      case cause_transport_t::unspecified:
+        f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::unspecified;
+        break;
+      default:
+        f1ap_cause.set_transport() =
+            static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+    }
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    // The mapping is 1:1 so we can directly convert the value
     f1ap_cause.set_protocol() =
         static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {

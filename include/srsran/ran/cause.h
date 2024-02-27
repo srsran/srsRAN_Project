@@ -62,9 +62,14 @@ enum class cause_radio_network_t : uint8_t {
   release_due_to_cn_detected_mob
 };
 
-enum class cause_transport_t : uint8_t { transport_res_unavailable = 0, unspecified };
+enum class cause_transport_t : uint8_t {
+  transport_res_unavailable = 0,
+  unspecified,
+  unknown_tnl_address_for_iab, // only F1AP and E1AP
+  unknown_up_tnl_info_for_iab  // only F1AP
+};
 
-enum class cause_nas_t : uint8_t { normal_release = 0, authentication_fail, deregister, unspecified };
+enum class cause_nas_t : uint8_t { normal_release = 0, authentication_fail, deregister, unspecified }; // only NGAP
 
 enum class cause_protocol_t : uint8_t {
   transfer_syntax_error = 0,
@@ -81,7 +86,7 @@ enum class cause_misc_t : uint8_t {
   not_enough_user_plane_processing_res,
   hardware_fail,
   om_intervention,
-  unknown_plmn_or_sn_pn,
+  unknown_plmn_or_sn_pn, // only NGAP
   unspecified
 };
 
