@@ -12,6 +12,7 @@
 
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
+#include "srsran/adt/expected.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
@@ -32,16 +33,16 @@ struct rlc_rx_um_sdu_segment_cmp {
   bool operator()(const rlc_rx_um_sdu_segment& a, const rlc_rx_um_sdu_segment& b) const { return a.so < b.so; }
 };
 
-/// Container to collect received SDU segments and to assemble the SDU upon completion
+/// Container for buffering of received SDU segments until fully received.
 struct rlc_rx_um_sdu_info {
-  // TODO: Refactor this struct.
-  // Move the following rlc_rx_um methods here:
-  // - add segments without duplicates
-  // - assemble SDU
-  bool                                                       fully_received = false;
-  bool                                                       has_gap        = false;
-  std::set<rlc_rx_um_sdu_segment, rlc_rx_um_sdu_segment_cmp> segments; // Set of segments with SO as key
-  byte_buffer_chain                                          sdu = {};
+  using segment_set_t = std::set<rlc_rx_um_sdu_segment, rlc_rx_um_sdu_segment_cmp>; // Set of segments with SO as key
+
+  /// Flags the SDU as fully received or not.
+  bool fully_received = false;
+  /// Indicates a gap (i.e. a missing segment) among all already received segments.
+  bool has_gap = false;
+  /// Buffer for set of SDU segments.
+  segment_set_t segments;
 };
 
 /// \brief Rx state variables
@@ -132,6 +133,13 @@ private:
   /// \param rx_sdu Container/Info object to be inspected
   void update_segment_inventory(rlc_rx_um_sdu_info& rx_sdu) const;
 
+  /// Reassembles a fully received SDU from buffered segments in the SDU info object.
+  ///
+  /// \param sdu_info The SDU info to be reassembled.
+  /// \param sn Sequence number (for logging).
+  /// \return The reassembled SDU in case of success, default_error_t{} otherwise.
+  expected<byte_buffer_chain> reassemble_sdu(rlc_rx_um_sdu_info& sdu_info, uint32_t sn);
+
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
@@ -166,11 +174,10 @@ struct formatter<srsran::rlc_rx_um_sdu_info> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "nof_segments={} has_gap={} fully_received={} sdu_len={}",
-                     info.segments.size(),
+                     "has_gap={} fully_received={} nof_segments={}",
                      info.has_gap,
                      info.fully_received,
-                     info.sdu.length());
+                     info.segments.size());
   }
 };
 
