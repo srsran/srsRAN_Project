@@ -153,12 +153,14 @@ def _publish_data(
                     for ue_info in metric["ue_list"]:
                         ue_container = ue_info["ue_container"]
                         rnti = ue_container.pop("rnti")
+                        pci = ue_container.pop("pci")
                         _influx_push(
                             write_api,
                             bucket=bucket,
                             record={
                                 "measurement": "ue_info",
                                 "tags": {
+                                    "pci": pci,
                                     "rnti": f"{rnti:x}",
                                     "testbed": testbed,
                                 },
