@@ -41,7 +41,12 @@ inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
       cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
+      // The mapping is not 1:1, so we need to handle the unspecified case separately
+      if (f1ap_cause.misc().value == asn1::f1ap::cause_misc_opts::unspecified) {
+        cause = cause_misc_t::unspecified;
+      } else {
+        cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
+      }
       break;
     default:
       report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", f1ap_cause.type());

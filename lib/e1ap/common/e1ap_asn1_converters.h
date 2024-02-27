@@ -986,7 +986,12 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
       cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
-      cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
+      // The mapping is not 1:1, so we need to handle the unspecified case separately
+      if (e1ap_cause.misc().value == asn1::e1ap::cause_misc_opts::unspecified) {
+        cause = cause_misc_t::unspecified;
+      } else {
+        cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
+      }
       break;
     default:
       report_fatal_error("Cannot convert E1AP ASN.1 cause {} to common type", e1ap_cause.type());
@@ -1012,7 +1017,12 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
     e1ap_cause.set_protocol() =
         static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    // The mapping is not 1:1, so we need to handle the unspecified case separately
+    if (variant_get<cause_misc_t>(cause) == cause_misc_t::unspecified) {
+      e1ap_cause.set_misc() = asn1::e1ap::cause_misc_opts::unspecified;
+    } else {
+      e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    }
   } else {
     report_fatal_error("Cannot convert cause to E1AP type");
   }
