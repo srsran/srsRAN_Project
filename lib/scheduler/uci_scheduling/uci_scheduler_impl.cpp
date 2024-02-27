@@ -97,7 +97,7 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
         // Move resource to last position and delete it to avoid O(N) removal.
         if (it != slot_wheel.end() - 1) {
           auto last_it = slot_wheel.end() - 1;
-          std::swap(it, last_it);
+          std::swap(*it, *last_it);
         }
         slot_wheel.pop_back();
       }
