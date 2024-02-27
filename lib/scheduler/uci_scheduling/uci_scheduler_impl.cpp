@@ -28,17 +28,7 @@ uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
   updated_ues.reserve(MAX_NOF_DU_UES);
 }
 
-uci_scheduler_impl::~uci_scheduler_impl()
-{
-  for (auto& slot_entry : periodic_uci_slot_wheel) {
-    if (not slot_entry.empty()) {
-      logger.error("cell={} c-rnti={}: UCI resources were not correctly cleaned up from UCI scheduler",
-                   cell_cfg.cell_index,
-                   slot_entry[0].rnti);
-      break;
-    }
-  }
-}
+uci_scheduler_impl::~uci_scheduler_impl() {}
 
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
 {
@@ -218,8 +208,11 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
     const ue_cell_configuration* ue_cfg   = get_ue_cfg(uci_info.rnti);
 
     if (ue_cfg == nullptr) {
-      logger.error(
-          "cell={} c-rnti={}: UE for which UCI is being scheduled was not found.", cell_cfg.cell_index, uci_info.rnti);
+      logger.error("cell={} c-rnti={}: UE for which {} is being scheduled was not found (slot={})",
+                   cell_cfg.cell_index,
+                   uci_info.rnti,
+                   it->sr_counter > 0 ? "SR" : (it->csi_counter > 0 ? "CSI" : "invalid UCI"),
+                   slot_alloc.slot);
       it = slot_ucis.erase(it);
       continue;
     }
