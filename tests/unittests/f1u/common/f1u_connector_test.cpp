@@ -118,7 +118,7 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
@@ -168,7 +168,7 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
@@ -219,7 +219,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx1;

@@ -40,7 +40,9 @@ public:
              e1ap_control_message_handler&                                         e1ap_,
              network_interface_config&                                             net_config_,
              n3_interface_config&                                                  n3_config_,
-             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec_,
              timer_factory                                                         timers_,
              f1u_cu_up_gateway&                                                    f1u_gw_,
              gtpu_teid_pool&                                                       f1u_teid_allocator_,
@@ -63,9 +65,13 @@ public:
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
                         gtpu_rx_demux_,
-                        *ue_exec_,
+                        *ue_dl_exec_,
+                        *ue_ul_exec_,
+                        *ue_ctrl_exec_,
                         gtpu_pcap),
-    ue_exec(std::move(ue_exec_)),
+    ue_dl_exec(std::move(ue_dl_exec_)),
+    ue_ul_exec(std::move(ue_ul_exec_)),
+    ue_ctrl_exec(std::move(ue_ctrl_exec_)),
     timers(timers_)
   {
     if (cfg.activity_level == activity_notification_level_t::ue) {
@@ -110,7 +116,9 @@ private:
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
 
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec;
 
   timer_factory timers;
   unique_timer  ue_inactivity_timer;

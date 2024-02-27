@@ -21,6 +21,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  timer_factory                  timers,
+                                 task_executor&                 ul_exec_,
                                  f1u_bearer_disconnector&       disconnector_) :
   logger("CU-F1-U", {ue_index, drb_id_, ul_tnl_info_}),
   tx_pdu_notifier(tx_pdu_notifier_),
@@ -28,6 +29,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   rx_sdu_notifier(rx_sdu_notifier_),
   disconnector(disconnector_),
   ul_tnl_info(ul_tnl_info_),
+  ul_exec(ul_exec_),
   dl_notif_timer(timers.create_timer())
 {
   dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),
@@ -35,6 +37,15 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
 }
 
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
+{
+  auto fn = [this, m = std::move(msg)]() mutable { handle_pdu_impl(std::move(m)); };
+
+  if (not ul_exec.execute(std::move(fn))) {
+    logger.log_warning("Dropped F1-U PDU, queue is full.");
+  }
+}
+
+void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
 {
   logger.log_debug("F1-U bearer received PDU");
   // handle T-PDU

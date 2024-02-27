@@ -91,6 +91,7 @@ protected:
                                             *tester,
                                             *tester,
                                             timer_factory{timers, ue_worker},
+                                            ue_worker,
                                             *tester);
   }
 

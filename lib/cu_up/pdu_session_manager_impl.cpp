@@ -34,6 +34,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_,
                                                    task_executor&                       ue_dl_exec_,
+                                                   task_executor&                       ue_ul_exec_,
+                                                   task_executor&                       ue_ctrl_exec_,
                                                    dlt_pcap&                            gtpu_pcap_) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
@@ -47,9 +49,12 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
   ue_dl_exec(ue_dl_exec_),
+  ue_ul_exec(ue_ul_exec_),
+  ue_ctrl_exec(ue_ctrl_exec_),
   gtpu_pcap(gtpu_pcap_),
   f1u_gw(f1u_gw_)
 {
+  (void)ue_ctrl_exec;
 }
 
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
@@ -186,6 +191,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                          f1u_ul_tunnel_addr,
                                          new_drb->f1u_to_pdcp_adapter,
                                          new_drb->f1u_to_pdcp_adapter,
+                                         ue_ul_exec,
                                          timers);
   new_drb->f1u_ul_teid        = f1u_ul_teid;
   drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
@@ -367,8 +373,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       f1u_ul_tunnel_addr.gtp_teid = drb->f1u_ul_teid;
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
-      drb->f1u = f1u_gw.create_cu_bearer(
-          ue_index, drb->drb_id, f1u_ul_tunnel_addr, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
+      drb->f1u = f1u_gw.create_cu_bearer(ue_index,
+                                         drb->drb_id,
+                                         f1u_ul_tunnel_addr,
+                                         drb->f1u_to_pdcp_adapter,
+                                         drb->f1u_to_pdcp_adapter,
+                                         ue_dl_exec,
+                                         timers);
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;

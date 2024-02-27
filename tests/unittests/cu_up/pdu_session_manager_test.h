@@ -55,6 +55,8 @@ protected:
                                                                  *gtpu_tx_notifier,
                                                                  *gtpu_rx_demux,
                                                                  teid_worker,
+                                                                 teid_worker,
+                                                                 teid_worker,
                                                                  gtpu_pcap);
   }
 
