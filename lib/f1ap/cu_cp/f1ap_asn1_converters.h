@@ -27,7 +27,7 @@ namespace srs_cu_cp {
 /// \brief Convert F1AP ASN.1 Cause to \c cause_t type.
 /// \param f1ap_cause The F1AP Cause.
 /// \return The cause_t type.
-inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
+inline cause_t asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
 {
   cause_t cause;
 
@@ -128,6 +128,7 @@ inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
 inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
+
   if (variant_holds_alternative<cause_radio_network_t>(cause)) {
     // Convert F1AP types
     if (static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) >= F1AP_RADIO_NETWORK_CAUSE_OFFSET &&
@@ -869,7 +870,7 @@ asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_srb
   // srb id
   srbs_failed_to_be_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_failed_to_be_setup_mod_item.srb_id);
   if (asn1_srbs_failed_to_be_setup_mod_item.cause_present) {
-    srbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
+    srbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
   }
 
   return srbs_failed_to_be_setup_mod_item;
@@ -887,7 +888,7 @@ asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_drb
   // drb id
   drbs_failed_to_be_setup_mod_item.drb_id = uint_to_drb_id(asn1_drbs_failed_to_be_setup_mod_item.drb_id);
   if (asn1_drbs_failed_to_be_setup_mod_item.cause_present) {
-    drbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
+    drbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
   }
 
   return drbs_failed_to_be_setup_mod_item;

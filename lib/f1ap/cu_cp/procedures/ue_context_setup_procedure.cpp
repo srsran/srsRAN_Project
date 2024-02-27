@@ -392,7 +392,7 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   response.ue_index = ue_index;
 
   // cause
-  response.cause = f1ap_asn1_to_cause(asn1_failure->cause);
+  response.cause = asn1_to_cause(asn1_failure->cause);
 
   // potential sp cell list
   if (asn1_failure->potential_sp_cell_list_present) {
@@ -481,7 +481,7 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
       // cause
       if (asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause_present) {
         scell_failed_to_setup_item.cause =
-            f1ap_asn1_to_cause(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause);
+            asn1_to_cause(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause);
       }
 
       response.scell_failed_to_setup_list.push_back(scell_failed_to_setup_item);

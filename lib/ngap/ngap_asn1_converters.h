@@ -112,7 +112,7 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(const cu_cp_qos_flow_p
 /// \brief Convert \c cause_t type to NGAP cause.
 /// \param cause The cause_t type.
 /// \return The NGAP cause.
-inline asn1::ngap::cause_c cause_to_asn1(cause_t cause)
+inline asn1::ngap::cause_c cause_to_ngap_asn1(cause_t cause)
 {
   asn1::ngap::cause_c ngap_cause;
 
@@ -277,7 +277,7 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 {
   asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
   asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_failed_item.qos_flow_id);
-  asn1_failed_item.cause       = cause_to_asn1(cu_cp_failed_item.cause);
+  asn1_failed_item.cause       = cause_to_ngap_asn1(cu_cp_failed_item.cause);
 
   return asn1_failed_item;
 }
@@ -444,7 +444,7 @@ inline bool pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
-  response_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
+  response_transfer.cause = cause_to_ngap_asn1(resp.unsuccessful_transfer.cause);
 
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
@@ -468,7 +468,7 @@ inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
+  setup_unsuccessful_transfer.cause = cause_to_ngap_asn1(resp.unsuccessful_transfer.cause);
 
   // TODO: Add crit diagnostics
 
@@ -901,7 +901,7 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
   asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
 
   // cause
-  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.unsuccessful_transfer.cause);
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_ngap_asn1(failed_item.unsuccessful_transfer.cause);
 
   // crit diagnostics
   if (failed_item.unsuccessful_transfer.crit_diagnostics.has_value()) {

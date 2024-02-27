@@ -51,7 +51,7 @@ inline void send_error_indication(ngap_message_notifier& ngap_notifier,
 
   if (cause.has_value()) {
     error_ind->cause_present = true;
-    error_ind->cause         = cause_to_asn1(cause.value());
+    error_ind->cause         = cause_to_ngap_asn1(cause.value());
   }
 
   // TODO: Add missing values

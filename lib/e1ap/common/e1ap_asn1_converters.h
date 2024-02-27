@@ -969,7 +969,7 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
 /// \brief Convert E1AP Cause to \c cause_t type.
 /// \param e1ap_cause The E1AP Cause.
 /// \return The cause type.
-inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
+inline cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
 {
   cause_t cause;
 
@@ -1086,7 +1086,7 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
 /// \brief Convert \c cause_t type to E1AP ASN.1 cause.
 /// \param cause The cause_t type.
 /// \return The E1AP ASN.1 cause.
-inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
+inline asn1::e1ap::cause_c cause_to_e1ap_asn1(cause_t cause)
 {
   asn1::e1ap::cause_c e1ap_cause;
 
@@ -1500,7 +1500,7 @@ inline void e1ap_drb_failed_item_list_to_asn1(
     // Add DRB ID
     asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
     // Add Cause
-    asn1_drb_failed_item.cause = cause_to_asn1_cause(drb_failed_item.cause);
+    asn1_drb_failed_item.cause = cause_to_e1ap_asn1(drb_failed_item.cause);
     asn1_drb_item_list.push_back(asn1_drb_failed_item);
   }
 }
