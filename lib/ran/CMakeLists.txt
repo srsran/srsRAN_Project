@@ -7,6 +7,9 @@
 #
 
 add_library(srsran_ran
+        cause/ngap_cause_converters.cpp
+        cause/f1ap_cause_converters.cpp
+        cause/e1ap_cause_converters.cpp
         csi_report/csi_report_config_helpers.cpp
         csi_report/csi_report_on_pucch_helpers.cpp
         csi_report/csi_report_on_pusch_helpers.cpp

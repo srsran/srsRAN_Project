@@ -9,8 +9,7 @@
  */
 
 #include "ue_context_release_routine.h"
-#include "srsran/asn1/f1ap/f1ap_ies.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/ngap_cause_converters.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -54,7 +53,7 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
     // If there is an active E1AP context,
     // prepare Bearer Context Release Command and call E1AP notifier
     bearer_context_release_command.ue_index = command.ue_index;
-    bearer_context_release_command.cause    = cause_radio_network_t::unspecified;
+    bearer_context_release_command.cause    = ngap_to_e1ap_cause(command.cause);
 
     CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_release_command(bearer_context_release_command));
   }
@@ -62,7 +61,7 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
   {
     // prepare F1AP UE Context Release Command and call F1AP notifier
     f1ap_ue_context_release_cmd.ue_index        = command.ue_index;
-    f1ap_ue_context_release_cmd.cause           = cause_radio_network_t::unspecified;
+    f1ap_ue_context_release_cmd.cause           = ngap_to_f1ap_cause(command.cause);
     f1ap_ue_context_release_cmd.rrc_release_pdu = release_context.rrc_release_pdu.copy();
     f1ap_ue_context_release_cmd.srb_id          = release_context.srb_id;
 

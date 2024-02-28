@@ -10,6 +10,7 @@
 
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -309,7 +310,7 @@ void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      resp
   for (const auto& item : setup_msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = item.pdu_session_id;
-    failed_item.unsuccessful_transfer.cause = cause_misc_t::unspecified;
+    failed_item.unsuccessful_transfer.cause = ngap_cause_misc_t::unspecified;
     response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
@@ -362,7 +363,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 // Helper to mark all PDU sessions that were requested to be set up as failed.
 void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
                                  const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                 cause_t                                         cause)
+                                 e1ap_cause_t                                    cause)
 {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> failed_list;
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
@@ -391,7 +392,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   } else {
     logger.info("ue={}: \"{}\" failed", setup_msg.ue_index, name());
 
-    mark_all_sessions_as_failed(response_msg, setup_msg, cause_radio_network_t::unspecified);
+    mark_all_sessions_as_failed(response_msg, setup_msg, e1ap_cause_t{e1ap_cause_radio_network_t::unspecified});
   }
 
   return response_msg;

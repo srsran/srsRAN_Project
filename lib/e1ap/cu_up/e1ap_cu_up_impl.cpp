@@ -240,7 +240,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
-        cause_to_e1ap_asn1(bearer_context_setup_response_msg.cause.value());
+        cause_to_asn1(bearer_context_setup_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextSetupFailure");
@@ -311,7 +311,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
-        cause_to_e1ap_asn1(bearer_context_mod_response_msg.cause.value());
+        cause_to_asn1(bearer_context_mod_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");

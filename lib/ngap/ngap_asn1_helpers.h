@@ -492,7 +492,7 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
                                                     const ngap_init_context_setup_failure& fail)
 {
   // Fill cause
-  asn1_fail->cause = cause_to_ngap_asn1(fail.cause);
+  asn1_fail->cause = cause_to_asn1(fail.cause);
 
   // Fill PDU Session Resource Failed to Setup List
   if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
@@ -702,7 +702,7 @@ inline void fill_asn1_ue_context_release_request(asn1::ngap::ue_context_release_
     }
   }
 
-  asn1_msg->cause = cause_to_ngap_asn1(msg.cause);
+  asn1_msg->cause = cause_to_asn1(msg.cause);
 }
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Release Command ASN1 struct to common type.
@@ -1167,7 +1167,7 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
 {
   if (!ho_response.success) {
     // cause
-    asn1_ho_failure->cause = cause_to_ngap_asn1(ho_response.cause);
+    asn1_ho_failure->cause = cause_to_asn1(ho_response.cause);
 
     // crit diagnostics
     if (ho_response.crit_diagnostics.has_value()) {

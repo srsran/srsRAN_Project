@@ -943,7 +943,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_release_cmd_s&  asn1_command,
                                                      const e1ap_bearer_context_release_command& command)
 {
-  asn1_command->cause = cause_to_e1ap_asn1(command.cause);
+  asn1_command->cause = cause_to_asn1(command.cause);
 }
 
 } // namespace srs_cu_cp

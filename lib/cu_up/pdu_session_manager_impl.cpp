@@ -67,7 +67,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   // prepare DRB creation result
   drb_setup_result drb_result = {};
   drb_result.success          = false;
-  drb_result.cause            = cause_radio_network_t::unspecified;
+  drb_result.cause            = e1ap_cause_radio_network_t::unspecified;
   drb_result.drb_id           = drb_to_setup.drb_id;
 
   // get DRB from list and create context
@@ -81,7 +81,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   five_qi_t five_qi =
       drb_to_setup.qos_flow_info_to_be_setup.begin()->qos_flow_level_qos_params.qos_characteristics.get_five_qi();
   if (qos_cfg.find(five_qi) == qos_cfg.end()) {
-    drb_result.cause = cause_radio_network_t::not_supported_5qi_value;
+    drb_result.cause = e1ap_cause_radio_network_t::not_supported_5qi_value;
     return drb_result;
   }
 
@@ -90,7 +90,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     // prepare QoS flow creation result
     qos_flow_setup_result flow_result = {};
     flow_result.success               = false;
-    flow_result.cause                 = cause_radio_network_t::unspecified;
+    flow_result.cause                 = e1ap_cause_radio_network_t::unspecified;
     flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
 
     if (!new_session.sdap->is_mapped(qos_flow_info.qos_flow_id) &&
@@ -109,8 +109,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
       // fail if mapping already exists
       flow_result.success = false;
       flow_result.cause   = new_session.sdap->is_mapped(qos_flow_info.qos_flow_id)
-                                ? cause_radio_network_t::multiple_qos_flow_id_instances
-                                : cause_radio_network_t::not_supported_5qi_value;
+                                ? e1ap_cause_radio_network_t::multiple_qos_flow_id_instances
+                                : e1ap_cause_radio_network_t::not_supported_5qi_value;
       logger.log_error("Cannot overwrite existing mapping for {}", qos_flow_info.qos_flow_id);
     }
 
@@ -123,7 +123,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     logger.log_error(
         "Failed to create {} for {}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
     new_session.drbs.erase(drb_to_setup.drb_id);
-    drb_result.cause   = cause_radio_network_t::unspecified;
+    drb_result.cause   = e1ap_cause_radio_network_t::unspecified;
     drb_result.success = false;
     return drb_result;
   }
@@ -133,7 +133,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     logger.log_error(
         "Failed to create {} for {}: Could not find 5QI. {}", drb_to_setup.drb_id, new_session.pdu_session_id, five_qi);
     new_session.drbs.erase(drb_to_setup.drb_id);
-    drb_result.cause   = cause_radio_network_t::not_supported_5qi_value;
+    drb_result.cause   = e1ap_cause_radio_network_t::not_supported_5qi_value;
     drb_result.success = false;
     return drb_result;
   }
@@ -225,7 +225,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
   pdu_session_result.pdu_session_id           = session.pdu_session_id;
-  pdu_session_result.cause                    = cause_radio_network_t::unspecified;
+  pdu_session_result.cause                    = e1ap_cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
     logger.log_error("PDU Session with {} already exists", session.pdu_session_id);
@@ -293,13 +293,13 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
 
   // Ref: TS 38.463 Sec. 8.3.1.2:
-  // For each PDU session for which the Security Indication IE is included in the PDU Session Resource To Setup List IE
-  // of the BEARER CONTEXT SETUP REQUEST message, and the Integrity Protection Indication IE or Confidentiality
+  // For each PDU session for which the Security Indication IE is included in the PDU Session Resource To Setup List
+  // IE of the BEARER CONTEXT SETUP REQUEST message, and the Integrity Protection Indication IE or Confidentiality
   // Protection Indication IE is set to "preferred", then the gNB-CU-UP should, if supported, perform user plane
   // integrity protection or ciphering, respectively, for the concerned PDU session and shall notify whether it
   // performed the user plane integrity protection or ciphering by including the Integrity Protection Result IE or
-  // Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup List IE of the BEARER CONTEXT
-  // SETUP RESPONSE message.
+  // Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup List IE of the BEARER
+  // CONTEXT SETUP RESPONSE message.
   if (security_result_required(session.security_ind)) {
     pdu_session_result.security_result = security_result_t{};
     auto& sec_res                      = pdu_session_result.security_result.value();
@@ -323,7 +323,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   pdu_session_modification_result pdu_session_result;
   pdu_session_result.success        = false;
   pdu_session_result.pdu_session_id = session.pdu_session_id;
-  pdu_session_result.cause          = cause_radio_network_t::unspecified;
+  pdu_session_result.cause          = e1ap_cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) == pdu_sessions.end()) {
     logger.log_error("PDU Session {} doesn't exists", session.pdu_session_id);
@@ -343,7 +343,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // prepare DRB modification result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
-    drb_result.cause            = cause_radio_network_t::unspecified;
+    drb_result.cause            = e1ap_cause_radio_network_t::unspecified;
     drb_result.drb_id           = drb_to_mod.drb_id;
 
     // find DRB in PDU session

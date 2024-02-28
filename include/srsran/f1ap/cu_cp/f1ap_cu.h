@@ -42,7 +42,7 @@ public:
 
 struct f1ap_ue_context_release_command {
   ue_index_t         ue_index = ue_index_t::invalid;
-  cause_t            cause;
+  f1ap_cause_t       cause;
   byte_buffer        rrc_release_pdu;
   optional<srb_id_t> srb_id;
 };

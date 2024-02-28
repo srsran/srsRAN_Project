@@ -17,7 +17,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/qos_prio_level.h"
 #include "srsran/support/error_handling.h"
 #include <string>
@@ -966,115 +966,25 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
   return pdcp_cfg;
 }
 
-/// \brief Convert E1AP Cause to \c cause_t type.
+/// \brief Convert E1AP Cause to \c e1ap_cause_t type.
 /// \param e1ap_cause The E1AP Cause.
 /// \return The cause type.
-inline cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
+inline e1ap_cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
 {
-  cause_t cause;
+  e1ap_cause_t cause;
 
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      switch (e1ap_cause.radio_network().value) {
-        // Common
-        case asn1::e1ap::cause_radio_network_opts::options::unspecified:
-          cause = cause_radio_network_t::unspecified;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::interaction_with_other_proc:
-          cause = cause_radio_network_t::interaction_with_other_proc;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::res_not_available_for_the_slice:
-          cause = cause_radio_network_t::res_not_available_for_the_slice;
-          break;
-        // Common for E1AP and NGAP
-        case asn1::e1ap::cause_radio_network_opts::options::not_supported_5qi_value:
-          cause = cause_radio_network_t::not_supported_5qi_value;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::up_integrity_protection_not_possible:
-          cause = cause_radio_network_t::up_integrity_protection_not_possible;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::up_confidentiality_protection_not_possible:
-          cause = cause_radio_network_t::up_confidentiality_protection_not_possible;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::multiple_pdu_session_id_instances:
-          cause = cause_radio_network_t::multiple_pdu_session_id_instances;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::unknown_pdu_session_id:
-          cause = cause_radio_network_t::unknown_pdu_session_id;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::multiple_qos_flow_id_instances:
-          cause = cause_radio_network_t::multiple_qos_flow_id_instances;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::invalid_qos_combination:
-          cause = cause_radio_network_t::invalid_qos_combination;
-          break;
-        // Common for E1AP and F1AP
-        case asn1::e1ap::cause_radio_network_opts::options::not_supported_qci_value:
-          cause = cause_radio_network_t::not_supported_qci_value;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::multiple_drb_id_instances:
-          cause = cause_radio_network_t::multiple_drb_id_instances;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::unknown_drb_id:
-          cause = cause_radio_network_t::unknown_drb_id;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::proc_cancelled:
-          cause = cause_radio_network_t::proc_cancelled;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::normal_release:
-          cause = cause_radio_network_t::normal_release;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available:
-          cause = cause_radio_network_t::no_radio_res_available;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::action_desirable_for_radio_reasons:
-          cause = cause_radio_network_t::action_desirable_for_radio_reasons;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::release_due_to_pre_emption:
-          cause = cause_radio_network_t::release_due_to_pre_emption;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::npn_not_supported:
-          cause = cause_radio_network_t::npn_not_supported;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::existing_meas_id:
-          cause = cause_radio_network_t::existing_meas_id;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::meas_temporarily_not_available:
-          cause = cause_radio_network_t::meas_temporarily_not_available;
-          break;
-        case asn1::e1ap::cause_radio_network_opts::options::meas_not_supported_for_the_obj:
-          cause = cause_radio_network_t::meas_not_supported_for_the_obj;
-          break;
-        // E1AP
-        default:
-          cause =
-              static_cast<cause_radio_network_t>(e1ap_cause.radio_network().value + E1AP_RADIO_NETWORK_CAUSE_OFFSET);
-      }
+      cause = static_cast<e1ap_cause_radio_network_t>(e1ap_cause.radio_network().value);
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
-      // The mapping is not 1:1, so we need to handle most cases separately
-      switch (e1ap_cause.transport().value) {
-        case asn1::e1ap::cause_transport_opts::transport_res_unavailable:
-          cause = cause_transport_t::transport_res_unavailable;
-          break;
-        case asn1::e1ap::cause_transport_opts::unspecified:
-          cause = cause_transport_t::unspecified;
-          break;
-        default:
-          cause = static_cast<cause_transport_t>(e1ap_cause.transport().value);
-      }
+      cause = static_cast<e1ap_cause_transport_t>(e1ap_cause.transport().value);
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
-      // The mapping is 1:1 so we can directly convert the value
       cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
-      // The mapping is not 1:1, so we need to handle the unspecified case separately
-      if (e1ap_cause.misc().value == asn1::e1ap::cause_misc_opts::unspecified) {
-        cause = cause_misc_t::unspecified;
-      } else {
-        cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
-      }
+      cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
       break;
     default:
       report_fatal_error("Cannot convert E1AP ASN.1 cause {} to common type", e1ap_cause.type());
@@ -1083,121 +993,29 @@ inline cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
   return cause;
 }
 
-/// \brief Convert \c cause_t type to E1AP ASN.1 cause.
-/// \param cause The cause_t type.
+/// \brief Convert \c e1ap_cause_t type to E1AP ASN.1 cause.
+/// \param cause The e1ap_cause_t type.
 /// \return The E1AP ASN.1 cause.
-inline asn1::e1ap::cause_c cause_to_e1ap_asn1(cause_t cause)
+inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
 {
-  asn1::e1ap::cause_c e1ap_cause;
+  asn1::e1ap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
-    // Convert E1AP types
-    if (static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) >= E1AP_RADIO_NETWORK_CAUSE_OFFSET) {
-      e1ap_cause.set_radio_network() = static_cast<asn1::e1ap::cause_radio_network_opts::options>(
-          static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) - E1AP_RADIO_NETWORK_CAUSE_OFFSET);
-    } else {
-      switch (variant_get<cause_radio_network_t>(cause)) {
-        // Common
-        case cause_radio_network_t::interaction_with_other_proc:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::interaction_with_other_proc;
-          break;
-        case cause_radio_network_t::res_not_available_for_the_slice:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::res_not_available_for_the_slice;
-          break;
-        // Common for E1AP and NGAP
-        case cause_radio_network_t::not_supported_5qi_value:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::not_supported_5qi_value;
-          break;
-        case cause_radio_network_t::up_integrity_protection_not_possible:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::up_integrity_protection_not_possible;
-          break;
-        case cause_radio_network_t::up_confidentiality_protection_not_possible:
-          e1ap_cause.set_radio_network() =
-              asn1::e1ap::cause_radio_network_opts::up_confidentiality_protection_not_possible;
-          break;
-        case cause_radio_network_t::multiple_pdu_session_id_instances:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::multiple_pdu_session_id_instances;
-          break;
-        case cause_radio_network_t::unknown_pdu_session_id:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::unknown_pdu_session_id;
-          break;
-        case cause_radio_network_t::multiple_qos_flow_id_instances:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::multiple_qos_flow_id_instances;
-          break;
-        case cause_radio_network_t::invalid_qos_combination:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::invalid_qos_combination;
-          break;
-        // Common for E1AP and F1AP
-        case cause_radio_network_t::not_supported_qci_value:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::not_supported_qci_value;
-          break;
-        case cause_radio_network_t::multiple_drb_id_instances:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::multiple_drb_id_instances;
-          break;
-        case cause_radio_network_t::unknown_drb_id:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::unknown_drb_id;
-          break;
-        case cause_radio_network_t::proc_cancelled:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::proc_cancelled;
-          break;
-        case cause_radio_network_t::normal_release:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::normal_release;
-          break;
-        case cause_radio_network_t::no_radio_res_available:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::no_radio_res_available;
-          break;
-        case cause_radio_network_t::action_desirable_for_radio_reasons:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::action_desirable_for_radio_reasons;
-          break;
-        case cause_radio_network_t::release_due_to_pre_emption:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::release_due_to_pre_emption;
-          break;
-        case cause_radio_network_t::npn_not_supported:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::npn_not_supported;
-          break;
-        case cause_radio_network_t::existing_meas_id:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::existing_meas_id;
-          break;
-        case cause_radio_network_t::meas_temporarily_not_available:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::meas_temporarily_not_available;
-          break;
-        case cause_radio_network_t::meas_not_supported_for_the_obj:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::meas_not_supported_for_the_obj;
-          break;
-        // E1AP
-        default:
-          e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::unspecified;
-      }
-    }
-  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    // The mapping is not 1:1, so we need to handle most cases separately
-    switch (variant_get<cause_transport_t>(cause)) {
-      case cause_transport_t::transport_res_unavailable:
-        e1ap_cause.set_transport() = asn1::e1ap::cause_transport_opts::transport_res_unavailable;
-        break;
-      case cause_transport_t::unspecified:
-        e1ap_cause.set_transport() = asn1::e1ap::cause_transport_opts::unspecified;
-        break;
-      default:
-        e1ap_cause.set_transport() =
-            static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
-    }
+  if (variant_holds_alternative<e1ap_cause_radio_network_t>(cause)) {
+    asn1_cause.set_radio_network() =
+        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<e1ap_cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<e1ap_cause_transport_t>(cause)) {
+    asn1_cause.set_transport() =
+        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<e1ap_cause_transport_t>(cause));
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    // The mapping is 1:1 so we can directly convert the value
-    e1ap_cause.set_protocol() =
+    asn1_cause.set_protocol() =
         static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    // The mapping is not 1:1, so we need to handle the unspecified case separately
-    if (variant_get<cause_misc_t>(cause) == cause_misc_t::unspecified) {
-      e1ap_cause.set_misc() = asn1::e1ap::cause_misc_opts::unspecified;
-    } else {
-      e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
-    }
+    asn1_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
   } else {
-    report_fatal_error("Cannot convert cause to E1AP type");
+    report_fatal_error("Cannot convert cause to E1AP type: {}", cause);
   }
 
-  return e1ap_cause;
+  return asn1_cause;
 }
 
 /// \brief Convert E1AP NG DL UP Unchanged to its boolean representation
@@ -1500,7 +1318,7 @@ inline void e1ap_drb_failed_item_list_to_asn1(
     // Add DRB ID
     asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
     // Add Cause
-    asn1_drb_failed_item.cause = cause_to_e1ap_asn1(drb_failed_item.cause);
+    asn1_drb_failed_item.cause = cause_to_asn1(drb_failed_item.cause);
     asn1_drb_item_list.push_back(asn1_drb_failed_item);
   }
 }

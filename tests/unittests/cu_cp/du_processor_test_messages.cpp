@@ -97,7 +97,7 @@ cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_
 {
   cu_cp_ue_context_release_command ue_context_release_command = {};
   ue_context_release_command.ue_index                         = ue_index;
-  ue_context_release_command.cause                            = cause_radio_network_t::unspecified;
+  ue_context_release_command.cause                            = ngap_cause_radio_network_t::unspecified;
   return ue_context_release_command;
 }
 
@@ -155,8 +155,9 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
   cmd.ue_index = uint_to_ue_index(0);
 
   cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_id                             = pdu_session_id;
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause = cause_nas_t::unspecified;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_id = pdu_session_id;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause =
+      ngap_cause_radio_network_t::unspecified;
 
   cmd.pdu_session_res_to_release_list_rel_cmd.emplace(pdu_session_id, pdu_session_res_to_release_item_rel_cmd);
 
@@ -206,7 +207,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification_with_qos_flow_remo
   // Add item to remove inexisting QoS flow.
   cu_cp_qos_flow_with_cause_item release_item;
   release_item.qos_flow_id = flow_id;
-  release_item.cause       = cause_radio_network_t::unspecified;
+  release_item.cause       = ngap_cause_radio_network_t::unspecified;
   transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);
 
   modify_item.transfer = transfer;

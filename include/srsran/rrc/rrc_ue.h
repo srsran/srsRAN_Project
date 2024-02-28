@@ -60,7 +60,7 @@ public:
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
   /// \brief Notify about the need to release a UE.
-  virtual void on_ue_release_required(const cause_t& cause) = 0;
+  virtual void on_ue_release_required(const ngap_cause_t& cause) = 0;
 };
 
 struct srb_creation_message {
@@ -99,7 +99,7 @@ public:
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to release a UE.
-  virtual void on_ue_release_required(const cause_t& cause) = 0;
+  virtual void on_ue_release_required(const ngap_cause_t& cause) = 0;
 };
 
 /// Interface used by the RRC security mode procedure

@@ -16,7 +16,7 @@
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 #include <vector>
@@ -24,201 +24,56 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Convert F1AP ASN.1 Cause to \c cause_t type.
-/// \param f1ap_cause The F1AP Cause.
-/// \return The cause_t type.
-inline cause_t asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
+/// \brief Convert F1AP ASN.1 Cause to \c f1ap_cause_t type.
+/// \param asn1_cause The F1AP Cause.
+/// \return The f1ap_cause_t type.
+inline f1ap_cause_t asn1_to_cause(asn1::f1ap::cause_c asn1_cause)
 {
-  cause_t cause;
+  f1ap_cause_t cause;
 
-  switch (f1ap_cause.type()) {
+  switch (asn1_cause.type()) {
     case asn1::f1ap::cause_c::types_opts::radio_network:
-      switch (f1ap_cause.radio_network().value) {
-        // Common
-        case asn1::f1ap::cause_radio_network_opts::options::unspecified:
-          cause = cause_radio_network_t::unspecified;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::interaction_with_other_proc:
-          cause = cause_radio_network_t::interaction_with_other_proc;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::res_not_available_for_the_slice:
-          cause = cause_radio_network_t::res_not_available_for_the_slice;
-          break;
-        // Common for F1AP and NGAP
-        case asn1::f1ap::cause_radio_network_opts::options::cell_not_available:
-          cause = cause_radio_network_t::cell_not_available;
-          break;
-        // Common for F1AP and E1AP
-        case asn1::f1ap::cause_radio_network_opts::options::not_supported_qci_value:
-          cause = cause_radio_network_t::not_supported_qci_value;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::multiple_drb_id_instances:
-          cause = cause_radio_network_t::multiple_drb_id_instances;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::unknown_drb_id:
-          cause = cause_radio_network_t::unknown_drb_id;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::proc_cancelled:
-          cause = cause_radio_network_t::proc_cancelled;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::normal_release:
-          cause = cause_radio_network_t::normal_release;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available:
-          cause = cause_radio_network_t::no_radio_res_available;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::action_desirable_for_radio_reasons:
-          cause = cause_radio_network_t::action_desirable_for_radio_reasons;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::release_due_to_pre_emption:
-          cause = cause_radio_network_t::release_due_to_pre_emption;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::npn_not_supported:
-          cause = cause_radio_network_t::npn_not_supported;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::existing_meas_id:
-          cause = cause_radio_network_t::existing_meas_id;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::meas_temporarily_not_available:
-          cause = cause_radio_network_t::meas_temporarily_not_available;
-          break;
-        case asn1::f1ap::cause_radio_network_opts::options::meas_not_supported_for_the_obj:
-          cause = cause_radio_network_t::meas_not_supported_for_the_obj;
-          break;
-        // F1AP
-        default:
-          cause = static_cast<cause_radio_network_t>(f1ap_cause.radio_network() + F1AP_RADIO_NETWORK_CAUSE_OFFSET);
-      }
+      cause = static_cast<f1ap_cause_radio_network_t>(asn1_cause.radio_network().value);
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      // The mapping is not 1:1, so we need to handle most cases separately
-      switch (f1ap_cause.transport().value) {
-        case asn1::f1ap::cause_transport_opts::transport_res_unavailable:
-          cause = cause_transport_t::transport_res_unavailable;
-          break;
-        case asn1::f1ap::cause_transport_opts::unspecified:
-          cause = cause_transport_t::unspecified;
-          break;
-        default:
-          cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
-      }
+      cause = static_cast<f1ap_cause_transport_t>(asn1_cause.transport().value);
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
-      // The mapping is 1:1 so we can directly convert the value
-      cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
+      cause = static_cast<cause_protocol_t>(asn1_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      // The mapping is not 1:1, so we need to handle the unspecified case separately
-      if (f1ap_cause.misc().value == asn1::f1ap::cause_misc_opts::unspecified) {
-        cause = cause_misc_t::unspecified;
-      } else {
-        cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
-      }
+      cause = static_cast<cause_misc_t>(asn1_cause.misc().value);
       break;
     default:
-      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", f1ap_cause.type());
+      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", asn1_cause.type());
   }
 
   return cause;
 }
 
-/// \brief Convert \c cause_t type to F1AP cause.
-/// \param cause The cause_t type.
+/// \brief Convert \c f1ap_cause_t type to F1AP cause.
+/// \param cause The f1ap_cause_t type.
 /// \return The F1AP cause.
-inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
+inline asn1::f1ap::cause_c cause_to_asn1(f1ap_cause_t cause)
 {
-  asn1::f1ap::cause_c f1ap_cause;
+  asn1::f1ap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
-    // Convert F1AP types
-    if (static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) >= F1AP_RADIO_NETWORK_CAUSE_OFFSET &&
-        static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) < E1AP_RADIO_NETWORK_CAUSE_OFFSET) {
-      f1ap_cause.set_radio_network() = static_cast<asn1::f1ap::cause_radio_network_opts::options>(
-          static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) - F1AP_RADIO_NETWORK_CAUSE_OFFSET);
-    } else {
-      switch (variant_get<cause_radio_network_t>(cause)) {
-        // Common
-        case cause_radio_network_t::interaction_with_other_proc:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::interaction_with_other_proc;
-          break;
-        case cause_radio_network_t::res_not_available_for_the_slice:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::res_not_available_for_the_slice;
-          break;
-        // Common for F1AP and NGAP
-        case cause_radio_network_t::cell_not_available:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::cell_not_available;
-          break;
-        // Common for F1AP and E1AP
-        case cause_radio_network_t::not_supported_qci_value:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::not_supported_qci_value;
-          break;
-        case cause_radio_network_t::multiple_drb_id_instances:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::multiple_drb_id_instances;
-          break;
-        case cause_radio_network_t::unknown_drb_id:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::unknown_drb_id;
-          break;
-        case cause_radio_network_t::proc_cancelled:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::proc_cancelled;
-          break;
-        case cause_radio_network_t::normal_release:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::normal_release;
-          break;
-        case cause_radio_network_t::no_radio_res_available:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::no_radio_res_available;
-          break;
-        case cause_radio_network_t::action_desirable_for_radio_reasons:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::action_desirable_for_radio_reasons;
-          break;
-        case cause_radio_network_t::release_due_to_pre_emption:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::release_due_to_pre_emption;
-          break;
-        case cause_radio_network_t::npn_not_supported:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::npn_not_supported;
-          break;
-        case cause_radio_network_t::existing_meas_id:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::existing_meas_id;
-          break;
-        case cause_radio_network_t::meas_temporarily_not_available:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::meas_temporarily_not_available;
-          break;
-        case cause_radio_network_t::meas_not_supported_for_the_obj:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::meas_not_supported_for_the_obj;
-          break;
-        // F1AP
-        default:
-          f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::unspecified;
-      }
-    }
-  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    // The mapping is not 1:1, so we need to handle most cases separately
-    switch (variant_get<cause_transport_t>(cause)) {
-      case cause_transport_t::transport_res_unavailable:
-        f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::transport_res_unavailable;
-        break;
-      case cause_transport_t::unspecified:
-        f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::unspecified;
-        break;
-      default:
-        f1ap_cause.set_transport() =
-            static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
-    }
+  if (variant_holds_alternative<f1ap_cause_radio_network_t>(cause)) {
+    asn1_cause.set_radio_network() =
+        static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<f1ap_cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<f1ap_cause_transport_t>(cause)) {
+    asn1_cause.set_transport() =
+        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<f1ap_cause_transport_t>(cause));
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    // The mapping is 1:1 so we can directly convert the value
-    f1ap_cause.set_protocol() =
+    asn1_cause.set_protocol() =
         static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    // The mapping is not 1:1, so we need to handle the unspecified case separately
-    if (variant_get<cause_misc_t>(cause) == cause_misc_t::unspecified) {
-      f1ap_cause.set_misc() = asn1::f1ap::cause_misc_opts::unspecified;
-    } else {
-      f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
-    }
+    asn1_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
   } else {
-    report_fatal_error("Cannot convert cause to F1AP type");
+    report_fatal_error("Cannot convert cause to F1AP type: {}", cause);
   }
 
-  return f1ap_cause;
+  return asn1_cause;
 }
 
 /// \brief Convert F1AP NRCGI to NR Cell Identity.

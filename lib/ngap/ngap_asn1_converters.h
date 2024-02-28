@@ -16,7 +16,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ran/bcd_helpers.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -109,161 +109,58 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(const cu_cp_qos_flow_p
   return ngap_qos_flow_info;
 }
 
-/// \brief Convert \c cause_t type to NGAP cause.
-/// \param cause The cause_t type.
+/// \brief Convert \c ngap_cause_t type to NGAP cause.
+/// \param cause The ngap_cause_t type.
 /// \return The NGAP cause.
-inline asn1::ngap::cause_c cause_to_ngap_asn1(cause_t cause)
+inline asn1::ngap::cause_c cause_to_asn1(ngap_cause_t cause)
 {
-  asn1::ngap::cause_c ngap_cause;
+  asn1::ngap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
-    // Convert NGAP types
-    if (static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) >= NGAP_RADIO_NETWORK_CAUSE_OFFSET &&
-        static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) < F1AP_RADIO_NETWORK_CAUSE_OFFSET) {
-      ngap_cause.set_radio_network() = static_cast<asn1::ngap::cause_radio_network_opts::options>(
-          static_cast<uint16_t>(variant_get<cause_radio_network_t>(cause)) - NGAP_RADIO_NETWORK_CAUSE_OFFSET);
-    } else {
-      switch (variant_get<cause_radio_network_t>(cause)) {
-        // Common type
-        case cause_radio_network_t::interaction_with_other_proc:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::interaction_with_other_proc;
-          break;
-        case cause_radio_network_t::res_not_available_for_the_slice:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::res_not_available_for_the_slice;
-          break;
-        // Common for NGAP and F1AP
-        case cause_radio_network_t::cell_not_available:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::cell_not_available;
-          break;
-        // Common for NGAP and E1AP
-        case cause_radio_network_t::not_supported_5qi_value:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::not_supported_5qi_value;
-          break;
-        case cause_radio_network_t::up_integrity_protection_not_possible:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::up_integrity_protection_not_possible;
-          break;
-        case cause_radio_network_t::up_confidentiality_protection_not_possible:
-          ngap_cause.set_radio_network() =
-              asn1::ngap::cause_radio_network_opts::up_confidentiality_protection_not_possible;
-          break;
-        case cause_radio_network_t::multiple_pdu_session_id_instances:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::multiple_pdu_session_id_instances;
-          break;
-        case cause_radio_network_t::unknown_pdu_session_id:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::unknown_pdu_session_id;
-          break;
-        case cause_radio_network_t::multiple_qos_flow_id_instances:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::multiple_qos_flow_id_instances;
-          break;
-        case cause_radio_network_t::invalid_qos_combination:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::invalid_qos_combination;
-          break;
-        // F1AP to NGAP conversion
-        case cause_radio_network_t::rl_fail_rlc:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::radio_conn_with_ue_lost;
-          break;
-        case cause_radio_network_t::rl_fail_others:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::radio_conn_with_ue_lost;
-          break;
-        // E1AP to NGAP conversion
-        case cause_radio_network_t::encryption_algorithms_not_supported:
-        case cause_radio_network_t::integrity_protection_algorithms_not_supported:
-          ngap_cause.set_radio_network() =
-              asn1::ngap::cause_radio_network_opts::encryption_and_or_integrity_protection_algorithms_not_supported;
-          break;
-        // NGAP
-        default:
-          ngap_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::unspecified;
-      }
-    }
-  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    ngap_cause.set_transport() =
-        static_cast<asn1::ngap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  if (variant_holds_alternative<ngap_cause_radio_network_t>(cause)) {
+    asn1_cause.set_radio_network() =
+        static_cast<asn1::ngap::cause_radio_network_opts::options>(variant_get<ngap_cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<ngap_cause_transport_t>(cause)) {
+    asn1_cause.set_transport() =
+        static_cast<asn1::ngap::cause_transport_opts::options>(variant_get<ngap_cause_transport_t>(cause));
   } else if (variant_holds_alternative<cause_nas_t>(cause)) {
-    ngap_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(variant_get<cause_nas_t>(cause));
+    asn1_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(variant_get<cause_nas_t>(cause));
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    ngap_cause.set_protocol() =
+    asn1_cause.set_protocol() =
         static_cast<asn1::ngap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
-  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    ngap_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else if (variant_holds_alternative<ngap_cause_misc_t>(cause)) {
+    asn1_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(variant_get<ngap_cause_misc_t>(cause));
   } else {
-    report_fatal_error("Cannot convert cause to NGAP type");
+    report_fatal_error("Cannot convert cause to NGAP type:{}", cause);
   }
 
-  return ngap_cause;
+  return asn1_cause;
 }
 
-/// \brief Convert NGAP ASN1 cause to \c cause_t type.
-/// \param ngap_cause The ASN1 NGAP cause.
-/// \return The cause_t type.
-inline cause_t asn1_to_cause(asn1::ngap::cause_c ngap_cause)
+/// \brief Convert NGAP ASN1 cause to \c ngap_cause_t type.
+/// \param asn1_cause The ASN1 NGAP cause.
+/// \return The ngap_cause_t type.
+inline ngap_cause_t asn1_to_cause(asn1::ngap::cause_c asn1_cause)
 {
-  cause_t cause;
+  ngap_cause_t cause;
 
-  switch (ngap_cause.type()) {
+  switch (asn1_cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
-      switch (ngap_cause.radio_network().value) {
-        // Common
-        case asn1::ngap::cause_radio_network_opts::options::unspecified:
-          cause = cause_radio_network_t::unspecified;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::interaction_with_other_proc:
-          cause = cause_radio_network_t::interaction_with_other_proc;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::res_not_available_for_the_slice:
-          cause = cause_radio_network_t::res_not_available_for_the_slice;
-          break;
-        // Common for NGAP and F1AP
-        case asn1::ngap::cause_radio_network_opts::options::cell_not_available:
-          cause = cause_radio_network_t::cell_not_available;
-          break;
-        // Common for NGAP and E1AP
-        case asn1::ngap::cause_radio_network_opts::options::not_supported_5qi_value:
-          cause = cause_radio_network_t::not_supported_5qi_value;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::up_integrity_protection_not_possible:
-          cause = cause_radio_network_t::up_integrity_protection_not_possible;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::up_confidentiality_protection_not_possible:
-          cause = cause_radio_network_t::up_confidentiality_protection_not_possible;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::multiple_pdu_session_id_instances:
-          cause = cause_radio_network_t::multiple_pdu_session_id_instances;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::unknown_pdu_session_id:
-          cause = cause_radio_network_t::unknown_pdu_session_id;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::multiple_qos_flow_id_instances:
-          cause = cause_radio_network_t::multiple_qos_flow_id_instances;
-          break;
-        case asn1::ngap::cause_radio_network_opts::options::invalid_qos_combination:
-          cause = cause_radio_network_t::invalid_qos_combination;
-          break;
-        // NGAP
-        default:
-          cause =
-              static_cast<cause_radio_network_t>(ngap_cause.radio_network().value + NGAP_RADIO_NETWORK_CAUSE_OFFSET);
-      }
+      cause = static_cast<ngap_cause_radio_network_t>(asn1_cause.radio_network().value);
       break;
     case asn1::ngap::cause_c::types_opts::transport:
-      // The mapping is not 1:1, so we need to handle some cases separately
-      if (ngap_cause.transport().value == asn1::ngap::cause_transport_opts::options::transport_res_unavailable) {
-        cause = cause_transport_t::transport_res_unavailable;
-      } else {
-        cause = cause_transport_t::unspecified;
-      }
+      cause = static_cast<ngap_cause_transport_t>(asn1_cause.transport().value);
       break;
     case asn1::ngap::cause_c::types_opts::nas:
-      cause = static_cast<cause_nas_t>(ngap_cause.nas().value);
+      cause = static_cast<cause_nas_t>(asn1_cause.nas().value);
       break;
     case asn1::ngap::cause_c::types_opts::protocol:
-      cause = static_cast<cause_protocol_t>(ngap_cause.protocol().value);
+      cause = static_cast<cause_protocol_t>(asn1_cause.protocol().value);
       break;
     case asn1::ngap::cause_c::types_opts::misc:
-      cause = static_cast<cause_misc_t>(ngap_cause.misc().value);
+      cause = static_cast<ngap_cause_misc_t>(asn1_cause.misc().value);
       break;
     default:
-      report_fatal_error("Cannot convert NGAP ASN.1 cause {} to common type", ngap_cause.type());
+      report_fatal_error("Cannot convert NGAP ASN.1 cause {} to common type", asn1_cause.type());
   }
 
   return cause;
@@ -277,7 +174,7 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 {
   asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
   asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_failed_item.qos_flow_id);
-  asn1_failed_item.cause       = cause_to_ngap_asn1(cu_cp_failed_item.cause);
+  asn1_failed_item.cause       = cause_to_asn1(cu_cp_failed_item.cause);
 
   return asn1_failed_item;
 }
@@ -444,7 +341,7 @@ inline bool pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
-  response_transfer.cause = cause_to_ngap_asn1(resp.unsuccessful_transfer.cause);
+  response_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
@@ -468,7 +365,7 @@ inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-  setup_unsuccessful_transfer.cause = cause_to_ngap_asn1(resp.unsuccessful_transfer.cause);
+  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // TODO: Add crit diagnostics
 
@@ -901,7 +798,7 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
   asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
 
   // cause
-  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_ngap_asn1(failed_item.unsuccessful_transfer.cause);
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.unsuccessful_transfer.cause);
 
   // crit diagnostics
   if (failed_item.unsuccessful_transfer.crit_diagnostics.has_value()) {

@@ -33,7 +33,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
       logger.log_error(pdu.begin(), pdu.end(), "Failed to unpack CCCH UL PDU");
-      on_ue_release_required(cause_radio_network_t::unspecified);
+      on_ue_release_required(ngap_cause_radio_network_t::unspecified);
       return;
     }
   }
@@ -51,7 +51,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
       break;
     default:
       logger.log_error("Unsupported CCCH UL message type");
-      on_ue_release_required(cause_radio_network_t::unspecified);
+      on_ue_release_required(ngap_cause_radio_network_t::unspecified);
   }
 }
 
@@ -60,7 +60,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   // Perform various checks to make sure we can serve the RRC Setup Request
   if (not cu_cp_notifier.on_ue_setup_request()) {
     logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
-    on_ue_release_required(cause_radio_network_t::unspecified);
+    on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
   }
 
@@ -68,7 +68,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
     // TS 38.473 section 8.4.1.2.
     logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
-    on_ue_release_required(cause_radio_network_t::unspecified);
+    on_ue_release_required(ngap_cause_radio_network_t::unspecified);
     return;
   }
 
@@ -91,7 +91,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       break;
     default:
       logger.log_error("Unsupported RrcSetupRequest");
-      on_ue_release_required(cause_radio_network_t::unspecified);
+      on_ue_release_required(ngap_cause_radio_network_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
