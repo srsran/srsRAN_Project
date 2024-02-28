@@ -348,7 +348,7 @@ def test_android_hp(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_4x4_mimo
-@mark.flaky(reruns=1, only_rerun=["5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
 # pylint: disable=too-many-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
@@ -470,14 +470,16 @@ def test_zmq_smoke(
         param(3, 15, 5, MEDIUM_BITRATE, False, id=ZMQ_ID),
         param(3, 15, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
         param(3, 15, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
+        param(3, 15, 50, MEDIUM_BITRATE, False, id=ZMQ_ID),
         param(41, 30, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
         param(41, 30, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 50, MEDIUM_BITRATE, False, id=ZMQ_ID),
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=1, only_rerun=["failed to start", "iperf did not achieve the expected data rate"])
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
+)
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

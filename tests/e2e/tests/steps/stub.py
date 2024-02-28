@@ -43,7 +43,7 @@ RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in th
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
-ATTACH_TIMEOUT: int = 5 * 60
+ATTACH_TIMEOUT: int = 1 * 60
 
 
 # pylint: disable=too-many-arguments,too-many-locals

@@ -35,7 +35,7 @@ Nightly Build Unit Tests:
       value: "#ci_gnb"
 
 Nightly E2E Tests:
-  cron: "15 23 * * 0-5"
+  cron: "00 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   variables:

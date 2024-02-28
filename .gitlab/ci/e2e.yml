@@ -267,7 +267,15 @@ amari 32UE:
     - *retina-needs
   parallel:
     matrix:
-      - KEYWORDS: ["attach_detach", "ping", "iperf and udp", "iperf and tcp"]
+      - KEYWORDS:
+          [
+            "attach_detach",
+            "ping",
+            "iperf and udp and band:3",
+            "iperf and udp and not band:3",
+            "iperf and tcp and band:3",
+            "iperf and tcp and not band:3",
+          ]
 
 amari 32UE [reestablishment]:
   extends: .zmq
