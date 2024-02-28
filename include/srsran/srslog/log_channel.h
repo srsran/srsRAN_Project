@@ -44,6 +44,13 @@ struct log_channel_config {
   bool should_print_context = false;
 };
 
+/// Strong type to wrap a constant log label that is prepended to each log message.
+struct log_label_t {
+  /// Optional log label. If set, will get printed in front of each log message.
+  /// Disabled by default.
+  std::string log_label;
+};
+
 /// A log channel is the entity used for logging messages.
 ///
 /// It can deliver a log entry to one or more different sinks, for example a
@@ -139,6 +146,38 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename... Args>
+  void operator()(const log_label_t& label, const char* fmtstr, Args&&... args)
+  {
+    if (!enabled()) {
+      return;
+    }
+
+    // Populate the store with all incoming arguments.
+    auto* store = backend.alloc_arg_store();
+    if (!store) {
+      return;
+    }
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
+
+    // Send the log entry to the backend.
+    log_formatter&    formatter = log_sink.get_formatter();
+    detail::log_entry entry     = {&log_sink,
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                 formatter.format(std::move(metadata), buffer);
+                               },
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value64, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag,
+                                    label.log_label}};
+    backend.push(std::move(entry));
+  }
+
+  /// Builds the provided log entry and passes it to the backend. When the
+  /// channel is disabled the log entry will be discarded.
+  template <typename... Args>
   void operator()(uint32_t a, uint32_t b, const char* fmtstr, Args&&... args)
   {
     if (!enabled()) {
@@ -200,6 +239,45 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
+                                    {},
+                                    std::vector<uint8_t>(buffer, buffer + len)}};
+    backend.push(std::move(entry));
+  }
+
+  /// Builds the provided log entry and passes it to the backend. When the
+  /// channel is disabled the log entry will be discarded.
+  template <typename... Args>
+  void operator()(const log_label_t& label, const uint8_t* buffer, size_t len, const char* fmtstr, Args&&... args)
+  {
+    if (!enabled()) {
+      return;
+    }
+
+    // Populate the store with all incoming arguments.
+    auto* store = backend.alloc_arg_store();
+    if (!store) {
+      return;
+    }
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
+
+    // Calculate the length to capture in the buffer.
+    if (hex_max_size >= 0) {
+      len = std::min<size_t>(len, hex_max_size);
+    }
+
+    // Send the log entry to the backend.
+    log_formatter&    formatter = log_sink.get_formatter();
+    detail::log_entry entry     = {&log_sink,
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer_) {
+                                 formatter.format(std::move(metadata), buffer_);
+                               },
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value64, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag,
+                                    label.log_label,
                                     std::vector<uint8_t>(buffer, buffer + len)}};
     backend.push(std::move(entry));
   }
@@ -237,6 +315,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
+                                    {},
                                     std::vector<uint8_t>(buffer, buffer + len)}};
     backend.push(std::move(entry));
   }
@@ -274,6 +353,45 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
+                                    {},
+                                    std::vector<uint8_t>(it_begin, it_end)}};
+    backend.push(std::move(entry));
+  }
+
+  /// Builds the provided log entry and passes it to the backend. When the
+  /// channel is disabled the log entry will be discarded.
+  template <typename It, typename... Args, typename std::enable_if<detail::is_byte_iterable<It>::value, int>::type = 0>
+  void operator()(const log_label_t& label, It it_begin, It it_end, const char* fmtstr, Args&&... args)
+  {
+    if (!enabled()) {
+      return;
+    }
+
+    // Populate the store with all incoming arguments.
+    auto* store = backend.alloc_arg_store();
+    if (!store) {
+      return;
+    }
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
+
+    // Calculate the length to capture in the buffer.
+    if (hex_max_size >= 0 && hex_max_size < std::distance(it_begin, it_end)) {
+      it_end = it_begin + hex_max_size;
+    }
+
+    // Send the log entry to the backend.
+    log_formatter&    formatter = log_sink.get_formatter();
+    detail::log_entry entry     = {&log_sink,
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                 formatter.format(std::move(metadata), buffer);
+                               },
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value64, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag,
+                                    label.log_label,
                                     std::vector<uint8_t>(it_begin, it_end)}};
     backend.push(std::move(entry));
   }
