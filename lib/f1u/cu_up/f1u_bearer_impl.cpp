@@ -21,6 +21,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  timer_factory                  timers,
+                                 unique_timer&                  ue_inactivity_timer_,
                                  task_executor&                 ul_exec_,
                                  f1u_bearer_disconnector&       disconnector_) :
   logger("CU-F1-U", {ue_index, drb_id_, ul_tnl_info_}),
@@ -30,7 +31,8 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   disconnector(disconnector_),
   ul_tnl_info(ul_tnl_info_),
   ul_exec(ul_exec_),
-  dl_notif_timer(timers.create_timer())
+  dl_notif_timer(timers.create_timer()),
+  ue_inactivity_timer(ue_inactivity_timer_)
 {
   dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),
                      [this](timer_id_t tid) { on_expired_dl_notif_timer(); });
@@ -50,6 +52,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
   logger.log_debug("F1-U bearer received PDU");
   // handle T-PDU
   if (!msg.t_pdu.empty()) {
+    ue_inactivity_timer.run(); // restart inactivity timer due to UL PDU
     logger.log_debug("Delivering T-PDU of size={}", msg.t_pdu.length());
     rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu));
   }
@@ -58,6 +61,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
     // Highest transmitted PDCP SN
     if (status.highest_transmitted_pdcp_sn.has_value()) {
+      ue_inactivity_timer.run(); // restart inactivity timer due to confirmed transmission of DL PDU
       uint32_t pdcp_sn = status.highest_transmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
       rx_delivery_notifier.on_transmit_notification(pdcp_sn);

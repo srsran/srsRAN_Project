@@ -22,6 +22,7 @@ std::unique_ptr<f1u_bearer> srsran::srs_cu_up::create_f1u_bearer(uint32_t       
                                                                  f1u_rx_delivery_notifier&      rx_delivery_notifier,
                                                                  f1u_rx_sdu_notifier&           rx_sdu_notifier,
                                                                  timer_factory                  timers,
+                                                                 unique_timer&                  ue_inactivity_timer,
                                                                  task_executor&                 ul_exec,
                                                                  f1u_bearer_disconnector&       disconnector)
 {
@@ -32,6 +33,7 @@ std::unique_ptr<f1u_bearer> srsran::srs_cu_up::create_f1u_bearer(uint32_t       
                                                   rx_delivery_notifier,
                                                   rx_sdu_notifier,
                                                   timers,
+                                                  ue_inactivity_timer,
                                                   ul_exec,
                                                   disconnector);
   return bearer;

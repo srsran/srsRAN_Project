@@ -82,15 +82,18 @@ protected:
 
     // create tester and testee
     logger.info("Creating F1-U bearer");
-    tester          = std::make_unique<f1u_cu_up_test_frame>();
-    drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(0,
+    tester              = std::make_unique<f1u_cu_up_test_frame>();
+    drb_id_t drb_id     = drb_id_t::drb1;
+    ue_inactivity_timer = ue_timer_factory.create_timer();
+    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    f1u = std::make_unique<f1u_bearer_impl>(0,
                                             drb_id,
                                             up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{ul_teid_next.value()++}},
                                             *tester,
                                             *tester,
                                             *tester,
-                                            timer_factory{timers, ue_worker},
+                                            ue_timer_factory,
+                                            ue_inactivity_timer,
                                             ue_worker,
                                             *tester);
   }
@@ -103,13 +106,15 @@ protected:
 
   void tick()
   {
-    timers.tick();
+    ue_timer_manager.tick();
     ue_worker.run_pending_tasks();
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                         timers;
   manual_task_worker                    ue_worker{128};
+  timer_manager                         ue_timer_manager;
+  timer_factory                         ue_timer_factory{ue_timer_manager, ue_worker};
+  unique_timer                          ue_inactivity_timer;
   std::unique_ptr<f1u_cu_up_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>      f1u;
   gtpu_teid_t                           ul_teid_next{1234};

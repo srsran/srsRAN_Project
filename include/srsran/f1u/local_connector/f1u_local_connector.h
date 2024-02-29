@@ -66,7 +66,8 @@ public:
                                                           srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                                                           task_executor&                       ul_exec,
-                                                          timer_factory                        timers) override;
+                                                          timer_factory                        timers,
+                                                          unique_timer& ue_inactivity_timer) override;
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                       const up_transport_layer_info& dl_up_tnl_info) override;
