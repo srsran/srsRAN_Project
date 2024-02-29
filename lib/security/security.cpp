@@ -75,7 +75,7 @@ void security_context::generate_as_keys()
   security::generate_k_up(as_keys.k_up_enc, as_keys.k_up_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
 
   logger.debug(k.data(), k.size(), "K_gNB");
-  logger.debug(as_keys.k_rrc_int.data(), as_keys.k_rrc_int.size(), "RRC Integrity Key");
+  logger.debug("RRC Integrity Key: {}", as_keys.k_rrc_int);
   logger.debug(as_keys.k_rrc_enc.data(), as_keys.k_rrc_enc.size(), "RRC Encryption Key");
   logger.debug(as_keys.k_up_int.data(), as_keys.k_up_int.size(), "UP Integrity Key");
   logger.debug(as_keys.k_up_enc.data(), as_keys.k_up_enc.size(), "UP Encryption Key");
