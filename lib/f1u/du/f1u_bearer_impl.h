@@ -78,6 +78,8 @@ private:
   bool fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status);
   bool fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status& status);
   void fill_data_delivery_status(nru_ul_message& msg);
+
+  void handle_pdu_impl(nru_dl_message msg);
 };
 
 } // namespace srs_du

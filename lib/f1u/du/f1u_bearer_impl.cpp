@@ -51,10 +51,18 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
 
 void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
+  auto fn = [this, m = std::move(msg)]() mutable { handle_pdu_impl(std::move(m)); };
+  if (!ue_executor.execute(std::move(fn))) {
+    logger.log_warning("Dropped F1-U PDU, queue is full");
+  }
+}
+
+void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
+{
   logger.log_debug("F1-U bearer received PDU");
   // handle T-PDU
   if (!msg.t_pdu.empty()) {
-    logger.log_debug("Delivering T-PDU of size={}, pdcp_sn={}", msg.t_pdu.length(), msg.pdcp_sn);
+    logger.log_debug("Delivering T-PDU. size={} pdcp_sn={}", msg.t_pdu.length(), msg.pdcp_sn);
     pdcp_tx_pdu tx_sdu = {};
     tx_sdu.buf         = std::move(msg.t_pdu);
     tx_sdu.pdcp_sn     = msg.pdcp_sn;
