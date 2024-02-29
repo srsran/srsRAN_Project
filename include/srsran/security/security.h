@@ -444,10 +444,10 @@ struct formatter<srsran::security::sec_key> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::security::sec_128_key& key, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::security::sec_key& key, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin(), key.end(), " "));
+    format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin(), key.begin() + 16, " "));
+    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin() + 16, key.end(), " "));
   }
 };
 } // namespace fmt

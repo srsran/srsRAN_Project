@@ -167,9 +167,9 @@ public:
     logger.log_info(
         "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
     if (sec_cfg.k_128_int.has_value()) {
-      logger.log_info(sec_cfg.k_128_int.value().data(), 16, "128 K_int");
+      logger.log_info("128 K_int: {}", sec_cfg.k_128_int.value());
     }
-    logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
+    logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
   };
 
   void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
