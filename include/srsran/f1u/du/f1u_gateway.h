@@ -13,7 +13,6 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
-#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"

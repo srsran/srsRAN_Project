@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "lib/du_manager/du_ue/du_ue_manager_repository.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "lib/du_manager/ran_resource_management/du_ran_resource_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <map>

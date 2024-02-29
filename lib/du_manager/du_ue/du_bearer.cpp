@@ -10,7 +10,6 @@
 
 #include "du_bearer.h"
 #include "../converters/rlc_config_helpers.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 
