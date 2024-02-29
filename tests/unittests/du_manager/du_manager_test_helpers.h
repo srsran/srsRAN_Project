@@ -212,7 +212,8 @@ public:
                                        const up_transport_layer_info& dl_tnl_info,
                                        const up_transport_layer_info& ul_tnl_info,
                                        srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                       timer_factory                  timers) override
+                                       timer_factory                  timers,
+                                       task_executor&                 ue_executor) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_tnl_info) == 0) {
       f1u_bearers.insert(std::make_pair(dl_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy>{}));

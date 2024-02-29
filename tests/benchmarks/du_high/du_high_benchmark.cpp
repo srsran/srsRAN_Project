@@ -297,7 +297,8 @@ public:
                                const up_transport_layer_info& dl_tnl,
                                const up_transport_layer_info& ul_tnl,
                                srs_du::f1u_rx_sdu_notifier&   du_rx,
-                               timer_factory                  timers) override
+                               timer_factory                  timers,
+                               task_executor&                 ue_executor) override
   {
     du_notif_list.push_back(&du_rx);
     bearer_list.emplace_back();

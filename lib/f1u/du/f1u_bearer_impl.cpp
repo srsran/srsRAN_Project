@@ -20,11 +20,13 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  const f1u_config&              config,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  f1u_tx_pdu_notifier&           tx_pdu_notifier_,
-                                 timer_factory                  timers) :
+                                 timer_factory                  timers,
+                                 task_executor&                 ue_executor_) :
   logger("DU-F1-U", {ue_index, drb_id_, dl_tnl_info_}),
   cfg(config),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
+  ue_executor(ue_executor_),
   ul_notif_timer(timers.create_timer())
 {
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });

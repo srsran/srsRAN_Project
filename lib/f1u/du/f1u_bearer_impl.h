@@ -34,7 +34,8 @@ public:
                   const f1u_config&              config,
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
-                  timer_factory                  timers);
+                  timer_factory                  timers,
+                  task_executor&                 ue_executor_);
 
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -55,6 +56,8 @@ private:
 
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
+
+  task_executor& ue_executor;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;

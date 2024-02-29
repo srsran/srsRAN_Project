@@ -80,7 +80,8 @@ public:
                                        const up_transport_layer_info& dl_up_tnl_info,
                                        const up_transport_layer_info& ul_up_tnl_info,
                                        srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                       timer_factory                  timers) override;
+                                       timer_factory                  timers,
+                                       task_executor&                 ue_executor) override;
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override;
 

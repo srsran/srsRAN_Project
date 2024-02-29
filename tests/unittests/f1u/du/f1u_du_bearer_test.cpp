@@ -77,7 +77,8 @@ protected:
         config,
         *tester,
         *tester,
-        timer_factory{timers, ue_worker});
+        timer_factory{timers, ue_worker},
+        ue_worker);
   }
 
   void TearDown() override

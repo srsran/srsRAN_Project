@@ -149,7 +149,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       drb->dluptnl_info_list[0],
       drb->uluptnl_info_list[0],
       drb->connector.f1u_rx_sdu_notif,
-      timer_factory{du_params.services.timers, du_params.services.ue_execs.ctrl_executor(ue_index)});
+      timer_factory{du_params.services.timers, du_params.services.ue_execs.ctrl_executor(ue_index)},
+      du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index));
   if (f1u_drb == nullptr) {
     srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
     return nullptr;

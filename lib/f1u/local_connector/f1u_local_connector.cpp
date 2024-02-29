@@ -115,7 +115,8 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
                                                           const up_transport_layer_info& dl_up_tnl_info,
                                                           const up_transport_layer_info& ul_up_tnl_info,
                                                           srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                                          timer_factory                  timers)
+                                                          timer_factory                  timers,
+                                                          task_executor&                 ue_executor)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
   if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
@@ -136,6 +137,7 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
   f1u_msg.rx_sdu_notifier                     = &du_rx;
   f1u_msg.tx_pdu_notifier                     = du_tx.get();
   f1u_msg.timers                              = timers;
+  f1u_msg.ue_executor                         = &ue_executor;
 
   std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
   srs_du::f1u_bearer*                 ptr        = f1u_bearer.get();
