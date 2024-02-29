@@ -338,6 +338,7 @@ def _ping(
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
         gtpu_enable=True,
+        log_ip_level="debug",
     )
     configure_artifacts(
         retina_data=retina_data,

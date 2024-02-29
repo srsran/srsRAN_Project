@@ -632,7 +632,7 @@ smoke release update cache:
     - *cache_build_set
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 smoke relwithdeb update cache:
   extends: .smoke relwithdeb
@@ -709,7 +709,7 @@ smoke valgrind update cache:
     SAVE_ARTIFACTS: "True" # Valgrind generates extra files
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 smoke asan:
   extends: .build_and_unit
@@ -1716,7 +1716,7 @@ basic relwithdeb:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic tsan:
   extends: .smoke tsan
@@ -1729,7 +1729,7 @@ basic tsan:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic asan:
   extends: smoke asan
@@ -1743,7 +1743,7 @@ basic asan:
   tags: ["${AMD64_AVX2_TAG}"]
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic memcheck:
   extends: .smoke valgrind
@@ -1756,7 +1756,7 @@ basic memcheck:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic avx512 dpdk:
   extends: .build_and_unit
@@ -1786,7 +1786,7 @@ basic avx512 dpdk:
   tags: ["on-prem-amd64-avx2-avx512"]
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 #######
 # Web #
