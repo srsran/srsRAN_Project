@@ -104,7 +104,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     unique_timer discard_timer = {};
     // Only start for finite durations
     if (cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-      discard_timer = timers.create_timer();
+      discard_timer = ue_dl_timer_factory.create_timer();
       discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
                         discard_callback{this, st.tx_next});
       discard_timer.run();

@@ -50,6 +50,8 @@ protected:
                                                                  logger,
                                                                  ue_inactivity_timer,
                                                                  timers_factory,
+                                                                 timers_factory,
+                                                                 timers_factory,
                                                                  *f1u_gw,
                                                                  *f1u_allocator,
                                                                  *gtpu_tx_notifier,

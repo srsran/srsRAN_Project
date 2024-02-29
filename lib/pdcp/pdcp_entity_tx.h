@@ -65,13 +65,13 @@ public:
                  pdcp_tx_config                  cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
-                 timer_factory                   timers_) :
+                 timer_factory                   ue_dl_timer_factory_) :
     pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
     logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
     lower_dn(lower_dn_),
     upper_cn(upper_cn_),
-    timers(timers_),
+    ue_dl_timer_factory(ue_dl_timer_factory_),
     tx_window(create_tx_window(cfg.sn_size))
   {
     // Validate configuration
@@ -212,7 +212,7 @@ private:
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
-  timer_factory                   timers;
+  timer_factory                   ue_dl_timer_factory;
 
   pdcp_tx_state                st        = {};
   security::security_direction direction = security::security_direction::downlink;

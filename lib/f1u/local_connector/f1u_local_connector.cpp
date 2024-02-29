@@ -23,7 +23,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
                                       srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                       srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                                       task_executor&                       ul_exec,
-                                      timer_factory                        timers,
+                                      timer_factory                        ue_dl_timer_factory,
                                       unique_timer&                        ue_inactivity_timer)
 {
   logger_cu.info("Creating CU F1-U bearer with UL GTP Tunnel={}", ul_up_tnl_info);
@@ -39,7 +39,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
                                                                                    *cu_tx,
                                                                                    rx_delivery_notifier,
                                                                                    rx_sdu_notifier,
-                                                                                   timers,
+                                                                                   ue_dl_timer_factory,
                                                                                    ue_inactivity_timer,
                                                                                    ul_exec,
                                                                                    *this);

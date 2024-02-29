@@ -40,23 +40,23 @@ struct gtpu_rx_sdu_info {
   optional<uint16_t> sn          = {};
 };
 
-/// Class used for receiving GTP-U bearers.
+/// Class used for receiving GTP-U NGU bearers, e.g. on N3 interface.
 class gtpu_tunnel_ngu_rx : public gtpu_tunnel_base_rx
 {
 public:
   gtpu_tunnel_ngu_rx(srs_cu_up::ue_index_t                    ue_index,
                      gtpu_config::gtpu_rx_config              cfg,
                      gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_,
-                     timer_factory                            timers_) :
+                     timer_factory                            ue_dl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
     rx_window(std::make_unique<sdu_window_impl<gtpu_rx_sdu_info, gtpu_rx_window_size, gtpu_tunnel_logger>>(logger)),
-    timers(timers_)
+    ue_dl_timer_factory(ue_dl_timer_factory_)
   {
     if (config.t_reordering.count() != 0) {
-      reordering_timer = timers.create_timer();
+      reordering_timer = ue_dl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
     logger.log_info(
@@ -247,7 +247,7 @@ private:
   unique_timer reordering_timer;
 
   /// Timer factory
-  timer_factory timers;
+  timer_factory ue_dl_timer_factory;
 
   /// Reordering callback (t-Reordering)
   class reordering_callback

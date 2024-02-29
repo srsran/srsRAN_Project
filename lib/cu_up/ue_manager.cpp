@@ -64,6 +64,11 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec = exec_pool.create_ul_pdu_executor();
   std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec = exec_pool.create_ctrl_executor();
 
+  // Create executor-specific timer factories
+  timer_factory ue_dl_timer_factory   = {timers, *ue_dl_exec};
+  timer_factory ue_ul_timer_factory   = {timers, *ue_ul_exec};
+  timer_factory ue_ctrl_timer_factory = {timers, *ue_ctrl_exec};
+
   // Create UE object
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
                                                                      ue_cfg,
@@ -73,7 +78,9 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      std::move(ue_dl_exec),
                                                                      std::move(ue_ul_exec),
                                                                      std::move(ue_ctrl_exec),
-                                                                     timer_factory{timers, *ue_ctrl_exec},
+                                                                     ue_dl_timer_factory,
+                                                                     ue_ul_timer_factory,
+                                                                     ue_ctrl_timer_factory,
                                                                      f1u_gw,
                                                                      f1u_teid_allocator,
                                                                      gtpu_tx_notifier,

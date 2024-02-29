@@ -36,8 +36,10 @@ public:
                            network_interface_config&                        net_config_,
                            n3_interface_config&                             n3_config_,
                            cu_up_ue_logger&                                 logger_,
-                           unique_timer&                                    ue_inactivity_timer,
-                           timer_factory                                    timers_,
+                           unique_timer&                                    ue_inactivity_timer_,
+                           timer_factory                                    ue_dl_timer_factory_,
+                           timer_factory                                    ue_ul_timer_factory_,
+                           timer_factory                                    ue_ctrl_timer_factory_,
                            f1u_cu_up_gateway&                               f1u_gw_,
                            gtpu_teid_pool&                                  f1u_teid_allocator_,
                            gtpu_tunnel_tx_upper_layer_notifier&             gtpu_tx_notifier_,
@@ -72,7 +74,9 @@ private:
   n3_interface_config&                                     n3_config;
   cu_up_ue_logger&                                         logger;
   unique_timer&                                            ue_inactivity_timer;
-  timer_factory                                            timers;
+  timer_factory                                            ue_dl_timer_factory;
+  timer_factory                                            ue_ul_timer_factory;
+  timer_factory                                            ue_ctrl_timer_factory;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;

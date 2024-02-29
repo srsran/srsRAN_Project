@@ -35,7 +35,10 @@ struct srb_pdcp_context {
     srb_pdcp.tx_upper_cn = &rrc_tx_control_notifier;
     srb_pdcp.rx_upper_dn = &rrc_rx_data_notifier;
     srb_pdcp.rx_upper_cn = &rrc_rx_control_notifier;
-    srb_pdcp.timers      = timers;
+    // Uplink, Downlink and Control run in the same executor, hence all timer factories are the same.
+    srb_pdcp.ue_dl_timer_factory   = timers;
+    srb_pdcp.ue_ul_timer_factory   = timers;
+    srb_pdcp.ue_ctrl_timer_factory = timers;
 
     // create PDCP entity
     entity = create_pdcp_entity(srb_pdcp);

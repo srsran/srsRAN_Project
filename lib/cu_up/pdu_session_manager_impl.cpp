@@ -28,7 +28,9 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    n3_interface_config&                             n3_config_,
                                                    cu_up_ue_logger&                                 logger_,
                                                    unique_timer&                        ue_inactivity_timer_,
-                                                   timer_factory                        timers_,
+                                                   timer_factory                        ue_dl_timer_factory_,
+                                                   timer_factory                        ue_ul_timer_factory_,
+                                                   timer_factory                        ue_ctrl_timer_factory_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
                                                    gtpu_teid_pool&                      f1u_teid_allocator_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
@@ -44,7 +46,9 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   n3_config(n3_config_),
   logger(logger_),
   ue_inactivity_timer(ue_inactivity_timer_),
-  timers(timers_),
+  ue_dl_timer_factory(ue_dl_timer_factory_),
+  ue_ul_timer_factory(ue_ul_timer_factory_),
+  ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
@@ -144,7 +148,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
   pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
-  pdcp_msg.timers                               = timers;
+  pdcp_msg.ue_dl_timer_factory                  = ue_dl_timer_factory;
+  pdcp_msg.ue_ul_timer_factory                  = ue_ul_timer_factory;
+  pdcp_msg.ue_ctrl_timer_factory                = ue_ctrl_timer_factory;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);
@@ -192,7 +198,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                          new_drb->f1u_to_pdcp_adapter,
                                          new_drb->f1u_to_pdcp_adapter,
                                          ue_ul_exec,
-                                         timers,
+                                         ue_dl_timer_factory,
                                          ue_inactivity_timer);
   new_drb->f1u_ul_teid        = f1u_ul_teid;
   drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
@@ -265,7 +271,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
-  msg.timers                           = timers;
+  msg.ue_dl_timer_factory              = ue_dl_timer_factory;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters
@@ -379,7 +385,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                          drb->f1u_to_pdcp_adapter,
                                          drb->f1u_to_pdcp_adapter,
                                          ue_dl_exec,
-                                         timers,
+                                         ue_dl_timer_factory,
                                          ue_inactivity_timer);
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 

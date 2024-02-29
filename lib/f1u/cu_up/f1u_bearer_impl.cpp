@@ -20,7 +20,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                                  f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
-                                 timer_factory                  timers,
+                                 timer_factory                  ue_dl_timer_factory,
                                  unique_timer&                  ue_inactivity_timer_,
                                  task_executor&                 ul_exec_,
                                  f1u_bearer_disconnector&       disconnector_) :
@@ -31,7 +31,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   disconnector(disconnector_),
   ul_tnl_info(ul_tnl_info_),
   ul_exec(ul_exec_),
-  dl_notif_timer(timers.create_timer()),
+  dl_notif_timer(ue_dl_timer_factory.create_timer()),
   ue_inactivity_timer(ue_inactivity_timer_)
 {
   dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),

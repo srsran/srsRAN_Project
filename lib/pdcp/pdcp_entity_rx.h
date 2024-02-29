@@ -57,7 +57,7 @@ public:
                  pdcp_rx_config                  cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,
-                 timer_factory                   timers);
+                 timer_factory                   ue_ul_timer_factory_);
 
   void handle_pdu(byte_buffer_chain buf) override;
 
@@ -191,7 +191,7 @@ private:
   pdcp_rx_upper_data_notifier&    upper_dn;
   pdcp_rx_upper_control_notifier& upper_cn;
 
-  timer_factory timers;
+  timer_factory ue_ul_timer_factory;
 
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)

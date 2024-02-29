@@ -239,7 +239,7 @@ public:
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
                                                           task_executor&                       ul_exec,
-                                                          timer_factory                        timers,
+                                                          timer_factory                        ue_dl_timer_factory,
                                                           unique_timer& ue_inactivity_timer) override
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
