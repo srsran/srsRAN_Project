@@ -77,16 +77,24 @@ ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, 
 /// \brief Calculates the number of active UL symbols in the current slot_index.
 ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp);
 
-/// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
+/// \brief Finds the next TDD slot index with DL symbols within the TDD period, starting from the given slot index.
+/// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
+/// start_slot_index being past the last DL slot within the period.
 optional<unsigned> find_next_tdd_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
+/// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
+/// start_slot_index being past the last full DL slot within the period.
 optional<unsigned> find_next_tdd_full_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
+/// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
+/// start_slot_index being >= TDD period in slots.
 optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
+/// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
+/// start_slot_index being >= TDD period in slots.
 optional<unsigned> find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 } // namespace srsran

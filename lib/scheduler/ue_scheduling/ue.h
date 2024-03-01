@@ -153,9 +153,10 @@ public:
   unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid = INVALID_LCID);
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
-  /// SRB0.
+  /// SRB0 or for SRB1 in fallback mode.
+  /// It includes the UE Contention Resolution Identity CE if it is pending.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  unsigned build_dl_srb0_srb1_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid);
+  unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, bool is_srb0);
 
 private:
   /// Expert config parameters used for UE scheduler.

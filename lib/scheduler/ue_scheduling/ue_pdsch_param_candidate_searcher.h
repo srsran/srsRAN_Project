@@ -35,7 +35,7 @@ class ue_pdsch_param_candidate_searcher
   using ss_iter = static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>::const_iterator;
 
 public:
-  // struct iterator;
+  struct iterator;
 
   /// Parameters for a given PDSCH candidate.
   struct candidate {

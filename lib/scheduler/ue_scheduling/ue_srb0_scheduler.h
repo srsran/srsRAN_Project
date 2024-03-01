@@ -40,17 +40,21 @@ public:
 
 private:
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
-  void slot_indication();
+  void update_ongoing_ue_retxs();
 
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  bool schedule_srb(cell_resource_allocator& res_alloc, ue& u, bool is_srb0, dl_harq_process* h_dl_retx = nullptr);
+  bool schedule_srb(cell_resource_allocator& res_alloc,
+                    ue&                      u,
+                    bool                     is_srb0,
+                    dl_harq_process*         h_dl_retx,
+                    optional<slot_point>     starting_sl);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
   dl_harq_process* schedule_srb0(ue&                      u,
                                  cell_resource_allocator& res_alloc,
                                  unsigned                 pdsch_time_res,
                                  unsigned                 slot_offset,
-                                 dl_harq_process*         h_dl_retx = nullptr);
+                                 dl_harq_process*         h_dl_retx);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
   dl_harq_process* schedule_srb1(ue&                      u,
@@ -125,11 +129,15 @@ private:
     ue_repository&   ues;
   };
 
-  void cache_ue_srb_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0);
+  void store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0);
+
+  optional<slot_point> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
-  const unsigned                    max_dl_slots_ahead_sched = 5U;
+  // TODO: Find proper values for these 2 parameters.
+  const unsigned                    max_dl_slots_ahead_sched  = 10U;
+  const unsigned                    max_sched_attempts_per_ue = 7U;
   pdcch_resource_allocator&         pdcch_sch;
   pucch_allocator&                  pucch_alloc;
   ue_repository&                    ues;
@@ -143,7 +151,7 @@ private:
   coreset_configuration      cs_cfg;
 
   /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
-  std::list<ack_and_retx_tracker> ongoing_ues_ack_retx;
+  std::list<ack_and_retx_tracker> ongoing_ues_ack_retxs;
 
   srslog::basic_logger& logger;
 };
