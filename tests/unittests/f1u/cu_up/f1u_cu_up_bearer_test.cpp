@@ -70,6 +70,8 @@ public:
 class f1u_cu_up_test : public ::testing::Test, public f1u_trx_test
 {
 protected:
+  const unsigned inactivity_time_ms = 100;
+
   void SetUp() override
   {
     // init test's logger
@@ -85,7 +87,11 @@ protected:
     tester              = std::make_unique<f1u_cu_up_test_frame>();
     drb_id_t drb_id     = drb_id_t::drb1;
     ue_inactivity_timer = ue_timer_factory.create_timer();
-    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    ue_inactivity_timer.set(std::chrono::milliseconds(inactivity_time_ms), [this](timer_id_t) {
+      // Text
+      ue_inactivity_triggered = true;
+    });
+    ue_inactivity_timer.run();
     f1u = std::make_unique<f1u_bearer_impl>(0,
                                             drb_id,
                                             up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{ul_teid_next.value()++}},
@@ -104,10 +110,12 @@ protected:
     srslog::flush();
   }
 
-  void tick()
+  void tick(unsigned ms = 1)
   {
-    ue_timer_manager.tick();
-    ue_worker.run_pending_tasks();
+    for (unsigned t = 0; t < ms; t++) {
+      ue_timer_manager.tick();
+      ue_worker.run_pending_tasks();
+    }
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
@@ -118,10 +126,13 @@ protected:
   std::unique_ptr<f1u_cu_up_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>      f1u;
   gtpu_teid_t                           ul_teid_next{1234};
+
+  bool ue_inactivity_triggered = false;
 };
 
 TEST_F(f1u_cu_up_test, create_and_delete)
 {
+  EXPECT_FALSE(ue_inactivity_triggered);
   EXPECT_TRUE(tester->tx_msg_list.empty());
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -208,6 +219,9 @@ TEST_F(f1u_cu_up_test, tx_discard)
 
 TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 {
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   constexpr uint32_t pdu_size = 10;
   constexpr uint32_t pdcp_sn  = 123;
 
@@ -242,10 +256,17 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
   tester->tx_msg_list.pop_front();
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // DL PDUs do not restart inactivity timer (only their transmit notif), hence one more tick shall expire the timer
+  tick(inactivity_time_ms);
+  EXPECT_TRUE(ue_inactivity_triggered);
 }
 
 TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
 {
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   constexpr uint32_t pdu_size = 10;
   constexpr uint32_t pdcp_sn  = 123;
 
@@ -254,10 +275,18 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
   msg1.t_pdu = byte_buffer_chain{rx_pdcp_pdu1.deep_copy()};
   f1u->handle_pdu(std::move(msg1));
 
+  // UL PDUs restart inactivity timer, hence further ticks shall not expire the timer
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   nru_ul_message msg2;
   msg2.t_pdu = byte_buffer_chain{rx_pdcp_pdu2.deep_copy()};
   f1u->handle_pdu(std::move(msg2));
+
+  // UL PDUs restart inactivity timer, hence further ticks shall not expire the timer
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
@@ -274,10 +303,17 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
   tester->rx_sdu_list.pop_front();
 
   EXPECT_TRUE(tester->rx_sdu_list.empty());
+
+  // One more tick shall finally expire the inactivity timer
+  tick(inactivity_time_ms);
+  EXPECT_TRUE(ue_inactivity_triggered);
 }
 
 TEST_F(f1u_cu_up_test, rx_transmit_notification)
 {
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   constexpr uint32_t highest_pdcp_sn = 123;
 
   nru_dl_data_delivery_status status1 = {};
@@ -286,11 +322,19 @@ TEST_F(f1u_cu_up_test, rx_transmit_notification)
   msg1.data_delivery_status           = std::move(status1);
   f1u->handle_pdu(std::move(msg1));
 
+  // Transmit notifications restart inactivity timer, hence further ticks shall not expire the timer
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   nru_dl_data_delivery_status status2 = {};
   status2.highest_transmitted_pdcp_sn = highest_pdcp_sn + 1;
   nru_ul_message msg2                 = {};
   msg2.data_delivery_status           = std::move(status2);
   f1u->handle_pdu(std::move(msg2));
+
+  // Transmit notifications restart inactivity timer, hence further ticks shall not expire the timer
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -309,10 +353,17 @@ TEST_F(f1u_cu_up_test, rx_transmit_notification)
   tester->highest_transmitted_pdcp_sn_list.pop_front();
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
+
+  // One more tick shall finally expire the inactivity timer
+  tick(inactivity_time_ms);
+  EXPECT_TRUE(ue_inactivity_triggered);
 }
 
 TEST_F(f1u_cu_up_test, rx_delivery_notification)
 {
+  tick(inactivity_time_ms - 1);
+  EXPECT_FALSE(ue_inactivity_triggered);
+
   constexpr uint32_t highest_pdcp_sn = 123;
 
   nru_dl_data_delivery_status status1 = {};
@@ -344,4 +395,8 @@ TEST_F(f1u_cu_up_test, rx_delivery_notification)
   tester->highest_delivered_pdcp_sn_list.pop_front();
 
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
+
+  // Delivery notifications do not restart inactivity timer, hence one more tick shall expire the timer
+  tick(inactivity_time_ms);
+  EXPECT_TRUE(ue_inactivity_triggered);
 }
