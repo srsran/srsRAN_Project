@@ -461,10 +461,9 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
                count,
                bearer_id,
                direction);
-    logger.log(
-        level, (uint8_t*)sec_cfg.k_128_int.value().data(), sec_cfg.k_128_int.value().size(), "Integrity check key.");
-    logger.log(level, (uint8_t*)mac_exp.data(), mac_exp.size(), "MAC expected.");
-    logger.log(level, (uint8_t*)mac.data(), mac.size(), "MAC found.");
+    logger.log(level, "Integrity check key: {}", sec_cfg.k_128_int);
+    logger.log(level, "MAC expected: {}", mac_exp);
+    logger.log(level, "MAC found: {}", mac);
     logger.log(level, buf.begin(), buf.end(), "Integrity check input message. len={}", buf.length());
   }
 
@@ -474,7 +473,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
 byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view& msg, uint32_t count)
 {
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
+  logger.log_debug("Cipher decrypt key: {}", sec_cfg.k_128_enc);
   logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg.");
 
   byte_buffer ct;

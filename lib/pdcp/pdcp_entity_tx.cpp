@@ -321,15 +321,15 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
   }
 
   logger.log_debug("Integrity gen. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)sec_cfg.k_128_int.value().data(), sec_cfg.k_128_int.value().size(), "Integrity gen key.");
+  logger.log_debug("Integrity gen key: {}", sec_cfg.k_128_int);
   logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message.");
-  logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
+  logger.log_debug("MAC generated: {}", mac);
 }
 
 void pdcp_entity_tx::cipher_encrypt(byte_buffer_view& buf, uint32_t count)
 {
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher encrypt key.");
+  logger.log_debug("Cipher encrypt key: {}", sec_cfg.k_128_enc);
   logger.log_debug(buf.begin(), buf.end(), "Cipher encrypt input msg.");
 
   switch (sec_cfg.cipher_algo) {

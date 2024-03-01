@@ -450,4 +450,20 @@ struct formatter<srsran::security::sec_key> {
     return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin() + 16, key.end(), " "));
   }
 };
+
+template <>
+struct formatter<srsran::security::sec_mac> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::security::sec_mac& mac, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(mac, " "));
+  }
+};
+
 } // namespace fmt
