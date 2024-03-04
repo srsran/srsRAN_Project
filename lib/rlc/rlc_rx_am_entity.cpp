@@ -487,7 +487,7 @@ expected<byte_buffer_chain> rlc_rx_am_entity::reassemble_sdu(rlc_rx_am_sdu_info&
     return {default_error_t{}};
   }
 
-  expected<byte_buffer_chain> sdu = byte_buffer_chain(); // TODO USE byte_buffer_chain::create()
+  expected<byte_buffer_chain> sdu = byte_buffer_chain::create();
   if (!sdu) {
     logger.log_error("Failed to create SDU buffer. sn={} {}", sn, sdu_info);
     return {default_error_t{}};

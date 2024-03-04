@@ -70,13 +70,22 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {
+    size_t                      sdu_len = payload.length();
+    expected<byte_buffer_chain> sdu     = byte_buffer_chain::create(std::move(payload));
+    if (!sdu) {
+      logger.log_error("Dropped SDU, failed to create SDU buffer. sdu_len={}", sdu_len);
+      metrics.metrics_add_lost_pdus(1);
+      return;
+    }
+
     // deliver to upper layer
-    logger.log_info("RX SDU. sdu_len={}", payload.length());
-    metrics.metrics_add_sdus(1, payload.length());
-    upper_dn.on_new_sdu(std::move(payload));
+    logger.log_info("RX SDU. sdu_len={}", sdu.value().length());
+    metrics.metrics_add_sdus(1, sdu.value().length());
+    upper_dn.on_new_sdu(std::move(sdu.value()));
     // Nothing else to do here ...
     return;
   }
+
   if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarded PDU. sn={} payload_len={}", header.sn, payload.length());
     // Nothing else to do here ...
@@ -397,7 +406,7 @@ expected<byte_buffer_chain> rlc_rx_um_entity::reassemble_sdu(rlc_rx_um_sdu_info&
     return {default_error_t{}};
   }
 
-  expected<byte_buffer_chain> sdu = byte_buffer_chain(); // TODO USE byte_buffer_chain::create()
+  expected<byte_buffer_chain> sdu = byte_buffer_chain::create();
   if (!sdu) {
     logger.log_error("Failed to create SDU buffer. sn={} {}", sn, sdu_info);
     return {default_error_t{}};
