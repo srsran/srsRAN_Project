@@ -84,7 +84,7 @@ static inline void convert_if_simd(float* z, const int16_t* x, float scale, unsi
     __m256i input_vec = _mm256_maskz_loadu_epi16(mask, reinterpret_cast<const __m256i*>(x + i));
 
     // Convert the int16_t elements to float and scale them.
-    __m512 float_vec = _mm512_cvtepi32_ps(_mm512_cvtepi16_epi32(input_vec));
+    __m512 float_vec = _mm512_maskz_cvtepi32_ps(mask, _mm512_maskz_cvtepi16_epi32(mask, input_vec));
     float_vec        = _mm512_mul_ps(float_vec, scale512);
 
     // Store the result back to memory.
