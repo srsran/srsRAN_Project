@@ -188,13 +188,15 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   }
 
   // Unpack PDCP PDU
-  byte_buffer rrc_pdu = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
-  if (rrc_pdu.empty()) {
-    logger.log_warning("Dropping empty PDU. RX {}", srb_id);
-    logger.log_debug("original len={}, new_len={}", pdcp_pdu.length(), rrc_pdu.length());
+  pdcp_result pdcp_unpacking_result = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
+  if (!pdcp_unpacking_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP unpacking failed with {}",
+                    pdcp_unpacking_result.get_failure_cause());
+    on_ue_release_required(pdcp_unpacking_result.get_failure_cause());
     return;
   }
 
+  byte_buffer rrc_pdu = pdcp_unpacking_result.get_pdu();
   handle_pdu(srb_id, std::move(rrc_pdu));
 }
 
@@ -333,9 +335,17 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
       dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
       // pack DL CCCH msg
-      release_context.rrc_release_pdu =
+      pdcp_result pdcp_packing_result =
           context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
-      release_context.srb_id = srb_id_t::srb1;
+      if (!pdcp_packing_result.is_successful()) {
+        logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                        pdcp_packing_result.get_failure_cause());
+        on_ue_release_required(pdcp_packing_result.get_failure_cause());
+        return release_context;
+      }
+
+      release_context.rrc_release_pdu = pdcp_packing_result.get_pdu();
+      release_context.srb_id          = srb_id_t::srb1;
 
       // Log Tx message
       log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
