@@ -81,6 +81,7 @@ private:
                        slot_point                 pdsch_slot,
                        dl_harq_process&           h_dl,
                        pdcch_dl_information&      pdcch,
+                       dci_dl_rnti_config_type    dci_type,
                        dl_msg_alloc&              msg,
                        unsigned                   pucch_res_indicator,
                        unsigned                   pdsch_time_res,
@@ -136,11 +137,11 @@ private:
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.
-  const unsigned                    max_dl_slots_ahead_sched  = 10U;
-  const unsigned                    max_sched_attempts_per_ue = 7U;
-  pdcch_resource_allocator&         pdcch_sch;
-  pucch_allocator&                  pucch_alloc;
-  ue_repository&                    ues;
+  const unsigned            max_dl_slots_ahead_sched  = 10U;
+  const unsigned            max_sched_attempts_per_ue = 7U;
+  pdcch_resource_allocator& pdcch_sch;
+  pucch_allocator&          pucch_alloc;
+  ue_repository&            ues;
 
   bwp_configuration initial_active_dl_bwp;
   // See 3GPP TS 38.213, clause 10.1,

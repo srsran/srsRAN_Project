@@ -72,8 +72,8 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   auto next_ue = pending_ues.begin();
   while (next_ue != pending_ues.end()) {
     if (not next_ue->is_srb0) {
-      continue;
       ++next_ue;
+      continue;
     }
 
     // The UE might have been deleted in the meantime, check if still exists.
@@ -95,8 +95,8 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   next_ue = pending_ues.begin();
   while (next_ue != pending_ues.end()) {
     if (next_ue->is_srb0) {
-      continue;
       ++next_ue;
+      continue;
     }
 
     // The UE might have been deleted in the meantime, check if still exists.
@@ -165,15 +165,14 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
   // TODO: Make this compatible with k0 > 0.
   slot_point sched_ref_slot = res_alloc[0].slot;
 
-  if (starting_sl.has_value()) {
-    srsran_sanity_check(starting_sl.value() >= sched_ref_slot,
-                        "The starting slot can't be before the scheduler reference slot");
-    if (sched_ref_slot + max_dl_slots_ahead_sched < starting_sl.value()) {
-      return false;
-    }
-  } else {
-    starting_sl = sched_ref_slot;
+  if (not cell_cfg.is_dl_enabled(sched_ref_slot)) {
+    return false;
   }
+
+  if (starting_sl.has_value() and sched_ref_slot + max_dl_slots_ahead_sched < starting_sl.value()) {
+    return false;
+  }
+  starting_sl = sched_ref_slot;
 
   // We keep track of the number of scheduling attempts for the given UE.
   unsigned   sched_attempts_cnt = 0;
@@ -521,6 +520,7 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
                   pdsch_alloc.slot,
                   *h_dl,
                   *pdcch,
+                  dci_type,
                   pdsch_alloc.result.dl.ue_grants.emplace_back(),
                   pucch_res_indicator.value(),
                   pdsch_time_res,
@@ -589,7 +589,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   if (not is_retx) {
     // Set MAC logical channels to schedule in this PDU.
     u.build_dl_fallback_transport_block_info(
-        msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, lcid_t::LCID_SRB0);
+        msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, true);
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
@@ -600,6 +600,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
                                         slot_point                 pdsch_slot,
                                         dl_harq_process&           h_dl,
                                         pdcch_dl_information&      pdcch,
+                                        dci_dl_rnti_config_type    dci_type,
                                         dl_msg_alloc&              msg,
                                         unsigned                   pucch_res_indicator,
                                         unsigned                   pdsch_time_res,
@@ -629,7 +630,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
 
   // Fill DL PDCCH DCI.
   static const uint8_t msg4_rv = 0;
-  switch (pdcch.dci.type) {
+  switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       build_dci_f1_0_tc_rnti(pdcch.dci,
                              cell_cfg.dl_cfg_common.init_dl_bwp,
@@ -668,7 +669,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
   msg.context.nof_retxs   = h_dl.tb(0).nof_retxs;
   msg.context.olla_offset = 0;
 
-  switch (pdcch.dci.type) {
+  switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
                                pdsch_params,
@@ -682,7 +683,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
         u.build_dl_fallback_transport_block_info(
-            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, lcid_t::LCID_SRB1);
+            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, false);
       }
       break;
     }
