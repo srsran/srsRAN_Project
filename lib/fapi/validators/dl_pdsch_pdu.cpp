@@ -234,58 +234,31 @@ static bool validate_nr_of_symbols(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PDSCH duration in symbols", msg_type, pdu_type, report);
 }
 
-/// Validates the ratio of PDSCH EPRE to NZP CSI-RSEPRE and the PDSCH DMRS power offset profile SSS properties of the
-/// PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
-static bool validate_power_control_offset_profile_nr(unsigned          power_control_offset_profile_nr,
-                                                     int               dmrs_power_profile_sss,
-                                                     validator_report& report)
+/// Validates the ratio of PDSCH EPRE to NZP CSI-RS EPRE property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
+static bool validate_power_control_offset_profile_nr(int power_control_offset, validator_report& report)
 {
-  static constexpr unsigned USE_PROFILE_SSS       = 255;
-  static constexpr unsigned MIN_VALUE_PROFILE_NR  = 0;
-  static constexpr unsigned MAX_VALUE_PROFILE_NR  = 23;
-  static constexpr int      USE_PROFILE_NR        = -32768;
-  static constexpr int      MIN_VALUE_PROFILE_SSS = -32767;
-  static constexpr int      MAX_VALUE_PROFILE_SSS = 32767;
+  static constexpr int MIN_VALUE = -8;
+  static constexpr int MAX_VALUE = 15;
 
-  if (power_control_offset_profile_nr == USE_PROFILE_SSS && MIN_VALUE_PROFILE_SSS <= dmrs_power_profile_sss &&
-      dmrs_power_profile_sss <= MAX_VALUE_PROFILE_SSS) {
-    return true;
-  }
-
-  if (dmrs_power_profile_sss == USE_PROFILE_NR && MIN_VALUE_PROFILE_NR <= power_control_offset_profile_nr &&
-      power_control_offset_profile_nr <= MAX_VALUE_PROFILE_NR) {
-    return true;
-  }
-
-  report.append(dmrs_power_profile_sss, "Ratio PDSCH EPRE to NZP CSI-RSEPRE", msg_type, pdu_type);
-  return false;
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, power_control_offset, "Ratio PDSCH EPRE to NZP CSI-RS EPRE", msg_type, pdu_type, report);
 }
 
-/// Validates the ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE and the PDSCH DMRS power offset profile SSS properties
-/// of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
+/// Validates the ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE property of the PDSCH PDU, as per SCF-222 v4.0
+/// section 3.4.2.2.
 static bool validate_power_control_offset_ss_profile_nr(unsigned          power_control_offset_ss_profile_nr,
-                                                        int               dmrs_power_profile_sss,
                                                         validator_report& report)
 {
-  static constexpr unsigned USE_PROFILE_SSS       = 255;
-  static constexpr unsigned MIN_VALUE_PROFILE_NR  = 0;
-  static constexpr unsigned MAX_VALUE_PROFILE_NR  = 3;
-  static constexpr int      USE_PROFILE_NR        = -32768;
-  static constexpr int      MIN_VALUE_PROFILE_SSS = -32767;
-  static constexpr int      MAX_VALUE_PROFILE_SSS = 32767;
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 3;
 
-  if (power_control_offset_ss_profile_nr == USE_PROFILE_SSS && MIN_VALUE_PROFILE_SSS <= dmrs_power_profile_sss &&
-      dmrs_power_profile_sss <= MAX_VALUE_PROFILE_SSS) {
-    return true;
-  }
-
-  if (dmrs_power_profile_sss == USE_PROFILE_NR && MIN_VALUE_PROFILE_NR <= power_control_offset_ss_profile_nr &&
-      power_control_offset_ss_profile_nr <= MAX_VALUE_PROFILE_NR) {
-    return true;
-  }
-
-  report.append(dmrs_power_profile_sss, "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE", msg_type, pdu_type);
-  return false;
+  return validate_field(MIN_VALUE,
+                        MAX_VALUE,
+                        power_control_offset_ss_profile_nr,
+                        "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE",
+                        msg_type,
+                        pdu_type,
+                        report);
 }
 
 /// Validates the is inline TB CRC property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -401,10 +374,8 @@ bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_start_symbol_index(pdu.start_symbol_index, report);
   result &= validate_nr_of_symbols(pdu.nr_of_symbols, report);
 
-  result &= validate_power_control_offset_profile_nr(
-      pdu.power_control_offset_profile_nr, pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss, report);
+  result &= validate_power_control_offset_profile_nr(pdu.power_control_offset_profile_nr, report);
   result &= validate_power_control_offset_ss_profile_nr(static_cast<unsigned>(pdu.power_control_offset_ss_profile_nr),
-                                                        pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss,
                                                         report);
 
   if (pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]) {

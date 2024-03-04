@@ -297,32 +297,16 @@ INSTANTIATE_TEST_SUITE_P(aggregation_level,
 INSTANTIATE_TEST_SUITE_P(dmrs_power,
                          validate_pdcch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_pdcch_pdu>{
-                                              "DMRS Power offset",
+                                              "Power control offset SS",
                                               [](dl_pdcch_pdu& pdu, int value) {
                                                 pdu.dl_dci.back().power_control_offset_ss_profile_nr = value;
-                                                pdu.maintenance_v3.info.back().pdcch_dmrs_power_offset_profile_sss =
-                                                    -32768;
                                               }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-126)), false},
+                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-127)), false},
                                                           test_case_data{static_cast<unsigned>(int16_t(-9)), false},
                                                           test_case_data{static_cast<unsigned>(int16_t(-8)), true},
                                                           test_case_data{0, true},
                                                           test_case_data{8, true},
                                                           test_case_data{9, false})));
-
-INSTANTIATE_TEST_SUITE_P(dmrs_power_1,
-                         validate_pdcch_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_pdcch_pdu>{
-                                              "DMRS Power offset",
-                                              [](dl_pdcch_pdu& pdu, int value) {
-                                                pdu.dl_dci.back().power_control_offset_ss_profile_nr = -127;
-                                                pdu.maintenance_v3.info.back().pdcch_dmrs_power_offset_profile_sss =
-                                                    value;
-                                              }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), false},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), true},
-                                                          test_case_data{0, true},
-                                                          test_case_data{32767, true})));
 
 INSTANTIATE_TEST_SUITE_P(
     collocated_al16_candidate,

@@ -105,9 +105,6 @@ void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
 
     fill_precoding_and_beamforming(dci_builder, pm_mapper, cell_nof_prbs);
 
-    // These parameters are not passed by the MAC, leave them as disabled.
-    dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});
-
     dci_builder.set_parameters_v4_dci(dci.info->n_id_pdcch_dmrs);
 
     dci_builder.set_payload(*dci.payload);

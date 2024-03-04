@@ -49,14 +49,12 @@ INSTANTIATE_TEST_SUITE_P(pss,
                                               "Beta PSS profile NR",
                                               [](dl_ssb_pdu& pdu, int value) {
                                                 pdu.beta_pss_profile_nr = static_cast<beta_pss_profile_type>(value);
-                                                pdu.ssb_maintenance_v3.beta_pss_profile_sss =
-                                                    (value == 255) ? 0 : std::numeric_limits<int16_t>::min();
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},
                                                           test_case_data{2, false},
                                                           test_case_data{254, false},
-                                                          test_case_data{255, true})));
+                                                          test_case_data{255, false})));
 
 INSTANTIATE_TEST_SUITE_P(pbch_block_index,
                          validate_ssb_pdu_field,
@@ -127,21 +125,6 @@ INSTANTIATE_TEST_SUITE_P(L_max,
                                                           test_case_data{64, true},
                                                           test_case_data{65, false})));
 
-INSTANTIATE_TEST_SUITE_P(scaling_power,
-                         validate_ssb_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
-                                              "Baseband power scaling applied to SS-PBCH",
-                                              [](dl_ssb_pdu& pdu, int value) {
-                                                pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = value;
-                                              }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), true},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), false},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-11001)), false},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-11000)), true},
-                                                          test_case_data{0, true},
-                                                          test_case_data{12000, true},
-                                                          test_case_data{12001, false})));
-
 /// Valid PDU should pass.
 TEST(validate_ssb_pdu, valid_pdu_passes)
 {
@@ -159,14 +142,13 @@ TEST(validate_ssb_pdu, invalid_pdu_fails)
   dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
   // Force 3 errors.
-  pdu.phys_cell_id                                   = 2000;
-  pdu.ssb_block_index                                = 100;
-  pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = -12000;
+  pdu.phys_cell_id    = 2000;
+  pdu.ssb_block_index = 100;
 
   validator_report report(0, 0);
   EXPECT_FALSE(validate_dl_ssb_pdu(pdu, report));
   // Assert 3 reports were generated.
-  EXPECT_EQ(report.reports.size(), 3u);
+  EXPECT_EQ(report.reports.size(), 2u);
 }
 
 /// Only build and run this test when asserts are available, as the death is caused by an assert.

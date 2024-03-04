@@ -132,7 +132,6 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
       // ZP-CSI type does not use these values.
       csi_builder.set_tx_power_info_parameters(0, fapi::nzp_csi_rs_epre_to_ssb::dB0);
     }
-    csi_builder.set_maintenance_v3_tx_power_info_parameters({});
   }
 }
 

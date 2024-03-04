@@ -126,31 +126,13 @@ static bool validate_scrambling_id(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Scrambling ID", msg_type, pdu_type, report);
 }
 
-/// Validates the power control offset SS profile NR and the CSI-RS power offset profile SSS properties of the CSI PDU,
-/// as per SCF-222 v4.0 section 3.4.2.3.
-static bool validate_power_control_offset_profile_nr(unsigned          power_control_offset_ss_profile_nr,
-                                                     int               profile_sss,
-                                                     validator_report& report)
+/// Validates the power control offset SS profile NR property of the CSI PDU, as per SCF-222 v4.0 section 3.4.2.3.
+static bool validate_power_control_offset_profile_nr(int power_control_offset, validator_report& report)
 {
-  static constexpr unsigned USE_PROFILE_SSS       = 255;
-  static constexpr unsigned MIN_VALUE_PROFILE_NR  = 0;
-  static constexpr unsigned MAX_VALUE_PROFILE_NR  = 23;
-  static constexpr int      USE_PROFILE_NR        = -32768;
-  static constexpr int      MIN_VALUE_PROFILE_SSS = -32767;
-  static constexpr int      MAX_VALUE_PROFILE_SSS = 32767;
+  static constexpr int MIN_VALUE = -8;
+  static constexpr int MAX_VALUE = 15;
 
-  if (power_control_offset_ss_profile_nr == USE_PROFILE_SSS && MIN_VALUE_PROFILE_SSS <= profile_sss &&
-      profile_sss <= MAX_VALUE_PROFILE_SSS) {
-    return true;
-  }
-
-  if (profile_sss == USE_PROFILE_NR && MIN_VALUE_PROFILE_NR <= power_control_offset_ss_profile_nr &&
-      power_control_offset_ss_profile_nr <= MAX_VALUE_PROFILE_NR) {
-    return true;
-  }
-
-  report.append(power_control_offset_ss_profile_nr, "Power control offset", msg_type, pdu_type);
-  return false;
+  return validate_field(MIN_VALUE, MAX_VALUE, power_control_offset, "Power control offset", msg_type, pdu_type, report);
 }
 
 /// Validates the power control offset SS profile NR property of the CSI PDU, as per SCF-222 v4.0 section 3.4.2.3.
@@ -159,25 +141,7 @@ static bool validate_power_control_offset_ss_profile_nr(unsigned value, validato
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 3;
 
-  if (value == 255) {
-    return true;
-  }
-
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Power control offset SS profile NR", msg_type, pdu_type, report);
-}
-
-/// Validates the power offset profile SSS property of the CSI PDU, as per SCF-222 v4.0 section 3.4.2.3.
-static bool validate_power_offset_profile_sss(int value, validator_report& report)
-{
-  static constexpr int USE_PROFILE_NR = -32768;
-  static constexpr int MIN_VALUE      = -32767;
-  static constexpr int MAX_VALUE      = 32767;
-
-  if (value == USE_PROFILE_NR) {
-    return true;
-  }
-
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Power offset profile SSS", msg_type, pdu_type, report);
 }
 
 bool srsran::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_report& report)
@@ -196,12 +160,10 @@ bool srsran::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_repor
   result &= validate_cdm_type(static_cast<unsigned>(pdu.cdm_type), report);
   result &= validate_freq_density(static_cast<unsigned>(pdu.freq_density), report);
   result &= validate_scrambling_id(pdu.scramb_id, report);
-  result &= validate_power_control_offset_profile_nr(
-      pdu.power_control_offset_profile_nr, pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss, report);
+  result &= validate_power_control_offset_profile_nr(pdu.power_control_offset_profile_nr, report);
   result &= validate_power_control_offset_ss_profile_nr(static_cast<unsigned>(pdu.power_control_offset_ss_profile_nr),
                                                         report);
   // NOTE: CSI-RS PDU index will not be validated.
-  result &= validate_power_offset_profile_sss(pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss, report);
 
   return result;
 }

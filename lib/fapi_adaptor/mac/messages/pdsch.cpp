@@ -111,10 +111,7 @@ static void fill_time_allocation(fapi::dl_pdsch_pdu_builder& builder, const ofdm
 
 static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder)
 {
-  builder.set_tx_power_info_parameters({0}, fapi::nzp_csi_rs_epre_to_ssb::dB0);
-
-  // Default v3 powers.
-  builder.set_maintenance_v3_tx_power_info_parameters({}, {});
+  builder.set_tx_power_info_parameters(0, fapi::nzp_csi_rs_epre_to_ssb::dB0);
 }
 
 static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
