@@ -372,8 +372,7 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_ul_search_spaces(pdcch_slot, preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->is_search_space0() or
-          ss->cfg->get_id() != ue_cc.cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id()) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -517,14 +516,14 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
-  // Second, schedule UEs with SRB data.
-  auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
-  };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
-
-  // Then, schedule new transmissions.
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    // Second, schedule UEs with SRB data.
+    auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+      return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
+    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
+
+    // Then, schedule new transmissions.
     auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(u, res_grid, pdsch_alloc, false, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };
