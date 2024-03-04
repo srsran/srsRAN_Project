@@ -14,6 +14,7 @@
 
 namespace srsran {
 
+/// \brief Atomic reference counter that can be used as a member of objects T of a intrusive_ptr<T>.
 class intrusive_ptr_atomic_ref_counter
 {
 public:
@@ -27,6 +28,10 @@ private:
   std::atomic<unsigned> ref_count{0};
 };
 
+/// \brief Smart pointer type where a reference counter for the managed object is stored in the object itself.
+///
+/// The advantage of this class over a shared_ptr<T> is its simplicity, avoiding two different memory regions for the
+/// reference counter and the managed object.
 template <typename T>
 class intrusive_ptr
 {
