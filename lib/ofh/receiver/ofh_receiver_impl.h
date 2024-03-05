@@ -49,7 +49,7 @@ public:
   receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies);
 
   // See interface for documentation.
-  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
+  ota_symbol_boundary_notifier* get_ota_symbol_boundary_notifier() override;
 
   // See interface for documentation.
   controller& get_controller() override;
