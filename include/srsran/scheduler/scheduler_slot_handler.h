@@ -395,9 +395,9 @@ struct csi_rs_info {
   /// \brief ScramblingID of the CSI-RS as per 3GPP TS 38.214, sec 5.2.2.3.1. Values: {0,...,1023}.
   uint16_t scrambling_id;
   /// Ratio of PDSCH EPRE to NZP CSI-RS EPRE as per 3GPP TS 38.214, clause 5.2.2.3.1. Values: {-8,...,15}.
-  int8_t power_ctrl_offset_profile_nr;
+  int8_t power_ctrl_offset;
   /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. Values: {-3,0,3,6}.
-  int8_t power_ctrl_offset_ss_profile_nr;
+  int8_t power_ctrl_offset_ss;
 };
 
 struct dl_sched_result {
