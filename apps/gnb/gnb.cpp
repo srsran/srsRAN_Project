@@ -321,6 +321,9 @@ int main(int argc, char** argv)
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
+  // Log CPU architecture.
+  cpu_architecture_info::get().print_cpu_info(gnb_logger);
+
   // Check and log included CPU features and check support by current CPU
   if (cpu_supports_included_features()) {
     gnb_logger.debug("Required CPU features: {}", get_cpu_feature_info());

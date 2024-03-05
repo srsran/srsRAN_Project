@@ -32,6 +32,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/unique_thread.h"
 #include "srsran/support/units.h"
 #include <map>
@@ -1147,7 +1148,7 @@ struct ofh_threads_appconfig {
 struct expert_threads_appconfig {
   expert_threads_appconfig()
   {
-    unsigned nof_threads = compute_host_nof_hardware_threads();
+    unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
     if (nof_threads < 4) {
       upper_threads.nof_ul_threads            = 1;
