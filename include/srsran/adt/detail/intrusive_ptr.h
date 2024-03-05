@@ -45,7 +45,7 @@ public:
     }
   }
 
-  intrusive_ptr(const intrusive_ptr& other) : ptr(other.ptr)
+  intrusive_ptr(const intrusive_ptr& other) noexcept : ptr(other.ptr)
   {
     if (ptr != nullptr) {
       intrusive_ptr_inc_ref(ptr);
@@ -61,7 +61,7 @@ public:
     }
   }
 
-  intrusive_ptr& operator=(intrusive_ptr& other)
+  intrusive_ptr& operator=(intrusive_ptr& other) noexcept
   {
     if (ptr != other.ptr) {
       T* temp = ptr;
