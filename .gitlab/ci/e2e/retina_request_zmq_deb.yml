@@ -1,0 +1,68 @@
+#
+# Copyright 2013-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: amarisoft-ue
+  type: ue
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
+  labels: 
+    - ${ZMQ_HOSTLABEL_1}
+  nof_ports: 4
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "8G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  resources:
+    - type: zmq
+    - type: license
+      model: amarisoft-5g
+  shared_files:
+    - local_path: ../../build_trx_srsran/libtrx_srsran.so
+      remote_path: /opt/lteue/trx_srsran.so
+      is_executable: true
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/agent-ubuntu-${UBUNTU_VERSION}:${RETINA_VERSION}
+  labels: 
+    - ${ZMQ_HOSTLABEL_1}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  resources:
+    - type: zmq
+  shared_files:
+    - local_path: ../../srsran-project_99.9-0ubuntu1ppa1~24.04_amd64.deb
+      remote_path: /tmp/retina-libs/srsran-project.deb
+      is_executable: false
+
+- name: open5gs
+  type: 5gc
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "4G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  labels: 
+    - ${ZMQ_HOSTLABEL_1}
