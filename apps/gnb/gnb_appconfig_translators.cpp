@@ -432,7 +432,11 @@ static sib19_info create_sib19_info(const gnb_appconfig& config)
     variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
     variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
     variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vx /= 0.06;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vy /= 0.06;
+    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vz /= 0.06;
   } else if (variant_holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
+    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis -= 6500000;
     variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
     variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
     variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
