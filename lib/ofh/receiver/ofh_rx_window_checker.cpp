@@ -48,7 +48,7 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
                                         get_nof_slots_per_subframe(to_subcarrier_spacing(rhs.get_numerology())) *
                                         rhs.get_nof_symbols();
 
-  int a = static_cast<int>(lhs.system_slot()) - static_cast<int>(rhs.system_slot());
+  int a = static_cast<int>(lhs.to_uint()) - static_cast<int>(rhs.to_uint());
   if (a >= nof_symbols_per_slot_wrap / 2) {
     return a - nof_symbols_per_slot_wrap;
   }
@@ -64,7 +64,7 @@ void rx_window_checker::on_new_symbol(slot_symbol_point symbol_point)
   slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point);
 
   // Update the stored slot symbol point as system value.
-  count_val.store(ota_symbol_point.system_slot(), std::memory_order_release);
+  count_val.store(ota_symbol_point.to_uint(), std::memory_order_release);
 
   // Print the statistics.
   print_statistics();
