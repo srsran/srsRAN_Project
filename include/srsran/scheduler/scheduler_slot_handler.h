@@ -57,7 +57,8 @@ struct pdsch_precoding_info {
 };
 
 struct tx_power_pdcch_information {
-  // TODO: populate power offsets required for PDCCH.
+  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
+  int8_t pwr_ctrl_offset_ss;
 };
 
 struct dmrs_information {
