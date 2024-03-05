@@ -961,6 +961,14 @@ static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched
       ->check(CLI::IsMember({2, 19}));
 }
 
+static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
+{
+  app.add_option("--sfn", epoch_time.sfn, "SFN Part")->capture_default_str()->check(CLI::Range(0, 1023));
+  app.add_option("--subframe_number", epoch_time.subframe_number, "Sub-frame number Part")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 9));
+}
+
 static void configure_cli11_ephemeris_info_ecef(CLI::App& app, ecef_coordinates_t& ephemeris_info)
 {
   app.add_option("--pos_x", ephemeris_info.position_x, "X Position of the satellite")
@@ -997,6 +1005,7 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
 }
 static void configure_cli11_ntn_args(CLI::App&              app,
                                      optional<ntn_config>&  ntn,
+                                     epoch_time_t&          epoch_time,
                                      orbital_coordinates_t& orbital_coordinates,
                                      ecef_coordinates_t&    ecef_coordinates)
 {
@@ -1007,6 +1016,10 @@ static void configure_cli11_ntn_args(CLI::App&              app,
 
   ntn.value().ta_info.emplace();
   app.add_option("--ta_common", ntn->ta_info->ta_common, "TA common offset");
+
+  // epoch time.
+  CLI::App* epoch_time_subcmd = app.add_subcommand("epoch_time", "Epoch time for the NTN assistance information");
+  configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
 
   // ephemeris configuration.
   CLI::App* ephem_subcmd_ecef =
@@ -2298,12 +2311,18 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
 
 static void manage_ntn_optional(CLI::App&             app,
                                 gnb_appconfig&        gnb_cfg,
+                                epoch_time_t&         epoch_time,
                                 orbital_coordinates_t orbital_coordinates,
                                 ecef_coordinates_t    ecef_coordinates)
 {
   auto     ntn_app             = app.get_subcommand_ptr("ntn");
+  unsigned nof_epoch_entries   = ntn_app->get_subcommand("epoch_time")->count_all();
   unsigned nof_ecef_entries    = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
   unsigned nof_orbital_entries = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
+
+  if (nof_epoch_entries) {
+    gnb_cfg.ntn_cfg.value().epoch_time = epoch_time;
+  }
 
   if (nof_ecef_entries) {
     gnb_cfg.ntn_cfg.value().ephemeris_info = ecef_coordinates;
@@ -2413,9 +2432,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
 
   // NTN section.
   CLI::App*                    ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();
+  static epoch_time_t          epoch_time;
   static ecef_coordinates_t    ecef_coordinates;
   static orbital_coordinates_t orbital_coordinates;
-  configure_cli11_ntn_args(*ntn_subcmd, gnb_cfg.ntn_cfg, orbital_coordinates, ecef_coordinates);
+  configure_cli11_ntn_args(*ntn_subcmd, gnb_cfg.ntn_cfg, epoch_time, orbital_coordinates, ecef_coordinates);
 
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
@@ -2549,7 +2569,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg, dummy_cfg);
     manage_hal_optional(app, gnb_cfg);
-    manage_ntn_optional(app, gnb_cfg, orbital_coordinates, ecef_coordinates);
+    manage_ntn_optional(app, gnb_cfg, epoch_time, orbital_coordinates, ecef_coordinates);
     manage_processing_delay(app, gnb_cfg);
     manage_expert_execution_threads(app, gnb_cfg);
   });
