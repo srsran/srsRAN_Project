@@ -168,6 +168,7 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
+        post_command="cu_cp --inactivity_timer=600",
     )
 
 
