@@ -152,7 +152,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                  concurrent_queue_policy::lockfree_mpmc,
                  appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
                 {fmt::format("ue_up_dl_exec#{}", i),
-                 concurrent_queue_policy::lockfree_spsc,
+                 concurrent_queue_policy::lockfree_mpmc,
                  appcfg.cu_up_cfg.gtpu_queue_size}}});
   }
 
