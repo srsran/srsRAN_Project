@@ -1227,6 +1227,15 @@ static bool validate_expert_execution_appconfig(const gnb_appconfig& config)
     return false;
   }
 
+  if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
+    auto& sdr_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+    if ((config.expert_execution_cfg.threads.lower_threads.execution_profile == lower_phy_thread_profile::single) &&
+        (sdr_cfg.expert_cfg.dl_buffer_size_policy != "auto")) {
+      fmt::print("DL buffer size policy must be set to auto when single thread lower PHY profile is used.\n");
+      return false;
+    }
+  }
+
   // Configure more cells for expert execution than the number of cells is an error.
   if (config.expert_execution_cfg.cell_affinities.size() > config.cells_cfg.size()) {
     fmt::print("Using more cells for expert execution '{}' than the number of defined cells '{}'\n",

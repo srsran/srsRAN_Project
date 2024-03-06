@@ -1665,6 +1665,14 @@ static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& t
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
 {
+  auto buffer_size_policy_check = [](const std::string& value) -> std::string {
+    if (value == "auto" || value == "single-packet" || value == "half-slot" || value == "slot" ||
+        value == "optimal-slot") {
+      return {};
+    }
+    return "Invalid DL buffer size policy. Accepted values [auto,single-packet,half-slot,slot,optimal-slot]";
+  };
+
   app.add_option("--low_phy_dl_throttling",
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
@@ -1678,6 +1686,12 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
                  "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
                  "mitigates transient effects.")
       ->capture_default_str();
+  app.add_option(
+         "--dl_buffer_size_policy",
+         config.dl_buffer_size_policy,
+         "Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.")
+      ->capture_default_str()
+      ->check(buffer_size_policy_check);
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)

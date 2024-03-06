@@ -922,6 +922,17 @@ struct ru_sdr_expert_appconfig {
   /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
   /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
+  /// \brief Lower PHY downlink baseband buffer size policy.
+  ///
+  /// Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.
+  /// Available options:
+  ///   - auto: the size policy is automatically selected based on the SDR front-end.
+  ///   - single-packet: the buffer size matches the optimal buffer size indicated by the SDR front-end.
+  ///   - half-slot:     the buffer size matches the number of samples per half-slot.
+  ///   - slot:          the buffer size matches the number of samples per slot.
+  ///   - optimal-slot:  the buffer size is equal to the greatest multiple of the optimal buffer size indicated by the
+  ///                    SDR front-end that results in a buffer size smaller than the number of samples per slot.
+  std::string dl_buffer_size_policy = "auto";
 };
 
 /// gNB app SDR Radio Unit configuration.
