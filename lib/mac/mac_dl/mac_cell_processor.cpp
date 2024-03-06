@@ -33,6 +33,12 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   slot_exec(slot_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
+  dl_harq_buffers(band_helper::get_n_rbs_from_bw(
+                      MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz),
+                      cell_cfg.scs_common,
+                      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn))),
+                  cell_cfg.dl_carrier.nof_ant,
+                  ctrl_exec_),
   // The PDU pool has to be large enough to fit the maximum number of RARs and Paging PDUs per slot for all possible K0
   // values.
   pdu_pool(MAX_DL_PDU_LENGTH,
@@ -41,7 +47,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payloads),
   rar_assembler(pdu_pool),
-  dlsch_assembler(ue_mng_),
+  dlsch_assembler(ue_mng_, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
   ue_mng(ue_mng_),
@@ -73,7 +79,7 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 
 void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event event)
 {
-  // Change execution context to slot indication executor.
+  // Forward error indication to the scheduler to be processed asynchronously.
   sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event);
 }
 

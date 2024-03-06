@@ -9,6 +9,7 @@
  */
 
 #include "dl_sch_pdu_assembler.h"
+#include "cell_dl_harq_buffer_pool.h"
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/error_handling.h"
@@ -250,8 +251,8 @@ private:
 
 // /////////////////////////
 
-dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_) :
-  ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("MAC"))
+dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers) :
+  ue_mng(ue_mng_), harq_buffers(cell_dl_harq_buffers), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 
@@ -264,17 +265,21 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
                                                              const dl_msg_tb_info& tb_info,
                                                              unsigned              tb_size_bytes)
 {
-  span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
+  du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
+  if (ue_idx == INVALID_DU_UE_INDEX) {
+    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
+    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
+  }
+
+  span<uint8_t> buffer = harq_buffers.dl_harq_buffer(ue_idx, h_id);
   if (buffer.size() < tb_size_bytes) {
-    logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
-                 ue_mng.get_ue_index(rnti),
-                 rnti,
-                 h_id);
+    logger.error(
+        "DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", ue_idx, rnti, h_id);
     return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
   }
   dl_sch_pdu ue_pdu(buffer.first(tb_size_bytes));
 
-  pdu_log_builder pdu_logger{ue_mng.get_ue_index(rnti), rnti, units::bytes{tb_size_bytes}, fmtbuf, logger};
+  pdu_log_builder pdu_logger{ue_idx, rnti, units::bytes{tb_size_bytes}, fmtbuf, logger};
 
   // Encode added subPDUs.
   for (const dl_msg_lc_info& sched_lch : tb_info.lc_chs_to_sched) {
@@ -291,7 +296,7 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
     ue_pdu.add_padding(tb_size_bytes - current_size);
   } else if (current_size > tb_size_bytes) {
     logger.error("ERROR: Allocated subPDUs exceed TB size ({} > {})", current_size, tb_size_bytes);
-    return {};
+    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
   }
 
   pdu_logger.log();
@@ -406,7 +411,12 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
 span<const uint8_t>
 dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb_idx, unsigned tbs_bytes)
 {
-  span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
+  du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
+  if (ue_idx == INVALID_DU_UE_INDEX) {
+    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
+    return span<const uint8_t>(zero_buffer).first(tbs_bytes);
+  }
+  span<const uint8_t> buffer = harq_buffers.dl_harq_buffer(ue_idx, h_id);
   if (buffer.size() < tbs_bytes) {
     logger.error("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
                  ue_mng.get_ue_index(rnti),
