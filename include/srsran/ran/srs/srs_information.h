@@ -15,9 +15,10 @@ namespace srsran {
 
 /// \brief Collects Sounding Reference Signal information.
 ///
-/// Calculates derived parameters that are used for the SRS sequence generation and mapping in TS38.211 Sections
+/// Contains the derived parameters that are used for the SRS sequence generation and mapping in TS38.211 Sections
 /// 6.4.1.4.2 and 6.4.1.4.3.
 ///
+/// The parameters describe the sequence and its allocation for a certain transmission port and OFDM symbol.
 struct srs_information {
   /// Sequence length, parameter \f$M_{sc,b}^{SRS}\f$.
   unsigned sequence_length;
@@ -37,8 +38,8 @@ struct srs_information {
 /// \param resource       SRS resource configuration.
 /// \param i_antenna_port Transmit 0-based antenna port index.
 /// \param i_symbol       OFDM symbol index within the slot.
-/// \return SRS information if the parameters are valid.
-/// \remark An assertion is triggered if any resource parameter is invalid.
+/// \return The SRS information.
+/// \remark An assertion is triggered if any resource parameter is invalid or not supported.
 srs_information
 get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port, unsigned i_symbol);
 

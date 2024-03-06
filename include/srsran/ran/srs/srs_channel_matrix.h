@@ -17,6 +17,7 @@
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/srsran_assert.h"
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 
@@ -127,7 +128,8 @@ public:
   /// \brief Near equal comparison method.
   /// \param[in] other     Channel matrix to compare against.
   /// \param[in] tolerance Maximum absolute error tolerated for considering two propagation channel coefficients equal.
-  /// \return \c true if both channel matrices are exactly the same, \c false otherwise.
+  /// \return \c true if the absolute error between both channel matrices is lower than \c tolerance, \c false
+  ///         otherwise.
   bool is_near_equal_to(const srs_channel_matrix& other, float tolerance) const
   {
     unsigned nof_rx_ports = get_nof_rx_ports();
