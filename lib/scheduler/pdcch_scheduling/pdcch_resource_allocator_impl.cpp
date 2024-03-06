@@ -178,6 +178,8 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
           : "0_1";
   // Populate power offsets.
   if (not cell_cfg.nzp_csi_rs_list.empty() and cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
     pdcch.ctx.tx_pwr.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
   }
 
@@ -225,6 +227,8 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
           : "1_1";
   // Populate power offsets.
   if (not cell_cfg.nzp_csi_rs_list.empty() and cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
     pdcch.ctx.tx_pwr.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
   }
 
