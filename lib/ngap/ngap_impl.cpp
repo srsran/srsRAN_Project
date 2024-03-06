@@ -321,7 +321,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   ue_ctxt.logger.log_info("Received InitialContextSetupRequest");
 
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
-  ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
+  if (ue_ctxt.ue_ids.amf_ue_id != uint_to_amf_ue_id(request->amf_ue_ngap_id)) {
+    ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
+  }
 
   // Convert to common type
   ngap_init_context_setup_request init_ctxt_setup_req;
@@ -569,7 +571,10 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     }
 
     // Update AMF UE ID
-    ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
+    if (ue_ctxt_list[ran_ue_id].ue_ids.amf_ue_id == amf_ue_id_t::invalid or
+        ue_ctxt_list[ran_ue_id].ue_ids.amf_ue_id != amf_ue_id) {
+      ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
+    }
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_id];

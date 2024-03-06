@@ -125,9 +125,23 @@ public:
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
 
     auto& ue = ues.at(ran_ue_id);
-    ue.logger.log_debug("Adding amf_ue_id={}", amf_ue_id);
-    ue.ue_ids.amf_ue_id = amf_ue_id;
-    amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
+
+    if (ue.ue_ids.amf_ue_id == amf_ue_id) {
+      // If the AMF-UE-ID is already set, we don't want to change it.
+      return;
+    } else if (ue.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
+      // If it was not set before, we add it
+      ue.logger.log_debug("Adding amf_ue_id={}", amf_ue_id);
+      ue.ue_ids.amf_ue_id = amf_ue_id;
+      amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
+    } else if (ue.ue_ids.amf_ue_id != amf_ue_id) {
+      // If it was set before, we update it
+      amf_ue_id_t old_amf_ue_id = ue.ue_ids.amf_ue_id;
+      ue.logger.log_info("Updating AMF-UE-ID. New amf_ue_id={}", amf_ue_id);
+      ue.ue_ids.amf_ue_id = amf_ue_id;
+      amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
+      amf_ue_id_to_ran_ue_id.erase(old_amf_ue_id);
+    }
 
     ue.logger.set_prefix({ue.ue_ids.ue_index, ran_ue_id, amf_ue_id});
   }
