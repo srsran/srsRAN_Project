@@ -53,25 +53,9 @@ class rx_window_checker : public ota_symbol_boundary_notifier
     uint64_t nof_late_messages() const { return late_counter.load(std::memory_order_relaxed); }
   };
 
-  /// Reception window timing parameters.
-  struct rx_timing_parameters {
-    /// Offset from the current OTA symbol to the first symbol at which UL User-Plane message can be received within its
-    /// reception window. Must be calculated based on \c Ta4_min parameter.
-    int sym_start;
-    /// Offset from the current OTA symbol to the last symbol at which UL User-Plane message can be received within its
-    /// reception window. Must be calculated based on \c Ta4_max parameter.
-    int sym_end;
-
-    rx_timing_parameters(const du_rx_window_timing_parameters&    params,
-                         std::chrono::duration<double, std::nano> symbol_duration) :
-      sym_start(std::ceil(params.Ta4_min / symbol_duration)), sym_end(std::floor(params.Ta4_max / symbol_duration))
-    {
-    }
-  };
-
 public:
   rx_window_checker(srslog::basic_logger&                    logger_,
-                    const du_rx_window_timing_parameters&    params,
+                    const rx_window_timing_parameters&       params,
                     std::chrono::duration<double, std::nano> symbol_duration);
 
   // See interface for documentation.
@@ -90,11 +74,11 @@ private:
   void print_statistics();
 
 private:
-  const rx_timing_parameters   timing_parameters;
-  const unsigned               nof_symbols_in_one_second;
-  unsigned                     nof_symbols;
-  rx_window_checker_statistics statistics;
-  std::atomic<uint32_t>        count_val;
+  const rx_window_timing_parameters timing_parameters;
+  const unsigned                    nof_symbols_in_one_second;
+  unsigned                          nof_symbols;
+  rx_window_checker_statistics      statistics;
+  std::atomic<uint32_t>             count_val;
 };
 
 } // namespace ofh

@@ -16,9 +16,9 @@ using namespace ofh;
 static constexpr unsigned OFH_MAX_NOF_SFN = 256U;
 
 rx_window_checker::rx_window_checker(srslog::basic_logger&                    logger_,
-                                     const du_rx_window_timing_parameters&    params,
+                                     const rx_window_timing_parameters&       params,
                                      std::chrono::duration<double, std::nano> symbol_duration) :
-  timing_parameters(params, symbol_duration),
+  timing_parameters(params),
   nof_symbols_in_one_second(std::ceil(std::chrono::seconds(1) / symbol_duration)),
   nof_symbols(0),
   statistics(logger_)
@@ -80,14 +80,14 @@ bool rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
   int diff = calculate_slot_symbol_point_distance(ota_point, symbol_point);
 
   // Late detected.
-  if (diff > timing_parameters.sym_end) {
+  if (diff > static_cast<int>(timing_parameters.sym_end)) {
     statistics.increment_late_counter();
 
     return false;
   }
 
   // Early detected.
-  if (diff < timing_parameters.sym_start) {
+  if (diff < static_cast<int>(timing_parameters.sym_start)) {
     statistics.increment_early_counter();
 
     return false;

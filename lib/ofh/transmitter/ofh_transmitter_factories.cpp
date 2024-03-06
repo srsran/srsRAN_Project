@@ -115,7 +115,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
     dl_config.cp                 = tx_config.cp;
     dl_config.scs                = tx_config.scs;
     dl_config.dl_processing_time = tx_config.dl_processing_time;
-    dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
+    dl_config.tx_timing_params   = tx_config.tx_timing_params;
     dl_config.sector             = tx_config.sector;
 
     downlink_handler_broadcast_impl_dependencies dl_dependencies;
@@ -133,7 +133,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
   dl_config.cp                 = tx_config.cp;
   dl_config.scs                = tx_config.scs;
   dl_config.dl_processing_time = tx_config.dl_processing_time;
-  dl_config.tx_timing_params   = tx_config.symbol_handler_cfg.tx_timing_params;
+  dl_config.tx_timing_params   = tx_config.tx_timing_params;
   dl_config.sector             = tx_config.sector;
 
   downlink_handler_impl_dependencies dl_dependencies;

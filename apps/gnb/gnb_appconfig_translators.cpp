@@ -1439,6 +1439,40 @@ static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
   return true;
 }
 
+/// Converts reception window timing parameters from microseconds to number of symbols given the symbol duration.
+static ofh::rx_window_timing_parameters
+rx_timing_window_params_us_to_symbols(std::chrono::microseconds                Ta4_max,
+                                      std::chrono::microseconds                Ta4_min,
+                                      std::chrono::duration<double, std::nano> symbol_duration)
+{
+  ofh::rx_window_timing_parameters rx_window_timing_params;
+  rx_window_timing_params.sym_start = std::ceil(Ta4_min / symbol_duration);
+  rx_window_timing_params.sym_end   = std::ceil(Ta4_max / symbol_duration);
+
+  return rx_window_timing_params;
+}
+
+/// Converts transmission window timing parameters from microseconds to number of symbols given the symbol duration.
+static ofh::tx_window_timing_parameters
+tx_timing_window_params_us_to_symbols(std::chrono::microseconds                T1a_max_cp_dl,
+                                      std::chrono::microseconds                T1a_min_cp_dl,
+                                      std::chrono::microseconds                T1a_max_cp_ul,
+                                      std::chrono::microseconds                T1a_min_cp_ul,
+                                      std::chrono::microseconds                T1a_max_up,
+                                      std::chrono::microseconds                T1a_min_up,
+                                      std::chrono::duration<double, std::nano> symbol_duration)
+{
+  ofh::tx_window_timing_parameters tx_window_timing_params;
+  tx_window_timing_params.sym_cp_dl_start = std::floor(T1a_max_cp_dl / symbol_duration);
+  tx_window_timing_params.sym_cp_dl_end   = std::ceil(T1a_min_cp_dl / symbol_duration);
+  tx_window_timing_params.sym_cp_ul_start = std::floor(T1a_max_cp_ul / symbol_duration);
+  tx_window_timing_params.sym_cp_ul_end   = std::ceil(T1a_min_cp_ul / symbol_duration);
+  tx_window_timing_params.sym_up_dl_start = std::floor(T1a_max_up / symbol_duration);
+  tx_window_timing_params.sym_up_dl_end   = std::ceil(T1a_min_up / symbol_duration);
+
+  return tx_window_timing_params;
+}
+
 static void
 generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& config, span<const du_cell_config> du_cells)
 {
@@ -1472,6 +1506,9 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
       srsran_terminate("Invalid Radio Unit MAC address");
     }
 
+    std::chrono::duration<double, std::nano> symbol_duration(
+        (1e6 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(cell.common_scs))));
+
     sector_cfg.cp                                  = cyclic_prefix::NORMAL;
     sector_cfg.scs                                 = cell.common_scs;
     sector_cfg.bw                                  = cell.channel_bw_mhz;
@@ -1479,26 +1516,27 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
     sector_cfg.ru_operating_bw                     = cell_cfg.cell.ru_operating_bw;
     sector_cfg.is_uplink_static_comp_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
     sector_cfg.is_downlink_static_comp_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;
-    sector_cfg.tx_window_timing_params             = {std::chrono::microseconds(cell_cfg.cell.T1a_max_cp_dl),
-                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_cp_dl),
-                                                      std::chrono::microseconds(cell_cfg.cell.T1a_max_cp_ul),
-                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_cp_ul),
-                                                      std::chrono::microseconds(cell_cfg.cell.T1a_max_up),
-                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_up)};
-    sector_cfg.rx_window_timing_params             = {std::chrono::microseconds(cell_cfg.cell.Ta4_max),
-                                                      std::chrono::microseconds(cell_cfg.cell.Ta4_min)};
-    sector_cfg.is_prach_control_plane_enabled      = cell_cfg.cell.is_prach_control_plane_enabled;
-    sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
-    sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
-    sector_cfg.ignore_ecpri_seq_id_field           = cell_cfg.cell.ignore_ecpri_seq_id_field;
-    sector_cfg.warn_unreceived_ru_frames           = cell_cfg.cell.warn_unreceived_ru_frames;
-    sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
-                                                      cell_cfg.cell.compression_bitwidth_ul};
-    sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
-                                                      cell_cfg.cell.compression_bitwidth_dl};
-    sector_cfg.prach_compression_params            = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
-                                                      cell_cfg.cell.compression_bitwidth_prach};
-    sector_cfg.iq_scaling                          = cell_cfg.cell.iq_scaling;
+    sector_cfg.tx_window_timing_params             = tx_timing_window_params_us_to_symbols(cell_cfg.cell.T1a_max_cp_dl,
+                                                                               cell_cfg.cell.T1a_min_cp_dl,
+                                                                               cell_cfg.cell.T1a_max_cp_ul,
+                                                                               cell_cfg.cell.T1a_min_cp_ul,
+                                                                               cell_cfg.cell.T1a_max_up,
+                                                                               cell_cfg.cell.T1a_min_up,
+                                                                               symbol_duration);
+    sector_cfg.rx_window_timing_params =
+        rx_timing_window_params_us_to_symbols(cell_cfg.cell.Ta4_max, cell_cfg.cell.Ta4_min, symbol_duration);
+    sector_cfg.is_prach_control_plane_enabled  = cell_cfg.cell.is_prach_control_plane_enabled;
+    sector_cfg.is_downlink_broadcast_enabled   = cell_cfg.cell.is_downlink_broadcast_enabled;
+    sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
+    sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
+    sector_cfg.warn_unreceived_ru_frames       = cell_cfg.cell.warn_unreceived_ru_frames;
+    sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
+                                                  cell_cfg.cell.compression_bitwidth_ul};
+    sector_cfg.dl_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
+                                                  cell_cfg.cell.compression_bitwidth_dl};
+    sector_cfg.prach_compression_params        = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
+                                                  cell_cfg.cell.compression_bitwidth_prach};
+    sector_cfg.iq_scaling                      = cell_cfg.cell.iq_scaling;
 
     sector_cfg.tci = cell_cfg.vlan_tag;
     sector_cfg.prach_eaxc.assign(cell_cfg.ru_prach_port_id.begin(), cell_cfg.ru_prach_port_id.end());

@@ -970,21 +970,21 @@ struct ru_ofh_base_cell_appconfig {
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
   optional<bs_channel_bandwidth_fr1> ru_operating_bw;
   /// T1a maximum parameter for downlink Control-Plane in microseconds.
-  unsigned T1a_max_cp_dl = 500U;
+  std::chrono::microseconds T1a_max_cp_dl{500};
   /// T1a minimum parameter for downlink Control-Plane in microseconds.
-  unsigned T1a_min_cp_dl = 258U;
+  std::chrono::microseconds T1a_min_cp_dl{258};
   /// T1a maximum parameter for uplink Control-Plane in microseconds.
-  unsigned T1a_max_cp_ul = 500U;
+  std::chrono::microseconds T1a_max_cp_ul{500};
   /// T1a minimum parameter for uplink Control-Plane in microseconds.
-  unsigned T1a_min_cp_ul = 285U;
+  std::chrono::microseconds T1a_min_cp_ul{285};
   /// T1a maximum parameter for downlink User-Plane in microseconds.
-  unsigned T1a_max_up = 300U;
+  std::chrono::microseconds T1a_max_up{300};
   /// T1a minimum parameter for downlink User-Plane in microseconds.
-  unsigned T1a_min_up = 85U;
+  std::chrono::microseconds T1a_min_up{85};
   /// Ta4 maximum parameter for uplink User-Plane in microseconds.
-  unsigned Ta4_max = 300U;
+  std::chrono::microseconds Ta4_max{300};
   /// Ta4 minimum parameter for uplink User-Plane in microseconds.
-  unsigned Ta4_min = 85U;
+  std::chrono::microseconds Ta4_min{85};
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = true;
   /// \brief Downlink broadcast flag.
