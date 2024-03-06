@@ -168,6 +168,11 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
   // Retrieve the existing PUCCH grants.
   const existing_pucch_grants existing_grants = get_existing_pucch_grants(pucchs, crnti, pucch_slot_alloc.slot);
 
+  // [Implementation-defined] Multiplexing of common and dedicated PUCCH grants are not yet supported.
+  if (existing_grants.format1_harq_common_grant != nullptr) {
+    return nullopt;
+  }
+
   const unsigned harq_ack_bits_increment = 1;
 
   // Case 1) If there is a PUCCH format 2 grant, update it.
