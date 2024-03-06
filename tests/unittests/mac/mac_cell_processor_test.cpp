@@ -33,7 +33,6 @@ protected:
              task_worker,
              task_worker,
              task_worker,
-             task_worker,
              pcap)
   {
   }
