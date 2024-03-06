@@ -122,28 +122,18 @@ void ue_srb0_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_i
 
 static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_point sl_tx)
 {
+  slot_point next_candidate_slot = sl_tx + 1U;
+
+  // In FDD, we advance by 1 slot.
   if (not cell_cfg.is_tdd()) {
-    // In FDD, we advance by 1 slot.
-    return sl_tx + 1U;
-  }
-  const auto&    tdd_cfg              = cell_cfg.tdd_cfg_common.value();
-  const unsigned tdd_period_nof_slots = nof_slots_per_tdd_period(tdd_cfg);
-
-  // Advance the slot by 1 and then search the next slot (including the just incremented next_candidate_slot) what is
-  // the next available DL slot.
-  slot_point         next_candidate_slot    = sl_tx + 1U;
-  optional<unsigned> offset_to_next_dl_slot = find_next_tdd_full_dl_slot(
-      cell_cfg.tdd_cfg_common.value(), next_candidate_slot.slot_index() % tdd_period_nof_slots);
-  if (offset_to_next_dl_slot.has_value()) {
-    return next_candidate_slot + offset_to_next_dl_slot.value();
+    return next_candidate_slot;
   }
 
-  // If offset_to_next_dl_slot has no value, it means that there no more DL slots within the period; advance to the next
-  // TDD period.
-  const unsigned offset_to_first_slot_next_tdd_period =
-      tdd_period_nof_slots - next_candidate_slot.slot_index() % tdd_period_nof_slots;
-
-  return next_candidate_slot + offset_to_first_slot_next_tdd_period;
+  // In TDD, advance the slot until it's a DL slot.
+  while (not cell_cfg.is_dl_enabled(next_candidate_slot)) {
+    next_candidate_slot = next_candidate_slot + 1U;
+  }
+  return next_candidate_slot;
 }
 
 bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
@@ -226,10 +216,13 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
           is_srb0 ? schedule_srb0(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, h_dl_retx)
                   : schedule_srb1(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, h_dl_retx);
 
-      if (not is_retx and candidate_h_dl != nullptr) {
-        store_harq_tx(u.ue_index, candidate_h_dl, 0);
+      const bool alloc_successful = candidate_h_dl != nullptr;
+      if (alloc_successful) {
+        if (not is_retx) {
+          store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
+        }
+        return true;
       }
-      return candidate_h_dl != nullptr;
 
       ++sched_attempts_cnt;
     }
@@ -269,10 +262,9 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
   }
 
   cell_slot_resource_allocator& pdsch_alloc = res_alloc[slot_offset + pdsch_td_cfg.k0];
-  prb_bitmap                    used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(
-      initial_active_dl_bwp.scs,
-      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id()),
-      pdsch_cfg.symbols);
+  auto cset0_crbs_lim = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id());
+  prb_bitmap used_crbs =
+      pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp.scs, cset0_crbs_lim, pdsch_cfg.symbols);
 
   sch_prbs_tbs  prbs_tbs{};
   sch_mcs_index mcs_idx = 0;
@@ -285,8 +277,8 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
     // Fetch the pending bytes in the SRB0 buffer + pending MAC Contention Resolution CEs bytes.
     const unsigned pending_bytes = u.pending_dl_srb0_or_srb1_newtx_bytes(true);
 
-    const unsigned starting_crb_idx = 0;
-    crb_interval   unused_crbs = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
+    crb_interval unused_crbs =
+        rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim.start(), cset0_crbs_lim.stop());
 
     // Try to find least MCS to fit SRB0 message.
     while (mcs_idx <= expert_cfg.max_msg4_mcs) {

@@ -138,7 +138,7 @@ private:
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.
   const unsigned            max_dl_slots_ahead_sched  = 10U;
-  const unsigned            max_sched_attempts_per_ue = 7U;
+  const unsigned            max_sched_attempts_per_ue = 10U;
   pdcch_resource_allocator& pdcch_sch;
   pucch_allocator&          pucch_alloc;
   ue_repository&            ues;

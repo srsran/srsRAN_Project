@@ -178,7 +178,7 @@ protected:
 
   void run_slot()
   {
-    current_slot++;
+    ++current_slot;
 
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
@@ -186,6 +186,7 @@ protected:
 
     bench->res_grid.slot_indication(current_slot);
     bench->pdcch_sch.slot_indication(current_slot);
+    bench->pucch_alloc.slot_indication(current_slot);
 
     bench->srb0_sched.run_slot(bench->res_grid);
 
@@ -281,7 +282,9 @@ protected:
     return bench->ue_db[ue_idx].pending_dl_srb0_or_srb1_newtx_bytes(true);
   }
 
-  const ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
+  const ue& get_ue(du_ue_index_t ue_idx) const { return bench->ue_db[ue_idx]; }
+
+  ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
 };
 
 // Parameters to be passed to test.
@@ -505,6 +508,148 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
+                         testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
+                                         srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
+
+class srb0_scheduler_head_scheduling : public base_srb0_scheduler_tester,
+                                       public ::testing::TestWithParam<srb0_test_params>
+{
+protected:
+  const unsigned MAX_NOF_SLOTS_GRID_IS_BUSY = 4;
+  const unsigned MAX_UES                    = 4;
+  const unsigned MAX_TEST_RUN_SLOTS         = 2100;
+  const unsigned MAC_SRB0_SDU_SIZE          = 128;
+
+  srb0_scheduler_head_scheduling() : base_srb0_scheduler_tester(GetParam().duplx_mode)
+  {
+    const unsigned      k0                 = 0;
+    const sch_mcs_index max_msg4_mcs_index = 8;
+    auto                cell_cfg           = create_custom_cell_config_request(k0);
+    setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
+  }
+
+  // Helper that generates the slot for the SRB0 buffer update.
+  unsigned generate_srb0_traffic_slot() const { return test_rgen::uniform_int(20U, 30U); }
+
+  // Helper that generates the number of slot during the scheduler res grid is fully used.
+  unsigned generate_nof_slot_grid_occupancy() const
+  {
+    return test_rgen::uniform_int(1U, MAX_NOF_SLOTS_GRID_IS_BUSY + 1);
+  }
+
+  // Returns the next DL slot starting from the input slot.
+  slot_point get_next_dl_slot(slot_point sl) const
+  {
+    while (not bench->cell_cfg.is_dl_enabled(sl)) {
+      sl++;
+    }
+    return sl;
+  }
+
+  // Returns the next candidate slot at which the SRB0 scheduler is expected to allocate a grant.
+  slot_point get_next_candidate_alloc_slot(slot_point sched_slot, unsigned nof_slot_grid_occupancy) const
+  {
+    if (nof_slot_grid_occupancy == 0) {
+      return sched_slot;
+    }
+
+    unsigned occupy_grid_slot_cnt = 0;
+
+    // The allocation must be on a DL slot.
+    do {
+      sched_slot++;
+      if (bench->cell_cfg.is_dl_enabled(sched_slot)) {
+        occupy_grid_slot_cnt++;
+      }
+    } while (occupy_grid_slot_cnt != nof_slot_grid_occupancy);
+
+    auto k1_falls_on_ul = [&cfg = bench->cell_cfg](slot_point pdsch_slot) {
+      static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
+      for (auto k1 : dci_1_0_k1_values) {
+        if (cfg.is_ul_enabled(pdsch_slot + k1)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Make sure the final slot for the SRB0 PDSCH is such that the corresponding PUCCH is in falls on a UL slot.
+    while (not k1_falls_on_ul(sched_slot) or (not bench->cell_cfg.is_dl_enabled(sched_slot))) {
+      sched_slot++;
+    }
+
+    return sched_slot;
+  }
+};
+
+TEST_P(srb0_scheduler_head_scheduling, test_allocation_in_appropriate_slots_in_tdd)
+{
+  // In this test, we check if the SRB0 allocation can schedule ahead with respect to the reference slot, which is given
+  // by the slot_indication in the scheduler.
+  // Every time there is we generate SRB0 buffer bytes, we set the resource grid as occupied for a given number of
+  // slots. This forces the scheduler to try the allocation in next slot(s).
+
+  unsigned du_idx = 0;
+  add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
+
+  auto& test_ue = get_ue(to_du_ue_index(du_idx));
+
+  // The slots at which we generate traffic and the number of slots the grid is occupied are generated randomly.
+  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
+  unsigned   nof_slots_grid_is_busy = generate_nof_slot_grid_occupancy();
+  slot_point candidate_srb_slot     = get_next_dl_slot(slot_update_srb_traffic);
+  slot_point check_alloc_slot       = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+
+  for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+
+    if (current_slot != check_alloc_slot) {
+      ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+      ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+    } else {
+      ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
+      ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
+
+      check_alloc_slot = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+    }
+
+    // Allocate buffer and occupy the grid to test the scheduler in advance scheduling.
+    if (current_slot == slot_update_srb_traffic) {
+      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), MAC_SRB0_SDU_SIZE);
+
+      auto fill_bw_grant = grant_info{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                                      ofdm_symbol_range{0, 14},
+                                      bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs};
+
+      slot_point occupy_grid_slot     = slot_update_srb_traffic;
+      unsigned   occupy_grid_slot_cnt = 0;
+      while (occupy_grid_slot_cnt < nof_slots_grid_is_busy) {
+        // Only set the grid busy in the DL slots.
+        if (bench->cell_cfg.is_dl_enabled(occupy_grid_slot)) {
+          bench->res_grid[occupy_grid_slot].dl_res_grid.fill(fill_bw_grant);
+          occupy_grid_slot_cnt++;
+        }
+        occupy_grid_slot++;
+      }
+
+      slot_update_srb_traffic = current_slot + generate_srb0_traffic_slot();
+      nof_slots_grid_is_busy  = generate_nof_slot_grid_occupancy();
+      candidate_srb_slot      = get_next_dl_slot(slot_update_srb_traffic);
+    }
+
+    // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
+    const unsigned   bit_index_1_harq_only = 0U;
+    dl_harq_process* dl_harq =
+        test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(current_slot, bit_index_1_harq_only);
+    if (dl_harq != nullptr) {
+      static constexpr unsigned tb_idx = 0U;
+      dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::ack, {});
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
+                         srb0_scheduler_head_scheduling,
                          testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
                                          srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
 
