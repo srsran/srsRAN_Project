@@ -277,7 +277,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
-    ue_ctxt_list.add_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
+    ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
   ue_ctxt.logger.log_info("Received DlNasTransportMessage");
@@ -321,7 +321,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   ue_ctxt.logger.log_info("Received InitialContextSetupRequest");
 
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
-  ue_ctxt_list.add_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
+  ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
 
   // Convert to common type
   ngap_init_context_setup_request init_ctxt_setup_req;
@@ -545,19 +545,31 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.amf_ue_ngap_id());
+
+    if (!ue_ctxt_list.contains(amf_ue_id)) {
+      // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
+      // indication
+      logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
+                     ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
+                     amf_ue_id);
+      send_error_indication(ngap_notifier, logger, {}, amf_ue_id, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+      return;
+    }
   } else if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
-  }
 
-  if (!ue_ctxt_list.contains(amf_ue_id)) {
-    // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
-    // indication
-    logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
-                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
-                   amf_ue_id);
-    send_error_indication(ngap_notifier, logger, {}, amf_ue_id, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
-    return;
+    if (!ue_ctxt_list.contains(ran_ue_id)) {
+      // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
+      // indication
+      logger.warning(
+          "ran_ue_id={} amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist", ran_ue_id, amf_ue_id);
+      send_error_indication(ngap_notifier, logger, {}, amf_ue_id, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+      return;
+    }
+
+    // Update AMF UE ID
+    ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_id];
@@ -576,7 +588,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   // Add AMF UE ID to UE, if its not set
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
-    ue_ctxt_list.add_amf_ue_id(ran_ue_id, amf_ue_id);
+    ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
   }
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);

@@ -118,7 +118,7 @@ public:
     return ues.at(ran_ue_id);
   }
 
-  void add_amf_ue_id(ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
+  void update_amf_ue_id(ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
   {
     srsran_assert(amf_ue_id != amf_ue_id_t::invalid, "Invalid amf_ue_id={}", amf_ue_id);
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
