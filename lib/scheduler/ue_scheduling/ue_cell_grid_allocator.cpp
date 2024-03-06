@@ -569,6 +569,17 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     }
   }
 
+  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common PUCCH
+  // resources.
+  if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
+    logger.debug("ue={} rnti={} Allocation of PUSCH in slot={} skipped. Cause: UE has PUCCH grant using common PUCCH "
+                 "resources scheduled",
+                 u.ue_index,
+                 u.crnti,
+                 pusch_alloc.slot);
+    return alloc_outcome::skip_ue;
+  }
+
   // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
   // removed when multiplexing the UCI on PUSCH.
   if (pusch_alloc.result.ul.puschs.size() >=
