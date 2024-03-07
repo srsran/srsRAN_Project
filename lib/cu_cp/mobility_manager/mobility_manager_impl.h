@@ -14,6 +14,7 @@
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
+#include "srsran/cu_cp/mobility_manager_measurement_handler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -32,12 +33,14 @@ public:
 };
 
 /// Basic cell manager implementation
-class mobility_manager final : public mobility_manager_measurement_handler
+class mobility_manager final : public mobility_manager_measurement_handler,
+                               public cu_cp_mobility_manager_ho_trigger_handler
 {
 public:
   mobility_manager(const mobility_manager_cfg& cfg, cu_cp_f1c_handler& du_db_, ue_manager& ue_mng_);
   ~mobility_manager() = default;
 
+  void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override;
   void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
                                           gnb_id_t     neighbor_gnb_id,
                                           nr_cell_id_t neighbor_nci,

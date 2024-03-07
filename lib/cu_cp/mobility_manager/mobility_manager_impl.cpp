@@ -20,6 +20,16 @@ mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_, cu_cp_f1c_h
 {
 }
 
+void mobility_manager::trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci)
+{
+  ue_index_t ue_index = ue_mng.get_ue_index(source_pci, rnti);
+  if (ue_index == ue_index_t::invalid) {
+    logger.warning("Could not trigger handover, UE is invalid. rnti={} pci={}", rnti, source_pci);
+    return;
+  }
+  handle_neighbor_better_than_spcell(ue_index, gnb_id_t{}, nr_cell_id_t{}, target_pci); // TODO: define gNB-ID and NCI
+}
+
 void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
                                                           gnb_id_t     neighbor_gnb_id,
                                                           nr_cell_id_t neighbor_nci,

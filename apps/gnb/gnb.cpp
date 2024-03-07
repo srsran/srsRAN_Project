@@ -322,10 +322,6 @@ int main(int argc, char** argv)
   rlc_json_channel.set_enabled(gnb_cfg.metrics_cfg.rlc.json_enabled);
   rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 
-  // Create console helper object for commands and metrics printing.
-  console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
-  console.on_app_starting();
-
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
 
@@ -357,6 +353,13 @@ int main(int argc, char** argv)
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = create_cu_cp(cu_cp_cfg);
+
+  // Create console helper object for commands and metrics printing.
+  console_helper console(*epoll_broker,
+                         json_channel,
+                         cu_cp_obj->get_mobility_manager_ho_trigger_handler(),
+                         gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  console.on_app_starting();
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),

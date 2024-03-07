@@ -36,6 +36,19 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   }
 }
 
+/// Parses hex integer values from a console command.
+template <typename Integer>
+static expected<Integer, std::string> parse_unsigned_hex(const std::string& value)
+{
+  try {
+    return std::strtoul(value.c_str(), nullptr, 16);
+  } catch (const std::invalid_argument& e) {
+    return {e.what()};
+  } catch (const std::out_of_range& e) {
+    return {e.what()};
+  }
+}
+
 /// Parses floating point values from a console command and attempts to store them in a double.
 static expected<double, std::string> parse_double(const std::string& value)
 {
@@ -71,10 +84,14 @@ static void string_parse_list(const std::string& input, char delimiter, Insertab
   }
 }
 
-console_helper::console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_, bool autostart_stdout_metrics_) :
+console_helper::console_helper(io_broker&                                            io_broker_,
+                               srslog::log_channel&                                  log_chan_,
+                               srs_cu_cp::cu_cp_mobility_manager_ho_trigger_handler& mob_,
+                               bool                                                  autostart_stdout_metrics_) :
   logger(srslog::fetch_basic_logger("GNB")),
   io_broker_handle(io_broker_),
   metrics_json(log_chan_),
+  mob(mob_),
   autostart_stdout_metrics(autostart_stdout_metrics_)
 {
   // set STDIN file descripter into non-blocking mode
@@ -83,7 +100,7 @@ console_helper::console_helper(io_broker& io_broker_, srslog::log_channel& log_c
     logger.error("Couldn't configure fd to non-blocking");
   }
 
-  if (io_broker_handle.register_fd(STDIN_FILENO, [this](int fd) { stdin_handler(fd); }) == false) {
+  if (!io_broker_handle.register_fd(STDIN_FILENO, [this](int fd) { stdin_handler(fd); })) {
     logger.error("Couldn't register stdin handler");
   }
 }
@@ -199,6 +216,40 @@ void console_helper::handle_rx_gain_command(const std::list<std::string>& gain_a
   fmt::print("Rx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
 }
 
+void console_helper::handle_handover_command(const std::list<std::string>& ho_args)
+{
+  if (ho_args.size() != 3) {
+    fmt::print("Invalid handover command structure. Usage: ho <ue_id> <pci>\n");
+    return;
+  }
+
+  auto                            arg     = ho_args.begin();
+  expected<unsigned, std::string> src_pci = parse_int<unsigned>(*arg);
+  if (src_pci.is_error()) {
+    fmt::print("Invalid source PCI.\n");
+    return;
+  }
+  arg++;
+  expected<unsigned, std::string> rnti = parse_unsigned_hex<unsigned>(*arg);
+  if (rnti.is_error()) {
+    fmt::print("Invalid UE RNTI.\n");
+    return;
+  }
+  arg++;
+  expected<unsigned, std::string> target_pci = parse_int<unsigned>(*arg);
+  if (target_pci.is_error()) {
+    fmt::print("Invalid PCI value.\n");
+    return;
+  }
+
+  mob.trigger_handover(
+      static_cast<pci_t>(src_pci.value()), static_cast<rnti_t>(rnti.value()), static_cast<pci_t>(target_pci.value()));
+  fmt::print("Handover triggered for UE with pci={} rnti={:#04x} to pci={}.\n",
+             src_pci.value(),
+             rnti.value(),
+             target_pci.value());
+}
+
 void console_helper::handle_log_command(const std::list<std::string>& args)
 {
   // Verify that the number of arguments is valid.
@@ -296,6 +347,9 @@ void console_helper::handle_command(const std::string& command)
   } else if (arg_list.front() == "sleep") {
     arg_list.pop_front();
     handle_sleep_command(arg_list);
+  } else if (arg_list.front() == "ho") {
+    arg_list.pop_front();
+    handle_handover_command(arg_list);
   } else {
     print_help();
   }
@@ -313,6 +367,7 @@ void console_helper::print_help()
   fmt::print("\t                       Note: Certain log messages might not be available if they depend on\n");
   fmt::print("\t                       logging decorators that are not instanced with the initial log level.\n");
   fmt::print("\tsleep <seconds>:       stops the execution of console sequential commands for the specified time\n");
+  fmt::print("\tho <serving pci> <rnti> <target pci>: force UE handover\n");
   fmt::print("\n");
 }
 
