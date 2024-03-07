@@ -20,13 +20,23 @@ namespace srsran {
 /// Class that manages the allocation, deallocation and fetching of DL HARQ buffers for a given cell.
 class cell_dl_harq_buffer_pool
 {
-  using ue_dl_harq_buffer_list = static_vector<std::vector<uint8_t>, MAX_NOF_HARQS>;
+  /// Type representing a DL HARQ buffer.
+  using dl_harq_buffer_storage = std::vector<uint8_t>;
+
+  /// Type representing the list of DL HARQ buffers allocated for a given UE in a given cell.
+  using ue_dl_harq_buffer_list = static_vector<dl_harq_buffer_storage, MAX_NOF_HARQS>;
 
 public:
+  /// \brief Construction of a DL HARQ buffer pool for a given cell.
+  /// \param cell_nof_prbs Number of PRBs of the cell.
+  /// \param nof_ports Number of ports of the cell.
+  /// \param ctrl_exec Executor to which DL HARQ buffer allocation tasks is dispatched.
   explicit cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
 
+  /// \brief Allocate DL HARQ buffers for a newly created UE.
   void allocate_ue_buffers(du_ue_index_t ue_index, unsigned nof_harqs);
 
+  /// \brief Deallocate DL HARQ buffers for a removed UE.
   void deallocate_ue_buffers(du_ue_index_t ue_index);
 
   /// Get DL HARQ buffer for a given UE.
@@ -38,16 +48,20 @@ public:
   }
 
 private:
-  const unsigned        max_pdu_len;
+  // Maximum MAC PDU length, derived based on the cell properties.
+  const unsigned max_pdu_len;
+  // Executor to which DL HARQ buffer allocation tasks is dispatched in the background.
   task_executor&        ctrl_exec;
   srslog::basic_logger& logger;
 
-  void grow_pool();
+  // This function dispatches a task to grow the pool of DL HARQ buffers, using the \c ctrl_exec, in case the pool
+  // size decreased below a specific threshold.
+  void grow_pool_in_background();
 
-  // Pool of DL HARQ buffers for a given cell.
+  // List of DL HARQ buffers currently allocated to UEs in the cell.
   std::vector<ue_dl_harq_buffer_list> cell_buffers;
 
-  // Buffers that can be reused for the creation of new UE HARQ buffers.
+  // DL HARQ buffers that are not associated with any UE and can be allocated to newly created UEs.
   std::vector<std::vector<uint8_t>> buffer_cache;
 };
 

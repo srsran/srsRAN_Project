@@ -71,7 +71,7 @@ void cell_dl_harq_buffer_pool::allocate_ue_buffers(du_ue_index_t ue_index, unsig
 
   // Defer the growth of the DL HARQ buffer pool.
   // We do not want to perform this operation at this point to avoid affecting the UE creation latency.
-  grow_pool();
+  grow_pool_in_background();
 }
 
 void cell_dl_harq_buffer_pool::deallocate_ue_buffers(du_ue_index_t ue_idx)
@@ -86,7 +86,7 @@ void cell_dl_harq_buffer_pool::deallocate_ue_buffers(du_ue_index_t ue_idx)
   ue_harqs.clear();
 }
 
-void cell_dl_harq_buffer_pool::grow_pool()
+void cell_dl_harq_buffer_pool::grow_pool_in_background()
 {
   if (buffer_cache.size() >= DL_HARQ_ALLOC_BATCH) {
     // Stop growing the pool if it has enough DL HARQ buffers in cache.
@@ -100,7 +100,7 @@ void cell_dl_harq_buffer_pool::grow_pool()
         }
 
         // Dispatch new task to grow pool if it hasn't yet achieved the desired size.
-        grow_pool();
+        grow_pool_in_background();
       })) {
     logger.warning("Failed to dispatch task to allocate DL HARQ buffers");
   }
