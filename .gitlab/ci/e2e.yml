@@ -237,7 +237,7 @@ amari 1UE:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
