@@ -455,8 +455,6 @@ test mode ru memcheck:
 
 amari b200 asan:
   extends: .rf
-  when: manual
-  allow_failure: true
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -466,15 +464,11 @@ amari b200 asan:
 
 validate b200 config:
   extends: .rf
-  when: manual
-  allow_failure: true
   variables:
     MARKERS: "rf_b200"
 
 validate n300 config:
   extends: .rf
-  when: manual
-  allow_failure: true
   variables:
     MARKERS: "rf_n300"
     TESTBED: "android_n300"
@@ -500,8 +494,6 @@ android b200:
 android x300:
   stage: rf
   extends: .e2e-run
-  when: manual
-  allow_failure: true
   variables:
     GROUP: "rf"
     TESTBED: "android_x300"
