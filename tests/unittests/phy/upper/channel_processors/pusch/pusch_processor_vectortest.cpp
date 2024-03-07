@@ -217,9 +217,15 @@ private:
       return nullptr;
     }
 
+    std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+        create_time_alignment_estimator_dft_factory(dft_factory);
+    if (!ta_estimator_factory) {
+      return nullptr;
+    }
+
     // Create port channel estimator factory.
     std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-        create_port_channel_estimator_factory_sw(dft_factory);
+        create_port_channel_estimator_factory_sw(ta_estimator_factory);
     if (!port_chan_estimator_factory) {
       return nullptr;
     }

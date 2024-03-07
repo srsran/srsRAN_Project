@@ -559,9 +559,13 @@ static pusch_processor_factory& get_pusch_processor_factory()
   }
   TESTASSERT(dft_factory, "Cannot create DFT factory.");
 
+  std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+      create_time_alignment_estimator_dft_factory(dft_factory);
+  TESTASSERT(ta_estimator_factory, "Cannot create TA estimator factory.");
+
   // Create port channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-      create_port_channel_estimator_factory_sw(dft_factory);
+      create_port_channel_estimator_factory_sw(ta_estimator_factory);
   TESTASSERT(port_chan_estimator_factory);
 
   // Create DM-RS for PUSCH channel estimator.

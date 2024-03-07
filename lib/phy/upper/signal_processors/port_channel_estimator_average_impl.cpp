@@ -160,16 +160,18 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
 
 /// \brief Estimates the time alignment based on one hop.
 ///
-/// \param[in] pilots_lse The estimated channel (only for REs carrying DM-RS).
-/// \param[in] pattern    DM-RS pattern for the current layer.
-/// \param[in] hop        Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
-///                       position (after hopping).
-/// \param[in] idft       Inverse DFT processor.
+/// \param[in] pilots_lse   The estimated channel (only for REs carrying DM-RS).
+/// \param[in] pattern      DM-RS pattern for the current layer.
+/// \param[in] hop          Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
+///                         position (after hopping).
+/// \param[in] scs          Subcarrier spacing.
+/// \param[in] ta_estimator Time alignment estimator.
 /// \return The estimated time alignment as a number of samples (the sampling frequency is given by the DFT processor).
 static float estimate_time_alignment(span<const cf_t>                                  pilots_lse,
                                      const port_channel_estimator::layer_dmrs_pattern& pattern,
                                      unsigned                                          hop,
-                                     dft_processor*                                    idft);
+                                     subcarrier_spacing                                scs,
+                                     time_alignment_estimator&                         ta_estimator);
 
 // Returns the interpolator configuration for the given RE pattern.
 static interpolator::configuration configure_interpolator(const bounded_bitset<NRE>& re_mask)
@@ -211,7 +213,6 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
 
     rsrp /= static_cast<float>(nof_dmrs_pilots);
     epre /= static_cast<float>(nof_dmrs_pilots);
-    time_alignment_s /= (DFT_SIZE * scs_to_khz(cfg.scs) * 1000.0F);
 
     estimate.set_rsrp(rsrp, port, i_layer);
     estimate.set_epre(epre, port, i_layer);
@@ -302,7 +303,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   noise_var +=
       estimate_noise(pilots, rx_pilots, filtered_pilots_lse, beta_scaling, nof_dmrs_symbols, hop_offset, i_layer);
 
-  time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, idft.get());
+  time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, cfg.scs, *ta_estimator);
 
   // Interpolate frequency domain.
   span<cf_t> ce_freq = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
@@ -396,7 +397,8 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
 static float estimate_time_alignment(span<const cf_t>                                  pilots_lse,
                                      const port_channel_estimator::layer_dmrs_pattern& pattern,
                                      unsigned                                          hop,
-                                     dft_processor*                                    idft)
+                                     subcarrier_spacing                                scs,
+                                     time_alignment_estimator&                         ta_estimator)
 {
   const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
@@ -413,19 +415,5 @@ static float estimate_time_alignment(span<const cf_t>                           
                 re_mask.size(),
                 pilots_lse.size());
 
-  span<cf_t> channel_observed_freq = idft->get_input();
-  srsvec::zero(channel_observed_freq);
-  re_mask.for_each(0, re_mask.size(), [&channel_observed_freq, &pilots_lse, i_lse = 0U](unsigned i_re) mutable {
-    channel_observed_freq[i_re] = pilots_lse[i_lse++];
-  });
-
-  span<const cf_t> channel_observed_time = idft->run();
-
-  static constexpr unsigned  HALF_CP_LENGTH     = ((144 / 2) * DFT_SIZE) / 2048;
-  std::pair<unsigned, float> observed_max_delay = srsvec::max_abs_element(channel_observed_time.first(HALF_CP_LENGTH));
-  std::pair<unsigned, float> observed_max_advance = srsvec::max_abs_element(channel_observed_time.last(HALF_CP_LENGTH));
-  if (observed_max_delay.second >= observed_max_advance.second) {
-    return static_cast<float>(observed_max_delay.first);
-  }
-  return -static_cast<float>(HALF_CP_LENGTH - observed_max_advance.first);
+  return ta_estimator.estimate(pilots_lse, re_mask, scs).time_alignment;
 }
