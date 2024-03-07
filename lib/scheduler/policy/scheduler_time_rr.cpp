@@ -228,6 +228,11 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
     const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
     const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
 
+    if (ue_cc.is_in_fallback_mode()) {
+      // Skip allocation for UEs in fallback mode, as it is handled by the SRB0 scheduler.
+      continue;
+    }
+
     // UE is already allocated in the PDCCH for this slot (e.g. we should skip a newTx if a reTx has already been
     // allocated for this UE).
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {

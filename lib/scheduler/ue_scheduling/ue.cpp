@@ -108,9 +108,9 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
   }
 }
 
-unsigned ue::pending_dl_newtx_bytes() const
+unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
 {
-  return dl_lc_ch_mgr.pending_bytes();
+  return lcid == INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
 unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const
@@ -122,11 +122,6 @@ unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const
     return pending_bytes + dl_lc_ch_mgr.pending_ue_con_res_id_ce_bytes();
   }
   return pending_bytes;
-}
-
-unsigned ue::pending_dl_srb1_newtx_bytes() const
-{
-  return dl_lc_ch_mgr.pending_bytes(LCID_SRB1);
 }
 
 unsigned ue::pending_ul_newtx_bytes() const

@@ -32,13 +32,21 @@ public:
   dl_logical_channel_manager();
 
   /// \brief Activate/Deactivate Bearer.
-  void set_status(lcid_t lcid, bool active) { channels[lcid].active = active; }
+  void set_status(lcid_t lcid, bool active)
+  {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+    channels[lcid].active;
+  }
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(span<const logical_channel_config> log_channels_configs);
 
   /// \brief Verifies if logical channel is activated for DL.
-  bool is_active(lcid_t lcid) const { return channels[lcid].active; }
+  bool is_active(lcid_t lcid) const
+  {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+    return channels[lcid].active;
+  }
 
   /// \brief Checks whether the UE has pending data.
   /// \remark Excludes data for SRB0.
@@ -95,12 +103,14 @@ public:
   /// \brief Last DL buffer status for given LCID (MAC subheader included).
   unsigned pending_bytes(lcid_t lcid) const
   {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
     return is_active(lcid) ? get_mac_sdu_required_bytes(channels[lcid].buf_st) : 0;
   }
 
   /// \brief Update DL buffer status for a given LCID.
   void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status)
   {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
     channels[lcid].buf_st = buffer_status;
   }
 

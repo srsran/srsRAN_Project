@@ -129,16 +129,13 @@ public:
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
-  /// \remark Excludes SRB0.
-  unsigned pending_dl_newtx_bytes() const;
+  /// param[in] lcid If the LCID is provided, the method will return the number of pending bytes for that LCID.
+  ///           Otherwise it will return the sum of all LCIDs pending bytes, excluding SRB0.
+  unsigned pending_dl_newtx_bytes(lcid_t lcid = lcid_t::INVALID_LCID) const;
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
   /// is used to derive the required transport block size for an DL grant.
   unsigned pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const;
-
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
-  /// is used to derive the required transport block size for an DL grant.
-  unsigned pending_dl_srb1_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.

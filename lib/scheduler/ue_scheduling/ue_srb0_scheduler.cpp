@@ -9,6 +9,7 @@
  */
 
 #include "ue_srb0_scheduler.h"
+#include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
@@ -147,7 +148,7 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
 
   const bool is_retx = h_dl_retx != nullptr;
 
-  // \rer sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
+  // \ref sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
   // slot_indication().
   // \ref starting_sl is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned a
   // PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that is
@@ -186,7 +187,9 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
       }
 
       // We do not support multiplexing of PDSCH for SRB0 and SRB1 when in fallback with CSI-RS.
-      if (not pdsch_alloc.result.dl.csi_rs.empty()) {
+      const bool is_csi_rs_slot = next_slot == sched_ref_slot ? not pdsch_alloc.result.dl.csi_rs.empty()
+                                                              : csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot);
+      if (is_csi_rs_slot) {
         continue;
       }
 
@@ -433,7 +436,7 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
     // Find available symbol x RB resources.
     const unsigned pending_bytes     = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
                                            ? u.pending_dl_srb0_or_srb1_newtx_bytes(false)
-                                           : u.pending_dl_srb1_newtx_bytes();
+                                           : u.pending_dl_newtx_bytes(lcid_t::LCID_SRB1);
     grant_prbs_mcs mcs_prbs_estimate = ue_pcell.required_dl_prbs(pdsch_td_cfg, pending_bytes, dci_type);
 
     if (mcs_prbs_estimate.n_prbs == 0) {

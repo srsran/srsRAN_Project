@@ -8,10 +8,12 @@
  *
  */
 
+#include "lib/scheduler/common_scheduling/csi_rs_scheduler.h"
 #include "lib/scheduler/config/sched_config_manager.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
+#include "lib/scheduler/support/csi_rs_helpers.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
@@ -89,6 +91,7 @@ struct test_bench {
   ue_repository                 ue_db;
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
+  csi_rs_scheduler              csi_rs_sched;
 
   explicit test_bench(const scheduler_expert_config&                  sched_cfg_,
                       const cell_config_builder_params&               builder_params_,
@@ -97,7 +100,8 @@ struct test_bench {
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
-    srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)
+    srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
+    csi_rs_sched(cell_cfg)
   {
     ue_alloc.add_cell(cell_cfg.cell_index, pdcch_sch, uci_alloc, res_grid);
   }
@@ -176,7 +180,7 @@ protected:
     bench->pucch_alloc.slot_indication(current_slot);
   }
 
-  void run_slot()
+  void run_slot(bool disabled_csi_rs = false)
   {
     ++current_slot;
 
@@ -188,6 +192,10 @@ protected:
     bench->pdcch_sch.slot_indication(current_slot);
     bench->pucch_alloc.slot_indication(current_slot);
 
+    if (not disabled_csi_rs) {
+      bench->csi_rs_sched.run_slot(bench->res_grid[0]);
+    }
+
     bench->srb0_sched.run_slot(bench->res_grid);
 
     result_logger.on_scheduler_result(bench->res_grid[0].result);
@@ -196,7 +204,7 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
-  scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
+  static scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index)
   {
     scheduler_expert_config     cfg   = config_helpers::make_default_scheduler_expert_config();
     scheduler_ue_expert_config& uecfg = cfg.ue;
@@ -489,7 +497,7 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
 
   for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
-    run_slot();
+    run_slot(true);
     // Notify about SRB0 message in DL one slot before partial slot in order for it to be scheduled in the next
     // (partial) slot.
     if (bench->cell_cfg.is_dl_enabled(current_slot + 1) and
@@ -529,7 +537,7 @@ protected:
   }
 
   // Helper that generates the slot for the SRB0 buffer update.
-  unsigned generate_srb0_traffic_slot() const { return test_rgen::uniform_int(20U, 30U); }
+  static unsigned generate_srb0_traffic_slot() { return test_rgen::uniform_int(20U, 30U); }
 
   // Helper that generates the number of slot during the scheduler res grid is fully used.
   unsigned generate_nof_slot_grid_occupancy() const
@@ -565,16 +573,14 @@ protected:
 
     auto k1_falls_on_ul = [&cfg = bench->cell_cfg](slot_point pdsch_slot) {
       static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
-      for (auto k1 : dci_1_0_k1_values) {
-        if (cfg.is_ul_enabled(pdsch_slot + k1)) {
-          return true;
-        }
-      }
-      return false;
+      return std::any_of(dci_1_0_k1_values.begin(), dci_1_0_k1_values.end(), [&cfg, pdsch_slot](uint8_t k1) {
+        return cfg.is_ul_enabled(pdsch_slot + k1);
+      });
     };
 
     // Make sure the final slot for the SRB0 PDSCH is such that the corresponding PUCCH is in falls on a UL slot.
-    while (not k1_falls_on_ul(sched_slot) or (not bench->cell_cfg.is_dl_enabled(sched_slot))) {
+    while ((not k1_falls_on_ul(sched_slot)) or (not bench->cell_cfg.is_dl_enabled(sched_slot)) or
+           csi_helper::is_csi_rs_slot(bench->cell_cfg, sched_slot)) {
       sched_slot++;
     }
 
@@ -582,7 +588,7 @@ protected:
   }
 };
 
-TEST_P(srb0_scheduler_head_scheduling, test_allocation_in_appropriate_slots_in_tdd)
+TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb0_allocation_1_ue)
 {
   // In this test, we check if the SRB0 allocation can schedule ahead with respect to the reference slot, which is given
   // by the slot_indication in the scheduler.
