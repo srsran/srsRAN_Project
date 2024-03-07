@@ -165,6 +165,8 @@ private:
 /// \param[in] tb_info TB on which MAC subPDUs will be stored.
 /// \param[in] lch_mng UE DL logical channel manager.
 /// \param[in] total_tbs available space in bytes for subPDUs.
+/// \param[in] lcid if provided, LCID of the logical channel to be allocated. Otherwise, the LCID with higher priority
+/// is chosen.
 /// \return Total number of bytes allocated (including MAC subheaders).
 unsigned allocate_mac_sdus(dl_msg_tb_info&             tb_info,
                            dl_logical_channel_manager& lch_mng,
