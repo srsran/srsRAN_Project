@@ -56,7 +56,7 @@ public:
                                           rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
 
-  bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) override;
+  bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const override;
 
 private:
   // Structs with the info about the PUCCH resources.

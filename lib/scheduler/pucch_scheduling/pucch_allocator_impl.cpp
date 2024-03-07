@@ -170,6 +170,11 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
 
   // [Implementation-defined] Multiplexing of common and dedicated PUCCH grants are not yet supported.
   if (existing_grants.format1_harq_common_grant != nullptr) {
+    logger.debug(
+        "rnti={}: PUCCH HARQ-ACK for slot={} not allocated. Cause: Multiplexing of common and dedicated PUCCH grants "
+        "are not supported",
+        crnti,
+        pucch_slot_alloc.slot);
     return nullopt;
   }
 
@@ -1136,7 +1141,7 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
   return grants;
 }
 
-bool pucch_allocator_impl::has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx)
+bool pucch_allocator_impl::has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const
 {
   return std::find(pucch_common_alloc_grid[sl_tx.to_uint()].begin(),
                    pucch_common_alloc_grid[sl_tx.to_uint()].end(),
