@@ -12,6 +12,7 @@
 
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../cell_meas_manager/cell_meas_manager_impl.h"
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "../ue_manager/ue_task_scheduler.h"
@@ -40,6 +41,7 @@ public:
                                 cu_cp_e1ap_ue_removal_notifier* e1ap_notifier,
                                 cu_cp_f1ap_ue_removal_notifier& f1ap_notifier,
                                 cu_cp_ngap_control_notifier&    ngap_notifier,
+                                cell_meas_manager&              cell_meas_mng,
                                 ue_manager&                     ue_mng,
                                 srslog::basic_logger&           logger);
 

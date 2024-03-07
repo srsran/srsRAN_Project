@@ -133,7 +133,8 @@ public:
 
   void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+  optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
+                                                       nr_cell_id_t           nci,
                                                        optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     optional<rrc_meas_cfg> meas_cfg;

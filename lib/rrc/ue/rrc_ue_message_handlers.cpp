@@ -276,7 +276,7 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
       [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
-        logger.log_debug("Awaiting RRC Reconfiguration Complete");
+        logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
         // create new transaction for RRC Reconfiguration procedure
         transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 
@@ -287,7 +287,7 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
           logger.log_debug("Received RRC Reconfiguration Complete after HO");
           procedure_result = true;
         } else {
-          logger.log_debug("Did not receive RRC Reconfiguration Complete after HO (timeout)");
+          logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: timeout");
         }
 
         CORO_RETURN(procedure_result);
@@ -364,7 +364,8 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
 optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(optional<rrc_meas_cfg> current_meas_config)
 {
   // (Re-)generate measurement config and return result.
-  context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
+  context.meas_cfg =
+      measurement_notifier.on_measurement_config_request(context.ue_index, context.cell.cgi.nci, current_meas_config);
   return context.meas_cfg;
 }
 

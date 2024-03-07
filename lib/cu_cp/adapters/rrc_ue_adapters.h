@@ -192,11 +192,12 @@ public:
     return ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+  optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
+                                                       nr_cell_id_t           nci,
                                                        optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
-    return meas_handler->handle_measurement_config_request(nci, current_meas_config);
+    return meas_handler->handle_measurement_config_request(ue_index, nci, current_meas_config);
   }
 
   void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override

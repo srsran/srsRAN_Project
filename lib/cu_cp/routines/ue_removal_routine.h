@@ -12,6 +12,7 @@
 
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
+#include "../cell_meas_manager/cell_meas_manager_impl.h"
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "../ue_manager/ue_task_scheduler.h"
@@ -30,6 +31,7 @@ public:
                      cu_cp_e1ap_ue_removal_notifier* e1ap_notifier_,
                      cu_cp_f1ap_ue_removal_notifier& f1ap_notifier_,
                      cu_cp_ngap_control_notifier&    ngap_notifier_,
+                     cell_meas_manager&              cell_meas_mng_,
                      ue_manager&                     ue_mng_,
                      srslog::basic_logger&           logger_);
 
@@ -43,6 +45,7 @@ private:
   cu_cp_e1ap_ue_removal_notifier* e1ap_notifier;   // to trigger removal of the UE at the E1AP
   cu_cp_f1ap_ue_removal_notifier& f1ap_notifier;   // to trigger removal of the UE at the F1AP
   cu_cp_ngap_control_notifier&    ngap_notifier;   // to trigger removal of the UE at the NGAP
+  cell_meas_manager&              cell_meas_mng;   // to remove UE context from cell measurement manager
   ue_manager&                     ue_mng;          // to remove UE context from DU processor
   srslog::basic_logger&           logger;
 };

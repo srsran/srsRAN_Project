@@ -335,9 +335,11 @@ public:
   virtual ~rrc_ue_measurement_notifier() = default;
 
   /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
+  /// \param[in] ue_index The index of the UE to retrieve the measurement config for.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
-  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
+  virtual optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
+                                                               nr_cell_id_t           nci,
                                                                optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.

@@ -31,11 +31,12 @@ void cu_cp_routine_manager::start_ue_removal_routine(ue_index_t                 
                                                      cu_cp_e1ap_ue_removal_notifier* e1ap_notifier,
                                                      cu_cp_f1ap_ue_removal_notifier& f1ap_notifier,
                                                      cu_cp_ngap_control_notifier&    ngap_notifier,
+                                                     cell_meas_manager&              cell_meas_mng,
                                                      ue_manager&                     ue_mng,
                                                      srslog::basic_logger&           logger)
 {
   ue_task_sched.handle_ue_async_task(
       ue_index,
       launch_async<ue_removal_routine>(
-          ue_index, rrc_du_notifier, e1ap_notifier, f1ap_notifier, ngap_notifier, ue_mng, logger));
+          ue_index, rrc_du_notifier, e1ap_notifier, f1ap_notifier, ngap_notifier, cell_meas_mng, ue_mng, logger));
 }
