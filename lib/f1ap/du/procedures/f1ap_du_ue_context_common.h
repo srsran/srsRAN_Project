@@ -43,10 +43,8 @@ f1ap_drb_to_setup make_drb_to_setup(const Asn1Type& drb_item)
 {
   f1ap_drb_to_setup drb_obj;
 
-  drb_obj.drb_id  = static_cast<drb_id_t>(drb_item.drb_id);
-  drb_obj.mode    = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
-  drb_obj.five_qi = uint_to_five_qi(
-      drb_item.qos_info.choice_ext().value().drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
+  drb_obj.drb_id = static_cast<drb_id_t>(drb_item.drb_id);
+  drb_obj.mode   = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
   drb_obj.uluptnl_info_list.reserve(drb_item.ul_up_tnl_info_to_be_setup_list.size());
   for (const auto& tnl_info : drb_item.ul_up_tnl_info_to_be_setup_list) {
     drb_obj.uluptnl_info_list.push_back(asn1_to_up_transport_layer_info(tnl_info.ul_up_tnl_info));
