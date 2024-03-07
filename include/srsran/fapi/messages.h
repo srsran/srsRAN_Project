@@ -241,10 +241,29 @@ struct dl_pdsch_codeword {
 enum class low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
 enum class resource_allocation_type : uint8_t { type_0, type_1 };
 enum class vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
-enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss = 255 };
+enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6 };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
 enum class dmrs_cfg_type : uint8_t { type_1, type_2 };
+
+/// Converts the given value to a NZP CSI-RS EPRE to SSB value.
+inline nzp_csi_rs_epre_to_ssb to_nzp_csi_rs_epre_to_ssb(int value)
+{
+  switch (value) {
+    case -3:
+      return nzp_csi_rs_epre_to_ssb::dB_minus_3;
+    case 0:
+      return nzp_csi_rs_epre_to_ssb::dB0;
+    case 3:
+      return nzp_csi_rs_epre_to_ssb::dB3;
+    case 6:
+      return nzp_csi_rs_epre_to_ssb::dB6;
+    default:
+      srsran_assert(0, "Invalid CSI-RS EPRE to SSB value '{}'", value);
+      break;
+  }
+  return nzp_csi_rs_epre_to_ssb::dB0;
+}
 
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {

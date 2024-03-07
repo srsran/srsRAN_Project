@@ -92,22 +92,6 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
   }
 }
 
-static fapi::nzp_csi_rs_epre_to_ssb to_nzp_csi_rs_epre_to_ssb(int value)
-{
-  switch (value) {
-    case -3:
-      return fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3;
-    case 0:
-      return fapi::nzp_csi_rs_epre_to_ssb::dB0;
-    case 3:
-      return fapi::nzp_csi_rs_epre_to_ssb::dB3;
-    case 6:
-      return fapi::nzp_csi_rs_epre_to_ssb::dB6;
-    default:
-      return fapi::nzp_csi_rs_epre_to_ssb::dB0;
-  }
-}
-
 static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
                                           span<const csi_rs_info>               csi_rs_list)
 {
@@ -127,7 +111,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
     csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs, pdu.bwp_cfg->cp);
     if (is_nzp_csi) {
       csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset,
-                                               to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss));
+                                               fapi::to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss));
     } else {
       // ZP-CSI type does not use these values.
       csi_builder.set_tx_power_info_parameters(0, fapi::nzp_csi_rs_epre_to_ssb::dB0);

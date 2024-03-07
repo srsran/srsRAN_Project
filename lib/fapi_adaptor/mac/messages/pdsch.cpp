@@ -109,9 +109,10 @@ static void fill_time_allocation(fapi::dl_pdsch_pdu_builder& builder, const ofdm
   builder.set_pdsch_allocation_in_time_parameters(symbols.start(), symbols.length());
 }
 
-static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder)
+static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder, const tx_power_pdsch_information& power_params)
 {
-  builder.set_tx_power_info_parameters(0, fapi::nzp_csi_rs_epre_to_ssb::dB0);
+  builder.set_tx_power_info_parameters(power_params.pwr_ctrl_offset,
+                                       fapi::to_nzp_csi_rs_epre_to_ssb(power_params.pwr_ctrl_offset_ss));
 }
 
 static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
@@ -160,6 +161,9 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
 
   // Time allocation.
   fill_time_allocation(builder, pdsch_cfg.symbols);
+
+  // Power parameters.
+  fill_power_parameters(builder, pdsch_cfg.tx_pwr_info);
 }
 
 static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
@@ -247,8 +251,6 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_bwp_parameters(
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
-  fill_power_parameters(builder);
-
   // Get the VRB-to-PRB mapping from the DCI.
   bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
   // Frequency allocation.
@@ -306,8 +308,6 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
   builder.set_bwp_parameters(
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
-
-  fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
   bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
@@ -368,8 +368,6 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_bwp_parameters(
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
-  fill_power_parameters(builder);
-
   // Get the VRB-to-PRB mapping from the DCI.
   bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
   // Frequency allocation.
@@ -419,8 +417,6 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
   builder.set_bwp_parameters(
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
-
-  fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
   bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;

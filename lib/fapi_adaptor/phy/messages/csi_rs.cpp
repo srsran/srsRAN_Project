@@ -29,7 +29,6 @@ static float translate_amplitude(fapi::nzp_csi_rs_epre_to_ssb power)
       return 2.F;
     case fapi::nzp_csi_rs_epre_to_ssb::dB6:
       return 4.F;
-    case fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss:
     default:
       return 1.F;
   }

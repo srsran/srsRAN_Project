@@ -33,7 +33,7 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
   dci.cce_index         = fapi_dci.cce_index;
   dci.aggregation_level = fapi_dci.aggregation_level;
 
-  dci.dmrs_power_offset_dB = static_cast<float>(fapi_dci.power_control_offset_ss_profile_nr);
+  dci.dmrs_power_offset_dB = fapi_dci.power_control_offset_ss_profile_nr;
   dci.data_power_offset_dB = dci.dmrs_power_offset_dB;
 
   // Unpack the payload.
