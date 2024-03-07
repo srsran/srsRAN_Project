@@ -44,13 +44,6 @@ struct log_channel_config {
   bool should_print_context = false;
 };
 
-/// Strong type to wrap a constant log label that is prepended to each log message.
-struct log_label_t {
-  /// Optional log label. If set, will get printed in front of each log message.
-  /// Disabled by default.
-  std::string log_label;
-};
-
 /// A log channel is the entity used for logging messages.
 ///
 /// It can deliver a log entry to one or more different sinks, for example a
@@ -146,7 +139,7 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename... Args>
-  void operator()(const log_label_t& label, const char* fmtstr, Args&&... args)
+  void operator()(std::shared_ptr<const std::string> log_label, const char* fmtstr, Args&&... args)
   {
     if (!enabled()) {
       return;
@@ -171,7 +164,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
-                                    label.log_label}};
+                                    std::move(log_label)}};
     backend.push(std::move(entry));
   }
 
@@ -247,7 +240,11 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename... Args>
-  void operator()(const log_label_t& label, const uint8_t* buffer, size_t len, const char* fmtstr, Args&&... args)
+  void operator()(std::shared_ptr<const std::string> log_label,
+                  const uint8_t*                     buffer,
+                  size_t                             len,
+                  const char*                        fmtstr,
+                  Args&&... args)
   {
     if (!enabled()) {
       return;
@@ -277,7 +274,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
-                                    label.log_label,
+                                    std::move(log_label),
                                     std::vector<uint8_t>(buffer, buffer + len)}};
     backend.push(std::move(entry));
   }
@@ -361,7 +358,8 @@ public:
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
   template <typename It, typename... Args, typename std::enable_if<detail::is_byte_iterable<It>::value, int>::type = 0>
-  void operator()(const log_label_t& label, It it_begin, It it_end, const char* fmtstr, Args&&... args)
+  void
+  operator()(std::shared_ptr<const std::string> log_label, It it_begin, It it_end, const char* fmtstr, Args&&... args)
   {
     if (!enabled()) {
       return;
@@ -391,7 +389,7 @@ public:
                                     store,
                                     log_name,
                                     log_tag,
-                                    label.log_label,
+                                    std::move(log_label),
                                     std::vector<uint8_t>(it_begin, it_end)}};
     backend.push(std::move(entry));
   }

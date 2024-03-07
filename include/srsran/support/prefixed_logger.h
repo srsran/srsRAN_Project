@@ -35,7 +35,7 @@ public:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "{}{}", prefix, prefix_separator);
-    log_label.log_label = fmt::to_string(buffer);
+    log_label = std::make_shared<const std::string>(fmt::to_string(buffer));
   }
 
   template <typename... Args>
@@ -199,8 +199,8 @@ public:
   srslog::basic_logger& get_basic_logger() { return logger; }
 
 private:
-  srslog::basic_logger& logger;
-  srslog::log_label_t   log_label;
+  srslog::basic_logger&              logger;
+  std::shared_ptr<const std::string> log_label;
 
   template <typename... Args>
   void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args) const
