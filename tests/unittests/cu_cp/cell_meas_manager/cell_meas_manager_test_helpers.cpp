@@ -42,6 +42,7 @@ void cell_meas_manager_test::create_default_manager()
 
   cell_meas_config cell_cfg;
   cell_cfg.serving_cell_cfg.nci   = 0;
+  cell_cfg.serving_cell_cfg.pci   = 1;
   cell_cfg.periodic_report_cfg_id = uint_to_report_cfg_id(1);
 
   neighbor_cell_meas_config ncell_meas_cfg;

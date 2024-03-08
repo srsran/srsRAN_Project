@@ -23,6 +23,7 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
 {
   cell_meas_config cell_cfg;
   cell_cfg.serving_cell_cfg.nci                 = 0;
+  cell_cfg.serving_cell_cfg.pci                 = 1;
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
@@ -44,6 +45,7 @@ TEST_F(cell_meas_manager_test, when_empty_neighbor_is_defined_but_no_event_confi
   cell_meas_manager_cfg cfg = {};
   cell_meas_config      cell_cfg;
   cell_cfg.serving_cell_cfg.nci = 0;
+  cell_cfg.serving_cell_cfg.pci = 1;
   cfg.cells.insert({cell_cfg.serving_cell_cfg.nci, cell_cfg});
 
   ASSERT_FALSE(is_valid_configuration(cfg));

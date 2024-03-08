@@ -285,10 +285,9 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
                  config.periodic_report_cfg_id,
                  "Periodical report configuration for the serving cell")
       ->check(CLI::Range(1, 64));
-  ;
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
-
   app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
+  app.add_option("--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");

@@ -667,18 +667,20 @@ struct cu_cp_neighbor_cell_appconfig_item {
 
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t    nr_cell_id; ///< Cell id.
-  std::string rat = "nr"; ///< RAT of this neighbor cell.
-
-  // TODO: Add optional SSB parameters.
+  uint64_t           nr_cell_id; ///< Cell id.
+  std::string        rat = "nr"; ///< RAT of this neighbor cell.
   optional<unsigned> periodic_report_cfg_id;
-  optional<unsigned> gnb_id; ///< gNodeB identifier
-  optional<nr_band>  band;
-  optional<unsigned> ssb_arfcn;
-  optional<unsigned> ssb_scs;
-  optional<unsigned> ssb_period;
-  optional<unsigned> ssb_offset;
-  optional<unsigned> ssb_duration;
+
+  // These parameters must only be set for external cells
+  // TODO: Add optional SSB parameters.
+  optional<unsigned> gnb_id;       ///< gNodeB identifier.
+  optional<pci_t>    pci;          ///< PCI.
+  optional<nr_band>  band;         ///< NR band.
+  optional<unsigned> ssb_arfcn;    ///< SSB ARFCN.
+  optional<unsigned> ssb_scs;      ///< SSB subcarrier spacing.
+  optional<unsigned> ssb_period;   ///< SSB period.
+  optional<unsigned> ssb_offset;   ///< SSB offset.
+  optional<unsigned> ssb_duration; ///< SSB duration.
 
   std::vector<cu_cp_neighbor_cell_appconfig_item> ncells; ///< Vector of cells that are a neighbor of this cell.
 };

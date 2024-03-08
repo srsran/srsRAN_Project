@@ -105,6 +105,7 @@ cu_cp_test::cu_cp_test()
   ncell_1.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
   cell_cfg_1.ncells.push_back(ncell_1);
   cell_cfg_1.serving_cell_cfg.nci = 0x19b0;
+  cell_cfg_1.serving_cell_cfg.pci = 1;
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19b0, cell_cfg_1);
 
   cell_meas_config cell_cfg_2;
@@ -114,6 +115,7 @@ cu_cp_test::cu_cp_test()
   ncell_2.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
   cell_cfg_2.ncells.push_back(ncell_2);
   cell_cfg_2.serving_cell_cfg.nci       = 0x19c0;
+  cell_cfg_2.serving_cell_cfg.pci       = 2;
   cell_cfg_2.serving_cell_cfg.gnb_id    = 412;
   cell_cfg_2.serving_cell_cfg.ssb_arfcn = 632628;
   cell_cfg_2.serving_cell_cfg.band      = nr_band::n78;
