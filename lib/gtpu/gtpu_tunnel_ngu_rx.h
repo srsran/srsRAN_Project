@@ -109,14 +109,14 @@ protected:
 
     if (!pdu.hdr.flags.seq_number || config.t_reordering.count() == 0) {
       // Forward this SDU straight away.
-      byte_buffer      rx_sdu      = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
+      byte_buffer      rx_sdu      = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
       deliver_sdu(rx_sdu_info);
       return;
     }
 
     uint16_t    sn     = pdu.hdr.seq_number;
-    byte_buffer rx_sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
+    byte_buffer rx_sdu = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction
 
     // Check out-of-window
     if (!inside_rx_window(sn)) {

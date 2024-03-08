@@ -61,15 +61,23 @@ protected:
         // For Supported Extension Headers Notification [...], the Sequence Number shall be ignored by the receiver,
         // even though the S flag is set to '1'.
         return;
-      case GTPU_MSG_ERROR_INDICATION:
-        // TODO: unpack and print information elements; add handling
-        logger.log_info(pdu.buf.begin(), pdu.buf.end(), "Received error indication from peer");
+      case GTPU_MSG_ERROR_INDICATION: {
+        gtpu_msg_error_indication err_ind = {};
+        byte_buffer               msg     = gtpu_extract_msg(std::move(pdu));
+        bool                      msg_ok  = gtpu_read_msg_error_indication(err_ind, msg, logger.get_basic_logger());
+        if (!msg_ok) {
+          logger.log_error(pdu.buf.begin(), pdu.buf.end(), "Received malfomed error indication from peer");
+          return;
+        }
+        logger.log_info("Received error indication from peer. {}", err_ind);
+        // TODO: implement handling:
         // TS 29.281 Sec. 7.3.1: Error Indication
         // When a GTP-U node receives a G-PDU for which no EPS Bearer context, PDP context, PDU Session, MBMS Bearer
         // context, or RAB exists, the GTP-U node shall discard the G - PDU.If the TEID of the incoming G-PDU is
         // different from the value 'all zeros' the GTP-U node shall also return a GTP error indication to the
         // originating node.
         return;
+      }
       case GTPU_MSG_END_MARKER:
         // TODO: unpack and print information elements; add handling
         logger.log_warning("Discarded PDU. Cause: 'End marker' not supported");

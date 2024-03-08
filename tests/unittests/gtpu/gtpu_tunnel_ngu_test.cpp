@@ -148,7 +148,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 
   gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(orig_vec), orig_addr);
-  ASSERT_EQ(gtpu_extract_t_pdu(std::move(dissected_pdu)), gtpu_rx.last_rx);
+  ASSERT_EQ(gtpu_extract_msg(std::move(dissected_pdu)), gtpu_rx.last_rx);
   ASSERT_EQ(uint_to_qos_flow_id(1), gtpu_rx.last_rx_qos_flow_id);
 };
 

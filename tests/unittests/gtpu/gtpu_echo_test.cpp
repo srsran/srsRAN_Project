@@ -134,6 +134,25 @@ TEST_F(gtpu_echo_test, rx_echo_req_tx_echo_rep)
   ASSERT_EQ(gtpu_tx.last_tx, echo_rep);
 };
 
+/// \brief Test correct reception of an error indication message
+TEST_F(gtpu_echo_test, rx_error_indication)
+{
+  null_dlt_pcap dummy_pcap;
+  // init echo entity
+  gtpu_echo_creation_message msg = {};
+  msg.gtpu_pcap                  = &dummy_pcap;
+  msg.tx_upper                   = &gtpu_tx;
+  echo                           = create_gtpu_echo(msg);
+
+  sockaddr_storage orig_addr        = {};
+  byte_buffer      error_indication = {gtpu_error_indication};
+
+  gtpu_tunnel_rx_upper_layer_interface* rx = echo->get_rx_upper_layer_interface();
+  rx->handle_pdu(std::move(error_indication), orig_addr);
+
+  ASSERT_TRUE(gtpu_tx.last_tx.empty());
+};
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
