@@ -42,5 +42,11 @@ inline uint64_t make_nr_cell_identity(uint32_t gnb_id, uint8_t gnb_id_bit_length
   return nci;
 }
 
+/// Returns the gNB ID from the NR Cell Identity.
+inline uint32_t get_gnb_id(nr_cell_id_t nr_cell_id, uint8_t gnb_id_bit_length)
+{
+  return (uint32_t)nr_cell_id >> (36 - gnb_id_bit_length);
+};
+
 } // namespace config_helpers
 } // namespace srsran

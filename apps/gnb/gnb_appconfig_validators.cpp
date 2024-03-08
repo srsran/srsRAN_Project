@@ -15,6 +15,7 @@
 #include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
@@ -638,16 +639,53 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
-/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
-static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
+static bool
+validate_mobility_appconfig(const uint32_t gnb_id, uint8_t gnb_id_bit_length, const mobility_appconfig& config)
 {
-  // only check if the pdu_session_setup_timout is larger than T310
+  // check cu_cp_cell_config
+  for (const auto& cell : config.cells) {
+    if ((config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id_bit_length) == gnb_id)) {
+      if (cell.gnb_id.has_value() || cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() ||
+          cell.ssb_scs.has_value() || cell.ssb_period.has_value() || cell.ssb_offset.has_value() ||
+          cell.ssb_duration.has_value()) {
+        fmt::print(
+            "For cells managed by the CU-CP the gnb_id, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
+            "ssb_duration must not be configured in the mobility config\n");
+        return false;
+      }
+    } else {
+      if (!cell.gnb_id.has_value() || !cell.pci.has_value() || !cell.band.has_value() || !cell.ssb_arfcn.has_value() ||
+          !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() || !cell.ssb_offset.has_value() ||
+          !cell.ssb_duration.has_value()) {
+        fmt::print("For external cells, the gnb_id, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
+                   "ssb_duration must be configured in the mobility config\n");
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
+static bool validate_cu_cp_appconfig(const uint32_t         gnb_id,
+                                     uint8_t                gnb_id_bit_length,
+                                     const cu_cp_appconfig& config,
+                                     const sib_appconfig&   sib_cfg)
+{
+  // check if the pdu_session_setup_timout is larger than T310
   if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
     fmt::print("pdu_session_setup_timeout ({}ms) must be larger than T310 ({}ms)\n",
                config.pdu_session_setup_timeout * 1000,
                sib_cfg.ue_timers_and_constants.t310);
     return false;
   }
+
+  // validate mobility config
+  if (!validate_mobility_appconfig(gnb_id, gnb_id_bit_length, config.mobility_config)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -1278,7 +1316,8 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
+  if (!validate_cu_cp_appconfig(
+          config.gnb_id, config.gnb_id_bit_length, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
     return false;
   }
 

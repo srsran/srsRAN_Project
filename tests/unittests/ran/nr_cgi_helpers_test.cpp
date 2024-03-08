@@ -36,3 +36,8 @@ TEST(nr_cgi_helpers_test, make_nr_cell_identity_test)
 {
   ASSERT_EQ(srsran::config_helpers::make_nr_cell_identity(411, 32, 0), 6576);
 }
+
+TEST(nr_cgi_helpers_test, get_gnb_id_test)
+{
+  ASSERT_EQ(srsran::config_helpers::get_gnb_id(6576, 32), 411);
+}
