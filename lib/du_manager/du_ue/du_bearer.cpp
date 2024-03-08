@@ -95,6 +95,7 @@ void du_drb_connector::disconnect()
   // Disconnect MAC <-> RLC interface.
   mac_rx_sdu_notifier.disconnect();
   rlc_tx_buffer_state_notif.disconnect();
+  mac_tx_sdu_notifier.disconnect();
 }
 
 void du_ue_drb::stop()
