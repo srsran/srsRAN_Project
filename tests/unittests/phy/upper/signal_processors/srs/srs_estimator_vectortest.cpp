@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const srs_channel_matrix& channel)
 
 bool operator==(const srs_channel_matrix& left, const srs_channel_matrix& right)
 {
-  return left.is_near_equal_to(right, 1e-2);
+  return left.is_near(right, 1e-2);
 }
 
 } // namespace srsran

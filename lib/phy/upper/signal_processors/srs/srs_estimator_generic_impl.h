@@ -17,7 +17,7 @@
 
 namespace srsran {
 
-/// Implements a generic sounding reference signal estimator.
+/// Implements a generic Sounding Reference Signal estimator.
 class srs_estimator_generic_impl : public srs_estimator
 {
 public:
@@ -40,7 +40,7 @@ private:
   /// It is given by the maximum value of \f$m_{SRS,0}\f$ in TS38.211 Table 6.4.1.4.3-1 and a comb size of 2.
   static constexpr unsigned max_seq_length = 272 * NRE / 2;
 
-  /// \brief Extract the received sounding reference signals sequence from a resource grid.
+  /// \brief Extract the received Sounding Reference Signals sequence from a resource grid.
   ///
   /// The sequence mapping is given in TS38.211 Section 6.4.1.4.3.
   ///

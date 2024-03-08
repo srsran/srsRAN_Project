@@ -23,7 +23,7 @@ public:
   /// Default destructor.
   virtual ~srs_estimator_factory() = default;
 
-  /// Creates a sounding reference signal based propagation channel estimator.
+  /// Creates a Sounding Reference Signal based propagation channel estimator.
   virtual std::unique_ptr<srs_estimator> create() = 0;
 };
 

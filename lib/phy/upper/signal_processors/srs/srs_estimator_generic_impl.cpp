@@ -27,11 +27,10 @@ void srs_estimator_generic_impl::extract_sequence(span<cf_t>                  se
                                                   unsigned                    initial_subcarrier,
                                                   unsigned                    comb_size)
 {
-  static_vector<bool, NRE * MAX_RB> mask(sequence.size() * comb_size);
+  bounded_bitset<NRE * MAX_RB> mask(sequence.size() * comb_size);
 
-  std::fill(mask.begin(), mask.end(), false);
   for (unsigned i = 0, i_end = sequence.size(); i != i_end; ++i) {
-    mask[comb_size * i] = true;
+    mask.set(comb_size * i);
   }
 
   grid.get(sequence, i_rx_port, i_symbol, initial_subcarrier, mask);
@@ -42,7 +41,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 {
   unsigned nof_symbols          = static_cast<unsigned>(config.resource.nof_symbols);
   unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
-  srsran_assert(config.resource.start_symbol + nof_symbols <= nof_symbols_per_slot,
+  srsran_assert(config.resource.start_symbol.value() + nof_symbols <= nof_symbols_per_slot,
                 "The start symbol index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the number of symbols "
                 "per slot (i.e., {})",
                 config.resource.start_symbol,
@@ -58,7 +57,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
          i_antenna_port != i_antenna_port_end;
          ++i_antenna_port) {
       cf_t coefficient = 0;
-      for (unsigned i_symbol = config.resource.start_symbol, i_symbol_end = config.resource.start_symbol + nof_symbols;
+      for (unsigned i_symbol     = config.resource.start_symbol.value(),
+                    i_symbol_end = config.resource.start_symbol.value() + nof_symbols;
            i_symbol != i_symbol_end;
            ++i_symbol) {
         // Generate SRS information for a given SRS antenna port and symbol.

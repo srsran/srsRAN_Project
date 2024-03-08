@@ -19,7 +19,7 @@ namespace srsran {
 struct srs_estimator_result {
   /// Wideband estimated channel matrix.
   srs_channel_matrix channel_matrix;
-  /// Wideband Measured noise variance.
+  /// Wideband measured noise variance.
   float noise_variance;
   /// Measured time alignment.
   phy_time_unit time_align;
