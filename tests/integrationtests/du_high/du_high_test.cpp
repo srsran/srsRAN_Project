@@ -11,7 +11,6 @@
 /// \file
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
-#include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
