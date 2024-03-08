@@ -110,7 +110,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 
 unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
 {
-  return lcid == INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
+  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
 unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const

@@ -275,14 +275,15 @@ protected:
     return bench->add_ue(ue_create_req);
   }
 
-  void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size)
+  void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size, bool is_srb0 = true)
   {
     // Notification from upper layers of DL buffer state.
-    const dl_buffer_state_indication_message msg{ue_idx, LCID_SRB0, buffer_size};
+    const dl_buffer_state_indication_message msg{ue_idx, is_srb0 ? LCID_SRB0 : LCID_SRB1, buffer_size};
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
+    bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
 
     // Notify scheduler of DL buffer state.
-    bench->srb0_sched.handle_dl_buffer_state_indication_srb(ue_idx, true);
+    bench->srb0_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -298,6 +299,12 @@ protected:
 // Parameters to be passed to test.
 struct srb0_test_params {
   uint8_t     k0;
+  duplex_mode duplx_mode;
+};
+
+// Parameters to be passed to test.
+struct fallback_sched_test_params {
+  bool        is_srb0;
   duplex_mode duplx_mode;
 };
 
@@ -520,11 +527,10 @@ INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                                          srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
 
 class srb0_scheduler_head_scheduling : public base_srb0_scheduler_tester,
-                                       public ::testing::TestWithParam<srb0_test_params>
+                                       public ::testing::TestWithParam<fallback_sched_test_params>
 {
 protected:
   const unsigned MAX_NOF_SLOTS_GRID_IS_BUSY = 4;
-  const unsigned MAX_UES                    = 4;
   const unsigned MAX_TEST_RUN_SLOTS         = 2100;
   const unsigned MAC_SRB0_SDU_SIZE          = 128;
 
@@ -590,10 +596,10 @@ protected:
 
 TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb0_allocation_1_ue)
 {
-  // In this test, we check if the SRB0 allocation can schedule ahead with respect to the reference slot, which is given
-  // by the slot_indication in the scheduler.
-  // Every time there is we generate SRB0 buffer bytes, we set the resource grid as occupied for a given number of
-  // slots. This forces the scheduler to try the allocation in next slot(s).
+  // In this test, we check if the SRB0/SRB1 allocation can schedule ahead with respect to the reference slot, which is
+  // given by the slot_indication in the scheduler. Every time there is we generate SRB0 buffer bytes, we set the
+  // resource grid as occupied for a given number of slots. This forces the scheduler to try the allocation in next
+  // slot(s).
 
   unsigned du_idx = 0;
   add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
@@ -606,7 +612,7 @@ TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb0_allocation
   slot_point candidate_srb_slot     = get_next_dl_slot(slot_update_srb_traffic);
   slot_point check_alloc_slot       = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
 
-  for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
 
     if (current_slot != check_alloc_slot) {
@@ -621,7 +627,7 @@ TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb0_allocation
 
     // Allocate buffer and occupy the grid to test the scheduler in advance scheduling.
     if (current_slot == slot_update_srb_traffic) {
-      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), MAC_SRB0_SDU_SIZE);
+      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
 
       auto fill_bw_grant = grant_info{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                                       ofdm_symbol_range{0, 14},
@@ -656,8 +662,187 @@ TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb0_allocation
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_head_scheduling,
-                         testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
-                                         srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
+                         testing::Values(fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::FDD},
+                                         fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::TDD},
+                                         fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
+                                         fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
+
+class srb0_scheduler_retx : public base_srb0_scheduler_tester,
+                            public ::testing::TestWithParam<fallback_sched_test_params>
+{
+protected:
+  srb0_scheduler_retx() : base_srb0_scheduler_tester(GetParam().duplx_mode)
+  {
+    const unsigned      k0                 = 0;
+    const sch_mcs_index max_msg4_mcs_index = 8;
+    auto                cell_cfg           = create_custom_cell_config_request(k0);
+    setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
+    ues_testers.reserve(MAX_UES);
+  }
+
+  // Class that implements a state-machine for the UE, to keep track of acks and retransmissions.
+  class ue_retx_tester
+  {
+  public:
+    enum class ue_state { idle, waiting_for_tx, waiting_for_ack, waiting_for_retx, reset_harq };
+
+    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, srb0_scheduler_retx* parent_) :
+      cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
+    {
+      slot_update_srb_traffic = slot_point{to_numerology_value(cell_cfg_.dl_cfg_common.init_dl_bwp.generic_params.scs),
+                                           test_rgen::uniform_int(20U, 20U)};
+      nof_packet_to_tx        = parent->SRB_PACKETS_TOT_TX;
+    }
+
+    void slot_indication(slot_point sl)
+    {
+      switch (state) {
+          // Wait until the slot to update the SRB0 traffic.
+        case ue_state::idle: {
+          if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
+            // Notify about SRB0 message in DL.
+            parent->push_buffer_state_to_dl_ue(test_ue.ue_index, parent->MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
+            state = ue_state::waiting_for_tx;
+          }
+          break;
+        }
+          // Wait until the UE transmits the PDSCH with SRB0 or SRB1.
+        case ue_state::waiting_for_tx: {
+          for (harq_id_t h_id = to_harq_id(0); h_id != MAX_HARQ_ID;
+               h_id           = to_harq_id(std::underlying_type_t<harq_id_t>(h_id) + 1)) {
+            if (test_ue.get_pcell().harqs.dl_harq(h_id).is_waiting_ack() == true) {
+              ongoing_h_id = h_id;
+              break;
+            }
+          }
+
+          if (ongoing_h_id != INVALID_HARQ_ID) {
+            --nof_packet_to_tx;
+            state = ue_state::waiting_for_ack;
+          }
+          break;
+        }
+          // Wait until the slot at which the ACK is expected and update successful and unsuccessful TX counters.
+        case ue_state::waiting_for_ack: {
+          const dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
+
+          if (h_dl.slot_ack() == sl) {
+            ack_outcome = test_rgen::bernoulli(0.5);
+            if (ack_outcome == true) {
+              ++successful_tx_cnt;
+              state = ue_state::reset_harq;
+            } else {
+              const unsigned tb_index_only_1_tb_supported = 0U;
+              if (h_dl.tb(tb_index_only_1_tb_supported).nof_retxs !=
+                  h_dl.tb(tb_index_only_1_tb_supported).max_nof_harq_retxs) {
+                state = ue_state::waiting_for_retx;
+              } else {
+                ++unsuccessful_tx_cnt;
+                state = ue_state::reset_harq;
+              }
+            }
+          }
+          break;
+        }
+          // Wait for UE to re-transmit the SRBO / SRB1 related PDSCH
+        case ue_state::waiting_for_retx: {
+          const dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(ongoing_h_id);
+          if (h_dl.empty()) {
+            ++missed_srb_cnt;
+            state = ue_state::reset_harq;
+          } else if (h_dl.is_waiting_ack()) {
+            state = ue_state::waiting_for_ack;
+          }
+          break;
+        }
+          // This state in necessary to set a delay in the reset of the HARQ-ID, which is needed by the
+          // ack_harq_process() function.
+        case ue_state::reset_harq: {
+          // Notify about SRB0 message in DL.
+          slot_update_srb_traffic =
+              sl.to_uint() + slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
+                                        test_rgen::uniform_int(1U, 20U)};
+          ongoing_h_id = INVALID_HARQ_ID;
+          state        = ue_state::idle;
+
+          break;
+        }
+      }
+    }
+
+    void ack_harq_process(slot_point sl)
+    {
+      // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
+      const unsigned   bit_index_1_harq_only = 0U;
+      dl_harq_process* dl_harq = test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl, bit_index_1_harq_only);
+      if (dl_harq != nullptr) {
+        srsran_assert(dl_harq->id == ongoing_h_id, "HARQ process mismatch");
+        static constexpr unsigned tb_idx = 0U;
+        dl_harq->ack_info(tb_idx, ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+      }
+    }
+
+    const cell_configuration& cell_cfg;
+    ue&                       test_ue;
+    ue_state                  state = ue_state::idle;
+    slot_point                slot_update_srb_traffic;
+    unsigned                  nof_packet_to_tx;
+    harq_id_t                 ongoing_h_id = INVALID_HARQ_ID;
+    srb0_scheduler_retx*      parent;
+    bool                      ack_outcome = false;
+    // Counter of TXs that terminate with ACK before reaching max_nof_harq_retxs.
+    unsigned successful_tx_cnt = 0;
+    // Counter of a TX that terminates with all NACKs until max_nof_harq_retxs is reached.
+    unsigned unsuccessful_tx_cnt = 0;
+    // Counter of a TX that require HARQ re-tx, but are not served by the scheduler.
+    unsigned missed_srb_cnt = 0;
+  };
+
+  const unsigned SRB_PACKETS_TOT_TX = 20;
+  const unsigned MAX_UES            = 32;
+  const unsigned MAX_TEST_RUN_SLOTS = 2100;
+  const unsigned MAC_SRB0_SDU_SIZE  = 128;
+
+  std::vector<ue_retx_tester> ues_testers;
+};
+
+TEST_P(srb0_scheduler_retx, test_scheduling_for_srb_retransmissions_multi_ue)
+{
+  // In this test, we check if the SRB0/SRB1 scheduler handles re-transmissions. Each time a SRB0/SRB1 buffer is updated
+  // for a given UE, the GNB is expected to schedule a PDSCH grant, or multiple grants (for retransmissions) in case of
+  // NACKs. Every time the SRB0/SRB1 buffer is updated, the scheduler is expected serve this SRB, which can result in a
+  // successful transmission (at least 1 ACK before reaching max_nof_harq_retxs) or an unsuccessful tx (all NACKs until
+  // max_nof_harq_retxs).
+  // The test fails if: (i) the tot. number of successful transmission and unsuccessful transmissions is less
+  // than the SRB0/SRB1 buffer updates; (ii) if any NACKed re-transmissions are left unserved (unless it reaches the
+  // max_nof_harq_retxs)
+
+  for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
+    add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
+    ues_testers.emplace_back(ue_retx_tester(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this));
+  }
+
+  for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+
+    for (auto& tester : ues_testers) {
+      tester.slot_indication(current_slot);
+      tester.ack_harq_process(current_slot);
+    }
+  }
+
+  for (auto& tester : ues_testers) {
+    ASSERT_EQ(0U, tester.missed_srb_cnt);
+    ASSERT_EQ(SRB_PACKETS_TOT_TX, tester.successful_tx_cnt + tester.unsuccessful_tx_cnt);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
+                         srb0_scheduler_retx,
+                         testing::Values(fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::FDD},
+                                         fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::TDD},
+                                         fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
+                                         fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
 
 int main(int argc, char** argv)
 {
