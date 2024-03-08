@@ -467,11 +467,11 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
         if (pucch.format == pucch_format::FORMAT_0) {
           pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_0.sr_bits) > 0;
-          // Auto ACK harqs.
+          // Auto ACK latest_harq_states.
           pucch_pdu.harqs.resize(pucch.format_0.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         } else {
           pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_1.sr_bits) > 0;
-          // Auto ACK harqs.
+          // Auto ACK latest_harq_states.
           pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         }
         pucch_pdu.ul_sinr = 55;
@@ -482,7 +482,7 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
         pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
         pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
-        // Auto ACK harqs.
+        // Auto ACK latest_harq_states.
         pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         if (pucch.csi_rep_cfg.has_value()) {
           pucch_pdu.csi.emplace();
@@ -507,7 +507,7 @@ protected:
     pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
 
     uci_indication::uci_pdu::uci_pusch_pdu pusch_pdu{};
-    // Auto ACK harqs.
+    // Auto ACK latest_harq_states.
     if (pusch.uci->harq.has_value()) {
       pusch_pdu.harqs.resize(pusch.uci->harq->harq_ack_nof_bits, mac_harq_ack_report_status::ack);
     }

@@ -34,6 +34,9 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
+  // NOTE: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
+  // value of k1, passed through the expert config.
+  dci_1_0_k1_values = {4, 5, 6, 7, 8};
 }
 
 void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -58,12 +61,12 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
     auto* h_dl = next_ue_harq_retx->get_harq_process();
 
     if (h_dl->has_pending_retx()) {
-      optional<slot_point> most_recent_tx = get_most_recent_slot_tx(u.ue_index);
+      optional<std::pair<slot_point, slot_point>> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
       if (next_ue_harq_retx->is_srb0) {
-        schedule_srb(res_alloc, u, true, h_dl, most_recent_tx);
+        schedule_srb(res_alloc, u, next_ue_harq_retx->is_srb0, h_dl, most_recent_tx_ack);
       } else {
         // TODO: Change this into SRB1_retx.
-        schedule_srb(res_alloc, u, true, h_dl, most_recent_tx);
+        schedule_srb(res_alloc, u, next_ue_harq_retx->is_srb0, h_dl, most_recent_tx_ack);
       }
     }
     ++next_ue_harq_retx;
@@ -83,9 +86,9 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
       continue;
     }
 
-    auto&                u              = ues[next_ue->ue_index];
-    optional<slot_point> most_recent_tx = get_most_recent_slot_tx(u.ue_index);
-    if (u.has_pending_dl_newtx_bytes(LCID_SRB0) and schedule_srb(res_alloc, u, true, nullptr, most_recent_tx)) {
+    auto&                                       u                  = ues[next_ue->ue_index];
+    optional<std::pair<slot_point, slot_point>> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    if (u.has_pending_dl_newtx_bytes(LCID_SRB0) and schedule_srb(res_alloc, u, true, nullptr, most_recent_tx_ack)) {
       next_ue = pending_ues.erase(next_ue);
     } else {
       ++next_ue;
@@ -106,10 +109,18 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
       continue;
     }
 
-    auto&                u              = ues[next_ue->ue_index];
-    optional<slot_point> most_recent_tx = get_most_recent_slot_tx(u.ue_index);
-    if (u.has_pending_dl_newtx_bytes(LCID_SRB1) and schedule_srb(res_alloc, u, false, nullptr, most_recent_tx)) {
-      next_ue = pending_ues.erase(next_ue);
+    auto&                                       u                  = ues[next_ue->ue_index];
+    optional<std::pair<slot_point, slot_point>> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    if (u.has_pending_dl_newtx_bytes(LCID_SRB1) and schedule_srb(res_alloc, u, false, nullptr, most_recent_tx_ack)) {
+      if (not u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
+        logger.debug("rnti={}: Removing UE from list, as SRB1 buffer is empty.", u.crnti);
+        next_ue = pending_ues.erase(next_ue);
+      }
+      // Don't increase the iterator here, as we give priority to the same UE if there left are bytes in the SRB1
+      // buffer.
+      // NOTE: The policy we adopt in this scheduler is to schedule first the all possible grants to a given UE,
+      // to speed up the re-establishment and re-configuration for that UE. Only after the SRB1 buffer of the UE is
+      // emptied, we move on to the next UE.
     } else {
       ++next_ue;
     }
@@ -137,11 +148,11 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
   return next_candidate_slot;
 }
 
-bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
-                                     ue&                      u,
-                                     bool                     is_srb0,
-                                     dl_harq_process*         h_dl_retx,
-                                     optional<slot_point>     starting_sl)
+bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator&                    res_alloc,
+                                     ue&                                         u,
+                                     bool                                        is_srb0,
+                                     dl_harq_process*                            h_dl_retx,
+                                     optional<std::pair<slot_point, slot_point>> most_recent_tx_ack_slots)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -160,14 +171,17 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
     return false;
   }
 
-  if (starting_sl.has_value() and sched_ref_slot + max_dl_slots_ahead_sched < starting_sl.value()) {
+  if (most_recent_tx_ack_slots.has_value() and
+      sched_ref_slot + max_dl_slots_ahead_sched < most_recent_tx_ack_slots.value().first) {
     return false;
   }
-  starting_sl = sched_ref_slot;
 
   // We keep track of the number of scheduling attempts for the given UE.
   unsigned   sched_attempts_cnt = 0;
-  slot_point next_slot          = starting_sl.value();
+  slot_point next_slot =
+      most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().first > sched_ref_slot
+          ? most_recent_tx_ack_slots.value().first
+          : sched_ref_slot;
 
   while (next_slot <= sched_ref_slot + max_dl_slots_ahead_sched) {
     unsigned                            offset_to_sched_ref_slot = static_cast<unsigned>(next_slot - sched_ref_slot);
@@ -215,15 +229,26 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
         return false;
       }
 
+      slot_point most_recent_ack_slot = pdsch_alloc.slot;
+      if (most_recent_tx_ack_slots.has_value()) {
+        if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= most_recent_tx_ack_slots.value().second) {
+          continue;
+        }
+        most_recent_ack_slot = most_recent_tx_ack_slots.value().second;
+      }
+
       dl_harq_process* candidate_h_dl =
-          is_srb0 ? schedule_srb0(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, h_dl_retx)
-                  : schedule_srb1(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, h_dl_retx);
+          is_srb0
+              ? schedule_srb0(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx)
+              : schedule_srb1(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
 
       const bool alloc_successful = candidate_h_dl != nullptr;
       if (alloc_successful) {
         if (not is_retx) {
           store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
         }
+        logger.debug(
+            "rnti={}: PDSCH space for SRB{} scheduled for slot:{}", u.crnti, is_srb0 ? "0" : "1", pdsch_alloc.slot);
         return true;
       }
 
@@ -235,7 +260,7 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator& res_alloc,
 
   // No resource found in UE's carriers and Search spaces.
   slot_point pdcch_slot = res_alloc[0].slot;
-  logger.debug("rnti={}: Not enough PDSCH space for {} message found in any of the slots:[{},{}).",
+  logger.debug("rnti={}: Not enough PDSCH space for {} message found in any of the slots:[{},{})",
                u.crnti,
                is_srb0 ? "SRB0" : "SRB1",
                pdcch_slot,
@@ -247,6 +272,7 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
                                                   cell_resource_allocator& res_alloc,
                                                   unsigned                 pdsch_time_res,
                                                   unsigned                 slot_offset,
+                                                  slot_point               most_recent_ack_slot,
                                                   dl_harq_process*         h_dl_retx)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
@@ -306,7 +332,7 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
 
     if (prbs_tbs.tbs_bytes < pending_bytes) {
       logger.debug(
-          "rnti={}: SRB0 PDU size ({}) exceeds TBS calculated ({}).", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
+          "rnti={}: SRB0 PDU size ({}) exceeds TBS calculated ({})", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
       return nullptr;
     }
 
@@ -334,16 +360,20 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
   pdcch_dl_information*         pdcch =
       pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.debug("rnti={}: Postponed SRB0 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
+    logger.debug(
+        "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDCCH.", u.crnti, pdsch_alloc.slot);
     return nullptr;
   }
 
   // Allocate PUCCH resources.
-  unsigned k1 = 4;
+  unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
-  static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
-  optional<unsigned>                  pucch_res_indicator;
+  optional<unsigned> pucch_res_indicator;
   for (const auto k1_candidate : dci_1_0_k1_values) {
+    // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
+    if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
+      continue;
+    }
     pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
         res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
@@ -352,7 +382,8 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
     }
   }
   if (not pucch_res_indicator.has_value()) {
-    logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PUCCH.");
+    logger.debug(
+        "rnti={}: Failed to allocate PDSCH for SRB0 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return nullptr;
   }
@@ -381,6 +412,7 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
                                                   cell_resource_allocator& res_alloc,
                                                   unsigned                 pdsch_time_res,
                                                   unsigned                 slot_offset,
+                                                  slot_point               most_recent_ack_slot,
                                                   dl_harq_process*         h_dl_retx)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
@@ -490,11 +522,14 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
   }
 
   // Allocate PUCCH resources.
-  unsigned k1 = 4;
+  unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
-  static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
-  optional<unsigned>                  pucch_res_indicator;
+  optional<unsigned> pucch_res_indicator;
   for (const auto k1_candidate : dci_1_0_k1_values) {
+    // Skip the k1 values that would result in a PUCCH allocation that would overlap with the most recent ACK slot.
+    if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
+      continue;
+    }
     pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
         res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
@@ -503,7 +538,8 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
     }
   }
   if (not pucch_res_indicator.has_value()) {
-    logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PUCCH.");
+    logger.debug(
+        "rnti={}: Failed to allocate PDSCH for SRB0 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return nullptr;
   }
@@ -713,20 +749,26 @@ const pdsch_time_domain_resource_allocation& ue_srb0_scheduler::get_pdsch_td_cfg
   return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
 }
 
-optional<slot_point> ue_srb0_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
+optional<std::pair<slot_point, slot_point>> ue_srb0_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
 {
-  optional<slot_point> most_recent_tx;
+  optional<std::pair<slot_point, slot_point>> most_recent_tx_ack_slot;
   for (const auto& ue_proc : ongoing_ues_ack_retxs) {
     if (ue_proc.ue_index == ue_idx) {
-      slot_point h_dl_slot_tx = ue_proc.get_harq_process()->slot_tx();
-      if (most_recent_tx.has_value() and h_dl_slot_tx > most_recent_tx.value()) {
-        most_recent_tx = ue_proc.get_harq_process()->slot_tx();
-      } else {
-        most_recent_tx.emplace(ue_proc.get_harq_process()->slot_tx());
+      slot_point h_dl_slot_tx  = ue_proc.get_harq_process()->slot_tx();
+      slot_point h_dl_slot_ack = ue_proc.get_harq_process()->slot_ack();
+      if (not most_recent_tx_ack_slot.has_value()) {
+        most_recent_tx_ack_slot.emplace(h_dl_slot_tx, h_dl_slot_ack);
+        continue;
+      }
+      if (h_dl_slot_tx > most_recent_tx_ack_slot.value().first) {
+        most_recent_tx_ack_slot.value().first = h_dl_slot_tx;
+      }
+      if (h_dl_slot_ack > most_recent_tx_ack_slot.value().second) {
+        most_recent_tx_ack_slot.value().second = h_dl_slot_ack;
       }
     }
   }
-  return most_recent_tx;
+  return most_recent_tx_ack_slot;
 }
 
 void ue_srb0_scheduler::store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0)

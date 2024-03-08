@@ -43,17 +43,18 @@ private:
   void update_ongoing_ue_retxs();
 
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  bool schedule_srb(cell_resource_allocator& res_alloc,
-                    ue&                      u,
-                    bool                     is_srb0,
-                    dl_harq_process*         h_dl_retx,
-                    optional<slot_point>     starting_sl);
+  bool schedule_srb(cell_resource_allocator&                    res_alloc,
+                    ue&                                         u,
+                    bool                                        is_srb0,
+                    dl_harq_process*                            h_dl_retx,
+                    optional<std::pair<slot_point, slot_point>> most_recent_tx_ack_slots);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
   dl_harq_process* schedule_srb0(ue&                      u,
                                  cell_resource_allocator& res_alloc,
                                  unsigned                 pdsch_time_res,
                                  unsigned                 slot_offset,
+                                 slot_point               most_recent_ack_slot,
                                  dl_harq_process*         h_dl_retx);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
@@ -61,6 +62,7 @@ private:
                                  cell_resource_allocator& res_alloc,
                                  unsigned                 pdsch_time_res,
                                  unsigned                 slot_offset,
+                                 slot_point               most_recent_ack_slot,
                                  dl_harq_process*         h_dl_retx = nullptr);
 
   void fill_srb0_grant(ue&                        u,
@@ -132,7 +134,10 @@ private:
 
   void store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0);
 
-  optional<slot_point> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
+  // If there is any pending SRB0 or SRB1 transmissions for the UE, the function returns the most recent slot with PDSCH
+  // for SRB0/SRB1 (first element of the pair) and the most recent slot with the corresponding PUCCH (first element of
+  // the pair).
+  optional<std::pair<slot_point, slot_point>> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
@@ -153,6 +158,8 @@ private:
 
   /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
   std::list<ack_and_retx_tracker> ongoing_ues_ack_retxs;
+
+  std::vector<uint8_t> dci_1_0_k1_values;
 
   srslog::basic_logger& logger;
 };

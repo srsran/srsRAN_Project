@@ -111,6 +111,14 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
     return nullopt;
   }
 
+  if (has_common_pucch_f1_grant(tcrnti, pucch_slot_alloc.slot)) {
+    logger.debug(
+        "tc-rnti={}: PUCCH common not allocated for slot={}. Cause: existing grant for this UE at the same slot",
+        tcrnti,
+        pucch_slot_alloc.slot);
+    return nullopt;
+  }
+
   // Get the PUCCH resources, either from default tables.
   optional<pucch_res_alloc_cfg> pucch_res = alloc_pucch_common_res_harq(pucch_slot_alloc, dci_info.ctx);
 
