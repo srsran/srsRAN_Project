@@ -203,6 +203,10 @@ bool du_high_test_bench::run_until(unique_function<bool()> condition, unsigned m
 
 bool du_high_test_bench::add_ue(rnti_t rnti)
 {
+  if (ues.count(rnti) > 0) {
+    return false;
+  }
+
   cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
@@ -211,7 +215,99 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   // Wait for Init UL RRC Message to come out of the F1AP.
   bool ret =
       run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 1000 * (next_slot.numerology() + 1));
-  return ret and test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
+  if (not ret or not test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti)) {
+    return false;
+  }
+
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
+      cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++);
+  ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id}));
+
+  return ret;
+}
+
+bool du_high_test_bench::run_rrc_setup(rnti_t rnti)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+
+  // Send DL RRC Message which contains RRC Setup.
+  f1ap_message msg = generate_dl_rrc_message_transfer(
+      *it->second.du_ue_id, *it->second.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Wait for contention resolution to be sent to the PHY.
+  bool ret = run_until([&]() {
+    if (phy.cell.last_dl_res.has_value() and phy.cell.last_dl_res.value().dl_res != nullptr) {
+      auto& dl_res = *phy.cell.last_dl_res.value().dl_res;
+      for (const dl_msg_alloc& grant : dl_res.ue_grants) {
+        if (grant.pdsch_cfg.rnti == rnti and
+            std::any_of(grant.tb_list[0].lc_chs_to_sched.begin(),
+                        grant.tb_list[0].lc_chs_to_sched.end(),
+                        [](const dl_msg_lc_info& lc_grant) { return lc_grant.lcid == lcid_dl_sch_t::UE_CON_RES_ID; })) {
+          return true;
+        }
+      }
+    }
+    return false;
+  });
+  if (not ret) {
+    return false;
+  }
+
+  // Wait for Msg4 to be ACKed.
+  unsigned msg4_k1 = 4;
+  for (unsigned i = 0; i != msg4_k1; ++i) {
+    run_slot();
+  }
+
+  // UE sends RRC Setup Complete. Wait until F1AP forwards UL RRC Message to CU-CP.
+  cu_notifier.last_f1ap_msgs.clear();
+  du_hi->get_pdu_handler().handle_rx_data_indication(
+      test_helpers::create_pdu_with_sdu(next_slot, rnti, lcid_t::LCID_SRB1));
+  ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
+    return false;
+  }
+  return true;
+}
+
+bool du_high_test_bench::run_ue_context_setup(rnti_t rnti)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+
+  // DU receives UE Context Setup Request.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message                            msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  asn1::f1ap::ue_context_setup_request_s& cmd = msg.pdu.init_msg().value.ue_context_setup_request();
+  cmd->gnb_du_ue_f1ap_id                      = gnb_du_ue_f1ap_id_to_uint(*it->second.du_ue_id);
+  cmd->gnb_cu_ue_f1ap_id                      = gnb_cu_ue_f1ap_id_to_uint(*it->second.cu_ue_id);
+  cmd->drbs_to_be_setup_list[0]
+      .value()
+      .drbs_to_be_setup_item()
+      .qos_info.choice_ext()
+      .value()
+      .drb_info()
+      .drb_qos.qos_characteristics.non_dyn_5qi()
+      .five_qi = 7U;
+  cmd->drbs_to_be_setup_list[0].value().drbs_to_be_setup_item().rlc_mode.value =
+      asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Wait until DU sends UE Context Setup Response.
+  bool ret = this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  if (not ret or cu_notifier.last_f1ap_msgs.size() != 1 or
+      not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
+    return false;
+  }
+
+  return true;
 }
 
 void du_high_test_bench::run_slot()
@@ -233,4 +329,21 @@ void du_high_test_bench::run_slot()
   EXPECT_TRUE(dl_result.has_value() and dl_result->slot == next_slot);
 
   ++next_slot;
+
+  // Process results.
+  handle_slot_results();
+}
+
+void du_high_test_bench::handle_slot_results()
+{
+  // Auto-generate UCI indications.
+  if (phy.cell.last_ul_res.has_value() and this->phy.cell.last_ul_res->ul_res != nullptr) {
+    const ul_sched_result& ul_res = *this->phy.cell.last_ul_res->ul_res;
+    slot_point             sl_rx  = this->phy.cell.last_ul_res->slot;
+
+    if (not ul_res.pucchs.empty()) {
+      mac_uci_indication_message uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.pucchs);
+      this->du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+    }
+  }
 }

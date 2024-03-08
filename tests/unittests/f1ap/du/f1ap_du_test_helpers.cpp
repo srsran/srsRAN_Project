@@ -170,6 +170,24 @@ f1ap_message srsran::srs_du::generate_ue_context_release_command()
   return msg;
 }
 
+f1ap_message srsran::srs_du::generate_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                              gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                              srb_id_t            srb_id,
+                                                              byte_buffer         rrc_container)
+{
+  using namespace asn1::f1ap;
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+  dl_rrc_msg_transfer_s& dl_msg = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+  dl_msg->gnb_du_ue_f1ap_id     = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+  dl_msg->gnb_cu_ue_f1ap_id     = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  dl_msg->srb_id                = srb_id_to_uint(srb_id);
+  dl_msg->rrc_container         = std::move(rrc_container);
+
+  return msg;
+}
+
 namespace {
 
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
