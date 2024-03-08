@@ -296,6 +296,45 @@ void test_bit_decoder()
   TESTASSERT_EQ(4 * 8, dec.nof_bits());
 }
 
+void test_bit_decoder_bytes()
+{
+  byte_buffer          bytes = {0b1, 0b10, 0b11, 0b100};
+  bit_decoder          dec(bytes);
+  std::vector<uint8_t> vec;
+
+  TESTASSERT_EQ(0, dec.nof_bytes());
+  TESTASSERT_EQ(0, dec.nof_bits());
+  TESTASSERT(bytes == dec.data());
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:   [00000001]
+  vec.resize(1);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(1, dec.nof_bytes());
+  TESTASSERT_EQ(8, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b1, vec[0]);
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:             [00000010][00000011]
+  vec.resize(2);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(3, dec.nof_bytes());
+  TESTASSERT_EQ(24, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b10, vec[0]);
+  TESTASSERT_EQ(0b11, vec[1]);
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:                                 [00000100]
+  vec.resize(1);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(4, dec.nof_bytes());
+  TESTASSERT_EQ(32, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b100, vec[0]);
+}
+
 void test_bit_decoder_bool()
 {
   byte_buffer bytes = {0x02};
@@ -359,6 +398,7 @@ int main()
   test_bit_encoder_uint64_offset();
   test_bit_decoder_empty_buffer();
   test_bit_decoder();
+  test_bit_decoder_bytes();
   test_bit_decoder_bool();
   test_bit_decoder_uint64_aligned();
   test_bit_decoder_uint64_offset();
