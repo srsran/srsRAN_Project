@@ -236,7 +236,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.start_symbol_index                 = 3;
   pdu.nr_of_symbols                      = 5;
   pdu.power_control_offset_profile_nr    = 6;
-  pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
+  pdu.power_control_offset_ss_profile_nr = fapi::power_control_offset_ss::dB3;
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
   pdu.dl_dmrs_symb_pos                   = 0;
   pdu.precoding_and_beamforming          = build_valid_tx_precoding_and_beamforming_pdu();
@@ -277,7 +277,7 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.freq_density                           = csi_rs_freq_density_type::three;
   pdu.scramb_id                              = 123;
   pdu.power_control_offset_profile_nr        = 0;
-  pdu.power_control_offset_ss_profile_nr     = nzp_csi_rs_epre_to_ssb::dB0;
+  pdu.power_control_offset_ss_profile_nr     = power_control_offset_ss::dB0;
   pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = 0;
   pdu.precoding_and_beamforming              = build_valid_tx_precoding_and_beamforming_pdu();
 

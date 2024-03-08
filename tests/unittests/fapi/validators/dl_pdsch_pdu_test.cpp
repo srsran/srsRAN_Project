@@ -295,7 +295,7 @@ INSTANTIATE_TEST_SUITE_P(offset_ss_profile_nr,
                                               "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE",
                                               [](dl_pdsch_pdu& pdu, int value) {
                                                 pdu.power_control_offset_ss_profile_nr =
-                                                    static_cast<nzp_csi_rs_epre_to_ssb>(value);
+                                                    static_cast<power_control_offset_ss>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{2, true},

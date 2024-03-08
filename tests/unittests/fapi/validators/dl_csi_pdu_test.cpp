@@ -173,7 +173,7 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset_SS_profile_NR,
                                               "Power control offset SS profile NR",
                                               [](dl_csi_rs_pdu& pdu, int value) {
                                                 pdu.power_control_offset_ss_profile_nr =
-                                                    static_cast<nzp_csi_rs_epre_to_ssb>(value);
+                                                    static_cast<power_control_offset_ss>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},

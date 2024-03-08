@@ -497,8 +497,8 @@ public:
 
   /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_tx_power_info_parameters(int                    power_control_offset,
-                                                     nzp_csi_rs_epre_to_ssb power_control_offset_ss)
+  dl_pdsch_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
+                                                     power_control_offset_ss power_control_offset_ss)
   {
     pdu.power_control_offset_profile_nr    = power_control_offset;
     pdu.power_control_offset_ss_profile_nr = power_control_offset_ss;
@@ -706,8 +706,8 @@ public:
 
   /// Sets the CSI-RS PDU tx power info parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
-  dl_csi_rs_pdu_builder& set_tx_power_info_parameters(int                    power_control_offset,
-                                                      nzp_csi_rs_epre_to_ssb power_control_offset_ss)
+  dl_csi_rs_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
+                                                      power_control_offset_ss power_control_offset_ss)
   {
     pdu.power_control_offset_ss_profile_nr = power_control_offset_ss;
     pdu.power_control_offset_profile_nr    = power_control_offset;

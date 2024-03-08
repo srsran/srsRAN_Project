@@ -64,7 +64,7 @@ TEST(dl_csi_pdu_builder, valid_tx_power_info_parameters_passes)
     dl_csi_rs_pdu         pdu;
     dl_csi_rs_pdu_builder builder(pdu);
 
-    nzp_csi_rs_epre_to_ssb ss = nzp_csi_rs_epre_to_ssb::dB3;
+    power_control_offset_ss ss = power_control_offset_ss::dB3;
 
     builder.set_tx_power_info_parameters(power, ss);
 

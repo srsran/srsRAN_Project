@@ -241,28 +241,31 @@ struct dl_pdsch_codeword {
 enum class low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
 enum class resource_allocation_type : uint8_t { type_0, type_1 };
 enum class vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
-enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6 };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
 enum class dmrs_cfg_type : uint8_t { type_1, type_2 };
 
-/// Converts the given value to a NZP CSI-RS EPRE to SSB value.
-inline nzp_csi_rs_epre_to_ssb to_nzp_csi_rs_epre_to_ssb(int value)
+/// Power control offset SS defined as 'ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE' as per SCF-222 v4.0
+/// section 2.2.4.5.
+enum class power_control_offset_ss : uint8_t { dB_minus_3, dB0, dB3, dB6 };
+
+/// Converts the given value to a power control offset SS value.
+inline power_control_offset_ss to_power_control_offset_ss(int value)
 {
   switch (value) {
     case -3:
-      return nzp_csi_rs_epre_to_ssb::dB_minus_3;
+      return power_control_offset_ss::dB_minus_3;
     case 0:
-      return nzp_csi_rs_epre_to_ssb::dB0;
+      return power_control_offset_ss::dB0;
     case 3:
-      return nzp_csi_rs_epre_to_ssb::dB3;
+      return power_control_offset_ss::dB3;
     case 6:
-      return nzp_csi_rs_epre_to_ssb::dB6;
+      return power_control_offset_ss::dB6;
     default:
-      srsran_assert(0, "Invalid CSI-RS EPRE to SSB value '{}'", value);
+      srsran_assert(0, "Invalid power control offset SS '{}'", value);
       break;
   }
-  return nzp_csi_rs_epre_to_ssb::dB0;
+  return power_control_offset_ss::dB0;
 }
 
 /// Downlink PDSCH PDU information.
@@ -315,7 +318,7 @@ struct dl_pdsch_pdu {
   // :TODO: PTRS
   tx_precoding_and_beamforming_pdu         precoding_and_beamforming;
   int                                      power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb                   power_control_offset_ss_profile_nr;
+  power_control_offset_ss                  power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
   inline_tb_crc_type                       is_inline_tb_crc;
   std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;
@@ -346,7 +349,7 @@ struct dl_csi_rs_pdu {
   csi_rs_freq_density_type          freq_density;
   uint16_t                          scramb_id;
   int                               power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb            power_control_offset_ss_profile_nr;
+  power_control_offset_ss           power_control_offset_ss_profile_nr;
   tx_precoding_and_beamforming_pdu  precoding_and_beamforming;
   dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4

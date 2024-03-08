@@ -147,9 +147,6 @@ static void pdcch_conversion_benchmark()
     // Payload.
     dci_payload payload;
     builder_dci.set_payload(payload);
-
-    optional<float> profile_data;
-    optional<float> profile_dmrs;
     builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
 
     pdcch_processor::pdu_t             proc_pdu;

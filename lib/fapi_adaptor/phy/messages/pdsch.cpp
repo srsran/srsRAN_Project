@@ -42,16 +42,16 @@ static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsc
   }
 }
 
-static float get_power_control_offset_ss_dB(fapi::nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr)
+static float get_power_control_offset_ss_dB(fapi::power_control_offset_ss power_control_offset_ss_profile_nr)
 {
   switch (power_control_offset_ss_profile_nr) {
-    case fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3:
+    case fapi::power_control_offset_ss::dB_minus_3:
       return -3.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB0:
+    case fapi::power_control_offset_ss::dB0:
       return +0.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB3:
+    case fapi::power_control_offset_ss::dB3:
       return +3.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB6:
+    case fapi::power_control_offset_ss::dB6:
     default:
       break;
   }

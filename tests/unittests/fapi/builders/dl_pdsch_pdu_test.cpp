@@ -179,7 +179,7 @@ TEST(dl_pdsch_pdu_builder, valid_tx_power_info_parameters_passes)
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
-    nzp_csi_rs_epre_to_ssb ss_profile = nzp_csi_rs_epre_to_ssb::dB0;
+    power_control_offset_ss ss_profile = power_control_offset_ss::dB0;
 
     builder.set_tx_power_info_parameters(power, ss_profile);
 

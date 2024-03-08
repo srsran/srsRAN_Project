@@ -112,7 +112,7 @@ static void fill_time_allocation(fapi::dl_pdsch_pdu_builder& builder, const ofdm
 static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder, const tx_power_pdsch_information& power_params)
 {
   builder.set_tx_power_info_parameters(power_params.pwr_ctrl_offset,
-                                       fapi::to_nzp_csi_rs_epre_to_ssb(power_params.pwr_ctrl_offset_ss));
+                                       fapi::to_power_control_offset_ss(power_params.pwr_ctrl_offset_ss));
 }
 
 static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,

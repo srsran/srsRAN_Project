@@ -96,12 +96,6 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
                   // Payload.
                   dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
                   builder_dci.set_payload(payload);
-
-                  optional<float> profile_data;
-                  if (power != -33) {
-                    profile_data.emplace(power);
-                  }
-
                   builder_dci.set_parameters_v4_dci(nid_dmrs);
 
                   pdcch_processor::pdu_t proc_pdu;

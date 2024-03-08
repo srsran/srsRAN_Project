@@ -21,20 +21,20 @@ using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
 
-static float calculate_ratio_pdsch_data_to_sss_dB(int profile_nr, fapi::nzp_csi_rs_epre_to_ssb profile_ss_nr)
+static float calculate_ratio_pdsch_data_to_sss_dB(int profile_nr, fapi::power_control_offset_ss profile_ss_nr)
 {
   float power_control_offset_ss_dB = 0.0F;
   switch (profile_ss_nr) {
-    case fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3:
+    case fapi::power_control_offset_ss::dB_minus_3:
       power_control_offset_ss_dB = -3.F;
       break;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB0:
+    case fapi::power_control_offset_ss::dB0:
       power_control_offset_ss_dB = .0F;
       break;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB3:
+    case fapi::power_control_offset_ss::dB3:
       power_control_offset_ss_dB = 3.F;
       break;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB6:
+    case fapi::power_control_offset_ss::dB6:
     default:
       power_control_offset_ss_dB = 6.F;
       break;
@@ -136,10 +136,10 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
             for (auto vrb_prb_mapping : {fapi::vrb_to_prb_mapping_type::interleaved_rb_size4,
                                          fapi::vrb_to_prb_mapping_type::interleaved_rb_size2}) {
               // Iterate all possible NZP-CSI-RS to SSS ratios. L1_use_profile_sss means SSS profile mode.
-              for (auto power_ss_profile_nr : {fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3,
-                                               fapi::nzp_csi_rs_epre_to_ssb::dB0,
-                                               fapi::nzp_csi_rs_epre_to_ssb::dB3,
-                                               fapi::nzp_csi_rs_epre_to_ssb::dB6}) {
+              for (auto power_ss_profile_nr : {fapi::power_control_offset_ss::dB_minus_3,
+                                               fapi::power_control_offset_ss::dB0,
+                                               fapi::power_control_offset_ss::dB3,
+                                               fapi::power_control_offset_ss::dB6}) {
                 // Iterate possible PDSCH data to NZP-CSI-RS ratios for Profile NR. It is ignored when
                 // power_ss_profile_nr is L1_use_profile_sss.
                 for (int power_profile_nr = -8; power_profile_nr != -7; ++power_profile_nr) {
@@ -206,11 +206,6 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                       }
 
                       builder.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
-
-                      optional<int>   profile_nr;
-                      optional<float> data_profile_sss;
-                      optional<float> dmrs_profile_sss;
-
                       builder.set_tx_power_info_parameters(power_profile_nr, power_ss_profile_nr);
 
                       // :TODO: not filling CBG to retx control parameters.
