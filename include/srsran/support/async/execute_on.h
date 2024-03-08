@@ -43,7 +43,7 @@ auto execute_on(TaskExecutor& exec)
 
   private:
     TaskExecutor& exec;
-    bool          success;
+    bool          success = false;
   };
 
   return task_executor_awaiter{exec};
@@ -77,7 +77,7 @@ auto defer_to(TaskExecutor& exec)
 
   private:
     TaskExecutor& exec;
-    bool          success;
+    bool          success = false;
   };
 
   return task_executor_awaiter{exec};
