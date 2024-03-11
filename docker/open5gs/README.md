@@ -1,4 +1,4 @@
-This is a all-in-one Docker container for Open5GS. At build, the container will use the specified version of the open5gs repository (default v2.6.1
+This is a all-in-one Docker container for Open5GS. At build, the container will use the specified version of the open5gs repository (default v2.6.6
 ). To run the latest tag of the open5gs repository (<https://github.com/open5gs/open5gs/tags>), line 51 and 52 in .Dockerfile
 ```
 # get latest open5gs tag (must be stored in a file, because docker does not allow to use the return value directly)
@@ -54,7 +54,7 @@ Build the Docker container using:
 
 `docker build --target open5gs -t open5gs-docker .`
 
-You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.1`
+You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.6`
 
 Then run the docker container with:
 

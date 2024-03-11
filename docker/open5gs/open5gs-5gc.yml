@@ -26,7 +26,6 @@ parameter:
 #    no_sgwu: true
 #    no_pcrf: true
 #    no_hss: true
-no_ipv6: true
 
 sbi:
     server:
@@ -242,3 +241,8 @@ udr:
     sbi:
       - addr: 127.0.0.20
         port: 7777
+time:
+  t3412:
+    value: 540     # 9 minutes * 60 = 540 seconds
+  t3512:
+    value: 540     # 9 minutes * 60 = 540 seconds
