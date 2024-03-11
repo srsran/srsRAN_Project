@@ -88,7 +88,8 @@ private:
 class pdsch_processor_pool : public pdsch_processor
 {
 public:
-  explicit pdsch_processor_pool(span<std::unique_ptr<pdsch_processor>> processors_) : free_list(processors_.size())
+  explicit pdsch_processor_pool(span<std::unique_ptr<pdsch_processor>> processors_, bool blocking_) :
+    free_list(processors_.size()), blocking(blocking_)
   {
     unsigned index = 0;
     for (std::unique_ptr<pdsch_processor>& processor : processors_) {
@@ -103,7 +104,11 @@ public:
                const pdu_t&                                                 pdu) override
   {
     // Try to get a worker.
-    optional<unsigned> index = free_list.try_pop();
+    optional<unsigned> index;
+
+    do {
+      index = free_list.try_pop();
+    } while (blocking && !index.has_value());
 
     // If no worker is available.
     if (!index.has_value()) {
@@ -119,6 +124,7 @@ public:
 private:
   std::vector<detail::pdsch_processor_wrapper> processors;
   detail::pdsch_processor_free_list            free_list;
+  bool                                         blocking;
 };
 
 } // namespace srsran

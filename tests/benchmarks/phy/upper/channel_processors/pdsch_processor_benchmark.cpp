@@ -627,7 +627,7 @@ static pdsch_processor_factory& get_processor_factory()
   TESTASSERT(pdsch_proc_factory);
 
   // Create PDSCH processor pool.
-  pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
+  pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads, true);
   TESTASSERT(pdsch_proc_factory);
 
   return *pdsch_proc_factory;
