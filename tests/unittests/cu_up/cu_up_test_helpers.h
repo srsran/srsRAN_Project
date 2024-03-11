@@ -29,9 +29,9 @@ constexpr auto default_wait_timeout = std::chrono::seconds(3);
 namespace srsran {
 
 /// Dummy CU-UP executor pool used for testing
-class dummy_cu_up_executor_pool final : public cu_up_executor_pool
+class dummy_cu_up_executor_pool final : public srs_cu_up::cu_up_executor_pool
 {
-  class dummy_pdu_session_executor_mapper_impl : public pdu_session_executor_mapper
+  class dummy_pdu_session_executor_mapper_impl : public srs_cu_up::ue_executor_mapper
   {
   public:
     dummy_pdu_session_executor_mapper_impl(task_executor& exec_) : exec(&exec_) {}
@@ -40,13 +40,21 @@ class dummy_cu_up_executor_pool final : public cu_up_executor_pool
     task_executor& ul_pdu_executor() override { return *exec; }
     task_executor& dl_pdu_executor() override { return *exec; }
 
+    async_task<void> stop() override
+    {
+      return launch_async([](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
+    }
+
     task_executor* exec;
   };
 
 public:
   dummy_cu_up_executor_pool(task_executor* test_executor_) : test_executor(test_executor_) {}
 
-  std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() override
+  std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {
     return std::make_unique<dummy_pdu_session_executor_mapper_impl>(*test_executor);
   }

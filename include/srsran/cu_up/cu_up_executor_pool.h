@@ -11,17 +11,24 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
+namespace srs_cu_up {
 
-/// \brief This class holds the executors available to a given UE PDU session in the CU-CP.
-class pdu_session_executor_mapper
+/// \brief This class holds the executors available to a given UE in the CU-UP.
+class ue_executor_mapper
 {
 public:
-  virtual ~pdu_session_executor_mapper() = default;
+  virtual ~ue_executor_mapper() = default;
 
-  /// \brief Returns the task executor appropriate for the control aspects of the PDU session (e.g. timers, deletion).
+  /// \brief Initiate the shutdown of the executors associated with the respective UE context.
+  /// \return Returns an asynchronous task that is only completed when all the UE executors finished their pending
+  /// tasks.
+  virtual async_task<void> stop() = 0;
+
+  /// \brief Returns the task executor appropriate for the control aspects of the UE context (e.g. timers, deletion).
   virtual task_executor& ctrl_executor() = 0;
 
   /// \brief Returns the task executor to handle UL PDUs in the user plane.
@@ -43,13 +50,15 @@ class cu_up_executor_pool
 public:
   virtual ~cu_up_executor_pool() = default;
 
-  /// \brief Instantiate executors for a new PDU session.
-  virtual std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() = 0;
+  /// \brief Instantiate executors for a created UE in the CU-UP.
+  virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;
 };
 
 /// \brief Creates an executor mapper for the CU-UP.
-std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_mapper(span<task_executor*> dl_pdu_executors,
+std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_mapper(task_executor&       cu_up_main_executor,
+                                                                span<task_executor*> dl_pdu_executors,
                                                                 span<task_executor*> ul_pdu_executors,
                                                                 span<task_executor*> ctrl_executors);
 
+} // namespace srs_cu_up
 } // namespace srsran

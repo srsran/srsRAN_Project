@@ -14,6 +14,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -60,6 +61,8 @@ private:
   timer_manager&                       timers;
   ue_db_t                              ue_db;
   srslog::basic_logger&                logger;
+
+  fifo_async_task_scheduler task_sched;
 };
 
 } // namespace srs_cu_up

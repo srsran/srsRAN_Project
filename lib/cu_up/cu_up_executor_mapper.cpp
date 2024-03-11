@@ -9,45 +9,89 @@
  */
 
 #include "srsran/cu_up/cu_up_executor_pool.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
+using namespace srs_cu_up;
 
-class cu_up_executor_mapper_impl final : public cu_up_executor_pool
+class cu_up_executor_pool_impl final : public cu_up_executor_pool
 {
-  struct session_executor_context {
+  struct ue_executor_context {
     task_executor& ctrl_exec;
     task_executor& ul_exec;
     task_executor& dl_exec;
 
-    session_executor_context(task_executor& ctrl_exec_, task_executor& ul_exec_, task_executor& dl_exec_) :
+    ue_executor_context(task_executor& ctrl_exec_, task_executor& ul_exec_, task_executor& dl_exec_) :
       ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_)
     {
     }
   };
 
 public:
-  class pdu_session_executor_mapper_impl final : public pdu_session_executor_mapper
+  /// Implementation of the UE executor mapper.
+  class ue_executor_mapper_impl final : public ue_executor_mapper
   {
   public:
-    pdu_session_executor_mapper_impl(cu_up_executor_mapper_impl& parent_, session_executor_context& ctxt_) :
-      parent(parent_), ctxt(ctxt_)
+    ue_executor_mapper_impl(cu_up_executor_pool_impl& parent_, ue_executor_context& ctxt_) :
+      parent(parent_), ctxt(&ctxt_)
     {
     }
 
-    ~pdu_session_executor_mapper_impl() override { parent.deregister_pdu_session(ctxt); }
+    ~ue_executor_mapper_impl() override { parent.release_ue_executors(*ctxt); }
 
-    task_executor& ctrl_executor() override { return ctxt.ctrl_exec; }
-    task_executor& ul_pdu_executor() override { return ctxt.ul_exec; }
-    task_executor& dl_pdu_executor() override { return ctxt.dl_exec; }
+    async_task<void> stop() override
+    {
+      ue_executor_context* ctxt_tmp = nullptr;
+      return launch_async([this, ctxt_tmp](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        // Switch to the UE execution context.
+        CORO_AWAIT(defer_to(ctxt->ctrl_exec));
+
+        // Make executors inaccessible via the ue_executor_mapper_impl public interface.
+        // Any public access after this point should assert.
+        ctxt_tmp = std::exchange(ctxt, nullptr);
+
+        // Synchronize with remaining executors to ensure there are no more pending tasks for this UE.
+        CORO_AWAIT(defer_to(ctxt_tmp->ul_exec));
+        CORO_AWAIT(defer_to(ctxt_tmp->dl_exec));
+
+        // Return back to main control execution context.
+        CORO_AWAIT(execute_on(parent.main_exec));
+
+        // Finally, deregister UE executors.
+        parent.release_ue_executors(*ctxt_tmp);
+
+        CORO_RETURN();
+      });
+    }
+
+    task_executor& ctrl_executor() override
+    {
+      srsran_assert(ctxt != nullptr, "UE executor mapper already stopped");
+      return ctxt->ctrl_exec;
+    }
+    task_executor& ul_pdu_executor() override
+    {
+      srsran_assert(ctxt != nullptr, "UE executor mapper already stopped");
+      return ctxt->ul_exec;
+    }
+    task_executor& dl_pdu_executor() override
+    {
+      srsran_assert(ctxt != nullptr, "UE executor mapper already stopped");
+      return ctxt->dl_exec;
+    }
 
   private:
-    cu_up_executor_mapper_impl& parent;
-    session_executor_context&   ctxt;
+    cu_up_executor_pool_impl& parent;
+    ue_executor_context*      ctxt;
   };
 
-  cu_up_executor_mapper_impl(span<task_executor*> dl_executors,
-                             span<task_executor*> ul_executors,
-                             span<task_executor*> ctrl_executors)
+  cu_up_executor_pool_impl(task_executor&       cu_up_main_exec,
+                           span<task_executor*> dl_executors,
+                           span<task_executor*> ul_executors,
+                           span<task_executor*> ctrl_executors) :
+    main_exec(cu_up_main_exec)
   {
     srsran_assert(ctrl_executors.size() > 0, "At least one DL executor must be specified");
     if (dl_executors.empty()) {
@@ -64,30 +108,35 @@ public:
     }
 
     for (unsigned i = 0; i != ctrl_executors.size(); ++i) {
-      sessions.emplace_back(*ctrl_executors[i], *ul_executors[i], *dl_executors[i]);
+      execs.emplace_back(*ctrl_executors[i], *ul_executors[i], *dl_executors[i]);
     }
   }
 
-  std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() override
+  std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
-    return std::make_unique<pdu_session_executor_mapper_impl>(
-        *this, sessions[round_robin_index.fetch_add(1, std::memory_order_relaxed) % sessions.size()]);
+    return std::make_unique<ue_executor_mapper_impl>(
+        *this, execs[round_robin_index.fetch_add(1, std::memory_order_relaxed) % execs.size()]);
   }
 
 private:
-  void deregister_pdu_session(session_executor_context& session_ctxt)
+  void release_ue_executors(ue_executor_context& ue_execs)
   {
     // do nothing.
   }
 
-  std::vector<session_executor_context> sessions;
+  // Main executor of the CU-UP.
+  task_executor& main_exec;
+
+  // List of UE executor mapper contexts created.
+  std::vector<ue_executor_context> execs;
 
   std::atomic<uint32_t> round_robin_index{0};
 };
 
-std::unique_ptr<cu_up_executor_pool> srsran::make_cu_up_executor_mapper(span<task_executor*> dl_executors,
-                                                                        span<task_executor*> ul_executors,
-                                                                        span<task_executor*> ctrl_executors)
+std::unique_ptr<cu_up_executor_pool> srsran::srs_cu_up::make_cu_up_executor_mapper(task_executor&       cu_up_main_exec,
+                                                                                   span<task_executor*> dl_executors,
+                                                                                   span<task_executor*> ul_executors,
+                                                                                   span<task_executor*> ctrl_executors)
 {
-  return std::make_unique<cu_up_executor_mapper_impl>(dl_executors, ul_executors, ctrl_executors);
+  return std::make_unique<cu_up_executor_pool_impl>(cu_up_main_exec, dl_executors, ul_executors, ctrl_executors);
 }

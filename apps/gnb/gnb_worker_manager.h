@@ -63,7 +63,7 @@ struct worker_manager {
   task_executor*              cu_up_e2_exec    = nullptr;
   task_executor*              metrics_hub_exec = nullptr;
 
-  std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
+  std::unique_ptr<srs_cu_up::cu_up_executor_pool> cu_up_exec_mapper;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 

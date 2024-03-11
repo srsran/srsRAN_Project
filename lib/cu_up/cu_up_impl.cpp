@@ -56,7 +56,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
-  ctrl_exec_mapper = cfg.ue_exec_pool->create_pdu_session();
+  ctrl_exec_mapper = cfg.ue_exec_pool->create_ue_executor_mapper();
   report_error_if_not(ctrl_exec_mapper != nullptr, "Could not create CU-UP executor for control TEID");
 
   // Create GTP-U echo and register it at demux

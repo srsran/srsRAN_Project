@@ -158,7 +158,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
          {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size},
          {fmt::format("du_rb_dl_exec#{}", i),
-          concurrent_queue_policy::lockfree_spsc,
+          concurrent_queue_policy::lockfree_mpmc,
           appcfg.cu_up_cfg.gtpu_queue_size}}});
   }
 
@@ -243,7 +243,8 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
     ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
   }
-  cu_up_exec_mapper = make_cu_up_executor_mapper(ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
+  cu_up_exec_mapper =
+      srs_cu_up::make_cu_up_executor_mapper(*cu_up_ctrl_exec, ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
 
   // Instantiate DU-high executor mapper.
   du_high_executors.resize(nof_cells);
