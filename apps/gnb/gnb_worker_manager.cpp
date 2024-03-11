@@ -10,7 +10,6 @@
 
 #include "gnb_worker_manager.h"
 #include "lib/du_high/du_high_executor_strategies.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 
@@ -84,6 +83,32 @@ void worker_manager::create_prio_worker(const std::string&                      
   }
 }
 
+void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_list, const pcap_appconfig& pcap_cfg)
+{
+  using namespace execution_config_helper;
+
+  // Default configuration for each pcap writer strand.
+  strand base_strand_cfg{{{"pcap_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+
+  // These layers have very low throughput, so no point in instantiating more than one strand.
+  // This means that there is no parallelization in pcap writing across these layers.
+  if (pcap_cfg.e2ap.enabled or pcap_cfg.f1ap.enabled or pcap_cfg.ngap.enabled or pcap_cfg.e1ap.enabled) {
+    strand_list.emplace_back(base_strand_cfg);
+  }
+  if (pcap_cfg.gtpu.enabled) {
+    base_strand_cfg.queues[0].name = "gtpu_pcap_exec";
+    strand_list.emplace_back(base_strand_cfg);
+  }
+  if (pcap_cfg.mac.enabled) {
+    base_strand_cfg.queues[0].name = "mac_pcap_exec";
+    strand_list.emplace_back(base_strand_cfg);
+  }
+  if (pcap_cfg.rlc.enabled) {
+    base_strand_cfg.queues[0].name = "rlc_pcap_exec";
+    strand_list.emplace_back(base_strand_cfg);
+  }
+}
+
 void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
@@ -108,7 +133,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {"high_prio_exec", task_priority::max},    // used for control plane and timer management.
        {"cu_up_strand", // used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
         task_priority::max,
-        {}, // define strands below.
+        {}, // define CU-UP strands below.
         task_worker_queue_size}},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
@@ -118,27 +143,24 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  // The low priority executor will be used for PCAP writing via dedicated strands.
-  strand strand_cfg{{{"pcap_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-  low_prio_strands.emplace_back(strand_cfg);
-  if (appcfg.pcap_cfg.gtpu.enabled) {
-    strand_cfg.queues[0].name = "gtpu_pcap_exec";
-    low_prio_strands.emplace_back(strand_cfg);
-  }
-  if (appcfg.pcap_cfg.mac.enabled) {
-    strand_cfg.queues[0].name = "mac_pcap_exec";
-    low_prio_strands.emplace_back(strand_cfg);
-  }
-  if (appcfg.pcap_cfg.rlc.enabled) {
-    strand_cfg.queues[0].name = "rlc_pcap_exec";
-    low_prio_strands.emplace_back(strand_cfg);
-  }
+  append_pcap_strands(low_prio_strands, appcfg.pcap_cfg);
 
   // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
   // support two priority levels, the highest being for timer management.
   strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
+
+  // Setup strands for the data plane of all the instantiated DUs.
+  // One strand per DU, each with multiple priority levels.
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    high_prio_strands.push_back(strand{
+        {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+         {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size},
+         {fmt::format("du_rb_dl_exec#{}", i),
+          concurrent_queue_policy::lockfree_spsc,
+          appcfg.cu_up_cfg.gtpu_queue_size}}});
+  }
 
   // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
   // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
@@ -152,7 +174,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                  concurrent_queue_policy::lockfree_mpmc,
                  appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
                 {fmt::format("ue_up_dl_exec#{}", i),
-                 concurrent_queue_policy::lockfree_mpmc,
+                 concurrent_queue_policy::lockfree_spsc,
                  appcfg.cu_up_cfg.gtpu_queue_size}}});
   }
 
@@ -233,9 +255,10 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     using exec_list       = std::initializer_list<task_executor*>;
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
                                                                    exec_list{exec_map.at("slot_exec#" + cell_id_str)});
-    auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec#0")},
-                                                                     exec_list{exec_map.at("ue_up_ul_exec#0")},
-                                                                     exec_list{exec_map.at("ue_up_dl_exec#0")});
+    auto ue_exec_mapper =
+        std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
+                                                   exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
+                                                   exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
                                                                                  *exec_map.at("ctrl_exec"),
