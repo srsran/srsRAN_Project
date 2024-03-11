@@ -112,7 +112,9 @@ bool dpdk::set_ldpc_enc_bbdev_data(::rte_bbdev_enc_op&   enc_op,
   // size is below the requested mbuf size (by default set to the maximum supported value RTE_BBDEV_LDPC_E_MAX_MBUF).
   ::rte_memcpy(input_data, data.begin(), data_len);
   // If required, copy the TB-CRC.
-  ::rte_memcpy(input_data + data_len, &tb_crc[0], tb_crc_len);
+  if (tb_crc_len > 0) {
+    ::rte_memcpy(input_data + data_len, &tb_crc[0], tb_crc_len);
+  }
   enc_op.ldpc_enc.input.length += data_len + tb_crc_len;
 
   // Allocate an mbuf for the output data from the received mempool.
