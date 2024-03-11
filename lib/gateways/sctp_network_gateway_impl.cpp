@@ -561,7 +561,13 @@ void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> pay
 void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> payload)
 {
   logger.debug("Received data of {} bytes", payload.size_bytes());
-  data_notifier.on_new_pdu(byte_buffer(payload.begin(), payload.end()));
+
+  auto payload_buffer = byte_buffer::create(payload.begin(), payload.end());
+  if (payload_buffer.is_error()) {
+    logger.warning("Unable to allocate byte_buffer");
+    return;
+  }
+  data_notifier.on_new_pdu(std::move(payload_buffer.value()));
 }
 
 ///< Process outgoing PDU and send over SCTP socket to peer.

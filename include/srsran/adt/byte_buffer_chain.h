@@ -121,6 +121,13 @@ class byte_buffer_chain
     buffer_offset_it_t it;
   };
 
+  struct block_deleter {
+    void operator()(void* p);
+  };
+
+  /// Creates an empty byte_buffer_chain.
+  byte_buffer_chain(void* mem);
+
 public:
   using value_type      = uint8_t;
   using reference       = uint8_t&;
@@ -132,8 +139,7 @@ public:
   using const_iterator = iter_impl<const uint8_t>;
 
   /// Creates an empty byte_buffer_chain.
-  byte_buffer_chain();
-  static expected<byte_buffer_chain> create() { return byte_buffer_chain{}; }
+  static expected<byte_buffer_chain> create();
 
   ~byte_buffer_chain()
   {
@@ -145,8 +151,8 @@ public:
 
   /// Default move constructor.
   byte_buffer_chain(byte_buffer_chain&& other) noexcept :
-    byte_count(std::exchange(other.byte_count, 0U)),
     mem_block(std::move(other.mem_block)),
+    byte_count(std::exchange(other.byte_count, 0U)),
     max_slices(std::exchange(other.max_slices, 0U)),
     slice_count(std::exchange(other.slice_count, 0U)),
     slices_ptr(std::exchange(other.slices_ptr, nullptr))
@@ -155,43 +161,32 @@ public:
 
   byte_buffer_chain(const byte_buffer_chain&) = delete;
 
-  /// Conversion from byte_buffer to byte_buffer_chain.
-  explicit byte_buffer_chain(byte_buffer buf_) : byte_buffer_chain()
-  {
-    bool ret = append(std::move(buf_));
-    (void)ret;
-  }
   /// Creates a byte_buffer_chain from a byte_buffer.
   static expected<byte_buffer_chain> create(byte_buffer buf_)
   {
-    byte_buffer_chain buf;
-    if (not buf.append(std::move(buf_))) {
+    auto buf = create();
+    if (buf.is_error()) {
+      return default_error_t{};
+    }
+    if (not buf.value().append(std::move(buf_))) {
       return default_error_t{};
     }
     return buf;
   }
 
-  /// Conversion from byte_buffer_slice to byte_buffer_chain.
-  byte_buffer_chain(byte_buffer_slice&& buf_) : byte_buffer_chain()
-  {
-    bool ret = append(std::move(buf_));
-    (void)ret;
-  }
   /// Creates a byte_buffer_chain from a byte_buffer_slice.
   static expected<byte_buffer_chain> create(byte_buffer_slice buf_)
   {
-    byte_buffer_chain buf;
-    if (not buf.append(std::move(buf_))) {
+    auto buf = create();
+    if (buf.is_error()) {
+      return default_error_t{};
+    }
+    if (not buf.value().append(std::move(buf_))) {
       return default_error_t{};
     }
     return buf;
   }
 
-  /// Conversion from byte_buffer with specified offset and size to byte_buffer_chain.
-  byte_buffer_chain(byte_buffer buf_, size_t start, size_t sz) :
-    byte_buffer_chain(byte_buffer_slice(std::move(buf_), start, sz))
-  {
-  }
   /// Creates a byte_buffer_chain from byte_buffer with specified offset and size to byte_buffer_chain.
   static expected<byte_buffer_chain> create(byte_buffer buf_, size_t start, size_t sz)
   {
@@ -218,14 +213,12 @@ public:
   byte_buffer_chain& operator=(const byte_buffer_chain&) noexcept = delete;
 
   /// Performs a deep copy of this byte_buffer_chain into a byte_buffer.
-  /// In case of a failure an empty byte_buffer is returned.
-  byte_buffer deep_copy() const
+  expected<byte_buffer> deep_copy() const
   {
     byte_buffer buf;
     for (const byte_buffer_slice& slice : slices()) {
       if (not buf.append(slice)) {
-        buf.clear();
-        break;
+        return default_error_t{};
       }
     }
     return buf;
@@ -376,14 +369,10 @@ public:
   }
 
 private:
-  struct block_deleter {
-    void operator()(void* p);
-  };
-
-  /// Total number of bytes stored in this container.
-  size_t byte_count = 0;
   /// Memory block managed by a memory pool, where the slices are stored.
   std::unique_ptr<void, block_deleter> mem_block;
+  /// Total number of bytes stored in this container.
+  size_t byte_count = 0;
   /// Maximum number of byte_buffer_slices that this container can hold.
   size_t max_slices = 0;
   /// Total number of byte_buffer_slices stored in this container.

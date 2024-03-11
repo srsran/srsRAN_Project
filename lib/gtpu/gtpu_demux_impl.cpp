@@ -81,7 +81,12 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t                           teid
                                       const sockaddr_storage&               src_addr)
 {
   if (gtpu_pcap.is_write_enabled()) {
-    gtpu_pcap.push_pdu(pdu.deep_copy());
+    auto pdu_copy = pdu.deep_copy();
+    if (pdu_copy.is_error()) {
+      logger.warning("Unable to deep copy PDU for PCAP writer");
+    } else {
+      gtpu_pcap.push_pdu(std::move(pdu_copy.value()));
+    }
   }
 
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu.length(), teid);

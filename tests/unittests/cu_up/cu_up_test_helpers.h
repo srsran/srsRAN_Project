@@ -146,7 +146,7 @@ public:
   {
     // Forward T-PDU to PDCP
     srsran_assert(rx_sdu_notifier != nullptr, "The rx_sdu_notifier must not be a nullptr!");
-    rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu));
+    rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu.value()));
   }
 
   void discard_sdu(uint32_t pdcp_sn) final { tx_discard_sdu_list.push_back(pdcp_sn); };

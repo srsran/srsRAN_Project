@@ -39,7 +39,8 @@ protected:
       drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
       drb.dluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
     }
-    this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+    this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
+        byte_buffer::create({0x1, 0x2, 0x3}).value();
 
     // Initiate procedure in F1AP.
     f1ap_message msg = generate_ue_context_modification_request(drbs);
@@ -107,7 +108,8 @@ TEST_F(f1ap_du_ue_context_modification_test,
   // Prepare DU manager response to F1AP with failed DRB.
   this->f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
   this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_failed_to_setup.push_back(drb_id_t::drb1);
-  this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
+      byte_buffer::create({0x1, 0x2, 0x3}).value();
 
   // Initiate procedure in F1AP.
   f1ap_message msg = generate_ue_context_modification_request({drb_id_t::drb1});

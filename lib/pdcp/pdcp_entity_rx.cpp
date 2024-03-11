@@ -61,12 +61,14 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
     return;
   }
 
-  byte_buffer pdu = buf.deep_copy();
-  if (pdu.empty()) {
+  auto pdu_copy = buf.deep_copy();
+  if (pdu_copy.is_error()) {
     metrics_add_dropped_pdus(1);
     logger.log_error("Dropping PDU: Copy failed. pdu_len={}", buf.length());
     return;
   }
+  byte_buffer pdu = std::move(pdu_copy.value());
+
   pdcp_dc_field dc = pdcp_pdu_get_dc(*(pdu.begin()));
   if (is_srb() || dc == pdcp_dc_field::data) {
     handle_data_pdu(std::move(pdu));

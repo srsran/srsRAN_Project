@@ -265,7 +265,7 @@ TEST(security_nia1_test, testset1)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 2
@@ -291,7 +291,7 @@ TEST(security_nia1_test, testset2)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 3
@@ -318,7 +318,7 @@ TEST(security_nia1_test, testset3)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 4
@@ -346,7 +346,7 @@ TEST(security_nia1_test, testset4)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 5
@@ -373,7 +373,7 @@ TEST(security_nia1_test, testset5)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 6
@@ -405,7 +405,7 @@ TEST(security_nia1_test, testset6)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA1 Test Set 7
@@ -468,7 +468,7 @@ TEST(security_nia1_test, testset7)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia1(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NEA2 Test Set 1
@@ -679,7 +679,7 @@ TEST(security_nia2_test, testset1)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA2 Test Set 2
@@ -708,7 +708,7 @@ TEST(security_nia2_test, testset2)
     sec_mac          mact_out = {};
     security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 #endif
   }
   {
@@ -716,7 +716,7 @@ TEST(security_nia2_test, testset2)
     sec_mac          mact_out = {};
     security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
 }
 
@@ -746,7 +746,7 @@ TEST(security_nia2_test, testset3)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA2 Test Set 4
@@ -776,7 +776,7 @@ TEST(security_nia2_test, testset4)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA2 Test Set 5
@@ -807,7 +807,7 @@ TEST(security_nia2_test, testset5)
     sec_mac          mact_out = {};
     security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 #endif
   }
   {
@@ -815,7 +815,7 @@ TEST(security_nia2_test, testset5)
     sec_mac          mact_out = {};
     security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
 }
 
@@ -846,7 +846,7 @@ TEST(security_nia2_test, testset6)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA2 Test Set 7
@@ -881,7 +881,7 @@ TEST(security_nia2_test, testset7)
   byte_buffer_view message_view{message};
   sec_mac          mact_out = {};
   security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+  EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 }
 
 /// 128-NIA2 Test Set 8
@@ -947,7 +947,7 @@ TEST(security_nia2_test, testset8)
     sec_mac          mact_out = {};
     security_nia2_cmac(mact_out, key, count_i, bearer, dir, message_view);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
 #endif
   }
   {
@@ -955,7 +955,7 @@ TEST(security_nia2_test, testset8)
     sec_mac          mact_out = {};
     security_nia2_non_cmac(mact_out, key, count_i, bearer, dir, message_view, length);
     EXPECT_EQ(message_view.length(), length / 8);
-    EXPECT_EQ(byte_buffer(mact_out), mact_buf);
+    EXPECT_EQ(byte_buffer::create(mact_out).value(), mact_buf);
   }
 }
 
@@ -1163,7 +1163,7 @@ TEST(security_nia3_test, testset1)
   byte_buffer_view message_view{message};
   sec_mac          mac_out = {};
   security_nia3(mac_out, key, count, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+  EXPECT_EQ(byte_buffer::create(mac_out).value(), mac_buf);
 }
 
 /// 128-NIA3 Test Set 2
@@ -1191,7 +1191,7 @@ TEST(security_nia3_test, testset2)
   byte_buffer_view message_view{message};
   sec_mac          mac_out = {};
   security_nia3(mac_out, key, count, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+  EXPECT_EQ(byte_buffer::create(mac_out).value(), mac_buf);
 }
 
 /// 128-NIA3 Test Set 3
@@ -1220,7 +1220,7 @@ TEST(security_nia3_test, testset3)
   byte_buffer_view message_view{message};
   sec_mac          mac_out = {};
   security_nia3(mac_out, key, count, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+  EXPECT_EQ(byte_buffer::create(mac_out).value(), mac_buf);
 }
 
 /// 128-NIA3 Test Set 4
@@ -1253,7 +1253,7 @@ TEST(security_nia3_test, testset4)
   byte_buffer_view message_view{message};
   sec_mac          mac_out = {};
   security_nia3(mac_out, key, count, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+  EXPECT_EQ(byte_buffer::create(mac_out).value(), mac_buf);
 }
 
 /// 128-NIA3 Test Set 5
@@ -1294,7 +1294,7 @@ TEST(security_nia3_test, testset5)
   byte_buffer_view message_view{message};
   sec_mac          mac_out = {};
   security_nia3(mac_out, key, count, bearer, dir, message_view, length);
-  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+  EXPECT_EQ(byte_buffer::create(mac_out).value(), mac_buf);
 }
 
 /// Generation of k_rrc_end and k_rrc_int
@@ -1463,9 +1463,10 @@ TEST(short_mac, short_mac_valid)
   sec_config.integ_algo    = integrity_algorithm::nia2;
   sec_config.k_int         = make_sec_key(k_int_cstr);
 
-  sec_short_mac_i short_mac                  = {0xc2, 0x18};
-  byte_buffer     var_short_mac_input_packed = {0x00, 0x40, 0x00, 0x00, 0x00, 0x01, 0x18, 0x04};
-  bool            valid                      = verify_short_mac(short_mac, var_short_mac_input_packed, sec_config);
+  sec_short_mac_i short_mac = {0xc2, 0x18};
+  byte_buffer     var_short_mac_input_packed =
+      byte_buffer::create({0x00, 0x40, 0x00, 0x00, 0x00, 0x01, 0x18, 0x04}).value();
+  bool valid = verify_short_mac(short_mac, var_short_mac_input_packed, sec_config);
   ASSERT_EQ(true, valid);
 }
 

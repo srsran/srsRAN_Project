@@ -15,6 +15,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/scheduler/harq_id.h"
 #include <functional>
+#include <utility>
 
 using namespace srsran;
 
@@ -22,7 +23,7 @@ using namespace srsran;
 // the largest TB possible.
 static const unsigned TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE = 10000000;
 
-static mac_rx_data_indication create_test_pdu_with_bsr(slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id)
+static expected<mac_rx_data_indication> create_test_pdu_with_bsr(slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id)
 {
   // - 8-bit R/LCID MAC subheader.
   // - MAC CE with Long BSR.
@@ -34,9 +35,12 @@ static mac_rx_data_indication create_test_pdu_with_bsr(slot_point sl_rx, rnti_t 
   // |         Buffer Size 1         |  Octet 4
 
   // We pass BSR=254, which according to TS38.321 is the maximum value for the LBSR size.
-  return mac_rx_data_indication{sl_rx,
-                                to_du_cell_index(0),
-                                mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, byte_buffer{0x3e, 0x02, 0x01, 254}}}};
+  auto buf = byte_buffer::create({0x3e, 0x02, 0x01, 254});
+  if (buf.is_error()) {
+    return default_error_t{};
+  }
+  return mac_rx_data_indication{
+      sl_rx, to_du_cell_index(0), mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
 }
 
 /// \brief Adapter for the MAC SDU TX builder that auto fills the DL buffer state update.
@@ -76,7 +80,7 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(const srs_du::du_test_con
   pdu_handler(pdu_handler_),
   slot_handler(slot_handler_),
   result_notifier(result_notifier_),
-  dl_bs_notifier(dl_bs_notifier_),
+  dl_bs_notifier(std::move(dl_bs_notifier_)),
   logger(srslog::fetch_basic_logger("MAC")),
   ue_info_mgr(ue_info_mgr_)
 {
@@ -265,7 +269,7 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
   }
   if (pucch.format == pucch_format::FORMAT_1 and
       variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
-    auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
+    const auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
     if (f1_ind.sr_info.has_value() != (pucch.format_1.sr_bits != sr_nof_bits::no_sr)) {
       return false;
     }
@@ -276,7 +280,7 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
   }
   if (pucch.format == pucch_format::FORMAT_2 and
       variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu)) {
-    auto& f2_ind = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
+    const auto& f2_ind = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
     if (f2_ind.sr_info.has_value() != (pucch.format_2.sr_bits != sr_nof_bits::no_sr)) {
       return false;
     }
@@ -303,7 +307,7 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
   // Update buffer states.
   for (const mac_uci_pdu& pdu : uci_msg.ucis) {
     if (ue_info_mgr.is_test_ue(pdu.rnti) and variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu)) {
-      auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
+      const auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
 
       if (f1_ind.harq_info.has_value()) {
         // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 has been received. At this point, we
@@ -315,8 +319,13 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
           }
 
           if (test_ue_cfg.pusch_active) {
+            auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
+            if (rx_pdu.is_error()) {
+              logger.warning("Unable to create test PDU with BSR");
+              continue;
+            }
             // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
-            pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0)));
+            pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
           }
           ue_info_mgr.msg4_rxed(pdu.rnti, true);
         }
@@ -343,8 +352,13 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
       continue;
     }
 
+    auto rx_pdu = create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id));
+    if (rx_pdu.is_error()) {
+      logger.warning("Unable to create test PDU with BSR");
+      continue;
+    }
     // In case of test mode UE, auto-forward a positive BSR.
-    pdu_handler.handle_rx_data_indication(create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id)));
+    pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
   }
 }
 

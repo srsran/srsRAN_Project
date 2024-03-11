@@ -170,8 +170,10 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   int num_pdus = 0;
   int pdu_size = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
-    rlc_sdu     sdu;
-    byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
+    rlc_sdu sdu;
+    auto    pdcp_hdr = byte_buffer::create({0x80, 0x00, 0x16});
+    report_error_if_not(!pdcp_hdr.is_error(), "Failed to allocate byte_buffer");
+    byte_buffer pdcp_hdr_buf = std::move(pdcp_hdr.value());
     byte_buffer sdu_buf      = std::move(sdu_list[i]);
     sdu.pdcp_sn              = i;
     sdu.buf                  = std::move(pdcp_hdr_buf);
@@ -182,7 +184,9 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
       pdu_buf.resize(pdu_size);
       size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
       pdu_buf.resize(pdu_len);
-      pdus.emplace_back(pdu_buf);
+      auto buf = byte_buffer::create(pdu_buf);
+      report_error_if_not(!buf.is_error(), "Failed to allocate byte_buffer");
+      pdus.emplace_back(std::move(buf.value()));
       num_pdus++;
     }
   }

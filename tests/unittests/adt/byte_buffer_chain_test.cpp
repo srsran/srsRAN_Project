@@ -39,7 +39,9 @@ class byte_buffer_chain_test : public testing::Test
 
 TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
 {
-  byte_buffer_chain chain;
+  auto buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& chain = buffer.value();
   ASSERT_TRUE(chain.empty());
   ASSERT_EQ(chain.length(), 0U);
   ASSERT_EQ(chain.nof_slices(), 0);
@@ -64,12 +66,14 @@ TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
 
 TEST_F(byte_buffer_chain_test, append_byte_buffer)
 {
-  byte_buffer_chain buf;
+  auto buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& buf = buffer.value();
 
-  byte_buffer other_buffer{1, 2, 3, 4, 5};
-  byte_buffer other_buffer2{6, 7, 8};
-  byte_buffer buf_concat = other_buffer.deep_copy();
-  ASSERT_TRUE(buf_concat.append(other_buffer2.deep_copy()));
+  byte_buffer other_buffer  = byte_buffer::create({1, 2, 3, 4, 5}).value();
+  byte_buffer other_buffer2 = byte_buffer::create({6, 7, 8}).value();
+  byte_buffer buf_concat    = other_buffer.deep_copy().value();
+  ASSERT_TRUE(buf_concat.append(other_buffer2.deep_copy().value()));
   ASSERT_TRUE(buf.append(other_buffer.copy()));
   ASSERT_TRUE(buf.append(other_buffer2.copy()));
 
@@ -95,21 +99,23 @@ TEST_F(byte_buffer_chain_test, append_byte_buffer)
   ASSERT_EQ(buf, buf_concat);
 
   // Test copy
-  byte_buffer buf_copy = buf.deep_copy();
+  byte_buffer buf_copy = buf.deep_copy().value();
   ASSERT_EQ(buf_copy.length(), buf_concat.length());
   ASSERT_EQ(buf_copy, buf_concat);
 }
 
 TEST_F(byte_buffer_chain_test, prepend_buffer)
 {
-  std::vector<uint8_t> vec = {1, 2, 3};
-  byte_buffer_chain    buf;
-  byte_buffer          buf2{vec};
+  std::vector<uint8_t> vec    = {1, 2, 3};
+  auto                 buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& buf  = buffer.value();
+  byte_buffer        buf2 = byte_buffer::create(vec).value();
 
   ASSERT_TRUE(buf.empty());
 
   // Set header using a span of bytes.
-  ASSERT_TRUE(buf.prepend(buf2.deep_copy()));
+  ASSERT_TRUE(buf.prepend(buf2.deep_copy().value()));
   ASSERT_FALSE(buf.empty());
   ASSERT_EQ(3, buf.length());
   ASSERT_EQ(buf, vec);
@@ -131,7 +137,7 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 
   // Set header by ref-count increment, avoiding deep copy.
   buf.clear();
-  buf2 = vec;
+  buf2 = byte_buffer::create(vec).value();
   ASSERT_TRUE(buf.prepend(buf2.copy()));
   ASSERT_EQ(buf, vec);
   *buf2.begin() = 5;
@@ -139,8 +145,8 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 
   // Set header by deep copy.
   buf.clear();
-  buf2 = vec;
-  ASSERT_TRUE(buf.prepend(buf2.deep_copy()));
+  buf2 = byte_buffer::create(vec).value();
+  ASSERT_TRUE(buf.prepend(buf2.deep_copy().value()));
   ASSERT_EQ(buf, vec);
   *buf2.begin() = 5;
   ASSERT_EQ(buf, vec);
@@ -148,12 +154,14 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 
 TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
 {
-  byte_buffer_chain buf;
+  auto buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& buf = buffer.value();
 
-  byte_buffer header_bytes = {1, 2, 3};
-  byte_buffer payload      = {4, 5, 6};
+  byte_buffer header_bytes = byte_buffer::create({1, 2, 3}).value();
+  byte_buffer payload      = byte_buffer::create({4, 5, 6}).value();
 
-  ASSERT_TRUE(buf.prepend(header_bytes.deep_copy()));
+  ASSERT_TRUE(buf.prepend(header_bytes.deep_copy().value()));
   ASSERT_EQ(header_bytes.length(), buf.length());
   ASSERT_TRUE(buf.append(payload.copy()));
   ASSERT_EQ(header_bytes.length() + payload.length(), buf.length());
@@ -180,13 +188,15 @@ TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
 
 TEST_F(byte_buffer_chain_test, payload_lifetime)
 {
-  byte_buffer_chain buf;
+  auto buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& buf = buffer.value();
 
   std::vector<uint8_t> all_bytes;
   {
-    byte_buffer header_bytes = {1, 2, 3};
-    byte_buffer payload1     = {4, 5, 6};
-    byte_buffer payload2     = {7, 8, 9};
+    byte_buffer header_bytes = byte_buffer::create({1, 2, 3}).value();
+    byte_buffer payload1     = byte_buffer::create({4, 5, 6}).value();
+    byte_buffer payload2     = byte_buffer::create({7, 8, 9}).value();
 
     all_bytes.insert(all_bytes.end(), header_bytes.begin(), header_bytes.end());
     all_bytes.insert(all_bytes.end(), payload1.begin(), payload1.end());
@@ -203,12 +213,15 @@ TEST_F(byte_buffer_chain_test, payload_lifetime)
 
 TEST_F(byte_buffer_chain_test, slice_chain_formatter)
 {
-  byte_buffer          pdu, pdu2;
+  byte_buffer          pdu;
+  byte_buffer          pdu2;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
   ASSERT_TRUE(pdu.append(bytes));
   ASSERT_TRUE(pdu2.append(bytes));
 
-  byte_buffer_chain chain;
+  auto buffer = byte_buffer_chain::create();
+  ASSERT_FALSE(buffer.is_error());
+  byte_buffer_chain& chain = buffer.value();
   ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu), 3, 2}));
   ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu2), 0, 2}));
 

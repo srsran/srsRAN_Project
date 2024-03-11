@@ -122,7 +122,12 @@ public:
   // Decipher and verify integrity of an PDCP PDU.
   pdcp_result unpack_pdcp_pdu(byte_buffer pdcp_pdu)
   {
-    pdcp_context.entity->get_rx_lower_interface().handle_pdu(byte_buffer_chain{std::move(pdcp_pdu)});
+    auto buffer_chain = byte_buffer_chain::create(std::move(pdcp_pdu));
+    if (buffer_chain.is_error()) {
+      return pdcp_result{pdcp_context.rrc_rx_control_notifier.get_failure_cause()};
+    }
+
+    pdcp_context.entity->get_rx_lower_interface().handle_pdu(std::move(buffer_chain.value()));
 
     byte_buffer unpacked_pdu = pdcp_context.rrc_rx_data_notifier.get_rrc_pdu();
 

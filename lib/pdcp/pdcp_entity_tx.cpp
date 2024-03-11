@@ -72,7 +72,13 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // We will need a copy of the SDU for the discard timer when using AM
   byte_buffer sdu;
   if (cfg.discard_timer.has_value() && is_am()) {
-    sdu = buf.deep_copy();
+    auto sdu_copy = buf.deep_copy();
+    if (sdu_copy.is_error()) {
+      logger.log_error("Unable to deep copy SDU");
+      upper_cn.on_protocol_failure();
+      return;
+    }
+    sdu = std::move(sdu_copy.value());
   }
 
   // Perform header compression
@@ -211,7 +217,13 @@ void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 
 void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 {
-  byte_buffer buf = {status.begin(), status.end()};
+  auto status_buffer = byte_buffer::create(status.begin(), status.end());
+  if (status_buffer.is_error()) {
+    logger.log_warning("Unable to allocate byte_buffer");
+    return;
+  }
+
+  byte_buffer buf = std::move(status_buffer.value());
   bit_decoder dec(buf);
 
   // Unpack and check PDU header
@@ -408,7 +420,14 @@ void pdcp_entity_tx::retransmit_all_pdus()
       hdr.sn                   = SN(sdu_info.count);
 
       // Pack header
-      byte_buffer buf = sdu_info.sdu.deep_copy();
+      auto buf_copy = sdu_info.sdu.deep_copy();
+      if (buf_copy.is_error()) {
+        logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+
+      byte_buffer buf = std::move(buf_copy.value());
       if (not write_data_pdu_header(buf, hdr)) {
         logger.log_error(
             "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);

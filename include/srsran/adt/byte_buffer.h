@@ -189,13 +189,6 @@ public:
   /// Explicit copy ctor. User should use copy() method for copy assignments.
   explicit byte_buffer(const byte_buffer&) noexcept = default;
 
-  /// Creates a byte_buffer with content provided by a span of bytes.
-  byte_buffer(span<const uint8_t> bytes)
-  {
-    if (not append(bytes)) {
-      clear();
-    }
-  }
   /// Creates a byte_buffer with contents provided by a span of bytes.
   static expected<byte_buffer> create(span<const uint8_t> bytes)
   {
@@ -207,21 +200,11 @@ public:
   }
 
   /// Creates a byte_buffer with data initialized via a initializer list.
-  byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
-  /// Creates a byte_buffer with data initialized via a initializer list.
   static expected<byte_buffer> create(std::initializer_list<uint8_t> lst)
   {
     return create(span<const uint8_t>(lst.begin(), lst.size()));
   }
 
-  /// Creates a byte_buffer with data assigned from a range of bytes.
-  template <typename It>
-  byte_buffer(It other_begin, It other_end)
-  {
-    if (not append(other_begin, other_end)) {
-      clear();
-    }
-  }
   /// Creates a byte_buffer with data assigned from a range of bytes.
   template <typename It>
   static expected<byte_buffer> create(It other_begin, It other_end)
@@ -239,33 +222,23 @@ public:
   byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other = {}) noexcept;
   byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept;
 
-  /// Copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
+  /// Copy assignment operator is disabled. Use std::move, .copy() or .deep_copy() instead.
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
 
-  /// Move assignment of byte_buffer. It avoids unnecessary reference counting increment.
+  /// Move assignment operator of byte_buffer. It avoids unnecessary reference counting increment.
   byte_buffer& operator=(byte_buffer&& other) noexcept = default;
 
-  /// Assignment of span of bytes.
-  byte_buffer& operator=(span<const uint8_t> bytes) noexcept
-  {
-    clear();
-    if (not append(bytes)) {
-      clear();
-    }
-    return *this;
-  }
-
   /// Performs a deep copy (byte by bytes) of this byte_buffer.
-  /// In case of a failure an empty byte_buffer is returned.
-  byte_buffer deep_copy() const
+  expected<byte_buffer> deep_copy() const
   {
+    if (ctrl_blk_ptr == nullptr) {
+      return byte_buffer{};
+    }
+
     byte_buffer buf;
-    if (ctrl_blk_ptr != nullptr) {
-      for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
-        if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
-          buf.clear();
-          break;
-        }
+    for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
+      if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
+        return default_error_t{};
       }
     }
     return buf;
@@ -483,7 +456,7 @@ public:
 
   byte_buffer_slice(byte_buffer_slice&&) noexcept = default;
 
-  byte_buffer_slice(span<const uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  /// Creates a byte buffer slice from a span of bytes.
   static expected<byte_buffer_slice> create(span<const uint8_t> bytes)
   {
     auto buf = byte_buffer::create(bytes);
@@ -493,7 +466,7 @@ public:
     return byte_buffer_slice(std::move(buf.value()));
   }
 
-  byte_buffer_slice(std::initializer_list<uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  /// Creates a byte buffer slice from a list of bytes.
   static expected<byte_buffer_slice> create(std::initializer_list<uint8_t> bytes)
   {
     auto buf = byte_buffer::create(bytes);

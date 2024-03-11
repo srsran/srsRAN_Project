@@ -74,9 +74,9 @@ TEST_P(pdcp_rx_test, rx_in_order)
     get_test_pdu(count + 1, test_pdu2);
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(1, test_frame->sdu_queue.size());
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     ASSERT_EQ(2, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
@@ -119,19 +119,19 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
 
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     // check rx_reord matches rx_next matches count + 2
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, pdcp_rx->get_state().rx_next);
 
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu3)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
     EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
     EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
 
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(3, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
@@ -171,11 +171,11 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
     get_test_pdu(count + 1, test_pdu2);
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     tick_all(10);
     ASSERT_EQ(1, test_frame->sdu_queue.size());
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
@@ -214,9 +214,9 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
     get_test_pdu(count + 1, test_pdu2);
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     ASSERT_EQ(1, test_frame->sdu_queue.size());
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
@@ -256,10 +256,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
     get_test_pdu(count + 1, test_pdu2);
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     tick_all(6000); // max t-Reordering is 3000ms
     ASSERT_EQ(0, test_frame->sdu_queue.size());
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(2, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
@@ -296,7 +296,7 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
     ASSERT_TRUE(test_pdu1.append(0)); // mess up MAC-I
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     // TODO: Re-enable once the RRC supports notifications from the PDCP
     // ASSERT_EQ(1, test_frame->integrity_fail_counter);
@@ -337,7 +337,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer pdu;
       get_test_pdu(count + i, pdu);
-      pdcp_rx->handle_pdu(byte_buffer_chain{std::move(pdu)});
+      pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(pdu)).value());
     }
 
     // check nof max_count reached and max protocol failures.

@@ -16,10 +16,12 @@
 
 using namespace srsran;
 
-const std::array<uint8_t, 16> k_128_int =
+static constexpr std::array<uint8_t, 16> k_128_int =
     {0x16, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31};
-const std::array<uint8_t, 16> k_128_enc =
+static constexpr std::array<uint8_t, 16> k_128_enc =
     {0x16, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31};
+
+namespace {
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
 class pdcp_tx_gen_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
@@ -30,12 +32,8 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(pdcp_tx_pdu pdu) final
-  {
-    byte_buffer_chain buf{std::move(pdu.buf)};
-    pdu_list.push_back(std::move(buf));
-  }
-  void                           on_discard_pdu(uint32_t pdcp_sn) final {}
+  void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_list.push_back(byte_buffer_chain::create(std::move(pdu.buf)).value()); }
+  void on_discard_pdu(uint32_t pdcp_sn) final {}
   std::vector<byte_buffer_chain> pdu_list;
 };
 
@@ -67,6 +65,8 @@ struct app_params {
   std::string log_level    = "error";
   std::string log_filename = "stdout";
 };
+
+} // namespace
 
 static void usage(const char* prog, const bench_params& params, const app_params& app)
 {

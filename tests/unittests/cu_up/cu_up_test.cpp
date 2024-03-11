@@ -278,9 +278,9 @@ TEST_F(cu_up_test, ul_data_flow)
       0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
   span<const uint8_t> t_pdu_span1 = {t_pdu_arr1};
-  byte_buffer         t_pdu_buf1  = {t_pdu_span1};
+  byte_buffer         t_pdu_buf1  = byte_buffer::create(t_pdu_span1).value();
   nru_ul_message      nru_msg1    = {};
-  nru_msg1.t_pdu                  = byte_buffer_chain{std::move(t_pdu_buf1)};
+  nru_msg1.t_pdu                  = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
   f1u_bearer.handle_pdu(std::move(nru_msg1));
 
   // send message 2
@@ -291,9 +291,9 @@ TEST_F(cu_up_test, ul_data_flow)
       0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
   span<const uint8_t> t_pdu_span2 = {t_pdu_arr2};
-  byte_buffer         t_pdu_buf2  = {t_pdu_span2};
+  byte_buffer         t_pdu_buf2  = byte_buffer::create(t_pdu_span2).value();
   nru_ul_message      nru_msg2    = {};
-  nru_msg2.t_pdu                  = byte_buffer_chain{std::move(t_pdu_buf2)};
+  nru_msg2.t_pdu                  = byte_buffer_chain::create(std::move(t_pdu_buf2)).value();
   f1u_bearer.handle_pdu(std::move(nru_msg2));
 
   std::array<uint8_t, 128> rx_buf;

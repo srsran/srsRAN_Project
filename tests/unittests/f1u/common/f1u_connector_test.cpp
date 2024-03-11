@@ -15,6 +15,8 @@
 
 using namespace srsran;
 
+namespace {
+
 // dummy CU-UP RX bearer interface
 struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_notifier {
   void on_new_sdu(byte_buffer_chain sdu) override
@@ -22,8 +24,8 @@ struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_noti
     logger.info(sdu.begin(), sdu.end(), "CU-UP received SDU");
     last_sdu = std::move(sdu);
   }
-  byte_buffer_chain     last_sdu;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
+  byte_buffer_chain     last_sdu = byte_buffer_chain::create().value();
+  srslog::basic_logger& logger   = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
 struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
@@ -100,6 +102,8 @@ protected:
   srslog::basic_logger&                f1u_logger_du = srslog::fetch_basic_logger("DU-F1-U", false);
 };
 
+} // namespace
+
 /// Test the instantiation of a new entity
 TEST_F(f1u_connector_test, create_new_connector)
 {
@@ -132,17 +136,21 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer       cu_buf = make_byte_buffer("ABCD");
-  byte_buffer_chain du_exp{cu_buf.deep_copy()};
+  byte_buffer cu_buf     = make_byte_buffer("ABCD");
+  auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
+  ASSERT_FALSE(du_exp_buf.is_error());
+  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
   pdcp_tx_pdu       sdu;
   sdu.buf     = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path
-  byte_buffer       du_buf = make_byte_buffer("DCBA");
-  byte_buffer       cu_exp = du_buf.deep_copy();
-  byte_buffer_chain du_slice{du_buf.deep_copy()};
+  byte_buffer du_buf       = make_byte_buffer("DCBA");
+  byte_buffer cu_exp       = du_buf.deep_copy().value();
+  auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
+  ASSERT_FALSE(du_slice_buf.is_error());
+  byte_buffer_chain du_slice = std::move(du_slice_buf.value());
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
 
   ASSERT_EQ(du_rx.last_sdu, du_exp);
@@ -152,9 +160,11 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   cu_bearer.reset();
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer       du_buf2 = make_byte_buffer("LMNO");
-  byte_buffer       cu_exp2 = du_buf2.deep_copy();
-  byte_buffer_chain du_slice2{du_buf2.deep_copy()};
+  byte_buffer du_buf2       = make_byte_buffer("LMNO");
+  byte_buffer cu_exp2       = du_buf2.deep_copy().value();
+  auto        du_slice2_buf = byte_buffer_chain::create(du_buf2.deep_copy().value());
+  ASSERT_FALSE(du_slice2_buf.is_error());
+  byte_buffer_chain du_slice2 = std::move(du_slice2_buf.value());
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice2));
   ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
 }
@@ -183,17 +193,21 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer       cu_buf = make_byte_buffer("ABCD");
-  byte_buffer_chain du_exp{cu_buf.deep_copy()};
+  byte_buffer cu_buf     = make_byte_buffer("ABCD");
+  auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
+  ASSERT_FALSE(du_exp_buf.is_error());
+  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
   pdcp_tx_pdu       sdu;
   sdu.buf     = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path
-  byte_buffer       du_buf = make_byte_buffer("DCBA");
-  byte_buffer       cu_exp = du_buf.deep_copy();
-  byte_buffer_chain du_slice{du_buf.deep_copy()};
+  byte_buffer du_buf       = make_byte_buffer("DCBA");
+  byte_buffer cu_exp       = du_buf.deep_copy().value();
+  auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
+  ASSERT_FALSE(du_slice_buf.is_error());
+  byte_buffer_chain du_slice = std::move(du_slice_buf.value());
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
 
   ASSERT_EQ(du_rx.last_sdu, du_exp);
@@ -236,17 +250,21 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   {
     // Check CU-UP -> DU path
-    byte_buffer       cu_buf = make_byte_buffer("ABCD");
-    byte_buffer_chain du_exp{cu_buf.deep_copy()};
+    byte_buffer cu_buf     = make_byte_buffer("ABCD");
+    auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
+    ASSERT_FALSE(du_exp_buf.is_error());
+    byte_buffer_chain du_exp = std::move(du_exp_buf.value());
     pdcp_tx_pdu       sdu;
     sdu.buf     = std::move(cu_buf);
     sdu.pdcp_sn = 0;
     cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
     // Check DU-> CU-UP path
-    byte_buffer       du_buf = make_byte_buffer("DCBA");
-    byte_buffer       cu_exp = du_buf.deep_copy();
-    byte_buffer_chain du_slice{du_buf.deep_copy()};
+    byte_buffer du_buf       = make_byte_buffer("DCBA");
+    byte_buffer cu_exp       = du_buf.deep_copy().value();
+    auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
+    ASSERT_FALSE(du_slice_buf.is_error());
+    byte_buffer_chain du_slice = std::move(du_slice_buf.value());
     du_bearer1->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
 
     ASSERT_EQ(du_rx1.last_sdu, du_exp);
@@ -268,17 +286,21 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   {
     // Check CU-UP -> DU path
-    byte_buffer       cu_buf = make_byte_buffer("ABCD");
-    byte_buffer_chain du_exp{cu_buf.deep_copy()};
+    byte_buffer cu_buf     = make_byte_buffer("ABCD");
+    auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
+    ASSERT_FALSE(du_exp_buf.is_error());
+    byte_buffer_chain du_exp = std::move(du_exp_buf.value());
     pdcp_tx_pdu       sdu;
     sdu.buf     = std::move(cu_buf);
     sdu.pdcp_sn = 0;
     cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
     // Check DU-> CU-UP path
-    byte_buffer       du_buf = make_byte_buffer("DCBA");
-    byte_buffer       cu_exp = du_buf.deep_copy();
-    byte_buffer_chain du_slice{du_buf.deep_copy()};
+    byte_buffer du_buf       = make_byte_buffer("DCBA");
+    byte_buffer cu_exp       = du_buf.deep_copy().value();
+    auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
+    ASSERT_FALSE(du_slice_buf.is_error());
+    byte_buffer_chain du_slice = std::move(du_slice_buf.value());
     du_bearer2->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
   }
 }

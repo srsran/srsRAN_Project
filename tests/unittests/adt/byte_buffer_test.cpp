@@ -172,7 +172,7 @@ TEST_F(byte_buffer_tester, empty_byte_buffer_in_valid_state)
   ASSERT_EQ_LEN(pdu, 0);
   pdu.clear();
   ASSERT_EQ_LEN(pdu, 0);
-  ASSERT_EQ(pdu, pdu.deep_copy());
+  ASSERT_EQ(pdu, pdu.deep_copy().value());
   ASSERT_EQ(pdu, pdu.copy());
   ASSERT_TRUE(pdu.append(std::vector<uint8_t>{}));
   ASSERT_EQ_LEN(pdu, 0);
@@ -181,7 +181,7 @@ TEST_F(byte_buffer_tester, empty_byte_buffer_in_valid_state)
 
 TEST_P(one_vector_size_param_test, ctor_with_span)
 {
-  byte_buffer pdu{this->bytes};
+  byte_buffer pdu = byte_buffer::create(this->bytes).value();
 
   ASSERT_EQ_LEN(pdu, bytes.size());
   ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), bytes.begin(), bytes.end()));
@@ -189,8 +189,8 @@ TEST_P(one_vector_size_param_test, ctor_with_span)
 
 TEST_P(one_vector_size_param_test, equality_comparison)
 {
-  byte_buffer        pdu{this->bytes};
-  byte_buffer        pdu2{this->bytes};
+  byte_buffer        pdu  = byte_buffer::create(this->bytes).value();
+  byte_buffer        pdu2 = byte_buffer::create(this->bytes).value();
   std::list<uint8_t> not_a_span{this->bytes.begin(), this->bytes.end()};
 
   // comparison byte_buffer vs span.
@@ -205,7 +205,7 @@ TEST_P(one_vector_size_param_test, equality_comparison)
   // comparison byte_buffer vs other range of larger length.
   std::vector<uint8_t> larger_bytes = concat_vec(bytes, test_rgen::random_vector<uint8_t>(random_vec_size()));
   std::list<uint8_t>   larger_not_a_span{larger_bytes.begin(), larger_bytes.end()};
-  pdu2 = byte_buffer{larger_bytes};
+  pdu2 = byte_buffer::create(larger_bytes).value();
   ASSERT_NE(pdu, larger_bytes);
   ASSERT_NE(larger_bytes, pdu);
   ASSERT_NE(pdu, pdu2);
@@ -216,7 +216,7 @@ TEST_P(one_vector_size_param_test, equality_comparison)
   std::vector<uint8_t> shorter_bytes(bytes.begin(),
                                      bytes.begin() + test_rgen::uniform_int<unsigned>(0, bytes.size() - 1));
   std::list<uint8_t>   shorter_not_a_span{shorter_bytes.begin(), shorter_bytes.end()};
-  pdu2 = byte_buffer{shorter_bytes};
+  pdu2 = byte_buffer::create(shorter_bytes).value();
   ASSERT_NE(pdu, shorter_bytes);
   ASSERT_NE(shorter_bytes, pdu);
   ASSERT_NE(pdu, pdu2);
@@ -247,7 +247,7 @@ TEST_P(one_vector_size_param_test, move_ctor)
 
 TEST_F(byte_buffer_tester, initializer_list)
 {
-  byte_buffer          pdu = {1, 2, 3, 4, 5, 6};
+  byte_buffer          pdu = byte_buffer::create({1, 2, 3, 4, 5, 6}).value();
   std::vector<uint8_t> bytes{1, 2, 3, 4, 5, 6};
 
   ASSERT_EQ_LEN(pdu, 6);
@@ -264,7 +264,7 @@ TEST_P(two_vector_size_param_test, append)
   ASSERT_EQ_BUFFER(pdu, bytes1);
 
   // Append two byte_buffers.
-  byte_buffer pdu2{bytes2};
+  byte_buffer pdu2 = byte_buffer::create(bytes2).value();
   ASSERT_EQ(pdu2, bytes2);
   ASSERT_TRUE(pdu2.append(pdu));
   ASSERT_EQ(pdu.length() + bytes2.size(), pdu2.length());
@@ -356,7 +356,7 @@ TEST_F(byte_buffer_tester, deep_copy_for_empty_byte_buffer)
 {
   byte_buffer pdu;
   byte_buffer pdu2;
-  pdu2 = pdu.deep_copy();
+  pdu2 = pdu.deep_copy().value();
   ASSERT_TRUE(pdu.empty());
   ASSERT_TRUE(pdu.empty());
 }
@@ -369,7 +369,7 @@ TEST_P(two_vector_size_param_test, deep_copy_for_non_empty_byte_buffer)
 
   // Deep copy.
   byte_buffer pdu2;
-  pdu2 = pdu.deep_copy();
+  pdu2 = pdu.deep_copy().value();
   ASSERT_FALSE(pdu.empty());
   ASSERT_FALSE(pdu2.empty());
   ASSERT_EQ_BUFFER(pdu, pdu2);
@@ -482,7 +482,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_valid
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
   // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer points to
   // the same head segment.
-  byte_buffer pdu{bytes1};
+  byte_buffer pdu = byte_buffer::create(bytes1).value();
 
   byte_buffer pdu2{pdu.copy()};
   ASSERT_TRUE(pdu.prepend(bytes2));
@@ -497,7 +497,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_reserve_prepend_and_append_kee
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
   // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer point to
   // the same head segment.
-  byte_buffer pdu{bytes1};
+  byte_buffer pdu = byte_buffer::create(bytes1).value();
 
   byte_buffer      pdu2{pdu.copy()};
   byte_buffer_view v = pdu.reserve_prepend(bytes2.size());
@@ -517,7 +517,7 @@ TEST_F(byte_buffer_tester, is_contiguous)
 
   ASSERT_TRUE(pdu.append(bytes));
   ASSERT_TRUE(pdu.is_contiguous());
-  ASSERT_TRUE(pdu.append(byte_buffer(bytes2)));
+  ASSERT_TRUE(pdu.append(byte_buffer::create(bytes2).value()));
   ASSERT_TRUE(not pdu.is_contiguous());
 
   ASSERT_EQ_BUFFER(pdu, bytes_concat);
@@ -758,7 +758,7 @@ TEST_F(byte_buffer_tester, append_rvalue_byte_buffer)
   std::vector<uint8_t> bytes_concat2 = concat_vec(bytes_concat, big_vec);
 
   // Chain small vector to empty buffer
-  byte_buffer pdu2(small_vec);
+  byte_buffer pdu2 = byte_buffer::create(small_vec).value();
   ASSERT_EQ(pdu2, small_vec);
   ASSERT_TRUE(pdu.prepend(std::move(pdu2)));
   ASSERT_FALSE(pdu.empty());
@@ -809,15 +809,16 @@ TEST_P(byte_buffer_stress_tester, concurrent_alloc_dealloc_test)
       bool alloc_or_dealloc = rdist(test_rgen::get()) <= this->P_alloc;
       if (alloc_or_dealloc) {
         // Allocation of new buffer.
-        byte_buffer buf(span<const uint8_t>(randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)));
-        if (buf.empty()) {
+        auto buf =
+            byte_buffer::create(span<const uint8_t>(randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)));
+        if (buf.is_error()) {
           // pool is depleted.
           continue;
         }
         if (free_list.empty()) {
-          allocated_buffers.push_back(std::move(buf));
+          allocated_buffers.push_back(std::move(buf.value()));
         } else {
-          allocated_buffers[free_list.back()] = std::move(buf);
+          allocated_buffers[free_list.back()] = std::move(buf.value());
           free_list.pop_back();
         }
       } else {
@@ -860,28 +861,28 @@ TEST_F(byte_buffer_tester, concurrent_alloc_dealloc_test)
 
   // Deplete the pool
   while (true) {
-    byte_buffer pdu = byte_buffer{span<const uint8_t>{randbytes.data(), 10U}};
-    if (pdu.empty()) {
+    auto pdu = byte_buffer::create(span<const uint8_t>{randbytes.data(), 10U});
+    if (pdu.is_error()) {
       break;
     }
-    allocated_buffers.push_back(std::move(pdu));
+    allocated_buffers.push_back(std::move(pdu.value()));
   }
 
   // Pool is still empty.
-  byte_buffer pdu = byte_buffer{span<const uint8_t>{randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)}};
-  ASSERT_TRUE(pdu.empty());
+  auto pdu = byte_buffer::create(span<const uint8_t>{randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)});
+  ASSERT_TRUE(pdu.is_error());
 
   // Test if a span can be added to a byte_buffer with heap as fallback allocator.
   size_t sz = test_rgen::uniform_int(1U, max_buffer_size);
   pdu       = byte_buffer{byte_buffer::fallback_allocation_tag{}, span<const uint8_t>{randbytes.data(), sz}};
-  ASSERT_EQ(pdu.length(), sz);
+  ASSERT_EQ(pdu.value().length(), sz);
   span<const uint8_t> expected_bytes{randbytes.data(), sz};
-  ASSERT_EQ(pdu, expected_bytes);
+  ASSERT_EQ(pdu.value(), expected_bytes);
 
   // Test if a byte_buffer can be added to a byte_buffer with heap as fallback allocator.
   pdu = byte_buffer{byte_buffer::fallback_allocation_tag{}, allocated_buffers.front()};
-  ASSERT_EQ(pdu.length(), allocated_buffers.front().length());
-  ASSERT_EQ(pdu, allocated_buffers.front());
+  ASSERT_EQ(pdu.value().length(), allocated_buffers.front().length());
+  ASSERT_EQ(pdu.value(), allocated_buffers.front());
 }
 
 INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
@@ -938,7 +939,7 @@ TEST_F(byte_buffer_view_tester, length)
 TEST_F(byte_buffer_view_tester, segment_iterator)
 {
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(random_vec_size());
-  byte_buffer          pdu{bytes};
+  byte_buffer          pdu   = byte_buffer::create(bytes).value();
 
   unsigned         offset      = test_rgen::uniform_int<unsigned>(0, bytes.size() - 1);
   unsigned         last_offset = test_rgen::uniform_int<unsigned>(offset + 1, bytes.size());
@@ -968,8 +969,8 @@ TEST_F(byte_buffer_slice_tester, empty_slice_is_in_valid_state)
 
 TEST_F(byte_buffer_slice_tester, ctor_with_span)
 {
-  std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
-  byte_buffer_slice    slice(vec);
+  std::vector<uint8_t> vec   = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
+  byte_buffer_slice    slice = byte_buffer_slice::create(vec).value();
 
   ASSERT_EQ_LEN(slice, vec.size());
   // Test operator[].
@@ -989,7 +990,7 @@ TEST_F(byte_buffer_slice_tester, ctor_with_span)
 TEST_F(byte_buffer_slice_tester, shallow_copy)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
-  byte_buffer          pdu(vec);
+  byte_buffer          pdu = byte_buffer::create(vec).value();
 
   byte_buffer_slice slice{pdu.copy()};
 
@@ -1017,9 +1018,9 @@ TEST_F(byte_buffer_slice_tester, shallow_copy)
 TEST_F(byte_buffer_slice_tester, deep_slice)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
-  byte_buffer          pdu{vec};
+  byte_buffer          pdu = byte_buffer::create(vec).value();
 
-  byte_buffer_slice slice{pdu.deep_copy()};
+  byte_buffer_slice slice{pdu.deep_copy().value()};
 
   // Test operator[].
   for (unsigned i = 0; i < vec.size(); ++i) {
@@ -1054,7 +1055,7 @@ TEST_F(byte_buffer_slice_tester, deep_slice)
 TEST_F(byte_buffer_slice_tester, move_ctor)
 {
   std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
-  byte_buffer          pdu{vec};
+  byte_buffer          pdu = byte_buffer::create(vec).value();
 
   byte_buffer_slice slice{std::move(pdu)};
   ASSERT_TRUE(pdu.empty());

@@ -70,9 +70,9 @@ TEST_F(sdap_rx_test, create_new_entity)
 TEST_F(sdap_rx_test, test_rx)
 {
   const std::array<uint8_t, 4> pdu_buf = {0x00, 0x01, 0x02, 0x03};
-  byte_buffer                  pdu{pdu_buf};
+  byte_buffer                  pdu     = byte_buffer::create(pdu_buf).value();
 
-  sdap->handle_pdu(pdu.deep_copy());
+  sdap->handle_pdu(pdu.deep_copy().value());
 
   ASSERT_FALSE(tester->sdu_queue.empty());
   EXPECT_EQ(tester->sdu_queue.front(), pdu);

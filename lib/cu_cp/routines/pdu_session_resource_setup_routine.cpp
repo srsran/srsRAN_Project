@@ -106,7 +106,10 @@ void pdu_session_resource_setup_routine::operator()(
   // sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
   if (next_config.initial_context_creation) {
     // prepare BearerContextSetupRequest
-    fill_e1ap_bearer_context_setup_request(bearer_context_setup_request);
+    if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup_request)) {
+      logger.warning("ue={}: \"{}\" failed to fill bearer context at CU-UP", setup_msg.ue_index, name());
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
 
     // call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
@@ -398,7 +401,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   return response_msg;
 }
 
-void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
+bool pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_bearer_context_setup_request& e1ap_request)
 {
   e1ap_request.ue_index = setup_msg.ue_index;
@@ -406,9 +409,19 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   // security info
   e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
   e1ap_request.security_info.security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
-  e1ap_request.security_info.up_security_key.encryption_key                    = security_cfg.k_enc;
+  auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
+  if (k_enc_buffer.is_error()) {
+    logger.warning("Unable to allocate byte_buffer");
+    return false;
+  }
+  e1ap_request.security_info.up_security_key.encryption_key = std::move(k_enc_buffer.value());
   if (security_cfg.k_int.has_value()) {
-    e1ap_request.security_info.up_security_key.integrity_protection_key = security_cfg.k_int.value();
+    auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
+    if (k_int_buffer.is_error()) {
+      logger.warning("Unable to allocate byte_buffer");
+      return false;
+    }
+    e1ap_request.security_info.up_security_key.integrity_protection_key = std::move(k_int_buffer.value());
   }
 
   e1ap_request.ue_dl_aggregate_maximum_bit_rate = setup_msg.ue_aggregate_maximum_bit_rate_dl;
@@ -425,6 +438,8 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
                                           setup_msg.pdu_session_res_setup_items,
                                           ue_cfg,
                                           default_security_indication);
+
+  return true;
 }
 
 // Helper to fill a Bearer Context Modification request if it is the initial E1AP message

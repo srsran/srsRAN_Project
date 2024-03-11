@@ -56,9 +56,9 @@ protected:
 TEST_F(gtpu_test, read_teid)
 {
   srsran::test_delimit_logger delimiter("GTP-U read TEID test");
-  byte_buffer                 orig_vec{gtpu_ping_vec_teid_1};
-  byte_buffer                 test_vec{gtpu_ping_vec_teid_1};
-  uint32_t                    teid = {};
+  byte_buffer                 orig_vec = byte_buffer::create(gtpu_ping_vec_teid_1).value();
+  byte_buffer                 test_vec = byte_buffer::create(gtpu_ping_vec_teid_1).value();
+  uint32_t                    teid     = {};
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
@@ -74,14 +74,14 @@ TEST_F(gtpu_test, read_teid)
 TEST_F(gtpu_test, pack_unpack)
 {
   srsran::test_delimit_logger delimiter("GTP-U unpack/pack test");
-  byte_buffer                 orig_vec{gtpu_ping_vec_teid_1};
-  byte_buffer                 tst_vec{gtpu_ping_vec_teid_1};
-  byte_buffer                 tst_vec_no_header{tst_vec.begin() + 8, tst_vec.end()};
+  byte_buffer                 orig_vec          = byte_buffer::create(gtpu_ping_vec_teid_1).value();
+  byte_buffer                 tst_vec           = byte_buffer::create(gtpu_ping_vec_teid_1).value();
+  byte_buffer                 tst_vec_no_header = byte_buffer::create(tst_vec.begin() + 8, tst_vec.end()).value();
   gtpu_dissected_pdu          dissected_pdu;
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
-  bool read_ok = gtpu_dissect_pdu(dissected_pdu, tst_vec.deep_copy(), gtpu_rx_logger);
+  bool read_ok = gtpu_dissect_pdu(dissected_pdu, tst_vec.deep_copy().value(), gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
 
   // Check flags
@@ -108,7 +108,7 @@ TEST_F(gtpu_test, pack_unpack)
   ASSERT_EQ(sdu.length(), tst_vec_no_header.length());
   ASSERT_EQ(sdu, tst_vec_no_header);
 
-  byte_buffer repack_buf = tst_vec_no_header.deep_copy();
+  byte_buffer repack_buf = tst_vec_no_header.deep_copy().value();
 
   gtpu_write_header(repack_buf, hdr, gtpu_tx_logger);
   logger.info(repack_buf.begin(), repack_buf.end(), "Repackaged GTP-U packet");
@@ -121,15 +121,16 @@ TEST_F(gtpu_test, pack_unpack)
 TEST_F(gtpu_test, pack_unpack_ext_hdr)
 {
   srsran::test_delimit_logger delimiter("GTP-U header extension unpack/pack test");
-  byte_buffer                 orig_vec{gtpu_ping_two_ext_vec};
-  byte_buffer                 tst_vec{gtpu_ping_two_ext_vec};
+  byte_buffer                 orig_vec = byte_buffer::create(gtpu_ping_two_ext_vec).value();
+  byte_buffer                 tst_vec  = byte_buffer::create(gtpu_ping_two_ext_vec).value();
   uint16_t                    ext_size = 4;
-  byte_buffer        tst_vec_no_header{tst_vec.begin() + GTPU_EXTENDED_HEADER_LEN + 2 * ext_size, tst_vec.end()};
+  byte_buffer                 tst_vec_no_header =
+      byte_buffer::create(tst_vec.begin() + GTPU_EXTENDED_HEADER_LEN + 2 * ext_size, tst_vec.end()).value();
   gtpu_dissected_pdu dissected_pdu;
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
-  bool read_ok = gtpu_dissect_pdu(dissected_pdu, tst_vec.deep_copy(), gtpu_rx_logger);
+  bool read_ok = gtpu_dissect_pdu(dissected_pdu, tst_vec.deep_copy().value(), gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
 
   // Check flags
@@ -169,13 +170,15 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   gtpu_header hdr = dissected_pdu.hdr;
 
-  byte_buffer container0                = {dissected_pdu.hdr.ext_list[0].container.begin(),
-                                           dissected_pdu.hdr.ext_list[0].container.end()};
+  byte_buffer container0 = byte_buffer::create(dissected_pdu.hdr.ext_list[0].container.begin(),
+                                               dissected_pdu.hdr.ext_list[0].container.end())
+                               .value();
   hdr.ext_list[0].container             = container0;
   hdr.ext_list[0].extension_header_type = dissected_pdu.hdr.ext_list[0].extension_header_type;
 
-  byte_buffer container1                = {dissected_pdu.hdr.ext_list[1].container.begin(),
-                                           dissected_pdu.hdr.ext_list[1].container.end()};
+  byte_buffer container1 = byte_buffer::create(dissected_pdu.hdr.ext_list[1].container.begin(),
+                                               dissected_pdu.hdr.ext_list[1].container.end())
+                               .value();
   hdr.ext_list[1].container             = container1;
   hdr.ext_list[1].extension_header_type = dissected_pdu.hdr.ext_list[1].extension_header_type;
 
@@ -184,7 +187,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(sdu.length(), tst_vec_no_header.length());
   ASSERT_EQ(sdu, tst_vec_no_header);
 
-  byte_buffer repack_buf = tst_vec_no_header.deep_copy();
+  byte_buffer repack_buf = tst_vec_no_header.deep_copy().value();
 
   gtpu_write_header(repack_buf, hdr, gtpu_tx_logger);
   logger.info(repack_buf.begin(), repack_buf.end(), "Repackaged GTP-U packet");
