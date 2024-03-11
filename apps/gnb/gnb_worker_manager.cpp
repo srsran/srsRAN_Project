@@ -166,8 +166,10 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
   // Each UE strand will have three queues, one for timer management and configuration, one for DL data plane and one
   // for UL data plane.
-  const unsigned nof_up_strands = 1; // TODO: Fix, once CU-UP supports new gnb-cu exec mapper.
-  for (unsigned i = 0; i != nof_up_strands; ++i) {
+  cu_up_strands.push_back(strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                  {"cu_up_io_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
+  const unsigned nof_cu_up_ue_strands = 16;
+  for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     cu_up_strands.push_back(
         strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                 {fmt::format("ue_up_ul_exec#{}", i),
@@ -229,22 +231,21 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   cu_cp_exec       = exec_map.at("ctrl_exec");
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");
   metrics_hub_exec = exec_map.at("ctrl_exec");
-  cu_up_ctrl_exec  = exec_map.at("ue_up_ctrl_exec#0");
-  cu_up_ul_exec    = exec_map.at("ue_up_ul_exec#0");
-  cu_up_dl_exec    = exec_map.at("ue_up_dl_exec#0");
-  cu_up_e2_exec    = exec_map.at("ue_up_ctrl_exec#0");
+  cu_up_ctrl_exec  = exec_map.at("cu_up_ctrl_exec");
+  cu_up_io_ul_exec = exec_map.at("cu_up_io_exec");
+  cu_up_e2_exec    = exec_map.at("cu_up_ctrl_exec");
 
   // Create CU-UP execution mapper object.
-  std::vector<task_executor*> ue_up_dl_execs(nof_up_strands, nullptr);
-  std::vector<task_executor*> ue_up_ul_execs   = {nof_up_strands, nullptr};
-  std::vector<task_executor*> ue_up_ctrl_execs = {nof_up_strands, nullptr};
-  for (unsigned i = 0; i != nof_up_strands; ++i) {
+  std::vector<task_executor*> ue_up_dl_execs(nof_cu_up_ue_strands, nullptr);
+  std::vector<task_executor*> ue_up_ul_execs   = {nof_cu_up_ue_strands, nullptr};
+  std::vector<task_executor*> ue_up_ctrl_execs = {nof_cu_up_ue_strands, nullptr};
+  for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     ue_up_dl_execs[i]   = exec_map.at(fmt::format("ue_up_dl_exec#{}", i));
     ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
     ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
   }
-  cu_up_exec_mapper =
-      srs_cu_up::make_cu_up_executor_mapper(*cu_up_ctrl_exec, ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
+  cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_mapper(
+      *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
 
   // Instantiate DU-high executor mapper.
   du_high_executors.resize(nof_cells);
