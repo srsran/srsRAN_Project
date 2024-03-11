@@ -11,9 +11,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/support/io/transport_layer_address.h"
 #include "fmt/format.h"
 #include <cstdint>
 
