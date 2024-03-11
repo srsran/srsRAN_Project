@@ -60,14 +60,12 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   // Create UE executors
   // TODO, these should be created within the same function, so that UL, DL and CTRL executors
   // can point to the same executor.
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec = exec_pool.create_dl_pdu_executor();
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec = exec_pool.create_ul_pdu_executor();
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec = exec_pool.create_ctrl_executor();
+  std::unique_ptr<pdu_session_executor_mapper> pdu_session_execs = exec_pool.create_pdu_session();
 
   // Create executor-specific timer factories
-  timer_factory ue_dl_timer_factory   = {timers, *ue_dl_exec};
-  timer_factory ue_ul_timer_factory   = {timers, *ue_ul_exec};
-  timer_factory ue_ctrl_timer_factory = {timers, *ue_ctrl_exec};
+  timer_factory ue_dl_timer_factory   = {timers, pdu_session_execs->dl_pdu_executor()};
+  timer_factory ue_ul_timer_factory   = {timers, pdu_session_execs->ul_pdu_executor()};
+  timer_factory ue_ctrl_timer_factory = {timers, pdu_session_execs->ctrl_executor()};
 
   // Create UE object
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
@@ -75,9 +73,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      e1ap,
                                                                      net_config,
                                                                      n3_config,
-                                                                     std::move(ue_dl_exec),
-                                                                     std::move(ue_ul_exec),
-                                                                     std::move(ue_ctrl_exec),
+                                                                     std::move(pdu_session_execs),
                                                                      ue_dl_timer_factory,
                                                                      ue_ul_timer_factory,
                                                                      ue_ctrl_timer_factory,

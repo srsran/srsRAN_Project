@@ -68,7 +68,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Holds DL executor for the control TEID.
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> dl_exec;
+  std::unique_ptr<pdu_session_executor_mapper> ctrl_exec_mapper;
 
   // Components
   std::atomic<bool>                    e1ap_connected = {false};

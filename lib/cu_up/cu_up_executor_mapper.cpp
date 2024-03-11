@@ -12,65 +12,77 @@
 
 using namespace srsran;
 
-class cu_up_executor_mapper_impl : public cu_up_executor_pool
+class cu_up_executor_mapper_impl final : public cu_up_executor_pool
 {
+  struct session_executor_context {
+    task_executor& ctrl_exec;
+    task_executor& ul_exec;
+    task_executor& dl_exec;
+
+    session_executor_context(task_executor& ctrl_exec_, task_executor& ul_exec_, task_executor& dl_exec_) :
+      ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_)
+    {
+    }
+  };
+
 public:
+  class pdu_session_executor_mapper_impl final : public pdu_session_executor_mapper
+  {
+  public:
+    pdu_session_executor_mapper_impl(cu_up_executor_mapper_impl& parent_, session_executor_context& ctxt_) :
+      parent(parent_), ctxt(ctxt_)
+    {
+    }
+
+    ~pdu_session_executor_mapper_impl() override { parent.deregister_pdu_session(ctxt); }
+
+    task_executor& ctrl_executor() override { return ctxt.ctrl_exec; }
+    task_executor& ul_pdu_executor() override { return ctxt.ul_exec; }
+    task_executor& dl_pdu_executor() override { return ctxt.dl_exec; }
+
+  private:
+    cu_up_executor_mapper_impl& parent;
+    session_executor_context&   ctxt;
+  };
+
   cu_up_executor_mapper_impl(span<task_executor*> dl_executors,
                              span<task_executor*> ul_executors,
                              span<task_executor*> ctrl_executors)
   {
-    dl_execs.assign(dl_executors.begin(), dl_executors.end());
-    ul_execs.assign(ul_executors.begin(), ul_executors.end());
-    ctrl_execs.assign(ctrl_executors.begin(), ctrl_executors.end());
+    srsran_assert(ctrl_executors.size() > 0, "At least one DL executor must be specified");
+    if (dl_executors.empty()) {
+      dl_executors = ctrl_executors;
+    } else {
+      srsran_assert(dl_executors.size() == ctrl_executors.size(),
+                    "If specified, the number of DL executors must be equal to the number of control executors");
+    }
+    if (ul_executors.empty()) {
+      ul_executors = ctrl_executors;
+    } else {
+      srsran_assert(ul_executors.size() == ctrl_executors.size(),
+                    "If specified, the number of UL executors must be equal to the number of control executors");
+    }
+
+    for (unsigned i = 0; i != ctrl_executors.size(); ++i) {
+      sessions.emplace_back(*ctrl_executors[i], *ul_executors[i], *dl_executors[i]);
+    }
   }
 
-  ptr create_dl_pdu_executor() override
+  std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() override
   {
-    return {dl_execs[round_robin_dl_index.fetch_add(1, std::memory_order_relaxed) % dl_execs.size()],
-            [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_ul_pdu_executor() override
-  {
-    return {ul_execs[round_robin_ul_index.fetch_add(1, std::memory_order_relaxed) % ul_execs.size()],
-            [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_ctrl_executor() override
-  {
-    return {ctrl_execs[round_robin_ctrl_index.fetch_add(1, std::memory_order_relaxed) % ctrl_execs.size()],
-            [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_ctrl_executor(p);
-              }
-            }};
+    return std::make_unique<pdu_session_executor_mapper_impl>(
+        *this, sessions[round_robin_index.fetch_add(1, std::memory_order_relaxed) % sessions.size()]);
   }
 
 private:
-  void dealloc_pdu_executor(task_executor* exec)
-  {
-    // do nothing.
-  }
-  void dealloc_ctrl_executor(task_executor* exec)
+  void deregister_pdu_session(session_executor_context& session_ctxt)
   {
     // do nothing.
   }
 
-  std::vector<task_executor*> dl_execs;
-  std::vector<task_executor*> ul_execs;
-  std::vector<task_executor*> ctrl_execs;
+  std::vector<session_executor_context> sessions;
 
-  std::atomic<uint32_t> round_robin_dl_index{0};
-  std::atomic<uint32_t> round_robin_ul_index{0};
-  std::atomic<uint32_t> round_robin_ctrl_index{0};
+  std::atomic<uint32_t> round_robin_index{0};
 };
 
 std::unique_ptr<cu_up_executor_pool> srsran::make_cu_up_executor_mapper(span<task_executor*> dl_executors,

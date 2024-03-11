@@ -31,47 +31,27 @@ namespace srsran {
 /// Dummy CU-UP executor pool used for testing
 class dummy_cu_up_executor_pool final : public cu_up_executor_pool
 {
+  class dummy_pdu_session_executor_mapper_impl : public pdu_session_executor_mapper
+  {
+  public:
+    dummy_pdu_session_executor_mapper_impl(task_executor& exec_) : exec(&exec_) {}
+
+    task_executor& ctrl_executor() override { return *exec; }
+    task_executor& ul_pdu_executor() override { return *exec; }
+    task_executor& dl_pdu_executor() override { return *exec; }
+
+    task_executor* exec;
+  };
+
 public:
   dummy_cu_up_executor_pool(task_executor* test_executor_) : test_executor(test_executor_) {}
-  using ptr = std::unique_ptr<task_executor, unique_function<void(task_executor*)>>;
 
-  ptr create_ul_pdu_executor() override
+  std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() override
   {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_dl_pdu_executor() override
-  {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_ctrl_executor() override
-  {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
+    return std::make_unique<dummy_pdu_session_executor_mapper_impl>(*test_executor);
   }
 
 private:
-  void dealloc_pdu_executor(task_executor* exec)
-  {
-    // do nothing.
-  }
-  void dealloc_ctrl_executor(task_executor* exec)
-  {
-    // do nothing.
-  }
-
   task_executor* test_executor;
 };
 

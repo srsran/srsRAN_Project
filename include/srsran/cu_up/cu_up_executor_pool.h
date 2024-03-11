@@ -15,28 +15,36 @@
 
 namespace srsran {
 
+/// \brief This class holds the executors available to a given UE PDU session in the CU-CP.
+class pdu_session_executor_mapper
+{
+public:
+  virtual ~pdu_session_executor_mapper() = default;
+
+  /// \brief Returns the task executor appropriate for the control aspects of the PDU session (e.g. timers, deletion).
+  virtual task_executor& ctrl_executor() = 0;
+
+  /// \brief Returns the task executor to handle UL PDUs in the user plane.
+  ///
+  /// The returned executor should be of low priority, but optimized for high computational loads.
+  virtual task_executor& ul_pdu_executor() = 0;
+
+  /// \brief Returns the task executor to handle DL PDUs in the user plane.
+  ///
+  /// The returned executor should be of low priority, but optimized for high computational loads.
+  virtual task_executor& dl_pdu_executor() = 0;
+};
+
 /// \brief Interface used to access different executors used in the CU-UP.
 ///
 /// Tasks dispatched to executors with the same key will be executed sequentially.
 class cu_up_executor_pool
 {
 public:
-  using ptr = std::unique_ptr<task_executor, unique_function<void(task_executor*)>>;
-
   virtual ~cu_up_executor_pool() = default;
 
-  /// \brief Creates a task executor to handle UL PDUs in the user plane.
-  ///
-  /// The returned executor should be of low priority, but optimized for high computational loads.
-  virtual ptr create_ul_pdu_executor() = 0;
-
-  /// \brief Creates a task executor to handle DL PDUs in the user plane.
-  ///
-  /// The returned executor should be of low priority, but optimized for high computational loads.
-  virtual ptr create_dl_pdu_executor() = 0;
-
-  /// \brief Creates a task executor appropriate for the control plane.
-  virtual ptr create_ctrl_executor() = 0;
+  /// \brief Instantiate executors for a new PDU session.
+  virtual std::unique_ptr<pdu_session_executor_mapper> create_pdu_session() = 0;
 };
 
 /// \brief Creates an executor mapper for the CU-UP.

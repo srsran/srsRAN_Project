@@ -35,22 +35,20 @@ struct ue_context_cfg {
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
-  ue_context(ue_index_t                                                            index_,
-             ue_context_cfg                                                        cfg_,
-             e1ap_control_message_handler&                                         e1ap_,
-             network_interface_config&                                             net_config_,
-             n3_interface_config&                                                  n3_config_,
-             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec_,
-             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec_,
-             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec_,
-             timer_factory                                                         ue_dl_timer_factory_,
-             timer_factory                                                         ue_ul_timer_factory_,
-             timer_factory                                                         ue_ctrl_timer_factory_,
-             f1u_cu_up_gateway&                                                    f1u_gw_,
-             gtpu_teid_pool&                                                       f1u_teid_allocator_,
-             gtpu_tunnel_tx_upper_layer_notifier&                                  gtpu_tx_notifier_,
-             gtpu_demux_ctrl&                                                      gtpu_rx_demux_,
-             dlt_pcap&                                                             gtpu_pcap) :
+  ue_context(ue_index_t                                   index_,
+             ue_context_cfg                               cfg_,
+             e1ap_control_message_handler&                e1ap_,
+             network_interface_config&                    net_config_,
+             n3_interface_config&                         n3_config_,
+             std::unique_ptr<pdu_session_executor_mapper> pdu_session_exec_mapper_,
+             timer_factory                                ue_dl_timer_factory_,
+             timer_factory                                ue_ul_timer_factory_,
+             timer_factory                                ue_ctrl_timer_factory_,
+             f1u_cu_up_gateway&                           f1u_gw_,
+             gtpu_teid_pool&                              f1u_teid_allocator_,
+             gtpu_tunnel_tx_upper_layer_notifier&         gtpu_tx_notifier_,
+             gtpu_demux_ctrl&                             gtpu_rx_demux_,
+             dlt_pcap&                                    gtpu_pcap) :
     index(index_),
     cfg(std::move(cfg_)),
     logger("CU-UP", {index_}),
@@ -69,13 +67,11 @@ public:
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
                         gtpu_rx_demux_,
-                        *ue_dl_exec_,
-                        *ue_ul_exec_,
-                        *ue_ctrl_exec_,
+                        pdu_session_exec_mapper_->dl_pdu_executor(),
+                        pdu_session_exec_mapper_->ul_pdu_executor(),
+                        pdu_session_exec_mapper_->ctrl_executor(),
                         gtpu_pcap),
-    ue_dl_exec(std::move(ue_dl_exec_)),
-    ue_ul_exec(std::move(ue_ul_exec_)),
-    ue_ctrl_exec(std::move(ue_ctrl_exec_)),
+    pdu_session_exec_mapper(std::move(pdu_session_exec_mapper_)),
     ue_dl_timer_factory(ue_dl_timer_factory_),
     ue_ul_timer_factory(ue_ul_timer_factory_),
     ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
@@ -122,9 +118,7 @@ private:
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
 
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec;
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec;
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec;
+  std::unique_ptr<pdu_session_executor_mapper> pdu_session_exec_mapper;
 
   timer_factory ue_dl_timer_factory;
   timer_factory ue_ul_timer_factory;
@@ -142,7 +136,7 @@ private:
       e1ap.handle_bearer_context_inactivity_notification(msg);
     };
 
-    if (!ue_ctrl_exec->execute(std::move(fn))) {
+    if (!pdu_session_exec_mapper->ctrl_executor().execute(std::move(fn))) {
       logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}", index);
     }
   }
