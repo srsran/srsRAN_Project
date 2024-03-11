@@ -273,7 +273,7 @@ amari 32UE:
   variables:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=False"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False"
   needs:
     - job: "basic relwithdeb"
       artifacts: true

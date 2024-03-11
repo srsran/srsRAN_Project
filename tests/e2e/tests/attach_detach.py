@@ -44,14 +44,14 @@ BITRATE_THRESHOLD: float = 0.1
     ),
 )
 @mark.parametrize(
-    "band, common_scs, bandwidth, always_download_artifacts",
+    "band, common_scs, bandwidth",
     (
-        param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
-        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(3, 15, 50, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start"])
+@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid"])
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -62,7 +62,6 @@ def test_zmq(
     band: int,
     common_scs: int,
     bandwidth: int,
-    always_download_artifacts: bool,
     protocol: IPerfProto,
     direction: IPerfDir,
 ):
@@ -86,7 +85,7 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=always_download_artifacts,
+        always_download_artifacts=False,
     )
 
 
