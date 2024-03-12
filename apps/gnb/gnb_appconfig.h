@@ -720,6 +720,12 @@ struct security_appconfig {
   std::string nia_preference_list        = "nia2,nia1,nia3";
 };
 
+/// \brief F1AP-CU configuration parameters.
+struct f1ap_cu_appconfig {
+  /// Timeout for the UE context setup procedure in milliseconds.
+  unsigned ue_context_setup_timeout = 1000;
+};
+
 struct cu_cp_appconfig {
   uint16_t           max_nof_dus               = 6;
   uint16_t           max_nof_cu_ups            = 6;
@@ -728,6 +734,7 @@ struct cu_cp_appconfig {
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;
+  f1ap_cu_appconfig  f1ap_config;
 };
 
 struct cu_up_appconfig {
@@ -1242,6 +1249,8 @@ struct gnb_appconfig {
   cu_cp_appconfig cu_cp_cfg;
   /// CU-CP configuration.
   cu_up_appconfig cu_up_cfg;
+  /// F1AP configuration.
+  f1ap_cu_appconfig f1ap_cfg;
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.

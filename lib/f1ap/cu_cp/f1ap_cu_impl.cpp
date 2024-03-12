@@ -24,12 +24,14 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
-f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
+f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
+                           f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
                            f1ap_ue_removal_notifier&    f1ap_cu_cp_notifier_,
                            timer_manager&               timers_,
                            task_executor&               ctrl_exec_) :
+  cfg(f1ap_cfg_),
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
@@ -88,7 +90,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
                                               optional<rrc_ue_transfer_context>    rrc_context)
 {
   return launch_async<ue_context_setup_procedure>(
-      request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger, rrc_context);
+      cfg, request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger, rrc_context);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)

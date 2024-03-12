@@ -12,6 +12,7 @@
 
 #include "ue_context/f1ap_cu_ue_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -24,7 +25,8 @@ class f1ap_ue_transaction_manager;
 class f1ap_cu_impl final : public f1ap_cu
 {
 public:
-  f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
+  f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
+               f1ap_message_notifier&       f1ap_pdu_notifier_,
                f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                f1ap_du_management_notifier& f1ap_du_management_notifier_,
                f1ap_ue_removal_notifier&    f1ap_cu_cp_notifier_,
@@ -105,7 +107,8 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
-  srslog::basic_logger& logger;
+  const f1ap_configuration cfg;
+  srslog::basic_logger&    logger;
 
   /// Repository of UE Contexts.
   f1ap_ue_context_list ue_ctxt_list;

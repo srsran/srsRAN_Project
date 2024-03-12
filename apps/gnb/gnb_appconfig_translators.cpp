@@ -118,6 +118,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
       config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;
 
+  // F1AP-CU config.
+  out_cfg.f1ap_config.ue_context_setup_timeout =
+      std::chrono::milliseconds{config.cu_cp_cfg.f1ap_config.ue_context_setup_timeout};
+
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
     srs_cu_cp::cell_meas_config meas_cfg_item;

@@ -415,6 +415,13 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
       ->capture_default_str();
 }
 
+static void configure_cli11_f1ap_args(CLI::App& app, f1ap_cu_appconfig& f1ap_params)
+{
+  app.add_option(
+         "--ue_context_setup_timeout", f1ap_params.ue_context_setup_timeout, "UE context setup timeout in milliseconds")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option(
@@ -441,6 +448,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
   configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
+
+  CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP configuration");
+  configure_cli11_f1ap_args(*f1ap_subcmd, cu_cp_params.f1ap_config);
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)

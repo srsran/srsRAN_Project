@@ -48,7 +48,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   context.du_index = cfg.du_index;
 
   // create f1ap
-  f1ap = create_f1ap(f1ap_notifier,
+  f1ap = create_f1ap(cfg.f1ap_cfg,
+                     f1ap_notifier,
                      f1ap_ev_notifier,
                      f1ap_du_mgmt_notifier,
                      f1ap_cu_cp_notifier,

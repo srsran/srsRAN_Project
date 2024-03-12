@@ -110,6 +110,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
   du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
   du_cfg.du_setup_notif              = &cfg.du_conn_notif;
+  du_cfg.f1ap_cfg                    = cfg.cu_cp.f1ap_config;
 
   std::unique_ptr<du_processor_impl_interface> du = create_du_processor(du_cfg,
                                                                         du_ctxt.du_to_cu_cp_notifier,
