@@ -35,8 +35,8 @@ class receiver
 public:
   virtual ~receiver() = default;
 
-  /// Returns the OTA symbol boundary notifier of this Open Fronthaul receiver.
-  virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;
+  /// Returns an OTA symbol boundary notifier of this Open Fronthaul receiver or nullptr if not present.
+  virtual ota_symbol_boundary_notifier* get_ota_symbol_boundary_notifier() = 0;
 
   /// Returns the controller of this Open Fronthaul receiver.
   virtual controller& get_controller() = 0;

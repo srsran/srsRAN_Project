@@ -310,7 +310,7 @@ void process_successful_pdu_resource_modification_outcome(
   } else {
     e1ap_pdu_session_resource_failed_item failed_item;
     failed_item.pdu_session_id = result.pdu_session_id;
-    failed_item.cause          = cause_radio_network_t::unspecified;
+    failed_item.cause          = e1ap_cause_radio_network_t::unspecified;
     pdu_session_resource_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }

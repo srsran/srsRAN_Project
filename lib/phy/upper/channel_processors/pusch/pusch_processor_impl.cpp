@@ -223,6 +223,13 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
+  // Determine if the PUSCH allocation overlaps with the position of the DC.
+  bool overlap_dc = false;
+  if (pdu.dc_position.has_value()) {
+    unsigned dc_position_prb = pdu.dc_position.value() / NRE;
+    overlap_dc               = rb_mask.test(dc_position_prb);
+  }
+
   // Get UL-SCH information as if there was no CSI Part 2 in the PUSCH.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
@@ -241,6 +248,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ulsch_config.dmrs_symbol_mask      = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
+  ulsch_config.contains_dc                 = overlap_dc;
   ulsch_information info                   = get_ulsch_information(ulsch_config);
 
   // Estimate channel.

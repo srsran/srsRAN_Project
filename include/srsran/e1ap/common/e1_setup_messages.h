@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"
 
@@ -49,7 +49,7 @@ struct cu_up_e1_setup_response {
   optional<std::string> gnb_cu_cp_name;
 
   // e1 setup failure
-  optional<cause_t>            cause;
+  optional<e1ap_cause_t>       cause;
   optional<crit_diagnostics_t> crit_diagnostics;
 };
 

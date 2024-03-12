@@ -30,5 +30,5 @@ using namespace srsran;
 std::unique_ptr<gtpu_tunnel_ngu> srsran::create_gtpu_tunnel_ngu(gtpu_tunnel_ngu_creation_message& msg)
 {
   return std::make_unique<gtpu_tunnel_ngu_impl>(
-      msg.ue_index, msg.cfg, *msg.gtpu_pcap, *msg.rx_lower, *msg.tx_upper, msg.timers);
+      msg.ue_index, msg.cfg, *msg.gtpu_pcap, *msg.rx_lower, *msg.tx_upper, msg.ue_dl_timer_factory);
 }

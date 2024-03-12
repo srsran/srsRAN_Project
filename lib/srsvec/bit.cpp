@@ -33,10 +33,8 @@
 using namespace srsran;
 using namespace srsvec;
 
-namespace {
-
 template <typename InType = uint8_t>
-void unpack_8bit(span<uint8_t> unpacked, InType value)
+static void unpack_8bit(span<uint8_t> unpacked, InType value)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
 
@@ -48,7 +46,7 @@ void unpack_8bit(span<uint8_t> unpacked, InType value)
 }
 
 template <typename RetType = uint8_t>
-RetType pack_8bit(span<const uint8_t> unpacked)
+static RetType pack_8bit(span<const uint8_t> unpacked)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
 
@@ -65,13 +63,11 @@ RetType pack_8bit(span<const uint8_t> unpacked)
   return static_cast<RetType>(packed);
 }
 
-} // namespace
-
 span<uint8_t> srsran::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits)
 {
   srsran_assert(bits.size() >= nof_bits, "Input span size is too small");
 
-  for (unsigned i = 0; i < nof_bits; i++) {
+  for (unsigned i = 0; i != nof_bits; ++i) {
     bits[i] = (value >> (nof_bits - i - 1)) & 0x1;
   }
 
@@ -214,7 +210,7 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 
   unsigned value = 0;
 
-  for (unsigned i = 0; i < nof_bits; i++) {
+  for (unsigned i = 0; i != nof_bits; ++i) {
     value |= (unsigned)bits[i] << (nof_bits - i - 1U);
   }
 
@@ -230,7 +226,7 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t> bits)
 
   unsigned value = 0;
 
-  for (unsigned i = 0, nof_bits = bits.size(); i != nof_bits; i++) {
+  for (unsigned i = 0, nof_bits = bits.size(); i != nof_bits; ++i) {
     value |= (unsigned)bits[i] << (nof_bits - i - 1U);
   }
 
@@ -335,14 +331,15 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t>
     unsigned i_word = 0;
 #ifdef __AVX2__
     for (unsigned i_word_end = (nof_full_words / 32) * 32; i_word != i_word_end; i_word += 32) {
-      __m256i word0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word]));
-      __m256i word1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word + 1]));
-      word0         = _mm256_and_si256(_mm256_slli_epi32(word0, input_start_mod),
+      __m256i word0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input.data() + input_start_word + i_word));
+      __m256i word1 =
+          _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input.data() + input_start_word + i_word + 1));
+      word0        = _mm256_and_si256(_mm256_slli_epi32(word0, input_start_mod),
                                _mm256_set1_epi8(mask_msb_ones<uint8_t>(bits_per_word - input_start_mod)));
-      word1         = _mm256_and_si256(_mm256_srli_epi32(word1, bits_per_word - input_start_mod),
+      word1        = _mm256_and_si256(_mm256_srli_epi32(word1, bits_per_word - input_start_mod),
                                _mm256_set1_epi8(mask_lsb_ones<uint8_t>(input_start_mod)));
-      __m256i word  = _mm256_or_si256(word0, word1);
-      _mm256_storeu_si256(reinterpret_cast<__m256i*>(&buffer[i_word]), word);
+      __m256i word = _mm256_or_si256(word0, word1);
+      _mm256_storeu_si256(reinterpret_cast<__m256i*>(buffer.data() + i_word), word);
     }
 #endif // __AVX2__
     for (; i_word != nof_full_words; ++i_word) {

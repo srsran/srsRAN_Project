@@ -44,7 +44,9 @@ struct pdcp_entity_creation_message {
   pdcp_tx_upper_control_notifier* tx_upper_cn;
   pdcp_rx_upper_data_notifier*    rx_upper_dn;
   pdcp_rx_upper_control_notifier* rx_upper_cn;
-  timer_factory                   timers;
+  timer_factory                   ue_dl_timer_factory;
+  timer_factory                   ue_ul_timer_factory;
+  timer_factory                   ue_ctrl_timer_factory;
 };
 
 /// Creates an instance of a PDCP entity.

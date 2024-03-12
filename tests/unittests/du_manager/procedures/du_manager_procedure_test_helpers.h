@@ -23,7 +23,8 @@
 #pragma once
 
 #include "../du_manager_test_helpers.h"
-#include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "lib/du_manager/du_ue/du_ue.h"
+#include "lib/du_manager/du_ue/du_ue_manager_repository.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
@@ -50,10 +51,11 @@ public:
     ue_notifiers_disconnected = true;
     return launch_no_op_task();
   }
-  void schedule_async_task(async_task<void> task) override { ue_ctrl_loop->schedule(std::move(task)); }
-  void handle_rlf_detection(rlf_cause cause) override {}
-  void handle_crnti_ce_detection() override {}
-  void stop_drb_traffic() override {}
+  async_task<void> handle_activity_stop_request() override { return launch_no_op_task(); }
+  void             schedule_async_task(async_task<void> task) override { ue_ctrl_loop->schedule(std::move(task)); }
+  void             handle_rlf_detection(rlf_cause cause) override {}
+  void             handle_crnti_ce_detection() override {}
+  void             stop_drb_traffic() override {}
   mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *this; }
   void                                 on_rlf_detected() override {}
   void                                 on_crnti_ce_received() override {}

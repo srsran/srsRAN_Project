@@ -42,7 +42,7 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   ue_res_grid_view.add_cell(*params.cell_res_alloc);
   cells[params.cell_index] = std::make_unique<cell>(expert_cfg, params, ue_db);
-  event_mng.add_cell(*params.cell_res_alloc, cells[params.cell_index]->srb0_sched);
+  event_mng.add_cell(*params.cell_res_alloc, cells[params.cell_index]->srb0_sched, cells[params.cell_index]->uci_sched);
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 
@@ -164,7 +164,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   ue_alloc.slot_indication();
 
   // Schedule periodic UCI (SR and CSI) before any UL grants.
-  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
+  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
   // Run cell-specific SRB0 scheduler.
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);

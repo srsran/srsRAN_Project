@@ -58,9 +58,9 @@ struct sector_configuration {
   uint16_t tci;
 
   /// DU transmission window timing parameters.
-  du_tx_window_timing_parameters tx_window_timing_params;
+  tx_window_timing_parameters tx_window_timing_params;
   /// Reception window timing parameters.
-  du_rx_window_timing_parameters rx_window_timing_params;
+  rx_window_timing_parameters rx_window_timing_params;
 
   /// Cyclic prefix.
   cyclic_prefix cp;

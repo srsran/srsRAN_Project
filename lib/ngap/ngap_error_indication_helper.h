@@ -42,7 +42,7 @@ inline void send_error_indication(ngap_message_notifier& ngap_notifier,
                                   srslog::basic_logger&  logger,
                                   optional<ran_ue_id_t>  ran_ue_id = {},
                                   optional<amf_ue_id_t>  amf_ue_id = {},
-                                  optional<cause_t>      cause     = {})
+                                  optional<ngap_cause_t> cause     = {})
 {
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();

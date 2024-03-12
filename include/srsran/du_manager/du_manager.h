@@ -52,6 +52,9 @@ public:
   /// \brief Remove UE context from the DU.
   virtual async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& request) = 0;
 
+  /// \brief Deactivate DRB activity for a given UE.
+  virtual async_task<void> handle_ue_deactivation_request(du_ue_index_t ue_index) = 0;
+
   /// \brief Handle the transfer of resources of old UE to new Reestablishing UE and deletion of the old UE context.
   virtual void handle_ue_reestablishment(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;
 };

@@ -52,7 +52,7 @@ struct e1ap_bearer_context_setup_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_list;
 
   // Bearer Context Setup Failure
-  optional<cause_t> cause;
+  optional<e1ap_cause_t> cause;
 
   // Common
   optional<e1ap_crit_diagnostics> crit_diagnostics;
@@ -87,7 +87,7 @@ struct e1ap_bearer_context_modification_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_to_modify_list;
 
   // Bearer Context Modification Failure
-  optional<cause_t> cause;
+  optional<e1ap_cause_t> cause;
 
   // Common
   optional<e1ap_crit_diagnostics> crit_diagnostics;
@@ -95,8 +95,8 @@ struct e1ap_bearer_context_modification_response {
 
 /// \brief Request to release a bearer context.
 struct e1ap_bearer_context_release_command {
-  ue_index_t ue_index = INVALID_UE_INDEX;
-  cause_t    cause; // Cause of the release.
+  ue_index_t   ue_index = INVALID_UE_INDEX;
+  e1ap_cause_t cause; // Cause of the release.
 };
 
 } // namespace srs_cu_up

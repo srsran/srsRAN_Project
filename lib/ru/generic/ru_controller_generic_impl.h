@@ -44,6 +44,12 @@ public:
   // See interface for documentation.
   void stop() override;
 
+  // See interface for documentation.
+  bool set_tx_gain(unsigned port_id, double gain_dB) override;
+
+  // See interface for documentation.
+  bool set_rx_gain(unsigned port_id, double gain_dB) override;
+
 private:
   std::vector<lower_phy_controller*> low_phy_crtl;
   radio_session&                     radio;

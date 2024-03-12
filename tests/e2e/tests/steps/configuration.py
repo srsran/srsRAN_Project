@@ -45,6 +45,7 @@ def configure_test_parameters(
     gtpu_enable: Optional[bool] = None,
     common_search_space_enable: bool = False,
     prach_config_index: int = -1,
+    log_ip_level="",
 ):
     """
     Configure test parameters
@@ -59,6 +60,7 @@ def configure_test_parameters(
                 "ssb_scs": common_scs,
                 "bandwidth": bandwidth,
                 "global_timing_advance": global_timing_advance,
+                "log_ip_level": log_ip_level,
             },
         },
         "gnb": {

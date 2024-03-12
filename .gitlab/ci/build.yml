@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/srsran_project_packaging
-    ref: "3"
+    ref: "4"
     file: .gitlab/ci-shared/package.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -17,7 +17,9 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
+
   AMD64_LIB_BUILDER_TAG: on-prem-amd64
+  AMD64_VIAVI_BUILDER_TAG: on-prem-amd64-avx2-avx512
 
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
@@ -632,7 +634,7 @@ smoke release update cache:
     - *cache_build_set
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 smoke relwithdeb update cache:
   extends: .smoke relwithdeb
@@ -709,7 +711,7 @@ smoke valgrind update cache:
     SAVE_ARTIFACTS: "True" # Valgrind generates extra files
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 smoke asan:
   extends: .build_and_unit
@@ -739,7 +741,7 @@ package:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 30 minutes
-  variables:
+  variables: &package_variables
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
     KUBERNETES_CPU_REQUEST: 7
@@ -1716,7 +1718,20 @@ basic relwithdeb:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
+
+basic package:
+  extends: .deb-package
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    <<: *package_variables
+    OS_VERSION: "24.04"
+  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+  needs: []
 
 basic tsan:
   extends: .smoke tsan
@@ -1729,7 +1744,7 @@ basic tsan:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic asan:
   extends: smoke asan
@@ -1743,7 +1758,7 @@ basic asan:
   tags: ["${AMD64_AVX2_TAG}"]
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic memcheck:
   extends: .smoke valgrind
@@ -1756,7 +1771,7 @@ basic memcheck:
     SAVE_ARTIFACTS: "True"
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 basic avx512 dpdk:
   extends: .build_and_unit
@@ -1783,10 +1798,10 @@ basic avx512 dpdk:
     KUBERNETES_CPU_LIMIT: 14
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
-  tags: ["on-prem-amd64-avx2-avx512"]
+  tags: ["${AMD64_VIAVI_BUILDER_TAG}"]
   artifacts:
     <<: *build_artifacts
-    expire_in: 1 day
+    expire_in: 3 day
 
 #######
 # Web #

@@ -22,10 +22,7 @@
 
 #include "rrc_ue_test_helpers.h"
 #include "rrc_ue_test_messages.h"
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/fifo_async_task_scheduler.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

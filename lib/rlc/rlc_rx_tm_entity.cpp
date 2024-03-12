@@ -41,11 +41,19 @@ rlc_rx_tm_entity::rlc_rx_tm_entity(uint32_t                          du_index,
 
 void rlc_rx_tm_entity::handle_pdu(byte_buffer_slice buf)
 {
-  metrics.metrics_add_pdus(1, buf.length());
+  size_t pdu_len = buf.length();
+  metrics.metrics_add_pdus(1, pdu_len);
 
   pcap.push_pdu(pcap_context, buf);
 
-  logger.log_info(buf.begin(), buf.end(), "RX SDU. sdu_len={}", buf.length());
-  metrics.metrics_add_sdus(1, buf.length());
-  upper_dn.on_new_sdu(std::move(buf));
+  expected<byte_buffer_chain> sdu = byte_buffer_chain::create(std::move(buf));
+  if (!sdu) {
+    logger.log_error("Dropped SDU, failed to create SDU buffer. sdu_len={}", pdu_len);
+    metrics.metrics_add_lost_pdus(1);
+    return;
+  }
+
+  logger.log_info(sdu.value().begin(), sdu.value().end(), "RX SDU. sdu_len={}", sdu.value().length());
+  metrics.metrics_add_sdus(1, sdu.value().length());
+  upper_dn.on_new_sdu(std::move(sdu.value()));
 }

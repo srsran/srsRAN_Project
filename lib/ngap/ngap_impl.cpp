@@ -35,7 +35,7 @@
 #include "procedures/ngap_ue_context_release_procedure.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_types.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -59,11 +59,11 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
-  context.gnb_id                     = ngap_cfg_.gnb_id;
-  context.ran_node_name              = ngap_cfg_.ran_node_name;
-  context.plmn                       = ngap_cfg_.plmn;
-  context.tac                        = ngap_cfg_.tac;
-  context.ue_context_setup_timeout_s = ngap_cfg_.ue_context_setup_timeout;
+  context.gnb_id                    = ngap_cfg_.gnb_id;
+  context.ran_node_name             = ngap_cfg_.ran_node_name;
+  context.plmn                      = ngap_cfg_.plmn;
+  context.tac                       = ngap_cfg_.tac;
+  context.pdu_session_setup_timeout = ngap_cfg_.pdu_session_setup_timeout;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -150,14 +150,14 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
-  // Start UE context setup timer
-  ue_ctxt.ue_context_setup_timer.set(context.ue_context_setup_timeout_s, [this, msg](timer_id_t /*tid*/) {
-    on_ue_context_setup_timer_expired(msg.ue_index);
+  // Start PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.set(context.pdu_session_setup_timeout, [this, msg](timer_id_t /*tid*/) {
+    on_pdu_session_setup_timer_expired(msg.ue_index);
   });
-  ue_ctxt.ue_context_setup_timer.run();
+  ue_ctxt.pdu_session_setup_timer.run();
 
-  ue_ctxt.logger.log_debug("Sending InitialUeMessage (timeout={}ms)",
-                           ue_ctxt.ue_context_setup_timer.duration().count());
+  ue_ctxt.logger.log_debug("Sending InitialUeMessage (PDU session timeout={}ms)",
+                           ue_ctxt.pdu_session_setup_timer.duration().count());
 
   // Forward message to AMF
   ngap_notifier.on_new_message(ngap_msg);
@@ -267,7 +267,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping DlNasTransportMessage. UE context does not exist",
                    msg->ran_ue_ngap_id,
                    msg->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -275,7 +275,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping DlNasTransportMessage. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -289,7 +289,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
-    ue_ctxt_list.add_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
+    ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
   ue_ctxt.logger.log_info("Received DlNasTransportMessage");
@@ -306,7 +306,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping InitialContextSetupRequest. UE context does not exist",
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -314,7 +314,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping InitialContextSetup. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -325,13 +325,17 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
 
-  // Stop UE context setup timer
-  ue_ctxt.ue_context_setup_timer.stop();
+  // If InitialContextSetupRequest contains PDU Session Setup list, stop pdu session setup timer
+  if (request->pdu_session_res_setup_list_cxt_req_present) {
+    ue_ctxt.pdu_session_setup_timer.stop();
+  }
 
   ue_ctxt.logger.log_info("Received InitialContextSetupRequest");
 
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
-  ue_ctxt_list.add_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
+  if (ue_ctxt.ue_ids.amf_ue_id != uint_to_amf_ue_id(request->amf_ue_ngap_id)) {
+    ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
+  }
 
   // Convert to common type
   ngap_init_context_setup_request init_ctxt_setup_req;
@@ -375,7 +379,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceSetupRequest. UE context does not exist",
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -383,7 +387,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceSetupRequest. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -393,6 +397,9 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                 ue_ctxt.ue_ids.ue_index,
                 ue_ctxt.ue_ids.ran_ue_id,
                 ue_ctxt.ue_ids.amf_ue_id);
+
+  // Stop PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.stop();
 
   if (!ue->get_rrc_ue_control_notifier().on_security_enabled()) {
     ue_ctxt.logger.log_warning("Dropping PduSessionResourceSetupRequest. Security context does not exist");
@@ -437,14 +444,14 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceModifyRequest. UE context does not exist",
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceModifyRequest. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -452,12 +459,12 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   byte_buffer asn1_request_pdu = pack_into_pdu(request);
   if (asn1_request_pdu == ue_ctxt.last_pdu_session_resource_modify_request) {
     ue_ctxt.logger.log_warning("Received duplicate PduSessionResourceModifyRequest");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unspecified);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
     return;
-  } else {
-    // Store last PDU session resource modify request
-    ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
   }
+
+  // Store last PDU session resource modify request
+  ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
   srsran_assert(ue != nullptr,
@@ -475,7 +482,11 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // Convert to common type
   cu_cp_pdu_session_resource_modify_request msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
-  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req);
+  if (!fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req)) {
+    ue_ctxt.logger.log_warning("Unable to fill ASN1 contents for PduSessionResourceModifyRequest");
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
+    return;
+  }
 
   // start routine
   task_sched.schedule_async_task(
@@ -495,7 +506,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceReleaseCommand. UE context does not exist",
                    command->ran_ue_ngap_id,
                    command->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -503,7 +514,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceReleaseCommand. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -519,7 +530,11 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   // Handle optional NAS PDU
   if (command->nas_pdu_present) {
     byte_buffer nas_pdu;
-    nas_pdu.resize(command->nas_pdu.size());
+    if (!nas_pdu.resize(command->nas_pdu.size())) {
+      ue_ctxt.logger.log_warning("Unable to resize the storage for the PduSessionResourceReleaseCommand PDU");
+      schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
+      return;
+    }
     std::copy(command->nas_pdu.begin(), command->nas_pdu.end(), nas_pdu.begin());
     ue_ctxt.logger.log_debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
 
@@ -544,30 +559,45 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.amf_ue_ngap_id());
+
+    if (!ue_ctxt_list.contains(amf_ue_id)) {
+      // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
+      // indication
+      logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
+                     ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
+                     amf_ue_id);
+      send_error_indication(ngap_notifier, logger, {}, amf_ue_id, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+      return;
+    }
   } else if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
-  }
 
-  if (!ue_ctxt_list.contains(amf_ue_id)) {
-    // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
-    // indication
-    logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
-                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
-                   amf_ue_id);
-    send_error_indication(ngap_notifier, logger, {}, amf_ue_id, cause_radio_network_t::unknown_local_ue_ngap_id);
-    return;
+    if (!ue_ctxt_list.contains(ran_ue_id)) {
+      // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
+      // indication
+      logger.warning(
+          "ran_ue_id={} amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist", ran_ue_id, amf_ue_id);
+      send_error_indication(ngap_notifier, logger, {}, amf_ue_id, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+      return;
+    }
+
+    // Update AMF UE ID
+    if (ue_ctxt_list[ran_ue_id].ue_ids.amf_ue_id == amf_ue_id_t::invalid or
+        ue_ctxt_list[ran_ue_id].ue_ids.amf_ue_id != amf_ue_id) {
+      ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
+    }
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_id];
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping UeContextReleaseCommand. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
+    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
     return;
-  } else {
-    ue_ctxt.release_scheduled = true;
   }
+
+  ue_ctxt.release_scheduled = true;
 
   if (ran_ue_id == ran_ue_id_t::invalid) {
     ran_ue_id = ue_ctxt.ue_ids.ran_ue_id;
@@ -575,7 +605,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   // Add AMF UE ID to UE, if its not set
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
-    ue_ctxt_list.add_amf_ue_id(ran_ue_id, amf_ue_id);
+    ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
   }
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
@@ -604,7 +634,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   logger.info("Received Paging");
 
   if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
-    logger.warning("Dropping PDU. Unsupportet UE Paging ID");
+    logger.warning("Dropping PDU. Unsupported UE Paging ID");
     send_error_indication(ngap_notifier, logger);
     return;
   }
@@ -673,7 +703,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   ue_index_t  ue_index  = ue_index_t::invalid;
-  std::string msg_cause = "";
+  std::string msg_cause;
 
   if (msg->cause_present) {
     msg_cause = asn1_cause_to_string(msg->cause);
@@ -683,7 +713,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
     amf_ue_id = uint_to_amf_ue_id(msg->amf_ue_ngap_id);
     if (!ue_ctxt_list.contains(uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
       logger.warning("amf_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->amf_ue_ngap_id);
-      send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+      send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
       return;
     }
     ue_index = ue_ctxt_list[amf_ue_id].ue_ids.ue_index;
@@ -691,7 +721,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
     ran_ue_id = uint_to_ran_ue_id(msg->ran_ue_ngap_id);
     if (!ue_ctxt_list.contains(uint_to_ran_ue_id(msg->ran_ue_ngap_id))) {
       logger.warning("ran_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->ran_ue_ngap_id);
-      send_error_indication(ngap_notifier, logger, {}, {}, cause_radio_network_t::unknown_local_ue_ngap_id);
+      send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
       return;
     }
     ue_index = ue_ctxt_list[ran_ue_id].ue_ids.ue_index;
@@ -705,8 +735,8 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   // Request UE release
   task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
                                    CORO_BEGIN(ctx);
-                                   CORO_AWAIT(handle_ue_context_release_request(
-                                       cu_cp_ue_context_release_request{ue_index, {}, cause_nas_t::unspecified}));
+                                   CORO_AWAIT(handle_ue_context_release_request(cu_cp_ue_context_release_request{
+                                       ue_index, {}, ngap_cause_radio_network_t::unspecified}));
                                    CORO_RETURN();
                                  }));
 
@@ -752,6 +782,9 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
+
+  // Stop PDU session setup timer
+  ue_ctxt.pdu_session_setup_timer.stop();
 
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. UE does not have an AMF UE ID");
@@ -869,7 +902,7 @@ void ngap_impl::remove_ue_context(ue_index_t ue_index)
   ue_ctxt_list.remove_ue_context(ue_index);
 }
 
-void ngap_impl::schedule_error_indication(ue_index_t ue_index, cause_t cause, optional<amf_ue_id_t> amf_ue_id)
+void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, optional<amf_ue_id_t> amf_ue_id)
 {
   logger.info("{}{}: Scheduling ErrorIndication",
               ue_index != ue_index_t::invalid ? fmt::format("ue={}", ue_index) : "",
@@ -882,31 +915,44 @@ void ngap_impl::schedule_error_indication(ue_index_t ue_index, cause_t cause, op
       }));
 }
 
-void ngap_impl::on_ue_context_setup_timer_expired(ue_index_t ue_index)
+void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
 {
   if (ue_ctxt_list.contains(ue_index)) {
     ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
-    ue_ctxt.logger.log_warning("UE context setup timer expired after {}ms. Releasing UE from DU",
-                               ue_ctxt.ue_context_setup_timer.duration().count());
+    if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
+      // AMF never responded to InitialUEMessage, so we only remove the UE from the DU
+      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Releasing UE from DU",
+                                 ue_ctxt.pdu_session_setup_timer.duration().count());
 
-    auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
-    srsran_assert(ue != nullptr,
-                  "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
-                  ue_ctxt.ue_ids.ue_index,
-                  ue_ctxt.ue_ids.ran_ue_id,
-                  ue_ctxt.ue_ids.amf_ue_id);
+      auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
+      srsran_assert(ue != nullptr,
+                    "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
+                    ue_ctxt.ue_ids.ue_index,
+                    ue_ctxt.ue_ids.ran_ue_id,
+                    ue_ctxt.ue_ids.amf_ue_id);
 
-    task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
-                                     CORO_BEGIN(ctx);
-                                     CORO_AWAIT(
-                                         ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
-                                             {ue_index, cause_nas_t::unspecified}));
-                                     CORO_RETURN();
-                                   }));
+      task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
+                                       CORO_BEGIN(ctx);
+                                       CORO_AWAIT(
+                                           ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
+                                               {ue_index, ngap_cause_radio_network_t::unspecified}));
+                                       CORO_RETURN();
+                                     }));
+    } else {
+      ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Requesting UE release",
+                                 ue_ctxt.pdu_session_setup_timer.duration().count());
 
+      // Request UE release
+      task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+                                       CORO_BEGIN(ctx);
+                                       CORO_AWAIT(handle_ue_context_release_request(cu_cp_ue_context_release_request{
+                                           ue_index, {}, ngap_cause_radio_network_t::unspecified}));
+                                       CORO_RETURN();
+                                     }));
+    }
   } else {
-    logger.debug("ue={}: Ignoring expired UE context setup timer. UE context not found", ue_index);
+    logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);
     return;
   }
 }

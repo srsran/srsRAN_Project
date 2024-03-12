@@ -206,7 +206,7 @@ protected:
         if (i != hold_back_pdu) {
           byte_buffer pdu;
           for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-            pdu.append(slice);
+            EXPECT_TRUE(pdu.append(slice));
           }
           rlc2_rx_lower->handle_pdu(std::move(pdu));
         }
@@ -219,7 +219,7 @@ protected:
     {
       byte_buffer pdu;
       for (const byte_buffer_slice& slice : pdu_bufs[hold_back_pdu].slices()) {
-        pdu.append(slice);
+        EXPECT_TRUE(pdu.append(slice));
       }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
@@ -376,7 +376,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
@@ -456,7 +456,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
@@ -740,7 +740,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[num_pdus - i - 1].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
@@ -810,7 +810,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     if (i != 1 && i != 6) {
       byte_buffer pdu;
       for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-        pdu.append(slice);
+        EXPECT_TRUE(pdu.append(slice));
       }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
@@ -820,14 +820,14 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[6].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[1].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
@@ -908,7 +908,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
 
       byte_buffer rx_pdu;
       for (const byte_buffer_slice& slice : tx_pdu.slices()) {
-        rx_pdu.append(slice);
+        EXPECT_TRUE(rx_pdu.append(slice));
       }
       rlc2_rx_lower->handle_pdu(std::move(rx_pdu));
 
@@ -972,7 +972,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
       if (num_pdus != 10 && num_pdus != 21) {
         byte_buffer rx_pdu;
         for (const byte_buffer_slice& slice : tx_pdu.slices()) {
-          rx_pdu.append(slice);
+          EXPECT_TRUE(rx_pdu.append(slice));
         }
         rlc2_rx_lower->handle_pdu(std::move(rx_pdu));
       } else {
@@ -1062,7 +1062,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     if (i != 2) {
       byte_buffer pdu;
       for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-        pdu.append(slice);
+        EXPECT_TRUE(pdu.append(slice));
       }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
@@ -1148,7 +1148,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
     for (const byte_buffer_slice& slice : pdu_bufs[order[i]].slices()) {
-      pdu.append(slice);
+      EXPECT_TRUE(pdu.append(slice));
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }

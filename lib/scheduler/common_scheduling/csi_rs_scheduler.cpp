@@ -59,9 +59,9 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
 
   fill_csi_rs_info_res_map(csi_rs, nzp_csi_rs_res.res_mapping);
 
-  csi_rs.scrambling_id                = nzp_csi_rs_res.scrambling_id;
-  csi_rs.power_ctrl_offset_profile_nr = nzp_csi_rs_res.pwr_ctrl_offset;
-  csi_rs.power_ctrl_offset_ss_profile_nr =
+  csi_rs.scrambling_id     = nzp_csi_rs_res.scrambling_id;
+  csi_rs.power_ctrl_offset = nzp_csi_rs_res.pwr_ctrl_offset;
+  csi_rs.power_ctrl_offset_ss =
       nzp_csi_rs_res.pwr_ctrl_offset_ss_db.has_value() ? *nzp_csi_rs_res.pwr_ctrl_offset_ss_db : 0;
 
   return csi_rs;

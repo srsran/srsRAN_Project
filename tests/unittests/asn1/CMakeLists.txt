@@ -18,6 +18,8 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+include_directories(../../..)
+
 set_directory_properties(PROPERTIES LABELS "asn1")
 
 add_executable(asn1_utils_test asn1_utils_test.cpp)
@@ -46,3 +48,7 @@ gtest_discover_tests(asn1_f1ap_test)
 add_executable(asn1_ngap_test asn1_ngap_test.cpp)
 target_link_libraries(asn1_ngap_test ngap_asn1 srslog srsran_support srsran_pcap gtest gtest_main)
 gtest_discover_tests(asn1_ngap_test)
+
+add_executable(asn1_cause_conversion_test asn1_cause_conversion_test.cpp)
+target_link_libraries(asn1_cause_conversion_test ngap_asn1 f1ap_asn1 e1ap_asn1 srslog srsran_ran srsran_support gtest gtest_main)
+gtest_discover_tests(asn1_cause_conversion_test)

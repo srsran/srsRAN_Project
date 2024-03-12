@@ -32,7 +32,7 @@ void* mem_alloc(std::size_t size);
 void  mem_free(void* ptr);
 } // namespace detail
 
-/// Type to store a dynamic amount of aligned contiguous elements
+/// Type to store a dynamic amount of aligned contiguous elements.
 template <typename T>
 class aligned_vec : public span<T>
 {
@@ -44,22 +44,21 @@ public:
   aligned_vec(const aligned_vec<T>& other)               = delete;
   aligned_vec(aligned_vec<T>&& other) noexcept           = delete;
 
-  aligned_vec() : span<T>(nullptr, 0UL){};
+  aligned_vec() = default;
   explicit aligned_vec(std::size_t size) { resize(size); }
+  ~aligned_vec() { dealloc(); }
 
-  void resize(unsigned new_size)
+  void resize(std::size_t new_size)
   {
     if (new_size == this->size()) {
       return;
     }
+
     dealloc();
 
-    T*      ptr_    = (T*)detail::mem_alloc(sizeof(T) * new_size);
-    span<T> o       = span<T>(ptr_, new_size);
-    *(span<T>*)this = o;
+    T*       p = reinterpret_cast<T*>(detail::mem_alloc(sizeof(T) * new_size));
+    span<T>::operator=(span<T>(p, new_size));
   }
-
-  ~aligned_vec() { dealloc(); }
 };
 
 } // namespace srsvec

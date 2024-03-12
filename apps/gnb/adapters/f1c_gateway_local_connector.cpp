@@ -42,8 +42,6 @@ public:
 
   void on_new_message(const f1ap_message& msg) override
   {
-    logger.debug("Received a PDU of type {}", msg.pdu.type().to_string());
-
     if (pcap_writer.is_write_enabled()) {
       byte_buffer   buf;
       asn1::bit_ref bref(buf);

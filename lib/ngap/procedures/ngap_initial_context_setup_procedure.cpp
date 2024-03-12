@@ -26,7 +26,7 @@
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_message.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -68,7 +68,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
            request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
-        failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
+        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
 
         fail_msg.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id, failed_item);
       }
@@ -133,7 +133,10 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
   init_ctxt_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   init_ctxt_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
+  if (!fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg)) {
+    logger.log_warning("Unable to fill ASN1 contents for InitialContextSetupResponse");
+    return;
+  }
 
   logger.log_info("Sending InitialContextSetupResponse");
   amf_notifier.on_new_message(ngap_msg);

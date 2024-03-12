@@ -54,7 +54,7 @@ struct ngap_init_context_setup_request {
 };
 
 struct ngap_init_context_setup_failure {
-  cause_t                                                                      cause;
+  ngap_cause_t                                                                 cause;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
   optional<crit_diagnostics_t>                                                 crit_diagnostics;
 };

@@ -24,7 +24,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
@@ -175,18 +175,18 @@ struct f1ap_drbs_setup_mod_item {
 };
 
 struct f1ap_srbs_failed_to_be_setup_mod_item {
-  srb_id_t          srb_id = srb_id_t::nulltype;
-  optional<cause_t> cause;
+  srb_id_t               srb_id = srb_id_t::nulltype;
+  optional<f1ap_cause_t> cause;
 };
 
 struct f1ap_drbs_failed_to_be_setup_mod_item {
-  drb_id_t          drb_id = drb_id_t::invalid;
-  optional<cause_t> cause;
+  drb_id_t               drb_id = drb_id_t::invalid;
+  optional<f1ap_cause_t> cause;
 };
 
 struct f1ap_scell_failed_to_setup_mod_item {
-  nr_cell_global_id_t scell_id;
-  optional<cause_t>   cause;
+  nr_cell_global_id_t    scell_id;
+  optional<f1ap_cause_t> cause;
 };
 
 struct f1ap_srbs_setup_mod_item {
@@ -216,7 +216,7 @@ struct f1ap_ue_context_setup_response {
   slotted_id_vector<srb_id_t, f1ap_srbs_setup_mod_item>              srbs_setup_list; // max size = 8
 
   // UE Context Setup Failure
-  optional<cause_t>                        cause;
+  optional<f1ap_cause_t>                   cause;
   std::vector<f1ap_potential_sp_cell_item> potential_sp_cell_list; // max size = 64
 
   // Common
@@ -300,7 +300,7 @@ struct f1ap_ue_context_modification_response {
   optional<bool>                                                     full_cfg;
 
   // UE Context Modification Failure
-  optional<cause_t> cause;
+  optional<f1ap_cause_t> cause;
 
   // Common
   optional<crit_diagnostics_t> crit_diagnostics;
@@ -308,8 +308,8 @@ struct f1ap_ue_context_modification_response {
 
 /// \brief Request Command for F1AP UE CONTEXT Release Request.
 struct f1ap_ue_context_release_request {
-  ue_index_t ue_index;
-  cause_t    cause;
+  ue_index_t   ue_index;
+  f1ap_cause_t cause;
 };
 
 } // namespace srs_cu_cp

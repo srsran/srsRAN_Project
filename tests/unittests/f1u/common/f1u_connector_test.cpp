@@ -88,6 +88,8 @@ protected:
 
     timers = timer_factory{timer_mng, ue_worker};
 
+    ue_inactivity_timer = timers.create_timer();
+
     // set F1-U bearer config
     config.t_notify = 10;
   }
@@ -101,6 +103,7 @@ protected:
   timer_manager      timer_mng;
   manual_task_worker ue_worker{128};
   timer_factory      timers;
+  unique_timer       ue_inactivity_timer;
 
   srs_du::f1u_config                   config;
   std::unique_ptr<f1u_local_connector> f1u_conn;
@@ -123,18 +126,19 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl{{"127.0.0.2"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer* du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl, ul_tnl, du_rx, timers);
+  srs_du::f1u_bearer*          du_bearer =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -173,18 +177,19 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl{{"127.0.0.2"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer* du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl, ul_tnl, du_rx, timers);
+  srs_du::f1u_bearer*          du_bearer =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -223,19 +228,20 @@ TEST_F(f1u_connector_test, update_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  up_transport_layer_info ul_tnl{{"127.0.0.1"}, gtpu_teid_t{1}};
-  up_transport_layer_info dl_tnl1{{"127.0.0.2"}, gtpu_teid_t{2}};
-  up_transport_layer_info dl_tnl2{{"127.0.0.3"}, gtpu_teid_t{2}};
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl1{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+  up_transport_layer_info dl_tnl2{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
   std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, timers);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx1;
-  srs_du::f1u_bearer* du_bearer1 = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl1, ul_tnl, du_rx1, timers);
+  srs_du::f1u_bearer*          du_bearer1 =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl1);
@@ -263,7 +269,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   // Attach new DU bearer
   dummy_f1u_du_rx_sdu_notifier du_rx2;
-  srs_du::f1u_bearer* du_bearer2 = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl2, ul_tnl, du_rx2, timers);
+  srs_du::f1u_bearer*          du_bearer2 =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
 
   // Attach new DL TEID
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl2);

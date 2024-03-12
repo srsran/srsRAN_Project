@@ -52,6 +52,8 @@ struct dlsch_configuration {
   unsigned nof_cdm_groups_without_data;
   /// Number of transmission layers.
   unsigned nof_layers;
+  /// Set to true if the transmission overlaps with the Direct Current (DC).
+  bool contains_dc;
 };
 
 /// Collects Downlink Shared Channel (DL-SCH) derived parameters.
@@ -60,6 +62,8 @@ struct dlsch_information {
   sch_information sch;
   /// Number of encoded and rate-matched DL-SCH data bits.
   units::bits nof_dl_sch_bits;
+  /// Number of bits that are affected by overlapping with the direct current.
+  units::bits nof_dc_overlap_bits;
 
   /// \brief Calculates the effective code rate normalized between 0 and 1.
   ///
@@ -71,7 +75,7 @@ struct dlsch_information {
     srsran_assert(sch.nof_bits_per_cb.value() > sch.nof_filler_bits_per_cb.value(),
                   "The number of bits per CB must be greater than the number of filler bits.");
     return static_cast<float>((sch.nof_bits_per_cb.value() - sch.nof_filler_bits_per_cb.value()) * sch.nof_cb) /
-           static_cast<float>(nof_dl_sch_bits.value());
+           static_cast<float>(nof_dl_sch_bits.value() - nof_dc_overlap_bits.value());
   }
 };
 

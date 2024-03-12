@@ -26,15 +26,8 @@
 
 using namespace srsran;
 
-mac_dl_ue_context::mac_dl_ue_context(const mac_ue_create_request& req) :
-  ue_index(req.ue_index), harq_buffers(MAX_NOF_HARQS)
+mac_dl_ue_context::mac_dl_ue_context(const mac_ue_create_request& req) : ue_index(req.ue_index)
 {
-  // Resize each HARQ buffer to maximum DL PDU size.
-  // TODO: Account the maximum PDU length, given cell BW.
-  for (std::vector<uint8_t>& harq : harq_buffers) {
-    harq.resize(MAX_DL_PDU_LENGTH);
-  }
-
   // Store DL logical channel notifiers.
   addmod_logical_channels(req.bearers);
 
@@ -86,12 +79,7 @@ bool mac_dl_ue_manager::remove_ue(du_ue_index_t ue_index)
 {
   // Erase UE from the repository.
   const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
-  if (not ue_db.contains(ue_index)) {
-    return false;
-  }
-  ue_db.erase(ue_index);
-
-  return true;
+  return ue_db.erase(ue_index);
 }
 
 bool mac_dl_ue_manager::addmod_bearers(du_ue_index_t                          ue_index,

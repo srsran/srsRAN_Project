@@ -68,8 +68,12 @@ void ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_rele
   ngap_msg.pdu.set_successful_outcome();
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE);
 
-  fill_asn1_pdu_session_resource_release_response(
-      ngap_msg.pdu.successful_outcome().value.pdu_session_res_release_resp(), response);
+  // TODO: needs more handling in the coro above?
+  if (!fill_asn1_pdu_session_resource_release_response(
+          ngap_msg.pdu.successful_outcome().value.pdu_session_res_release_resp(), response)) {
+    logger.log_warning("Cannot fill ASN1 PDU Session Resource Release Response");
+    return;
+  }
 
   auto& pdu_session_res_release_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_release_resp();
   pdu_session_res_release_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);

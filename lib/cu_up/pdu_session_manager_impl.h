@@ -48,13 +48,17 @@ public:
                            network_interface_config&                        net_config_,
                            n3_interface_config&                             n3_config_,
                            cu_up_ue_logger&                                 logger_,
-                           unique_timer&                                    ue_inactivity_timer,
-                           timer_factory                                    timers_,
+                           unique_timer&                                    ue_inactivity_timer_,
+                           timer_factory                                    ue_dl_timer_factory_,
+                           timer_factory                                    ue_ul_timer_factory_,
+                           timer_factory                                    ue_ctrl_timer_factory_,
                            f1u_cu_up_gateway&                               f1u_gw_,
                            gtpu_teid_pool&                                  f1u_teid_allocator_,
                            gtpu_tunnel_tx_upper_layer_notifier&             gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                                 gtpu_rx_demux_,
                            task_executor&                                   ue_dl_exec_,
+                           task_executor&                                   ue_ul_exec_,
+                           task_executor&                                   ue_ctrl_exec_,
                            dlt_pcap&                                        gtpu_pcap_);
 
   pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
@@ -82,11 +86,15 @@ private:
   n3_interface_config&                                     n3_config;
   cu_up_ue_logger&                                         logger;
   unique_timer&                                            ue_inactivity_timer;
-  timer_factory                                            timers;
+  timer_factory                                            ue_dl_timer_factory;
+  timer_factory                                            ue_ul_timer_factory;
+  timer_factory                                            ue_ctrl_timer_factory;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;
+  task_executor&                                           ue_ul_exec;
+  task_executor&                                           ue_ctrl_exec;
   dlt_pcap&                                                gtpu_pcap;
   f1u_cu_up_gateway&                                       f1u_gw;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id

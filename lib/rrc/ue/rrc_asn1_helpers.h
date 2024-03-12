@@ -34,7 +34,8 @@ namespace srs_cu_cp {
 /// \brief Fills ASN.1 RRC Setup struct.
 /// \param[out] rrc_setup The RRC Setup ASN.1 struct to fill.
 /// \param[in] init_ul_rrc_transfer_msg The Init_UL_RRC_Transfer message received by the CU.
-inline void
+/// \return True on success, otherwise false.
+inline bool
 fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s& rrc_setup, const byte_buffer& mcg, uint8_t rrc_transaction_id)
 {
   using namespace asn1::rrc_nr;
@@ -49,8 +50,12 @@ fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s& rrc_setup, const byte_buffer&
 
   // Copy cell config from DU_to_CU_RRC_Container to master cell group
   auto& master_cell_group = setup_ies.master_cell_group;
-  master_cell_group.resize(mcg.length());
+  if (!master_cell_group.resize(mcg.length())) {
+    return false;
+  }
+
   std::copy(mcg.begin(), mcg.end(), master_cell_group.begin());
+  return true;
 }
 
 /// Extracts transaction id of RRC Setup complete message.

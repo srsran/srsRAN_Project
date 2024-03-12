@@ -24,7 +24,6 @@
 
 #include "sdap_session_logger.h"
 #include "srsran/sdap/sdap.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -37,13 +36,8 @@ public:
                       pdu_session_id_t      psi,
                       qos_flow_id_t         qfi_,
                       drb_id_t              drb_id_,
-                      unique_timer&         ue_inactivity_timer_,
                       sdap_tx_pdu_notifier& pdu_notifier_) :
-    logger("SDAP", {ue_index, psi, qfi_, drb_id_, "DL"}),
-    qfi(qfi_),
-    drb_id(drb_id_),
-    ue_inactivity_timer(ue_inactivity_timer_),
-    pdu_notifier(pdu_notifier_)
+    logger("SDAP", {ue_index, psi, qfi_, drb_id_, "DL"}), qfi(qfi_), drb_id(drb_id_), pdu_notifier(pdu_notifier_)
   {
   }
 
@@ -52,7 +46,6 @@ public:
     // pass through
     logger.log_debug("TX PDU. {} pdu_len={}", qfi, sdu.length());
     pdu_notifier.on_new_pdu(std::move(sdu));
-    ue_inactivity_timer.run();
   }
 
   drb_id_t get_drb_id() const { return drb_id; }
@@ -61,7 +54,6 @@ private:
   sdap_session_trx_logger logger;
   qos_flow_id_t           qfi;
   drb_id_t                drb_id;
-  unique_timer&           ue_inactivity_timer;
   sdap_tx_pdu_notifier&   pdu_notifier;
 };
 

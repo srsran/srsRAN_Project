@@ -112,7 +112,7 @@ static uint32_t generate_gtp_teid()
 
 TEST(f1ap_asn1_helpers_test, test_up_transport_layer_converter)
 {
-  up_transport_layer_info up_tp_layer_info = {transport_layer_address{create_random_ipv4_string()},
+  up_transport_layer_info up_tp_layer_info = {transport_layer_address::create_from_string(create_random_ipv4_string()),
                                               int_to_gtpu_teid(0x1)};
 
   asn1::f1ap::up_transport_layer_info_c asn1_transport_layer_info;
@@ -126,7 +126,7 @@ TEST(f1ap_asn1_helpers_test, test_up_transport_layer_converter)
 
 TEST(transport_layer_address_test, ipv6_transport_layer_address_to_asn1)
 {
-  up_transport_layer_info up_tp_layer_info = {transport_layer_address{create_random_ipv6_string()},
+  up_transport_layer_info up_tp_layer_info = {transport_layer_address::create_from_string(create_random_ipv6_string()),
                                               int_to_gtpu_teid(0x1)};
 
   asn1::f1ap::up_transport_layer_info_c asn1_transport_layer_info;

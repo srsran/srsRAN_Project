@@ -42,7 +42,9 @@ public:
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
-                  timer_factory                  timers,
+                  timer_factory                  ue_dl_timer_factory,
+                  unique_timer&                  ue_inactivity_timer_,
+                  task_executor&                 ul_exec_,
                   f1u_bearer_disconnector&       diconnector_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
@@ -74,14 +76,21 @@ private:
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
   f1u_bearer_disconnector&  disconnector;
   up_transport_layer_info   ul_tnl_info;
+  task_executor&            ul_exec;
 
   /// Downlink notification timer that triggers periodic transmission of discard blocks towards lower layers. The
   /// purpose of this timer is to avoid excessive downlink notifications for every PDCP SN that is discarded by upper
   /// layers.
   unique_timer dl_notif_timer;
 
+  /// UE inactivity timer that is injected from parent entities. The timer must run in the UL executor!
+  /// The timer shall be restarted on each UL PDU (= UL activity) and on each transmit notification (= DL activity).
+  unique_timer& ue_inactivity_timer;
+
   /// Collection of pending \c nru_pdcp_sn_discard_block objects.
   nru_pdcp_sn_discard_blocks discard_blocks;
+
+  void handle_pdu_impl(nru_ul_message msg);
 
   /// \brief Fills the provided \c nru_dl_message with all SDU discard blocks that have been aggregated since the last
   /// call of this function (or since creation of this object).

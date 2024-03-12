@@ -91,7 +91,10 @@ void rrc_setup_procedure::send_rrc_setup()
   dl_ccch_msg_s dl_ccch_msg;
   dl_ccch_msg.msg.set_c1().set_rrc_setup();
   rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
-  fill_asn1_rrc_setup_msg(rrc_setup, du_to_cu_container, transaction.id());
+  if (!fill_asn1_rrc_setup_msg(rrc_setup, du_to_cu_container, transaction.id())) {
+    logger.log_warning("ASN1 RRC setup message fill failed");
+    return;
+  }
   rrc_ue.on_new_dl_ccch(dl_ccch_msg);
 }
 

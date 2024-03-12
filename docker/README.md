@@ -12,6 +12,13 @@ To launch the full multi-container solution, please run:
 docker compose -f docker/docker-compose.yml up
 ```
 
+or
+
+```bash
+cd docker/
+docker compose up
+```
+
 - To force a new build of the containers (including a new build of srsRAN gnb), please add a `--build` flag at the end of the previous command.
 - To run it in background, please add a `-d` flag at the end of the previous command.
 - For more options, check `docker compose up --help`

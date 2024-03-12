@@ -133,6 +133,24 @@ struct lower_phy_configuration {
   task_executor* prach_async_executor;
 };
 
+/// Converts a string into a baseband buffer size policy.
+inline lower_phy_baseband_buffer_size_policy to_buffer_size_policy(const std::string& str)
+{
+  if (str == "single-packet") {
+    return lower_phy_baseband_buffer_size_policy::single_packet;
+  }
+  if (str == "half-slot") {
+    return lower_phy_baseband_buffer_size_policy::half_slot;
+  }
+  if (str == "slot") {
+    return lower_phy_baseband_buffer_size_policy::slot;
+  }
+  if (str == "optimal-slot") {
+    return lower_phy_baseband_buffer_size_policy::optimal_slot;
+  }
+  report_error("Invalid lower PHY baseband buffer size policy '{}'.", str);
+}
+
 /// Returns true if the given lower PHY configuration is valid, otherwise false.
 inline bool is_valid_lower_phy_config(const lower_phy_configuration& config)
 {

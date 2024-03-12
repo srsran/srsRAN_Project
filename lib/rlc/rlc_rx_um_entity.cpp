@@ -82,13 +82,22 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {
+    size_t                      sdu_len = payload.length();
+    expected<byte_buffer_chain> sdu     = byte_buffer_chain::create(std::move(payload));
+    if (!sdu) {
+      logger.log_error("Dropped SDU, failed to create SDU buffer. sdu_len={}", sdu_len);
+      metrics.metrics_add_lost_pdus(1);
+      return;
+    }
+
     // deliver to upper layer
-    logger.log_info("RX SDU. sdu_len={}", payload.length());
-    metrics.metrics_add_sdus(1, payload.length());
-    upper_dn.on_new_sdu(std::move(payload));
+    logger.log_info("RX SDU. sdu_len={}", sdu.value().length());
+    metrics.metrics_add_sdus(1, sdu.value().length());
+    upper_dn.on_new_sdu(std::move(sdu.value()));
     // Nothing else to do here ...
     return;
   }
+
   if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarded PDU. sn={} payload_len={}", header.sn, payload.length());
     // Nothing else to do here ...
@@ -110,10 +119,19 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
      * - reassemble the RLC SDU from all byte segments with SN = x, remove RLC headers and deliver the reassembled
      *   RLC SDU to upper layer;
      */
-    rlc_rx_um_sdu_info& rx_sdu = (*rx_window)[header.sn];
-    logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
-    metrics.metrics_add_sdus(1, rx_sdu.sdu.length());
-    upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
+    rlc_rx_um_sdu_info&         sdu_info = (*rx_window)[header.sn];
+    expected<byte_buffer_chain> sdu      = reassemble_sdu(sdu_info, header.sn);
+    if (!sdu) {
+      logger.log_error("Dropped SDU, failed to reassemble. sn={}", header.sn);
+      metrics.metrics_add_lost_pdus(1);
+      // Do not pass empty SDU to upper layers and continue as normal to maintain state
+    } else {
+      logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, sdu.value().length());
+      metrics.metrics_add_sdus(1, sdu.value().length());
+      upper_dn.on_new_sdu(std::move(sdu.value()));
+    }
+    // Release all segments
+    sdu_info.segments.clear();
 
     /*
      * - if x = RX_Next_Reassembly:
@@ -281,16 +299,6 @@ bool rlc_rx_um_entity::handle_segment_data_sdu(const rlc_um_pdu_header& header, 
 
   // Check whether all segments have been received
   update_segment_inventory(rx_sdu);
-  logger.log_debug("Updated segment inventory. {}", rx_sdu);
-  if (rx_sdu.fully_received) {
-    // Assemble SDU from segments
-    for (const rlc_rx_um_sdu_segment& segm : rx_sdu.segments) {
-      logger.log_debug("Chaining segment. so={} len={}", segm.so, segm.payload.length());
-      rx_sdu.sdu.append(segm.payload.copy());
-    }
-    rx_sdu.segments.clear();
-    logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
-  }
   return stored;
 }
 
@@ -299,7 +307,7 @@ bool rlc_rx_um_entity::store_segment(rlc_rx_um_sdu_info& sdu_info, rlc_rx_um_sdu
   // Section 5.2.2.2.2; Although not supposed to happen in UM, we check and discard segments with overlapping bytes
   // as described in Section 5.2.3.2.2 for AM.
 
-  std::set<rlc_rx_um_sdu_segment, rlc_rx_um_sdu_segment_cmp>::iterator cur_segment = sdu_info.segments.begin();
+  auto cur_segment = sdu_info.segments.begin();
   while (cur_segment != sdu_info.segments.end()) {
     uint32_t cur_last_byte = cur_segment->so + cur_segment->payload.length() - 1;
     uint32_t new_last_byte = new_segment.so + new_segment.payload.length() - 1;
@@ -400,6 +408,36 @@ void rlc_rx_um_entity::update_segment_inventory(rlc_rx_um_sdu_info& rx_sdu) cons
   // No gaps, but last segment not yet received
   rx_sdu.has_gap        = false;
   rx_sdu.fully_received = false;
+}
+
+expected<byte_buffer_chain> rlc_rx_um_entity::reassemble_sdu(rlc_rx_um_sdu_info& sdu_info, uint32_t sn)
+{
+  // Sanity check
+  if (!sdu_info.fully_received) {
+    logger.log_error("Cannot reassemble SDU not marked as fully_received. sn={} {}", sn, sdu_info);
+    return {default_error_t{}};
+  }
+
+  expected<byte_buffer_chain> sdu = byte_buffer_chain::create();
+  if (!sdu) {
+    logger.log_error("Failed to create SDU buffer. sn={} {}", sn, sdu_info);
+    return {default_error_t{}};
+  }
+
+  for (const rlc_rx_um_sdu_segment& segm : sdu_info.segments) {
+    logger.log_debug("Chaining segment. sn={} so={} len={}", sn, segm.so, segm.payload.length());
+    if (!sdu.value().append(segm.payload.copy())) {
+      logger.log_error("Failed to append segment in SDU buffer. sn={} so={} len={} {}",
+                       sn,
+                       segm.so,
+                       segm.payload.length(),
+                       sdu_info);
+      return {default_error_t{}};
+    }
+  }
+  logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", sn, sdu.value().length());
+
+  return sdu;
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.2.4

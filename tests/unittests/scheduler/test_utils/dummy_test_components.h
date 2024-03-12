@@ -144,6 +144,8 @@ public:
   {
     return 0;
   }
+
+  bool has_uci_harq_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) override { return false; }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier

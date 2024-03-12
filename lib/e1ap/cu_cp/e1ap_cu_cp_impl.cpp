@@ -24,7 +24,7 @@
 #include "../common/e1ap_asn1_helpers.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 
 using namespace srsran;
 using namespace asn1::e1ap;
@@ -76,7 +76,7 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
     e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
     auto& setup_fail  = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
-    setup_fail->cause = cause_to_asn1_cause(msg.cause.value());
+    setup_fail->cause = cause_to_asn1(msg.cause.value());
 
     // set values handled by E1
     setup_fail->transaction_id = current_transaction_id;

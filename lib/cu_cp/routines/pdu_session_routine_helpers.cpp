@@ -22,6 +22,7 @@
 
 #include "pdu_session_routine_helpers.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
+#include "srsran/ran/cause/e1ap_cause_converters.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -499,7 +500,7 @@ void srsran::srs_cu_cp::update_failed_list(
     // Add to list taking cause received from CU-UP.
     cu_cp_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
-    failed_item.unsuccessful_transfer.cause = e1ap_item.cause;
+    failed_item.unsuccessful_transfer.cause = e1ap_to_ngap_cause(e1ap_item.cause);
     ngap_failed_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }

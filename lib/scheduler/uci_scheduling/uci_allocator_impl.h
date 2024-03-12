@@ -60,6 +60,8 @@ public:
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
 
+  bool has_uci_harq_on_common_pucch_res(rnti_t rnti, slot_point sl_tx) override;
+
 private:
   // \brief Information cached by the UCI scheduler relative to the UCIs scheduled in the cell resource grid. Store
   // here any information that does not need to be stored in the PUCCH and PUSCH PDUs and does not need to be sent to

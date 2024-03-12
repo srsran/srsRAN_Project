@@ -226,6 +226,34 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   ASSERT_FALSE(pucch_ptr->resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";
 }
 
+TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_used)
+{
+  const static unsigned msg4_size = 128;
+
+  // Enqueue ConRes CE + Msg4.
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
+
+  // Wait for ConRes + Msg4 PDCCH to be scheduled.
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_dl_pdcch(rnti) != nullptr; }));
+
+  const pdcch_dl_information&       dl_pdcch          = *find_ue_dl_pdcch(rnti);
+  bool                              is_common_ss_used = false;
+  const search_space_configuration* ss_used           = nullptr;
+  for (const search_space_configuration& ss :
+       cell_cfg_list.front().dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+    if (dl_pdcch.ctx.context.ss_id == ss.get_id()) {
+      is_common_ss_used = true;
+      ss_used           = &ss;
+      break;
+    }
+  }
+  ASSERT_TRUE(is_common_ss_used) << "UE in fallback should use common SS";
+  // PDCCH monitoring must be active in this slot.
+  ASSERT_TRUE(ss_used != nullptr and pdcch_helper::is_pdcch_monitoring_active(next_slot, *ss_used))
+      << fmt::format("Common SS id={} is not monitored at slot={}", ss_used->get_id(), next_slot.slot_index());
+}
+
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                          scheduler_con_res_msg4_test,
                          ::testing::Values(conres_test_params{LCID_SRB0, duplex_mode::FDD},

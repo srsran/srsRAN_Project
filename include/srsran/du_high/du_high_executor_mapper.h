@@ -1,3 +1,24 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * This file is part of srsRAN.
+ *
+ * srsRAN is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * srsRAN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * A copy of the GNU Affero General Public License can be found in
+ * the LICENSE file in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/.
+ *
+ */
 
 #pragma once
 
@@ -17,9 +38,6 @@ public:
 
   /// \brief Executor to handle slot_indication events for a given cell.
   virtual task_executor& slot_ind_executor(du_cell_index_t cell_index) = 0;
-
-  /// \brief Executor to handle error_indication events for a given cell.
-  virtual task_executor& error_ind_executor(du_cell_index_t cell_index) = 0;
 };
 
 /// This interface is used to allow the DU to choose between different UE-specific task executors.

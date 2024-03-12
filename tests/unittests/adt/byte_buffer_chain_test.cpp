@@ -64,11 +64,11 @@ TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
   ASSERT_EQ(chain.length(), 0U);
   ASSERT_EQ(chain.begin(), chain.end());
 
-  chain.append(byte_buffer{});
+  ASSERT_TRUE(chain.append(byte_buffer{}));
   ASSERT_EQ(chain.length(), 0U);
   ASSERT_EQ(chain.begin(), chain.end());
 
-  chain.prepend(byte_buffer{});
+  ASSERT_TRUE(chain.prepend(byte_buffer{}));
   ASSERT_EQ(chain.length(), 0U);
   ASSERT_EQ(chain.begin(), chain.end());
   ASSERT_TRUE(chain.slices().empty());
@@ -82,8 +82,8 @@ TEST_F(byte_buffer_chain_test, append_byte_buffer)
   byte_buffer other_buffer2{6, 7, 8};
   byte_buffer buf_concat = other_buffer.deep_copy();
   ASSERT_TRUE(buf_concat.append(other_buffer2.deep_copy()));
-  buf.append(other_buffer.copy());
-  buf.append(other_buffer2.copy());
+  ASSERT_TRUE(buf.append(other_buffer.copy()));
+  ASSERT_TRUE(buf.append(other_buffer2.copy()));
 
   // Test length/empty methods.
   ASSERT_FALSE(buf.empty());
@@ -121,7 +121,7 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
   ASSERT_TRUE(buf.empty());
 
   // Set header using a span of bytes.
-  buf.prepend(buf2.deep_copy());
+  ASSERT_TRUE(buf.prepend(buf2.deep_copy()));
   ASSERT_FALSE(buf.empty());
   ASSERT_EQ(3, buf.length());
   ASSERT_EQ(buf, vec);
@@ -137,14 +137,14 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 
   // Set header avoiding ref-count increment and avoiding deep copy.
   buf.clear();
-  buf.prepend(std::move(buf2));
+  ASSERT_TRUE(buf.prepend(std::move(buf2)));
   ASSERT_EQ(buf, vec);
   ASSERT_TRUE(buf2.empty());
 
   // Set header by ref-count increment, avoiding deep copy.
   buf.clear();
   buf2 = vec;
-  buf.prepend(buf2.copy());
+  ASSERT_TRUE(buf.prepend(buf2.copy()));
   ASSERT_EQ(buf, vec);
   *buf2.begin() = 5;
   ASSERT_NE(buf, vec);
@@ -152,7 +152,7 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
   // Set header by deep copy.
   buf.clear();
   buf2 = vec;
-  buf.prepend(buf2.deep_copy());
+  ASSERT_TRUE(buf.prepend(buf2.deep_copy()));
   ASSERT_EQ(buf, vec);
   *buf2.begin() = 5;
   ASSERT_EQ(buf, vec);
@@ -165,9 +165,9 @@ TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
   byte_buffer header_bytes = {1, 2, 3};
   byte_buffer payload      = {4, 5, 6};
 
-  buf.prepend(header_bytes.deep_copy());
+  ASSERT_TRUE(buf.prepend(header_bytes.deep_copy()));
   ASSERT_EQ(header_bytes.length(), buf.length());
-  buf.append(payload.copy());
+  ASSERT_TRUE(buf.append(payload.copy()));
   ASSERT_EQ(header_bytes.length() + payload.length(), buf.length());
 
   // Test comparison.
@@ -204,9 +204,9 @@ TEST_F(byte_buffer_chain_test, payload_lifetime)
     all_bytes.insert(all_bytes.end(), payload1.begin(), payload1.end());
     all_bytes.insert(all_bytes.end(), payload2.begin(), payload2.end());
 
-    buf.prepend(header_bytes.copy());
-    buf.append(std::move(payload1));
-    buf.append(payload2.copy());
+    ASSERT_TRUE(buf.prepend(header_bytes.copy()));
+    ASSERT_TRUE(buf.append(std::move(payload1)));
+    ASSERT_TRUE(buf.append(payload2.copy()));
   }
   // Note: header and payload went out of scope, but that shouldnt affect the rlc buffer content.
 
@@ -221,8 +221,8 @@ TEST_F(byte_buffer_chain_test, slice_chain_formatter)
   ASSERT_TRUE(pdu2.append(bytes));
 
   byte_buffer_chain chain;
-  chain.append(byte_buffer_slice{std::move(pdu), 3, 2});
-  chain.append(byte_buffer_slice{std::move(pdu2), 0, 2});
+  ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu), 3, 2}));
+  ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu2), 0, 2}));
 
   for (auto& b : chain) {
     ASSERT_TRUE(b > 0);

@@ -56,7 +56,15 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   log_rrc_message(logger, Tx, pdu, dl_dcch_msg, "DCCH DL");
 
   // pack PDCP PDU and send down the stack
-  byte_buffer pdcp_pdu = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
+  auto pdcp_packing_result = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
+  if (!pdcp_packing_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                    pdcp_packing_result.get_failure_cause());
+    on_ue_release_required(pdcp_packing_result.get_failure_cause());
+    return;
+  }
+
+  byte_buffer pdcp_pdu = pdcp_packing_result.get_pdu();
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "TX {} PDU", context.ue_index, context.c_rnti, srb_id);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }

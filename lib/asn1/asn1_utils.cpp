@@ -941,7 +941,7 @@ uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
 void octet_string_helper::to_octet_string(srsran::span<uint8_t> buf, uint64_t number)
 {
   uint64_t nbytes = buf.size();
-  if ((static_cast<uint64_t>(1U) << (8U * nbytes)) <= number) {
+  if (nbytes < 8 and (static_cast<uint64_t>(1U) << (8U * nbytes)) <= number) {
     log_error("Integer={} does not fit in an OCTET STRING of size={}", number, nbytes);
     return;
   }
@@ -952,7 +952,7 @@ void octet_string_helper::to_octet_string(srsran::span<uint8_t> buf, uint64_t nu
 
 void octet_string_helper::to_octet_string(srsran::byte_buffer& buf, uint64_t number)
 {
-  buf.clear();
+  buf           = byte_buffer{byte_buffer::fallback_allocation_tag{}};
   size_t nbytes = sizeof(number);
   for (uint32_t i = 0; i < nbytes; ++i) {
     if (not buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xffu)) {
@@ -997,7 +997,7 @@ unsigned octet_string_helper::hex_string_to_octets(srsran::span<uint8_t> buf, co
 {
   srsran_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
   if (str.size() % 2 != 0) {
-    log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
+    log_error("The provided hex string size={} is not a multiple of 2.", str.size());
   }
   char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
@@ -1010,7 +1010,7 @@ unsigned octet_string_helper::hex_string_to_octets(srsran::span<uint8_t> buf, co
 void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string& str)
 {
   if (str.size() % 2 != 0) {
-    log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
+    log_error("The provided hex string size={} is not a multiple of 2.", str.size());
   }
   char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
@@ -1026,10 +1026,18 @@ void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string&
 ************************/
 
 template <bool Al>
+unbounded_octstring<Al>::unbounded_octstring(const unbounded_octstring& other) noexcept :
+  // Use fallback allocator, because operator= should never fail.
+  srsran::byte_buffer(fallback_allocation_tag{}, other)
+{
+}
+
+template <bool Al>
 unbounded_octstring<Al>& unbounded_octstring<Al>::operator=(const unbounded_octstring& other) noexcept
 {
   if (this != &other) {
-    *static_cast<byte_buffer*>(this) = other.deep_copy();
+    // Use fallback allocator, because operator= should never fail.
+    *this = byte_buffer{fallback_allocation_tag{}, other};
   }
   return *this;
 }
@@ -1046,7 +1054,7 @@ SRSASN_CODE unbounded_octstring<Al>::pack(bit_ref& bref) const
 {
   HANDLE_CODE(pack_length(bref, length(), aligned));
   for (uint8_t b : *this) {
-    bref.pack(b, 8);
+    HANDLE_CODE(bref.pack(b, 8));
   }
   return SRSASN_SUCCESS;
 }
@@ -1074,8 +1082,12 @@ std::string unbounded_octstring<Al>::to_string() const
 template <bool Al>
 unbounded_octstring<Al>& unbounded_octstring<Al>::from_string(const std::string& hexstr)
 {
-  this->clear();
+  // clears previous buffer.
+  *this = byte_buffer{byte_buffer::fallback_allocation_tag{}};
+
+  // appends hex string to buffer.
   octet_string_helper::append_hex_string(*this, hexstr);
+
   return *this;
 }
 

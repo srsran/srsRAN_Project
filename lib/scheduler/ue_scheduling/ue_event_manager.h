@@ -35,6 +35,7 @@ namespace srsran {
 
 class scheduler_metrics_handler;
 class scheduler_event_logger;
+class uci_scheduler_impl;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -47,7 +48,7 @@ public:
   ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
   ~ue_event_manager();
 
-  void add_cell(cell_resource_allocator& cell_res_grid, ue_srb0_scheduler& srb0_sched);
+  void add_cell(cell_resource_allocator& cell_res_grid, ue_srb0_scheduler& srb0_sched, uci_scheduler_impl& uci_sched);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -123,8 +124,11 @@ private:
 
     cell_resource_allocator* res_grid = nullptr;
 
-    /// Reference to SRB0 and other bearers scheduler
+    // Reference to SRB0 and other bearers scheduler
     ue_srb0_scheduler* srb0_sched = nullptr;
+
+    // Reference to the CSI and SR UCI scheduler.
+    uci_scheduler_impl* uci_sched = nullptr;
   };
   std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 

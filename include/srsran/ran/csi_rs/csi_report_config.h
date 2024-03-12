@@ -41,6 +41,9 @@ enum csi_report_config_id_t : uint8_t {
   MAX_NOF_CSI_REPORT_CONFIGS = 48,
 };
 
+/// Maximum CSI report period in slots.
+constexpr unsigned MAX_CSI_REPORT_PERIOD = 320;
+
 /// \brief Periodicity and slot offset.
 /// \remark See TS 38.331, \c CSI-ReportPeriodicityAndOffset.
 enum class csi_report_periodicity {

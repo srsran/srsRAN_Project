@@ -121,7 +121,12 @@ TEST_P(PuschTpmiSelectFixture, VectorTest)
   // Get combined parameter.
   const test_case_t& test_case = GetParam();
 
-  if ((test_case.channel_matrix.get_nof_rx_ports() > 1) || (test_case.channel_matrix.get_nof_tx_ports() > 2)) {
+  unsigned nof_tx_ports   = test_case.channel_matrix.get_nof_tx_ports();
+  unsigned nof_rx_ports   = test_case.channel_matrix.get_nof_rx_ports();
+  unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
+
+  // Only one layer is currently supported.
+  if (max_nof_layers > 1) {
     GTEST_SKIP();
   }
 

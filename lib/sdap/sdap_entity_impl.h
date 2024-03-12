@@ -36,15 +36,8 @@ namespace srs_cu_up {
 class sdap_entity_impl : public sdap_entity, public sdap_tx_sdu_handler
 {
 public:
-  sdap_entity_impl(uint32_t              ue_index_,
-                   pdu_session_id_t      psi_,
-                   unique_timer&         ue_inactivity_timer_,
-                   sdap_rx_sdu_notifier& rx_sdu_notifier_) :
-    logger("SDAP", {ue_index_, psi_}),
-    ue_index(ue_index_),
-    psi(psi_),
-    ue_inactivity_timer(ue_inactivity_timer_),
-    rx_sdu_notifier(rx_sdu_notifier_)
+  sdap_entity_impl(uint32_t ue_index_, pdu_session_id_t psi_, sdap_rx_sdu_notifier& rx_sdu_notifier_) :
+    logger("SDAP", {ue_index_, psi_}), ue_index(ue_index_), psi(psi_), rx_sdu_notifier(rx_sdu_notifier_)
   {
   }
   ~sdap_entity_impl() override = default;
@@ -86,12 +79,12 @@ public:
 
     // create TX mapping
     std::unique_ptr<sdap_entity_tx_impl> tx =
-        std::make_unique<sdap_entity_tx_impl>(ue_index, psi, qfi, drb_id, ue_inactivity_timer, tx_pdu_notifier);
+        std::make_unique<sdap_entity_tx_impl>(ue_index, psi, qfi, drb_id, tx_pdu_notifier);
     tx_map.insert({qfi, std::move(tx)});
 
     // create RX mapping
     std::unique_ptr<sdap_entity_rx_impl> rx =
-        std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, ue_inactivity_timer, rx_sdu_notifier);
+        std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, rx_sdu_notifier);
     rx_map.insert({drb_id, std::move(rx)});
   }
 
@@ -116,7 +109,6 @@ private:
   sdap_session_logger   logger;
   uint32_t              ue_index;
   pdu_session_id_t      psi;
-  unique_timer&         ue_inactivity_timer;
   sdap_rx_sdu_notifier& rx_sdu_notifier;
 
   std::unordered_map<qos_flow_id_t, std::unique_ptr<sdap_entity_tx_impl>> tx_map;

@@ -39,7 +39,9 @@ std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t                       ue_
                                               f1u_tx_pdu_notifier&           tx_pdu_notifier,
                                               f1u_rx_delivery_notifier&      rx_delivery_notifier,
                                               f1u_rx_sdu_notifier&           rx_sdu_notifier,
-                                              timer_factory                  timers,
+                                              timer_factory                  ue_dl_timer_factory,
+                                              unique_timer&                  ue_inactivity_timer,
+                                              task_executor&                 ul_exec,
                                               f1u_bearer_disconnector&       disconnector);
 
 } // namespace srs_cu_up

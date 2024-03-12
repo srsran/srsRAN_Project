@@ -25,28 +25,8 @@
 
 using namespace srsran;
 
-void ru_ofh_timing_notifier_impl::notify_new_slot(ofh::slot_symbol_point symbol_point)
-{
-  // For the first slot, update the current_slot member and return.
-  // Returning at this point will notify the upper layers on the next slot, instead of notifying a random one.
-  if (!current_slot.valid()) {
-    current_slot = symbol_point.get_slot();
-    return;
-  }
-
-  // Nothing to do if the slot did not change.
-  if (symbol_point.get_slot() == current_slot) {
-    return;
-  }
-
-  current_slot = symbol_point.get_slot();
-  timing_notifier.on_tti_boundary(current_slot + nof_slot_offset_du_ru);
-}
-
 void ru_ofh_timing_notifier_impl::on_new_symbol(ofh::slot_symbol_point symbol_point)
 {
-  notify_new_slot(symbol_point);
-
   if (symbol_point.get_symbol_index() == half_slot_symbol) {
     timing_notifier.on_ul_half_slot_boundary(symbol_point.get_slot());
   }
@@ -54,14 +34,9 @@ void ru_ofh_timing_notifier_impl::on_new_symbol(ofh::slot_symbol_point symbol_po
   if (symbol_point.get_symbol_index() == full_slot_symbol) {
     timing_notifier.on_ul_full_slot_boundary(symbol_point.get_slot());
   }
-}
 
-ru_ofh_timing_notifier_impl::ru_ofh_timing_notifier_impl(unsigned            nof_slot_offset_du_ru_,
-                                                         unsigned            nof_symbols_per_slot,
-                                                         ru_timing_notifier& timing_notifier_) :
-  nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
-  half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
-  full_slot_symbol(nof_symbols_per_slot - 1U),
-  timing_notifier(timing_notifier_)
-{
+  // New slots start on symbol index 0.
+  if (symbol_point.get_symbol_index() == 0) {
+    timing_notifier.on_tti_boundary(symbol_point.get_slot() + nof_slot_offset_du_ru);
+  }
 }

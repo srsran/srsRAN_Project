@@ -68,8 +68,14 @@ struct pdsch_precoding_info {
   static_vector<prg_info, precoding_constants::MAX_NOF_PRG> prg_infos;
 };
 
+/// Transmit power information associated with PDCCH PDU.
 struct tx_power_pdcch_information {
-  // TODO
+  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
+  /// \remark If the UE has not been provided dedicated higher layer parameters, the UE may assume that the ratio of
+  /// PDCCH DMRS EPRE to SSS EPRE is within -8 dB and 8 dB when the UE monitors PDCCHs for a DCI format 1_0 with CRC
+  /// scrambled by SI-RNTI, P-RNTI, or RA-RNTI. See TS 38.213, clause 4.1.
+  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffsetSS we assume it to be 0dB.
+  int8_t pwr_ctrl_offset_ss{0};
 };
 
 struct dmrs_information {
@@ -162,6 +168,17 @@ struct pdsch_codeword {
   bool new_data;
 };
 
+/// Transmit power information associated with PDSCH PDU.
+struct tx_power_pdsch_information {
+  /// Ratio of PDSCH EPRE to NZP CSI-RS EPRE when UE derives CSI feedback. See 3GPP TS 38.214, clause 5.2.2.3.1. Values
+  /// {-8,...,15} dB with 1 dB step size.
+  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffset we assume it to be 0dB.
+  int8_t pwr_ctrl_offset{0};
+  /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. See 3GPP TS 38.214, clause 5.2.2.3.1. Values {-3, 0, 3, 6} dB.
+  /// \remark [Implementation-defined] In case UE is not configured with powerControlOffsetSS we assume it to be 0dB.
+  int8_t pwr_ctrl_offset_ss{0};
+};
+
 /// \brief Information relative to a PDSCH grant in a given slot.
 struct pdsch_information {
   rnti_t                                                 rnti;
@@ -183,6 +200,8 @@ struct pdsch_information {
   harq_id_t harq_id;
   /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.
   optional<pdsch_precoding_info> precoding;
+  /// Transmit power information for the PDSCH.
+  tx_power_pdsch_information tx_pwr_info;
 };
 
 /// Dummy MAC CE payload.
@@ -397,9 +416,9 @@ struct csi_rs_info {
   /// \brief ScramblingID of the CSI-RS as per 3GPP TS 38.214, sec 5.2.2.3.1. Values: {0,...,1023}.
   uint16_t scrambling_id;
   /// Ratio of PDSCH EPRE to NZP CSI-RS EPRE as per 3GPP TS 38.214, clause 5.2.2.3.1. Values: {-8,...,15}.
-  int8_t power_ctrl_offset_profile_nr;
+  int8_t power_ctrl_offset;
   /// Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE. Values: {-3,0,3,6}.
-  int8_t power_ctrl_offset_ss_profile_nr;
+  int8_t power_ctrl_offset_ss;
 };
 
 struct dl_sched_result {

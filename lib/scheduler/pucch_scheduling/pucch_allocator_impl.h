@@ -68,6 +68,8 @@ public:
                                           rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
 
+  bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const override;
+
 private:
   // Structs with the info about the PUCCH resources.
   struct pucch_res_alloc_cfg {
@@ -172,9 +174,6 @@ private:
                                 unsigned                     harq_ack_bits,
                                 sr_nof_bits                  sr_bits,
                                 unsigned                     csi_part1_bits);
-
-  // Returns true if the given PUCCH grant scheduled for slot sl_tx uses a common PUCCH resource.
-  bool is_pucch_f1_grant_common(rnti_t rnti, slot_point sl_tx) const;
 
   // Helper that retrieves the existing grants allocated to a given UE for a given slot.
   existing_pucch_grants

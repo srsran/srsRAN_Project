@@ -56,6 +56,12 @@ public:
   /// its bearers during the layer by layer UE context removal.
   virtual async_task<void> disconnect_notifiers() = 0;
 
+  /// \brief Stop DRB activity and the detection of RLF for this UE.
+  ///
+  /// This method can be called when the DU receives a request to delete a UE context, but the UE is not yet in a
+  /// state where it is ready to be deleted (e.g. pending SRB PDUs).
+  virtual async_task<void> handle_activity_stop_request() = 0;
+
   /// \brief Schedule task for a given UE.
   virtual void schedule_async_task(async_task<void> task) = 0;
 

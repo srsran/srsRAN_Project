@@ -74,7 +74,9 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
   // Add the sectors notifiers.
   for (auto& sector : sectors) {
     notifiers.push_back(&sector->get_transmitter().get_ota_symbol_boundary_notifier());
-    notifiers.push_back(&sector->get_receiver().get_ota_symbol_boundary_notifier());
+    if (auto* notifier = sector->get_receiver().get_ota_symbol_boundary_notifier()) {
+      notifiers.push_back(notifier);
+    }
 
     // Configure the error handler for the OFH sectors.
     sector->set_error_notifier(error_handler);

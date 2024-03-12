@@ -49,11 +49,11 @@ void rlc_tx_tm_entity::handle_sdu(rlc_sdu sdu_)
 {
   size_t sdu_len = sdu_.buf.length();
   if (sdu_queue.write(sdu_)) {
-    logger.log_info(sdu_.buf.begin(), sdu_.buf.end(), "TX SDU. sdu_len={} {}", sdu_len, sdu_queue);
+    logger.log_info(sdu_.buf.begin(), sdu_.buf.end(), "TX SDU. sdu_len={} {}", sdu_len, sdu_queue.get_state());
     metrics.metrics_add_sdus(1, sdu_len);
     handle_changed_buffer_state();
   } else {
-    logger.log_info("Dropped SDU. sdu_len={} {}", sdu_len, sdu_queue);
+    logger.log_info("Dropped SDU. sdu_len={} {}", sdu_len, sdu_queue.get_state());
     metrics.metrics_add_lost_sdus(1);
   }
 }
@@ -73,7 +73,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
-    logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
+    logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue.get_state());
     if (not sdu_queue.read(sdu)) {
       logger.log_debug("SDU queue empty. grant_len={}", grant_len);
       return 0;

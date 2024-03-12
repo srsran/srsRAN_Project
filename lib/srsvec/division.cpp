@@ -24,6 +24,7 @@
 #include "simd.h"
 
 using namespace srsran;
+using namespace srsvec;
 
 static void divide_fff_simd(float* result, const float* num, const float* den, std::size_t len)
 {
@@ -31,12 +32,12 @@ static void divide_fff_simd(float* result, const float* num, const float* den, s
 
 #if SRSRAN_SIMD_F_SIZE
   for (; i + SRSRAN_SIMD_F_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
-    simd_f_t num_simd = srsran_simd_f_loadu(&num[i]);
-    simd_f_t den_simd = srsran_simd_f_loadu(&den[i]);
+    simd_f_t num_simd = srsran_simd_f_loadu(num + i);
+    simd_f_t den_simd = srsran_simd_f_loadu(den + i);
 
     simd_f_t r = srsran_simd_f_mul(num_simd, srsran_simd_f_rcp(den_simd));
 
-    srsran_simd_f_storeu(&result[i], r);
+    srsran_simd_f_storeu(result + i, r);
   }
 #endif
 

@@ -22,16 +22,14 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/qos_prio_level.h"
 #include "srsran/support/error_handling.h"
 #include <string>
@@ -980,19 +978,19 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
   return pdcp_cfg;
 }
 
-/// \brief Convert E1AP Cause to \c cause_t type.
+/// \brief Convert E1AP Cause to \c e1ap_cause_t type.
 /// \param e1ap_cause The E1AP Cause.
 /// \return The cause type.
-inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
+inline e1ap_cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
 {
-  cause_t cause;
+  e1ap_cause_t cause;
 
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      cause = static_cast<cause_radio_network_t>(e1ap_cause.radio_network().value);
+      cause = static_cast<e1ap_cause_radio_network_t>(e1ap_cause.radio_network().value);
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
-      cause = static_cast<cause_transport_t>(e1ap_cause.transport().value);
+      cause = static_cast<e1ap_cause_transport_t>(e1ap_cause.transport().value);
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
       cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
@@ -1007,29 +1005,29 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
   return cause;
 }
 
-/// \brief Convert \c cause_t type to E1AP ASN.1 cause.
-/// \param cause The cause_t type.
+/// \brief Convert \c e1ap_cause_t type to E1AP ASN.1 cause.
+/// \param cause The e1ap_cause_t type.
 /// \return The E1AP ASN.1 cause.
-inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
+inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
 {
-  asn1::e1ap::cause_c e1ap_cause;
+  asn1::e1ap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
-    e1ap_cause.set_radio_network() =
-        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
-  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    e1ap_cause.set_transport() =
-        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  if (variant_holds_alternative<e1ap_cause_radio_network_t>(cause)) {
+    asn1_cause.set_radio_network() =
+        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<e1ap_cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<e1ap_cause_transport_t>(cause)) {
+    asn1_cause.set_transport() =
+        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<e1ap_cause_transport_t>(cause));
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    e1ap_cause.set_protocol() =
+    asn1_cause.set_protocol() =
         static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    asn1_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
   } else {
-    report_fatal_error("Cannot convert cause to E1AP type");
+    report_fatal_error("Cannot convert cause to E1AP type: {}", cause);
   }
 
-  return e1ap_cause;
+  return asn1_cause;
 }
 
 /// \brief Convert E1AP NG DL UP Unchanged to its boolean representation
@@ -1332,7 +1330,7 @@ inline void e1ap_drb_failed_item_list_to_asn1(
     // Add DRB ID
     asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
     // Add Cause
-    asn1_drb_failed_item.cause = cause_to_asn1_cause(drb_failed_item.cause);
+    asn1_drb_failed_item.cause = cause_to_asn1(drb_failed_item.cause);
     asn1_drb_item_list.push_back(asn1_drb_failed_item);
   }
 }

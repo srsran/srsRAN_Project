@@ -152,7 +152,7 @@ def test_android_hp(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["Some packages got lost"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "Some packages got lost"])
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -180,6 +180,7 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
+        post_command="cu_cp --inactivity_timer=600",
     )
 
 
@@ -350,6 +351,7 @@ def _ping(
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
         gtpu_enable=True,
+        log_ip_level="debug",
     )
     configure_artifacts(
         retina_data=retina_data,

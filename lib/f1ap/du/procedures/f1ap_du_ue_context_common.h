@@ -28,55 +28,56 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Creates a \c srb_id_t from ASN.1 type
+/// \brief Creates a \c srb_id_t from ASN.1 type.
 ///
-/// This function is used by the following procedures
+/// This function is used by the following procedures:
 /// - f1ap_du_ue_context_setup_procedure
 /// - f1ap_du_ue_context_modification_procedure
 ///
-/// \param srb_item ASN.1 item with SRB-specific parameters to be setup
-/// \return srb_id_t object
+/// \param srb_item ASN.1 item with SRB-specific parameters to be setup.
+/// \return srb_id_t object.
 template <typename Asn1Type>
 srb_id_t make_srb_id(const Asn1Type& srb_item)
 {
-  return (srb_id_t)srb_item.srb_id;
+  return static_cast<srb_id_t>(srb_item.srb_id);
 }
 
-/// \brief Creates a \c f1ap_drb_to_setup from ASN.1 type
+/// \brief Creates a \c f1ap_drb_to_setup from ASN.1 type.
 ///
-/// This function is used by the following procedures
+/// This function is used by the following procedures:
 /// - f1ap_du_ue_context_setup_procedure
 /// - f1ap_du_ue_context_modification_procedure
 ///
-/// \param drb_item ASN.1 item with DRB-specific parameters to be setup
-/// \return f1ap_drb_to_setup object
+/// \param drb_item ASN.1 item with DRB-specific parameters to be setup.
+/// \return f1ap_drb_to_setup object.
 template <typename Asn1Type>
 f1ap_drb_to_setup make_drb_to_setup(const Asn1Type& drb_item)
 {
   f1ap_drb_to_setup drb_obj;
-  drb_obj.drb_id = (drb_id_t)drb_item.drb_id;
-  drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
-  drb_obj.uluptnl_info_list.resize(drb_item.ul_up_tnl_info_to_be_setup_list.size());
-  for (unsigned j = 0; j != drb_obj.uluptnl_info_list.size(); ++j) {
-    drb_obj.uluptnl_info_list[j] =
-        asn1_to_up_transport_layer_info(drb_item.ul_up_tnl_info_to_be_setup_list[j].ul_up_tnl_info);
-  }
+
+  drb_obj.drb_id  = static_cast<drb_id_t>(drb_item.drb_id);
+  drb_obj.mode    = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
   drb_obj.five_qi = uint_to_five_qi(
       drb_item.qos_info.choice_ext().value().drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
+  drb_obj.uluptnl_info_list.reserve(drb_item.ul_up_tnl_info_to_be_setup_list.size());
+  for (const auto& tnl_info : drb_item.ul_up_tnl_info_to_be_setup_list) {
+    drb_obj.uluptnl_info_list.push_back(asn1_to_up_transport_layer_info(tnl_info.ul_up_tnl_info));
+  }
+
   return drb_obj;
 }
 
-/// \brief Creates a \c drb_id_t from ASN.1 type
+/// \brief Creates a \c drb_id_t from ASN.1 type.
 ///
-/// This function is used by the following procedures
+/// This function is used by the following procedures:
 /// - f1ap_du_ue_context_modification_procedure
 ///
-/// \param drb_item ASN.1 item with DRB-specific parameters to be removed
-/// \return drb_id_t object
+/// \param drb_item ASN.1 item with DRB-specific parameters to be removed.
+/// \return drb_id_t object.
 template <typename Asn1Type>
 drb_id_t make_drb_id(const Asn1Type& drb_item)
 {
-  return (drb_id_t)drb_item.drb_id;
+  return static_cast<drb_id_t>(drb_item.drb_id);
 }
 
 } // namespace srs_du

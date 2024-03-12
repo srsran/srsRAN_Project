@@ -73,23 +73,22 @@ static transmitter_config generate_transmitter_config(const sector_configuration
 {
   transmitter_config tx_config;
 
-  tx_config.sector                      = sector_cfg.sector_id;
-  tx_config.bw                          = sector_cfg.bw;
-  tx_config.scs                         = sector_cfg.scs;
-  tx_config.cp                          = sector_cfg.cp;
-  tx_config.dl_eaxc                     = sector_cfg.dl_eaxc;
-  tx_config.ul_eaxc                     = sector_cfg.ul_eaxc;
-  tx_config.prach_eaxc                  = sector_cfg.prach_eaxc;
-  tx_config.is_prach_cp_enabled         = sector_cfg.is_prach_control_plane_enabled;
-  tx_config.mac_dst_address             = sector_cfg.mac_dst_address;
-  tx_config.mac_src_address             = sector_cfg.mac_src_address;
-  tx_config.tci                         = sector_cfg.tci;
-  tx_config.interface                   = sector_cfg.interface;
-  tx_config.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
-  tx_config.mtu_size                    = sector_cfg.mtu_size;
-  tx_config.ru_working_bw               = sector_cfg.ru_operating_bw;
-  tx_config.symbol_handler_cfg          = {
-               sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
+  tx_config.sector                               = sector_cfg.sector_id;
+  tx_config.bw                                   = sector_cfg.bw;
+  tx_config.scs                                  = sector_cfg.scs;
+  tx_config.cp                                   = sector_cfg.cp;
+  tx_config.dl_eaxc                              = sector_cfg.dl_eaxc;
+  tx_config.ul_eaxc                              = sector_cfg.ul_eaxc;
+  tx_config.prach_eaxc                           = sector_cfg.prach_eaxc;
+  tx_config.is_prach_cp_enabled                  = sector_cfg.is_prach_control_plane_enabled;
+  tx_config.mac_dst_address                      = sector_cfg.mac_dst_address;
+  tx_config.mac_src_address                      = sector_cfg.mac_src_address;
+  tx_config.tci                                  = sector_cfg.tci;
+  tx_config.interface                            = sector_cfg.interface;
+  tx_config.is_promiscuous_mode_enabled          = sector_cfg.is_promiscuous_mode_enabled;
+  tx_config.mtu_size                             = sector_cfg.mtu_size;
+  tx_config.ru_working_bw                        = sector_cfg.ru_operating_bw;
+  tx_config.tx_timing_params                     = sector_cfg.tx_window_timing_params;
   tx_config.dl_compr_params                      = sector_cfg.dl_compression_params;
   tx_config.ul_compr_params                      = sector_cfg.ul_compression_params;
   tx_config.prach_compr_params                   = sector_cfg.prach_compression_params;

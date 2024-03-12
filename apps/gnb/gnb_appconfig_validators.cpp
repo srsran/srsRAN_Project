@@ -141,6 +141,13 @@ template <typename T>
   return std::unique(temp_ports.begin(), temp_ports.end()) == temp_ports.end();
 }
 
+static bool validate_transmission_window(std::chrono::duration<double, std::micro> symbol_duration,
+                                         std::chrono::microseconds                 window_start,
+                                         std::chrono::microseconds                 window_end)
+{
+  return ((window_end - window_start) > symbol_duration);
+}
+
 /// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
 /// false.
 static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
@@ -150,6 +157,30 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
   for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
     const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
     const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
+
+    const std::chrono::duration<double, std::micro> symbol_duration(
+        (1e3 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(cell_cfg.common_scs))));
+
+    if (!validate_transmission_window(symbol_duration, ofh_cell.cell.T1a_min_cp_dl, ofh_cell.cell.T1a_max_cp_dl)) {
+      fmt::print("Transmission timing window length for DL Control-Plane must be bigger than the symbol duration "
+                 "({:.2f}us).\n",
+                 symbol_duration.count());
+      return false;
+    }
+
+    if (!validate_transmission_window(symbol_duration, ofh_cell.cell.T1a_min_cp_ul, ofh_cell.cell.T1a_max_cp_ul)) {
+      fmt::print("Transmission timing window length for UL Control-Plane must be bigger than the symbol duration "
+                 "({:.2f}us).\n",
+                 symbol_duration.count());
+      return false;
+    }
+
+    if (!validate_transmission_window(symbol_duration, ofh_cell.cell.T1a_min_up, ofh_cell.cell.T1a_max_up)) {
+      fmt::print(
+          "Transmission timing window length for DL User-Plane must be bigger than the symbol duration ({:.2f}us).\n",
+          symbol_duration.count());
+      return false;
+    }
 
     if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_dl != ofh_cell.ru_dl_port_id.size()) {
       fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n",
@@ -622,10 +653,10 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
 {
-  // only check if the ue_context_setup_timout is larger than T310
-  if (config.ue_context_setup_timeout_s * 1000 < sib_cfg.ue_timers_and_constants.t310) {
-    fmt::print("ue_context_setup_timeout_s ({}ms) must be larger than T310 ({}ms)\n",
-               config.ue_context_setup_timeout_s * 1000,
+  // only check if the pdu_session_setup_timout is larger than T310
+  if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
+    fmt::print("pdu_session_setup_timeout ({}ms) must be larger than T310 ({}ms)\n",
+               config.pdu_session_setup_timeout * 1000,
                sib_cfg.ue_timers_and_constants.t310);
     return false;
   }
@@ -1206,6 +1237,15 @@ static bool validate_expert_execution_appconfig(const gnb_appconfig& config)
   if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads.upper_threads,
                                             config.expert_phy_cfg.max_processing_delay_slots)) {
     return false;
+  }
+
+  if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
+    auto& sdr_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+    if ((config.expert_execution_cfg.threads.lower_threads.execution_profile == lower_phy_thread_profile::single) &&
+        (sdr_cfg.expert_cfg.dl_buffer_size_policy != "auto")) {
+      fmt::print("DL buffer size policy must be set to auto when single thread lower PHY profile is used.\n");
+      return false;
+    }
   }
 
   // Configure more cells for expert execution than the number of cells is an error.

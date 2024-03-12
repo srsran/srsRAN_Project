@@ -22,11 +22,13 @@
 
 #pragma once
 
+#include "common.h"
 #include "srsran/adt/variant.h"
+#include "fmt/format.h"
 
 namespace srsran {
 
-enum class cause_radio_network_t : uint8_t {
+enum class ngap_cause_radio_network_t : uint8_t {
   unspecified = 0,
   txnrelocoverall_expiry,
   successful_ho,
@@ -71,24 +73,29 @@ enum class cause_radio_network_t : uint8_t {
   redirection,
   res_not_available_for_the_slice,
   ue_max_integrity_protected_data_rate_reason,
-  release_due_to_cn_detected_mob
+  release_due_to_cn_detected_mob,
+  n26_interface_not_available,
+  release_due_to_pre_emption,
+  multiple_location_report_ref_id_instances,
+  rsn_not_available_for_the_up,
+  npn_access_denied,
+  cag_only_access_denied,
+  insufficient_ue_cap,
+  redcap_ue_not_supported,
+  unknown_mbs_session_id,
+  indicated_mbs_session_area_info_not_served_by_the_gnb,
+  inconsistent_slice_info_for_the_session,
+  misaligned_assoc_for_multicast_unicast
 };
 
-enum class cause_transport_t : uint8_t { transport_res_unavailable = 0, unspecified };
-
-enum class cause_nas_t : uint8_t { normal_release = 0, authentication_fail, deregister, unspecified };
-
-enum class cause_protocol_t : uint8_t {
-  transfer_syntax_error = 0,
-  abstract_syntax_error_reject,
-  abstract_syntax_error_ignore_and_notify,
-  msg_not_compatible_with_receiver_state,
-  semantic_error,
-  abstract_syntax_error_falsely_constructed_msg,
-  unspecified
+enum class ngap_cause_transport_t : uint8_t {
+  transport_res_unavailable = 0,
+  unspecified,
 };
 
-enum class cause_misc_t : uint8_t {
+enum class cause_nas_t : uint8_t { normal_release = 0, authentication_fail, deregister, unspecified }; // only NGAP
+
+enum class ngap_cause_misc_t : uint8_t {
   ctrl_processing_overload = 0,
   not_enough_user_plane_processing_res,
   hardware_fail,
@@ -97,30 +104,16 @@ enum class cause_misc_t : uint8_t {
   unspecified
 };
 
-using cause_t = variant<cause_radio_network_t, cause_transport_t, cause_nas_t, cause_protocol_t, cause_misc_t>;
-
-// Establishment cause
-
-enum class establishment_cause_t : uint8_t {
-  emergency = 0,
-  high_prio_access,
-  mt_access,
-  mo_sig,
-  mo_data,
-  mo_voice_call,
-  mo_video_call,
-  mo_sms,
-  mps_prio_access,
-  mcs_prio_access
-};
+using ngap_cause_t =
+    variant<ngap_cause_radio_network_t, ngap_cause_transport_t, cause_nas_t, cause_protocol_t, ngap_cause_misc_t>;
 
 } // namespace srsran
 
 namespace fmt {
 
-// cause_t formatter
+// ngap_cause_t formatter
 template <>
-struct formatter<srsran::cause_t> {
+struct formatter<srsran::ngap_cause_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -128,18 +121,18 @@ struct formatter<srsran::cause_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::cause_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::ngap_cause_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::cause_radio_network_t>(o)) {
-      return format_to(ctx.out(), "radio_network-id{}", srsran::variant_get<srsran::cause_radio_network_t>(o));
-    } else if (srsran::variant_holds_alternative<srsran::cause_transport_t>(o)) {
-      return format_to(ctx.out(), "transport-id{}", srsran::variant_get<srsran::cause_transport_t>(o));
+    if (srsran::variant_holds_alternative<srsran::ngap_cause_radio_network_t>(o)) {
+      return format_to(ctx.out(), "radio_network-id{}", srsran::variant_get<srsran::ngap_cause_radio_network_t>(o));
+    } else if (srsran::variant_holds_alternative<srsran::ngap_cause_transport_t>(o)) {
+      return format_to(ctx.out(), "transport-id{}", srsran::variant_get<srsran::ngap_cause_transport_t>(o));
     } else if (srsran::variant_holds_alternative<srsran::cause_nas_t>(o)) {
       return format_to(ctx.out(), "nas-id{}", srsran::variant_get<srsran::cause_nas_t>(o));
     } else if (srsran::variant_holds_alternative<srsran::cause_protocol_t>(o)) {
       return format_to(ctx.out(), "protocol-id{}", srsran::variant_get<srsran::cause_protocol_t>(o));
     } else {
-      return format_to(ctx.out(), "misc-id{}", srsran::variant_get<srsran::cause_misc_t>(o));
+      return format_to(ctx.out(), "misc-id{}", srsran::variant_get<srsran::ngap_cause_misc_t>(o));
     }
   }
 };

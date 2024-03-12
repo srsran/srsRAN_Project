@@ -44,6 +44,12 @@ public:
   // See interface for documentation.
   void stop() override;
 
+  // See interface for documentation.
+  bool set_tx_gain(unsigned port_id, double gain_dB) override { return false; }
+
+  // See interface for documentation.
+  bool set_rx_gain(unsigned port_id, double gain_dB) override { return false; }
+
 private:
   srslog::basic_logger&         logger;
   std::vector<ofh::controller*> sector_controllers;

@@ -28,6 +28,17 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+struct pdcp_result {
+  variant<byte_buffer, ngap_cause_t> result;
+
+  /// Whether the packing/unpacking was successful.
+  bool is_successful() const { return variant_holds_alternative<byte_buffer>(result); }
+
+  ngap_cause_t get_failure_cause() const { return variant_get<ngap_cause_t>(result); }
+
+  byte_buffer get_pdu() const { return byte_buffer{variant_get<byte_buffer>(result)}; }
+};
+
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
 struct srb_pdcp_context {
   std::unique_ptr<pdcp_entity>   entity;
@@ -47,7 +58,10 @@ struct srb_pdcp_context {
     srb_pdcp.tx_upper_cn = &rrc_tx_control_notifier;
     srb_pdcp.rx_upper_dn = &rrc_rx_data_notifier;
     srb_pdcp.rx_upper_cn = &rrc_rx_control_notifier;
-    srb_pdcp.timers      = timers;
+    // Uplink, Downlink and Control run in the same executor, hence all timer factories are the same.
+    srb_pdcp.ue_dl_timer_factory   = timers;
+    srb_pdcp.ue_ul_timer_factory   = timers;
+    srb_pdcp.ue_ctrl_timer_factory = timers;
 
     // create PDCP entity
     entity = create_pdcp_entity(srb_pdcp);
@@ -103,17 +117,33 @@ public:
   }
 
   // Add ciphering and integrity protection to an RRC PDU.
-  byte_buffer pack_rrc_pdu(byte_buffer rrc_pdu)
+  pdcp_result pack_rrc_pdu(byte_buffer rrc_pdu)
   {
     pdcp_context.entity->get_tx_upper_data_interface().handle_sdu(std::move(rrc_pdu));
-    return pdcp_context.pdcp_tx_notifier.get_pdcp_pdu();
+
+    byte_buffer packed_pdu = pdcp_context.pdcp_tx_notifier.get_pdcp_pdu();
+
+    // If the PDCP layer failed to pack the PDU, return the failure cause.
+    if (packed_pdu.empty()) {
+      return pdcp_result{pdcp_context.rrc_tx_control_notifier.get_failure_cause()};
+    }
+
+    return pdcp_result{std::move(packed_pdu)};
   }
 
   // Decipher and verify integrity of an PDCP PDU.
-  byte_buffer unpack_pdcp_pdu(byte_buffer pdcp_pdu)
+  pdcp_result unpack_pdcp_pdu(byte_buffer pdcp_pdu)
   {
     pdcp_context.entity->get_rx_lower_interface().handle_pdu(byte_buffer_chain{std::move(pdcp_pdu)});
-    return pdcp_context.rrc_rx_data_notifier.get_rrc_pdu();
+
+    byte_buffer unpacked_pdu = pdcp_context.rrc_rx_data_notifier.get_rrc_pdu();
+
+    // If the PDCP layer failed to unpack the PDU, return the failure cause.
+    if (unpacked_pdu.empty()) {
+      return pdcp_result{pdcp_context.rrc_rx_control_notifier.get_failure_cause()};
+    }
+
+    return pdcp_result{std::move(unpacked_pdu)};
   }
 
 private:

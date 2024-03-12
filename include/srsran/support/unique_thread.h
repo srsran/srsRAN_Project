@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cpu_architecture_info.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/strong_type.h"
 #include "srsran/adt/unique_function.h"
@@ -29,12 +30,6 @@
 #include <thread>
 
 namespace srsran {
-
-/// Computes the number of threads that are usable in the given host.
-size_t compute_host_nof_hardware_threads();
-
-/// Get maximum CPU ID available to the application.
-size_t get_host_max_cpu_id();
 
 /// OS thread RT scheduling priority.
 /// Note: posix defines a minimum spread between sched_get_priority_max() and sched_get_priority_min() of 32.
@@ -112,9 +107,13 @@ struct os_sched_affinity_bitmask {
 public:
   static constexpr size_t MAX_CPUS = 1024;
 
-  os_sched_affinity_bitmask() : cpu_bitset(get_host_max_cpu_id() + 1) {}
+  os_sched_affinity_bitmask() : cpu_bitset(cpu_architecture_info::get().get_host_total_nof_cpus()) {}
 
-  explicit os_sched_affinity_bitmask(size_t cpu_idx) : cpu_bitset(get_host_max_cpu_id() + 1) { set(cpu_idx); }
+  explicit os_sched_affinity_bitmask(size_t cpu_idx) :
+    cpu_bitset(cpu_architecture_info::get().get_host_total_nof_cpus())
+  {
+    set(cpu_idx);
+  }
 
   os_sched_affinity_bitmask(size_t bitset_size, size_t cpu_idx) : cpu_bitset(bitset_size) { set(cpu_idx); }
 

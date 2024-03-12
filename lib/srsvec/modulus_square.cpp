@@ -24,6 +24,7 @@
 #include "simd.h"
 
 using namespace srsran;
+using namespace srsvec;
 
 static void modulus_square_simd(float* result, const cf_t* input, std::size_t len)
 {
@@ -32,8 +33,8 @@ static void modulus_square_simd(float* result, const cf_t* input, std::size_t le
 #if SRSRAN_SIMD_CF_SIZE
   for (unsigned simd_end = SRSRAN_SIMD_CF_SIZE * (len / SRSRAN_SIMD_CF_SIZE); i != simd_end; i += SRSRAN_SIMD_CF_SIZE) {
     // Load 2 SIMD words of floats.
-    simd_f_t simd_input1 = srsran_simd_f_loadu((float*)&input[i]);
-    simd_f_t simd_input2 = srsran_simd_f_loadu((float*)&input[i + SRSRAN_SIMD_CF_SIZE / 2]);
+    simd_f_t simd_input1 = srsran_simd_f_loadu(reinterpret_cast<const float*>(input + i));
+    simd_f_t simd_input2 = srsran_simd_f_loadu(reinterpret_cast<const float*>(input + i + SRSRAN_SIMD_CF_SIZE / 2));
 
     // Calculates the squares.
     simd_f_t simd_mul1 = srsran_simd_f_mul(simd_input1, simd_input1);
@@ -42,7 +43,7 @@ static void modulus_square_simd(float* result, const cf_t* input, std::size_t le
     // Horizontally add the values in pair, it results in adding the squared real and imaginary parts.
     simd_f_t simd_abs2 = srsran_simd_f_hadd(simd_mul1, simd_mul2);
 
-    srsran_simd_f_storeu(&result[i], simd_abs2);
+    srsran_simd_f_storeu(result + i, simd_abs2);
   }
 #endif // SRSRAN_SIMD_CF_SIZE
 
@@ -57,5 +58,6 @@ static void modulus_square_simd(float* result, const cf_t* input, std::size_t le
 void srsran::srsvec::modulus_square(span<float> result, span<const srsran::cf_t> input)
 {
   srsran_srsvec_assert_size(result, input);
+
   modulus_square_simd(result.data(), input.data(), input.size());
 }

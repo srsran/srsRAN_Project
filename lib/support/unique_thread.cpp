@@ -21,71 +21,12 @@
  */
 
 #include "srsran/support/unique_thread.h"
-#include "srsran/support/sysinfo.h"
 #include "fmt/ostream.h"
 #include <cstdio>
 #include <pthread.h>
 #include <sys/types.h>
 
 using namespace srsran;
-
-namespace {
-
-struct cpu_description {
-  cpu_set_t cpuset;
-  size_t    nof_cores;
-  size_t    max_cpu_id;
-};
-
-/// \brief  Compute the CPU set of the caller thread.
-cpu_description compute_machine_desc()
-{
-  // Clean-up cgroups possibly left from a previous run.
-  cleanup_cgroups();
-
-  cpu_description desc;
-  cpu_set_t&      cpuset = desc.cpuset;
-
-  // Compute the CPU bitmask.
-  CPU_ZERO(&cpuset);
-  if (sched_getaffinity(0, sizeof(cpuset), &cpuset) != 0) {
-    printf("Warning: Could not get CPU affinity of main thread. Cause: %s\n", strerror(errno));
-    // In failure case, we set all CPUs as available.
-    unsigned nof_cores = std::max(1U, std::thread::hardware_concurrency());
-    for (size_t i = 0; i < nof_cores; ++i) {
-      CPU_SET(i, &cpuset);
-    }
-  }
-
-  // Compute the number of cores.
-  desc.nof_cores = std::max(1, CPU_COUNT(&cpuset));
-
-  // Compute max CPU id.
-  for (unsigned i = 0; i < CPU_SETSIZE; ++i) {
-    if (CPU_ISSET(i, &cpuset)) {
-      desc.max_cpu_id = i;
-    }
-  }
-
-  return desc;
-}
-
-// Obtain CPU description at the start of the application. This value is affected by commands or tools like taskset,
-// which limit the number of cores available to the application. However, frameworks (e.g. DPDK) that affect the
-// affinities of the main thread in the main() function will not affect this value.
-const cpu_description host_desc = compute_machine_desc();
-
-} // namespace
-
-size_t srsran::compute_host_nof_hardware_threads()
-{
-  return host_desc.nof_cores;
-}
-
-size_t srsran::get_host_max_cpu_id()
-{
-  return host_desc.max_cpu_id;
-}
 
 /// Sets thread OS scheduling real-time priority.
 static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
@@ -190,8 +131,9 @@ const os_sched_affinity_bitmask& os_sched_affinity_bitmask::available_cpus()
 {
   static os_sched_affinity_bitmask available_cpus_mask = []() {
     os_sched_affinity_bitmask bitmask;
+    cpu_set_t                 cpuset = cpu_architecture_info::get().get_available_cpuset();
     for (size_t i = 0; i < bitmask.size(); ++i) {
-      if (CPU_ISSET(i, &host_desc.cpuset)) {
+      if (CPU_ISSET(i, &cpuset)) {
         bitmask.cpu_bitset.set(i);
       }
     }

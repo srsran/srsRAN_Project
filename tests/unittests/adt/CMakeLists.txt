@@ -34,6 +34,7 @@ add_executable(byte_buffer_test
         byte_buffer_chain_test.cpp)
 target_link_libraries(byte_buffer_test srslog srsran_support gtest gtest_main)
 add_test(byte_buffer_test byte_buffer_test)
+set_tests_properties(byte_buffer_test PROPERTIES LABELS "tsan")
 gtest_discover_tests(byte_buffer_test)
 
 add_executable(ring_buffer_test ring_buffer_test.cpp blocking_queue_test.cpp concurrent_queue_test.cpp)

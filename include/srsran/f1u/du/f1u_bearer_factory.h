@@ -41,6 +41,7 @@ struct f1u_bearer_creation_message {
   f1u_rx_sdu_notifier*    rx_sdu_notifier;
   f1u_tx_pdu_notifier*    tx_pdu_notifier;
   timer_factory           timers;
+  task_executor*          ue_executor;
 };
 
 /// \brief Creates an F1-U bearer for the DU.

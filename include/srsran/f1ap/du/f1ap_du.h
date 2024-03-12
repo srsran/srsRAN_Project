@@ -185,6 +185,13 @@ public:
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;
 
+  /// \brief Request by the F1AP to the DU to deactivate the DRB activity for a given UE.
+  ///
+  /// This is generally called when the DU receives a request to remove a UE context, but it needs to flush first
+  /// any pending SRB PDUs.
+  /// \param ue_index Index of the UE for which the DRB deactivation is requested.
+  virtual async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) = 0;
+
   /// \brief Notify DU that a given UE is performing RRC Reestablishment.
   virtual void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;
 

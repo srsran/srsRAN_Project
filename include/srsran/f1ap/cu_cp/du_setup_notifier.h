@@ -24,7 +24,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
@@ -57,8 +57,8 @@ struct du_setup_result {
     uint8_t                                       gnb_cu_rrc_version;
   };
   struct rejected {
-    cause_t     cause;
-    std::string cause_str;
+    f1ap_cause_t cause;
+    std::string  cause_str;
   };
 
   variant<accepted, rejected> result;

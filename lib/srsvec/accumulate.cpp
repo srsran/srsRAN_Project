@@ -21,22 +21,24 @@
  */
 #include "srsran/srsvec/accumulate.h"
 #include "simd.h"
+#include "srsran/support/srsran_assert.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace srsvec;
 
 static float accumulate_f_simd(const float* x, unsigned len)
 {
-  float result = 0;
+  float    result = 0;
+  unsigned i      = 0;
 
-  unsigned i = 0;
 #if SRSRAN_SIMD_F_SIZE
   if (len >= SRSRAN_SIMD_F_SIZE) {
-    simd_f_t simd_result = srsran_simd_f_loadu(&x[i]);
+    simd_f_t simd_result = srsran_simd_f_loadu(x + i);
     i += SRSRAN_SIMD_F_SIZE;
 
     for (unsigned simd_end = SRSRAN_SIMD_F_SIZE * (len / SRSRAN_SIMD_F_SIZE); i != simd_end; i += SRSRAN_SIMD_F_SIZE) {
-      simd_f_t simd_x = srsran_simd_f_loadu(&x[i]);
+      simd_f_t simd_x = srsran_simd_f_loadu(x + i);
 
       simd_result = srsran_simd_f_add(simd_x, simd_result);
     }

@@ -250,7 +250,9 @@ public:
                                                           const up_transport_layer_info&       ul_up_tnl_info,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
-                                                          timer_factory                        timers) override
+                                                          task_executor&                       ul_exec,
+                                                          timer_factory                        ue_dl_timer_factory,
+                                                          unique_timer& ue_inactivity_timer) override
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);

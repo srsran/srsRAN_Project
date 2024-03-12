@@ -116,7 +116,6 @@ public:
 
   task_executor& executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
-  task_executor& error_ind_executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
 
   std::vector<task_executor*> execs;
 };

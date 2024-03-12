@@ -45,7 +45,7 @@ namespace srsvec {
 /// \param [in]  x Input Span.
 /// \param [in]  threshold Clipping threshold.
 /// \return The number of clipped samples.
-unsigned clip(span<float> y, span<const float> x, const float threshold);
+unsigned clip(span<float> y, span<const float> x, float threshold);
 
 /// \brief Clips the real and imaginary components of a complex span.
 ///
@@ -68,7 +68,7 @@ unsigned clip(span<float> y, span<const float> x, const float threshold);
 /// \param [in]  x Input Span.
 /// \param [in]  threshold Clipping threshold.
 /// \return The number of clipped samples.
-unsigned clip_iq(span<cf_t> y, span<const cf_t> x, const float threshold);
+unsigned clip_iq(span<cf_t> y, span<const cf_t> x, float threshold);
 
 /// \brief Clips the magnitude of a complex span.
 ///
@@ -85,7 +85,7 @@ unsigned clip_iq(span<cf_t> y, span<const cf_t> x, const float threshold);
 /// \param [in]  x Input Span.
 /// \param [in]  threshold Clipping threshold.
 /// \return The number of clipped samples.
-unsigned clip_magnitude(span<cf_t> y, span<const cf_t> x, const float threshold);
+unsigned clip_magnitude(span<cf_t> y, span<const cf_t> x, float threshold);
 
 } // namespace srsvec
 } // namespace srsran

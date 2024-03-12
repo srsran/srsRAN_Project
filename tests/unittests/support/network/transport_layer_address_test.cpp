@@ -55,42 +55,45 @@ TEST(transport_layer_address_test, empty_address)
 
 TEST(transport_layer_address_test, conversion_to_ipv4_string)
 {
-  std::string             ipv4_str = create_random_ipv4_string();
-  transport_layer_address addr{ipv4_str};
+  std::string ipv4_str = create_random_ipv4_string();
+  auto        addr     = transport_layer_address::create_from_string(ipv4_str);
   ASSERT_EQ(addr.to_string(), ipv4_str);
   ASSERT_EQ(fmt::format("{}", addr), ipv4_str);
 }
 
 TEST(transport_layer_address_test, conversion_to_ipv6_string)
 {
-  std::string             ipv6_str = create_random_ipv6_string();
-  transport_layer_address addr{ipv6_str};
+  std::string ipv6_str = create_random_ipv6_string();
+  auto        addr     = transport_layer_address::create_from_string(ipv6_str);
   ASSERT_EQ(addr.to_string(), ipv6_str);
   ASSERT_EQ(fmt::format("{}", addr), ipv6_str);
 }
 
 TEST(transport_layer_address_test, ipv4_address_comparison)
 {
-  std::string             ipv4_str1 = create_random_ipv4_string();
-  std::string             ipv4_str2 = create_random_ipv4_string();
-  transport_layer_address addr1{ipv4_str1}, addr2{ipv4_str2};
+  std::string ipv4_str1 = create_random_ipv4_string();
+  std::string ipv4_str2 = create_random_ipv4_string();
+  auto        addr1     = transport_layer_address::create_from_string(ipv4_str1);
+  auto        addr2     = transport_layer_address::create_from_string(ipv4_str2);
   ASSERT_EQ(addr1, ipv4_str1);
   ASSERT_EQ(addr2, ipv4_str2);
 }
 
 TEST(transport_layer_address_test, ipv6_address_comparison)
 {
-  std::string             ipv6_str1 = create_random_ipv6_string();
-  std::string             ipv6_str2 = create_random_ipv6_string();
-  transport_layer_address addr1{ipv6_str1}, addr2{ipv6_str2};
+  std::string ipv6_str1 = create_random_ipv6_string();
+  std::string ipv6_str2 = create_random_ipv6_string();
+  auto        addr1     = transport_layer_address::create_from_string(ipv6_str1);
+  auto        addr2     = transport_layer_address::create_from_string(ipv6_str2);
   ASSERT_EQ(addr1, ipv6_str1);
   ASSERT_EQ(addr2, ipv6_str2);
 }
 
 TEST(transport_layer_address_test, ipv4_is_always_different_from_ipv6)
 {
-  std::string             ipv4_str = create_random_ipv4_string();
-  std::string             ipv6_str = create_random_ipv6_string();
-  transport_layer_address addr1{ipv4_str}, addr2{ipv6_str};
+  std::string ipv4_str = create_random_ipv4_string();
+  std::string ipv6_str = create_random_ipv6_string();
+  auto        addr1    = transport_layer_address::create_from_string(ipv4_str);
+  auto        addr2    = transport_layer_address::create_from_string(ipv6_str);
   ASSERT_NE(addr1, addr2);
 }

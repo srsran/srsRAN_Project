@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 15-02-2024 (seed 0):
+// This file was generated using the following MATLAB class on 20-02-2024 (seed 0):
 //   + "srsTPMISelectUnittest.m"
 
 #include "srsran/ran/pusch/pusch_tpmi_select.h"

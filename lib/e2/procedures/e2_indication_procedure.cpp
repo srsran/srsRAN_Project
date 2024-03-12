@@ -87,9 +87,15 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       }
 
       // Put RIC indication content into message.
-      e2_ind.indication->ri_cind_msg.value.resize(ind_msg_bytes.length());
+      if (!e2_ind.indication->ri_cind_msg.value.resize(ind_msg_bytes.length())) {
+        logger.error("Unable to resize byte_buffer, dropping indication");
+        continue;
+      }
       std::copy(ind_msg_bytes.begin(), ind_msg_bytes.end(), e2_ind.indication->ri_cind_msg.value.begin());
-      e2_ind.indication->ri_cind_hdr.value.resize(ind_hdr_bytes.length());
+      if (!e2_ind.indication->ri_cind_hdr.value.resize(ind_hdr_bytes.length())) {
+        logger.error("Unable to resize byte_buffer, dropping indication");
+        continue;
+      }
       std::copy(ind_hdr_bytes.begin(), ind_hdr_bytes.end(), e2_ind.indication->ri_cind_hdr.value.begin());
       logger.info("Sending E2 indication");
       send_e2_indication(e2_ind);

@@ -247,7 +247,8 @@ protected:
       }
       if (run_count != queue_size) {
         // Unexpected failure to pop enqueued tasks. It might be due to queue shutdown.
-        srslog::fetch_basic_logger("ALL").info("Couldn't run all pending tasks in strand");
+        srslog::fetch_basic_logger("ALL").info(
+            "Couldn't run all pending tasks in strand. run_count={} queue_size={}", run_count, queue_size);
       }
 
       // We have run all the tasks that were enqueued since when we computed queue_size.

@@ -52,8 +52,12 @@ public:
              e1ap_control_message_handler&                                         e1ap_,
              network_interface_config&                                             net_config_,
              n3_interface_config&                                                  n3_config_,
-             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec_,
-             timer_factory                                                         timers_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec_,
+             std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec_,
+             timer_factory                                                         ue_dl_timer_factory_,
+             timer_factory                                                         ue_ul_timer_factory_,
+             timer_factory                                                         ue_ctrl_timer_factory_,
              f1u_cu_up_gateway&                                                    f1u_gw_,
              gtpu_teid_pool&                                                       f1u_teid_allocator_,
              gtpu_tunnel_tx_upper_layer_notifier&                                  gtpu_tx_notifier_,
@@ -70,22 +74,30 @@ public:
                         n3_config_,
                         logger,
                         ue_inactivity_timer,
-                        timers_,
+                        ue_dl_timer_factory_,
+                        ue_ul_timer_factory_,
+                        ue_ctrl_timer_factory_,
                         f1u_gw_,
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
                         gtpu_rx_demux_,
-                        *ue_exec_,
+                        *ue_dl_exec_,
+                        *ue_ul_exec_,
+                        *ue_ctrl_exec_,
                         gtpu_pcap),
-    ue_exec(std::move(ue_exec_)),
-    timers(timers_)
+    ue_dl_exec(std::move(ue_dl_exec_)),
+    ue_ul_exec(std::move(ue_ul_exec_)),
+    ue_ctrl_exec(std::move(ue_ctrl_exec_)),
+    ue_dl_timer_factory(ue_dl_timer_factory_),
+    ue_ul_timer_factory(ue_ul_timer_factory_),
+    ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
   {
     if (cfg.activity_level == activity_notification_level_t::ue) {
       if (not cfg.ue_inactivity_timeout.has_value()) {
         report_error(
             "Failed to create UE context. Activity notification level is UE, but no UE inactivity timer configured\n");
       }
-      ue_inactivity_timer = timers.create_timer();
+      ue_inactivity_timer = ue_ul_timer_factory.create_timer();
       ue_inactivity_timer.set(*cfg.ue_inactivity_timeout,
                               [this](timer_id_t /*tid*/) { on_ue_inactivity_timer_expired(); });
       ue_inactivity_timer.run();
@@ -122,15 +134,29 @@ private:
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
 
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec;
+  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec;
 
-  timer_factory timers;
-  unique_timer  ue_inactivity_timer;
-  void          on_ue_inactivity_timer_expired()
+  timer_factory ue_dl_timer_factory;
+  timer_factory ue_ul_timer_factory;
+  timer_factory ue_ctrl_timer_factory;
+
+  unique_timer ue_inactivity_timer;
+
+  /// Handle expired UE inactivity timer. This function is called from a timer that is run in UE executor,
+  /// therefore it handovers the handling to control executor.
+  void on_ue_inactivity_timer_expired()
   {
-    e1ap_bearer_context_inactivity_notification msg = {};
-    msg.ue_index                                    = index;
-    e1ap.handle_bearer_context_inactivity_notification(msg);
+    auto fn = [this]() mutable {
+      e1ap_bearer_context_inactivity_notification msg = {};
+      msg.ue_index                                    = index;
+      e1ap.handle_bearer_context_inactivity_notification(msg);
+    };
+
+    if (!ue_ctrl_exec->execute(std::move(fn))) {
+      logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}", index);
+    }
   }
 };
 

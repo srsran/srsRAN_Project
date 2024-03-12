@@ -51,6 +51,9 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
   // Mark UE context for release, so that any UE Context Release Request coming from lower layers due to RLF is ignored.
   ue.context.marked_for_release = true;
 
+  // Stop activity in the DRBs before sending the UE's RRC release and performing the UE context removal.
+  CORO_AWAIT(ue.du_handler.request_ue_drb_deactivation(ue.context.ue_index));
+
   if (msg->rrc_container_present) {
     // If the UE CONTEXT RELEASE COMMAND message contains the RRC-Container IE, the gNB-DU shall send the RRC
     // container to the UE via the SRB indicated by the SRB ID IE.

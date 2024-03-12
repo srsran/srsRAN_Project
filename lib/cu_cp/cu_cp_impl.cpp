@@ -279,10 +279,11 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
   cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(target_ue_index, source_ue_index);
 }
 
-optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(nr_cell_id_t           nci,
+optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(ue_index_t             ue_index,
+                                                                     nr_cell_id_t           nci,
                                                                      optional<rrc_meas_cfg> current_meas_config)
 {
-  return cell_meas_mng.get_measurement_config(nci, current_meas_config);
+  return cell_meas_mng.get_measurement_config(ue_index, nci, current_meas_config);
 }
 
 void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results)
@@ -307,6 +308,7 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                        e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
                                        f1ap_adapters.at(du_index),
                                        ngap_adapter,
+                                       cell_meas_mng,
                                        ue_mng,
                                        logger);
 }

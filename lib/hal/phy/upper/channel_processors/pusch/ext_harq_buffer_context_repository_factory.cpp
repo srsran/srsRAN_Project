@@ -26,7 +26,9 @@ using namespace srsran;
 using namespace hal;
 
 std::shared_ptr<ext_harq_buffer_context_repository>
-srsran::hal::create_ext_harq_buffer_context_repository(unsigned nof_rnti, unsigned nof_harq_id, bool debug_mode)
+srsran::hal::create_ext_harq_buffer_context_repository(unsigned nof_codeblocks,
+                                                       uint64_t ext_harq_buff_size,
+                                                       bool     debug_mode)
 {
-  return std::make_shared<ext_harq_buffer_context_repository>(nof_rnti, nof_harq_id, debug_mode);
+  return std::make_shared<ext_harq_buffer_context_repository>(nof_codeblocks, ext_harq_buff_size, debug_mode);
 }

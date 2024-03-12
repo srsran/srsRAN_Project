@@ -202,9 +202,11 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb =
+      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
+              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
+          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
+          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
@@ -264,9 +266,11 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb =
+      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
+              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
+          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
+          : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
@@ -320,6 +324,16 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   pdsch.ss_set_type =
       dci_cfg.system_information_indicator == 0 ? search_space_set_type::type0 : search_space_set_type::type0A;
   pdsch.dci_fmt = dci_dl_format::f1_0;
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 }
 
 void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
@@ -356,6 +370,16 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   pdsch.ss_set_type    = search_space_set_type::type2;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 }
 
 void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch,
@@ -397,6 +421,16 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   pdsch.ss_set_type    = search_space_set_type::type1;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 }
 
 void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
@@ -436,6 +470,16 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.dci_fmt     = dci_dl_format::f1_0;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   pdsch.nof_layers  = 1U;
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
@@ -487,6 +531,16 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
   pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = 1;
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
@@ -545,6 +599,16 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
 
   // Beamforming and precoding.
   pdsch.precoding = cs_mgr.get_precoding(pdsch_cfg.nof_layers, prbs);
+
+  // Populate power offsets.
+  if (not cell_cfg.nzp_csi_rs_list.empty()) {
+    // [Implementation-defined] It is assumed that same powerControlOffset and powerControlOffsetSS is configured in
+    // NZP-CSI-RS-Resource across all resources.
+    pdsch.tx_pwr_info.pwr_ctrl_offset = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset;
+    if (cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.has_value()) {
+      pdsch.tx_pwr_info.pwr_ctrl_offset_ss = cell_cfg.nzp_csi_rs_list.front().pwr_ctrl_offset_ss_db.value();
+    }
+  }
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

@@ -69,7 +69,7 @@ public:
                  pdcp_rx_config                  cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,
-                 timer_factory                   timers);
+                 timer_factory                   ue_ul_timer_factory_);
 
   void handle_pdu(byte_buffer_chain buf) override;
 
@@ -126,9 +126,9 @@ public:
     logger.log_info(
         "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
     if (sec_cfg.k_128_int.has_value()) {
-      logger.log_info(sec_cfg.k_128_int.value().data(), 16, "128 K_int");
+      logger.log_info("128 K_int: {}", sec_cfg.k_128_int);
     }
-    logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
+    logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
   }
 
   void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
@@ -203,7 +203,7 @@ private:
   pdcp_rx_upper_data_notifier&    upper_dn;
   pdcp_rx_upper_control_notifier& upper_cn;
 
-  timer_factory timers;
+  timer_factory ue_ul_timer_factory;
 
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)

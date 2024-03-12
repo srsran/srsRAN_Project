@@ -22,7 +22,7 @@
 
 #include "rrc_reconfiguration_procedure.h"
 #include "../rrc_asn1_helpers.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -81,11 +81,11 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     // Notify NGAP to request UE context release from AMF
     CORO_AWAIT_VALUE(release_request_sent,
                      ngap_ctrl_notifier.on_ue_context_release_request(
-                         {context.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason}));
+                         {context.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
     if (!release_request_sent) {
       // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
-      CORO_AWAIT(
-          du_processor_notifier.on_ue_context_release_command({context.ue_index, cause_radio_network_t::unspecified}));
+      CORO_AWAIT(du_processor_notifier.on_ue_context_release_command(
+          {context.ue_index, ngap_cause_radio_network_t::unspecified}));
     }
   }
 

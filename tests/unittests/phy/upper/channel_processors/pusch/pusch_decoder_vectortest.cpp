@@ -199,7 +199,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 
   // Interfacing to a shared external HARQ buffer context repository.
   unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
-  unsigned acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size().value();
+  uint64_t acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size_bytes();
   std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context =
       create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);

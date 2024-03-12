@@ -22,6 +22,7 @@
 
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/du_ue_ric_configuration_procedure.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

@@ -50,10 +50,6 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   logger.debug("ue={}: \"{}\" initialized", ue_index, name());
 
-  // prepare ue context release request in case of failure
-  ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
-
   {
     // prepare first BearerContextModificationRequest
     generate_bearer_context_modification_request_for_new_ul_tnl();

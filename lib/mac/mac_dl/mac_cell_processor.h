@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../mac_ctrl/mac_config.h"
+#include "cell_dl_harq_buffer_pool.h"
 #include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_manager.h"
 #include "mac_scheduler_cell_info_handler.h"
@@ -46,7 +47,6 @@ public:
                      mac_cell_result_notifier&        phy_notifier,
                      task_executor&                   cell_exec,
                      task_executor&                   slot_exec,
-                     task_executor&                   err_ind_exec,
                      task_executor&                   ctrl_exec,
                      mac_pcap&                        pcap);
 
@@ -58,6 +58,9 @@ public:
 
   void handle_slot_indication(slot_point sl_tx) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
+
+  /// Gets DL HARQ buffer pool that is specific to this cell.
+  cell_dl_harq_buffer_pool& get_dl_harq_pool() { return dl_harq_buffers; }
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
@@ -85,9 +88,11 @@ private:
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
   task_executor&                  slot_exec;
-  task_executor&                  err_ind_exec;
   task_executor&                  ctrl_exec;
   mac_cell_result_notifier&       phy_cell;
+
+  // Pool of DL HARQ buffers used for UE PDSCH.
+  cell_dl_harq_buffer_pool dl_harq_buffers;
 
   ticking_ring_buffer_pool pdu_pool;
 

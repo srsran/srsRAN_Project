@@ -41,13 +41,17 @@ public:
                    pdcp_tx_upper_control_notifier& tx_upper_cn,
                    pdcp_rx_upper_data_notifier&    rx_upper_dn,
                    pdcp_rx_upper_control_notifier& rx_upper_cn,
-                   timer_factory                   timers) :
+                   timer_factory                   ue_dl_timer_factory,
+                   timer_factory                   ue_ul_timer_factory,
+                   timer_factory                   ue_ctrl_timer_factory) :
     logger("PDCP", {ue_index, rb_id, "DL/UL"}),
     metrics_period(config.custom.metrics_period),
-    metrics_timer(timers.create_timer())
+    metrics_timer(ue_ctrl_timer_factory.create_timer())
   {
-    tx = std::make_unique<pdcp_entity_tx>(ue_index, rb_id, config.get_tx_config(), tx_lower_dn, tx_upper_cn, timers);
-    rx = std::make_unique<pdcp_entity_rx>(ue_index, rb_id, config.get_rx_config(), rx_upper_dn, rx_upper_cn, timers);
+    tx = std::make_unique<pdcp_entity_tx>(
+        ue_index, rb_id, config.get_tx_config(), tx_lower_dn, tx_upper_cn, ue_dl_timer_factory);
+    rx = std::make_unique<pdcp_entity_rx>(
+        ue_index, rb_id, config.get_rx_config(), rx_upper_dn, rx_upper_cn, ue_ul_timer_factory);
 
     // Tx/Rx interconnect
     tx->set_status_provider(rx.get());

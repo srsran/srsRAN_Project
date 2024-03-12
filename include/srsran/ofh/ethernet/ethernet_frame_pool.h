@@ -187,6 +187,7 @@ public:
         buffer.status = frame_buffer::frame_buffer_status::free;
       }
     }
+    used_buffers.clear();
   }
 
   // Returns a vector of pointers to the buffers ready for sending.

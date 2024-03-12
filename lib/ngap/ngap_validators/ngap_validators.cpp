@@ -45,7 +45,7 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
         // Add failed psi to response
         cu_cp_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = psi;
-        failed_item.unsuccessful_transfer.cause = cause_radio_network_t::multiple_pdu_session_id_instances;
+        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::multiple_pdu_session_id_instances;
         verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
       }
     }
@@ -72,7 +72,7 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
           // Add failed psi to response
           cu_cp_pdu_session_res_setup_failed_item failed_item;
           failed_item.pdu_session_id              = psi;
-          failed_item.unsuccessful_transfer.cause = cause_radio_network_t::invalid_qos_combination;
+          failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::invalid_qos_combination;
           verification_outcome.response.pdu_session_res_failed_to_setup_items.emplace(psi, failed_item);
           // If single QoS flow fails, then the whole PDU session fails
           break;
@@ -116,7 +116,7 @@ pdu_session_resource_modify_validation_outcome srsran::srs_cu_cp::verify_pdu_ses
         // Add failed psi to response
         cu_cp_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = psi;
-        failed_item.unsuccessful_transfer.cause = cause_radio_network_t::multiple_pdu_session_id_instances;
+        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::multiple_pdu_session_id_instances;
         verification_outcome.response.pdu_session_res_failed_to_modify_list.emplace(psi, failed_item);
       }
     }

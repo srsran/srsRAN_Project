@@ -252,7 +252,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
-        cause_to_asn1_cause(bearer_context_setup_response_msg.cause.value());
+        cause_to_asn1(bearer_context_setup_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextSetupFailure");
@@ -323,7 +323,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
-        cause_to_asn1_cause(bearer_context_mod_response_msg.cause.value());
+        cause_to_asn1(bearer_context_mod_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");
@@ -343,7 +343,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
 
   bearer_context_release_cmd.ue_index = ue_ctxt.ue_ids.ue_index;
-  bearer_context_release_cmd.cause    = e1ap_cause_to_cause(msg->cause);
+  bearer_context_release_cmd.cause    = asn1_to_cause(msg->cause);
 
   // Forward message to CU-UP
   cu_up_notifier.on_bearer_context_release_command_received(bearer_context_release_cmd);

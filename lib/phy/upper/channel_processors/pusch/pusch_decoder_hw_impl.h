@@ -85,6 +85,7 @@ public:
     srsran_assert(crc_set.crc24B->get_generator_poly() == crc_generator_poly::CRC24B,
                   "Not a CRC generator of type CRC24B.");
     srsran_assert(decoder, "Invalid hardware-accelerated PUSCH decoder.");
+    absolute_cb_ids.resize(MAX_NOF_SEGMENTS);
   }
 
   // See interface for the documentation.

@@ -171,7 +171,7 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   return pack_into_pdu(ho_prep, "handover preparation info");
 }
 
-void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
+void rrc_ue_impl::on_ue_release_required(const ngap_cause_t& cause)
 {
   task_sched.schedule_async_task(
       launch_async([this, ngap_release_result = bool{false}, cause](coro_context<async_task<void>>& ctx) mutable {

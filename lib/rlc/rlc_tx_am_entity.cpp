@@ -79,12 +79,16 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
   size_t sdu_length   = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
-    logger.log_info(
-        sdu.buf.begin(), sdu.buf.end(), "TX SDU. sdu_len={} pdcp_sn={} {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue);
+    logger.log_info(sdu.buf.begin(),
+                    sdu.buf.end(),
+                    "TX SDU. sdu_len={} pdcp_sn={} {}",
+                    sdu.buf.length(),
+                    sdu.pdcp_sn,
+                    sdu_queue.get_state());
     metrics.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
-    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue);
+    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue.get_state());
     metrics.metrics_add_lost_sdus(1);
   }
 }
@@ -192,7 +196,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
 
   // Read new SDU from TX queue
   rlc_sdu sdu;
-  logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
+  logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue.get_state());
   if (not sdu_queue.read(sdu)) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
     return 0;

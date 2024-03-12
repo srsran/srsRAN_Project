@@ -93,6 +93,12 @@ public:
   /// \param[in] crnti C-RNTI of the UE.
   /// \return Returns number of PDSCHs scheduled if UCI allocation if found, 0 otherwise.
   virtual uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) = 0;
+
+  /// Returns whether a UCI HARQ-ACK allocated on common PUCCH resource exists at a given slot or not.
+  /// \param[in] crnti C-RNTI of the UE.
+  /// \param[in] sl_tx UCI slot.
+  /// \return Returns true if a UCI HARQ-ACK allocated on common PUCCH resource exists. False, otherwise.
+  virtual bool has_uci_harq_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) = 0;
 };
 
 } // namespace srsran

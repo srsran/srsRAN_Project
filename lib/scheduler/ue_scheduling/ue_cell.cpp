@@ -265,7 +265,9 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg->cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg->search_space(ss.get_id()));
+      if (pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, ss)) {
+        active_search_spaces.push_back(&ue_cfg->search_space(ss.get_id()));
+      }
     }
     return active_search_spaces;
   }
@@ -303,6 +305,10 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
           (not is_ss_for_ra and not is_ss_for_paging and not is_type3_css)) {
         return false;
       }
+    }
+
+    if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, *ss.cfg)) {
+      return false;
     }
 
     if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, true), pdcch_slot)
@@ -330,7 +336,9 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg->cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg->search_space(ss.get_id()));
+      if (pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, ss)) {
+        active_search_spaces.push_back(&ue_cfg->search_space(ss.get_id()));
+      }
     }
     return active_search_spaces;
   }
@@ -368,6 +376,10 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
           (not is_ss_for_ra and not is_ss_for_paging and not is_type3_css)) {
         return false;
       }
+    }
+
+    if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, *ss.cfg)) {
+      return false;
     }
 
     if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, false),

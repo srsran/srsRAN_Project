@@ -22,10 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/complex.h"
-#include "srsran/srsvec/detail/traits.h"
-#include "srsran/support/srsran_assert.h"
-#include <numeric>
+#include "srsran/adt/span.h"
 
 namespace srsran {
 namespace srsvec {

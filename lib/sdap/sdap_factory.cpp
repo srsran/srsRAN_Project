@@ -34,6 +34,5 @@ using namespace srs_cu_up;
 
 std::unique_ptr<sdap_entity> srsran::srs_cu_up::create_sdap(sdap_entity_creation_message& msg)
 {
-  return std::make_unique<sdap_entity_impl>(
-      msg.ue_index, msg.pdu_session_id, msg.ue_inactivity_timer, *msg.rx_sdu_notifier);
+  return std::make_unique<sdap_entity_impl>(msg.ue_index, msg.pdu_session_id, *msg.rx_sdu_notifier);
 }

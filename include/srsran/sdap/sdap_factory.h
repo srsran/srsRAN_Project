@@ -37,7 +37,6 @@ namespace srs_cu_up {
 struct sdap_entity_creation_message {
   uint32_t              ue_index;
   pdu_session_id_t      pdu_session_id;
-  unique_timer&         ue_inactivity_timer;
   sdap_rx_sdu_notifier* rx_sdu_notifier;
 };
 

@@ -218,6 +218,7 @@ TEST_P(PxschChainFixture, Ideal)
   dlsch_params.dmrs_symbol_mask            = dmrs_symbol_mask;
   dlsch_params.nof_cdm_groups_without_data = 2;
   dlsch_params.nof_layers                  = nof_layers;
+  dlsch_params.contains_dc                 = true;
   dlsch_information info                   = get_dlsch_information(dlsch_params);
   ASSERT_LT(info.get_effective_code_rate(), 0.95);
 

@@ -259,7 +259,10 @@ public:
 
           // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the
           // DU.
-          resp->rrc_container.resize(msg4_pdu.length());
+          if (!resp->rrc_container.resize(msg4_pdu.length())) {
+            du_logger.warning("Unable to resize RRC PDU to {} bytes", msg4_pdu.length());
+            return;
+          }
           std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.begin());
         } else if (msg.pdu.init_msg().value.type().value ==
                    asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {

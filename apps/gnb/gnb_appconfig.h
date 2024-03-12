@@ -44,6 +44,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/unique_thread.h"
 #include "srsran/support/units.h"
 #include <map>
@@ -729,10 +730,10 @@ struct security_appconfig {
 };
 
 struct cu_cp_appconfig {
-  uint16_t           max_nof_dus                = 6;
-  uint16_t           max_nof_cu_ups             = 6;
-  int                inactivity_timer           = 7200; // in seconds
-  unsigned           ue_context_setup_timeout_s = 3;    // in seconds (must be larger than T310)
+  uint16_t           max_nof_dus               = 6;
+  uint16_t           max_nof_cu_ups            = 6;
+  int                inactivity_timer          = 5; // in seconds
+  unsigned           pdu_session_setup_timeout = 3; // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;
@@ -933,6 +934,17 @@ struct ru_sdr_expert_appconfig {
   /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
   /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
+  /// \brief Lower PHY downlink baseband buffer size policy.
+  ///
+  /// Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.
+  /// Available options:
+  ///   - auto: the size policy is automatically selected based on the SDR front-end.
+  ///   - single-packet: the buffer size matches the optimal buffer size indicated by the SDR front-end.
+  ///   - half-slot:     the buffer size matches the number of samples per half-slot.
+  ///   - slot:          the buffer size matches the number of samples per slot.
+  ///   - optimal-slot:  the buffer size is equal to the greatest multiple of the optimal buffer size indicated by the
+  ///                    SDR front-end that results in a buffer size smaller than the number of samples per slot.
+  std::string dl_buffer_size_policy = "auto";
 };
 
 /// gNB app SDR Radio Unit configuration.
@@ -981,21 +993,21 @@ struct ru_ofh_base_cell_appconfig {
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
   optional<bs_channel_bandwidth_fr1> ru_operating_bw;
   /// T1a maximum parameter for downlink Control-Plane in microseconds.
-  unsigned T1a_max_cp_dl = 500U;
+  std::chrono::microseconds T1a_max_cp_dl{500};
   /// T1a minimum parameter for downlink Control-Plane in microseconds.
-  unsigned T1a_min_cp_dl = 258U;
+  std::chrono::microseconds T1a_min_cp_dl{258};
   /// T1a maximum parameter for uplink Control-Plane in microseconds.
-  unsigned T1a_max_cp_ul = 500U;
+  std::chrono::microseconds T1a_max_cp_ul{500};
   /// T1a minimum parameter for uplink Control-Plane in microseconds.
-  unsigned T1a_min_cp_ul = 285U;
+  std::chrono::microseconds T1a_min_cp_ul{285};
   /// T1a maximum parameter for downlink User-Plane in microseconds.
-  unsigned T1a_max_up = 300U;
+  std::chrono::microseconds T1a_max_up{300};
   /// T1a minimum parameter for downlink User-Plane in microseconds.
-  unsigned T1a_min_up = 85U;
+  std::chrono::microseconds T1a_min_up{85};
   /// Ta4 maximum parameter for uplink User-Plane in microseconds.
-  unsigned Ta4_max = 300U;
+  std::chrono::microseconds Ta4_max{300};
   /// Ta4 minimum parameter for uplink User-Plane in microseconds.
-  unsigned Ta4_min = 85U;
+  std::chrono::microseconds Ta4_min{85};
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = true;
   /// \brief Downlink broadcast flag.
@@ -1159,7 +1171,7 @@ struct ofh_threads_appconfig {
 struct expert_threads_appconfig {
   expert_threads_appconfig()
   {
-    unsigned nof_threads = compute_host_nof_hardware_threads();
+    unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
     if (nof_threads < 4) {
       upper_threads.nof_ul_threads            = 1;

@@ -231,7 +231,7 @@ private:
       return nullptr;
     }
 
-    if (factory_type == "generic") {
+    if (factory_type.find("generic") != std::string::npos) {
       return create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory);
     }
 

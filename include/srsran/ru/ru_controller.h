@@ -43,6 +43,18 @@ public:
   /// \brief Stops the Radio Unit operation.
   /// \note Caller will be blocked until the controller is fully stopped.
   virtual void stop() = 0;
+
+  /// \brief Sets the transmission gain for the specified port.
+  /// \param[in] port_id Port identifier.
+  /// \param[in] gain_dB Transmission gain in dB.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_tx_gain(unsigned port_id, double gain_dB) = 0;
+
+  /// \brief Sets the receive gain for the specified port.
+  /// \param[in] port_id Port identifier.
+  /// \param[in] gain_dB Receive gain in dB.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
 };
 
 } // namespace srsran

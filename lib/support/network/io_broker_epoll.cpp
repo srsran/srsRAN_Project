@@ -138,18 +138,25 @@ void io_broker_epoll::thread_loop()
 /// file descriptors can be added while the epoll_wait() is blocking.
 bool io_broker_epoll::register_fd(int fd, recv_callback_t handler)
 {
+  logger.debug("Registering file descriptor. fd={}", fd);
+
+  {
+    // add event handler to map before registering it at epoll control
+    std::lock_guard<std::mutex> lock(event_handler_mutex);
+    event_handler.insert({fd, std::make_unique<epoll_receive_callback>(handler)});
+  }
+
   struct epoll_event ev = {};
   ev.data.fd            = fd;
   ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
     logger.error("Failed to register file descriptor. fd={} error={}", fd, strerror(errno));
+    // remove event handler from map
+    std::lock_guard<std::mutex> lock(event_handler_mutex);
+    event_handler.erase(fd);
     return false;
   }
 
-  std::lock_guard<std::mutex> lock(event_handler_mutex);
-  event_handler.insert({fd, std::make_unique<epoll_receive_callback>(handler)});
-
-  logger.debug("Registered file descriptor. fd={}", fd);
   return true;
 }
 

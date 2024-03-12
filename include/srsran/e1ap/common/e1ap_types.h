@@ -26,7 +26,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -216,7 +216,7 @@ struct e1ap_qos_flow_item {
 
 struct e1ap_qos_flow_failed_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
-  cause_t       cause;
+  e1ap_cause_t  cause;
 };
 
 struct e1ap_data_forwarding_info {
@@ -233,8 +233,8 @@ struct e1ap_drb_setup_item_ng_ran {
 };
 
 struct e1ap_drb_failed_item_ng_ran {
-  drb_id_t drb_id = drb_id_t::invalid;
-  cause_t  cause;
+  drb_id_t     drb_id = drb_id_t::invalid;
+  e1ap_cause_t cause;
 };
 
 struct e1ap_pdu_session_resource_setup_modification_item {
@@ -249,7 +249,7 @@ struct e1ap_pdu_session_resource_setup_modification_item {
 
 struct e1ap_pdu_session_resource_failed_item {
   pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
-  cause_t          cause;
+  e1ap_cause_t     cause;
 };
 
 struct e1ap_crit_diagnostics_item {

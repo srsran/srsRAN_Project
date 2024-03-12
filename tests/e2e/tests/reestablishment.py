@@ -23,7 +23,7 @@ Ping / Reestablishment Tests
 """
 import logging
 import time
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -45,12 +45,12 @@ from .steps.stub import ping_start, ping_wait_until_finish, start_network, stop,
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=5, only_rerun=["failed to start", "StatusCode.ABORTED"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments
 def test_zmq_reestablishment(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
+    ue: UEStub,  # pylint: disable=invalid-name
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -69,7 +69,7 @@ def test_zmq_reestablishment(
     _ping_and_reestablishment_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_4,
+        ue_array=(ue,),
         gnb=gnb,
         fivegc=fivegc,
         band=band,

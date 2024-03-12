@@ -214,11 +214,11 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   EXPECT_TRUE(mod_result.success);
   ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
   EXPECT_FALSE(mod_result.drb_setup_results[0].success);
-  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::unspecified});
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, e1ap_cause_t{e1ap_cause_radio_network_t::unspecified});
   ASSERT_EQ(mod_result.drb_setup_results[0].qos_flow_results.size(), 1);
   EXPECT_FALSE(mod_result.drb_setup_results[0].qos_flow_results[0].success);
   EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[0].cause,
-            cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+            e1ap_cause_t{e1ap_cause_radio_network_t::multiple_qos_flow_id_instances});
 
   // validate pdu session is not disconnected from GTP-U gateway
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
@@ -251,7 +251,7 @@ TEST_F(pdu_session_manager_test, drb_create_with_unknown_five_qi)
   ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
 
   EXPECT_FALSE(setup_result.drb_setup_results[0].success);
-  EXPECT_EQ(setup_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::not_supported_5qi_value});
+  EXPECT_EQ(setup_result.drb_setup_results[0].cause, e1ap_cause_t{e1ap_cause_radio_network_t::not_supported_5qi_value});
   ASSERT_EQ(setup_result.drb_setup_results[0].qos_flow_results.size(), 0);
 }
 
@@ -302,13 +302,14 @@ TEST_F(pdu_session_manager_test, drb_create_with_two_qfi_of_which_one_is_already
   EXPECT_TRUE(mod_result.success);
   ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
   EXPECT_TRUE(mod_result.drb_setup_results[0].success); // success, since at least one QFI mapping was valid
-  EXPECT_EQ(mod_result.drb_setup_results[0].cause, cause_t{cause_radio_network_t::unspecified});
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, e1ap_cause_t{e1ap_cause_radio_network_t::unspecified});
   ASSERT_EQ(mod_result.drb_setup_results[0].qos_flow_results.size(), 2);
   EXPECT_FALSE(mod_result.drb_setup_results[0].qos_flow_results[0].success); // the first was invalid
   EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[0].cause,
-            cause_t{cause_radio_network_t::multiple_qos_flow_id_instances});
+            e1ap_cause_t{e1ap_cause_radio_network_t::multiple_qos_flow_id_instances});
   EXPECT_TRUE(mod_result.drb_setup_results[0].qos_flow_results[1].success); // the second was valid
-  EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[1].cause, cause_t{cause_radio_network_t::unspecified});
+  EXPECT_EQ(mod_result.drb_setup_results[0].qos_flow_results[1].cause,
+            e1ap_cause_t{e1ap_cause_radio_network_t::unspecified});
 
   // validate pdu session is not disconnected from GTP-U gateway
   EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);

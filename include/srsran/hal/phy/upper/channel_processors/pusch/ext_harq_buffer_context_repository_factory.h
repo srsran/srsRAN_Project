@@ -30,7 +30,7 @@ namespace hal {
 /// Returns a ext_harq_buffer_context_repository instance on success, otherwise returns nullptr.
 std::shared_ptr<ext_harq_buffer_context_repository>
 create_ext_harq_buffer_context_repository(unsigned nof_codeblocks,
-                                          unsigned ext_harq_buff_size,
+                                          uint64_t ext_harq_buff_size,
                                           bool     debug_mode = false);
 
 } // namespace hal

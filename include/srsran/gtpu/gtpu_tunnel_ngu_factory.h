@@ -39,7 +39,7 @@ struct gtpu_tunnel_ngu_creation_message {
   dlt_pcap*                                gtpu_pcap;
   gtpu_tunnel_ngu_rx_lower_layer_notifier* rx_lower;
   gtpu_tunnel_tx_upper_layer_notifier*     tx_upper;
-  timer_factory                            timers;
+  timer_factory                            ue_dl_timer_factory;
 };
 
 /// Creates an instance of a GTP-U entity.

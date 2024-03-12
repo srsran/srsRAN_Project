@@ -25,6 +25,7 @@
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
 #include "rlc_rx_entity.h"
+#include "srsran/adt/expected.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
@@ -45,16 +46,16 @@ struct rlc_rx_am_sdu_segment_cmp {
   bool operator()(const rlc_rx_am_sdu_segment& a, const rlc_rx_am_sdu_segment& b) const { return a.so < b.so; }
 };
 
-/// Container to collect received SDU segments and to assemble the SDU upon completion
+/// Container for buffering of received SDUs or SDU segments until fully received.
 struct rlc_rx_am_sdu_info {
-  // TODO: Refactor this struct.
-  // Move the following rlc_rx_am methods here:
-  // - add segments without duplicates
-  // - assemble SDU
-  bool                                                       fully_received = false;
-  bool                                                       has_gap        = false;
-  std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp> segments; // Set of segments with SO as key
-  byte_buffer_chain                                          sdu = {};
+  using segment_set_t = std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp>; // Set of segments with SO as key
+
+  /// Flags the SDU as fully received or not.
+  bool fully_received = false;
+  /// Indicates a gap (i.e. a missing segment) among all already received segments.
+  bool has_gap = false;
+  /// Buffer for either a full SDU or a set of SDU segments.
+  variant<byte_buffer_slice, segment_set_t> sdu_data;
 };
 
 /// \brief Rx state variables
@@ -283,6 +284,13 @@ private:
   /// \param rx_sdu Container/Info object to be inspected
   void update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const;
 
+  /// Reassembles a fully received SDU from buffered segment(s) in the SDU info object.
+  ///
+  /// \param sdu_info The SDU info to be reassembled.
+  /// \param sn Sequence number (for logging).
+  /// \return The reassembled SDU in case of success, default_error_t{} otherwise.
+  expected<byte_buffer_chain> reassemble_sdu(rlc_rx_am_sdu_info& sdu_info, uint32_t sn);
+
   /// Rebuilds the cached status_report according to missing SDUs and SDU segments in rx_window
   /// and resets the rx_window_changed flag
   void refresh_status_report();
@@ -324,12 +332,23 @@ struct formatter<srsran::rlc_rx_am_sdu_info> {
   auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(),
-                     "nof_segments={} has_gap={} fully_received={} sdu_len={}",
-                     info.segments.size(),
-                     info.has_gap,
-                     info.fully_received,
-                     info.sdu.length());
+    if (srsran::variant_holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
+      // full SDU
+      const srsran::byte_buffer_slice& payload = srsran::variant_get<srsran::byte_buffer_slice>(info.sdu_data);
+      return format_to(
+          ctx.out(), "has_gap={} fully_received={} sdu_len={}", info.has_gap, info.fully_received, payload.length());
+    } else if (srsran::variant_holds_alternative<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data)) {
+      // segmented SDU
+      const srsran::rlc_rx_am_sdu_info::segment_set_t& segments =
+          srsran::variant_get<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data);
+      return format_to(ctx.out(),
+                       "has_gap={} fully_received={} nof_segments={}",
+                       info.has_gap,
+                       info.fully_received,
+                       segments.size());
+    }
+    // unset default case - neither full SDU nor segmented SDU
+    return format_to(ctx.out(), "has_gap={} fully_received={}", info.has_gap, info.fully_received);
   }
 };
 

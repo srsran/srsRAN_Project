@@ -78,12 +78,12 @@ public:
 
   void handle_ack(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack)
   {
-    handle_ack_common(ue_index, cell_index, ack, 0);
+    handle_ack_common(ue_index, cell_index, ack, /* is_dl=*/true);
   }
 
   void handle_crc(du_ue_index_t ue_index, du_cell_index_t cell_index, bool crc)
   {
-    handle_ack_common(ue_index, cell_index, crc, 1);
+    handle_ack_common(ue_index, cell_index, crc, /* is_dl=*/false);
   }
 
   void handle_csi(du_ue_index_t ue_index, du_cell_index_t cell_index, bool csi_decoded)
@@ -101,7 +101,7 @@ public:
       if (current_count == max_consecutive_kos[cell_index].max_consecutive_csi_dtx) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
-          logger.info("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
+          logger.warning("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
 
           // Notify upper layers.
           u.notifier->on_rlf_detected();
@@ -122,25 +122,26 @@ public:
   }
 
 private:
-  void handle_ack_common(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack, unsigned count_index)
+  void handle_ack_common(du_ue_index_t ue_index, du_cell_index_t cell_index, bool ack, bool is_dl)
   {
     srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
-    auto& u = ues[ue_index];
+    auto&          u           = ues[ue_index];
+    const unsigned count_index = is_dl ? 0 : 1;
 
     if (ack) {
       u.ko_counters[count_index].store(0, std::memory_order::memory_order_relaxed);
     } else {
       unsigned current_count = u.ko_counters[count_index].fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
       // Note: We use == instead of <= to ensure only one notification is sent.
-      const unsigned max_counter = count_index == 0 ? max_consecutive_kos[cell_index].max_consecutive_dl_kos
-                                                    : max_consecutive_kos[cell_index].max_consecutive_csi_dtx;
+      const unsigned max_counter = is_dl ? max_consecutive_kos[cell_index].max_consecutive_dl_kos
+                                         : max_consecutive_kos[cell_index].max_consecutive_ul_kos;
       if (current_count == max_counter) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
-          logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
-                      ue_index,
-                      current_count,
-                      count_index == 0 ? "HARQ-ACK" : "CRC");
+          logger.warning("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
+                         ue_index,
+                         current_count,
+                         is_dl ? "HARQ-ACK" : "CRC");
 
           // Notify upper layers.
           u.notifier->on_rlf_detected();

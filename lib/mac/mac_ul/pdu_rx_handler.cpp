@@ -130,7 +130,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 {
   mac_ul_ue_context* ue = ue_manager.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UL subPDU ue={}, lcid={} UL-CCCH: Received UL-CCCH for inexistent UE", ue_index, LCID_SRB0);
+    logger.warning("UL subPDU ue={}, lcid={} UL-CCCH: Received UL-CCCH for non-existent UE", ue_index, LCID_SRB0);
     return false;
   }
 
@@ -171,13 +171,13 @@ bool pdu_rx_handler::handle_rx_subpdus(const decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
-    logger.warning("{}: Discarding SDU. Cause: Inexistent C-RNTI", create_prefix(ctx, sdu));
+    logger.warning("{}: Discarding SDU. Cause: Non-existent C-RNTI", create_prefix(ctx, sdu));
     return false;
   }
 
   lcid_t lcid = (lcid_t)sdu.lcid().value();
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("{}: Discarding SDU. Cause: Inexistent LCID", create_prefix(ctx, sdu));
+    logger.warning("{}: Discarding SDU. Cause: Non-existent LCID", create_prefix(ctx, sdu));
     return false;
   }
 
@@ -290,7 +290,11 @@ bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul
   msg.tc_rnti    = ctx.pdu_rx.rnti;
   msg.cell_index = ctx.cell_index_rx;
   msg.slot_rx    = ctx.slot_rx;
-  msg.subpdu.append(sdu.payload());
+
+  if (!msg.subpdu.append(sdu.payload())) {
+    logger.warning("{}: Unable to append SDU into sub-PDU", create_prefix(ctx, sdu));
+    return false;
+  }
   ccch_notifier.on_ul_ccch_msg_received(msg);
 
   // TODO: Do not discard remaining CEs.

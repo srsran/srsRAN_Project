@@ -76,9 +76,9 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
 {
 }
 
-ota_symbol_boundary_notifier& receiver_impl::get_ota_symbol_boundary_notifier()
+ota_symbol_boundary_notifier* receiver_impl::get_ota_symbol_boundary_notifier()
 {
-  return window_checker;
+  return window_checker.disabled() ? nullptr : &window_checker;
 }
 
 controller& receiver_impl::get_controller()

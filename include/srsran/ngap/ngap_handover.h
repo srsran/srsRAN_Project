@@ -76,11 +76,11 @@ struct ngap_cell_type {
 };
 
 struct ngap_last_visited_ngran_cell_info {
-  nr_cell_global_id_t global_cell_id;
-  ngap_cell_type      cell_type;
-  uint16_t            time_ue_stayed_in_cell;
-  optional<uint16_t>  time_ue_stayed_in_cell_enhanced_granularity;
-  optional<cause_t>   ho_cause_value;
+  nr_cell_global_id_t    global_cell_id;
+  ngap_cell_type         cell_type;
+  uint16_t               time_ue_stayed_in_cell;
+  optional<uint16_t>     time_ue_stayed_in_cell_enhanced_granularity;
+  optional<ngap_cause_t> ho_cause_value;
 };
 
 struct ngap_last_visited_cell_item {
@@ -99,7 +99,7 @@ struct ngap_source_ngran_node_to_target_ngran_node_transparent_container {
 struct ngap_handover_request {
   ue_index_t                ue_index = ue_index_t::invalid;
   ngap_handov_type          handov_type;
-  cause_t                   cause;
+  ngap_cause_t              cause;
   ngap_ue_aggr_max_bit_rate ue_aggr_max_bit_rate;
   // TODO: Add optional core_network_assist_info_for_inactive
   security::security_context                                            security_context;
@@ -158,7 +158,7 @@ struct ngap_handover_resource_allocation_response {
   ngap_target_ngran_node_to_source_ngran_node_transparent_container target_to_source_transparent_container;
 
   // handover request failure
-  cause_t cause;
+  ngap_cause_t cause;
 
   // common
   optional<crit_diagnostics_t> crit_diagnostics;

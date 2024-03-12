@@ -22,10 +22,9 @@
 
 #pragma once
 
-#include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/pdcp/pdcp_tx.h"
-#include "srsran/rrc/rrc.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -48,26 +47,30 @@ private:
 class pdcp_rx_control_rrc_ue_adapter : public pdcp_rx_upper_control_notifier
 {
 public:
-  explicit pdcp_rx_control_rrc_ue_adapter()
-  {
-    // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP").debug("No RRC handler for PDCP Rx control events. All events will be ignored.");
-  }
+  pdcp_rx_control_rrc_ue_adapter() = default;
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Requesting UE release. Cause: Received protocol failure from PDCP Rx");
+    cause = cause_protocol_t::unspecified;
   }
 
   void on_integrity_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_integrity_failure() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Requesting UE release. Cause: Received integrity failure from PDCP Rx");
+    cause = cause_protocol_t::unspecified;
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Requesting UE release. Cause: Max count reached from PDCP Rx");
+    cause = cause_protocol_t::unspecified;
   }
+
+  ngap_cause_t get_failure_cause() { return cause; }
+
+private:
+  ngap_cause_t cause;
 };
 
 /// Adapter between PDCP and RRC UE for DL PDUs
@@ -93,21 +96,24 @@ private:
 class pdcp_tx_control_rrc_ue_adapter : public pdcp_tx_upper_control_notifier
 {
 public:
-  explicit pdcp_tx_control_rrc_ue_adapter()
-  {
-    // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP").debug("No RRC handler for PDCP Tx control events. All events will be ignored.");
-  }
+  pdcp_tx_control_rrc_ue_adapter() = default;
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Requesting UE release. Cause: Received protocol failure from PDCP Tx");
+    cause = cause_protocol_t::unspecified;
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Tx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Requesting UE release. Cause: Max count reached from PDCP Tx");
+    cause = cause_protocol_t::unspecified;
   }
+
+  ngap_cause_t get_failure_cause() { return cause; }
+
+private:
+  ngap_cause_t cause;
 };
 
 } // namespace srs_cu_cp

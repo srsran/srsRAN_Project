@@ -25,7 +25,9 @@
 #include "metrics_plotter_json.h"
 #include "metrics_plotter_stdout.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/ru/ru_controller.h"
 #include "srsran/scheduler/scheduler_metrics.h"
+#include <list>
 
 namespace srsran {
 
@@ -59,6 +61,10 @@ public:
   void on_app_stopping() override;
 
   void set_cells(const span<du_cell_config>& cells_);
+  void set_ru_controller(ru_controller& controller);
+
+  void handle_tx_gain_command(const std::list<std::string>& gain_args);
+  void handle_rx_gain_command(const std::list<std::string>& gain_args);
 
 private:
   void stdin_handler(int fd);
@@ -70,6 +76,7 @@ private:
   metrics_plotter_stdout      metrics_plotter;
   metrics_plotter_json        metrics_json;
   std::vector<du_cell_config> cells;
+  optional<ru_controller*>    radio_controller;
   bool                        autostart_stdout_metrics = false;
 };
 

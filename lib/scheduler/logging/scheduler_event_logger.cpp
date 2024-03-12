@@ -181,7 +181,7 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
             fmtbuf, "{}{}: {}", i == 0 ? "" : " ", bsr.reported_lcgs[i].lcg_id, bsr.reported_lcgs[i].nof_bytes);
       }
     }
-    fmt::format_to(fmtbuf, "}} to_alloc={:B}", bsr.tot_ul_pending_bytes);
+    fmt::format_to(fmtbuf, "}} pending_bytes={}", bsr.tot_ul_pending_bytes);
   }
 }
 

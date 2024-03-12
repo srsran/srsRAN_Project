@@ -34,7 +34,7 @@
 
 namespace srsran {
 
-/// Class used for transmitting GTP-U bearers.
+/// Class used for transmitting GTP-U NGU bearers, e.g. on N3 interface.
 class gtpu_tunnel_ngu_tx : public gtpu_tunnel_base_tx, public gtpu_tunnel_tx_lower_layer_interface
 {
 public:

@@ -134,10 +134,6 @@ public:
     is_fallback_mode = fallback_state_;
   }
 
-  bool is_pucch_grid_inited() const { return is_pucch_alloc_grid_initialized; }
-
-  void set_pucch_grid_inited() { is_pucch_alloc_grid_initialized = true; }
-
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
@@ -161,8 +157,6 @@ private:
   /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must
   /// already have applied a dedicated config.
   bool is_fallback_mode = false;
-
-  bool is_pucch_alloc_grid_initialized = false;
 
   metrics ue_metrics;
 

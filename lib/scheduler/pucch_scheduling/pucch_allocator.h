@@ -110,6 +110,12 @@ public:
   virtual pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                                   rnti_t                        crnti,
                                                   const ue_cell_configuration&  ue_cell_cfg) = 0;
+
+  /// Returns whether a PUCCH grant using common PUCCH resource already exists at a given slot for a UE.
+  /// \param[in] rnti RNTI of the UE.
+  /// \param[in] sl_tx Slot to search PUCCH grants.
+  /// \return Returns true if a PUCCH grant using common PUCCH resource exits. False, otherwise.
+  virtual bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const = 0;
 };
 
 } // namespace srsran

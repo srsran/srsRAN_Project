@@ -28,10 +28,11 @@ using namespace ofh;
 static constexpr unsigned OFH_MAX_NOF_SFN = 256U;
 
 rx_window_checker::rx_window_checker(srslog::basic_logger&                    logger_,
-                                     const du_rx_window_timing_parameters&    params,
+                                     const rx_window_timing_parameters&       params,
                                      std::chrono::duration<double, std::nano> symbol_duration) :
-  timing_parameters(params, symbol_duration),
+  timing_parameters(params),
   nof_symbols_in_one_second(std::ceil(std::chrono::seconds(1) / symbol_duration)),
+  is_disabled(!is_log_enabled(logger_)),
   nof_symbols(0),
   statistics(logger_)
 {
@@ -60,7 +61,7 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
                                         get_nof_slots_per_subframe(to_subcarrier_spacing(rhs.get_numerology())) *
                                         rhs.get_nof_symbols();
 
-  int a = static_cast<int>(lhs.system_slot()) - static_cast<int>(rhs.system_slot());
+  int a = static_cast<int>(lhs.to_uint()) - static_cast<int>(rhs.to_uint());
   if (a >= nof_symbols_per_slot_wrap / 2) {
     return a - nof_symbols_per_slot_wrap;
   }
@@ -72,18 +73,26 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
 
 void rx_window_checker::on_new_symbol(slot_symbol_point symbol_point)
 {
+  if (SRSRAN_LIKELY(is_disabled)) {
+    return;
+  }
+
   // Build a new slot symbol point that manages that the SFN values in OFH is 1 byte.
   slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point);
 
   // Update the stored slot symbol point as system value.
-  count_val.store(ota_symbol_point.system_slot(), std::memory_order_release);
+  count_val.store(ota_symbol_point.to_uint(), std::memory_order_release);
 
   // Print the statistics.
   print_statistics();
 }
 
-bool rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_point)
+void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_point)
 {
+  if (SRSRAN_LIKELY(is_disabled)) {
+    return;
+  }
+
   // Store the ota symbol point to use the same value for the early and late points.
   slot_symbol_point ota_point(
       symbol_point.get_numerology(), count_val.load(std::memory_order_acquire), symbol_point.get_nof_symbols());
@@ -92,23 +101,19 @@ bool rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
   int diff = calculate_slot_symbol_point_distance(ota_point, symbol_point);
 
   // Late detected.
-  if (diff > timing_parameters.sym_end) {
+  if (diff > static_cast<int>(timing_parameters.sym_end)) {
     statistics.increment_late_counter();
-
-    return false;
+    return;
   }
 
   // Early detected.
-  if (diff < timing_parameters.sym_start) {
+  if (diff < static_cast<int>(timing_parameters.sym_start)) {
     statistics.increment_early_counter();
-
-    return false;
+    return;
   }
 
   // On time detected.
   statistics.increment_on_time_counter();
-
-  return true;
 }
 
 void rx_window_checker::print_statistics()

@@ -79,7 +79,8 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 
   // Request UE release in case of a failure to cleanup CU-CP
   if (!response.pdu_session_res_failed_to_modify_list.empty()) {
-    ue_context_release_request = {ue_ids.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason};
+    ue_context_release_request = {
+        ue_ids.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason};
     CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
   }
 
@@ -109,7 +110,11 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   pdu_session_res_modify_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
   pdu_session_res_modify_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
-  fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response);
+  // TODO: needs more handling in the coro above?
+  if (!fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {
+    logger.log_warning("Unable to fill ASN1 contents of PDUSessionResourceModifyResponse", name());
+    return;
+  }
 
   logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);

@@ -90,8 +90,8 @@ public:
   unsigned get_nof_fft_cores() const { return nof_fft_lcores; }
 
   /// Returns the size of the (external) HARQ buffer size embedded in the hardware-accelerator.
-  /// \return HARQ buffer size (in bytes).
-  units::bytes get_harq_buff_size() const { return units::bytes(1024 * info.drv.harq_buffer_size); }
+  /// \return HARQ buffer size in bytes. Note that 64 bits are used to enable sizes >= 4GB.
+  uint64_t get_harq_buff_size_bytes() const { return static_cast<uint64_t>(info.drv.harq_buffer_size) * 1024; }
 
   /// Returns the size of each mbuf used to exchange unencoded and unrate-matched messages with the accelerator.
   /// \return Unencoded and unrate-matched mbuf size (in bytes).

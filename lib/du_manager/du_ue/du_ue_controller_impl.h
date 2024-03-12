@@ -38,6 +38,8 @@ public:
 
   async_task<void> disconnect_notifiers() override;
 
+  async_task<void> handle_activity_stop_request() override;
+
   void schedule_async_task(async_task<void> task) override { ue_db.schedule_async_task(ue_index, std::move(task)); }
 
   void handle_rlf_detection(rlf_cause cause) override;

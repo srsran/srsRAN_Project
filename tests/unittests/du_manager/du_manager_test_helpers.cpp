@@ -21,6 +21,7 @@
  */
 
 #include "du_manager_test_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
@@ -102,7 +103,7 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
     req.drbs_to_setup.back().five_qi = uint_to_five_qi(9);
     req.drbs_to_setup.back().uluptnl_info_list.resize(1);
     req.drbs_to_setup.back().uluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(0);
-    req.drbs_to_setup.back().uluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"};
+    req.drbs_to_setup.back().uluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
   }
 
   return req;
@@ -114,7 +115,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
   du_mng_exec(worker),
   ue_exec_mapper(worker),
   cell_exec_mapper(worker),
-  params{{"srsgnb", 1, 1, {"127.0.0.1"}, du_cells},
+  params{{"srsgnb", 1, 1, transport_layer_address::create_from_string("127.0.0.1"), du_cells},
          {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
          {f1ap, f1ap},
          {f1u_gw},

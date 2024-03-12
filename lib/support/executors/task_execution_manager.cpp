@@ -331,7 +331,7 @@ struct worker_pool_context final : public common_task_execution_context<task_wor
                               "Invalid number of queues for the specified policies ({} != {})",
                               params.queues.size(),
                               sizeof...(QueuePolicies));
-          std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
+          std::array<unsigned, sizeof...(QueuePolicies)> qsizes{};
           for (unsigned i = 0; i != params.queues.size(); ++i) {
             qsizes[i] = params.queues[i].size;
           }
@@ -484,7 +484,7 @@ struct priority_multiqueue_worker_context
   static std::unique_ptr<task_execution_context>
   create(const execution_config_helper::priority_multiqueue_worker& params)
   {
-    std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
+    std::array<unsigned, sizeof...(QueuePolicies)> qsizes{};
     for (unsigned i = 0; i != params.queues.size(); ++i) {
       qsizes[i] = params.queues[i].size;
     }

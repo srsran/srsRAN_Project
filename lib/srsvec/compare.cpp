@@ -21,7 +21,6 @@
  */
 
 #include "srsran/srsvec/compare.h"
-
 #include "simd.h"
 #include "srsran/support/math_utils.h"
 #include <numeric>
@@ -29,18 +28,19 @@
 using namespace srsran;
 using namespace srsvec;
 
-const char* srsran::srsvec::detail::find(span<const char> input, char value)
+const char* srsran::srsvec::detail::find(span<const char> input, const char* value)
 {
   // Input index.
   unsigned index = 0;
+  char     v     = *value;
 
 #ifdef HAVE_AVX2
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 32.
   for (unsigned simd_index_end = 32 * (input.size() / 32); index != simd_index_end; index += 32) {
     // Load 32 consecutive words starting at index.
-    __m256i simd_input = _mm256_loadu_si256((__m256i*)&input[index]);
+    __m256i simd_input = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input.data() + index));
     // Compare the 32 words with the value.
-    __m256i simd_eq_filler_bit = _mm256_cmpeq_epi8(_mm256_set1_epi8(value), simd_input);
+    __m256i simd_eq_filler_bit = _mm256_cmpeq_epi8(_mm256_set1_epi8(v), simd_input);
     // Get the MSB of each word.
     unsigned mask = _mm256_movemask_epi8(simd_eq_filler_bit);
     // If it is not zero, it means at least one of the words in the SIMD register is equal to value.
@@ -55,9 +55,9 @@ const char* srsran::srsvec::detail::find(span<const char> input, char value)
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 16.
   for (unsigned simd_index_end = 16 * (input.size() / 16); index != simd_index_end; index += 16) {
     // Load 16 consecutive words starting at index.
-    int8x16_t simd_input = vld1q_s8(reinterpret_cast<const int8_t*>(&input[index]));
+    int8x16_t simd_input = vld1q_s8(reinterpret_cast<const int8_t*>(input.data() + index));
     // Compare the 16 words with the value.
-    uint8x16_t mask_u8 = vceqq_s8(vdupq_n_s8((int8_t)value), simd_input);
+    uint8x16_t mask_u8 = vceqq_s8(vdupq_n_s8(int8_t(v)), simd_input);
     uint8_t    mask    = vmaxvq_u8(mask_u8);
     if (mask != 0) {
       found = true;
@@ -67,9 +67,9 @@ const char* srsran::srsvec::detail::find(span<const char> input, char value)
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 8.
   for (unsigned simd_index_end = 8 * (input.size() / 8); !found && index != simd_index_end; index += 8) {
     // Load 8 consecutive words starting at index.
-    int8x8_t simd_input = vld1_s8(reinterpret_cast<const int8_t*>(&input[index]));
+    int8x8_t simd_input = vld1_s8(reinterpret_cast<const int8_t*>(input.data() + index));
     // Compare the 8 words with the value.
-    uint8x8_t mask_u8 = vceq_s8(vdup_n_s8((int8_t)value), simd_input);
+    uint8x8_t mask_u8 = vceq_s8(vdup_n_s8(int8_t(v)), simd_input);
     uint8_t   mask    = vmaxv_u8(mask_u8);
     if (mask != 0) {
       break;
@@ -80,7 +80,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, char value)
   // Keeps iterating from the current index to the end.
   for (; index != input.size(); ++index) {
     // Early return if a word is equal to value.
-    if (input[index] == value) {
+    if (input[index] == v) {
       return &input[index];
     }
   }
@@ -91,10 +91,10 @@ const char* srsran::srsvec::detail::find(span<const char> input, char value)
 
 std::pair<unsigned, float> srsran::srsvec::max_abs_element(span<const cf_t> x)
 {
+  unsigned i         = 0;
+  unsigned len       = x.size();
   unsigned max_index = 0;
-  float    max_abs2  = 0.0F;
-
-  unsigned i = 0, len = x.size();
+  float    max_abs2  = 0;
 
 #if SRSRAN_SIMD_CF_SIZE
   // Prepare range of indexes in SIMD register.
@@ -109,8 +109,8 @@ std::pair<unsigned, float> srsran::srsvec::max_abs_element(span<const cf_t> x)
 
   for (unsigned simd_end = SRSRAN_SIMD_CF_SIZE * (len / SRSRAN_SIMD_CF_SIZE); i != simd_end; i += SRSRAN_SIMD_CF_SIZE) {
     // Load 2 SIMD words of floats.
-    simd_f_t simd_x1 = srsran_simd_f_loadu((float*)&x[i]);
-    simd_f_t simd_x2 = srsran_simd_f_loadu((float*)&x[i + SRSRAN_SIMD_CF_SIZE / 2]);
+    simd_f_t simd_x1 = srsran_simd_f_loadu(reinterpret_cast<const float*>(x.data() + i));
+    simd_f_t simd_x2 = srsran_simd_f_loadu(reinterpret_cast<const float*>(x.data() + i + SRSRAN_SIMD_CF_SIZE / 2));
 
     // Calculates the squares.
     simd_f_t simd_mul1 = srsran_simd_f_mul(simd_x1, simd_x1);
@@ -155,10 +155,10 @@ std::pair<unsigned, float> srsran::srsvec::max_abs_element(span<const cf_t> x)
 
 std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
 {
+  unsigned i         = 0;
+  unsigned len       = x.size();
   unsigned max_index = 0;
-  float    max_x     = 0.0F;
-
-  unsigned i = 0, len = x.size();
+  float    max_x     = 0;
 
 #if SRSRAN_SIMD_CF_SIZE
   // Prepare range of indexes in SIMD register.
@@ -173,7 +173,7 @@ std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
 
   for (unsigned simd_end = SRSRAN_SIMD_CF_SIZE * (len / SRSRAN_SIMD_CF_SIZE); i != simd_end; i += SRSRAN_SIMD_CF_SIZE) {
     // Load SIMD word of floats.
-    simd_f_t simd_x = srsran_simd_f_loadu((float*)&x[i]);
+    simd_f_t simd_x = srsran_simd_f_loadu(reinterpret_cast<const float*>(x.data() + i));
 
     // Get SIMD selector mask.
     simd_sel_t res = srsran_simd_f_max(simd_x, simd_max_values);

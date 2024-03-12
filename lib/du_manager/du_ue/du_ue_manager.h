@@ -53,6 +53,9 @@ public:
   /// \brief Handle the removal of an existing UE context by F1AP request.
   async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
+  /// \brief Handle the deactivation of an existing UE context by F1AP request.
+  async_task<void> handle_ue_deactivation_request(du_ue_index_t ue_index);
+
   void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
 
   /// \brief Handle the configuration of an existing UE context by RIC request.

@@ -29,14 +29,23 @@ namespace srsran {
 
 /// \brief Identifier for F1-U transport layer associated to a DRB.
 struct up_transport_layer_info {
-  transport_layer_address tp_address{"0.0.0.0"};
+  transport_layer_address tp_address = transport_layer_address::create_from_string("0.0.0.0");
   gtpu_teid_t             gtp_teid;
+
+  up_transport_layer_info() = default;
+
+  up_transport_layer_info(const transport_layer_address& tp_address_, gtpu_teid_t gtp_teid_) :
+    tp_address(tp_address_), gtp_teid(gtp_teid_)
+  {
+  }
 
   bool operator==(const up_transport_layer_info& other) const
   {
     return tp_address == other.tp_address and gtp_teid == other.gtp_teid;
   }
+
   bool operator!=(const up_transport_layer_info& other) const { return not(*this == other); }
+
   bool operator<(const up_transport_layer_info& other) const
   {
     return gtp_teid < other.gtp_teid or (gtp_teid == other.gtp_teid and tp_address < other.tp_address);
@@ -58,24 +67,26 @@ void up_transport_layer_info_to_asn1(Asn1Type& asn1obj, const up_transport_layer
 /// \param asn1obj ASN.1 object which is going to be converted.
 /// \return UP Transport Layer Info object where the result of the conversion is stored.
 template <typename Asn1Type>
-up_transport_layer_info asn1_to_up_transport_layer_info(Asn1Type& asn1obj)
+up_transport_layer_info asn1_to_up_transport_layer_info(const Asn1Type& asn1obj)
 {
-  up_transport_layer_info ret;
-  ret.gtp_teid = int_to_gtpu_teid(asn1obj.gtp_tunnel().gtp_teid.to_number());
-  ret.tp_address.from_bitstring(asn1obj.gtp_tunnel().transport_layer_address.to_string());
-  return ret;
+  return {transport_layer_address::create_from_bitstring(asn1obj.gtp_tunnel().transport_layer_address.to_string()),
+          int_to_gtpu_teid(asn1obj.gtp_tunnel().gtp_teid.to_number())};
 }
 
 } // namespace srsran
 
+namespace std {
+
 template <>
-struct std::hash<srsran::up_transport_layer_info> {
-  std::size_t operator()(const srsran::up_transport_layer_info& s) const noexcept
+struct hash<srsran::up_transport_layer_info> {
+  size_t operator()(const srsran::up_transport_layer_info& s) const noexcept
   {
-    return (std::hash<srsran::transport_layer_address>{}(s.tp_address) ^
-            (std::hash<srsran::gtpu_teid_t::value_type>{}(s.gtp_teid.value()) << 1U) >> 1U);
+    return (hash<srsran::transport_layer_address>{}(s.tp_address) ^
+            (hash<srsran::gtpu_teid_t::value_type>{}(s.gtp_teid.value()) << 1U) >> 1U);
   }
 };
+
+} // namespace std
 
 namespace fmt {
 

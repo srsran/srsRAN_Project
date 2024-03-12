@@ -26,6 +26,7 @@
 #pragma once
 
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/units.h"
 #include <vector>
 
 namespace srsran {
@@ -33,7 +34,7 @@ namespace hal {
 
 /// Fixed CB-offset increment used in the accelerator's HARQ memory.
 /// Note that it is assumed that the HARQ memory is organized in N slots of HARQ_INCR bytes.
-static constexpr unsigned HARQ_INCR = 32768;
+static constexpr units::bytes HARQ_INCR{32768};
 
 /// External HARQ buffer context.
 struct ext_harq_buffer_context_entry {
@@ -51,10 +52,10 @@ public:
   /// \param[in] nof_codeblocks_    Indicates the number of codeblocks to store in the repository.
   /// \param[in] ext_harq_buff_size Size of the external HARQ buffer (in bytes).
   /// \param[in] debug_mode_        Requests to implement the debug mode (meant for unittesting).
-  explicit ext_harq_buffer_context_repository(unsigned nof_codeblocks_, unsigned ext_harq_buff_size, bool debug_mode_) :
+  explicit ext_harq_buffer_context_repository(unsigned nof_codeblocks_, uint64_t ext_harq_buff_size, bool debug_mode_) :
     nof_codeblocks(nof_codeblocks_)
   {
-    unsigned requested_size = nof_codeblocks_ * HARQ_INCR;
+    uint64_t requested_size = static_cast<uint64_t>(nof_codeblocks_) * static_cast<uint64_t>(HARQ_INCR.value());
     srsran_assert(requested_size <= ext_harq_buff_size,
                   "Requested size ({} bytes) for {} codeblocks exceeds external HARQ buffer capacity ({} bytes).",
                   requested_size,

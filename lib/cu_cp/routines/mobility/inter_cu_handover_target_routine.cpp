@@ -23,7 +23,7 @@
 #include "inter_cu_handover_target_routine.h"
 #include "../pdu_session_routine_helpers.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/ran/cause.h"
+#include "srsran/ran/cause/e1ap_cause_converters.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -334,7 +334,7 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
           // qos flow id
           qos_flow_item.qos_flow_id = flow_failed_item.qos_flow_id;
           // cause
-          qos_flow_item.cause = flow_failed_item.cause;
+          qos_flow_item.cause = e1ap_to_ngap_cause(flow_failed_item.cause);
 
           admitted_item.ho_request_ack_transfer.qos_flow_failed_to_setup_list.push_back(qos_flow_item);
         }

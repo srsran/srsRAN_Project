@@ -116,7 +116,7 @@ bool srsran::srs_cu_cp::is_valid(
   // Reject request if PDU session with same ID already exists.
   for (const auto& pdu_session : setup_items) {
     if (context.pdu_sessions.find(pdu_session.pdu_session_id) != context.pdu_sessions.end()) {
-      logger.debug("PDU session ID {} already exists", pdu_session.pdu_session_id);
+      logger.info("PDU session ID {} already exists", pdu_session.pdu_session_id);
       return false;
     }
 

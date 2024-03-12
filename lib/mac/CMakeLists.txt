@@ -34,6 +34,7 @@ set(SOURCES mac_factory.cpp
             mac_dl/paging_pdu_assembler.cpp
             mac_dl/ssb_assembler.cpp
             mac_dl/mac_dl_ue_manager.cpp
+            mac_dl/cell_dl_harq_buffer_pool.cpp
             mac_ul/mac_ul_sch_pdu.cpp
             mac_ul/ul_bsr.cpp
             mac_ul/pdu_rx_handler.cpp

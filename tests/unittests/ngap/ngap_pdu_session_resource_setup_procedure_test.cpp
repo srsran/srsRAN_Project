@@ -107,6 +107,33 @@ protected:
   }
 };
 
+/// Test missing PDU Session Resource Setup Request
+TEST_F(ngap_pdu_session_resource_setup_procedure_test,
+       when_pdu_session_resource_setup_request_is_not_received_then_ue_release_is_requested)
+{
+  ASSERT_EQ(ngap->get_nof_ues(), 0);
+
+  // Test preamble
+  this->start_procedure();
+
+  // check that initial context setup request was received to the AMF and that UE object has been created
+  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value,
+            asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type(),
+            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp);
+  ASSERT_EQ(ngap->get_nof_ues(), 1);
+
+  // tick timers
+  // Status: NGAP does not receive new PDU Session Resource Setup Request until pdu_session_setup_timer has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < cfg.pdu_session_setup_timeout.count() * 1000; ++msec_elapsed) {
+    this->tick();
+  }
+
+  // check that UE release was requested
+  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+}
+
 /// Test valid PDU Session Resource Setup Request
 TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_valid_pdu_session_resource_setup_request_received_then_pdu_session_setup_succeeds)

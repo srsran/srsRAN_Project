@@ -75,7 +75,7 @@ protected:
         return;
       case GTPU_MSG_ERROR_INDICATION:
         // TODO: unpack and print information elements; add handling
-        logger.log_error(pdu.buf.begin(), pdu.buf.end(), "Received error indication from peer");
+        logger.log_info(pdu.buf.begin(), pdu.buf.end(), "Received error indication from peer");
         // TS 29.281 Sec. 7.3.1: Error Indication
         // When a GTP-U node receives a G-PDU for which no EPS Bearer context, PDP context, PDU Session, MBMS Bearer
         // context, or RAB exists, the GTP-U node shall discard the G - PDU.If the TEID of the incoming G-PDU is

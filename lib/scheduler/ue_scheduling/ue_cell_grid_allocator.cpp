@@ -285,7 +285,16 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
-    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length());
+    // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c txDirectCurrentLocation)
+    // is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB, the UE assumes the default
+    // value of 3300 (i.e. "Outside the carrier")".
+    bool contains_dc = false;
+    if (cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.has_value()) {
+      contains_dc = dc_offset_helper::is_contained(
+          cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.value(), grant.crbs);
+    }
+
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length(), contains_dc);
   } else {
     // It is a retx.
     mcs_tbs_info.emplace(
@@ -538,12 +547,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                 expert_cfg.max_puschs_per_slot);
     return alloc_outcome::skip_slot;
   }
-  if (pusch_alloc.result.ul.puschs.size() >=
-      expert_cfg.max_ul_grants_per_slot - static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size())) {
-    logger.info("Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
-                expert_cfg.max_puschs_per_slot);
-    return alloc_outcome::skip_slot;
-  }
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
@@ -560,22 +563,44 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     }
   }
 
+  const unsigned nof_pucch_grants =
+      std::count_if(pusch_alloc.result.ul.pucchs.begin(),
+                    pusch_alloc.result.ul.pucchs.end(),
+                    [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
+
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled over the same slot
   // and the UE is in fallback mode.
   // NOTE: This is due to the lack of clarity of the TS when it comes to define what \c betaOffsets to use for PUSCH
   // when the UE does not have a dedicated configuration.
   if (ue_cc->is_in_fallback_mode()) {
-    const auto* pucch_grant_it =
-        std::find_if(pusch_alloc.result.ul.pucchs.begin(),
-                     pusch_alloc.result.ul.pucchs.end(),
-                     [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
-    if (pucch_grant_it != pusch_alloc.result.ul.pucchs.end()) {
+    if (nof_pucch_grants != 0) {
       logger.debug("rnti={} Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
                    "PUCCH grants scheduled",
                    u.crnti,
                    pusch_alloc.slot);
       return alloc_outcome::skip_ue;
     }
+  }
+
+  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common PUCCH
+  // resources.
+  if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
+    logger.debug("ue={} rnti={} Allocation of PUSCH in slot={} skipped. Cause: UE has PUCCH grant using common PUCCH "
+                 "resources scheduled",
+                 u.ue_index,
+                 u.crnti,
+                 pusch_alloc.slot);
+    return alloc_outcome::skip_ue;
+  }
+
+  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
+  // removed when multiplexing the UCI on PUSCH.
+  if (pusch_alloc.result.ul.puschs.size() >=
+      expert_cfg.max_ul_grants_per_slot -
+          (static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size()) - nof_pucch_grants)) {
+    logger.info("Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
+                expert_cfg.max_puschs_per_slot);
+    return alloc_outcome::skip_slot;
   }
 
   // Verify CRBs allocation.
@@ -646,7 +671,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
+    bool contains_dc =
+        dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, grant.crbs);
+
+    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length(), contains_dc);
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {

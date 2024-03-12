@@ -105,7 +105,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   res_to_setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
   res_to_setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
   res_to_setup_item.pdu_session_res_dl_ambr                     = 330000000;
-  res_to_setup_item.ng_ul_up_tnl_info = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
+  res_to_setup_item.ng_ul_up_tnl_info = {transport_layer_address::create_from_string("0.0.0.0"), int_to_gtpu_teid(0)};
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
   drb_to_setup_item.drb_id                      = uint_to_drb_id(1);
@@ -271,7 +271,7 @@ e1ap_bearer_context_release_command srsran::srs_cu_cp::generate_bearer_context_r
 {
   e1ap_bearer_context_release_command command;
   command.ue_index = ue_index;
-  command.cause    = cause_radio_network_t::unspecified;
+  command.cause    = e1ap_cause_radio_network_t::unspecified;
 
   return command;
 }

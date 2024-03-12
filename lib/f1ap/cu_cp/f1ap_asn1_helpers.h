@@ -393,7 +393,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
       f1ap_scell_failed_to_setup_mod_item scell_failed_item;
       scell_failed_item.scell_id = cgi_from_asn1(asn1_scell_failed_item.scell_id);
       if (asn1_scell_failed_item.cause_present) {
-        scell_failed_item.cause = f1ap_asn1_to_cause(asn1_scell_failed_item.cause);
+        scell_failed_item.cause = asn1_to_cause(asn1_scell_failed_item.cause);
       }
       res.scell_failed_to_setup_mod_list.push_back(scell_failed_item);
     }
@@ -468,7 +468,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
                                                        const asn1::f1ap::ue_context_mod_fail_s& asn1_fail)
 {
   res.success = false;
-  res.cause   = f1ap_asn1_to_cause(asn1_fail->cause);
+  res.cause   = asn1_to_cause(asn1_fail->cause);
   if (asn1_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }

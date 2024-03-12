@@ -50,32 +50,46 @@ struct bench_params {
   bool     print_timing_info = false;
 };
 
-static void usage(const char* prog, const bench_params& params, int algo)
+struct app_params {
+  int         algo         = -1;
+  std::string log_level    = "error";
+  std::string log_filename = "stdout";
+};
+
+static void usage(const char* prog, const bench_params& params, const app_params& app)
 {
   fmt::print("Usage: {} [-R repetitions] [-t timing information]\n", prog);
-  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", algo);
+  fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n", app.log_level);
+  fmt::print("\t-f Log filename to use [Default {}]\n", app.log_filename);
   fmt::print("\t-h Show this message\n");
 }
 
-static void parse_args(int argc, char** argv, bench_params& params, int& algo)
+static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'a':
-        algo = std::strtol(optarg, nullptr, 10);
+        app.algo = std::strtol(optarg, nullptr, 10);
         break;
       case 't':
         params.print_timing_info = true;
         break;
+      case 'l':
+        app.log_level = std::string(optarg);
+        break;
+      case 'f':
+        app.log_filename = std::string(optarg);
+        break;
       case 'h':
       default:
-        usage(argv[0], params, algo);
+        usage(argv[0], params, app);
         exit(0);
     }
   }
@@ -125,9 +139,6 @@ void benchmark_pdcp_tx(bench_params                  params,
   // Create test frame
   pdcp_tx_gen_frame frame = {};
 
-  auto& logger = srslog::fetch_basic_logger("PDCP");
-  logger.set_level(srslog::str_to_basic_level("warning"));
-
   // Create PDCP entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx =
       std::make_unique<pdcp_entity_tx>(0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker});
@@ -172,8 +183,8 @@ int run_benchmark(bench_params params, int algo)
   }
   fmt::print("------ Benchmarcking: NIA{} NEA{} ------\n", algo, algo);
 
-  security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(algo);
-  security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(algo);
+  auto int_algo  = static_cast<security::integrity_algorithm>(algo);
+  auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
   if (algo == 0) {
     benchmark_pdcp_tx(params,
@@ -192,15 +203,22 @@ int run_benchmark(bench_params params, int algo)
 
 int main(int argc, char** argv)
 {
-  srslog::init();
-  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::error);
-
-  int          algo = -1;
   bench_params params{};
-  parse_args(argc, argv, params, algo);
+  app_params   app_params{};
+  parse_args(argc, argv, params, app_params);
 
-  if (algo != -1) {
-    run_benchmark(params, algo);
+  srslog::init();
+
+  srslog::sink* log_sink = (app_params.log_filename == "stdout") ? srslog::create_stdout_sink()
+                                                                 : srslog::create_file_sink(app_params.log_filename);
+  if (log_sink == nullptr) {
+    return -1;
+  }
+  srslog::set_default_sink(*log_sink);
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::str_to_basic_level(app_params.log_level));
+
+  if (app_params.algo != -1) {
+    run_benchmark(params, app_params.algo);
   } else {
     for (unsigned i = 0; i < 4; i++) {
       run_benchmark(params, i);

@@ -49,7 +49,9 @@ public:
                    const up_transport_layer_info&       ul_up_tnl_info,
                    srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                    srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
-                   timer_factory                        timers) = 0;
+                   task_executor&                       ul_exec,
+                   timer_factory                        ue_dl_timer_factory,
+                   unique_timer&                        ue_inactivity_timer) = 0;
 
   virtual void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                               const up_transport_layer_info& dl_up_tnl_info) = 0;

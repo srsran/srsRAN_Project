@@ -28,7 +28,7 @@ services:
       target: open5gs
       args:
         OS_VERSION: "22.04"
-        OPEN5GS_VERSION: "v2.6.1"
+        OPEN5GS_VERSION: "v2.6.6"
     env_file:
       - ${OPEN_5GS_ENV_FILE:-open5gs/open5gs.env}
     privileged: true

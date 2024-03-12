@@ -35,21 +35,22 @@ class ru_ofh_timing_notifier_impl : public ofh::ota_symbol_boundary_notifier
 public:
   ru_ofh_timing_notifier_impl(unsigned            nof_slot_offset_du_ru_,
                               unsigned            nof_symbols_per_slot,
-                              ru_timing_notifier& timing_notifier_);
+                              ru_timing_notifier& timing_notifier_) :
+    nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
+    half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
+    full_slot_symbol(nof_symbols_per_slot - 1U),
+    timing_notifier(timing_notifier_)
+  {
+  }
 
   // See interface for documentation.
   void on_new_symbol(ofh::slot_symbol_point symbol_point) override;
-
-private:
-  /// Notifies a new slot.
-  void notify_new_slot(ofh::slot_symbol_point symbol_point);
 
 private:
   const unsigned      nof_slot_offset_du_ru;
   const unsigned      half_slot_symbol;
   const unsigned      full_slot_symbol;
   ru_timing_notifier& timing_notifier;
-  slot_point          current_slot;
 };
 
 } // namespace srsran

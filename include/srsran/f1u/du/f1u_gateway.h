@@ -25,7 +25,6 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
-#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
@@ -51,7 +50,8 @@ public:
                                                const up_transport_layer_info& dl_up_tnl_info,
                                                const up_transport_layer_info& ul_up_tnl_info,
                                                srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                               timer_factory                  timers) = 0;
+                                               timer_factory                  timers,
+                                               task_executor&                 ue_executor) = 0;
 
   virtual void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) = 0;
 };

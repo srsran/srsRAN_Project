@@ -160,6 +160,7 @@ full-code-format:
     KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
     KUBERNETES_MEMORY_LIMIT: 12Gi
+    CHECK_PER_FILE_TIMEOUT: 600
   before_script:
     - |
       echo "
@@ -180,7 +181,21 @@ full-code-format:
       cd build || exit
       cmake -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=False -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
       make srsran_build_info # needed to generate hashes.h
+    - |
+      monitor_child_process() {
+          while true; do
+              ps -eo comm,pid,etimes | grep ${ANALYZER} | while read comm pid etimes; do
+                  if [ $etimes -gt $CHECK_PER_FILE_TIMEOUT ]; then
+                      echo "Killing child analysis process"
+                      kill $pid
+                  fi
+              done
+              sleep 30
+          done
+      }
+      export -f monitor_child_process
   script:
+    - nohup bash -c monitor_child_process &
     - static-analyzer.sh -i /tmp/codechecker_skip --jobs ${KUBERNETES_CPU_REQUEST} --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
     - mv codechecker_html codechecker-${ANALYZER}-html
@@ -191,7 +206,6 @@ full-code-format:
       - codechecker-${ANALYZER}-html${ARTIFACT_EXTRA_PATH}
     when: always
     expire_in: 10 minutes
-  timeout: 8 hours # clangsa is slow
 
 clang-tidy:
   extends: .codechecker
@@ -211,6 +225,7 @@ cppcheck:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   interruptible: false
+  retry: 2
   variables:
     ANALYZER: cppcheck
     ANALYZER_ARGS: --cppcheck-max-template-recursion 5
@@ -231,6 +246,7 @@ clangsa:
   variables:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
+  timeout: 8 hours
 
 .coverity_base:
   image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
@@ -452,7 +468,7 @@ disable current schedule:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
       when: always
     - if: $CI_DESCRIPTION =~ /Weekly/
-      when: always                  
+      when: always
   interruptible: false
   variables:
     ENABLE: "false"

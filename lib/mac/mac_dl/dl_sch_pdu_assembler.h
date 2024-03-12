@@ -31,6 +31,7 @@
 namespace srsran {
 
 class byte_buffer_chain;
+class cell_dl_harq_buffer_pool;
 
 /// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
 /// Each subPDU is composed of a MAC subheader and MAC CE or MAC SDU payload.
@@ -97,7 +98,7 @@ private:
 class dl_sch_pdu_assembler
 {
 public:
-  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_);
+  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers);
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
   /// \param rnti RNTI for which the MAC PDU was allocated.
@@ -130,7 +131,8 @@ private:
   /// Assemble MAC subPDU with a CE.
   void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, pdu_log_builder& pdu_logger);
 
-  mac_dl_ue_manager& ue_mng;
+  mac_dl_ue_manager&        ue_mng;
+  cell_dl_harq_buffer_pool& harq_buffers;
 
   srslog::basic_logger& logger;
   // memory buffer to avoid allocations during formatting of pdus

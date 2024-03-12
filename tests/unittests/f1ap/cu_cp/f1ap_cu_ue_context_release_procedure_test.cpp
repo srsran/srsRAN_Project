@@ -41,7 +41,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
   test_logger.info("Starting UE Context Release procedure");
   f1ap_ue_context_release_command f1ap_ue_ctxt_rel_cmd_msg;
   f1ap_ue_ctxt_rel_cmd_msg.ue_index = ue_index_t::min;
-  f1ap_ue_ctxt_rel_cmd_msg.cause    = cause_radio_network_t::unspecified;
+  f1ap_ue_ctxt_rel_cmd_msg.cause    = f1ap_cause_radio_network_t::unspecified;
 
   // launch F1 UE context release procedure
   async_task<ue_index_t>         t = f1ap->handle_ue_context_release_command(f1ap_ue_ctxt_rel_cmd_msg);

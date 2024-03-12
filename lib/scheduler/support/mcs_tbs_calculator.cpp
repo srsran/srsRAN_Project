@@ -39,7 +39,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                             const ue_cell_configuration& ue_cell_cfg,
                                             unsigned                     tbs_bytes,
                                             sch_mcs_description          mcs_info,
-                                            unsigned                     nof_prbs)
+                                            unsigned                     nof_prbs,
+                                            bool                         contains_dc)
 {
   ulsch_configuration ulsch_info{.tbs                = static_cast<units::bits>(tbs_bytes * NOF_BITS_PER_BYTE),
                                  .mcs_descr          = mcs_info,
@@ -53,7 +54,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                  .dmrs_symbol_mask   = pusch_cfg.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
                                      static_cast<unsigned>(pusch_cfg.dmrs.num_dmrs_cdm_grps_no_data),
-                                 .nof_layers = pusch_cfg.nof_layers};
+                                 .nof_layers  = pusch_cfg.nof_layers,
+                                 .contains_dc = contains_dc};
 
   ulsch_info.alpha_scaling = alpha_scaling_to_float(
       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling);
@@ -162,7 +164,8 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
 optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
                                                  const ue_cell_configuration& ue_cell_cfg,
                                                  sch_mcs_index                max_mcs,
-                                                 unsigned                     nof_prbs)
+                                                 unsigned                     nof_prbs,
+                                                 bool                         contains_dc)
 {
   // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -190,7 +193,8 @@ optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pd
                                  .dmrs_symbol_mask   = pdsch_params.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
                                      static_cast<unsigned>(pdsch_params.dmrs.num_dmrs_cdm_grps_no_data),
-                                 .nof_layers = pdsch_params.nof_layers};
+                                 .nof_layers  = pdsch_params.nof_layers,
+                                 .contains_dc = contains_dc};
 
   float effective_code_rate = get_dlsch_information(dlsch_info).get_effective_code_rate();
 
@@ -207,9 +211,10 @@ optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pd
                                                                      .tb_scaling_field = pdsch_params.tb_scaling_field,
                                                                      .n_prb            = nof_prbs});
 
-    dlsch_info.tbs       = static_cast<units::bits>(tbs_bits);
-    dlsch_info.mcs_descr = mcs_info;
-    effective_code_rate  = get_dlsch_information(dlsch_info).get_effective_code_rate();
+    dlsch_info.tbs         = static_cast<units::bits>(tbs_bits);
+    dlsch_info.mcs_descr   = mcs_info;
+    dlsch_info.contains_dc = contains_dc;
+    effective_code_rate    = get_dlsch_information(dlsch_info).get_effective_code_rate();
   }
 
   // If no MCS such that effective code rate <= 0.95, return an empty optional object.
@@ -224,7 +229,8 @@ optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pd
 optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
                                                  const ue_cell_configuration& ue_cell_cfg,
                                                  sch_mcs_index                max_mcs,
-                                                 unsigned                     nof_prbs)
+                                                 unsigned                     nof_prbs,
+                                                 bool                         contains_dc)
 {
   // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -244,7 +250,7 @@ optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pu
       NOF_BITS_PER_BYTE;
 
   // > Compute the effective code rate.
-  ulsch_configuration ulsch_cfg           = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs_bytes, mcs_info, nof_prbs);
+  ulsch_configuration ulsch_cfg = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
   float               effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
 
   // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.

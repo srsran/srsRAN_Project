@@ -23,11 +23,12 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/adt/variant.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 #include <vector>
@@ -35,56 +36,56 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Convert F1AP ASN.1 Cause to \c cause_t type.
-/// \param f1ap_cause The F1AP Cause.
-/// \return The cause_t type.
-inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
+/// \brief Convert F1AP ASN.1 Cause to \c f1ap_cause_t type.
+/// \param asn1_cause The F1AP Cause.
+/// \return The f1ap_cause_t type.
+inline f1ap_cause_t asn1_to_cause(asn1::f1ap::cause_c asn1_cause)
 {
-  cause_t cause;
+  f1ap_cause_t cause;
 
-  switch (f1ap_cause.type()) {
+  switch (asn1_cause.type()) {
     case asn1::f1ap::cause_c::types_opts::radio_network:
-      cause = static_cast<cause_radio_network_t>(f1ap_cause.radio_network().value);
+      cause = static_cast<f1ap_cause_radio_network_t>(asn1_cause.radio_network().value);
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
+      cause = static_cast<f1ap_cause_transport_t>(asn1_cause.transport().value);
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
-      cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
+      cause = static_cast<cause_protocol_t>(asn1_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
+      cause = static_cast<cause_misc_t>(asn1_cause.misc().value);
       break;
     default:
-      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", f1ap_cause.type());
+      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", asn1_cause.type());
   }
 
   return cause;
 }
 
-/// \brief Convert \c cause_t type to F1AP cause.
-/// \param cause The cause_t type.
+/// \brief Convert \c f1ap_cause_t type to F1AP cause.
+/// \param cause The f1ap_cause_t type.
 /// \return The F1AP cause.
-inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
+inline asn1::f1ap::cause_c cause_to_asn1(f1ap_cause_t cause)
 {
-  asn1::f1ap::cause_c f1ap_cause;
+  asn1::f1ap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
-    f1ap_cause.set_radio_network() =
-        static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
-  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
-    f1ap_cause.set_transport() =
-        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  if (variant_holds_alternative<f1ap_cause_radio_network_t>(cause)) {
+    asn1_cause.set_radio_network() =
+        static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<f1ap_cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<f1ap_cause_transport_t>(cause)) {
+    asn1_cause.set_transport() =
+        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<f1ap_cause_transport_t>(cause));
   } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    f1ap_cause.set_protocol() =
+    asn1_cause.set_protocol() =
         static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
   } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+    asn1_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
   } else {
-    report_fatal_error("Cannot convert cause to F1AP type");
+    report_fatal_error("Cannot convert cause to F1AP type: {}", cause);
   }
 
-  return f1ap_cause;
+  return asn1_cause;
 }
 
 /// \brief Convert F1AP NRCGI to NR Cell Identity.
@@ -736,7 +737,7 @@ asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_srb
   // srb id
   srbs_failed_to_be_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_failed_to_be_setup_mod_item.srb_id);
   if (asn1_srbs_failed_to_be_setup_mod_item.cause_present) {
-    srbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
+    srbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
   }
 
   return srbs_failed_to_be_setup_mod_item;
@@ -754,7 +755,7 @@ asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_drb
   // drb id
   drbs_failed_to_be_setup_mod_item.drb_id = uint_to_drb_id(asn1_drbs_failed_to_be_setup_mod_item.drb_id);
   if (asn1_drbs_failed_to_be_setup_mod_item.cause_present) {
-    drbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
+    drbs_failed_to_be_setup_mod_item.cause = asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
   }
 
   return drbs_failed_to_be_setup_mod_item;

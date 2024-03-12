@@ -24,6 +24,7 @@
 
 #include "resource_block.h"
 #include "srsran/adt/strong_type.h"
+#include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
@@ -66,6 +67,36 @@ inline uint16_t pack(dc_offset_t offset, unsigned carrier_nof_rbs)
 
   // Case DC offset falls outside the spectrum.
   return 3300;
+}
+
+/// \brief Checks if the DC position is contained in a CRB interval.
+/// \param[in] offset          DC offset parameter.
+/// \param[in] carrier_nof_rbs Carrier bandwidth in resource blocks.
+/// \param[in] rbs             Resource block allocation.
+/// \return \c true if the DC position is contained within the allocated CRBs. Otherwise \c false.
+inline bool is_contained(dc_offset_t offset, unsigned carrier_nof_rbs, crb_interval rbs)
+{
+  if (offset == dc_offset_t::undetermined) {
+    return false;
+  }
+
+  // Case where DC offset inside spectrum.
+  const int nof_subcarriers = static_cast<int>(NOF_SUBCARRIERS_PER_RB * carrier_nof_rbs);
+  auto      dc_position     = static_cast<std::underlying_type_t<dc_offset_t>>(offset);
+  if (dc_position >= -nof_subcarriers / 2 && dc_position < nof_subcarriers / 2) {
+    dc_position += nof_subcarriers / 2;
+  }
+
+  return rbs.contains(dc_position / NOF_SUBCARRIERS_PER_RB);
+}
+
+/// \brief Checks if the DC position is contained in a CRB interval.
+/// \param[in] dc_position     DC position in subcarriers within the grid relative to PointA.
+/// \param[in] rbs             Resource block allocation.
+/// \return \c true if the DC position is contained within the allocated CRBs. Otherwise \c false.
+inline bool is_contained(unsigned dc_position, crb_interval rbs)
+{
+  return rbs.contains(dc_position / NOF_SUBCARRIERS_PER_RB);
 }
 
 } // namespace dc_offset_helper

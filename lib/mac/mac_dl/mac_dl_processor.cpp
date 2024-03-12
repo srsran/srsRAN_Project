@@ -49,7 +49,6 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
                                            cfg.phy_notifier.get_cell(cell_cfg_req.cell_index),
                                            cfg.cell_exec_mapper.executor(cell_cfg_req.cell_index),
                                            cfg.cell_exec_mapper.slot_ind_executor(cell_cfg_req.cell_index),
-                                           cfg.cell_exec_mapper.error_ind_executor(cell_cfg_req.cell_index),
                                            cfg.ctrl_exec,
                                            cfg.pcap);
 }
@@ -64,8 +63,12 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
 
 async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request& request)
 {
-  // > Allocate UE DL HARQ buffers.
-  // Note: This is a large allocation, and therefore, should be done outside of the cell thread to avoid causing lates.
+  // > Allocate DL HARQ resources for the new UE.
+  // Note: This may call a large allocation, and therefore, should be done out of the cell thread to avoid causing
+  // lates.
+  cells[request.cell_index]->get_dl_harq_pool().allocate_ue_buffers(request.ue_index, MAX_NOF_HARQS);
+
+  // > Create a MAC UE DL context.
   mac_dl_ue_context ue_inst(request);
 
   return launch_async([this, request, ue_inst = std::move(ue_inst)](coro_context<async_task<bool>>& ctx) mutable {
@@ -86,17 +89,20 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request& request)
 
 async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request& request)
 {
-  return launch_async([this, request](coro_context<async_task<void>>& ctx) {
+  return launch_async([this, request](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    // 1. Change to respective DL executor
+    // Change to respective DL executor
     CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.cell_index)));
 
-    // 2. Remove UE associated DL channels
+    // Remove UE associated DL channels
     ue_mng.remove_ue(request.ue_index);
 
-    // 3. Change back to CTRL executor before returning
+    // Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
+
+    // Deallocate DL HARQ buffers back in the CTRL executor.
+    cells[request.cell_index]->get_dl_harq_pool().deallocate_ue_buffers(request.ue_index);
 
     CORO_RETURN();
   });

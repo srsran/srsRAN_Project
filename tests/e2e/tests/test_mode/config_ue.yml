@@ -19,7 +19,7 @@
 #
 
 cu_cp:
-  ue_context_setup_timeout_s: 5
+  pdu_session_setup_timeout: 5
   inactivity_timer: 3
   rrc:
     force_reestablishment_fallback: false
@@ -61,10 +61,12 @@ cell_cfg:
     nof_dl_symbols: 7
     nof_dl_slots: 7
     nof_ul_slots: 2
+  # nof_antennas_dl: 1 - Set in gnb call. Please check it in agent.log
+  # nof_antennas_ul: 1 - Set in gnb call. Please check it in agent.log
 
 test_mode:
   test_ue:
-    rnti: 0x4655
-    ri: 2
+    # ri: 1 - Set in gnb call. Please check it in agent.log
+    rnti: 0x44
     cqi: 15
     nof_ues: 2

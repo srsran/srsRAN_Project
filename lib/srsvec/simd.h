@@ -57,29 +57,44 @@ inline bool is_simd_addr_aligned(const void* addr, uintptr_t mask)
   return (addr_i & mask) == 0;
 }
 
-/*
- * SIMD Vector bit alignment
- */
-#ifdef HAVE_AVX512
-#define SIMD_BYTE_ALIGN 64
-#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x3f)
+///
+/// SIMD Vector bit alignment.
+///
 
+#ifdef HAVE_AVX512
+constexpr unsigned SIMD_BYTE_ALIGN = 64;
+inline bool        SIMD_IS_ALIGNED(const void* ptr)
+{
+  return is_simd_addr_aligned(ptr, 0x3f);
+}
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX
-#define SIMD_BYTE_ALIGN 32
-#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x1f)
+constexpr unsigned SIMD_BYTE_ALIGN = 32;
+inline bool        SIMD_IS_ALIGNED(const void* ptr)
+{
+  return is_simd_addr_aligned(ptr, 0x1f);
+}
 #else /* HAVE_AVX */
 #ifdef HAVE_SSE
-#define SIMD_BYTE_ALIGN 16
-#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x0f)
-#else /* HAVE_SSE */
-#define SIMD_BYTE_ALIGN 16
-#define SIMD_IS_ALIGNED(PTR) (true)
+constexpr unsigned SIMD_BYTE_ALIGN = 16;
+inline bool        SIMD_IS_ALIGNED(const void* ptr)
+{
+  return is_simd_addr_aligned(ptr, 0x0f);
+}
+#else  /* HAVE_SSE */
+constexpr unsigned SIMD_BYTE_ALIGN = 16;
+inline bool        SIMD_IS_ALIGNED(const void* ptr)
+{
+  return true;
+}
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX */
 #endif /* HAVE_AVX512 */
 
-/* Memory Sizes for Single Floating Point and fixed point */
+///
+/// Memory Sizes for Single Floating Point and fixed point.
+///
+
 #ifdef HAVE_AVX512
 
 #define SRSRAN_SIMD_F_SIZE 16
@@ -147,25 +162,31 @@ inline bool is_simd_addr_aligned(const void* addr, uintptr_t mask)
 
 #if SRSRAN_SIMD_F_SIZE
 
-/* Data types */
+///
+/// Data types.
+///
+
 #ifdef HAVE_AVX512
-typedef __m512 simd_f_t;
+using simd_f_t = __m512;
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-typedef __m256 simd_f_t;
+using simd_f_t = __m256;
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-typedef __m128 simd_f_t;
+using simd_f_t = __m128;
 #else /* HAVE_NEON */
 #ifdef HAVE_NEON
-typedef float32x4_t simd_f_t;
+using simd_f_t = float32x4_t;
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 
-/* Single precision Floating point functions */
-static inline simd_f_t srsran_simd_f_load(const float* ptr)
+///
+/// Single precision Floating point functions.
+///
+
+inline simd_f_t srsran_simd_f_load(const float* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_load_ps(ptr);
@@ -184,7 +205,7 @@ static inline simd_f_t srsran_simd_f_load(const float* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_loadu(const float* ptr)
+inline simd_f_t srsran_simd_f_loadu(const float* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_loadu_ps(ptr);
@@ -203,7 +224,7 @@ static inline simd_f_t srsran_simd_f_loadu(const float* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_f_store(float* ptr, simd_f_t simdreg)
+inline void srsran_simd_f_store(float* ptr, simd_f_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_store_ps(ptr, simdreg);
@@ -222,7 +243,7 @@ static inline void srsran_simd_f_store(float* ptr, simd_f_t simdreg)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_f_storeu(float* ptr, simd_f_t simdreg)
+inline void srsran_simd_f_storeu(float* ptr, simd_f_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_storeu_ps(ptr, simdreg);
@@ -241,7 +262,7 @@ static inline void srsran_simd_f_storeu(float* ptr, simd_f_t simdreg)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_set1(float x)
+inline simd_f_t srsran_simd_f_set1(float x)
 {
 #ifdef HAVE_AVX512
   return _mm512_set1_ps(x);
@@ -260,7 +281,7 @@ static inline simd_f_t srsran_simd_f_set1(float x)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_mul(simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_mul(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_mul_ps(a, b);
@@ -279,7 +300,7 @@ static inline simd_f_t srsran_simd_f_mul(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_rcp(simd_f_t a)
+inline simd_f_t srsran_simd_f_rcp(simd_f_t a)
 {
 #ifdef HAVE_AVX512
   return _mm512_rcp14_ps(a);
@@ -298,7 +319,7 @@ static inline simd_f_t srsran_simd_f_rcp(simd_f_t a)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   __m512 r = _mm512_add_ps(a, b);
@@ -311,18 +332,17 @@ static inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
   return _mm_addsub_ps(a, b);
 #else            /* HAVE_SSE */
 #ifdef HAVE_NEON // CURRENTLY USES GENERIC IMPLEMENTATION FOR NEON
-  float*   a_ptr = (float*)&a;
-  float*   b_ptr = (float*)&b;
-  simd_f_t ret;
-  float*   c_ptr = (float*)&ret;
-  for (int i = 0; i < 4; i++) {
+  const float* a_ptr = reinterpret_cast<const float*>(&a);
+  const float* b_ptr = reinterpret_cast<const float*>(&b);
+  simd_f_t     ret;
+  float*       c_ptr = reinterpret_cast<float*>(&ret);
+  for (int i = 0; i != 4; ++i) {
     if (i % 2 == 0) {
       c_ptr[i] = a_ptr[i] - b_ptr[i];
     } else {
       c_ptr[i] = a_ptr[i] + b_ptr[i];
     }
   }
-
   return ret;
 #endif           /* HAVE_NEON */
 #endif           /* HAVE_SSE */
@@ -330,7 +350,7 @@ static inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
 #endif           /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_sub_ps(a, b);
@@ -349,7 +369,7 @@ static inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_add_ps(a, b);
@@ -368,7 +388,7 @@ static inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_fmadd_ps(a, b, acc);
@@ -387,7 +407,7 @@ static inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_zero(void)
+inline simd_f_t srsran_simd_f_zero()
 {
 #ifdef HAVE_AVX512
   return _mm512_setzero_ps();
@@ -406,7 +426,7 @@ static inline simd_f_t srsran_simd_f_zero(void)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_swap(simd_f_t a)
+inline simd_f_t srsran_simd_f_swap(simd_f_t a)
 {
 #ifdef HAVE_AVX512
   return _mm512_permute_ps(a, 0b10110001);
@@ -425,7 +445,7 @@ static inline simd_f_t srsran_simd_f_swap(simd_f_t a)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_hadd(simd_f_t a, simd_f_t b)
+inline simd_f_t srsran_simd_f_hadd(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   const __m512i idx1 = _mm512_setr_epi32((0b00000),
@@ -466,7 +486,7 @@ static inline simd_f_t srsran_simd_f_hadd(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
+inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
 {
 #ifdef HAVE_AVX512
   return _mm512_sqrt_ps(a);
@@ -482,17 +502,20 @@ static inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
   sqrt_reciprocal    = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
   float32x4_t result = vmulq_f32(a, sqrt_reciprocal);
 
-  /* Detect zeros in NEON 1/sqrtf for preventing NaN */
-  float32x4_t zeros = vmovq_n_f32(0);      /* Zero vector */
-  uint32x4_t  mask  = vceqq_f32(a, zeros); /* Zero vector mask */
-  return vbslq_f32(mask, zeros, result);   /* Force zero results and return */
+  // Detect zeros in NEON 1/sqrtf for preventing NaN.
+  // Zero vector.
+  float32x4_t zeros = vmovq_n_f32(0);
+  // Zero vector mask.
+  uint32x4_t mask = vceqq_f32(a, zeros);
+  // Force zero results and return.
+  return vbslq_f32(mask, zeros, result);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_neg(simd_f_t a)
+inline simd_f_t srsran_simd_f_neg(simd_f_t a)
 {
 #ifdef HAVE_AVX512
   return _mm512_xor_ps(_mm512_set1_ps(-0.0f), a);
@@ -511,7 +534,7 @@ static inline simd_f_t srsran_simd_f_neg(simd_f_t a)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_neg_mask(simd_f_t a, simd_f_t mask)
+inline simd_f_t srsran_simd_f_neg_mask(simd_f_t a, simd_f_t mask)
 {
 #ifdef HAVE_AVX512
   return _mm512_xor_ps(mask, a);
@@ -530,7 +553,7 @@ static inline simd_f_t srsran_simd_f_neg_mask(simd_f_t a, simd_f_t mask)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_abs(simd_f_t a)
+inline simd_f_t srsran_simd_f_abs(simd_f_t a)
 {
 #ifdef HAVE_AVX512
   return _mm512_andnot_ps(_mm512_set1_ps(-0.0f), a);
@@ -549,17 +572,17 @@ static inline simd_f_t srsran_simd_f_abs(simd_f_t a)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_f_fprintf(FILE* stream, simd_f_t a)
+inline void srsran_simd_f_fprintf(std::FILE* stream, simd_f_t a)
 {
   float x[SRSRAN_SIMD_F_SIZE];
 
   srsran_simd_f_storeu(x, a);
 
-  fprintf(stream, "[");
-  for (int i = 0; i < SRSRAN_SIMD_F_SIZE; i++) {
-    fprintf(stream, "%+2.5f, ", x[i]);
+  std::fprintf(stream, "[");
+  for (float f : x) {
+    std::fprintf(stream, "%+2.5f, ", f);
   }
-  fprintf(stream, "];\n");
+  std::fprintf(stream, "];\n");
 }
 
 #endif /* SRSRAN_SIMD_F_SIZE */
@@ -567,21 +590,24 @@ static inline void srsran_simd_f_fprintf(FILE* stream, simd_f_t a)
 #if SRSRAN_SIMD_CF_SIZE
 
 #ifdef HAVE_NEON
-typedef float32x4x2_t simd_cf_t;
+using simd_cf_t = float32x4x2_t;
 #else
-typedef struct {
+struct simd_cf_t {
   simd_f_t re;
   simd_f_t im;
-} simd_cf_t;
+};
 #endif
 
-/* Complex Single precission Floating point functions */
-static inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
+///
+/// Complex Single precision Floating point functions.
+///
+
+inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
-  __m512 in1 = _mm512_load_ps((float*)(ptr));
-  __m512 in2 = _mm512_load_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
+  __m512 in1 = _mm512_load_ps(reinterpret_cast<const float*>(ptr));
+  __m512 in2 = _mm512_load_ps(reinterpret_cast<const float*>(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
       in1,
       _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
@@ -592,19 +618,19 @@ static inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
       in2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  __m256 in1  = _mm256_permute_ps(_mm256_load_ps((float*)(ptr)), 0b11011000);
-  __m256 in2  = _mm256_permute_ps(_mm256_load_ps((float*)(ptr + 4)), 0b11011000);
+  __m256 in1  = _mm256_permute_ps(_mm256_load_ps(reinterpret_cast<const float*>(ptr)), 0b11011000);
+  __m256 in2  = _mm256_permute_ps(_mm256_load_ps(reinterpret_cast<const float*>(ptr + 4)), 0b11011000);
   ret.re      = _mm256_unpacklo_ps(in1, in2);
   ret.im      = _mm256_unpackhi_ps(in1, in2);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  __m128 i1 = _mm_load_ps((float*)(ptr));
-  __m128 i2 = _mm_load_ps((float*)(ptr + 2));
+  __m128 i1 = _mm_load_ps(reinterpret_cast<const float*>(ptr));
+  __m128 i2 = _mm_load_ps(reinterpret_cast<const float*>(ptr + 2));
   ret.re    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(2, 0, 2, 0));
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
 #ifdef HAVE_NEON
-  ret        = vld2q_f32((float*)(ptr));
+  ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
@@ -612,13 +638,12 @@ static inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
   return ret;
 }
 
-/* Complex Single precission Floating point functions */
-static inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
+inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
-  __m512 in1 = _mm512_loadu_ps((float*)(ptr));
-  __m512 in2 = _mm512_loadu_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
+  __m512 in1 = _mm512_loadu_ps(reinterpret_cast<const float*>(ptr));
+  __m512 in2 = _mm512_loadu_ps(reinterpret_cast<const float*>(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
       in1,
       _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
@@ -629,19 +654,19 @@ static inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
       in2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  __m256 in1  = _mm256_permute_ps(_mm256_loadu_ps((float*)(ptr)), 0b11011000);
-  __m256 in2  = _mm256_permute_ps(_mm256_loadu_ps((float*)(ptr + 4)), 0b11011000);
+  __m256 in1  = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr)), 0b11011000);
+  __m256 in2  = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr + 4)), 0b11011000);
   ret.re      = _mm256_unpacklo_ps(in1, in2);
   ret.im      = _mm256_unpackhi_ps(in1, in2);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  __m128 i1 = _mm_loadu_ps((float*)(ptr));
-  __m128 i2 = _mm_loadu_ps((float*)(ptr + 2));
+  __m128 i1 = _mm_loadu_ps(reinterpret_cast<const float*>(ptr));
+  __m128 i2 = _mm_loadu_ps(reinterpret_cast<const float*>(ptr + 2));
   ret.re    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(2, 0, 2, 0));
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
 #ifdef HAVE_NEON
-  ret        = vld2q_f32((float*)(ptr));
+  ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
@@ -649,7 +674,7 @@ static inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
+inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -663,7 +688,7 @@ static inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
 #ifdef HAVE_SSE
   ret.re    = _mm_load_ps(re);
   ret.im    = _mm_load_ps(im);
-#else /*HAVE_NEON*/
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
   ret.val[0] = vld1q_f32(re);
   ret.val[1] = vld1q_f32(im);
@@ -674,7 +699,7 @@ static inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
+inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -688,7 +713,7 @@ static inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
 #ifdef HAVE_SSE
   ret.re    = _mm_loadu_ps(re);
   ret.im    = _mm_loadu_ps(im);
-#else /*HAVE_NEON*/
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
   ret.val[0] = vld1q_f32(re);
   ret.val[1] = vld1q_f32(im);
@@ -699,7 +724,7 @@ static inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
   return ret;
 }
 
-static inline void srsran_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
+inline void srsran_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
 {
 #ifdef HAVE_AVX512
   __m512 s1 = _mm512_permutex2var_ps(
@@ -710,28 +735,28 @@ static inline void srsran_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
       simdreg.re,
       _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
       simdreg.im);
-  _mm512_store_ps((float*)(ptr), s1);
-  _mm512_store_ps((float*)(ptr + 8), s2);
+  _mm512_store_ps(reinterpret_cast<float*>(ptr), s1);
+  _mm512_store_ps(reinterpret_cast<float*>(ptr + 8), s2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
   __m256 out1 = _mm256_permute_ps(simdreg.re, 0b11011000);
   __m256 out2 = _mm256_permute_ps(simdreg.im, 0b11011000);
-  _mm256_store_ps((float*)(ptr), _mm256_unpacklo_ps(out1, out2));
-  _mm256_store_ps((float*)(ptr + 4), _mm256_unpackhi_ps(out1, out2));
+  _mm256_store_ps(reinterpret_cast<float*>(ptr), _mm256_unpacklo_ps(out1, out2));
+  _mm256_store_ps(reinterpret_cast<float*>(ptr + 4), _mm256_unpackhi_ps(out1, out2));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_store_ps((float*)(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
-  _mm_store_ps((float*)(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
-#else /*HAVE_NEON*/
+  _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
+  _mm_store_ps(reinterpret_cast<float*>(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst2q_f32((float*)(ptr), simdreg);
+  vst2q_f32(reinterpret_cast<float*>(ptr), simdreg);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
+inline void srsran_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
 {
 #ifdef HAVE_AVX512
   __m512 s1 = _mm512_permutex2var_ps(
@@ -742,28 +767,28 @@ static inline void srsran_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
       simdreg.re,
       _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
       simdreg.im);
-  _mm512_storeu_ps((float*)(ptr), s1);
-  _mm512_storeu_ps((float*)(ptr + 8), s2);
+  _mm512_storeu_ps(reinterpret_cast<float*>(ptr), s1);
+  _mm512_storeu_ps(reinterpret_cast<float*>(ptr + 8), s2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
   __m256 out1 = _mm256_permute_ps(simdreg.re, 0b11011000);
   __m256 out2 = _mm256_permute_ps(simdreg.im, 0b11011000);
-  _mm256_storeu_ps((float*)(ptr), _mm256_unpacklo_ps(out1, out2));
-  _mm256_storeu_ps((float*)(ptr + 4), _mm256_unpackhi_ps(out1, out2));
+  _mm256_storeu_ps(reinterpret_cast<float*>(ptr), _mm256_unpacklo_ps(out1, out2));
+  _mm256_storeu_ps(reinterpret_cast<float*>(ptr + 4), _mm256_unpackhi_ps(out1, out2));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_storeu_ps((float*)(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
-  _mm_storeu_ps((float*)(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
-#else /*HAVE_NEON*/
+  _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
+  _mm_storeu_ps(reinterpret_cast<float*>(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst2q_f32((float*)(ptr), simdreg);
+  vst2q_f32(reinterpret_cast<float*>(ptr), simdreg);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_cf_store(float* re, float* im, simd_cf_t simdreg)
+inline void srsran_simd_cf_store(float* re, float* im, simd_cf_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_store_ps(re, simdreg.re);
@@ -774,19 +799,19 @@ static inline void srsran_simd_cf_store(float* re, float* im, simd_cf_t simdreg)
   _mm256_store_ps(im, simdreg.im);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_SSE
-  _mm_store_ps((float*)re, simdreg.re);
-  _mm_store_ps((float*)im, simdreg.im);
-#else /*HAVE_NEON*/
+  _mm_store_ps(re, simdreg.re);
+  _mm_store_ps(im, simdreg.im);
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst1q_f32((float*)re, simdreg.val[0]);
-  vst1q_f32((float*)im, simdreg.val[1]);
+  vst1q_f32(re, simdreg.val[0]);
+  vst1q_f32(im, simdreg.val[1]);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg)
+inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_storeu_ps(re, simdreg.re);
@@ -797,28 +822,28 @@ static inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg
   _mm256_storeu_ps(im, simdreg.im);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_SSE
-  _mm_storeu_ps((float*)re, simdreg.re);
-  _mm_storeu_ps((float*)im, simdreg.im);
-#else /*HAVE_NEON*/
+  _mm_storeu_ps(re, simdreg.re);
+  _mm_storeu_ps(im, simdreg.im);
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst1q_f32((float*)re, simdreg.val[0]);
-  vst1q_f32((float*)im, simdreg.val[1]);
+  vst1q_f32(re, simdreg.val[0]);
+  vst1q_f32(im, simdreg.val[1]);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
+inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
 {
 #ifdef HAVE_NEON
   simd_f_t out = in.val[0];
 #else
   simd_f_t out      = in.re;
-#endif /*HAVE_NEON*/
+#endif /* HAVE_NEON */
 #ifndef HAVE_AVX512
 #ifdef HAVE_AVX2
-  /* Permute for AVX registers (mis SSE registers) */
+  // Permute for AVX registers (reorders data across 128-bit registers).
   const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
   out               = _mm256_permutevar8x32_ps(out, idx);
 #endif /* HAVE_AVX2 */
@@ -826,16 +851,16 @@ static inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
   return out;
 }
 
-static inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
+inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
 {
 #ifdef HAVE_NEON
   simd_f_t out = in.val[1];
 #else
   simd_f_t out      = in.im;
-#endif /*HAVE_NEON*/
+#endif /* HAVE_NEON */
 #ifndef HAVE_AVX512
 #ifdef HAVE_AVX2
-  /* Permute for AVX registers (mis SSE registers) */
+  // Permute for AVX registers (reorders data across 128-bit registers).
   const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
   out               = _mm256_permutevar8x32_ps(out, idx);
 #endif /* HAVE_AVX2 */
@@ -843,7 +868,7 @@ static inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
   return out;
 }
 
-static inline simd_cf_t srsran_simd_cf_set1(cf_t x)
+inline simd_cf_t srsran_simd_cf_set1(cf_t x)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -857,7 +882,7 @@ static inline simd_cf_t srsran_simd_cf_set1(cf_t x)
 #ifdef HAVE_SSE
   ret.re            = _mm_set1_ps(x.real());
   ret.im            = _mm_set1_ps(x.imag());
-#else /*HAVE_NEON*/
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
   ret.val[0]        = vdupq_n_f32(x.real());
   ret.val[1]        = vdupq_n_f32(x.imag());
@@ -868,7 +893,7 @@ static inline simd_cf_t srsran_simd_cf_set1(cf_t x)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
+inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -898,7 +923,7 @@ static inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_conjprod(simd_cf_t a, simd_cf_t b)
+inline simd_cf_t srsran_simd_cf_conjprod(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -923,7 +948,7 @@ static inline simd_cf_t srsran_simd_cf_conjprod(simd_cf_t a, simd_cf_t b)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_add(simd_cf_t a, simd_cf_t b)
+inline simd_cf_t srsran_simd_cf_add(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -948,7 +973,7 @@ static inline simd_cf_t srsran_simd_cf_add(simd_cf_t a, simd_cf_t b)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
+inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -973,13 +998,13 @@ static inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
   return ret;
 }
 
-static inline simd_f_t srsran_simd_cf_norm_sq(simd_cf_t a)
+inline simd_f_t srsran_simd_cf_norm_sq(simd_cf_t a)
 {
   return srsran_simd_f_fma(
       srsran_simd_f_mul(srsran_simd_cf_re(a), srsran_simd_cf_re(a)), srsran_simd_cf_im(a), srsran_simd_cf_im(a));
 }
 
-static inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
+inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -1005,7 +1030,7 @@ static inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
+inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -1050,7 +1075,7 @@ static inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_neg(simd_cf_t a)
+inline simd_cf_t srsran_simd_cf_neg(simd_cf_t a)
 {
   simd_cf_t ret;
 #if HAVE_NEON
@@ -1063,7 +1088,7 @@ static inline simd_cf_t srsran_simd_cf_neg(simd_cf_t a)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_neg_mask(simd_cf_t a, simd_f_t mask)
+inline simd_cf_t srsran_simd_cf_neg_mask(simd_cf_t a, simd_f_t mask)
 {
   simd_cf_t ret;
 #ifndef HAVE_AVX512
@@ -1081,7 +1106,7 @@ static inline simd_cf_t srsran_simd_cf_neg_mask(simd_cf_t a, simd_f_t mask)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_conj(simd_cf_t a)
+inline simd_cf_t srsran_simd_cf_conj(simd_cf_t a)
 {
   simd_cf_t ret;
 #if HAVE_NEON
@@ -1094,7 +1119,7 @@ static inline simd_cf_t srsran_simd_cf_conj(simd_cf_t a)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_mulj(simd_cf_t a)
+inline simd_cf_t srsran_simd_cf_mulj(simd_cf_t a)
 {
   simd_cf_t ret;
 #if HAVE_NEON
@@ -1107,7 +1132,7 @@ static inline simd_cf_t srsran_simd_cf_mulj(simd_cf_t a)
   return ret;
 }
 
-static inline simd_cf_t srsran_simd_cf_zero(void)
+inline simd_cf_t srsran_simd_cf_zero()
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -1132,17 +1157,17 @@ static inline simd_cf_t srsran_simd_cf_zero(void)
   return ret;
 }
 
-static inline void srsran_simd_cf_fprintf(FILE* stream, simd_cf_t a)
+inline void srsran_simd_cf_fprintf(std::FILE* stream, simd_cf_t a)
 {
   cf_t x[SRSRAN_SIMD_CF_SIZE];
 
   srsran_simd_cfi_storeu(x, a);
 
-  fprintf(stream, "[");
-  for (int i = 0; i < SRSRAN_SIMD_CF_SIZE; i++) {
-    fprintf(stream, "%+2.5f%+2.5fi, ", x[i].real(), x[i].imag());
+  std::fprintf(stream, "[");
+  for (auto c : x) {
+    std::fprintf(stream, "%+2.5f%+2.5fi, ", c.real(), c.imag());
   }
-  fprintf(stream, "];\n");
+  std::fprintf(stream, "];\n");
 }
 
 #endif /* SRSRAN_SIMD_CF_SIZE */
@@ -1150,64 +1175,64 @@ static inline void srsran_simd_cf_fprintf(FILE* stream, simd_cf_t a)
 #if SRSRAN_SIMD_I_SIZE
 
 #ifdef HAVE_AVX512
-typedef __m512i   simd_i_t;
-typedef __mmask16 simd_sel_t;
+using simd_i_t   = __m512i;
+using simd_sel_t = __mmask16;
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-typedef __m256i simd_i_t;
-typedef __m256  simd_sel_t;
+using simd_i_t   = __m256i;
+using simd_sel_t = __m256;
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-typedef __m128i simd_i_t;
-typedef __m128  simd_sel_t;
+using simd_i_t   = __m128i;
+using simd_sel_t = __m128;
 #else /* HAVE_AVX2 */
 #ifdef HAVE_NEON
-typedef int32x4_t  simd_i_t;
-typedef uint32x4_t simd_sel_t;
+using simd_i_t   = int32x4_t;
+using simd_sel_t = uint32x4_t;
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 
-static inline simd_i_t srsran_simd_i_load(int32_t* x)
+inline simd_i_t srsran_simd_i_load(const int32_t* x)
 {
 #ifdef HAVE_AVX512
-  return _mm512_load_epi32((__m512i*)x);
+  return _mm512_load_epi32(reinterpret_cast<const __m512i*>(x));
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  return _mm256_load_si256((__m256i*)x);
+  return _mm256_load_si256(reinterpret_cast<const __m256i*>(x));
 #else
 #ifdef HAVE_SSE
-  return _mm_load_si128((__m128i*)x);
+  return _mm_load_si128(reinterpret_cast<const __m128i*>(x));
 #else
 #ifdef HAVE_NEON
-  return vld1q_s32((int*)x);
+  return vld1q_s32(reinterpret_cast<const int*>(x));
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
+inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 {
 #ifdef HAVE_AVX512
-  _mm512_store_epi32((__m512i*)x, reg);
+  _mm512_store_epi32(reinterpret_cast<__m512i*>(x), reg);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  _mm256_store_si256((__m256i*)x, reg);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(x), reg);
 #else
 #ifdef HAVE_SSE
-  _mm_store_si128((__m128i*)x, reg);
+  _mm_store_si128(reinterpret_cast<__m128i*>(x), reg);
 #else
 #ifdef HAVE_NEON
-  vst1q_s32((int*)x, reg);
-#endif /*HAVE_NEON*/
+  vst1q_s32(reinterpret_cast<int*>(x), reg);
+#endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_i_t srsran_simd_i_set1(int x)
+inline simd_i_t srsran_simd_i_set1(int x)
 {
 #ifdef HAVE_AVX512
   return _mm512_set1_epi32(x);
@@ -1226,7 +1251,7 @@ static inline simd_i_t srsran_simd_i_set1(int x)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_i_t srsran_simd_i_add(simd_i_t a, simd_i_t b)
+inline simd_i_t srsran_simd_i_add(simd_i_t a, simd_i_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_add_epi32(a, b);
@@ -1245,7 +1270,7 @@ static inline simd_i_t srsran_simd_i_add(simd_i_t a, simd_i_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_i_t srsran_simd_i_mul(simd_i_t a, simd_i_t b)
+inline simd_i_t srsran_simd_i_mul(simd_i_t a, simd_i_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_mullo_epi32(a, b);
@@ -1264,7 +1289,7 @@ static inline simd_i_t srsran_simd_i_mul(simd_i_t a, simd_i_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
+inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_and_si512(a, b);
@@ -1283,7 +1308,7 @@ static inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
+inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
 {
 #ifdef HAVE_AVX512
   return _kand_mask16(a, b);
@@ -1302,7 +1327,7 @@ static inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_sel_t srsran_simd_f_max(simd_f_t a, simd_f_t b)
+inline simd_sel_t srsran_simd_f_max(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_cmp_ps_mask(a, b, _CMP_GT_OS);
@@ -1321,7 +1346,7 @@ static inline simd_sel_t srsran_simd_f_max(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_sel_t srsran_simd_f_min(simd_f_t a, simd_f_t b)
+inline simd_sel_t srsran_simd_f_min(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_cmp_ps_mask(a, b, _CMP_LT_OS);
@@ -1340,7 +1365,7 @@ static inline simd_sel_t srsran_simd_f_min(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_f_t srsran_simd_f_select(simd_f_t a, simd_f_t b, simd_sel_t selector)
+inline simd_f_t srsran_simd_f_select(simd_f_t a, simd_f_t b, simd_sel_t selector)
 {
 #ifdef HAVE_AVX512
   return _mm512_mask_blend_ps(selector, (__m512)a, (__m512)b);
@@ -1359,7 +1384,7 @@ static inline simd_f_t srsran_simd_f_select(simd_f_t a, simd_f_t b, simd_sel_t s
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel_t selector)
+inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel_t selector)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
@@ -1386,7 +1411,7 @@ static inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel
   return ret;
 }
 
-static inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector)
+inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector)
 {
 #ifdef HAVE_AVX512
   return (__m512i)_mm512_mask_blend_ps(selector, (__m512)a, (__m512)b);
@@ -1405,36 +1430,36 @@ static inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t s
 #endif /* HAVE_AVX512 */
 }
 
-#endif /* SRSRAN_SIMD_I_SIZE*/
+#endif /* SRSRAN_SIMD_I_SIZE */
 
 #if SRSRAN_SIMD_S_SIZE
 
 #ifdef HAVE_AVX512
-typedef __m512i simd_s_t;
+using simd_s_t = __m512i;
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-typedef __m256i simd_s_t;
+using simd_s_t = __m256i;
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-typedef __m128i simd_s_t;
+using simd_s_t = __m128i;
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-typedef int16x8_t simd_s_t;
+using simd_s_t = int16x8_t;
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 
-static inline simd_s_t srsran_simd_s_load(const int16_t* ptr)
+inline simd_s_t srsran_simd_s_load(const int16_t* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_load_si512(ptr);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  return _mm256_load_si256((__m256i*)ptr);
+  return _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  return _mm_load_si128((__m128i*)ptr);
+  return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   return vld1q_s16(ptr);
@@ -1444,16 +1469,16 @@ static inline simd_s_t srsran_simd_s_load(const int16_t* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_s_t srsran_simd_s_loadu(const int16_t* ptr)
+inline simd_s_t srsran_simd_s_loadu(const int16_t* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_loadu_si512(ptr);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  return _mm256_loadu_si256((__m256i*)ptr);
+  return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(ptr));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  return _mm_loadu_si128((__m128i*)ptr);
+  return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   return vld1q_s16(ptr);
@@ -1463,16 +1488,16 @@ static inline simd_s_t srsran_simd_s_loadu(const int16_t* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_s_store(int16_t* ptr, simd_s_t simdreg)
+inline void srsran_simd_s_store(int16_t* ptr, simd_s_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_store_si512(ptr, simdreg);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  _mm256_store_si256((__m256i*)ptr, simdreg);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), simdreg);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_store_si128((__m128i*)ptr, simdreg);
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   vst1q_s16(ptr, simdreg);
@@ -1482,16 +1507,16 @@ static inline void srsran_simd_s_store(int16_t* ptr, simd_s_t simdreg)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_s_storeu(int16_t* ptr, simd_s_t simdreg)
+inline void srsran_simd_s_storeu(int16_t* ptr, simd_s_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_storeu_si512(ptr, simdreg);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  _mm256_storeu_si256((__m256i*)ptr, simdreg);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), simdreg);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_storeu_si128((__m128i*)ptr, simdreg);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   vst1q_s16(ptr, simdreg);
@@ -1500,7 +1525,7 @@ static inline void srsran_simd_s_storeu(int16_t* ptr, simd_s_t simdreg)
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 }
-static inline simd_s_t srsran_simd_s_zero(void)
+inline simd_s_t srsran_simd_s_zero()
 {
 #ifdef HAVE_AVX512
   return _mm512_setzero_si512();
@@ -1519,7 +1544,7 @@ static inline simd_s_t srsran_simd_s_zero(void)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_s_t srsran_simd_s_mul(simd_s_t a, simd_s_t b)
+inline simd_s_t srsran_simd_s_mul(simd_s_t a, simd_s_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_mullo_epi16(a, b);
@@ -1538,7 +1563,7 @@ static inline simd_s_t srsran_simd_s_mul(simd_s_t a, simd_s_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
+inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
 {
 #ifdef HAVE_AVX512
   __m256i a0 = _mm512_extracti64x4_epi64(a, 0);
@@ -1556,18 +1581,17 @@ static inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
   return _mm_sign_epi16(a, b);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-  /* Taken and modified from sse2neon.h licensed under MIT
-   * Source: https://github.com/DLTcollab/sse2neon
-   */
+  // Taken and modified from sse2neon.h licensed under MIT.
+  // Source: https://github.com/DLTcollab/sse2neon
   int16x8_t zero = vdupq_n_s16(0);
-  // signed shift right: faster than vclt
+  // Signed shift right: faster than vclt.
   // (b < 0) ? 0xffff : 0
   uint16x8_t ltMask = vreinterpretq_u16_s16(vshrq_n_s16(b, 15));
   // (b == 0) ? 0xffff : 0
   int16x8_t zeroMask = vreinterpretq_s16_u16(vceqq_s16(b, zero));
   // -a
   int16x8_t neg = vnegq_s16(a);
-  // bitwise select either a or neg based on ltMask
+  // Bitwise select either a or neg based on ltMask.
   int16x8_t masked = vbslq_s16(ltMask, neg, a);
   // res = masked & (~zeroMask)
   int16x8_t res = vbicq_s16(masked, zeroMask);
@@ -1578,7 +1602,7 @@ static inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_s_t srsran_simd_s_add(simd_s_t a, simd_s_t b)
+inline simd_s_t srsran_simd_s_add(simd_s_t a, simd_s_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_add_epi16(a, b);
@@ -1597,7 +1621,7 @@ static inline simd_s_t srsran_simd_s_add(simd_s_t a, simd_s_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
+inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_sub_epi16(a, b);
@@ -1620,78 +1644,64 @@ static inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
 
 #if SRSRAN_SIMD_C16_SIZE
 
-typedef
 #ifdef HAVE_AVX512
-    struct {
-  union {
-    __m512i m512;
-    int16_t i16[32];
-  } re;
-  union {
-    __m512i m512;
-    int16_t i16[32];
-  } im;
+struct simd_c16_t {
+  __m512i re;
+  __m512i im;
+};
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-    struct {
-  union {
-    __m256i m256;
-    int16_t i16[16];
-  } re;
-  union {
-    __m256i m256;
-    int16_t i16[16];
-  } im;
+struct simd_c16_t {
+  __m256i re;
+  __m256i im;
+};
 #else
 #ifdef HAVE_SSE
-    struct {
-  union {
-    __m128i m128;
-    int16_t i16[8];
-  } re;
-  union {
-    __m128i m128;
-    int16_t i16[8];
-  } im;
+struct simd_c16_t {
+  __m128i re;
+  __m128i im;
+};
 #else
 #ifdef HAVE_NEON
-    union {
+struct simd_c16_t {
   int16x8x2_t m128;
-  int16_t     i16[16];
+};
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
-} simd_c16_t;
 
-/* Fixed point precision (16-bit) functions */
-static inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
+///
+/// Fixed point precision (16-bit) functions.
+///
+
+inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX512
-  __m512i in1 = _mm512_load_si512((__m512i*)(ptr));
-  __m512i in2 = _mm512_load_si512((__m512i*)(ptr + 8));
-  ret.re.m512 = _mm512_mask_blend_epi16(
+  __m512i in1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(ptr));
+  __m512i in2 = _mm512_load_si512(reinterpret_cast<const __m512i*>(ptr + 8));
+  ret.re      = _mm512_mask_blend_epi16(
       0xaaaaaaaa, in1, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in2, 0b10100000), 0b10100000));
-  ret.im.m512 = _mm512_mask_blend_epi16(
+  ret.im = _mm512_mask_blend_epi16(
       0xaaaaaaaa, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_AVX2
-  __m256i in1 = _mm256_load_si256((__m256i*)(ptr));
-  __m256i in2 = _mm256_load_si256((__m256i*)(ptr + 8));
-  ret.re.m256 =
+  __m256i in1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr));
+  __m256i in2 = _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr + 8));
+  ret.re =
       _mm256_blend_epi16(in1, _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
-  ret.im.m256 =
+  ret.im =
       _mm256_blend_epi16(_mm256_shufflelo_epi16(_mm256_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  __m128i in1 = _mm_load_si128((__m128i*)(ptr));
-  __m128i in2 = _mm_load_si128((__m128i*)(ptr + 8));
-  ret.re.m128 = _mm_blend_epi16(in1, _mm_shufflelo_epi16(_mm_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
-  ret.im.m128 = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
+  __m128i in1 = _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
+  __m128i in2 = _mm_load_si128(reinterpret_cast<const __m128i*>(ptr + 8));
+  ret.re      = _mm_blend_epi16(in1, _mm_shufflelo_epi16(_mm_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
+  ret.im      = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
-  ret.m128     = vld2q_s16((int16_t*)(ptr));
+  ret.m128     = vld2q_s16(reinterpret_cast<const int16_t*>(ptr));
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
@@ -1699,153 +1709,153 @@ static inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
   return ret;
 }
 
-static inline simd_c16_t srsran_simd_c16_load(const int16_t* re, const int16_t* im)
+inline simd_c16_t srsran_simd_c16_load(const int16_t* re, const int16_t* im)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_load_si256((__m256i*)(re));
-  ret.im.m256 = _mm256_load_si256((__m256i*)(im));
+  ret.re = _mm256_load_si256(reinterpret_cast<const __m256i*>(re));
+  ret.im = _mm256_load_si256(reinterpret_cast<const __m256i*>(im));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128   = _mm_load_si128((__m128i*)(re));
-  ret.im.m128   = _mm_load_si128((__m128i*)(im));
+  ret.re        = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im        = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
-  ret.m128.val[0] = vld1q_s16((int16_t*)(re));
-  ret.m128.val[1] = vld1q_s16((int16_t*)(im));
+  ret.m128.val[0] = vld1q_s16(re);
+  ret.m128.val[1] = vld1q_s16(im);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
   return ret;
 }
 
-static inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
+inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_loadu_si256((__m256i*)(re));
-  ret.im.m256 = _mm256_loadu_si256((__m256i*)(im));
+  ret.re = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(re));
+  ret.im = _mm256_loadu_si256(reinterpret_cast<const__m256i*>(im));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128   = _mm_loadu_si128((__m128i*)(re));
-  ret.im.m128   = _mm_loadu_si128((__m128i*)(im));
+  ret.re        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
 #else /* HAVE_SSE*/
 #ifdef HAVE_NEON
-  ret.m128.val[0] = vld1q_s16((int16_t*)(re));
-  ret.m128.val[1] = vld1q_s16((int16_t*)(im));
+  ret.m128.val[0] = vld1q_s16(re);
+  ret.m128.val[1] = vld1q_s16(im);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
   return ret;
 }
 
-static inline void srsran_simd_c16i_store(c16_t* ptr, simd_c16_t simdreg)
+inline void srsran_simd_c16i_store(c16_t* ptr, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re.m256, 0b10110001), 0b10110001);
-  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im.m256, 0b10110001), 0b10110001);
-  _mm256_store_si256((__m256i*)(ptr), _mm256_blend_epi16(simdreg.re.m256, im_sw, 0b10101010));
-  _mm256_store_si256((__m256i*)(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im.m256, 0b10101010));
+  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else
 #ifdef HAVE_SSE
-  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re.m128, 0b10110001), 0b10110001);
-  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im.m128, 0b10110001), 0b10110001);
-  _mm_store_si128((__m128i*)(ptr), _mm_blend_epi16(simdreg.re.m128, im_sw, 0b10101010));
-  _mm_store_si128((__m128i*)(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im.m128, 0b10101010));
-#else /*HAVE_NEON*/
+  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst2q_s16((int16_t*)(ptr), simdreg.m128);
+  vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 }
 
-static inline void srsran_simd_c16i_storeu(c16_t* ptr, simd_c16_t simdreg)
+inline void srsran_simd_c16i_storeu(c16_t* ptr, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re.m256, 0b10110001), 0b10110001);
-  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im.m256, 0b10110001), 0b10110001);
-  _mm256_storeu_si256((__m256i*)(ptr), _mm256_blend_epi16(simdreg.re.m256, im_sw, 0b10101010));
-  _mm256_storeu_si256((__m256i*)(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im.m256, 0b10101010));
+  __m256i re_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m256i im_sw = _mm256_shufflelo_epi16(_mm256_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), _mm256_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr + 8), _mm256_blend_epi16(re_sw, simdreg.im, 0b10101010));
 #else
 #ifdef HAVE_SSE
-  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re.m128, 0b10110001), 0b10110001);
-  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im.m128, 0b10110001), 0b10110001);
-  _mm_storeu_si128((__m128i*)(ptr), _mm_blend_epi16(simdreg.re.m128, im_sw, 0b10101010));
-  _mm_storeu_si128((__m128i*)(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im.m128, 0b10101010));
-#else /*HAVE_NEON*/
+  __m128i re_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.re, 0b10110001), 0b10110001);
+  __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
+#else /* HAVE_NEON */
 #ifdef HAVE_NEON
-  vst2q_s16((int16_t*)(ptr), simdreg.m128);
+  vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 }
 
-static inline void srsran_simd_c16_store(int16_t* re, int16_t* im, simd_c16_t simdreg)
+inline void srsran_simd_c16_store(int16_t* re, int16_t* im, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  _mm256_store_si256((__m256i*)re, simdreg.re.m256);
-  _mm256_store_si256((__m256i*)im, simdreg.im.m256);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(re), simdreg.re);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(im), simdreg.im);
 #else
 #ifdef HAVE_SSE
-  _mm_store_si128((__m128i*)re, simdreg.re.m128);
-  _mm_store_si128((__m128i*)im, simdreg.im.m128);
+  _mm_store_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
+  _mm_store_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
 #ifdef HAVE_NEON
-  vst1q_s16((int16_t*)re, simdreg.m128.val[0]);
-  vst1q_s16((int16_t*)im, simdreg.m128.val[1]);
+  vst1q_s16(re, simdreg.m128.val[0]);
+  vst1q_s16(im, simdreg.m128.val[1]);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 }
 
-static inline void srsran_simd_c16_storeu(int16_t* re, int16_t* im, simd_c16_t simdreg)
+inline void srsran_simd_c16_storeu(int16_t* re, int16_t* im, simd_c16_t simdreg)
 {
 #ifdef HAVE_AVX2
-  _mm256_storeu_si256((__m256i*)re, simdreg.re.m256);
-  _mm256_storeu_si256((__m256i*)im, simdreg.im.m256);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(re), simdreg.re);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(im), simdreg.im);
 #else
 #ifdef HAVE_SSE
-  _mm_storeu_si128((__m128i*)re, simdreg.re.m128);
-  _mm_storeu_si128((__m128i*)im, simdreg.im.m128);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
 #ifdef HAVE_NEON
-  vst1q_s16((int16_t*)re, simdreg.m128.val[0]);
-  vst1q_s16((int16_t*)im, simdreg.m128.val[1]);
+  vst1q_s16(re, simdreg.m128.val[0]);
+  vst1q_s16(im, simdreg.m128.val[1]);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 }
 
-static inline simd_c16_t srsran_simd_c16_prod(simd_c16_t a, simd_c16_t b)
+inline simd_c16_t srsran_simd_c16_prod(simd_c16_t a, simd_c16_t b)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_sub_epi16(_mm256_mulhrs_epi16(a.re.m256, _mm256_slli_epi16(b.re.m256, 1)),
-                                 _mm256_mulhrs_epi16(a.im.m256, _mm256_slli_epi16(b.im.m256, 1)));
-  ret.im.m256 = _mm256_add_epi16(_mm256_mulhrs_epi16(a.re.m256, _mm256_slli_epi16(b.im.m256, 1)),
-                                 _mm256_mulhrs_epi16(a.im.m256, _mm256_slli_epi16(b.re.m256, 1)));
+  ret.re = _mm256_sub_epi16(_mm256_mulhrs_epi16(a.re, _mm256_slli_epi16(b.re, 1)),
+                            _mm256_mulhrs_epi16(a.im, _mm256_slli_epi16(b.im, 1)));
+  ret.im = _mm256_add_epi16(_mm256_mulhrs_epi16(a.re, _mm256_slli_epi16(b.im, 1)),
+                            _mm256_mulhrs_epi16(a.im, _mm256_slli_epi16(b.re, 1)));
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_sub_epi16(_mm_mulhrs_epi16(a.re.m128, _mm_slli_epi16(b.re.m128, 1)),
-                              _mm_mulhrs_epi16(a.im.m128, _mm_slli_epi16(b.im.m128, 1)));
-  ret.im.m128 = _mm_add_epi16(_mm_mulhrs_epi16(a.re.m128, _mm_slli_epi16(b.im.m128, 1)),
-                              _mm_mulhrs_epi16(a.im.m128, _mm_slli_epi16(b.re.m128, 1)));
+  ret.re =
+      _mm_sub_epi16(_mm_mulhrs_epi16(a.re, _mm_slli_epi16(b.re, 1)), _mm_mulhrs_epi16(a.im, _mm_slli_epi16(b.im, 1)));
+  ret.im =
+      _mm_add_epi16(_mm_mulhrs_epi16(a.re, _mm_slli_epi16(b.im, 1)), _mm_mulhrs_epi16(a.im, _mm_slli_epi16(b.re, 1)));
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
   return ret;
 }
 
-static inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
+inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_add_epi16(a.re.m256, b.re.m256);
-  ret.im.m256 = _mm256_add_epi16(a.im.m256, b.im.m256);
+  ret.re = _mm256_add_epi16(a.re, b.re);
+  ret.im = _mm256_add_epi16(a.im, b.im);
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_add_epi16(a.re.m128, b.re.m128);
-  ret.im.m128 = _mm_add_epi16(a.im.m128, b.im.m128);
+  ret.re     = _mm_add_epi16(a.re, b.re);
+  ret.im     = _mm_add_epi16(a.im, b.im);
 #else
 #ifdef HAVE_NEON
   ret.m128.val[0] = vaddq_s16(a.m128.val[0], a.m128.val[0]);
@@ -1856,16 +1866,16 @@ static inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
   return ret;
 }
 
-static inline simd_c16_t srsran_simd_c16_zero(void)
+inline simd_c16_t srsran_simd_c16_zero()
 {
   simd_c16_t ret;
 #ifdef HAVE_AVX2
-  ret.re.m256 = _mm256_setzero_si256();
-  ret.im.m256 = _mm256_setzero_si256();
+  ret.re = _mm256_setzero_si256();
+  ret.im = _mm256_setzero_si256();
 #else
 #ifdef HAVE_SSE
-  ret.re.m128 = _mm_setzero_si128();
-  ret.im.m128 = _mm_setzero_si128();
+  ret.re     = _mm_setzero_si128();
+  ret.im     = _mm_setzero_si128();
 #else
 #ifdef HAVE_NEON
   ret.m128.val[0] = vdupq_n_s16(0);
@@ -1880,7 +1890,7 @@ static inline simd_c16_t srsran_simd_c16_zero(void)
 
 #if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
 
-static inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
+inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
   __m512 aa = _mm512_permutex2var_ps(
@@ -1896,10 +1906,10 @@ static inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
   return _mm512_packs_epi32(ai, bi);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  __m256  aa  = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x20), _MM_FROUND_NINT);
-  __m256  bb  = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x31), _MM_FROUND_NINT);
-  __m256i ai  = _mm256_cvtps_epi32(aa);
-  __m256i bi  = _mm256_cvtps_epi32(bb);
+  __m256  aa = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x20), _MM_FROUND_NINT);
+  __m256  bb = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x31), _MM_FROUND_NINT);
+  __m256i ai = _mm256_cvtps_epi32(aa);
+  __m256i bi = _mm256_cvtps_epi32(bb);
   return _mm256_packs_epi32(ai, bi);
 #else
 #ifdef HAVE_SSE
@@ -1922,33 +1932,37 @@ static inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
 #endif /* SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_C16_SIZE */
 
 #if SRSRAN_SIMD_B_SIZE
-/* Data types */
+
+///
+/// Data types.
+///
+
 #ifdef HAVE_AVX512
-typedef __m512i simd_b_t;
+using simd_b_t = __m512i;
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-typedef __m256i simd_b_t;
+using simd_b_t = __m256i;
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-typedef __m128i simd_b_t;
+using simd_b_t = __m128i;
 #else /* HAVE_NEON */
 #ifdef HAVE_NEON
-typedef int8x16_t simd_b_t;
+using simd_b_t = int8x16_t;
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 
-static inline simd_b_t srsran_simd_b_load(const int8_t* ptr)
+inline simd_b_t srsran_simd_b_load(const int8_t* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_load_si512(ptr);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  return _mm256_load_si256((__m256i*)ptr);
+  return _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  return _mm_load_si128((__m128i*)ptr);
+  return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   return vld1q_s8(ptr);
@@ -1958,16 +1972,16 @@ static inline simd_b_t srsran_simd_b_load(const int8_t* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_b_t srsran_simd_b_loadu(const int8_t* ptr)
+inline simd_b_t srsran_simd_b_loadu(const int8_t* ptr)
 {
 #ifdef HAVE_AVX512
   return _mm512_loadu_si512(ptr);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  return _mm256_loadu_si256((__m256i*)ptr);
+  return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(ptr));
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  return _mm_loadu_si128((__m128i*)ptr);
+  return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   return vld1q_s8(ptr);
@@ -1977,16 +1991,16 @@ static inline simd_b_t srsran_simd_b_loadu(const int8_t* ptr)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_b_store(int8_t* ptr, simd_b_t simdreg)
+inline void srsran_simd_b_store(int8_t* ptr, simd_b_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_store_si512(ptr, simdreg);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  _mm256_store_si256((__m256i*)ptr, simdreg);
+  _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), simdreg);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_store_si128((__m128i*)ptr, simdreg);
+  _mm_store_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   vst1q_s8(ptr, simdreg);
@@ -1996,16 +2010,16 @@ static inline void srsran_simd_b_store(int8_t* ptr, simd_b_t simdreg)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_b_storeu(int8_t* ptr, simd_b_t simdreg)
+inline void srsran_simd_b_storeu(int8_t* ptr, simd_b_t simdreg)
 {
 #ifdef HAVE_AVX512
   _mm512_storeu_si512(ptr, simdreg);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  _mm256_storeu_si256((__m256i*)ptr, simdreg);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), simdreg);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_SSE
-  _mm_storeu_si128((__m128i*)ptr, simdreg);
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
   vst1q_s8(ptr, simdreg);
@@ -2015,7 +2029,7 @@ static inline void srsran_simd_b_storeu(int8_t* ptr, simd_b_t simdreg)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_b_t srsran_simd_b_xor(simd_b_t a, simd_b_t b)
+inline simd_b_t srsran_simd_b_xor(simd_b_t a, simd_b_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_xor_epi32(a, b);
@@ -2034,7 +2048,7 @@ static inline simd_b_t srsran_simd_b_xor(simd_b_t a, simd_b_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_b_t srsran_simd_b_add(simd_b_t a, simd_b_t b)
+inline simd_b_t srsran_simd_b_add(simd_b_t a, simd_b_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_adds_epi8(a, b);
@@ -2053,7 +2067,7 @@ static inline simd_b_t srsran_simd_b_add(simd_b_t a, simd_b_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_b_t srsran_simd_b_sub(simd_b_t a, simd_b_t b)
+inline simd_b_t srsran_simd_b_sub(simd_b_t a, simd_b_t b)
 {
 #ifdef HAVE_AVX512
   return _mm512_subs_epi8(a, b);
@@ -2072,7 +2086,7 @@ static inline simd_b_t srsran_simd_b_sub(simd_b_t a, simd_b_t b)
 #endif /* HAVE_AVX512 */
 }
 
-static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
+inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
 {
 #ifdef HAVE_AVX512
   __m256i a0 = _mm512_extracti64x4_epi64(a, 0);
@@ -2090,18 +2104,17 @@ static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
   return _mm_sign_epi8(a, b);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-  /* Taken and modified from sse2neon.h licensed under MIT
-   * Source: https://github.com/DLTcollab/sse2neon
-   */
+  // Taken and modified from sse2neon.h licensed under MIT.
+  // Source: https://github.com/DLTcollab/sse2neon
   int8x16_t zero = vdupq_n_s8(0);
-  // signed shift right: faster than vclt
+  // Signed shift right: faster than vclt.
   // (b < 0) ? 0xff : 0
   uint8x16_t ltMask = vreinterpretq_u8_s8(vshrq_n_s8(b, 7));
   // (b == 0) ? 0xff : 0
   int8x16_t zeroMask = vreinterpretq_s8_u8(vceqq_s8(b, zero));
   // -a
   int8x16_t neg = vnegq_s8(a);
-  // bitwise select either a or neg based on ltMask
+  // Bitwise select either a or neg based on ltMask.
   int8x16_t masked = vbslq_s8(ltMask, neg, a);
   // res = masked & (~zeroMask)
   int8x16_t res = vbicq_s8(masked, zeroMask);
@@ -2112,6 +2125,6 @@ static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
 #endif /* HAVE_AVX512 */
 }
 
-#endif /*SRSRAN_SIMD_B_SIZE */
+#endif /* SRSRAN_SIMD_B_SIZE */
 
 } // namespace srsran

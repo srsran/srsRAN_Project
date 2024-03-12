@@ -43,13 +43,13 @@ from .steps.stub import FIVEGC_STARTUP_TIMEOUT, GNB_STARTUP_TIMEOUT, handle_star
 @mark.parametrize(
     "extra_config, nof_ant",
     (
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 1", 1, id="Test UE 1x1 Rank 1"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 1", 2, id="Test UE 2x2 Rank 1"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 2", 2, id="Test UE 2x2 Rank 2"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 1", 4, id="Test UE 4x4 Rank 1"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 2", 4, id="Test UE 4x4 Rank 2"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 3", 4, id="Test UE 4x4 Rank 3"),
-        param("test_mode test_ue --rnti 0x44 --cqi 15 --ri 4", 4, id="Test UE 4x4 Rank 4"),
+        param("test_mode test_ue --ri 1", 1, id="Test UE 1x1 Rank 1"),
+        param("test_mode test_ue --ri 1", 2, id="Test UE 2x2 Rank 1"),
+        param("test_mode test_ue --ri 2", 2, id="Test UE 2x2 Rank 2"),
+        param("test_mode test_ue --ri 1", 4, id="Test UE 4x4 Rank 1"),
+        param("test_mode test_ue --ri 2", 4, id="Test UE 4x4 Rank 2"),
+        param("test_mode test_ue --ri 3", 4, id="Test UE 4x4 Rank 3"),
+        param("test_mode test_ue --ri 4", 4, id="Test UE 4x4 Rank 4"),
     ),
 )
 @mark.test_mode

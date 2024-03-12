@@ -57,3 +57,13 @@ void ru_controller_generic_impl::stop()
     low_phy->stop();
   }
 }
+
+bool ru_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
+{
+  return radio.get_management_plane().set_tx_gain(port_id, gain_dB);
+}
+
+bool ru_controller_generic_impl::set_rx_gain(unsigned port_id, double gain_dB)
+{
+  return radio.get_management_plane().set_rx_gain(port_id, gain_dB);
+}

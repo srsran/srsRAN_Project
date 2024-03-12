@@ -95,6 +95,12 @@ bool pdcch_slot_allocator::cancel_last_pdcch(cell_slot_resource_allocator& slot_
     return false;
   }
 
+  // Clear allocation on resource grid.
+  const coreset_configuration& cs_cfg     = *records.back().pdcch_ctx->coreset_cfg;
+  const crb_index_list&        pdcch_crbs = records.back().pdcch_candidate_crbs[dfs_tree.back().dci_iter_index];
+  ofdm_symbol_range            symbols{0, (uint8_t)cs_cfg.duration};
+  slot_alloc.dl_res_grid.clear(records.back().pdcch_ctx->bwp_cfg->scs, symbols, pdcch_crbs);
+
   dfs_tree.pop_back();
   records.pop_back();
   return true;

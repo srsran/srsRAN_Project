@@ -143,7 +143,7 @@ bool dpdk::set_ldpc_dec_bbdev_data(::rte_bbdev_dec_op&   dec_op,
   dec_op.ldpc_dec.input.length += cw_len;
 
   // Harq offset for the current CB (based on its unique absolute ID).
-  unsigned harq_offset = srsran::hal::HARQ_INCR * absolute_cb_id;
+  unsigned harq_offset = srsran::hal::HARQ_INCR.value() * absolute_cb_id;
 
   // Input HARQ combining data is only needed in case of a retransmission.
   if (!new_data) {

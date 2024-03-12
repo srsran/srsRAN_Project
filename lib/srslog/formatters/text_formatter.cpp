@@ -73,6 +73,9 @@ static void format_metadata(const detail::log_entry_metadata& metadata, fmt::mem
     ctx_buffer.push_back('\0');
     fmt::format_to(buffer, "[{: >8}] ", ctx_buffer.data());
   }
+  if (metadata.log_label != nullptr && !metadata.log_label->empty()) {
+    fmt::format_to(buffer, "{}", *metadata.log_label);
+  }
 }
 
 void text_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer)

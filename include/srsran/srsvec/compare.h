@@ -29,7 +29,7 @@ namespace srsran {
 namespace srsvec {
 
 namespace detail {
-const char* find(span<const char> input, char value);
+const char* find(span<const char> input, const char* value);
 }
 
 template <typename T1, typename T2>
@@ -59,7 +59,9 @@ template <typename T>
 const T* find(span<const T> input, T value)
 {
   static_assert(sizeof(T) == 1, "The datatype must be one byte wide.");
-  return (const T*)detail::find(span<const char>((const char*)input.data(), input.size()), *((char*)&value));
+  return reinterpret_cast<const T*>(
+      detail::find(span<const char>(reinterpret_cast<const char*>(input.data()), input.size()),
+                   reinterpret_cast<const char*>(&value)));
 }
 
 /// \brief Finds the maximum absolute value in a complex span.

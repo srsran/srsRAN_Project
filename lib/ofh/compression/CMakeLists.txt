@@ -29,23 +29,18 @@ set(SOURCES
         iq_decompressor_selector.cpp)
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-    list(APPEND SOURCES packing_utils_avx2.cpp
+    list(APPEND SOURCES
             iq_compression_bfp_avx2.cpp
-            packing_utils_avx512.cpp
             iq_compression_bfp_avx512.cpp
             iq_compression_none_avx512.cpp)
-    set_source_files_properties(packing_utils_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
     set_source_files_properties(iq_compression_bfp_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
-    set_source_files_properties(packing_utils_avx512.cpp PROPERTIES
-            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512dq;")
     set_source_files_properties(iq_compression_bfp_avx512.cpp PROPERTIES
-            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512cd;")
+            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512cd;-mavx512dq;")
     set_source_files_properties(iq_compression_none_avx512.cpp PROPERTIES
-            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;")
+            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512dq;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 if (HAVE_NEON)
-    list(APPEND SOURCES packing_utils_neon.cpp)
     list(APPEND SOURCES iq_compression_bfp_neon.cpp)
 endif (HAVE_NEON)
 

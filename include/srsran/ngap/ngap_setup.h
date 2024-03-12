@@ -74,7 +74,7 @@ struct ngap_ng_setup_response {
 };
 
 struct ngap_ng_setup_failure {
-  cause_t                      cause;
+  ngap_cause_t                 cause;
   optional<crit_diagnostics_t> crit_diagnostics;
 };
 

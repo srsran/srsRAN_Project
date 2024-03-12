@@ -85,7 +85,8 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 
   // Request UE release in case of a failure to cleanup CU-CP
   if (!response.pdu_session_res_failed_to_setup_items.empty()) {
-    ue_context_release_request = {ue_ids.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason};
+    ue_context_release_request = {
+        ue_ids.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason};
     CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
   }
 

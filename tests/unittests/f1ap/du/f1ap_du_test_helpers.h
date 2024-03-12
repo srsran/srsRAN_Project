@@ -116,6 +116,8 @@ public:
     });
   }
 
+  async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) override { return launch_no_op_task(); }
+
   void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override {}
 
   /// \brief Retrieve task scheduler specific to a given UE.

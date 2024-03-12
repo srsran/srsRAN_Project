@@ -65,8 +65,9 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
+  ue_index_t             ue_index = ue_index_t::min;
   nr_cell_id_t           cid      = 0;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -76,8 +77,9 @@ TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are
 {
   create_default_manager();
 
+  ue_index_t             ue_index = ue_index_t::min;
   nr_cell_id_t           cid      = 5;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -87,9 +89,11 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
 {
   create_default_manager();
 
+  ue_index_t ue_index = ue_index_t::min;
+
   meas_obj_id_t meas_obj_id = meas_obj_id_t::min;
   for (unsigned cid = 0; cid < 2; ++cid) {
-    optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
+    optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
     check_default_meas_cfg(meas_cfg, meas_obj_id);
     meas_obj_id = uint_to_meas_obj_id(meas_obj_id_to_uint(meas_obj_id) + 2);
   }
@@ -99,7 +103,8 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
 {
   create_default_manager();
 
-  const nr_cell_id_t nci = 1;
+  ue_index_t         ue_index = ue_index_t::min;
+  const nr_cell_id_t nci      = 1;
 
   // get current config
   optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
@@ -113,7 +118,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
 
   // Make sure meas_cfg is created.
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
   check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
 }
 
@@ -121,7 +126,8 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
 {
   create_default_manager();
 
-  const nr_cell_id_t nci = 1;
+  ue_index_t         ue_index = ue_index_t::min;
+  const nr_cell_id_t nci      = 1;
 
   // get current config
   optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
@@ -134,7 +140,7 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
 
   // Make sure meas_cfg is created.
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
   check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
 }
 
@@ -143,8 +149,9 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_n
   // Create a manager without ncells and without report config.
   create_manager_without_ncells_and_periodic_report();
 
+  ue_index_t             ue_index = ue_index_t::min;
   nr_cell_id_t           cid      = 0;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -154,15 +161,16 @@ TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_remo
 {
   create_default_manager();
 
+  ue_index_t         ue_index    = ue_index_t::min;
   const nr_cell_id_t initial_nci = 0;
 
   // Make sure meas_cfg is created (no previous meas config provided)
-  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(initial_nci);
+  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
   check_default_meas_cfg(initial_meas_cfg, meas_obj_id_t::min);
   verify_meas_cfg(initial_meas_cfg);
 
   const nr_cell_id_t     target_nci      = 1;
-  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(target_nci, initial_meas_cfg);
+  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
 
   // Make sure initial IDs are release again.
   ASSERT_EQ(target_meas_cfg.value().meas_obj_to_rem_list.at(0),

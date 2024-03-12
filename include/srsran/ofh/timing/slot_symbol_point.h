@@ -59,8 +59,8 @@ public:
   /// Numerology index (0..4).
   unsigned get_numerology() const { return numerology; }
 
-  /// System slot.
-  uint32_t system_slot() const { return count_val; }
+  /// Conversion of slot symbol point to a raw counter.
+  uint32_t to_uint() const { return count_val; }
 
   /// Implementation of the sum operator, where \c jump is represented in number of symbols.
   slot_symbol_point& operator+=(int jump)
@@ -153,7 +153,7 @@ inline int operator-(slot_symbol_point lhs, slot_symbol_point rhs)
                                         get_nof_slots_per_subframe(to_subcarrier_spacing(lhs.get_numerology())) *
                                         lhs.get_nof_symbols();
 
-  int tmp = static_cast<int>(lhs.system_slot()) - static_cast<int>(rhs.system_slot());
+  int tmp = static_cast<int>(lhs.to_uint()) - static_cast<int>(rhs.to_uint());
   if (tmp > (nof_symbols_per_slot_wrap / 2)) {
     return (tmp - nof_symbols_per_slot_wrap);
   }

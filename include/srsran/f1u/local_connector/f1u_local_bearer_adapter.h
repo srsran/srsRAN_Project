@@ -39,34 +39,39 @@ public:
     logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info})
   {
   }
+
   void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_, const up_transport_layer_info& dl_tnl_info_)
   {
     handler = &handler_;
     dl_tnl_info.emplace(dl_tnl_info_);
   }
+
   void detach_du_handler(const up_transport_layer_info& dl_tnl_info_)
   {
     if (dl_tnl_info == dl_tnl_info_) {
       handler = nullptr;
       dl_tnl_info.reset();
     } else {
-      logger.log_info("Cannot dettach DU handler: DL-TEID does not match.");
+      logger.log_info("Cannot dettach DU bearer, DL-FTEID does not match. F-TEID={}, requested F-TEID={}",
+                      dl_tnl_info,
+                      dl_tnl_info_);
     }
   }
+
   void on_new_pdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
-      logger.log_info("Cannot handle NR-U DL message: DU handler not attached.");
+      logger.log_info("Cannot handle NR-U DL message. DU bearer does not exist.");
       return;
     }
-    logger.log_debug("Passing PDU to DU handler. {}", dl_tnl_info);
+    logger.log_debug("Passing PDU to DU bearer. {}", dl_tnl_info);
     handler->handle_pdu(std::move(msg));
   };
 
 private:
   srs_cu_up::f1u_bearer_logger      logger;
-  srs_du::f1u_rx_pdu_handler*       handler     = nullptr;
-  optional<up_transport_layer_info> dl_tnl_info = {};
+  srs_du::f1u_rx_pdu_handler*       handler = nullptr;
+  optional<up_transport_layer_info> dl_tnl_info;
 };
 
 class f1u_tx_delivery_local_adapter : public srs_cu_up::f1u_rx_delivery_notifier
@@ -93,7 +98,7 @@ public:
   void on_new_pdu(nru_ul_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("DU-F1-U").info("Cannot handle NR-U UL message: CU handler not attached.");
+      logger.log_info("Cannot handle NR-U UL message. CU-UP bearer does not exist.");
       return;
     }
     handler->handle_pdu(std::move(msg));

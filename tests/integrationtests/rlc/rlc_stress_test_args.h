@@ -126,7 +126,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -d, --pdu_drop_rate <rate>      Set rate at which RLC PDUs are dropped.\n"
     "  -c, --pdu_cut_rate <rate>       Set rate at which RLC PDUs are chopped in length.\n"
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
-    "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
+    "  -t, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
     "  --pdcp_sn_size <level>          Set PDCP SN size.\n"
     "  --pdcp_t_reordering <timeout>   Set PDCP t-Reordering timeout (ms).\n"

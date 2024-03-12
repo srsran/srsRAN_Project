@@ -23,6 +23,8 @@
 #include "du_processor_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/ran/cause/f1ap_cause_converters.h"
+#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_du_factory.h"
 
@@ -105,7 +107,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   // TODO: How to handle missing optional freq and timing in meas timing config?
   if (!rrc_du_adapter.on_new_served_cell_list(request.gnb_du_served_cells_list)) {
     res.result =
-        du_setup_result::rejected{cause_transport_t::unspecified, "Could not establish served cell list in RRC"};
+        du_setup_result::rejected{f1ap_cause_transport_t::unspecified, "Could not establish served cell list in RRC"};
     return res;
   }
 
@@ -330,12 +332,12 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
                          ngap_ctrl_notifier.on_ue_context_release_request(
                              cu_cp_ue_context_release_request{request.ue_index,
                                                               ue->get_up_resource_manager().get_pdu_sessions(),
-                                                              cause_radio_network_t::radio_conn_with_ue_lost}));
+                                                              f1ap_to_ngap_cause(request.cause)}));
         if (!ngap_release_successful) {
           // Release UE from DU, if it doesn't exist in the NGAP
           logger.debug("ue={}: Releasing UE from DU. ReleaseRequest not sent to AMF", request.ue_index);
           CORO_AWAIT(handle_ue_context_release_command(
-              cu_cp_ue_context_release_command{request.ue_index, cause_nas_t::unspecified}));
+              cu_cp_ue_context_release_command{request.ue_index, ngap_cause_radio_network_t::user_inactivity}));
         }
         CORO_RETURN();
       }));
@@ -484,14 +486,14 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
   f1ap_paging_notifier.on_paging_message(msg);
 }
 
-void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index, cause_t cause)
+void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index, ngap_cause_t cause)
 {
   du_ue* ue = ue_manager.find_du_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
 
   cu_cp_ue_context_release_request req;
   req.ue_index = ue_index;
-  req.cause    = cause_radio_network_t::user_inactivity;
+  req.cause    = cause;
 
   // Add PDU Session IDs
   auto& up_resource_manager            = ue->get_up_resource_manager();
@@ -511,7 +513,7 @@ void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index
 void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   if (msg.ue_inactive) {
-    send_ngap_ue_context_release_request(msg.ue_index, cause_radio_network_t::user_inactivity);
+    send_ngap_ue_context_release_request(msg.ue_index, ngap_cause_radio_network_t::user_inactivity);
   } else {
     logger.debug("Inactivity notification level not supported");
   }

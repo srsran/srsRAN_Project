@@ -174,7 +174,7 @@ du_high_test_bench::du_high_test_bench() :
     cfg.timers       = &timers;
     cfg.gnb_du_id    = 0;
     cfg.gnb_du_name  = "srsdu";
-    cfg.du_bind_addr = {"127.0.0.1"};
+    cfg.du_bind_addr = transport_layer_address::create_from_string("127.0.0.1");
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
     cfg.qos          = config_helpers::make_default_du_qos_config_list(0);
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();

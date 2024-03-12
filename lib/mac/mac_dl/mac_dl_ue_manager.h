@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cell_dl_harq_buffer_pool.h"
 #include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
@@ -52,10 +53,6 @@ public:
 
   du_ue_index_t get_ue_index() const { return ue_index; }
 
-  // HARQ buffer methods.
-  span<uint8_t>       dl_harq_buffer(harq_id_t h_id) { return harq_buffers[h_id]; }
-  span<const uint8_t> dl_harq_buffer(harq_id_t h_id) const { return harq_buffers[h_id]; }
-
   // DL Logical Channel methods.
   const slotted_id_vector<lcid_t, mac_sdu_tx_builder*>& logical_channels() const { return dl_bearers; }
   void addmod_logical_channels(span<const mac_logical_channel_config> dl_logical_channels);
@@ -65,7 +62,6 @@ public:
 
 private:
   du_ue_index_t                                  ue_index;
-  std::vector<std::vector<uint8_t>>              harq_buffers;
   slotted_id_vector<lcid_t, mac_sdu_tx_builder*> dl_bearers;
   ue_con_res_id_t                                msg3_subpdu = {};
 };
@@ -133,19 +129,6 @@ public:
 
   /// \brief Returns UE Contention Resolution Id, which is derived from Msg3 bytes.
   ue_con_res_id_t get_con_res_id(rnti_t rnti);
-
-  span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id, unsigned tb_idx)
-  {
-    du_ue_index_t ue_index = rnti_table[rnti];
-    if (ue_index == INVALID_DU_UE_INDEX) {
-      return {};
-    }
-    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
-    if (not ue_db.contains(ue_index)) {
-      return {};
-    }
-    return ue_db[ue_index].dl_harq_buffer(h_id);
-  }
 
 private:
   du_rnti_table& rnti_table;

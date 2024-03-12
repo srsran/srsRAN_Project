@@ -373,7 +373,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     for (const auto& failed_item : response.pdu_session_resource_failed_list) {
       asn1::e1ap::pdu_session_res_failed_item_s asn1_failed_item;
       asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
-      asn1_failed_item.cause          = cause_to_asn1_cause(failed_item.cause);
+      asn1_failed_item.cause          = cause_to_asn1(failed_item.cause);
 
       asn1_bearer_context_setup_response.pdu_session_res_failed_list.push_back(asn1_failed_item);
     }
@@ -736,7 +736,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
     for (const auto& res_failed_mod_item : response.pdu_session_resource_failed_list) {
       asn1::e1ap::pdu_session_res_failed_mod_item_s asn1_res_failed_mod_item;
       asn1_res_failed_mod_item.pdu_session_id = pdu_session_id_to_uint(res_failed_mod_item.pdu_session_id);
-      asn1_res_failed_mod_item.cause          = cause_to_asn1_cause(res_failed_mod_item.cause);
+      asn1_res_failed_mod_item.cause          = cause_to_asn1(res_failed_mod_item.cause);
 
       asn1_bearer_context_modification_response.pdu_session_res_failed_mod_list.push_back(asn1_res_failed_mod_item);
     }
@@ -859,7 +859,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
     for (const auto& res_failed_to_modify_item : response.pdu_session_resource_failed_to_modify_list) {
       asn1::e1ap::pdu_session_res_failed_to_modify_item_s asn1_res_failed_to_modify_item;
       asn1_res_failed_to_modify_item.pdu_session_id = pdu_session_id_to_uint(res_failed_to_modify_item.pdu_session_id);
-      asn1_res_failed_to_modify_item.cause          = cause_to_asn1_cause(res_failed_to_modify_item.cause);
+      asn1_res_failed_to_modify_item.cause          = cause_to_asn1(res_failed_to_modify_item.cause);
 
       asn1_bearer_context_modification_response.pdu_session_res_failed_to_modify_list.push_back(
           asn1_res_failed_to_modify_item);

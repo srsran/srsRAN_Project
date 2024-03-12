@@ -114,7 +114,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
           "\"{}\" for old_ue={} failed. Requesting UE context release", name(), reestablishment_context.ue_index);
       // Release the old UE
       ue_context_release_request.ue_index = context.ue_index;
-      ue_context_release_request.cause    = cause_radio_network_t::unspecified;
+      ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
       CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
     } else {
       logger.log_debug("\"{}\" for old_ue={} finalized", name(), reestablishment_context.ue_index);
@@ -157,7 +157,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
       logger.log_debug("old_ue={} was not fully attached yet. Requesting UE context release",
                        reestablishment_context.ue_index);
       ue_context_release_request.ue_index = reestablishment_context.ue_index;
-      ue_context_release_request.cause    = cause_radio_network_t::unspecified;
+      ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
       CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
     }
 

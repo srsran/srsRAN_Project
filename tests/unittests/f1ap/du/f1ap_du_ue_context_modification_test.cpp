@@ -49,7 +49,7 @@ protected:
       drb.drb_id = drb_id;
       drb.dluptnl_info_list.resize(1);
       drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
-      drb.dluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"};
+      drb.dluptnl_info_list[0].tp_address = transport_layer_address::create_from_string("127.0.0.1");
     }
     this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
 

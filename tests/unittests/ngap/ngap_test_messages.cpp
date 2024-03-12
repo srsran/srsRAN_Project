@@ -159,7 +159,8 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
 {
   cu_cp_initial_ue_message msg = {};
   msg.ue_index                 = ue_index;
-  msg.nas_pdu.resize(nas_pdu_len);
+  bool ret                     = msg.nas_pdu.resize(nas_pdu_len);
+  (void)ret;
   msg.establishment_cause                = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
   msg.user_location_info.nr_cgi.plmn_hex = "00f110";
   msg.user_location_info.nr_cgi.nci      = 6576;
@@ -181,7 +182,8 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   dl_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   dl_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
   if (nas_pdu.empty()) {
-    dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+    bool ret = dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+    (void)ret;
   } else {
     dl_nas_transport_msg->nas_pdu = nas_pdu.copy();
   }
@@ -193,7 +195,8 @@ cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_i
 {
   cu_cp_ul_nas_transport ul_nas_transport = {};
   ul_nas_transport.ue_index               = ue_index;
-  ul_nas_transport.nas_pdu.resize(nas_pdu_len);
+  bool ret                                = ul_nas_transport.nas_pdu.resize(nas_pdu_len);
+  (void)ret;
   ul_nas_transport.user_location_info.nr_cgi.plmn_hex = "00f110";
   ul_nas_transport.user_location_info.nr_cgi.nci      = 6576;
   ul_nas_transport.user_location_info.tai.plmn_id     = "00f110";
@@ -212,7 +215,8 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
   auto& ul_nas_transport_msg           = ul_nas_transport.pdu.init_msg().value.ul_nas_transport();
   ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ul_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-  ul_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  bool ret                             = ul_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  (void)ret;
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
@@ -463,7 +467,8 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_sessio
 
   auto& dlqos_flow_per_tnl_info =
       pdu_session_setup_response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info;
-  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
+  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("0.0.0.0"),
+                                              int_to_gtpu_teid(0)};
   cu_cp_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
   dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), assoc_qos_flow);
@@ -628,7 +633,8 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_modify_response(pdu_sessi
   pdu_session_modify_response_item.pdu_session_id = pdu_session_id;
 
   cu_cp_qos_flow_per_tnl_information qos_flow_per_tnl_info;
-  qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid(1)};
+  qos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address::create_from_string("127.0.0.1"),
+                                            int_to_gtpu_teid(1)};
 
   cu_cp_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = qos_flow_id;

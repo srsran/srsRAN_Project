@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "lib/du_manager/du_ue/du_ue_manager_repository.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "lib/du_manager/ran_resource_management/du_ran_resource_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <map>
@@ -70,7 +70,6 @@ public:
   explicit dummy_cell_executor_mapper(task_executor& exec_) : exec(exec_) {}
   task_executor& executor(du_cell_index_t cell_index) override { return exec; }
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override { return exec; }
-  task_executor& error_ind_executor(du_cell_index_t cell_index) override { return exec; }
 
   task_executor& exec;
 };
@@ -224,7 +223,8 @@ public:
                                        const up_transport_layer_info& dl_tnl_info,
                                        const up_transport_layer_info& ul_tnl_info,
                                        srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                       timer_factory                  timers) override
+                                       timer_factory                  timers,
+                                       task_executor&                 ue_executor) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_tnl_info) == 0) {
       f1u_bearers.insert(std::make_pair(dl_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy>{}));

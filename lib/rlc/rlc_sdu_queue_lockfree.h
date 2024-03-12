@@ -211,6 +211,19 @@ public:
   /// \return The number of buffered SDU bytes that are not marked as discarded.
   uint32_t size_bytes() const { return n_bytes.load(std::memory_order_relaxed); }
 
+  /// \brief Container for return value of \c get_state function.
+  struct state {
+    uint32_t n_sdus;  ///< Number of buffered SDUs that are not marked as discarded.
+    uint32_t n_bytes; ///< Number of buffered bytes that are not marked as discarded.
+  };
+
+  /// \brief Reads the state of the queue, i.e. number of buffered SDUs and bytes that are not marked as discarded.
+  ///
+  /// This function may be called by any thread.
+  ///
+  /// \return Current state of the queue.
+  state get_state() const { return {size_sdus(), size_bytes()}; }
+
   /// \brief Checks if the internal queue is empty.
   ///
   /// This function may be called by any thread.
@@ -293,7 +306,7 @@ private:
 
 namespace fmt {
 template <>
-struct formatter<srsran::rlc_sdu_queue_lockfree> {
+struct formatter<srsran::rlc_sdu_queue_lockfree::state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -301,10 +314,10 @@ struct formatter<srsran::rlc_sdu_queue_lockfree> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_sdu_queue_lockfree& q, FormatContext& ctx)
+  auto format(const srsran::rlc_sdu_queue_lockfree::state& state, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", q.size_sdus(), q.size_bytes());
+    return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", state.n_sdus, state.n_bytes);
   }
 };
 

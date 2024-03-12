@@ -27,16 +27,10 @@ using namespace srsran;
 using namespace ofh;
 
 message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&                  logger_,
-                                                   const symbol_handler_config&           cfg,
+                                                   const tx_window_timing_parameters&     timing_params_,
                                                    std::unique_ptr<ether::gateway>        gw,
                                                    std::shared_ptr<ether::eth_frame_pool> frame_pool) :
-  logger(logger_),
-  pool_ptr(frame_pool),
-  pool(*pool_ptr),
-  gateway(std::move(gw)),
-  timing_params(
-      cfg.tx_timing_params,
-      std::chrono::duration<double, std::nano>(1e6 / (cfg.symbols_per_slot * get_nof_slots_per_subframe(cfg.scs))))
+  logger(logger_), pool_ptr(frame_pool), pool(*pool_ptr), gateway(std::move(gw)), timing_params(timing_params_)
 {
   srsran_assert(gateway, "Invalid Ethernet gateway");
   srsran_assert(pool_ptr, "Invalid frame pool");

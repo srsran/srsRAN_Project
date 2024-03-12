@@ -99,6 +99,11 @@ public:
   /// \param crbs List of CRBs, where CRB=0 corresponds to the CRB closest to pointA.
   void fill(ofdm_symbol_range symbols, span<const uint16_t> crb_list);
 
+  /// Clears allocated symbol x CRB list in the carrier resource grid.
+  /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
+  /// \param crbs List of CRBs, where CRB=0 corresponds to the CRB closest to pointA.
+  void clear(ofdm_symbol_range symbols, span<const uint16_t> crb_list);
+
   /// Checks whether the provided symbol x CRB range collides with any other allocation in the carrier resource grid.
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
   /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
@@ -157,6 +162,11 @@ public:
   /// \param symbols OFDM symbol interval of the allocation.
   void fill(grant_info grant);
   void fill(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, span<const uint16_t> crbs);
+
+  /// Clears allocated symbol x RB range in the cell resource grid.
+  /// \param symbols OFDM symbol interval of the allocation.
+  /// \param prbs PRB interval of the allocation. PRB=0 corresponds to the first PRB of the BWP.
+  void clear(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, span<const uint16_t> crbs);
 
   /// Checks whether the provided symbol x RB range collides with any other allocation in the cell resource grid.
   /// \param grant contains the symbol x RB range whose available we want to check.

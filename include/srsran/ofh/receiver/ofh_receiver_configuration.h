@@ -51,7 +51,7 @@ struct receiver_config {
   /// Tag control information field.
   uint16_t tci;
   /// Reception window timing parameters.
-  du_rx_window_timing_parameters rx_timing_params;
+  rx_window_timing_parameters rx_timing_params;
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.

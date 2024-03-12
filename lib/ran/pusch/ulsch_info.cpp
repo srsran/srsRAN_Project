@@ -349,5 +349,12 @@ ulsch_information srsran::get_ulsch_information(const ulsch_configuration& confi
   // Number of bits used for CSI Part 2.
   result.nof_csi_part2_bits = units::bits(result.nof_csi_part2_re * config.nof_layers * modulation_order);
 
+  // Count the number of rate matched bits that overlap with the DC position.
+  if (config.contains_dc) {
+    result.nof_dc_overlap_bits = units::bits(config.nof_symbols * modulation_order);
+  } else {
+    result.nof_dc_overlap_bits = 0_bits;
+  }
+
   return result;
 }

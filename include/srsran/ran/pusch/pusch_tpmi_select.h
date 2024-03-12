@@ -62,6 +62,9 @@ public:
     return info[nof_layers - 1];
   }
 
+  /// Constructs a PUSCH TPMI information from a span.
+  pusch_tpmi_select_info(const span<tpmi_info>& info_) : info(info_.begin(), info_.end()) {}
+
   /// Constructs a PUSCH TPMI information from an initializer list.
   pusch_tpmi_select_info(const std::initializer_list<tpmi_info>& info_) : info(info_.begin(), info_.end()) {}
 

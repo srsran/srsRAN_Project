@@ -273,6 +273,16 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
       // Limit the grant PRBs.
       if (not is_retx and dl_new_tx_max_nof_rbs_per_ue_per_slot.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, dl_new_tx_max_nof_rbs_per_ue_per_slot.value());
+        // [Implementation-defined]
+        // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs for
+        // which dl_new_tx_max_nof_rbs_per_ue_per_slot was computed. One way is by checking if the emtpy interval is
+        // less than 2 times the required RBs. If so, allocate all remaining RBs. NOTE: This approach won't hold good in
+        // case of low traffic scenario.
+        const unsigned twice_grant_crbs_length =
+            rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
+        if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
+          mcs_prbs.n_prbs = twice_grant_crbs_length;
+        }
       }
 
       if (mcs_prbs.n_prbs == 0) {
@@ -375,8 +385,7 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_ul_search_spaces(pdcch_slot, preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->is_search_space0() or
-          ss->cfg->get_id() != ue_cc.cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id()) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -426,6 +435,14 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // Limit the grant PRBs.
       if (not is_retx and not schedule_sr_only and ul_new_tx_max_nof_rbs_per_ue_per_slot.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ul_new_tx_max_nof_rbs_per_ue_per_slot.value());
+        // [Implementation-defined]
+        // Check whether it's the last UE to be scheduled in this slot i.e. if the emtpy interval is less than 2 times
+        // the required RBs. If so, allocate all remaining RBs.
+        const unsigned twice_grant_crbs_length =
+            rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
+        if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
+          mcs_prbs.n_prbs = twice_grant_crbs_length;
+        }
       }
       // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
       if (mcs_prbs.n_prbs == 0) {
@@ -510,16 +527,16 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   };
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
 
-  // Second, schedule UEs with SRB data.
-  auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger);
-  };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
-
-  // Then, schedule new transmissions.
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    // Second, schedule UEs with SRB data.
+    auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+      return alloc_dl_ue(u, res_grid, pdsch_alloc, false, true, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
+    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
+
+    // Then, schedule new transmissions.
     auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(u, res_grid, pdsch_alloc, false, false, logger, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };

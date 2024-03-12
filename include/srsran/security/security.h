@@ -428,4 +428,52 @@ struct formatter<srsran::security::sec_domain> {
   }
 };
 
+// Key formatting
+template <>
+struct formatter<srsran::security::sec_128_key> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::security::sec_128_key& key, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key, " "));
+  }
+};
+
+template <>
+struct formatter<srsran::security::sec_key> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::security::sec_key& key, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin(), key.begin() + 16, " "));
+    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(key.begin() + 16, key.end(), " "));
+  }
+};
+
+template <>
+struct formatter<srsran::security::sec_mac> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::security::sec_mac& mac, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "\n\t{:02x}", fmt::join(mac, " "));
+  }
+};
+
 } // namespace fmt
