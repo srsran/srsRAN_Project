@@ -344,6 +344,10 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
     report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
   }
 
+  std::shared_ptr<time_alignment_estimator_factory> ta_est_factory =
+      create_time_alignment_estimator_dft_factory(dft_factory);
+  report_fatal_error_if_not(ta_est_factory, "Invalid TA estimator factory.");
+
   std::shared_ptr<prach_generator_factory> prach_gen_factory = create_prach_generator_factory_sw();
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
@@ -351,7 +355,8 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_prach_detector_factory_sw(dft_factory, prach_gen_factory);
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
-  std::shared_ptr<srs_estimator_factory> srs_factory = create_srs_estimator_generic_factory(sequence_factory);
+  std::shared_ptr<srs_estimator_factory> srs_factory =
+      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory);
   report_fatal_error_if_not(srs_factory, "Invalid SRS estimator factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.

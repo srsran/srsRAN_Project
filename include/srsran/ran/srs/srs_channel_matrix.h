@@ -18,8 +18,10 @@
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/srsran_assert.h"
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <initializer_list>
+#include <numeric>
 
 namespace srsran {
 
@@ -125,9 +127,13 @@ public:
   }
 
   /// \brief Near equal comparison method.
+  ///
+  /// Checks whether two matrices are similar, that is whether their Frobenius distance does not exceed the given
+  /// tolerance, relative to the norm of the first matrix.
+  ///
   /// \param[in] other     Channel matrix to compare against.
-  /// \param[in] tolerance Maximum absolute error tolerated for considering two propagation channel coefficients equal.
-  /// \return \c true if the absolute error between both channel matrices is lower than \c tolerance, \c false
+  /// \param[in] tolerance Maximum relative error.
+  /// \return \c true if the relative distance between the two channel matrices is lower than \c tolerance, \c false
   ///         otherwise.
   bool is_near(const srs_channel_matrix& other, float tolerance) const
   {
@@ -141,16 +147,15 @@ public:
       return false;
     }
 
-    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
-      for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
-        float error = std::abs(get_coefficient(i_rx_port, i_tx_port) - other.get_coefficient(i_rx_port, i_tx_port));
-        if (error > tolerance) {
-          return false;
-        }
-      }
-    }
+    // Normalize both matrices.
+    srs_channel_matrix left  = this->normalize();
+    srs_channel_matrix right = other.normalize();
 
-    return true;
+    // Calculate the difference of both matrices.
+    srs_channel_matrix diff = left - right;
+
+    // Finally, calculate the distance between the matrices.
+    return (diff.frobenius_norm() / left.frobenius_norm()) < tolerance;
   }
 
   /// Gets the current number of receive ports.
@@ -195,11 +200,74 @@ public:
     data[{i_rx_port, i_tx_port}] = coefficient;
   }
 
-  /// Scales all the coefficients by a scaling factor.
+  /// Scales all the coefficients by a real scaling factor.
   srs_channel_matrix& operator*=(float scale)
   {
     srsvec::sc_prod(data.get_data(), scale, data.get_data());
     return *this;
+  }
+
+  /// Scales all the coefficients by a complex scaling factor.
+  srs_channel_matrix& operator*=(cf_t scale)
+  {
+    srsvec::sc_prod(data.get_data(), scale, data.get_data());
+    return *this;
+  }
+
+  /// Calculates the Frobenius norm of the channel matrix.
+  float frobenius_norm() const
+  {
+    span<const cf_t> raw_data = data.get_data();
+
+    float square_sum =
+        std::accumulate(raw_data.begin(), raw_data.end(), 0.0F, [](float sum, cf_t in) { return sum + std::norm(in); });
+
+    return std::sqrt(square_sum);
+  }
+
+  /// \brief Subtracts two channel matrices.
+  /// \param[in] other The matrix to subtract.
+  /// \return The difference matrix.
+  /// \remark An assertion is triggered if the dimensions are not equal.
+  srs_channel_matrix operator-(const srs_channel_matrix& other) const
+  {
+    srsran_assert(get_nof_tx_ports() == other.get_nof_tx_ports(), "The number of transmit ports is not equal.");
+    srsran_assert(get_nof_rx_ports() == other.get_nof_rx_ports(), "The number of receive ports is not equal.");
+
+    unsigned nof_rx_ports = get_nof_rx_ports();
+    unsigned nof_tx_ports = get_nof_tx_ports();
+
+    srs_channel_matrix result(nof_rx_ports, nof_tx_ports);
+    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+      for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
+        result.set_coefficient(
+            get_coefficient(i_rx_port, i_tx_port) - other.get_coefficient(i_rx_port, i_tx_port), i_rx_port, i_tx_port);
+      }
+    }
+
+    return result;
+  }
+
+  /// \brief Normalizes the channel matrix.
+  ///
+  /// Applies a scaling factor to all the channel matrix coefficients. The scaling magnitude is equal to the square
+  /// root of the number of coefficients divided by the Frobenius norm. The scaling argument is the opposite of the
+  /// first coefficient argument.
+  ///
+  /// \return A normalized channel matrix with purely-real first coefficient and Frobenius norm equal to the square root
+  /// of the number of elements.
+  srs_channel_matrix normalize() const
+  {
+    unsigned nof_rx_ports = get_nof_rx_ports();
+    unsigned nof_tx_ports = get_nof_tx_ports();
+
+    float argument  = -std::arg(get_coefficient(0, 0));
+    float amplitude = std::sqrt(nof_rx_ports * nof_tx_ports) / frobenius_norm();
+    cf_t  scaling   = std::polar(amplitude, argument);
+
+    srs_channel_matrix result = *this;
+    result *= scaling;
+    return result;
   }
 
 private:

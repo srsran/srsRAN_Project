@@ -20,7 +20,8 @@
 
 using namespace srsran;
 
-static double to_seconds(unsigned index, unsigned dft_size, subcarrier_spacing scs)
+template <typename IndexType>
+static double to_seconds(IndexType index, unsigned dft_size, subcarrier_spacing scs)
 {
   // Calculate DFT sampling rate.
   unsigned sampling_rate = dft_size * scs_to_khz(scs) * 1000;
@@ -31,7 +32,8 @@ static double to_seconds(unsigned index, unsigned dft_size, subcarrier_spacing s
 
 time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>                pilots_lse,
                                                                        bounded_bitset<max_nof_symbols> re_mask,
-                                                                       subcarrier_spacing              scs)
+                                                                       subcarrier_spacing              scs,
+                                                                       double                          max_ta)
 {
   span<cf_t> channel_observed_freq = idft->get_input();
   srsvec::zero(channel_observed_freq);
@@ -41,21 +43,26 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<cons
 
   span<const cf_t> channel_observed_time = idft->run();
 
-  static constexpr unsigned  HALF_CP_LENGTH     = ((144 / 2) * dft_size) / 2048;
-  std::pair<unsigned, float> observed_max_delay = srsvec::max_abs_element(channel_observed_time.first(HALF_CP_LENGTH));
-  std::pair<unsigned, float> observed_max_advance = srsvec::max_abs_element(channel_observed_time.last(HALF_CP_LENGTH));
+  unsigned max_ta_samples = ((144 / 2) * dft_size) / 2048;
+  if (std::isnormal(max_ta)) {
+    max_ta_samples = static_cast<unsigned>(std::floor(max_ta * static_cast<double>(scs_to_khz(scs) * 1000 * dft_size)));
+  }
+
+  std::pair<unsigned, float> observed_max_delay = srsvec::max_abs_element(channel_observed_time.first(max_ta_samples));
+  std::pair<unsigned, float> observed_max_advance = srsvec::max_abs_element(channel_observed_time.last(max_ta_samples));
 
   double t_align_seconds;
   if (observed_max_delay.second >= observed_max_advance.second) {
     t_align_seconds = to_seconds(observed_max_delay.first, dft_size, scs);
   } else {
-    t_align_seconds = -to_seconds(HALF_CP_LENGTH - observed_max_advance.first, dft_size, scs);
+    t_align_seconds = -to_seconds(max_ta_samples - observed_max_advance.first, dft_size, scs);
   }
 
+  // Fill results.
   time_alignment_measurement result;
   result.time_alignment = t_align_seconds;
-  result.min            = -to_seconds(HALF_CP_LENGTH, dft_size, scs);
-  result.max            = to_seconds(HALF_CP_LENGTH, dft_size, scs);
+  result.min            = -to_seconds(max_ta_samples, dft_size, scs);
+  result.max            = to_seconds(max_ta_samples, dft_size, scs);
   result.resolution     = to_seconds(1, dft_size, scs);
   return result;
 }

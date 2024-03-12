@@ -35,11 +35,14 @@ public:
   /// \param[in] symbols Complex frequency domain symbols.
   /// \param[in] mask    Distribution of the complex symbols within an OFDM symbol.
   /// \param[in] scs     Subcarrier spacing.
+  /// \param[in] max_ta  Maximum absolute time alignment measurement if it is not zero.
   /// \return The measured time alignment.
   /// \remark An assertion is triggered if the number of symbols is not equal to the number of active elements in the
   /// mask.
-  virtual time_alignment_measurement
-  estimate(span<const cf_t> symbols, bounded_bitset<max_nof_symbols> mask, subcarrier_spacing scs) = 0;
+  virtual time_alignment_measurement estimate(span<const cf_t>                symbols,
+                                              bounded_bitset<max_nof_symbols> mask,
+                                              subcarrier_spacing              scs,
+                                              double                          max_ta = 0.0) = 0;
 };
 
 } // namespace srsran

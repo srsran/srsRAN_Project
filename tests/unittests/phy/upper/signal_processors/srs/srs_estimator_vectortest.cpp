@@ -10,6 +10,7 @@
 
 #include "../../../support/resource_grid_test_doubles.h"
 #include "srs_estimator_test_data.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/upper/signal_processors/srs/formatters.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
@@ -36,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const srs_channel_matrix& channel)
 
 bool operator==(const srs_channel_matrix& left, const srs_channel_matrix& right)
 {
-  return left.is_near(right, 1e-2);
+  return left.is_near(right, 0.05F);
 }
 
 } // namespace srsran
@@ -48,12 +49,19 @@ class srsEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 protected:
   void SetUp() override
   {
+    std::shared_ptr<dft_processor_factory> dft_proc_factory = create_dft_processor_factory_fftw_slow();
+    ASSERT_NE(dft_proc_factory, nullptr);
+
+    std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+        create_time_alignment_estimator_dft_factory(dft_proc_factory);
+    ASSERT_NE(ta_estimator_factory, nullptr);
+
     std::shared_ptr<low_papr_sequence_generator_factory> sequence_generator_factory =
         create_low_papr_sequence_generator_sw_factory();
     ASSERT_NE(sequence_generator_factory, nullptr);
 
     std::shared_ptr<srs_estimator_factory> srs_est_factory =
-        create_srs_estimator_generic_factory(sequence_generator_factory);
+        create_srs_estimator_generic_factory(sequence_generator_factory, ta_estimator_factory);
     ASSERT_NE(srs_est_factory, nullptr);
 
     estimator = srs_est_factory->create();
@@ -79,7 +87,8 @@ TEST_P(srsEstimatorFixture, FromVector)
 
   srs_estimator_result result = estimator->estimate(grid, config);
 
-  ASSERT_EQ(test_case.context.result.channel_matrix, result.channel_matrix);
+  ASSERT_EQ(test_case.context.result.channel_matrix.normalize(), result.channel_matrix.normalize());
+  ASSERT_NEAR(test_case.context.result.time_alignment.time_alignment, result.time_alignment.time_alignment, 1e-7);
 }
 
 INSTANTIATE_TEST_SUITE_P(srsEstimatorFixture, srsEstimatorFixture, ::testing::ValuesIn(srs_estimator_test_data));
