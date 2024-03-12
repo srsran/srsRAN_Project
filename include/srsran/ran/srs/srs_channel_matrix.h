@@ -49,14 +49,13 @@ public:
                   srs_constants::max_nof_rx_ports);
     srsran_assert(nof_tx_ports <= srs_constants::max_nof_tx_ports,
                   "The number of transmit ports (i.e., {}) exceeds the maximum (i.e., {}).",
-                  nof_rx_ports,
-                  srs_constants::max_nof_rx_ports);
+                  nof_tx_ports,
+                  srs_constants::max_nof_tx_ports);
   }
 
   /// \brief Constructs a channel matrix with the desired number of receive and transmit ports.
   ///
-  /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients
-  /// values.
+  /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients.
   ///
   /// \param[in] coefficients Channel coefficient list, arranged by i) receive port and ii) transmit port.
   /// \param[in] nof_rx_ports Number of receive ports.

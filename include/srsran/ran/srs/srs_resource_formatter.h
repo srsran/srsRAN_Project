@@ -15,7 +15,7 @@
 
 namespace fmt {
 
-/// \brief Custom formatter for \c srsran::srs_estimator_configuration.
+/// \brief Custom formatter for \c srsran::srs_resource_configuration.
 template <>
 struct formatter<srsran::srs_resource_configuration> {
   /// Helper used to parse formatting options and format fields.
