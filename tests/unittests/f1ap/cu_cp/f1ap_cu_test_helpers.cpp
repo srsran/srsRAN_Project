@@ -25,13 +25,13 @@ gnb_cu_ue_f1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_ue_f1ap_id()
       gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min), gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
 }
 
-f1ap_cu_test::f1ap_cu_test()
+f1ap_cu_test::f1ap_cu_test(const f1ap_configuration& f1ap_cfg)
 {
   test_logger.set_level(srslog::basic_levels::debug);
   f1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(f1ap_configuration{},
+  f1ap = create_f1ap(f1ap_cfg,
                      f1ap_pdu_notifier,
                      du_processor_notifier,
                      f1ap_du_mgmt_notifier,
@@ -86,6 +86,12 @@ f1ap_cu_test::test_ue& f1ap_cu_test::run_ue_context_setup()
   test_ues[ue_index].cu_ue_id = cu_ue_id;
   test_ues[ue_index].du_ue_id = du_ue_id;
   return test_ues[ue_index];
+}
+
+void f1ap_cu_test::tick()
+{
+  this->timers.tick();
+  this->ctrl_worker.run_pending_tasks();
 }
 
 f1ap_ue_context_setup_request

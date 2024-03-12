@@ -222,7 +222,7 @@ protected:
     optional<gnb_du_ue_f1ap_id_t> du_ue_id;
   };
 
-  f1ap_cu_test();
+  f1ap_cu_test(const f1ap_configuration& f1ap_cfg = {});
   ~f1ap_cu_test() override;
 
   /// \brief Helper method to successfully create UE instance in F1AP.
@@ -230,6 +230,8 @@ protected:
 
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
   test_ue& run_ue_context_setup();
+
+  void tick();
 
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
