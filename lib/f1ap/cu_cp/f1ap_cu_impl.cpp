@@ -44,12 +44,13 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
+  const char* msg_name = "\"DLRRCMessageTransfer\"";
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping DlRrcMessageTransfer. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping \"{}\". UE context does not exist", msg.ue_index, msg_name);
     return;
   }
-
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
+  srsran_sanity_check(ue_ctxt.ue_ids.du_ue_f1ap_id != gnb_du_ue_f1ap_id_t::invalid, "Invalid gNB-DU-UE-F1AP-Id");
 
   asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
   dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
@@ -58,7 +59,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 
   if (ue_ctxt.pending_old_ue_id.has_value()) {
-    // if the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
+    // If the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
     // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7.
     dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
     dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.pending_old_ue_id.value());
@@ -70,14 +71,14 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_message f1ap_dl_rrc_msg;
   f1ap_dl_rrc_msg.pdu.set_init_msg();
   f1ap_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-  f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dl_rrc_msg;
+  f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = std::move(dl_rrc_msg);
 
   // send DL RRC message
-  ue_ctxt.logger.log_debug("Sending DlRrcMessageTransfer");
+  ue_ctxt.logger.log_debug("Sending \"{}\"", msg_name);
   if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     f1ap_dl_rrc_msg.pdu.to_json(js);
-    ue_ctxt.logger.log_debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
+    ue_ctxt.logger.log_debug("Containerized \"{}\": {}", msg_name, js.to_string());
   }
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
@@ -93,7 +94,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping UeContextReleaseCommand. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping \"UEContextReleaseCommand\". Cause: UE context does not exist", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -108,7 +109,7 @@ async_task<f1ap_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
   if (!ue_ctxt_list.contains(request.ue_index)) {
-    logger.warning("ue={}: Dropping UeContextModificationRequest. UE context does not exist", request.ue_index);
+    logger.warning("ue={}: Dropping \"UEContextModificationRequest\". UE context does not exist", request.ue_index);
 
     return launch_async([](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -142,11 +143,11 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
   fill_asn1_paging_message(paging_msg.pdu.init_msg().value.paging(), msg);
 
   // send DL RRC message
-  logger.debug("Sending Paging");
+  logger.debug("Sending \"Paging\"");
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     paging_msg.pdu.to_json(js);
-    logger.debug("Containerized Paging: {}", js.to_string());
+    logger.debug("Containerized \"Paging\": {}", js.to_string());
   }
   pdu_notifier.on_new_message(paging_msg);
 }
