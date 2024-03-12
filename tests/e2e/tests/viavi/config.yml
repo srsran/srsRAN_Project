@@ -6,12 +6,6 @@
 # the distribution.
 #
 
-cu_cp:
-  pdu_session_setup_timeout: 5
-  inactivity_timer: 5
-  rrc:
-    force_reestablishment_fallback: true
-
 cell_cfg:
   dl_arfcn: 625000
   band: 78
@@ -38,7 +32,9 @@ cell_cfg:
     mcs_table: qam256
     max_alloc_attempts: 8
     max_pdschs_per_slot: 8
-  #   max_rb_size: 45   # <-- enable this only for 32UE
+{% if max_rb_size != -1 %}
+    max_rb_size: {{ max_rb_size }}
+{% endif %}
   ul_common:
     max_ul_grants_per_slot: 16
     max_pucchs_per_slot: 14
