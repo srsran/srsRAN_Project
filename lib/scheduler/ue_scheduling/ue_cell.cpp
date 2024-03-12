@@ -91,7 +91,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());
       break;
     default:
-      report_fatal_error("Unsupported PDCCH DCI UL format");
+      report_fatal_error("Unsupported PDCCH DCI DL format");
   }
 
   optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg.mcs_table);
