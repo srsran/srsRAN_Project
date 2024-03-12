@@ -26,7 +26,7 @@ def main():
     loglevel = args.loglevel
 
     INFRASTRUCTURE_TAG = "on-prem-amd64-avx2-avx512"
-    OS_NAME = "ubuntu-22.04"
+    OS_NAME = "ubuntu-24.04"
     COMPILER = "gcc"
     TESTMODE = "none"
 
