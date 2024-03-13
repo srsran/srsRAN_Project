@@ -35,7 +35,7 @@ public:
   void set_status(lcid_t lcid, bool active)
   {
     srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-    channels[lcid].active;
+    channels[lcid].active = active;
   }
 
   /// \brief Update the configurations of the provided lists of bearers.
@@ -44,7 +44,9 @@ public:
   /// \brief Verifies if logical channel is activated for DL.
   bool is_active(lcid_t lcid) const
   {
-    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+    if (lcid > LCID_MAX_DRB) {
+      return false;
+    }
     return channels[lcid].active;
   }
 
@@ -103,7 +105,6 @@ public:
   /// \brief Last DL buffer status for given LCID (MAC subheader included).
   unsigned pending_bytes(lcid_t lcid) const
   {
-    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
     return is_active(lcid) ? get_mac_sdu_required_bytes(channels[lcid].buf_st) : 0;
   }
 
