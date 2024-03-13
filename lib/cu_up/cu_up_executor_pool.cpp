@@ -133,10 +133,11 @@ private:
   std::atomic<uint32_t> round_robin_index{0};
 };
 
-std::unique_ptr<cu_up_executor_pool> srsran::srs_cu_up::make_cu_up_executor_mapper(task_executor&       cu_up_main_exec,
-                                                                                   span<task_executor*> dl_executors,
-                                                                                   span<task_executor*> ul_executors,
-                                                                                   span<task_executor*> ctrl_executors)
+std::unique_ptr<cu_up_executor_pool> srsran::srs_cu_up::make_cu_up_executor_pool(task_executor& cu_up_main_executor,
+                                                                                 span<task_executor*> dl_pdu_executors,
+                                                                                 span<task_executor*> ul_pdu_executors,
+                                                                                 span<task_executor*> ctrl_executors)
 {
-  return std::make_unique<cu_up_executor_pool_impl>(cu_up_main_exec, dl_executors, ul_executors, ctrl_executors);
+  return std::make_unique<cu_up_executor_pool_impl>(
+      cu_up_main_executor, dl_pdu_executors, ul_pdu_executors, ctrl_executors);
 }

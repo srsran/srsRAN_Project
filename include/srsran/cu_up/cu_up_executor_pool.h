@@ -55,10 +55,10 @@ public:
 };
 
 /// \brief Creates an executor mapper for the CU-UP.
-std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_mapper(task_executor&       cu_up_main_executor,
-                                                                span<task_executor*> dl_pdu_executors,
-                                                                span<task_executor*> ul_pdu_executors,
-                                                                span<task_executor*> ctrl_executors);
+std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_pool(task_executor&       cu_up_main_executor,
+                                                              span<task_executor*> dl_pdu_executors,
+                                                              span<task_executor*> ul_pdu_executors,
+                                                              span<task_executor*> ctrl_executors);
 
 } // namespace srs_cu_up
 } // namespace srsran

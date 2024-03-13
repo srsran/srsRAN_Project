@@ -95,14 +95,17 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
   if (pcap_cfg.e2ap.enabled or pcap_cfg.f1ap.enabled or pcap_cfg.ngap.enabled or pcap_cfg.e1ap.enabled) {
     strand_list.emplace_back(base_strand_cfg);
   }
+
   if (pcap_cfg.gtpu.enabled) {
     base_strand_cfg.queues[0].name = "gtpu_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
+
   if (pcap_cfg.mac.enabled) {
     base_strand_cfg.queues[0].name = "mac_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
+
   if (pcap_cfg.rlc.enabled) {
     base_strand_cfg.queues[0].name = "rlc_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
@@ -166,8 +169,9 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // currently support multithreading, these strands will point to a strand that interfaces with the non-RT thread pool.
   // Each UE strand will have three queues, one for timer management and configuration, one for DL data plane and one
   // for UL data plane.
-  cu_up_strands.push_back(strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                  {"cu_up_io_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
+  cu_up_strands.push_back(
+      strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}}});
   const unsigned nof_cu_up_ue_strands = 16;
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     cu_up_strands.push_back(
@@ -232,7 +236,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");
   metrics_hub_exec = exec_map.at("ctrl_exec");
   cu_up_ctrl_exec  = exec_map.at("cu_up_ctrl_exec");
-  cu_up_io_ul_exec = exec_map.at("cu_up_io_exec");
+  cu_up_io_ul_exec = exec_map.at("cu_up_io_ul_exec");
   cu_up_e2_exec    = exec_map.at("cu_up_ctrl_exec");
 
   // Create CU-UP execution mapper object.
@@ -244,7 +248,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
     ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
   }
-  cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_mapper(
+  cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_pool(
       *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
 
   // Instantiate DU-high executor mapper.
