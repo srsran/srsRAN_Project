@@ -40,10 +40,7 @@ public:
 
 private:
   // Actual demuxing, to be run in CU-UP executor.
-  void handle_pdu_impl(gtpu_teid_t                           teid,
-                       gtpu_tunnel_rx_upper_layer_interface* tunnel,
-                       byte_buffer                           pdu,
-                       const sockaddr_storage&               src_addr);
+  void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr);
 
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;

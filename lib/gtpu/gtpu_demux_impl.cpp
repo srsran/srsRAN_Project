@@ -62,9 +62,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
     return;
   }
 
-  auto fn = [this, teid, p = std::move(pdu), tunnel = it->second.tunnel, src_addr]() mutable {
-    handle_pdu_impl(teid, tunnel, std::move(p), src_addr);
-  };
+  auto fn = [this, teid, p = std::move(pdu), src_addr]() mutable { handle_pdu_impl(teid, std::move(p), src_addr); };
 
   if (not it->second.tunnel_exec->execute(std::move(fn))) {
     if (not cfg.warn_on_drop) {
@@ -75,10 +73,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
   }
 }
 
-void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t                           teid,
-                                      gtpu_tunnel_rx_upper_layer_interface* tunnel,
-                                      byte_buffer                           pdu,
-                                      const sockaddr_storage&               src_addr)
+void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr)
 {
   if (gtpu_pcap.is_write_enabled()) {
     auto pdu_copy = pdu.deep_copy();
@@ -91,6 +86,21 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t                           teid
 
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu.length(), teid);
 
+  gtpu_tunnel_rx_upper_layer_interface* tunnel = nullptr;
+  {
+    /// Get GTP-U tunnel. We lookup the tunnel again, as the tunnel could have been
+    /// removed between the time PDU processing was enqueued and the time we actually
+    /// run the task.
+    std::lock_guard<std::mutex> guard(map_mutex);
+    const auto&                 it = teid_to_tunnel.find(teid);
+    tunnel                         = it->second.tunnel;
+    if (it == teid_to_tunnel.end()) {
+      logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
+      return;
+    }
+  }
   // Forward entire PDU to the tunnel
+  // As removal happens in the same thread as handling the PDU, we no longer
+  // need the lock.
   tunnel->handle_pdu(std::move(pdu), src_addr);
 }
