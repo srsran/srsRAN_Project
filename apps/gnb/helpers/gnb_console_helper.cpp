@@ -175,6 +175,47 @@ void gnb_console_helper::handle_rx_gain_command(const std::list<std::string>& ga
   fmt::print("Rx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
 }
 
+void gnb_console_helper::handle_log_command(const std::list<std::string>& args)
+{
+  // Verify that the number of arguments is valid.
+  if (args.size() != 2) {
+    fmt::print("Invalid log command syntax. Usage: log <channel> <level>\n");
+    return;
+  }
+
+  // Copy and change to upper case the chanel string.
+  std::string channel_str = args.front();
+  std::transform(channel_str.begin(), channel_str.end(), channel_str.begin(), ::toupper);
+
+  // Copy and change to upper case the level string.
+  std::string level_str = args.back();
+  std::transform(level_str.begin(), level_str.end(), level_str.begin(), ::toupper);
+
+  // Convert to enum and check if it is valid.
+  srslog::basic_levels level = srslog::str_to_basic_level(level_str);
+  if (level_str != basic_level_to_string(level)) {
+    fmt::print("Invalid {} log level. Valid levels are: none, error, warning, info and debug\n", args.back());
+    return;
+  }
+
+  srslog::basic_logger& channel = srslog::fetch_basic_logger(channel_str);
+  channel.set_level(level);
+}
+
+void gnb_console_helper::handle_sleep_command(const std::list<std::string>& args)
+{
+  // Verify that the number of arguments is valid.
+  if (args.size() != 1) {
+    fmt::print("Invalid sleep command syntax. Usage: sleep <seconds>\n");
+    return;
+  }
+
+  double seconds = std::strtod(args.front().c_str(), nullptr);
+
+  std::chrono::microseconds microseconds(static_cast<uint64_t>(seconds * 1e6));
+  std::this_thread::sleep_for(microseconds);
+}
+
 void gnb_console_helper::handle_command(const std::string& command)
 {
   // Print help message if the command is empty.
@@ -199,6 +240,12 @@ void gnb_console_helper::handle_command(const std::string& command)
   } else if (arg_list.front() == "rx_gain") {
     arg_list.pop_front();
     handle_rx_gain_command(arg_list);
+  } else if (arg_list.front() == "log") {
+    arg_list.pop_front();
+    handle_log_command(arg_list);
+  } else if (arg_list.front() == "sleep") {
+    arg_list.pop_front();
+    handle_sleep_command(arg_list);
   } else {
     print_help();
   }
@@ -211,6 +258,8 @@ void gnb_console_helper::print_help()
   fmt::print("\tq:                     quit application\n");
   fmt::print("\ttx_gain <port> <gain>: set Tx gain\n");
   fmt::print("\trx_gain <port> <gain>: set Rx gain\n");
+  fmt::print("\tlog <channel> <level>: set log level for the given channel (experimental)\n");
+  fmt::print("\tsleep <seconds>:       stops the execution of console sequential commands for the specified time\n");
   fmt::print("\n");
 }
 
