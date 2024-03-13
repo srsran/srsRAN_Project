@@ -49,7 +49,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 {
   const char* msg_name = "\"DLRRCMessageTransfer\"";
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping \"{}\". UE context does not exist", msg.ue_index, msg_name);
+    logger.warning("ue={}: Dropping {}. UE context does not exist", msg.ue_index, msg_name);
     return;
   }
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
@@ -77,11 +77,11 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = std::move(dl_rrc_msg);
 
   // send DL RRC message
-  ue_ctxt.logger.log_debug("Sending \"{}\"", msg_name);
+  ue_ctxt.logger.log_debug("Sending {}", msg_name);
   if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     f1ap_dl_rrc_msg.pdu.to_json(js);
-    ue_ctxt.logger.log_debug("Containerized \"{}\": {}", msg_name, js.to_string());
+    ue_ctxt.logger.log_debug("Containerized {}: {}", msg_name, js.to_string());
   }
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
@@ -395,33 +395,35 @@ void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
 {
   expected<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(msg.pdu);
   expected<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
-
-  if (not du_ue_id.has_value() and not cu_ue_id.has_value()) {
-    logger.info("Rx du_id={}: {} {}", du_ctxt.du_id, msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-  } else if (du_ue_id.has_value() or cu_ue_id.has_value()) {
-    const f1ap_ue_context* ue = nullptr;
-    if (cu_ue_id.has_value()) {
-      ue = ue_ctxt_list.find(cu_ue_id.value());
-    }
+  ue_index_t                    ue_idx   = ue_index_t::invalid;
+  if (cu_ue_id.has_value()) {
+    auto* ue = ue_ctxt_list.find(cu_ue_id.value());
     if (ue != nullptr) {
-      logger.info("Rx du_id={} cu_ue_id={} du_ue_id={} ue={}: {}",
-                  du_ctxt.du_id,
-                  cu_ue_id.value(),
-                  du_ue_id.value(),
-                  ue->ue_ids.ue_index,
-                  get_message_type_str(msg.pdu));
-    } else {
-      logger.info("Rx du_id={} cu_ue_id={} du_ue_id={}: {}",
-                  du_ctxt.du_id,
-                  cu_ue_id.has_value() ? cu_ue_id.value() : gnb_cu_ue_f1ap_id_t::invalid,
-                  du_ue_id.has_value() ? du_ue_id.value() : gnb_du_ue_f1ap_id_t::invalid,
-                  get_message_type_str(msg.pdu));
+      ue_idx = ue->ue_ids.ue_index;
     }
   }
+
+  // Custom formattable object whose formatting function will run in the log backend.
+  auto rx_pdu_log_entry = make_formattable(
+      [du_id = du_ctxt.du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(msg.pdu)](auto& ctx) {
+        fmt::format_to(ctx.out(), "Rx du_id={}", du_id);
+        if (ue_idx != ue_index_t::invalid) {
+          fmt::format_to(ctx.out(), " ue={}", ue_idx);
+        }
+        if (du_ue_id.has_value()) {
+          fmt::format_to(ctx.out(), " GNB-DU-UE-F1AP-ID={}", du_ue_id.value());
+        }
+        if (cu_ue_id.has_value()) {
+          fmt::format_to(ctx.out(), " GNB-CU-UE-F1AP-ID={}", cu_ue_id.value());
+        }
+        return fmt::format_to(ctx.out(), ": {}", msg_name);
+      });
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     msg.pdu.to_json(js);
-    logger.debug("Containerized PDU: {}", js.to_string());
+    logger.info("{}. Content: {}", rx_pdu_log_entry, js.to_string());
+  } else {
+    logger.info("{}", rx_pdu_log_entry);
   }
 }

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 
@@ -36,6 +37,7 @@ struct f1ap_common_log_prefix {
 };
 
 } // namespace srsran
+
 namespace fmt {
 
 template <>
