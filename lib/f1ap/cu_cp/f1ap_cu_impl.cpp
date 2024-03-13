@@ -10,6 +10,7 @@
 
 #include "f1ap_cu_impl.h"
 #include "../common/asn1_helpers.h"
+#include "../common/f1ap_asn1_utils.h"
 #include "f1ap_asn1_helpers.h"
 #include "procedures/f1_setup_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
@@ -156,15 +157,10 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
 
 void f1ap_cu_impl::handle_message(const f1ap_message& msg)
 {
-  logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    msg.pdu.to_json(js);
-    logger.debug("Containerized PDU: {}", js.to_string());
-  }
-
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
+        log_rx_pdu(msg);
+
         switch (msg.pdu.type().value) {
           case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
             handle_initiating_message(msg.pdu.init_msg());
@@ -392,5 +388,40 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
     } break;
     default:
       logger.warning("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+  }
+}
+
+void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
+{
+  expected<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(msg.pdu);
+  expected<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
+
+  if (not du_ue_id.has_value() and not cu_ue_id.has_value()) {
+    logger.info("Rx du_id={}: {} {}", du_ctxt.du_id, msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+  } else if (du_ue_id.has_value() or cu_ue_id.has_value()) {
+    const f1ap_ue_context* ue = nullptr;
+    if (cu_ue_id.has_value()) {
+      ue = ue_ctxt_list.find(cu_ue_id.value());
+    }
+    if (ue != nullptr) {
+      logger.info("Rx du_id={} cu_ue_id={} du_ue_id={} ue={}: {}",
+                  du_ctxt.du_id,
+                  cu_ue_id.value(),
+                  du_ue_id.value(),
+                  ue->ue_ids.ue_index,
+                  get_message_type_str(msg.pdu));
+    } else {
+      logger.info("Rx du_id={} cu_ue_id={} du_ue_id={}: {}",
+                  du_ctxt.du_id,
+                  cu_ue_id.has_value() ? cu_ue_id.value() : gnb_cu_ue_f1ap_id_t::invalid,
+                  du_ue_id.has_value() ? du_ue_id.value() : gnb_du_ue_f1ap_id_t::invalid,
+                  get_message_type_str(msg.pdu));
+    }
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Containerized PDU: {}", js.to_string());
   }
 }

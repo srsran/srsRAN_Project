@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_context.h"
 #include "ue_context/f1ap_cu_ue_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
@@ -107,10 +108,16 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
+  /// \brief Log F1AP RX PDU.
+  void log_rx_pdu(const f1ap_message& pdu);
+
   const f1ap_configuration cfg;
   srslog::basic_logger&    logger;
 
-  /// Repository of UE Contexts.
+  // DU context.
+  du_context du_ctxt;
+
+  // Repository of UE Contexts.
   f1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
