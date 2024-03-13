@@ -40,7 +40,6 @@ set(SOURCES
         cell_scheduler.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp
-        support/csi_rs_helpers.h
         support/csi_rs_helper.cpp)
 
 add_library(srsran_sched STATIC ${SOURCES}

@@ -112,10 +112,10 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
   }
 
   if (has_common_pucch_f1_grant(tcrnti, pucch_slot_alloc.slot)) {
-    logger.debug(
-        "tc-rnti={}: PUCCH common not allocated for slot={}. Cause: existing grant for this UE at the same slot",
-        tcrnti,
-        pucch_slot_alloc.slot);
+    logger.debug("tc-rnti={}: PUCCH common not allocated for slot={}. Cause: a grant for this UE already exists in the "
+                 "same slot",
+                 tcrnti,
+                 pucch_slot_alloc.slot);
     return nullopt;
   }
 

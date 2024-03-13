@@ -229,7 +229,7 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
     const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
 
     if (ue_cc.is_in_fallback_mode()) {
-      // Skip allocation for UEs in fallback mode, as it is handled by the SRB0 scheduler.
+      // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
       return alloc_outcome::skip_ue;
     }
 

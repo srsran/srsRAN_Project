@@ -507,7 +507,7 @@ protected:
     pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
 
     uci_indication::uci_pdu::uci_pusch_pdu pusch_pdu{};
-    // Auto ACK latest_harq_states.
+    // Auto ACK harqs.
     if (pusch.uci->harq.has_value()) {
       pusch_pdu.harqs.resize(pusch.uci->harq->harq_ack_nof_bits, mac_harq_ack_report_status::ack);
     }

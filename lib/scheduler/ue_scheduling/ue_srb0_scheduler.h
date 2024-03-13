@@ -42,12 +42,18 @@ private:
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
   void update_ongoing_ue_retxs();
 
+  // Holds the most recent slot with PDSCH for SRB0/SRB1 and the most recent slot with the corresponding PUCCH.
+  struct most_recent_tx_slots {
+    slot_point most_recent_tx_slot;
+    slot_point most_recent_ack_slot;
+  };
+
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  bool schedule_srb(cell_resource_allocator&                    res_alloc,
-                    ue&                                         u,
-                    bool                                        is_srb0,
-                    dl_harq_process*                            h_dl_retx,
-                    optional<std::pair<slot_point, slot_point>> most_recent_tx_ack_slots);
+  bool schedule_srb(cell_resource_allocator&       res_alloc,
+                    ue&                            u,
+                    bool                           is_srb0,
+                    dl_harq_process*               h_dl_retx,
+                    optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
   dl_harq_process* schedule_srb0(ue&                      u,
@@ -134,15 +140,19 @@ private:
 
   void store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0);
 
-  // If there is any pending SRB0 or SRB1 transmissions for the UE, the function returns the most recent slot with PDSCH
-  // for SRB0/SRB1 (first element of the pair) and the most recent slot with the corresponding PUCCH (first element of
-  // the pair).
-  optional<std::pair<slot_point, slot_point>> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
+  // If there are any pending SRB0 or SRB1 transmissions for the UE, the function returns the most recent slot with
+  // PDSCH for SRB0/SRB1 and the most recent slot with the corresponding PUCCH.
+  optional<most_recent_tx_slots> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.
-  const unsigned            max_dl_slots_ahead_sched  = 10U;
+  // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
+  // find PDSCH space for SRB0 or SRB1.
+  const unsigned max_dl_slots_ahead_sched = 10U;
+  // Set the max number of attempt the scheduler can do while running through the nested loops over the PDSCH time
+  // allocation indices and the ahead slots. This is to avoid excessive long iterations in case of a large number of
+  // PDSCH time allocation indices.
   const unsigned            max_sched_attempts_per_ue = 10U;
   pdcch_resource_allocator& pdcch_sch;
   pucch_allocator&          pucch_alloc;
