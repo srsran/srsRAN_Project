@@ -10,7 +10,7 @@
 
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
-#include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
+#include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -467,11 +467,11 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
         if (pucch.format == pucch_format::FORMAT_0) {
           pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_0.sr_bits) > 0;
-          // Auto ACK latest_harq_states.
+          // Auto ACK harqs.
           pucch_pdu.harqs.resize(pucch.format_0.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         } else {
           pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_1.sr_bits) > 0;
-          // Auto ACK latest_harq_states.
+          // Auto ACK harqs.
           pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         }
         pucch_pdu.ul_sinr = 55;
@@ -482,7 +482,7 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
         pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
         pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
-        // Auto ACK latest_harq_states.
+        // Auto ACK harqs.
         pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         if (pucch.csi_rep_cfg.has_value()) {
           pucch_pdu.csi.emplace();

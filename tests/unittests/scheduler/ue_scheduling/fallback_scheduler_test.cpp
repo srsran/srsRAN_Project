@@ -16,7 +16,7 @@
 #include "lib/scheduler/support/csi_rs_helpers.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
-#include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
+#include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -90,7 +90,7 @@ struct test_bench {
   uci_allocator_impl            uci_alloc{pucch_alloc};
   ue_repository                 ue_db;
   ue_cell_grid_allocator        ue_alloc;
-  ue_srb0_scheduler             srb0_sched;
+  ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
   explicit test_bench(const scheduler_expert_config&                  sched_cfg_,
@@ -100,7 +100,7 @@ struct test_bench {
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
-    srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
+    fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
     ue_alloc.add_cell(cell_cfg.cell_index, pdcch_sch, uci_alloc, res_grid);
@@ -126,7 +126,7 @@ struct test_bench {
   }
 };
 
-class base_srb0_scheduler_tester
+class base_fallback_tester
 {
 protected:
   slot_point                 current_slot{0, 0};
@@ -139,12 +139,12 @@ protected:
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
 
-  base_srb0_scheduler_tester(duplex_mode duplx_mode_) :
+  base_fallback_tester(duplex_mode duplx_mode_) :
     duplx_mode(duplx_mode_), builder_params(test_builder_params(duplx_mode))
   {
   }
 
-  ~base_srb0_scheduler_tester()
+  ~base_fallback_tester()
   {
     // Log pending allocations before finishing test.
     for (unsigned i = 0; i != max_k_value; ++i) {
@@ -196,7 +196,7 @@ protected:
       bench->csi_rs_sched.run_slot(bench->res_grid[0]);
     }
 
-    bench->srb0_sched.run_slot(bench->res_grid);
+    bench->fallback_sched.run_slot(bench->res_grid);
 
     result_logger.on_scheduler_result(bench->res_grid[0].result);
 
@@ -283,7 +283,7 @@ protected:
     bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
 
     // Notify scheduler of DL buffer state.
-    bench->srb0_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0);
+    bench->fallback_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -306,15 +306,15 @@ struct fallback_sched_test_params {
   duplex_mode duplx_mode;
 };
 
-class srb0_scheduler_tester : public base_srb0_scheduler_tester, public ::testing::TestWithParam<srb0_test_params>
+class fallback_scheduler_tester : public base_fallback_tester, public ::testing::TestWithParam<srb0_test_params>
 {
 protected:
-  srb0_scheduler_tester() : base_srb0_scheduler_tester(GetParam().duplx_mode), params{GetParam()} {}
+  fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode), params{GetParam()} {}
 
   srb0_test_params params;
 };
 
-TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
+TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
 {
   setup_sched(create_expert_config(2), create_custom_cell_config_request(params.k0));
   // Add UE.
@@ -346,7 +346,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
   ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
-TEST_P(srb0_scheduler_tester, failed_allocating_resources)
+TEST_P(fallback_scheduler_tester, failed_allocating_resources)
 {
   setup_sched(create_expert_config(0), create_custom_cell_config_request(params.k0));
 
@@ -373,7 +373,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
   }
 }
 
-TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
+TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
 {
   setup_sched(create_expert_config(27), create_custom_cell_config_request(params.k0));
   // Add UE.
@@ -401,7 +401,7 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
   ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
-TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
+TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
 {
   setup_sched(create_expert_config(3), create_custom_cell_config_request(params.k0));
   // Add UE.
@@ -419,7 +419,7 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
   }
 }
 
-TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
+TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
   const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
   setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request(params.k0));
@@ -435,13 +435,13 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
   run_slot();
 }
 
-class srb0_scheduler_tdd_tester : public base_srb0_scheduler_tester, public ::testing::Test
+class fallback_scheduler_tdd_tester : public base_fallback_tester, public ::testing::Test
 {
 protected:
-  srb0_scheduler_tdd_tester() : base_srb0_scheduler_tester(srsran::duplex_mode::TDD) {}
+  fallback_scheduler_tdd_tester() : base_fallback_tester(srsran::duplex_mode::TDD) {}
 };
 
-TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
+TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
 {
   const unsigned      k0                 = 0;
   const sch_mcs_index max_msg4_mcs_index = 1;
@@ -479,7 +479,7 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
   }
 }
 
-TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
+TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 {
   const unsigned                           k0                 = 0;
   const sch_mcs_index                      max_msg4_mcs_index = 8;
@@ -519,20 +519,20 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
-                         srb0_scheduler_tester,
+INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
+                         fallback_scheduler_tester,
                          testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
                                          srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
 
-class srb0_scheduler_head_scheduling : public base_srb0_scheduler_tester,
-                                       public ::testing::TestWithParam<fallback_sched_test_params>
+class fallback_scheduler_head_scheduling : public base_fallback_tester,
+                                           public ::testing::TestWithParam<fallback_sched_test_params>
 {
 protected:
   const unsigned MAX_NOF_SLOTS_GRID_IS_BUSY = 4;
   const unsigned MAX_TEST_RUN_SLOTS         = 2100;
   const unsigned MAC_SRB0_SDU_SIZE          = 128;
 
-  srb0_scheduler_head_scheduling() : base_srb0_scheduler_tester(GetParam().duplx_mode)
+  fallback_scheduler_head_scheduling() : base_fallback_tester(GetParam().duplx_mode)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -592,7 +592,7 @@ protected:
   }
 };
 
-TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocation_1_ue)
+TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocation_1_ue)
 {
   // In this test, we check if the SRB0/SRB1 allocation can schedule ahead with respect to the reference slot, which is
   // given by the slot_indication in the scheduler. Every time we generate SRB0 buffer bytes, we set the resource grid
@@ -658,18 +658,17 @@ TEST_P(srb0_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocation_
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
-                         srb0_scheduler_head_scheduling,
+INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
+                         fallback_scheduler_head_scheduling,
                          testing::Values(fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::TDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
 
-class srb0_scheduler_retx : public base_srb0_scheduler_tester,
-                            public ::testing::TestWithParam<fallback_sched_test_params>
+class fallback_scheduler_retx : public base_fallback_tester, public ::testing::TestWithParam<fallback_sched_test_params>
 {
 protected:
-  srb0_scheduler_retx() : base_srb0_scheduler_tester(GetParam().duplx_mode)
+  fallback_scheduler_retx() : base_fallback_tester(GetParam().duplx_mode)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -684,7 +683,7 @@ protected:
   public:
     enum class ue_state { idle, waiting_for_tx, waiting_for_ack, waiting_for_retx, reset_harq };
 
-    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, srb0_scheduler_retx* parent_) :
+    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_retx* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
       slot_update_srb_traffic = generate_srb1_next_update_delay();
@@ -791,7 +790,7 @@ protected:
     slot_point                slot_update_srb_traffic;
     unsigned                  nof_packet_to_tx;
     harq_id_t                 ongoing_h_id = INVALID_HARQ_ID;
-    srb0_scheduler_retx*      parent;
+    fallback_scheduler_retx*  parent;
     bool                      ack_outcome = false;
     // Counter of TXs that terminate with ACK before reaching max_nof_harq_retxs.
     unsigned successful_tx_cnt = 0;
@@ -809,7 +808,7 @@ protected:
   std::vector<ue_retx_tester> ues_testers;
 };
 
-TEST_P(srb0_scheduler_retx, test_scheduling_for_srb_retransmissions_multi_ue)
+TEST_P(fallback_scheduler_retx, test_scheduling_for_srb_retransmissions_multi_ue)
 {
   // In this test, we check if the SRB0/SRB1 scheduler handles re-transmissions. Each time a SRB0/SRB1 buffer is updated
   // for a given UE, the GNB is expected to schedule a PDSCH grant, or multiple grants (for retransmissions) in case of
@@ -840,18 +839,18 @@ TEST_P(srb0_scheduler_retx, test_scheduling_for_srb_retransmissions_multi_ue)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
-                         srb0_scheduler_retx,
+INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
+                         fallback_scheduler_retx,
                          testing::Values(fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = true, .duplx_mode = duplex_mode::TDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
 
-class srb0_scheduler_srb1_segmentation : public base_srb0_scheduler_tester,
-                                         public ::testing::TestWithParam<fallback_sched_test_params>
+class fallback_scheduler_srb1_segmentation : public base_fallback_tester,
+                                             public ::testing::TestWithParam<fallback_sched_test_params>
 {
 protected:
-  srb0_scheduler_srb1_segmentation() : base_srb0_scheduler_tester(GetParam().duplx_mode)
+  fallback_scheduler_srb1_segmentation() : base_fallback_tester(GetParam().duplx_mode)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -864,7 +863,7 @@ protected:
   class ue_retx_tester
   {
   public:
-    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, srb0_scheduler_srb1_segmentation* parent_) :
+    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_srb1_segmentation* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
       slot_update_srb_traffic = generate_srb1_next_update_delay();
@@ -940,7 +939,7 @@ protected:
     ue&                               test_ue;
     slot_point                        slot_update_srb_traffic;
     unsigned                          nof_packet_to_tx;
-    srb0_scheduler_srb1_segmentation* parent;
+    fallback_scheduler_srb1_segmentation* parent;
     srslog::basic_logger&             test_logger  = srslog::fetch_basic_logger("TEST");
     unsigned                          missing_retx = 0;
 
@@ -956,7 +955,7 @@ protected:
   std::vector<ue_retx_tester> ues_testers;
 };
 
-TEST_P(srb0_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
+TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 {
   // In this test, we check if the SRB0/SRB1 scheduler handles segmentation for the SRB1. Each time a SRB1 buffer is
   // updated, the GNB is to sends one or more grants, until the UE's SRB1 buffer is emptied.
@@ -982,8 +981,8 @@ TEST_P(srb0_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
-                         srb0_scheduler_srb1_segmentation,
+INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
+                         fallback_scheduler_srb1_segmentation,
                          testing::Values(fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
 

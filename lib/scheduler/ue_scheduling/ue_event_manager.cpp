@@ -632,7 +632,7 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 }
 
 void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
-                                ue_srb0_scheduler&       srb0_sched,
+                                ue_fallback_scheduler&   srb0_sched,
                                 uci_scheduler_impl&      uci_sched)
 {
   const du_cell_index_t cell_index = cell_res_grid.cell_index();

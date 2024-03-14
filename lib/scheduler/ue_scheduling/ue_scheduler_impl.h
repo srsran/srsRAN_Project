@@ -18,9 +18,9 @@
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
+#include "ue_fallback_scheduler.h"
 #include "ue_repository.h"
 #include "ue_scheduler.h"
-#include "ue_srb0_scheduler.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -69,7 +69,7 @@ private:
     uci_scheduler_impl uci_sched;
 
     /// SRB0 scheduler.
-    ue_srb0_scheduler srb0_sched;
+    ue_fallback_scheduler srb0_sched;
 
     cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_repository& ues) :
       cell_res_alloc(params.cell_res_alloc),

@@ -8,7 +8,7 @@
  *
  */
 
-#include "ue_srb0_scheduler.h"
+#include "ue_fallback_scheduler.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
@@ -18,11 +18,11 @@
 
 using namespace srsran;
 
-ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cfg_,
-                                     const cell_configuration&         cell_cfg_,
-                                     pdcch_resource_allocator&         pdcch_sch_,
-                                     pucch_allocator&                  pucch_alloc_,
-                                     ue_repository&                    ues_) :
+ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& expert_cfg_,
+                                             const cell_configuration&         cell_cfg_,
+                                             pdcch_resource_allocator&         pdcch_sch_,
+                                             pucch_allocator&                  pucch_alloc_,
+                                             ue_repository&                    ues_) :
   expert_cfg(expert_cfg_),
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
@@ -34,12 +34,13 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
+  ongoing_ues_ack_retxs.reserve(MAX_NOF_DU_UES);
   // NOTE: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
   dci_1_0_k1_values = {4, 5, 6, 7, 8};
 }
 
-void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
+void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   // Update the HARQ processes of UE with ongoing transmissions to check which ones still need to be acked or
   // retransmitted.
@@ -49,34 +50,23 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+  // Although the scheduler can schedule on future slots, we run the scheduler only in DL enabled slots.
+  if (not cell_cfg.is_dl_enabled(res_alloc[0].slot)) {
     return;
   }
 
-  auto next_ue_harq_retx = ongoing_ues_ack_retxs.begin();
-  while (next_ue_harq_retx != ongoing_ues_ack_retxs.end()) {
-    // TODO: Add a stopping condition in this loop, so next_ue won't iterate over all the UEs and HARQ-processes if
-    //       there are no resources.
-
-    auto& u    = *ues.find(next_ue_harq_retx->ue_index);
-    auto* h_dl = next_ue_harq_retx->get_harq_process();
+  for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
+    auto& u    = *ues.find(next_ue_harq_retx.ue_index);
+    auto* h_dl = next_ue_harq_retx.h_dl;
 
     if (h_dl->has_pending_retx()) {
       optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      if (next_ue_harq_retx->is_srb0) {
-        schedule_srb(res_alloc, u, next_ue_harq_retx->is_srb0, h_dl, most_recent_tx_ack);
-      } else {
-        // TODO: Change this into SRB1_retx.
-        schedule_srb(res_alloc, u, next_ue_harq_retx->is_srb0, h_dl, most_recent_tx_ack);
-      }
+      schedule_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
     }
-    ++next_ue_harq_retx;
   }
 
   // Schedule SRB0 messages before SRB1, as we prioritize SRB0 over SRB1.
-  auto next_ue = pending_ues.begin();
-  while (next_ue != pending_ues.end()) {
+  for (auto next_ue = pending_ues.begin(); next_ue != pending_ues.end();) {
     if (not next_ue->is_srb0) {
       ++next_ue;
       continue;
@@ -98,8 +88,7 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 
   // Keep SRB1 with lower priority than SRB0.
-  next_ue = pending_ues.begin();
-  while (next_ue != pending_ues.end()) {
+  for (auto next_ue = pending_ues.begin(); next_ue != pending_ues.end();) {
     if (next_ue->is_srb0) {
       ++next_ue;
       continue;
@@ -131,7 +120,7 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 }
 
-void ue_srb0_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0)
+void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0)
 {
   pending_ues.push_back({ue_index, is_srb0});
 }
@@ -152,11 +141,11 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
   return next_candidate_slot;
 }
 
-bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
-                                     ue&                            u,
-                                     bool                           is_srb0,
-                                     dl_harq_process*               h_dl_retx,
-                                     optional<most_recent_tx_slots> most_recent_tx_ack_slots)
+bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
+                                         ue&                            u,
+                                         bool                           is_srb0,
+                                         dl_harq_process*               h_dl_retx,
+                                         optional<most_recent_tx_slots> most_recent_tx_ack_slots)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -165,29 +154,34 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
 
   // \ref sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
   // slot_indication().
-  // \ref starting_sl is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned a
-  // PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that is
-  // scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
+  // NOTE: we guarantee that \ref sched_ref_slot is a DL slot in the caller.
   // TODO: Make this compatible with k0 > 0.
   slot_point sched_ref_slot = res_alloc[0].slot;
 
-  if (not cell_cfg.is_dl_enabled(sched_ref_slot)) {
-    return false;
-  }
-
+  // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot in
+  // the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if there
+  // is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
+  // scheduler attempt to allocate a new TX on the same slot.
   if (most_recent_tx_ack_slots.has_value() and
-      sched_ref_slot + max_dl_slots_ahead_sched < most_recent_tx_ack_slots.value().most_recent_ack_slot) {
+      sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
     return false;
   }
 
   // We keep track of the number of scheduling attempts for the given UE.
-  unsigned   sched_attempts_cnt = 0;
-  slot_point next_slot =
+  unsigned sched_attempts_cnt = 0;
+
+  // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned a
+  // PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that is
+  // scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
+  // NOTE: The \c most_recent_tx_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
+  // most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot.
+  slot_point starting_slot =
       most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot
           ? most_recent_tx_ack_slots.value().most_recent_tx_slot
           : sched_ref_slot;
 
-  while (next_slot <= sched_ref_slot + max_dl_slots_ahead_sched) {
+  for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
+       next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
     auto                                offset_to_sched_ref_slot = static_cast<unsigned>(next_slot - sched_ref_slot);
     const cell_slot_resource_allocator& pdcch_alloc              = res_alloc[offset_to_sched_ref_slot];
 
@@ -261,8 +255,6 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
 
       ++sched_attempts_cnt;
     }
-
-    next_slot = get_next_srb_slot(cell_cfg, next_slot);
   }
 
   // No resource found in UE's carriers and Search spaces.
@@ -275,12 +267,12 @@ bool ue_srb0_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
   return false;
 }
 
-dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
-                                                  cell_resource_allocator& res_alloc,
-                                                  unsigned                 pdsch_time_res,
-                                                  unsigned                 slot_offset,
-                                                  slot_point               most_recent_ack_slot,
-                                                  dl_harq_process*         h_dl_retx)
+dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u,
+                                                      cell_resource_allocator& res_alloc,
+                                                      unsigned                 pdsch_time_res,
+                                                      unsigned                 slot_offset,
+                                                      slot_point               most_recent_ack_slot,
+                                                      dl_harq_process*         h_dl_retx)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
   const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -398,29 +390,33 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb0(ue&                      u,
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
-  fill_srb0_grant(u,
-                  pdsch_alloc.slot,
-                  *h_dl,
-                  *pdcch,
-                  pdsch_alloc.result.dl.ue_grants.emplace_back(),
-                  pucch_res_indicator.value(),
-                  pdsch_time_res,
-                  k1,
-                  mcs_idx,
-                  ue_grant_crbs,
-                  pdsch_cfg,
-                  prbs_tbs.tbs_bytes,
-                  is_retx);
+  const bool              is_srb0  = true;
+  dci_dl_rnti_config_type dci_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
+  fill_srb_grant(u,
+                 pdsch_alloc.slot,
+                 *h_dl,
+                 *pdcch,
+                 dci_type,
+                 pdsch_alloc.result.dl.ue_grants.emplace_back(),
+                 pucch_res_indicator.value(),
+                 pdsch_time_res,
+                 k1,
+                 mcs_idx,
+                 ue_grant_crbs,
+                 pdsch_cfg,
+                 prbs_tbs.tbs_bytes,
+                 is_retx,
+                 is_srb0);
 
   return h_dl;
 }
 
-dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
-                                                  cell_resource_allocator& res_alloc,
-                                                  unsigned                 pdsch_time_res,
-                                                  unsigned                 slot_offset,
-                                                  slot_point               most_recent_ack_slot,
-                                                  dl_harq_process*         h_dl_retx)
+dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u,
+                                                      cell_resource_allocator& res_alloc,
+                                                      unsigned                 pdsch_time_res,
+                                                      unsigned                 slot_offset,
+                                                      slot_point               most_recent_ack_slot,
+                                                      dl_harq_process*         h_dl_retx)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
   const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -551,37 +547,39 @@ dl_harq_process* ue_srb0_scheduler::schedule_srb1(ue&                      u,
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
-  fill_srb1_grant(u,
-                  pdsch_alloc.slot,
-                  *h_dl,
-                  *pdcch,
-                  dci_type,
-                  pdsch_alloc.result.dl.ue_grants.emplace_back(),
-                  pucch_res_indicator.value(),
-                  pdsch_time_res,
-                  k1,
-                  final_mcs_tbs.mcs,
-                  ue_grant_crbs,
-                  pdsch_cfg,
-                  final_mcs_tbs.tbs,
-                  is_retx);
+  const bool is_srb0 = false;
+  fill_srb_grant(u,
+                 pdsch_alloc.slot,
+                 *h_dl,
+                 *pdcch,
+                 dci_type,
+                 pdsch_alloc.result.dl.ue_grants.emplace_back(),
+                 pucch_res_indicator.value(),
+                 pdsch_time_res,
+                 k1,
+                 final_mcs_tbs.mcs,
+                 ue_grant_crbs,
+                 pdsch_cfg,
+                 final_mcs_tbs.tbs,
+                 is_retx,
+                 is_srb0);
 
   return h_dl;
 }
 
-void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
-                                        slot_point                 pdsch_slot,
-                                        dl_harq_process&           h_dl,
-                                        pdcch_dl_information&      pdcch,
-                                        dl_msg_alloc&              msg,
-                                        unsigned                   pucch_res_indicator,
-                                        unsigned                   pdsch_time_res,
-                                        unsigned                   k1,
-                                        sch_mcs_index              mcs_idx,
-                                        const crb_interval&        ue_grant_crbs,
-                                        const pdsch_config_params& pdsch_params,
-                                        unsigned                   tbs_bytes,
-                                        bool                       is_retx)
+void ue_fallback_scheduler::fill_srb0_grant(ue&                        u,
+                                            slot_point                 pdsch_slot,
+                                            dl_harq_process&           h_dl,
+                                            pdcch_dl_information&      pdcch,
+                                            dl_msg_alloc&              msg,
+                                            unsigned                   pucch_res_indicator,
+                                            unsigned                   pdsch_time_res,
+                                            unsigned                   k1,
+                                            sch_mcs_index              mcs_idx,
+                                            const crb_interval&        ue_grant_crbs,
+                                            const pdsch_config_params& pdsch_params,
+                                            unsigned                   tbs_bytes,
+                                            bool                       is_retx)
 {
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRBO PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
@@ -631,30 +629,31 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);
 }
 
-void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
-                                        slot_point                 pdsch_slot,
-                                        dl_harq_process&           h_dl,
-                                        pdcch_dl_information&      pdcch,
-                                        dci_dl_rnti_config_type    dci_type,
-                                        dl_msg_alloc&              msg,
-                                        unsigned                   pucch_res_indicator,
-                                        unsigned                   pdsch_time_res,
-                                        unsigned                   k1,
-                                        sch_mcs_index              mcs_idx,
-                                        const crb_interval&        ue_grant_crbs,
-                                        const pdsch_config_params& pdsch_params,
-                                        unsigned                   tbs_bytes,
-                                        bool                       is_retx)
+void ue_fallback_scheduler::fill_srb_grant(ue&                        u,
+                                           slot_point                 pdsch_slot,
+                                           dl_harq_process&           h_dl,
+                                           pdcch_dl_information&      pdcch,
+                                           dci_dl_rnti_config_type    dci_type,
+                                           dl_msg_alloc&              msg,
+                                           unsigned                   pucch_res_indicator,
+                                           unsigned                   pdsch_time_res,
+                                           unsigned                   k1,
+                                           sch_mcs_index              mcs_idx,
+                                           const crb_interval&        ue_grant_crbs,
+                                           const pdsch_config_params& pdsch_params,
+                                           unsigned                   tbs_bytes,
+                                           bool                       is_retx,
+                                           bool                       is_srb0)
 {
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
-  static constexpr uint8_t srb1_dai = 0;
+  static constexpr uint8_t srb_dai = 0;
   if (not is_retx) {
     const bool is_fallback = true;
     h_dl.new_tx(pdsch_slot,
                 k1,
                 expert_cfg.max_nof_harq_retxs,
-                srb1_dai,
+                srb_dai,
                 u.get_pcell().channel_state_manager().get_wideband_cqi(),
                 pdsch_params.nof_layers,
                 is_fallback);
@@ -665,6 +664,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
 
   // Fill DL PDCCH DCI.
   static const uint8_t msg4_rv = 0;
+  srsran_sanity_check(is_srb0 ? dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 : true, "Invalid DCI type for SRB0");
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       build_dci_f1_0_tc_rnti(pdcch.dci,
@@ -686,7 +686,7 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
                             pdsch_time_res,
                             k1,
                             pucch_res_indicator,
-                            srb1_dai,
+                            srb_dai,
                             mcs_idx,
                             msg4_rv,
                             h_dl);
@@ -718,10 +718,11 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
         u.build_dl_fallback_transport_block_info(
-            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, false);
+            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, is_srb0);
       }
       break;
     }
+      // This is only for SRB1.
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
       build_pdsch_f1_0_c_rnti(msg.pdsch_cfg,
                               pdsch_params,
@@ -748,18 +749,19 @@ void ue_srb0_scheduler::fill_srb1_grant(ue&                        u,
   h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);
 }
 
-const pdsch_time_domain_resource_allocation& ue_srb0_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
+const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
 {
   return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
 }
 
-optional<ue_srb0_scheduler::most_recent_tx_slots> ue_srb0_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
+optional<ue_fallback_scheduler::most_recent_tx_slots>
+ue_fallback_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
 {
-  optional<ue_srb0_scheduler::most_recent_tx_slots> most_recent_tx_ack_slot;
+  optional<ue_fallback_scheduler::most_recent_tx_slots> most_recent_tx_ack_slot;
   for (const auto& ue_proc : ongoing_ues_ack_retxs) {
     if (ue_proc.ue_index == ue_idx) {
-      slot_point h_dl_slot_tx  = ue_proc.get_harq_process()->slot_tx();
-      slot_point h_dl_slot_ack = ue_proc.get_harq_process()->slot_ack();
+      slot_point h_dl_slot_tx  = ue_proc.h_dl->slot_tx();
+      slot_point h_dl_slot_ack = ue_proc.h_dl->slot_ack();
       if (not most_recent_tx_ack_slot.has_value()) {
         most_recent_tx_ack_slot.emplace(
             most_recent_tx_slots{.most_recent_tx_slot = h_dl_slot_tx, .most_recent_ack_slot = h_dl_slot_ack});
@@ -776,19 +778,20 @@ optional<ue_srb0_scheduler::most_recent_tx_slots> ue_srb0_scheduler::get_most_re
   return most_recent_tx_ack_slot;
 }
 
-void ue_srb0_scheduler::store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0)
+void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0)
 {
-  srsran_assert(ongoing_ues_ack_retxs.end() == std::find_if(ongoing_ues_ack_retxs.begin(),
-                                                            ongoing_ues_ack_retxs.end(),
-                                                            [ue_index, h_dl](const ack_and_retx_tracker& tracker) {
-                                                              return tracker.match_ue_harq(ue_index, h_dl);
-                                                            }),
-                "This UE and HARQ process were already in the list");
+  srsran_sanity_check(ongoing_ues_ack_retxs.end() ==
+                          std::find_if(ongoing_ues_ack_retxs.begin(),
+                                       ongoing_ues_ack_retxs.end(),
+                                       [ue_index, h_dl](const ack_and_retx_tracker& tracker) {
+                                         return tracker.match_ue_harq(ue_index, h_dl);
+                                       }),
+                      "This UE and HARQ process were already in the list");
 
   ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl, is_srb0, ues);
 }
 
-void ue_srb0_scheduler::update_ongoing_ue_retxs()
+void ue_fallback_scheduler::update_ongoing_ue_retxs()
 {
   if (ongoing_ues_ack_retxs.empty()) {
     return;
@@ -796,13 +799,14 @@ void ue_srb0_scheduler::update_ongoing_ue_retxs()
 
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
   // elements are potential candidate for retransmissions.
-  auto it_ue_harq = ongoing_ues_ack_retxs.begin();
-  while (it_ue_harq != ongoing_ues_ack_retxs.end()) {
+  for (std::vector<ack_and_retx_tracker>::iterator it_ue_harq = ongoing_ues_ack_retxs.begin();
+       it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index)) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }
-    dl_harq_process& h_dl = *it_ue_harq->get_harq_process();
+
+    dl_harq_process& h_dl = *it_ue_harq->h_dl;
     if (h_dl.empty()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;

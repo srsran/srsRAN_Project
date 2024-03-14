@@ -21,14 +21,14 @@
 namespace srsran {
 
 /// Defines SRB0 scheduler that is used to allocate grants for UE's SRB0 DL messages in a given slot.
-class ue_srb0_scheduler
+class ue_fallback_scheduler
 {
 public:
-  explicit ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cfg_,
-                             const cell_configuration&         cell_cfg_,
-                             pdcch_resource_allocator&         pdcch_sch_,
-                             pucch_allocator&                  pucch_alloc_,
-                             ue_repository&                    ues_);
+  explicit ue_fallback_scheduler(const scheduler_ue_expert_config& expert_cfg_,
+                                 const cell_configuration&         cell_cfg_,
+                                 pdcch_resource_allocator&         pdcch_sch_,
+                                 pucch_allocator&                  pucch_alloc_,
+                                 ue_repository&                    ues_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -85,20 +85,21 @@ private:
                        unsigned                   tbs_bytes,
                        bool                       is_retx);
 
-  void fill_srb1_grant(ue&                        u,
-                       slot_point                 pdsch_slot,
-                       dl_harq_process&           h_dl,
-                       pdcch_dl_information&      pdcch,
-                       dci_dl_rnti_config_type    dci_type,
-                       dl_msg_alloc&              msg,
-                       unsigned                   pucch_res_indicator,
-                       unsigned                   pdsch_time_res,
-                       unsigned                   k1,
-                       sch_mcs_index              mcs_idx,
-                       const crb_interval&        ue_grant_crbs,
-                       const pdsch_config_params& pdsch_params,
-                       unsigned                   tbs_bytes,
-                       bool                       is_retx);
+  void fill_srb_grant(ue&                        u,
+                      slot_point                 pdsch_slot,
+                      dl_harq_process&           h_dl,
+                      pdcch_dl_information&      pdcch,
+                      dci_dl_rnti_config_type    dci_type,
+                      dl_msg_alloc&              msg,
+                      unsigned                   pucch_res_indicator,
+                      unsigned                   pdsch_time_res,
+                      unsigned                   k1,
+                      sch_mcs_index              mcs_idx,
+                      const crb_interval&        ue_grant_crbs,
+                      const pdsch_config_params& pdsch_params,
+                      unsigned                   tbs_bytes,
+                      bool                       is_retx,
+                      bool                       is_srb0);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
@@ -115,27 +116,19 @@ private:
   {
   public:
     explicit ack_and_retx_tracker(du_ue_index_t ue_idx, dl_harq_process* h_dl_, bool is_srb0_, ue_repository& ues_) :
-      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_), ues(ues_)
+      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_)
     {
-      srsran_assert(ues.contains(ue_index), "UE not found in the UE repository");
-      srsran_assert(h_dl_ == &(ues[ue_idx].get_pcell().harqs.dl_harq(h_dl_->id)),
-                    "HARQ process not found among the UE HARQs");
     }
+    explicit ack_and_retx_tracker(const ack_and_retx_tracker& other) = default;
 
     bool match_ue_harq(du_ue_index_t ue_idx_, dl_harq_process* h_dl_) const
     {
       return ue_index == ue_idx_ and h_dl == h_dl_;
     }
 
-    // We make the access to the HARQ process is subject to the UE existence in the UE repository.
-    dl_harq_process* get_harq_process() const { return ues.contains(ue_index) ? h_dl : nullptr; }
-
-    du_ue_index_t ue_index;
-    bool          is_srb0;
-
-  private:
+    du_ue_index_t    ue_index;
+    bool             is_srb0;
     dl_harq_process* h_dl;
-    ue_repository&   ues;
   };
 
   void store_harq_tx(du_ue_index_t ue_index, dl_harq_process* h_dl, bool is_srb0);
@@ -167,7 +160,7 @@ private:
   coreset_configuration      cs_cfg;
 
   /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
-  std::list<ack_and_retx_tracker> ongoing_ues_ack_retxs;
+  std::vector<ack_and_retx_tracker> ongoing_ues_ack_retxs;
 
   std::vector<uint8_t> dci_1_0_k1_values;
 
