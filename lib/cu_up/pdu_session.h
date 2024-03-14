@@ -39,7 +39,7 @@ struct pdu_session {
   ~pdu_session()
   {
     // Remove GTP-U tunnel from GTP-U demux.
-    gtpu_rx_demux.remove_tunnel(local_teid);
+    // gtpu_rx_demux.remove_tunnel(local_teid);
   }
 
   std::unique_ptr<sdap_entity>     sdap;
