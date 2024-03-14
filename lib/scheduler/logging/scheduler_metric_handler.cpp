@@ -58,16 +58,19 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
-void scheduler_metrics_handler::handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi)
+void scheduler_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
 {
-  if (ues.contains(ue_index)) {
-    auto& u = ues[ue_index];
-    if (csi.first_tb_wideband_cqi.has_value()) {
-      u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
-    }
-    if (csi.ri.has_value()) {
-      u.last_ri = csi.ri->to_uint();
-    }
+  u.data.nof_pucch_snr_reports++;
+  u.data.sum_pucch_snrs += sinr;
+}
+
+void scheduler_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
+{
+  if (csi.first_tb_wideband_cqi.has_value()) {
+    u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
+  }
+  if (csi.ri.has_value()) {
+    u.last_ri = csi.ri->to_uint();
   }
 }
 
@@ -95,13 +98,42 @@ void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool
   }
 }
 
-void scheduler_metrics_handler::handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr)
+void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu)
 {
-  if (ues.contains(ue_index)) {
-    auto& u = ues[ue_index];
-    if (pucch_sinr.has_value()) {
-      u.data.nof_pucch_snr_reports++;
-      u.data.sum_pucch_snrs += pucch_sinr.value();
+  if (ues.contains(pdu.ue_index)) {
+    auto& u = ues[pdu.ue_index];
+
+    if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu)) {
+      auto& f1 = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu);
+
+      if (f1.ul_sinr.has_value()) {
+        handle_pucch_sinr(u, f1.ul_sinr.value());
+      }
+
+      if (f1.time_advance_offset.has_value()) {
+        u.last_ta = f1.time_advance_offset.value().to_seconds();
+      }
+    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu)) {
+      auto& f2 = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu);
+
+      if (f2.ul_sinr.has_value()) {
+        handle_pucch_sinr(u, f2.ul_sinr.value());
+      }
+
+      if (f2.csi.has_value()) {
+        handle_csi_report(u, f2.csi.value());
+      }
+
+      if (f2.time_advance_offset.has_value()) {
+        u.last_ta = f2.time_advance_offset.value().to_seconds();
+      }
+    } else {
+      // PUSCH case.
+      auto& pusch = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(pdu.pdu);
+
+      if (pusch.csi.has_value()) {
+        handle_csi_report(u, pusch.csi.value());
+      }
     }
   }
 }

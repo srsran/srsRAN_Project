@@ -39,17 +39,14 @@ public:
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
-  /// \brief Register CSI report metric.
-  void handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi);
-
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
   /// \brief Register HARQ timeout.
   void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override;
 
-  /// \brief Register PUCCH SINR.
-  void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);
+  /// \brief Handle UCI PDU indication.
+  void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);
 
   /// \brief Handle UL BSR indication.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);
@@ -103,6 +100,9 @@ private:
 
     void reset();
   };
+
+  void handle_pucch_sinr(ue_metric_context& u, float sinr);
+  void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
 
   void report_metrics();
   void handle_slot_result(const sched_result& slot_result);
