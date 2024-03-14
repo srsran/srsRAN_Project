@@ -64,7 +64,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
 
   auto fn = [this, teid, p = std::move(pdu), src_addr]() mutable { handle_pdu_impl(teid, std::move(p), src_addr); };
 
-  if (not it->second.tunnel_exec->execute(std::move(fn))) {
+  if (not it->second.tunnel_exec->defer(std::move(fn))) {
     if (not cfg.warn_on_drop) {
       logger.info("Dropped GTP-U PDU, queue is full. teid={}", teid);
     } else {
