@@ -158,7 +158,10 @@ void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication
     auto& u = ues[phr_ind.ue_index];
 
     // Store last PHR.
-    u.last_phr = phr_ind.phr;
+    if (not phr_ind.phr.get_phr().empty()) {
+      interval<int> rg = phr_ind.phr.get_phr().front().ph;
+      u.last_phr       = (rg.start() + rg.stop()) / 2;
+    }
   }
 }
 
@@ -274,6 +277,7 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   if (last_ta >= 0) {
     ret.last_ta = std::chrono::microseconds{static_cast<unsigned>(last_ta * 1e6)};
   }
+  ret.last_phr = last_phr;
 
   // Reset UE stats metrics on every report.
   reset();

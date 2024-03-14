@@ -51,8 +51,10 @@ static std::string scaled_time(std::chrono::microseconds t)
 static void print_header()
 {
   fmt::print("\n");
-  fmt::print("          |--------------------DL---------------------|-------------------UL-------------------------\n");
-  fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr    ta\n");
+  fmt::print(
+      "          |--------------------DL---------------------|-------------------UL------------------------------\n");
+  fmt::print(
+      " pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr    ta  phr\n");
 }
 
 static std::string float_to_string(float f, int digits, int field_width)
@@ -185,6 +187,11 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
       fmt::print("{}", scaled_time(ue.last_ta.value()));
     } else {
       fmt::print("   n/a");
+    }
+    if (ue.last_phr.has_value()) {
+      fmt::print(" {:>4}", ue.last_phr.value());
+    } else {
+      fmt::print("  n/a");
     }
 
     fmt::print("\n");

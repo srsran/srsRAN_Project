@@ -40,6 +40,7 @@ struct scheduler_ue_metrics {
   unsigned                            bsr;
   unsigned                            dl_bs;
   optional<std::chrono::microseconds> last_ta;
+  optional<int>                       last_phr;
 };
 
 /// \brief Notifier interface used by scheduler to report UE metrics.
