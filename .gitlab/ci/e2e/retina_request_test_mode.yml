@@ -23,7 +23,8 @@
       limits: "6G"
   resources:
     - type: zmq
-      nof_ant: 4
+      nof_antennas_dl: 4
+      nof_antennas_ul: 4
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:

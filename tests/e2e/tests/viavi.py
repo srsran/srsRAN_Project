@@ -192,8 +192,22 @@ def _test_viavi(
     """
     retina_data.test_config = {
         "gnb": {
-            "parameters": {"gnb_id": 1, "log_level": "warning", "pcap": False, "max_rb_size": max_rb_size},
-            "templates": {"cell": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
+            "parameters": {
+                "gnb_id": 1,
+                "log_level": "warning",
+                "pcap": False,
+                "max_rb_size": max_rb_size,
+                "dl_arfcn": 625000,
+                "band": 78,
+                "channel_bandwidth_MHz": 100,
+                "common_scs": 30,
+                "tac": 7,
+                "pci": 1,
+                "nof_antennas_dl": 4,
+                "nof_antennas_ul": 1,
+                "prach_config_index": 159,
+            },
+            "templates": {"extra": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
     if metrics_server is not None:

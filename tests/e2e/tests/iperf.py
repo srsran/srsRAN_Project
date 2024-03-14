@@ -477,9 +477,9 @@ def test_zmq_smoke(
     ),
 )
 @mark.zmq
-@mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
-)
+# @mark.flaky(
+#     reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
+# )
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
