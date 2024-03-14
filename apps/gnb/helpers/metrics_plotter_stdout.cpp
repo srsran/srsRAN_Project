@@ -40,11 +40,19 @@ static std::string scaled_fmt_integer(uint64_t num)
   return "Invalid number";
 }
 
+static std::string scaled_time(std::chrono::microseconds t)
+{
+  if (t.count() < 1000) {
+    return fmt::format("{:>4}us", t.count());
+  }
+  return fmt::format("{:>4}ms", std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
+}
+
 static void print_header()
 {
   fmt::print("\n");
-  fmt::print("          |--------------------DL---------------------|-------------------UL-------------------\n");
-  fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr\n");
+  fmt::print("          |--------------------DL---------------------|-------------------UL-------------------------\n");
+  fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr    ta\n");
 }
 
 static std::string float_to_string(float f, int digits, int field_width)
@@ -173,6 +181,11 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
       fmt::print(" {:>3}%", 0);
     }
     fmt::print(" {}", scaled_fmt_integer(ue.bsr));
+    if (ue.last_ta.has_value()) {
+      fmt::print("{}", scaled_time(ue.last_ta.value()));
+    } else {
+      fmt::print("   n/a");
+    }
 
     fmt::print("\n");
   }

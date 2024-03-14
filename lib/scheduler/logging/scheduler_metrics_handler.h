@@ -95,6 +95,7 @@ private:
     uint8_t                                last_ri  = 1;
     unsigned                               last_bsr = 0;
     phr_report                             last_phr;
+    double                                 last_ta = -1;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     non_persistent_data                    data;
 

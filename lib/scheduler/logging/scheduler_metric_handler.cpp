@@ -52,6 +52,9 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
     if (crc_pdu.tb_crc_success) {
       u.data.sum_ul_tb_bytes += tbs.value();
     }
+    if (crc_pdu.time_advance_offset.has_value()) {
+      u.last_ta = crc_pdu.time_advance_offset->to_seconds();
+    }
   }
 }
 
@@ -236,7 +239,9 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  // TODO: update PUSCH and PUCCH SNR metrics based on indications.
+  if (last_ta >= 0) {
+    ret.last_ta = std::chrono::microseconds{static_cast<unsigned>(last_ta * 1e6)};
+  }
 
   // Reset UE stats metrics on every report.
   reset();
