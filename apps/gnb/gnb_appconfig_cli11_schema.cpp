@@ -211,6 +211,11 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   app.add_option(
          "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
+
+  app.add_option("--stdout_metrics_period",
+                 metrics_params.stdout_metrics_period,
+                 "DU statistics report period in milliseconds. This metrics sets the console output period.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)

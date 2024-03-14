@@ -1794,6 +1794,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
 
   // Logging and tracing.
   out_cfg.log_broadcast_messages = config.log_cfg.broadcast_enabled;
+  out_cfg.metrics_report_period  = std::chrono::milliseconds{config.metrics_cfg.stdout_metrics_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
