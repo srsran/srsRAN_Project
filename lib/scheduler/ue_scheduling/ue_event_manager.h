@@ -36,8 +36,9 @@ public:
   ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
   ~ue_event_manager();
 
-  void
-  add_cell(cell_resource_allocator& cell_res_grid, ue_fallback_scheduler& srb0_sched, uci_scheduler_impl& uci_sched);
+  void add_cell(cell_resource_allocator& cell_res_grid,
+                ue_fallback_scheduler&   fallback_sched,
+                uci_scheduler_impl&      uci_sched);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -113,8 +114,8 @@ private:
 
     cell_resource_allocator* res_grid = nullptr;
 
-    // Reference to SRB0 and other bearers scheduler
-    ue_fallback_scheduler* srb0_sched = nullptr;
+    // Reference to fallback scheduler.
+    ue_fallback_scheduler* fallback_sched = nullptr;
 
     // Reference to the CSI and SR UCI scheduler.
     uci_scheduler_impl* uci_sched = nullptr;

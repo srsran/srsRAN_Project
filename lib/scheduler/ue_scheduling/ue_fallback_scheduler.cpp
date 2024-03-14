@@ -337,7 +337,7 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u
 
     if (mcs_idx > expert_cfg.max_msg4_mcs) {
       logger.debug("rnti={}: Postponing SRB0 PDU allocation. Cause: MCS index chosen ({}) for SRB0 exceeds maximum"
-                   "allowed MCS index ({})",
+                   " allowed MCS index ({})",
                    u.crnti,
                    mcs_idx,
                    expert_cfg.max_msg4_mcs);
@@ -565,68 +565,6 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
                  is_srb0);
 
   return h_dl;
-}
-
-void ue_fallback_scheduler::fill_srb0_grant(ue&                        u,
-                                            slot_point                 pdsch_slot,
-                                            dl_harq_process&           h_dl,
-                                            pdcch_dl_information&      pdcch,
-                                            dl_msg_alloc&              msg,
-                                            unsigned                   pucch_res_indicator,
-                                            unsigned                   pdsch_time_res,
-                                            unsigned                   k1,
-                                            sch_mcs_index              mcs_idx,
-                                            const crb_interval&        ue_grant_crbs,
-                                            const pdsch_config_params& pdsch_params,
-                                            unsigned                   tbs_bytes,
-                                            bool                       is_retx)
-{
-  // Allocate DL HARQ.
-  // NOTE: We do not multiplex the SRBO PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
-  if (not is_retx) {
-    const bool               is_fallback = true;
-    static constexpr uint8_t srb0_dai    = 0;
-    h_dl.new_tx(pdsch_slot,
-                k1,
-                expert_cfg.max_nof_harq_retxs,
-                srb0_dai,
-                u.get_pcell().channel_state_manager().get_wideband_cqi(),
-                u.get_pcell().channel_state_manager().get_nof_dl_layers(),
-                is_fallback);
-  } else {
-    const unsigned harq_bit_idx = 0U;
-    h_dl.new_retx(pdsch_slot, k1, harq_bit_idx);
-  }
-
-  // Fill DL PDCCH DCI.
-  static const uint8_t msg4_rv = 0;
-  build_dci_f1_0_tc_rnti(pdcch.dci,
-                         cell_cfg.dl_cfg_common.init_dl_bwp,
-                         ue_grant_crbs,
-                         pdsch_time_res,
-                         k1,
-                         pucch_res_indicator,
-                         mcs_idx,
-                         msg4_rv,
-                         h_dl);
-
-  // Fill PDSCH PDU.
-  msg.context.ue_index    = u.ue_index;
-  msg.context.k1          = k1;
-  msg.context.ss_id       = pdcch.ctx.context.ss_id;
-  msg.context.nof_retxs   = h_dl.tb(0).nof_retxs;
-  msg.context.olla_offset = 0;
-  build_pdsch_f1_0_tc_rnti(
-      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_crbs, not is_retx);
-
-  if (not is_retx) {
-    // Set MAC logical channels to schedule in this PDU.
-    u.build_dl_fallback_transport_block_info(
-        msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, true);
-  }
-
-  // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
-  h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);
 }
 
 void ue_fallback_scheduler::fill_srb_grant(ue&                        u,

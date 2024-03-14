@@ -935,13 +935,13 @@ protected:
                         test_rgen::uniform_int(20U, 40U)};
     }
 
-    const cell_configuration&         cell_cfg;
-    ue&                               test_ue;
-    slot_point                        slot_update_srb_traffic;
-    unsigned                          nof_packet_to_tx;
+    const cell_configuration&             cell_cfg;
+    ue&                                   test_ue;
+    slot_point                            slot_update_srb_traffic;
+    unsigned                              nof_packet_to_tx;
     fallback_scheduler_srb1_segmentation* parent;
-    srslog::basic_logger&             test_logger  = srslog::fetch_basic_logger("TEST");
-    unsigned                          missing_retx = 0;
+    srslog::basic_logger&                 test_logger  = srslog::fetch_basic_logger("TEST");
+    unsigned                              missing_retx = 0;
 
     using h_state = srsran::dl_harq_process::harq_process::transport_block::state_t;
     std::vector<h_state> latest_harq_states;

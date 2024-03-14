@@ -270,7 +270,7 @@ public:
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
     cqi_value                                               cqi;
     unsigned                                                nof_layers;
-    bool                                                    is_fallback;
+    bool                                                    is_fallback{false};
   };
 
   struct dl_ack_info_result {

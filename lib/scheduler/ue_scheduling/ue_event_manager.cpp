@@ -80,7 +80,7 @@ public:
       u.handle_dl_buffer_state_indication(dl_bo);
       if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
         // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication_srb(
+        parent.du_cells[u.get_pcell().cell_index].fallback_sched->handle_dl_buffer_state_indication_srb(
             dl_bo.ue_index, dl_bo.lcid == LCID_SRB0);
       }
 
@@ -632,16 +632,16 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 }
 
 void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
-                                ue_fallback_scheduler&   srb0_sched,
+                                ue_fallback_scheduler&   fallback_sched,
                                 uci_scheduler_impl&      uci_sched)
 {
   const du_cell_index_t cell_index = cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  du_cells[cell_index].cfg        = &cell_res_grid.cfg;
-  du_cells[cell_index].res_grid   = &cell_res_grid;
-  du_cells[cell_index].srb0_sched = &srb0_sched;
-  du_cells[cell_index].uci_sched  = &uci_sched;
+  du_cells[cell_index].cfg            = &cell_res_grid.cfg;
+  du_cells[cell_index].res_grid       = &cell_res_grid;
+  du_cells[cell_index].fallback_sched = &fallback_sched;
+  du_cells[cell_index].uci_sched      = &uci_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
