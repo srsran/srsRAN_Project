@@ -150,12 +150,6 @@ void ue_context_setup_procedure::send_ue_context_setup_request()
   // Convert common type to asn1
   fill_asn1_ue_context_setup_request(req, request, ue_ctxt->ue_ids);
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_ue_ctxt_setup_request_msg.pdu.to_json(js);
-    logger.debug("Containerized UeContextSetupRequest: {}", js.to_string());
-  }
-
   // send UE context setup request message
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_setup_request_msg);
 }

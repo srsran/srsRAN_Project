@@ -35,10 +35,10 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
   cfg(f1ap_cfg_),
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
-  pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
-  ctrl_exec(ctrl_exec_)
+  ctrl_exec(ctrl_exec_),
+  tx_pdu_notifier(*this, f1ap_pdu_notifier_)
 {
 }
 
@@ -77,13 +77,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = std::move(dl_rrc_msg);
 
   // send DL RRC message
-  ue_ctxt.logger.log_debug("Sending {}", msg_name);
-  if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_dl_rrc_msg.pdu.to_json(js);
-    ue_ctxt.logger.log_debug("Containerized {}: {}", msg_name, js.to_string());
-  }
-  pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
+  tx_pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
 
 async_task<f1ap_ue_context_setup_response>
@@ -91,7 +85,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
                                               optional<rrc_ue_transfer_context>    rrc_context)
 {
   return launch_async<ue_context_setup_procedure>(
-      cfg, request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger, rrc_context);
+      cfg, request, ue_ctxt_list, du_processor_notifier, tx_pdu_notifier, logger, rrc_context);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
@@ -105,7 +99,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<ue_context_release_procedure>(msg, ue_ctxt_list[msg.ue_index], pdu_notifier);
+  return launch_async<ue_context_release_procedure>(msg, ue_ctxt_list[msg.ue_index], tx_pdu_notifier);
 }
 
 async_task<f1ap_ue_context_modification_response>
@@ -120,7 +114,7 @@ f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modif
     });
   }
 
-  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier);
+  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], tx_pdu_notifier);
 }
 
 bool f1ap_cu_impl::handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index)
@@ -145,14 +139,8 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
 
   fill_asn1_paging_message(paging_msg.pdu.init_msg().value.paging(), msg);
 
-  // send DL RRC message
-  logger.debug("Sending \"Paging\"");
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    paging_msg.pdu.to_json(js);
-    logger.debug("Containerized \"Paging\": {}", js.to_string());
-  }
-  pdu_notifier.on_new_message(paging_msg);
+  // Send message to DU.
+  tx_pdu_notifier.on_new_message(paging_msg);
 }
 
 void f1ap_cu_impl::handle_message(const f1ap_message& msg)
@@ -217,7 +205,7 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 {
   current_transaction_id = request->transaction_id;
 
-  handle_f1_setup_procedure(request, pdu_notifier, du_processor_notifier, logger);
+  handle_f1_setup_procedure(request, du_ctxt, tx_pdu_notifier, du_processor_notifier, logger);
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
@@ -391,10 +379,18 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 }
 
-void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
+static auto log_pdu_helper(srslog::basic_logger&         logger,
+                           bool                          is_rx,
+                           gnb_du_id_t                   du_id,
+                           const f1ap_ue_context_list&   ue_ctxt_list,
+                           const asn1::f1ap::f1ap_pdu_c& pdu)
 {
-  expected<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(msg.pdu);
-  expected<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
+  if (not logger.info.enabled()) {
+    return;
+  }
+
+  optional<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(pdu);
+  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(pdu);
   ue_index_t                    ue_idx   = ue_index_t::invalid;
   if (cu_ue_id.has_value()) {
     auto* ue = ue_ctxt_list.find(cu_ue_id.value());
@@ -404,9 +400,9 @@ void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
   }
 
   // Custom formattable object whose formatting function will run in the log backend.
-  auto rx_pdu_log_entry = make_formattable(
-      [du_id = du_ctxt.du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(msg.pdu)](auto& ctx) {
-        fmt::format_to(ctx.out(), "Rx du_id={}", du_id);
+  auto rx_pdu_log_entry =
+      make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
+        fmt::format_to(ctx.out(), "{} PDU GNB-DU-ID={}", is_rx ? "Rx" : "Tx", du_id);
         if (ue_idx != ue_index_t::invalid) {
           fmt::format_to(ctx.out(), " ue={}", ue_idx);
         }
@@ -421,9 +417,21 @@ void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    msg.pdu.to_json(js);
-    logger.info("{}. Content: {}", rx_pdu_log_entry, js.to_string());
+    pdu.to_json(js);
+    logger.info("{}. Content:\n{}", rx_pdu_log_entry, js.to_string());
   } else {
     logger.info("{}", rx_pdu_log_entry);
   }
+}
+
+void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
+{
+  log_pdu_helper(logger, true, du_ctxt.du_id, ue_ctxt_list, msg.pdu);
+}
+
+void f1ap_cu_impl::tx_pdu_notifier_with_logging::on_new_message(const f1ap_message& msg)
+{
+  log_pdu_helper(parent.logger, false, parent.du_ctxt.du_id, parent.ue_ctxt_list, msg.pdu);
+
+  decorated.on_new_message(msg);
 }

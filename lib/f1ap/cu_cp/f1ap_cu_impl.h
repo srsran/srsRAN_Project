@@ -74,6 +74,21 @@ public:
   f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *this; }
 
 private:
+  class tx_pdu_notifier_with_logging final : public f1ap_message_notifier
+  {
+  public:
+    tx_pdu_notifier_with_logging(f1ap_cu_impl& parent_, f1ap_message_notifier& decorated_) :
+      parent(parent_), decorated(decorated_)
+    {
+    }
+
+    void on_new_message(const f1ap_message& msg) override;
+
+  private:
+    f1ap_cu_impl&          parent;
+    f1ap_message_notifier& decorated;
+  };
+
   /// \brief Handle the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
@@ -121,10 +136,11 @@ private:
   f1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
-  f1ap_message_notifier&       pdu_notifier;
   f1ap_du_processor_notifier&  du_processor_notifier;
   f1ap_du_management_notifier& du_management_notifier;
   task_executor&               ctrl_exec;
+
+  tx_pdu_notifier_with_logging tx_pdu_notifier;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id
 };

@@ -57,14 +57,6 @@ void ue_context_modification_procedure::send_ue_context_modification_request()
   ctx_mod->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
   ctx_mod->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
 
-  if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_ue_ctxt_mod_request_msg.pdu.to_json(js);
-    logger.debug("{}: Containerized UEContextModificationRequest: {}",
-                 f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()},
-                 js.to_string());
-  }
-
   // send UE context modification request message
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_mod_request_msg);
 }
