@@ -493,6 +493,21 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
   logger.log_info("Removing PDU session with {}", pdu_session_id);
 }
 
+void pdu_session_manager_impl::disconnect_all_pdu_sessions()
+{
+  fmt::print("huzzaa!\n");
+  for (const auto& pdu_session_it : pdu_sessions) {
+    fmt::print("disconnecting psi={}", pdu_session_it.first);
+    for (const auto& drb : pdu_session_it.second->drbs) {
+      fmt::print("disconnecting DRB={}", pdu_session_it.first);
+      logger.log_debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
+      f1u_gw.disconnect_cu_bearer(up_transport_layer_info(
+          transport_layer_address::create_from_string(net_config.f1u_bind_addr), drb.second->f1u_ul_teid));
+    }
+    gtpu_rx_demux.remove_tunnel(pdu_session_it.second->local_teid);
+  }
+}
+
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();

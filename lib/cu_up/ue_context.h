@@ -89,7 +89,12 @@ public:
   }
   ~ue_context() override = default;
 
-  async_task<void> stop() { return ue_exec_mapper->stop(); }
+  async_task<void> stop()
+  {
+    /// Disconnect
+    pdu_session_manager.disconnect_all_pdu_sessions();
+    return ue_exec_mapper->stop();
+  }
 
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
