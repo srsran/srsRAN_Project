@@ -380,6 +380,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
 }
 
 static auto log_pdu_helper(srslog::basic_logger&         logger,
+                           bool                          json_log,
                            bool                          is_rx,
                            gnb_du_id_t                   du_id,
                            const f1ap_ue_context_list&   ue_ctxt_list,
@@ -403,19 +404,19 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
   auto rx_pdu_log_entry =
       make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
         fmt::format_to(ctx.out(), "{} PDU GNB-DU-ID={}", is_rx ? "Rx" : "Tx", du_id);
-        if (ue_idx != ue_index_t::invalid) {
-          fmt::format_to(ctx.out(), " ue={}", ue_idx);
-        }
         if (du_ue_id.has_value()) {
           fmt::format_to(ctx.out(), " GNB-DU-UE-F1AP-ID={}", du_ue_id.value());
         }
         if (cu_ue_id.has_value()) {
           fmt::format_to(ctx.out(), " GNB-CU-UE-F1AP-ID={}", cu_ue_id.value());
         }
+        if (ue_idx != ue_index_t::invalid) {
+          fmt::format_to(ctx.out(), " ue={}", ue_idx);
+        }
         return fmt::format_to(ctx.out(), ": {}", msg_name);
       });
 
-  if (logger.debug.enabled()) {
+  if (json_log) {
     asn1::json_writer js;
     pdu.to_json(js);
     logger.info("{}. Content:\n{}", rx_pdu_log_entry, js.to_string());
@@ -426,12 +427,12 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
 
 void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
 {
-  log_pdu_helper(logger, true, du_ctxt.du_id, ue_ctxt_list, msg.pdu);
+  log_pdu_helper(logger, cfg.json_log_enabled, true, du_ctxt.du_id, ue_ctxt_list, msg.pdu);
 }
 
 void f1ap_cu_impl::tx_pdu_notifier_with_logging::on_new_message(const f1ap_message& msg)
 {
-  log_pdu_helper(parent.logger, false, parent.du_ctxt.du_id, parent.ue_ctxt_list, msg.pdu);
+  log_pdu_helper(parent.logger, parent.cfg.json_log_enabled, false, parent.du_ctxt.du_id, parent.ue_ctxt_list, msg.pdu);
 
   decorated.on_new_message(msg);
 }

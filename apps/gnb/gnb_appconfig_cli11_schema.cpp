@@ -97,6 +97,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
                  "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
                  "\"phy_rx_symbols_filename\" is set.")
       ->capture_default_str();
+  app.add_option("--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
+      ->always_capture_default();
   app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 

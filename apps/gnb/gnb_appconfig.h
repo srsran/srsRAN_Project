@@ -778,6 +778,8 @@ struct log_appconfig {
   optional<unsigned> phy_rx_symbols_port = 0;
   /// If true, prints the PRACH frequency-domain symbols.
   bool phy_rx_symbols_prach = false;
+  /// Enable JSON generation for the F1AP Tx and Rx PDUs.
+  bool f1ap_json_enabled = false;
   /// Set to a valid file path to enable tracing and write the trace to the file.
   std::string tracing_filename;
 };

@@ -121,6 +121,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   // F1AP-CU config.
   out_cfg.f1ap_config.ue_context_setup_timeout =
       std::chrono::milliseconds{config.cu_cp_cfg.f1ap_config.ue_context_setup_timeout};
+  out_cfg.f1ap_config.json_log_enabled = config.log_cfg.f1ap_json_enabled;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
