@@ -70,17 +70,6 @@ private:
   optional<up_transport_layer_info> dl_tnl_info;
 };
 
-class f1u_tx_delivery_local_adapter : public srs_cu_up::f1u_rx_delivery_notifier
-{
-public:
-  void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
-  void on_transmit_notification(uint32_t highest_pdcp_sn) override {}
-  void on_delivery_notification(uint32_t highest_pdcp_sn) override {}
-
-private:
-  srs_du::f1u_rx_pdu_handler* handler = nullptr;
-};
-
 class f1u_ul_local_adapter : public srs_du::f1u_tx_pdu_notifier
 {
 public:
