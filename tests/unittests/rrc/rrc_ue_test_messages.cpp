@@ -12,6 +12,7 @@
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/security/security.h"
 

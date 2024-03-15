@@ -19,6 +19,7 @@
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -673,14 +674,14 @@ struct cu_cp_cell_appconfig_item {
 
   // These parameters must only be set for external cells
   // TODO: Add optional SSB parameters.
-  optional<unsigned> gnb_id;       ///< gNodeB identifier.
-  optional<pci_t>    pci;          ///< PCI.
-  optional<nr_band>  band;         ///< NR band.
-  optional<unsigned> ssb_arfcn;    ///< SSB ARFCN.
-  optional<unsigned> ssb_scs;      ///< SSB subcarrier spacing.
-  optional<unsigned> ssb_period;   ///< SSB period.
-  optional<unsigned> ssb_offset;   ///< SSB offset.
-  optional<unsigned> ssb_duration; ///< SSB duration.
+  optional<unsigned> gnb_id_bit_length; ///< gNodeB identifier bit length.
+  optional<pci_t>    pci;               ///< PCI.
+  optional<nr_band>  band;              ///< NR band.
+  optional<unsigned> ssb_arfcn;         ///< SSB ARFCN.
+  optional<unsigned> ssb_scs;           ///< SSB subcarrier spacing.
+  optional<unsigned> ssb_period;        ///< SSB period.
+  optional<unsigned> ssb_offset;        ///< SSB offset.
+  optional<unsigned> ssb_duration;      ///< SSB duration.
 
   std::vector<cu_cp_neighbor_cell_appconfig_item> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
@@ -1232,9 +1233,7 @@ struct gnb_appconfig {
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// gNodeB identifier.
-  uint32_t gnb_id = 411;
-  /// Length of gNB identity in bits. Values {22,...,32}.
-  uint8_t gnb_id_bit_length = 32;
+  gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.

@@ -639,8 +639,7 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
-static bool
-validate_mobility_appconfig(const uint32_t gnb_id, uint8_t gnb_id_bit_length, const mobility_appconfig& config)
+static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_appconfig& config)
 {
   // check cu_cp_cell_config
   for (const auto& cell : config.cells) {
@@ -650,21 +649,22 @@ validate_mobility_appconfig(const uint32_t gnb_id, uint8_t gnb_id_bit_length, co
       return false;
     }
 
-    if ((config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id_bit_length) == gnb_id)) {
-      if (cell.gnb_id.has_value() || cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() ||
-          cell.ssb_scs.has_value() || cell.ssb_period.has_value() || cell.ssb_offset.has_value() ||
-          cell.ssb_duration.has_value()) {
-        fmt::print(
-            "For cells managed by the CU-CP the gnb_id, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
-            "ssb_duration must not be configured in the mobility config\n");
+    if (cell.gnb_id_bit_length.has_value() &&
+        (config_helpers::get_gnb_id(cell.nr_cell_id, cell.gnb_id_bit_length.value()) == gnb_id)) {
+      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
+          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
+        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+                   "ssb_offset and "
+                   "ssb_duration must not be configured in the mobility config\n");
         return false;
       }
     } else {
-      if (!cell.gnb_id.has_value() || !cell.pci.has_value() || !cell.band.has_value() || !cell.ssb_arfcn.has_value() ||
-          !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() || !cell.ssb_offset.has_value() ||
-          !cell.ssb_duration.has_value()) {
-        fmt::print("For external cells, the gnb_id, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
-                   "ssb_duration must be configured in the mobility config\n");
+      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
+          !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
+          !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
+        fmt::print(
+            "For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
+            "ssb_duration must be configured in the mobility config\n");
         return false;
       }
     }
@@ -674,10 +674,7 @@ validate_mobility_appconfig(const uint32_t gnb_id, uint8_t gnb_id_bit_length, co
 }
 
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
-static bool validate_cu_cp_appconfig(const uint32_t         gnb_id,
-                                     uint8_t                gnb_id_bit_length,
-                                     const cu_cp_appconfig& config,
-                                     const sib_appconfig&   sib_cfg)
+static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
 {
   // check if the pdu_session_setup_timout is larger than T310
   if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
@@ -688,7 +685,7 @@ static bool validate_cu_cp_appconfig(const uint32_t         gnb_id,
   }
 
   // validate mobility config
-  if (!validate_mobility_appconfig(gnb_id, gnb_id_bit_length, config.mobility_config)) {
+  if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
     return false;
   }
 
@@ -1322,8 +1319,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(
-          config.gnb_id, config.gnb_id_bit_length, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
+  if (!validate_cu_cp_appconfig(config.gnb_id, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
     return false;
   }
 

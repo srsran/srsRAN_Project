@@ -27,7 +27,7 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   ngap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  cfg.gnb_id        = 411;
+  cfg.gnb_id        = {411, 22};
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = "00101";
   cfg.tac           = 7;

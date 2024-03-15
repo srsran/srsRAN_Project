@@ -286,7 +286,8 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
                  "Periodical report configuration for the serving cell")
       ->check(CLI::Range(1, 64));
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
-  app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
+  app.add_option("--gnb_id_bit_length", config.gnb_id_bit_length, "gNodeB identifier bit length")
+      ->check(CLI::Range(22, 32));
   app.add_option("--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
@@ -2420,8 +2421,8 @@ static void configure_cli11_fapi_args(CLI::App& app, fapi_appconfig& config)
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
   gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
-  app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
-  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
+  app.add_option("--gnb_id", gnb_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();

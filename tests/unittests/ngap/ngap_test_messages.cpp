@@ -59,7 +59,7 @@ bool srsran::srs_cu_cp::is_pdu_type(const ngap_message&                         
 ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
   ngap_ng_setup_request request_msg;
-  request_msg.global_ran_node_id.gnb_id  = 411;
+  request_msg.global_ran_node_id.gnb_id  = {411, 22};
   request_msg.global_ran_node_id.plmn_id = "00101";
 
   request_msg.ran_node_name = "srsgnb01";

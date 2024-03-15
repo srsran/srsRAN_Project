@@ -126,7 +126,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
           srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
     }
 
-    meas_cfg_item.serving_cell_cfg.gnb_id    = app_cfg_item.gnb_id;
+    if (app_cfg_item.gnb_id_bit_length.has_value()) {
+      meas_cfg_item.serving_cell_cfg.gnb_id =
+          config_helpers::get_gnb_id(app_cfg_item.nr_cell_id, app_cfg_item.gnb_id_bit_length.value());
+    }
     meas_cfg_item.serving_cell_cfg.pci       = app_cfg_item.pci;
     meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
     meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
@@ -517,7 +520,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // Set the rest of the parameters.
     out_cell.nr_cgi.plmn      = base_cell.plmn;
-    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
+    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, cell_id);
     out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = param.search_space0_index;
 

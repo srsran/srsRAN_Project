@@ -16,6 +16,7 @@
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/rlc/rlc_config.h"
 #include <vector>

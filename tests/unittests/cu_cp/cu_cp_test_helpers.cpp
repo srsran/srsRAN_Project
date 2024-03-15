@@ -55,7 +55,7 @@ cu_cp_test::cu_cp_test()
   cfg.timers              = timers.get();
 
   // NGAP config
-  cfg.ngap_config.gnb_id        = 411;
+  cfg.ngap_config.gnb_id        = {411, 22};
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";
   cfg.ngap_config.tac           = 7;
@@ -116,7 +116,7 @@ cu_cp_test::cu_cp_test()
   cell_cfg_2.ncells.push_back(ncell_2);
   cell_cfg_2.serving_cell_cfg.nci       = 0x19c0;
   cell_cfg_2.serving_cell_cfg.pci       = 2;
-  cell_cfg_2.serving_cell_cfg.gnb_id    = 412;
+  cell_cfg_2.serving_cell_cfg.gnb_id    = gnb_id_t{412, 22};
   cell_cfg_2.serving_cell_cfg.ssb_arfcn = 632628;
   cell_cfg_2.serving_cell_cfg.band      = nr_band::n78;
   cell_cfg_2.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz30;

@@ -18,6 +18,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
