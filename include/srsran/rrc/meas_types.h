@@ -12,6 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
@@ -83,9 +84,38 @@ struct rrc_periodicity_and_offset {
   optional<uint8_t> sf160;
 };
 
+inline bool operator==(const rrc_periodicity_and_offset& lhs, const rrc_periodicity_and_offset& rhs)
+{
+  if (lhs.sf5.has_value() && rhs.sf5.has_value()) {
+    return lhs.sf5.value() == rhs.sf5.value();
+  }
+  if (lhs.sf10.has_value() && rhs.sf10.has_value()) {
+    return lhs.sf10.value() == rhs.sf10.value();
+  }
+  if (lhs.sf20.has_value() && rhs.sf20.has_value()) {
+    return lhs.sf20.value() == rhs.sf20.value();
+  }
+  if (lhs.sf40.has_value() && rhs.sf40.has_value()) {
+    return lhs.sf40.value() == rhs.sf40.value();
+  }
+  if (lhs.sf80.has_value() && rhs.sf80.has_value()) {
+    return lhs.sf80.value() == rhs.sf80.value();
+  }
+  if (lhs.sf160.has_value() && rhs.sf160.has_value()) {
+    return lhs.sf160.value() == rhs.sf160.value();
+  }
+
+  return false;
+};
+
 struct rrc_ssb_mtc {
   rrc_periodicity_and_offset periodicity_and_offset;
   uint8_t                    dur;
+};
+
+inline bool operator==(const rrc_ssb_mtc& lhs, const rrc_ssb_mtc& rhs)
+{
+  return lhs.periodicity_and_offset == rhs.periodicity_and_offset && lhs.dur == rhs.dur;
 };
 
 struct rrc_ss_rssi_meas {
@@ -107,6 +137,11 @@ struct rrc_meas_timing {
 struct rrc_ssb_mtc2 {
   std::vector<pci_t> pci_list;
   uint8_t            periodicity;
+};
+
+inline bool operator==(const rrc_ssb_mtc2& lhs, const rrc_ssb_mtc2& rhs)
+{
+  return lhs.periodicity == rhs.periodicity && lhs.pci_list == rhs.pci_list;
 };
 
 struct rrc_ssb_to_measure {
@@ -210,8 +245,10 @@ struct rrc_pci_range_elem {
   rrc_pci_range pci_range;
 };
 
+using ssb_frequency_t = uint32_t;
+
 struct rrc_meas_obj_nr {
-  optional<uint32_t>                ssb_freq;
+  optional<ssb_frequency_t>         ssb_freq; // SSB ARFCN value
   optional<subcarrier_spacing>      ssb_subcarrier_spacing;
   optional<rrc_ssb_mtc>             smtc1;
   optional<rrc_ssb_mtc2>            smtc2;
@@ -579,3 +616,66 @@ struct rrc_meas_results {
 
 } // namespace srs_cu_cp
 } // namespace srsran
+
+namespace fmt {
+
+// Cell meas config formatter
+template <>
+struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    std::string smtc1_str = "";
+    std::string smtc2_str = "";
+
+    if (meas_object.smtc1.has_value()) {
+      smtc1_str = " smtc1: periodicity_and_offset=";
+      if (meas_object.smtc1.value().periodicity_and_offset.sf5.has_value()) {
+        smtc1_str = fmt::format("{}sf5({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf5.value());
+      }
+      if (meas_object.smtc1.value().periodicity_and_offset.sf10.has_value()) {
+        smtc1_str = fmt::format("{}sf10({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf10.value());
+      }
+      if (meas_object.smtc1.value().periodicity_and_offset.sf20.has_value()) {
+        smtc1_str = fmt::format("{}sf20({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf20.value());
+      }
+      if (meas_object.smtc1.value().periodicity_and_offset.sf40.has_value()) {
+        smtc1_str = fmt::format("{}sf40({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf40.value());
+      }
+      if (meas_object.smtc1.value().periodicity_and_offset.sf80.has_value()) {
+        smtc1_str = fmt::format("{}sf80({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf80.value());
+      }
+      if (meas_object.smtc1.value().periodicity_and_offset.sf160.has_value()) {
+        smtc1_str =
+            fmt::format("{}sf160({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf160.value());
+      }
+
+      smtc1_str = fmt::format("{} dur={}", smtc1_str, meas_object.smtc1.value().dur);
+    }
+
+    if (meas_object.smtc2.has_value()) {
+      smtc2_str = " smtc2: pci_list=[ ";
+      for (const auto& pci : meas_object.smtc2.value().pci_list) {
+        smtc2_str = smtc2_str + std::to_string(pci) + " ";
+      }
+      smtc2_str = fmt::format("{}] periodicity={}", smtc2_str, meas_object.smtc2.value().periodicity);
+    }
+
+    return format_to(
+        ctx.out(),
+        "ssb_freq={} ssb_scs={}{}{}",
+        meas_object.ssb_freq.has_value() ? fmt::to_string(meas_object.ssb_freq.value()) : "?",
+        meas_object.ssb_subcarrier_spacing.has_value() ? to_string(meas_object.ssb_subcarrier_spacing.value()) : "?",
+        meas_object.smtc1.has_value() ? smtc1_str : "",
+        meas_object.smtc2.has_value() ? smtc2_str : "");
+  }
+};
+
+} // namespace fmt

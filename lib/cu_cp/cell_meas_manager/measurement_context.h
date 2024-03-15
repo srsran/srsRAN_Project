@@ -41,7 +41,15 @@ public:
     return new_meas_id;
   }
 
-  void remove_meas_id(meas_id_t meas_id) { meas_ids.erase(meas_id_to_uint(meas_id)); }
+  /// Remove all meas ids from the context, including lookups.
+  void clear_meas_ids()
+  {
+    meas_id_to_meas_context.clear();
+    meas_ids.clear();
+
+    // Mark zero index as occupied as the first valid meas ID is 1.
+    meas_ids.emplace(0);
+  }
 
   /// \brief Get the next available meas obj id.
   meas_obj_id_t allocate_meas_obj_id()
@@ -59,13 +67,23 @@ public:
     return new_meas_obj_id;
   }
 
-  void remove_meas_obj_id(meas_obj_id_t meas_obj_id) { meas_obj_ids.erase(meas_obj_id_to_uint(meas_obj_id)); }
+  /// Remove all meas obj ids from the context, including lookups.
+  void clear_meas_obj_ids()
+  {
+    nci_to_meas_obj_id.clear();
+    meas_obj_id_to_ncis.clear();
+    meas_obj_ids.clear();
+
+    // Mark zero index as occupied as the first valid meas obj ID is 1.
+    meas_obj_ids.emplace(0);
+  }
 
   slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;     // 0 is reserved for invalid meas_id
   slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids; // 0 is reserved for invalid meas_obj_id
 
-  std::map<meas_id_t, meas_context_t>   meas_id_to_meas_context;
-  std::map<meas_obj_id_t, nr_cell_id_t> meas_obj_id_to_nci;
+  std::map<meas_id_t, meas_context_t>                meas_id_to_meas_context;
+  std::map<nr_cell_id_t, meas_obj_id_t>              nci_to_meas_obj_id;
+  std::map<meas_obj_id_t, std::vector<nr_cell_id_t>> meas_obj_id_to_ncis;
 
   cell_meas_manager_ue_context()
   {

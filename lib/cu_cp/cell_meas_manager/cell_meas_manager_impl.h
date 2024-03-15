@@ -13,6 +13,9 @@
 #include "../ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/rrc/meas_types.h"
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -40,14 +43,23 @@ public:
   get_measurement_config(ue_index_t ue_index, nr_cell_id_t nci, optional<rrc_meas_cfg> current_meas_config = {});
   optional<cell_meas_config> get_cell_config(nr_cell_id_t nci);
   void                       update_cell_config(nr_cell_id_t                                  nci,
-                                                const serving_cell_meas_config&               serv_cell_cfg_,
-                                                const std::vector<neighbor_cell_meas_config>& ncells_ = {});
+                                                const serving_cell_meas_config&               serv_cell_cfg,
+                                                const std::vector<neighbor_cell_meas_config>& ncells = {});
   void                       report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
 private:
+  /// \brief Generate measurement objects for the given cell configuration.
+  void generate_measurement_objects_for_serving_cells();
+
+  bool update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg);
+
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
   ue_manager&                          ue_mng;
+
+  std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
+      ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
+  std::unordered_map<ssb_frequency_t, std::vector<nr_cell_id_t>> ssb_freq_to_ncis;
 
   srslog::basic_logger& logger;
 };

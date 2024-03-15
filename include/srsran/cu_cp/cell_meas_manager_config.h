@@ -92,7 +92,7 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
 
     return format_to(
         ctx.out(),
-        "nci={} complete={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
+        "nci={:#x} complete={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
         cfg.serving_cell_cfg.nci,
         is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
         cfg.serving_cell_cfg.pci.has_value() ? to_string(cfg.serving_cell_cfg.pci.value()) : "?",

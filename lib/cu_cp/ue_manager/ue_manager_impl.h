@@ -198,10 +198,8 @@ public:
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt) { meas_context = std::move(meas_ctxt); }
 
-  bool meas_context_created() { return meas_context.has_value(); }
-
   /// \brief Get the measurement context of the UE.
-  optional<cell_meas_manager_ue_context>& get_meas_context() { return meas_context; }
+  cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
 
 private:
   // common context
@@ -223,10 +221,10 @@ private:
   optional<ngap_ue_t> ngap_ue_context;
 
   // cu-cp ue context
-  ngap_rrc_ue_adapter                    ngap_rrc_ue_ev_notifier;
-  cu_cp_rrc_ue_adapter                   cu_cp_rrc_ue_ev_notifier;
-  rrc_ue_cu_cp_adapter                   rrc_ue_cu_cp_ev_notifier;
-  optional<cell_meas_manager_ue_context> meas_context;
+  ngap_rrc_ue_adapter          ngap_rrc_ue_ev_notifier;
+  cu_cp_rrc_ue_adapter         cu_cp_rrc_ue_ev_notifier;
+  rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
+  cell_meas_manager_ue_context meas_context;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
@@ -357,7 +355,7 @@ public:
 
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 
-  optional<cell_meas_manager_ue_context>& get_measurement_context(ue_index_t ue_index)
+  cell_meas_manager_ue_context& get_measurement_context(ue_index_t ue_index)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
     srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
