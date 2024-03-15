@@ -490,21 +490,20 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_td
 
 TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 {
-  const unsigned                           k0                 = 0;
-  const sch_mcs_index                      max_msg4_mcs_index = 8;
-  const tdd_ul_dl_config_common            tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
-                                                   .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
-                                                                .nof_dl_slots              = 2,
-                                                                .nof_dl_symbols            = 8,
-                                                                .nof_ul_slots              = 2,
-                                                                .nof_ul_symbols            = 0}};
+  const unsigned                k0                 = 0;
+  const sch_mcs_index           max_msg4_mcs_index = 8;
+  const tdd_ul_dl_config_common tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
+                                        .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
+                                                     .nof_dl_slots              = 2,
+                                                     .nof_dl_symbols            = 8,
+                                                     .nof_ul_slots              = 2,
+                                                     .nof_ul_symbols            = 0}};
+  // Disabled CSI-RS resources, as this test uses a TDD configuration that is not compatible with CSI-RS scheduling.
+  this->builder_params.csi_rs_enabled               = false;
   sched_cell_configuration_request_message cell_cfg = create_custom_cell_config_request(k0, tdd_cfg);
   // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
   cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
       cell_cfg.searchspace0, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cell_cfg.tdd_ul_dl_cfg_common);
-  // Disabled CSI-RS resources, as this test uses a TDD configuration that is not compatible with CSI-RS scheduling.
-  cell_cfg.nzp_csi_rs_res_list.clear();
-  cell_cfg.zp_csi_rs_list.clear();
   setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
 
   const unsigned MAX_TEST_RUN_SLOTS = 40;
