@@ -9,6 +9,7 @@
  */
 
 #include "../../../lib/phy/support/resource_grid_impl.h"
+#include "helpers.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
@@ -102,39 +103,6 @@ public:
 
 static test_parameters test_params;
 
-/// Helper function to convert array of port indexes to string.
-static std::string port_ids_to_str(span<unsigned> ports)
-{
-  std::stringstream ss;
-  ss << "{";
-  for (unsigned i = 0, e = ports.size() - 1; i != e; ++i) {
-    ss << ports[i] << ", ";
-  }
-  ss << ports[ports.size() - 1] << "}";
-  return ss.str();
-}
-
-/// Helper function to parse list of ports provided as a string.
-static std::vector<unsigned> parse_port_id(const std::string& port_id_str)
-{
-  std::vector<unsigned> port_ids;
-  size_t                start_pos = port_id_str.find('{');
-  size_t                end_pos   = port_id_str.find('}');
-  if (start_pos == std::string::npos || end_pos == std::string::npos) {
-    return port_ids;
-  }
-  std::string       ports_comma_separated = port_id_str.substr(start_pos + 1, end_pos - 1);
-  std::stringstream ss(ports_comma_separated);
-  int               port;
-  while (ss >> port) {
-    port_ids.push_back(port);
-    if (ss.peek() == ',' || ss.peek() == ' ') {
-      ss.ignore();
-    }
-  }
-  return port_ids;
-}
-
 /// Prints usage information of the app.
 static void usage(const char* prog)
 {
@@ -167,55 +135,6 @@ static void usage(const char* prog)
   fmt::print("\t-v Logging level. [Default {}]\n", test_params.log_level);
   fmt::print("\t-f Log file name. [Default {}]\n", test_params.log_filename);
   fmt::print("\t-h Show this message\n");
-}
-
-/// Validates the bandwidth argument provided as a user input.
-static bool validate_bw(unsigned bandwidth)
-{
-  switch (bandwidth) {
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz5):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz5;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz10):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz10;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz15):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz15;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz20):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz20;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz25):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz25;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz30):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz30;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz40):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz40;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz50):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz50;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz60):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz60;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz70):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz70;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz80):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz80;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz90):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz90;
-      break;
-    case bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1::MHz100):
-      test_params.bw = bs_channel_bandwidth_fr1::MHz100;
-      break;
-    default:
-      return false;
-  }
-  return true;
 }
 
 /// Parses arguments of the app.
@@ -255,9 +174,11 @@ static void parse_args(int argc, char** argv)
         break;
       case 'w':
         if (optarg != nullptr) {
-          if (!validate_bw(std::strtol(optarg, nullptr, 10))) {
+          if (!is_valid_bw(std::strtol(optarg, nullptr, 10))) {
             fmt::print("Invalid bandwidth\n");
             invalid_arg = true;
+          } else {
+            test_params.bw = MHz_to_bs_channel_bandwidth(std::strtol(optarg, nullptr, 10));
           }
         }
         break;
