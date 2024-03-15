@@ -48,12 +48,14 @@ private:
     slot_point most_recent_ack_slot;
   };
 
+  enum class sched_outcome { success, next_ue, exit_scheduler };
+
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  bool schedule_srb(cell_resource_allocator&       res_alloc,
-                    ue&                            u,
-                    bool                           is_srb0,
-                    dl_harq_process*               h_dl_retx,
-                    optional<most_recent_tx_slots> most_recent_tx_ack_slots);
+  sched_outcome schedule_srb(cell_resource_allocator&       res_alloc,
+                             ue&                            u,
+                             bool                           is_srb0,
+                             dl_harq_process*               h_dl_retx,
+                             optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
   dl_harq_process* schedule_srb0(ue&                      u,

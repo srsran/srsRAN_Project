@@ -68,7 +68,11 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     if (h_dl->has_pending_retx()) {
       optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      schedule_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
+      sched_outcome outcome = schedule_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
+      // This is the case of the scheduler reaching the maximum number of sched attempts.
+      if (outcome == sched_outcome::exit_scheduler) {
+        return;
+      }
     }
   }
 
@@ -87,10 +91,18 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     auto&                          u                  = ues[next_ue->ue_index];
     optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    if (u.has_pending_dl_newtx_bytes(LCID_SRB0) and schedule_srb(res_alloc, u, true, nullptr, most_recent_tx_ack)) {
-      next_ue = pending_ues.erase(next_ue);
-    } else {
+    if (not u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
       ++next_ue;
+      continue;
+    }
+
+    sched_outcome outcome = schedule_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
+    if (outcome == sched_outcome::success) {
+      next_ue = pending_ues.erase(next_ue);
+    } else if (outcome == sched_outcome::next_ue) {
+      ++next_ue;
+    } else {
+      return;
     }
   }
 
@@ -113,15 +125,24 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
     // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
     // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
-    if (u.has_pending_dl_newtx_bytes(LCID_SRB1) and schedule_srb(res_alloc, u, false, nullptr, most_recent_tx_ack)) {
+    if (not u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
+      ++next_ue;
+      continue;
+    }
+
+    sched_outcome outcome = schedule_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
+    if (outcome == sched_outcome::success) {
       // If all bytes of SRB1 are scheduled, remove UE.
       if (not u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
         next_ue = pending_ues.erase(next_ue);
       }
       // Don't increase the iterator here, as we give priority to the same UE, if there are still some SRB1 bytes left
-      // in the buffer.
-    } else {
+      // in the buffer. At the next iteration, the scheduler will try again with the same scheduler, but starting from
+      // the next available slot.
+    } else if (outcome == sched_outcome::next_ue) {
       ++next_ue;
+    } else {
+      return;
     }
   }
 }
@@ -147,11 +168,12 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
   return next_candidate_slot;
 }
 
-bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
-                                         ue&                            u,
-                                         bool                           is_srb0,
-                                         dl_harq_process*               h_dl_retx,
-                                         optional<most_recent_tx_slots> most_recent_tx_ack_slots)
+ue_fallback_scheduler::sched_outcome
+ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
+                                    ue&                            u,
+                                    bool                           is_srb0,
+                                    dl_harq_process*               h_dl_retx,
+                                    optional<most_recent_tx_slots> most_recent_tx_ack_slots)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -164,19 +186,19 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
   // TODO: Make this compatible with k0 > 0.
   slot_point sched_ref_slot = res_alloc[0].slot;
 
-  // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot in
-  // the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if there
-  // is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
+  // This is to prevent the edge case of the scheduler trying to allocate an SRB PDSCH in the farthest possible slot
+  // in the future when, in the same slot, there is already an SRB PDSCH allocated. This can happen, for example, if
+  // there is a retransmission (previously) allocated at slot sched_ref_slot + max_dl_slots_ahead_sched, and then the
   // scheduler attempt to allocate a new TX on the same slot.
   if (most_recent_tx_ack_slots.has_value() and
       sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
-    return false;
+    return sched_outcome::next_ue;
   }
 
-  // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned a
-  // PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that is
-  // scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
-  // NOTE: The \c most_recent_tx_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
+  // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned
+  // a PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that
+  // is scheduled for an earlier slot than the PDSCH of the first part of the SRB1. NOTE: The \c most_recent_tx_slot
+  // is not necessarily more recent than sched_ref_slot; hence we need to check that
   // most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot.
   slot_point starting_slot =
       most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot
@@ -186,7 +208,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
     if (sched_attempts_cnt >= max_sched_attempts) {
-      return false;
+      return sched_outcome::exit_scheduler;
     }
 
     if (std::find(slots_without_pdxch_space.begin(), slots_without_pdxch_space.end(), next_slot) !=
@@ -225,7 +247,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
                    u.crnti,
                    is_srb0 ? "SRB0" : "SRB1");
       slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
-      return false;
+      continue;
     }
 
     // As it is not possible to schedule a PDSCH whose related PUCCH falls in a slot that is the same as or older than
@@ -250,7 +272,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
       if (not is_retx) {
         store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
       }
-      return true;
+      return sched_outcome::success;
     }
 
     ++sched_attempts_cnt;
@@ -263,7 +285,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
                is_srb0 ? "SRB0" : "SRB1",
                pdcch_slot,
                pdcch_slot + max_dl_slots_ahead_sched + 1);
-  return false;
+  return sched_outcome::next_ue;
 }
 
 dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u,
@@ -310,7 +332,8 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u
     if (unused_crbs.empty()) {
       logger.debug(
           "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
-      // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
+      // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs
+      // too.
       slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
       return nullptr;
     }
@@ -322,7 +345,8 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u
       // from the sentence "... the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm) and
       // Target code rate (R) used in the physical downlink shared channel.".
 
-      // At this point, xOverhead is not configured yet. As per TS 38.214, Clause 5.1.3.2, xOverhead is assumed to be 0.
+      // At this point, xOverhead is not configured yet. As per TS 38.214, Clause 5.1.3.2, xOverhead is assumed to be
+      // 0.
       const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_idx);
       prbs_tbs                             = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                          static_cast<unsigned>(pdsch_cfg.symbols.length()),
@@ -455,7 +479,8 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
   // For DCI 1-0 scrambled with TC-RNTI, as per TS 38.213, Section 7.3.1.2.1, we should consider the size of CORESET#0
   // as the size for the BWP.
   // For DCI 1-0 scrambled with C-RNTI, if the DCI is monitored in a common search space and CORESET#0 is configured
-  // for the cell, as per TS 38.213, Section 7.3.1.0, we should consider the size of CORESET#0  as the size for the BWP.
+  // for the cell, as per TS 38.213, Section 7.3.1.0, we should consider the size of CORESET#0  as the size for the
+  // BWP.
   cell_slot_resource_allocator& pdsch_alloc = res_alloc[slot_offset + pdsch_td_cfg.k0];
   prb_bitmap                    used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(
       initial_active_dl_bwp.scs,
@@ -514,9 +539,9 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
     }
 
     const unsigned final_nof_prbs = ue_grant_crbs.length();
-    // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c txDirectCurrentLocation)
-    // is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB, the UE assumes the default
-    // value of 3300 (i.e. "Outside the carrier")".
+    // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c
+    // txDirectCurrentLocation) is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB,
+    // the UE assumes the default value of 3300 (i.e. "Outside the carrier")".
     bool contains_dc = false;
     if (cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.has_value()) {
       contains_dc = dc_offset_helper::is_contained(
@@ -794,8 +819,7 @@ void ue_fallback_scheduler::update_ongoing_ue_retxs()
 
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
   // elements are potential candidate for retransmissions.
-  for (std::vector<ack_and_retx_tracker>::iterator it_ue_harq = ongoing_ues_ack_retxs.begin();
-       it_ue_harq != ongoing_ues_ack_retxs.end();) {
+  for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index)) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
