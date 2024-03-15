@@ -26,12 +26,17 @@ struct srs_information {
   unsigned sequence_group;
   /// Sequence number, parameter \f$v\f$.
   unsigned sequence_number;
-  /// Sequence cyclic shift, parameter \f$\alpha\f$.
-  float alpha;
+  /// Sequence cyclic shift, parameter \f$n_{SRS}^{cs,i}\f$.
+  unsigned n_cs;
+  /// Sequence maximum cyclic shift, parameter \f$n_{SRS}^{cs,max}\f$.
+  unsigned n_cs_max;
   /// First subcarrier used for mapping the sequence within the BWP, parameter \f$k_{0}^{(p_i)}\f$.
   unsigned mapping_initial_subcarrier;
   /// Comb size, parameter \f$K_{TC}\f$.
   unsigned comb_size;
+
+  /// Gets the sequence cyclic shift, parameter \f$\alpha\f$.
+  float get_alpha() const { return static_cast<float>(2 * M_PI * n_cs) / static_cast<float>(n_cs_max); }
 };
 
 /// \brief Get Sounding Reference Signal information.

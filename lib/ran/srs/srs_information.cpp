@@ -61,9 +61,6 @@ srsran::get_srs_information(const srs_resource_configuration& resource, unsigned
                                 (n_cs_max * i_antenna_port) / static_cast<unsigned>(resource.nof_antenna_ports)) %
                                n_cs_max;
 
-  // Calculate alpha.
-  float alpha = 2 * M_PI * static_cast<float>(cyclic_shift_port) / static_cast<float>(n_cs_max);
-
   // Calculate initial subcarrier index.
   unsigned k_tc = resource.comb_offset.value();
   if ((resource.cyclic_shift >= n_cs_max / 2) && (resource.cyclic_shift < n_cs_max) &&
@@ -88,7 +85,8 @@ srsran::get_srs_information(const srs_resource_configuration& resource, unsigned
   info.sequence_length            = sequence_length;
   info.sequence_group             = u;
   info.sequence_number            = v;
-  info.alpha                      = alpha;
+  info.n_cs                       = cyclic_shift_port;
+  info.n_cs_max                   = n_cs_max;
   info.mapping_initial_subcarrier = initial_subcarrier;
   info.comb_size                  = comb_size;
   return info;
