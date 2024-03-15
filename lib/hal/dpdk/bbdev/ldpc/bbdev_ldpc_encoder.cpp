@@ -206,10 +206,10 @@ void dpdk::read_ldpc_enc_bbdev_data(::rte_bbdev_enc_op& enc_op,
   }
 
   for (uint seg_idx = 0, end_idx = nof_segments; seg_idx < end_idx; ++seg_idx) {
-    uint32_t seg_byte_length             = static_cast<uint32_t>(ceil(static_cast<float>(seg_length) / 8.0));
-    uint32_t seg_bit_length_with_padding = seg_byte_length * 8;
-    srsvec::bit_unpack(span<uint8_t>(data.subspan(seg_offset, seg_bit_length_with_padding)),
-                       ::bit_buffer::from_bytes(span<uint8_t>(&packed_data[seg_byte_offset], seg_byte_length)));
+    uint32_t seg_byte_length = units::bits(seg_length).round_up_to_bytes().value();
+    srsvec::bit_unpack(
+        span<uint8_t>(data.subspan(seg_offset, seg_length)),
+        ::bit_buffer::from_bytes(span<uint8_t>(&packed_data[seg_byte_offset], seg_byte_length)).first(seg_length));
 
     // In TB mode the segment offset needs to be udpated.
     if (!cb_mode) {
