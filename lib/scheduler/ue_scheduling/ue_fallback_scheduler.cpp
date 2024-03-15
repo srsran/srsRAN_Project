@@ -38,6 +38,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   // NOTE: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
   dci_1_0_k1_values = {4, 5, 6, 7, 8};
+  slots_without_pdxch_space.reserve(max_dl_slots_ahead_sched + 1);
 }
 
 void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -46,8 +47,11 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // retransmitted.
   update_ongoing_ue_retxs();
 
-  // Reset the scheduling attempt counter; this takes into account retxs and new txs.
+  // Reset the scheduling counters; this takes into account retxs and new txs.
   sched_attempts_cnt = 0;
+  if (not slots_without_pdxch_space.empty()) {
+    slots_without_pdxch_space.clear();
+  }
 
   if (ues.empty()) {
     return;
@@ -181,77 +185,75 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
 
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
+    if (sched_attempts_cnt >= max_sched_attempts) {
+      return false;
+    }
+
+    if (std::find(slots_without_pdxch_space.begin(), slots_without_pdxch_space.end(), next_slot) !=
+        slots_without_pdxch_space.end()) {
+      continue;
+    }
+
     auto                                offset_to_sched_ref_slot = static_cast<unsigned>(next_slot - sched_ref_slot);
     const cell_slot_resource_allocator& pdcch_alloc              = res_alloc[offset_to_sched_ref_slot];
+    const cell_slot_resource_allocator& pdsch_alloc              = res_alloc[offset_to_sched_ref_slot];
 
-    for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
-         ++time_res_idx) {
-      if (sched_attempts_cnt >= max_sched_attempts) {
-        return false;
-      }
-
-      const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
-      const cell_slot_resource_allocator&          pdsch_alloc  = res_alloc[offset_to_sched_ref_slot + pdsch_td_cfg.k0];
-
-      if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
-        continue;
-      }
-
-      // We do not support multiplexing of PDSCH for SRB0 and SRB1 when in fallback with CSI-RS.
-      const bool is_csi_rs_slot = next_slot == sched_ref_slot ? not pdsch_alloc.result.dl.csi_rs.empty()
-                                                              : csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot);
-      if (is_csi_rs_slot) {
-        continue;
-      }
-
-      // Check whether PDSCH time domain resource does not overlap with CORESET.
-      if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
-        continue;
-      }
-
-      // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-      if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
-        continue;
-      }
-
-      if (is_retx and h_dl_retx->last_alloc_params().nof_symbols != pdsch_td_cfg.symbols.length()) {
-        continue;
-      }
-
-      // Verify there is space in PDSCH and PDCCH result lists for new allocations.
-      if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
-        logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
-                     u.crnti,
-                     is_srb0 ? "SRB0" : "SRB1");
-        return false;
-      }
-
-      // As it is not possible to schedule a PDSCH whose related PUCCH falls in a slot that is the same as or older than
-      // the most recent already scheduled ACK slot (for the same UE), whenever we detect this is the case we skip the
-      // allocation in advance.
-      slot_point most_recent_ack_slot = pdsch_alloc.slot;
-      if (most_recent_tx_ack_slots.has_value()) {
-        if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= most_recent_tx_ack_slots.value().most_recent_ack_slot) {
-          continue;
-        }
-        most_recent_ack_slot = most_recent_tx_ack_slots.value().most_recent_ack_slot;
-      }
-
-      dl_harq_process* candidate_h_dl =
-          is_srb0
-              ? schedule_srb0(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx)
-              : schedule_srb1(u, res_alloc, time_res_idx, offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
-
-      const bool alloc_successful = candidate_h_dl != nullptr;
-      if (alloc_successful) {
-        if (not is_retx) {
-          store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
-        }
-        return true;
-      }
-
-      ++sched_attempts_cnt;
+    if ((not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) or (not cell_cfg.is_dl_enabled(pdsch_alloc.slot))) {
+      continue;
     }
+
+    // Instead of looping through all pdsch_time_res_idx values, pick the one with the largest number of symbols that
+    // fits within the current DL slots.
+    optional<unsigned> time_res_idx = get_pdsch_time_res_idx(bwp_cfg_common.pdsch_common, pdsch_alloc.slot, h_dl_retx);
+    if (not time_res_idx.has_value()) {
+      continue;
+    }
+
+    const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx.value());
+    srsran_sanity_check(pdsch_td_cfg.k0 == 0, "Fallback scheduler only only supports k0=0");
+
+    // We do not support multiplexing of PDSCH for SRB0 and SRB1 when in fallback with CSI-RS.
+    const bool is_csi_rs_slot = next_slot == sched_ref_slot ? not pdsch_alloc.result.dl.csi_rs.empty()
+                                                            : csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot);
+    if (is_csi_rs_slot) {
+      continue;
+    }
+
+    // Verify there is space in PDSCH and PDCCH result lists for new allocations.
+    if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
+      logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
+                   u.crnti,
+                   is_srb0 ? "SRB0" : "SRB1");
+      slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+      return false;
+    }
+
+    // As it is not possible to schedule a PDSCH whose related PUCCH falls in a slot that is the same as or older than
+    // the most recent already scheduled ACK slot (for the same UE), whenever we detect this is the case we skip the
+    // allocation in advance.
+    slot_point most_recent_ack_slot = pdsch_alloc.slot;
+    if (most_recent_tx_ack_slots.has_value()) {
+      if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= most_recent_tx_ack_slots.value().most_recent_ack_slot) {
+        continue;
+      }
+      most_recent_ack_slot = most_recent_tx_ack_slots.value().most_recent_ack_slot;
+    }
+
+    dl_harq_process* candidate_h_dl =
+        is_srb0 ? schedule_srb0(
+                      u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx)
+                : schedule_srb1(
+                      u, res_alloc, time_res_idx.value(), offset_to_sched_ref_slot, most_recent_ack_slot, h_dl_retx);
+
+    const bool alloc_successful = candidate_h_dl != nullptr;
+    if (alloc_successful) {
+      if (not is_retx) {
+        store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
+      }
+      return true;
+    }
+
+    ++sched_attempts_cnt;
   }
 
   // No resource found in UE's carriers and Search spaces.
@@ -304,6 +306,14 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u
 
     crb_interval unused_crbs =
         rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim.start(), cset0_crbs_lim.stop());
+
+    if (unused_crbs.empty()) {
+      logger.debug(
+          "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
+      // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
+      slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+      return nullptr;
+    }
 
     // Try to find least MCS to fit SRB0 message.
     while (mcs_idx <= expert_cfg.max_msg4_mcs) {
@@ -358,6 +368,8 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb0(ue&                      u
   if (pdcch == nullptr) {
     logger.debug(
         "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDCCH.", u.crnti, pdsch_alloc.slot);
+    // If there is no PDCCH space on this slot for this UE, then this slot should be avoided by the other UEs too.
+    slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
     return nullptr;
   }
 
@@ -453,6 +465,19 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
   crb_interval ue_grant_crbs;
   sch_mcs_tbs  final_mcs_tbs;
 
+  // Check if there is space on the PDSCH, and if not, skip this slot.
+  auto cset0_crbs_lim = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id());
+  crb_interval unused_crbs =
+      rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim.start(), cset0_crbs_lim.stop());
+
+  if (unused_crbs.empty()) {
+    logger.debug(
+        "rnti={}: Postponed SRB1 PDU scheduling for slot. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
+    // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
+    slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+    return nullptr;
+  }
+
   if (is_retx) {
     const unsigned final_nof_prbs = h_dl->last_alloc_params().rbs.type1().length();
     final_mcs_tbs.mcs             = h_dl->last_alloc_params().tb.front().value().mcs;
@@ -514,7 +539,7 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
   pdcch_dl_information*         pdcch =
       pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.debug("rnti={}: Postponed SRB0 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
+    logger.debug("rnti={}: Postponed SRB1 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
     return nullptr;
   }
 
@@ -536,7 +561,7 @@ dl_harq_process* ue_fallback_scheduler::schedule_srb1(ue&                      u
   }
   if (not pucch_res_indicator.has_value()) {
     logger.debug(
-        "rnti={}: Failed to allocate PDSCH for SRB0 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
+        "rnti={}: Failed to allocate PDSCH for SRB1 for slot={}. Cause: No space in PUCCH", u.crnti, pdsch_alloc.slot);
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return nullptr;
   }
@@ -687,6 +712,41 @@ void ue_fallback_scheduler::fill_srb_grant(ue&                        u,
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
 {
   return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
+}
+
+optional<unsigned> ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
+                                                                 slot_point                 sl_tx,
+                                                                 const dl_harq_process*     h_dl_retx) const
+{
+  optional<unsigned> candidate_pdsch_time_res_idx;
+  for (unsigned time_res_idx = 0; time_res_idx != pdsch_cfg.pdsch_td_alloc_list.size(); ++time_res_idx) {
+    const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
+    // Check whether PDSCH time domain resource does not overlap with CORESET.
+    if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
+      continue;
+    }
+
+    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+    if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_tx)) {
+      continue;
+    }
+
+    // For retransmissions, we want to make sure we use the same number of symbols as the original transmission.
+    if (h_dl_retx != nullptr) {
+      if (h_dl_retx->last_alloc_params().nof_symbols != pdsch_td_cfg.symbols.length()) {
+        continue;
+      }
+      return candidate_pdsch_time_res_idx = time_res_idx;
+    }
+    // For new transmissions, we want to search for the PDSCH time domain resource with the largest number of symbols.
+    if (candidate_pdsch_time_res_idx.has_value() and
+        pdsch_td_cfg.symbols.length() < get_pdsch_td_cfg(candidate_pdsch_time_res_idx.value()).symbols.length()) {
+      continue;
+    }
+    candidate_pdsch_time_res_idx = time_res_idx;
+  }
+
+  return candidate_pdsch_time_res_idx;
 }
 
 optional<ue_fallback_scheduler::most_recent_tx_slots>

@@ -89,6 +89,10 @@ private:
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
+  optional<unsigned> get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
+                                            slot_point                 sl_tx,
+                                            const dl_harq_process*     h_dl_retx) const;
+
   struct srb_ue {
     du_ue_index_t ue_index;
     bool          is_srb0;
@@ -150,6 +154,8 @@ private:
 
   /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
   std::vector<ack_and_retx_tracker> ongoing_ues_ack_retxs;
+
+  std::vector<slot_point> slots_without_pdxch_space;
 
   std::vector<uint8_t> dci_1_0_k1_values;
 
