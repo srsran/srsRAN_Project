@@ -290,7 +290,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
   app.add_option("--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
-  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
+  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms")->check(CLI::IsMember({5, 10, 20, 40, 80, 160}));
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
   app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 

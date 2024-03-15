@@ -28,9 +28,10 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
   cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   rrc_ssb_mtc ssb_mtc;
-  ssb_mtc.dur                                  = 1;
-  ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-  cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+  ssb_mtc.dur                                 = 1;
+  ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+  ssb_mtc.periodicity_and_offset.offset       = 0;
+  cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   ASSERT_TRUE(is_complete(cell_cfg.serving_cell_cfg));
 }
 
@@ -198,9 +199,10 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
-    ssb_mtc.dur                                  = 1;
-    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    serving_cell_cfg.ssb_mtc.emplace()           = ssb_mtc;
+    ssb_mtc.dur                                = 1;
+    ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.offset      = 0;
+    serving_cell_cfg.ssb_mtc.emplace()         = ssb_mtc;
   }
 
   // Update cell config for cell 1

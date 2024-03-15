@@ -33,22 +33,28 @@ inline rrc_ssb_mtc asn1_to_ssb_mtc(const asn1::rrc_nr::ssb_mtc_s& asn1_ssb_mtc)
   // periodicity and offset
   switch (asn1_ssb_mtc.periodicity_and_offset.type()) {
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf5:
-      ssb_mtc.periodicity_and_offset.sf5 = asn1_ssb_mtc.periodicity_and_offset.sf5();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)5;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf5();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf10:
-      ssb_mtc.periodicity_and_offset.sf10 = asn1_ssb_mtc.periodicity_and_offset.sf10();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)10;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf10();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf20:
-      ssb_mtc.periodicity_and_offset.sf20 = asn1_ssb_mtc.periodicity_and_offset.sf20();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)20;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf20();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf40:
-      ssb_mtc.periodicity_and_offset.sf40 = asn1_ssb_mtc.periodicity_and_offset.sf40();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)40;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf40();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf80:
-      ssb_mtc.periodicity_and_offset.sf80 = asn1_ssb_mtc.periodicity_and_offset.sf80();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)80;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf80();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf160:
-      ssb_mtc.periodicity_and_offset.sf160 = asn1_ssb_mtc.periodicity_and_offset.sf160();
+      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)160;
+      ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf160();
       break;
     default:
       srslog::fetch_basic_logger("RRC").error("Invalid SSB MTC configuration.");
@@ -163,26 +169,33 @@ inline asn1::rrc_nr::ssb_mtc_s ssb_mtc_to_rrc_asn1(rrc_ssb_mtc ssb_mtc)
 {
   asn1::rrc_nr::ssb_mtc_s asn1_ssb_mtc;
 
-  if (ssb_mtc.periodicity_and_offset.sf5.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf5();
-    asn1_ssb_mtc.periodicity_and_offset.sf5() = ssb_mtc.periodicity_and_offset.sf5.value();
-  } else if (ssb_mtc.periodicity_and_offset.sf10.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf10();
-    asn1_ssb_mtc.periodicity_and_offset.sf10() = ssb_mtc.periodicity_and_offset.sf10.value();
-  } else if (ssb_mtc.periodicity_and_offset.sf20.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf20();
-    asn1_ssb_mtc.periodicity_and_offset.sf20() = ssb_mtc.periodicity_and_offset.sf20.value();
-  } else if (ssb_mtc.periodicity_and_offset.sf40.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf40();
-    asn1_ssb_mtc.periodicity_and_offset.sf40() = ssb_mtc.periodicity_and_offset.sf40.value();
-  } else if (ssb_mtc.periodicity_and_offset.sf80.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf10();
-    asn1_ssb_mtc.periodicity_and_offset.sf80() = ssb_mtc.periodicity_and_offset.sf80.value();
-  } else if (ssb_mtc.periodicity_and_offset.sf160.has_value()) {
-    asn1_ssb_mtc.periodicity_and_offset.set_sf160();
-    asn1_ssb_mtc.periodicity_and_offset.sf160() = ssb_mtc.periodicity_and_offset.sf160.value();
-  } else {
-    report_fatal_error("Cannot convert SSB MTC to ASN.1 type");
+  switch ((uint8_t)ssb_mtc.periodicity_and_offset.periodicity) {
+    case 5:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf5();
+      asn1_ssb_mtc.periodicity_and_offset.sf5() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    case 10:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf10();
+      asn1_ssb_mtc.periodicity_and_offset.sf10() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    case 20:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf20();
+      asn1_ssb_mtc.periodicity_and_offset.sf20() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    case 40:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf40();
+      asn1_ssb_mtc.periodicity_and_offset.sf40() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    case 80:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf80();
+      asn1_ssb_mtc.periodicity_and_offset.sf80() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    case 160:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf160();
+      asn1_ssb_mtc.periodicity_and_offset.sf160() = ssb_mtc.periodicity_and_offset.offset;
+      break;
+    default:
+      report_fatal_error("Cannot convert SSB MTC to ASN.1 type");
   }
 
   asn1::number_to_enum(asn1_ssb_mtc.dur, ssb_mtc.dur);

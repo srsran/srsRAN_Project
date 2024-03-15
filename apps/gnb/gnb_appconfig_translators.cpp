@@ -38,29 +38,9 @@ static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
 {
   srs_cu_cp::rrc_ssb_mtc ssb_mtc;
-  switch (period) {
-    case 5:
-      ssb_mtc.periodicity_and_offset.sf5.emplace() = offset;
-      break;
-    case 10:
-      ssb_mtc.periodicity_and_offset.sf10.emplace() = offset;
-      break;
-    case 20:
-      ssb_mtc.periodicity_and_offset.sf20.emplace() = offset;
-      break;
-    case 40:
-      ssb_mtc.periodicity_and_offset.sf40.emplace() = offset;
-      break;
-    case 80:
-      ssb_mtc.periodicity_and_offset.sf80.emplace() = offset;
-      break;
-    case 160:
-      ssb_mtc.periodicity_and_offset.sf160.emplace() = offset;
-      break;
-    default:
-      report_error("Invalid SSB periodicity {}\n", period);
-  }
-  ssb_mtc.dur = duration;
+  ssb_mtc.periodicity_and_offset.periodicity = (srs_cu_cp::rrc_periodicity_and_offset::periodicity_t)period;
+  ssb_mtc.periodicity_and_offset.offset      = offset;
+  ssb_mtc.dur                                = duration;
 
   return ssb_mtc;
 }

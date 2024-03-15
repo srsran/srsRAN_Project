@@ -644,6 +644,12 @@ validate_mobility_appconfig(const uint32_t gnb_id, uint8_t gnb_id_bit_length, co
 {
   // check cu_cp_cell_config
   for (const auto& cell : config.cells) {
+    if (cell.ssb_period.has_value() && cell.ssb_offset.has_value() &&
+        cell.ssb_offset.value() >= cell.ssb_period.value()) {
+      fmt::print("ssb_offset must be smaller than ssb_period\n");
+      return false;
+    }
+
     if ((config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id_bit_length) == gnb_id)) {
       if (cell.gnb_id.has_value() || cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() ||
           cell.ssb_scs.has_value() || cell.ssb_period.has_value() || cell.ssb_offset.has_value() ||

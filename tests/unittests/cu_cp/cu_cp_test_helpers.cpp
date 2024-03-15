@@ -121,8 +121,10 @@ cu_cp_test::cu_cp_test()
   cell_cfg_2.serving_cell_cfg.band      = nr_band::n78;
   cell_cfg_2.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz30;
   cell_cfg_2.serving_cell_cfg.ssb_mtc.emplace();
-  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().periodicity_and_offset.sf20.emplace(0);
-  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().dur = 5;
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().periodicity_and_offset.periodicity =
+      (rrc_periodicity_and_offset::periodicity_t)20;
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().periodicity_and_offset.offset = 0;
+  cell_cfg_2.serving_cell_cfg.ssb_mtc.value().dur                           = 5;
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_2);
 
   // create CU-CP.

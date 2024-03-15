@@ -56,9 +56,10 @@ void cell_meas_manager_test::create_default_manager()
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
-    ssb_mtc.dur                                  = 1;
-    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+    ssb_mtc.dur                                 = 1;
+    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.offset       = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
@@ -76,9 +77,10 @@ void cell_meas_manager_test::create_default_manager()
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
-    ssb_mtc.dur                                  = 1;
-    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+    ssb_mtc.dur                                 = 1;
+    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.offset       = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
@@ -213,9 +215,10 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
-    ssb_mtc.dur                                  = 1;
-    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+    ssb_mtc.dur                                 = 1;
+    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.offset       = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 

@@ -87,10 +87,12 @@ protected:
     // Add meas timing
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
-    meas_timing.freq_and_timing.value().carrier_freq                                    = 535930;
-    meas_timing.freq_and_timing.value().ssb_subcarrier_spacing                          = subcarrier_spacing::kHz15;
-    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.dur                         = 5;
-    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
+    meas_timing.freq_and_timing.value().carrier_freq            = 535930;
+    meas_timing.freq_and_timing.value().ssb_subcarrier_spacing  = subcarrier_spacing::kHz15;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.dur = 5;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.periodicity =
+        (rrc_periodicity_and_offset::periodicity_t)10;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.offset = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
     ue_cfg.rrc_procedure_timeout_ms = rrc_procedure_timeout_ms;

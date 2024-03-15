@@ -76,36 +76,14 @@ inline report_cfg_id_t uint_to_report_cfg_id(uint8_t id)
 }
 
 struct rrc_periodicity_and_offset {
-  optional<uint8_t> sf5;
-  optional<uint8_t> sf10;
-  optional<uint8_t> sf20;
-  optional<uint8_t> sf40;
-  optional<uint8_t> sf80;
-  optional<uint8_t> sf160;
+  enum class periodicity_t : uint8_t { sf5 = 5, sf10 = 10, sf20 = 20, sf40 = 40, sf80 = 80, sf160 = 160 };
+  periodicity_t periodicity;
+  uint8_t       offset;
 };
 
 inline bool operator==(const rrc_periodicity_and_offset& lhs, const rrc_periodicity_and_offset& rhs)
 {
-  if (lhs.sf5.has_value() && rhs.sf5.has_value()) {
-    return lhs.sf5.value() == rhs.sf5.value();
-  }
-  if (lhs.sf10.has_value() && rhs.sf10.has_value()) {
-    return lhs.sf10.value() == rhs.sf10.value();
-  }
-  if (lhs.sf20.has_value() && rhs.sf20.has_value()) {
-    return lhs.sf20.value() == rhs.sf20.value();
-  }
-  if (lhs.sf40.has_value() && rhs.sf40.has_value()) {
-    return lhs.sf40.value() == rhs.sf40.value();
-  }
-  if (lhs.sf80.has_value() && rhs.sf80.has_value()) {
-    return lhs.sf80.value() == rhs.sf80.value();
-  }
-  if (lhs.sf160.has_value() && rhs.sf160.has_value()) {
-    return lhs.sf160.value() == rhs.sf160.value();
-  }
-
-  return false;
+  return lhs.periodicity == rhs.periodicity && lhs.offset == rhs.offset;
 };
 
 struct rrc_ssb_mtc {
@@ -636,28 +614,10 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
     std::string smtc2_str = "";
 
     if (meas_object.smtc1.has_value()) {
-      smtc1_str = " smtc1: periodicity_and_offset=";
-      if (meas_object.smtc1.value().periodicity_and_offset.sf5.has_value()) {
-        smtc1_str = fmt::format("{}sf5({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf5.value());
-      }
-      if (meas_object.smtc1.value().periodicity_and_offset.sf10.has_value()) {
-        smtc1_str = fmt::format("{}sf10({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf10.value());
-      }
-      if (meas_object.smtc1.value().periodicity_and_offset.sf20.has_value()) {
-        smtc1_str = fmt::format("{}sf20({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf20.value());
-      }
-      if (meas_object.smtc1.value().periodicity_and_offset.sf40.has_value()) {
-        smtc1_str = fmt::format("{}sf40({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf40.value());
-      }
-      if (meas_object.smtc1.value().periodicity_and_offset.sf80.has_value()) {
-        smtc1_str = fmt::format("{}sf80({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf80.value());
-      }
-      if (meas_object.smtc1.value().periodicity_and_offset.sf160.has_value()) {
-        smtc1_str =
-            fmt::format("{}sf160({})", smtc1_str, meas_object.smtc1.value().periodicity_and_offset.sf160.value());
-      }
-
-      smtc1_str = fmt::format("{} dur={}", smtc1_str, meas_object.smtc1.value().dur);
+      smtc1_str = fmt::format(" smtc1: periodicity={} offset={} dur={}",
+                              meas_object.smtc1.value().periodicity_and_offset.periodicity,
+                              meas_object.smtc1.value().periodicity_and_offset.offset,
+                              meas_object.smtc1.value().dur);
     }
 
     if (meas_object.smtc2.has_value()) {
@@ -673,8 +633,8 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
         "ssb_freq={} ssb_scs={}{}{}",
         meas_object.ssb_freq.has_value() ? fmt::to_string(meas_object.ssb_freq.value()) : "?",
         meas_object.ssb_subcarrier_spacing.has_value() ? to_string(meas_object.ssb_subcarrier_spacing.value()) : "?",
-        meas_object.smtc1.has_value() ? smtc1_str : "",
-        meas_object.smtc2.has_value() ? smtc2_str : "");
+        smtc1_str,
+        smtc2_str);
   }
 };
 
