@@ -404,14 +404,14 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
   auto rx_pdu_log_entry =
       make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
         fmt::format_to(ctx.out(), "{} PDU GNB-DU-ID={}", is_rx ? "Rx" : "Tx", du_id);
+        if (ue_idx != ue_index_t::invalid) {
+          fmt::format_to(ctx.out(), " ue={}", ue_idx);
+        }
         if (du_ue_id.has_value()) {
           fmt::format_to(ctx.out(), " GNB-DU-UE-F1AP-ID={}", du_ue_id.value());
         }
         if (cu_ue_id.has_value()) {
           fmt::format_to(ctx.out(), " GNB-CU-UE-F1AP-ID={}", cu_ue_id.value());
-        }
-        if (ue_idx != ue_index_t::invalid) {
-          fmt::format_to(ctx.out(), " ue={}", ue_idx);
         }
         return fmt::format_to(ctx.out(), ": {}", msg_name);
       });
