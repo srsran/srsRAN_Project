@@ -152,6 +152,7 @@ endif (ENABLE_ASAN)
 
 if (ENABLE_TSAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+    add_definitions(-DENABLE_TSAN)
 endif (ENABLE_TSAN)
 
 if (ENABLE_GCOV)

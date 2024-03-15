@@ -10,6 +10,10 @@
 
 #pragma once
 
+#ifdef ENABLE_TSAN
+#include "sanitizer/tsan_interface.h"
+#endif
+
 #include "cameron314/concurrentqueue.h"
 #include "memory_block_list.h"
 #include "srsran/adt/static_vector.h"
@@ -155,6 +159,9 @@ public:
     free_memory_block_list batch;
     if (central_mem_cache.try_dequeue(w_ctx->consumer_token, batch)) {
       w_ctx->local_cache.push_back(batch);
+#ifdef ENABLE_TSAN
+      __tsan_acquire((void*)w_ctx->local_cache.back().head);
+#endif
       node = w_ctx->local_cache.back().try_pop();
       validate_node_address(node);
     }
@@ -177,6 +184,9 @@ public:
 
     // Push block to local cache.
     w_ctx->local_cache.back().push(p);
+#ifdef ENABLE_TSAN
+    __tsan_release(p);
+#endif
 
     if (w_ctx->local_cache.size() >= max_local_batches and w_ctx->local_cache.back().size() >= block_batch_size) {
       // Local cache is full. Rebalance by sending batches of blocks to central cache.
@@ -198,7 +208,10 @@ public:
   }
 
   /// Get central cache current size in number of memory blocks.
-  size_t get_central_cache_approx_size() const { return central_mem_cache.size_approx() * block_batch_size; }
+  size_t get_central_cache_approx_size() const
+  {
+    return central_mem_cache.size_approx() * block_batch_size;
+  }
   /// Get thread local cache current size in number of memory blocks.
   size_t get_local_cache_size()
   {
@@ -266,7 +279,10 @@ private:
   }
 
   /// Number of batches of memory blocks stored in the pool.
-  size_t nof_total_batches() const { return (nof_blocks + block_batch_size - 1) / block_batch_size; }
+  size_t nof_total_batches() const
+  {
+    return (nof_blocks + block_batch_size - 1) / block_batch_size;
+  }
 
   void validate_node_address(void* node)
   {
