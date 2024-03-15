@@ -70,11 +70,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   drb_result.cause            = e1ap_cause_radio_network_t::unspecified;
   drb_result.drb_id           = drb_to_setup.drb_id;
 
-  // get DRB from list and create context
-  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
-  auto& new_drb = new_session.drbs.at(drb_to_setup.drb_id);
-
-  // Create QoS flows
+  // Make sure 5QI exists before creating DRB.
   if (drb_to_setup.qos_flow_info_to_be_setup.empty()) {
     return drb_result;
   }
@@ -85,6 +81,11 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     return drb_result;
   }
 
+  // get DRB from list and create context
+  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
+  auto& new_drb = new_session.drbs.at(drb_to_setup.drb_id);
+
+  // Create Qos Flows
   uint32_t nof_flow_success = 0;
   for (const auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
     // prepare QoS flow creation result
@@ -492,16 +493,13 @@ void pdu_session_manager_impl::disconnect_pdu_session(pdu_session_id_t pdu_sessi
 
   // Disconnect all UL tunnels for this PDU session.
   auto& pdu_session = pdu_sessions.at(pdu_session_id);
+  pdu_session->stop();
   for (const auto& drb : pdu_session->drbs) {
-    logger.log_debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
-    f1u_gw.disconnect_cu_bearer(up_transport_layer_info(
-        transport_layer_address::create_from_string(net_config.f1u_bind_addr), drb.second->f1u_ul_teid));
     if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
       logger.log_error(
           "{} could not remove ul_teid at session termination. ul_teid={}", pdu_session_id, drb.second->f1u_ul_teid);
     }
   }
-  gtpu_rx_demux.remove_tunnel(pdu_session->local_teid);
   logger.log_info("Disconnecting PDU session with {}", pdu_session_id);
 }
 

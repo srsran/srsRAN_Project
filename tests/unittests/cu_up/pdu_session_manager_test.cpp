@@ -386,3 +386,9 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
