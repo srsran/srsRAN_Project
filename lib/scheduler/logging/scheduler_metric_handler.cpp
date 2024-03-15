@@ -159,6 +159,7 @@ void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication
 
     // Store last PHR.
     if (not phr_ind.phr.get_phr().empty()) {
+      // Log the floor of the average of the PH interval.
       interval<int> rg = phr_ind.phr.get_phr().front().ph;
       u.last_phr       = (rg.start() + rg.stop()) / 2;
     }
