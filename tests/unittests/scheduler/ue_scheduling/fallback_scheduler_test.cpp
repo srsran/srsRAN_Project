@@ -180,7 +180,7 @@ protected:
     bench->pucch_alloc.slot_indication(current_slot);
   }
 
-  void run_slot(bool disabled_csi_rs = false)
+  void run_slot()
   {
     ++current_slot;
 
@@ -192,9 +192,7 @@ protected:
     bench->pdcch_sch.slot_indication(current_slot);
     bench->pucch_alloc.slot_indication(current_slot);
 
-    if (not disabled_csi_rs) {
-      bench->csi_rs_sched.run_slot(bench->res_grid[0]);
-    }
+    bench->csi_rs_sched.run_slot(bench->res_grid[0]);
 
     bench->fallback_sched.run_slot(bench->res_grid);
 
@@ -318,18 +316,19 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
 {
   setup_sched(create_expert_config(2), create_custom_cell_config_request(params.k0));
   // Add UE.
-  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  add_ue(to_rnti(0x4601), ue_idx);
   // Notify about SRB0 message in DL of size 101 bytes.
   const unsigned mac_srb0_sdu_size = 101;
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(ue_idx, mac_srb0_sdu_size);
 
-  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
+  const unsigned exp_size = get_pending_bytes(ue_idx);
 
   // Test the following:
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
   // 2. Check for PDSCH allocation.
   // 3. Check whether CW TB bytes matches with pending bytes to be sent.
-  const auto& test_ue = get_ue(to_du_ue_index(0));
+  const auto& test_ue = get_ue(ue_idx);
   bool        is_ue_allocated_pdcch{false};
   bool        is_ue_allocated_pdsch{false};
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
@@ -344,6 +343,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
   ASSERT_TRUE(is_ue_allocated_pdsch);
+  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0));
 }
 
 TEST_P(fallback_scheduler_tester, failed_allocating_resources)
@@ -377,14 +377,15 @@ TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
 {
   setup_sched(create_expert_config(27), create_custom_cell_config_request(params.k0));
   // Add UE.
-  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  add_ue(to_rnti(0x4601), ue_idx);
   // Notify about SRB0 message in DL of size 458 bytes.
   const unsigned mac_srb0_sdu_size = 458;
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(ue_idx, mac_srb0_sdu_size);
 
-  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
+  const unsigned exp_size = get_pending_bytes(ue_idx);
 
-  const auto& test_ue = get_ue(to_du_ue_index(0));
+  const auto& test_ue = get_ue(ue_idx);
   bool        is_ue_allocated_pdcch{false};
   bool        is_ue_allocated_pdsch{false};
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
@@ -399,6 +400,8 @@ TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
   ASSERT_TRUE(is_ue_allocated_pdsch);
+
+  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0));
 }
 
 TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
@@ -424,7 +427,8 @@ TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_s
   const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
   setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request(params.k0));
   // Add UE.
-  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  add_ue(to_rnti(0x4601), ue_idx);
   // Random payload size.
   const unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
@@ -444,7 +448,7 @@ protected:
 TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
 {
   const unsigned      k0                 = 0;
-  const sch_mcs_index max_msg4_mcs_index = 1;
+  const sch_mcs_index max_msg4_mcs_index = 5;
   auto                cell_cfg           = create_custom_cell_config_request(k0);
   setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
 
@@ -477,6 +481,11 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_td
       }
     }
   }
+
+  for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
+    const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
+    ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0)) << "UE " << ue_idx << " has still pending DL bytes";
+  }
 }
 
 TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
@@ -493,6 +502,9 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
   cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
       cell_cfg.searchspace0, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cell_cfg.tdd_ul_dl_cfg_common);
+  // Disabled CSI-RS resources, as this test uses a TDD configuration that is not compatible with CSI-RS scheduling.
+  cell_cfg.nzp_csi_rs_res_list.clear();
+  cell_cfg.zp_csi_rs_list.clear();
   setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
 
   const unsigned MAX_TEST_RUN_SLOTS = 40;
@@ -502,7 +514,7 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
 
   for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
-    run_slot(true);
+    run_slot();
     // Notify about SRB0 message in DL one slot before partial slot in order for it to be scheduled in the next
     // (partial) slot.
     if (bench->cell_cfg.is_dl_enabled(current_slot + 1) and

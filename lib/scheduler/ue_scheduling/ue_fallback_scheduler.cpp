@@ -46,6 +46,9 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // retransmitted.
   update_ongoing_ue_retxs();
 
+  // Reset the scheduling attempt counter; this takes into account retxs and new txs.
+  sched_attempts_cnt = 0;
+
   if (ues.empty()) {
     return;
   }
@@ -109,7 +112,6 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     if (u.has_pending_dl_newtx_bytes(LCID_SRB1) and schedule_srb(res_alloc, u, false, nullptr, most_recent_tx_ack)) {
       // If all bytes of SRB1 are scheduled, remove UE.
       if (not u.has_pending_dl_newtx_bytes(LCID_SRB1)) {
-        logger.debug("rnti={}: Removing UE from list, as SRB1 buffer is empty.", u.crnti);
         next_ue = pending_ues.erase(next_ue);
       }
       // Don't increase the iterator here, as we give priority to the same UE, if there are still some SRB1 bytes left
@@ -167,9 +169,6 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
     return false;
   }
 
-  // We keep track of the number of scheduling attempts for the given UE.
-  unsigned sched_attempts_cnt = 0;
-
   // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned a
   // PDSCH grant for SRB1 that was fragmented, we want to avoid allocating the second part of SRB1 in a PDSCH that is
   // scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
@@ -187,7 +186,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
 
     for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
          ++time_res_idx) {
-      if (sched_attempts_cnt >= max_sched_attempts_per_ue) {
+      if (sched_attempts_cnt >= max_sched_attempts) {
         return false;
       }
 
@@ -221,7 +220,7 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
 
       // Verify there is space in PDSCH and PDCCH result lists for new allocations.
       if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
-        logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list.",
+        logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
                      u.crnti,
                      is_srb0 ? "SRB0" : "SRB1");
         return false;
@@ -248,8 +247,6 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
         if (not is_retx) {
           store_harq_tx(u.ue_index, candidate_h_dl, is_srb0);
         }
-        logger.debug(
-            "rnti={}: PDSCH space for SRB{} scheduled for slot:{}", u.crnti, is_srb0 ? "0" : "1", pdsch_alloc.slot);
         return true;
       }
 
@@ -259,11 +256,11 @@ bool ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_allo
 
   // No resource found in UE's carriers and Search spaces.
   slot_point pdcch_slot = res_alloc[0].slot;
-  logger.debug("rnti={}: Not enough PDSCH space for {} message found in any of the slots:[{},{})",
+  logger.debug("rnti={}: Not enough PDCCH/PDSCH/PUCCH resources for {} message found in any of the slots:[{},{})",
                u.crnti,
                is_srb0 ? "SRB0" : "SRB1",
                pdcch_slot,
-               pdcch_slot + max_dl_slots_ahead_sched);
+               pdcch_slot + max_dl_slots_ahead_sched + 1);
   return false;
 }
 

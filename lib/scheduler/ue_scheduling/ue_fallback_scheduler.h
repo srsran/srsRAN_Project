@@ -129,10 +129,13 @@ private:
   // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
   // find PDSCH space for SRB0 or SRB1.
   const unsigned max_dl_slots_ahead_sched = 10U;
-  // Set the max number of attempt the scheduler can do while running through the nested loops over the PDSCH time
-  // allocation indices and the ahead slots. This is to avoid excessive long iterations in case of a large number of
-  // PDSCH time allocation indices.
-  const unsigned            max_sched_attempts_per_ue = 10U;
+  // Set the max number of attempts the scheduler can do while running through the nested loops over the PDSCH time
+  // allocation indices and the ahead slots for all UEs. This is to avoid excessive long iterations in case many UEs.
+  // NOTE: max_sched_attempts = (max_dl_slots_ahead_sched + 1) * max_pdsch_time_res guarantees that at 1 UE will be
+  // allocated in a TDD period of 10 slots.
+  const unsigned max_sched_attempts = 22U;
+  // Counter for the scheduling attempts per function call.
+  unsigned                  sched_attempts_cnt = 0;
   pdcch_resource_allocator& pdcch_sch;
   pucch_allocator&          pucch_alloc;
   ue_repository&            ues;
