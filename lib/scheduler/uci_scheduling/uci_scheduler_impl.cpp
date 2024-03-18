@@ -249,7 +249,6 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
 {
   // For all UEs whose config has been recently updated, schedule their UCIs up until one slot before the farthest
   // slot in the resource grid.
-  // TODO: Remove UCIs from the list of updated UEs when the UE is removed, if they have no HARQ-ACK.
   for (rnti_t rnti : updated_ues) {
     const ue_cell_configuration* ue_cfg = get_ue_cfg(rnti);
     if (ue_cfg == nullptr) {

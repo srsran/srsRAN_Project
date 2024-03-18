@@ -191,15 +191,11 @@ TEST(dl_pdsch_pdu_builder, valid_tx_power_info_parameters_passes)
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
-    nzp_csi_rs_epre_to_ssb ss_profile = nzp_csi_rs_epre_to_ssb::dB0;
-    optional<int>          p;
-    if (power != 16) {
-      p.emplace(power);
-    }
+    power_control_offset_ss ss_profile = power_control_offset_ss::dB0;
 
-    builder.set_tx_power_info_parameters(p, ss_profile);
+    builder.set_tx_power_info_parameters(power, ss_profile);
 
-    ASSERT_EQ(p ? static_cast<unsigned>(p.value() + 8) : 255, pdu.power_control_offset_profile_nr);
+    ASSERT_EQ(power, pdu.power_control_offset_profile_nr);
     ASSERT_EQ(ss_profile, pdu.power_control_offset_ss_profile_nr);
   }
 }
@@ -293,30 +289,6 @@ TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_csi_rm_parameters_passes)
   ASSERT_EQ(csi, pdu.pdsch_maintenance_v3.csi_for_rm);
 }
 
-TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_tx_power_info_parameters_passes)
-{
-  for (int power : {-33, -10, 0}) {
-    dl_pdsch_pdu         pdu;
-    dl_pdsch_pdu_builder builder(pdu);
-
-    optional<float> dmrs;
-    if (power != -33) {
-      dmrs.emplace(power);
-    }
-    optional<float> data;
-    if (power + 33 != 33) {
-      data.emplace(power + 33);
-    }
-
-    builder.set_maintenance_v3_tx_power_info_parameters(dmrs, data);
-
-    ASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
-              pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss);
-    ASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
-              pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss);
-  }
-}
-
 TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_cbg_tx_crtl_parameters_passes)
 {
   for (auto cbg_per_tb : {2U, 4U, 6U, 8U}) {
@@ -346,24 +318,6 @@ TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_codeword_parameters_passes)
   ASSERT_EQ(cbg, pdu.pdsch_maintenance_v3.cbg_tx_information[0]);
   ASSERT_EQ(1, pdu.cws.size());
   ASSERT_EQ(1, pdu.pdsch_maintenance_v3.cbg_tx_information.size());
-}
-
-TEST(dl_pdsch_pdu_builder, valid_ptrs_maintenance_v3_tx_power_parameters_passes)
-{
-  for (int power : {-33, 0}) {
-    dl_pdsch_pdu         pdu;
-    dl_pdsch_pdu_builder builder(pdu);
-
-    optional<float> ptrs;
-    if (power != -33) {
-      ptrs.emplace(power);
-    }
-
-    builder.set_ptrs_maintenance_v3_tx_power_info_parameters(ptrs);
-
-    ASSERT_EQ(ptrs ? static_cast<int>(ptrs.value() * 1000) : -32768,
-              pdu.ptrs_maintenance_v3.pdsch_ptrs_power_offset_profile_sss);
-  }
 }
 
 TEST(dl_pdsch_pdu_builder, valid_maintenance_v4_basica_parameters_passes)

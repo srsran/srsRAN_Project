@@ -154,6 +154,12 @@ f1ap_message generate_ue_context_modification_request(const std::initializer_lis
 /// \brief Generate an F1AP UE Context Release Command message.
 f1ap_message generate_ue_context_release_command();
 
+/// \brief Generate an F1AP DL RRC Message Transfer message.
+f1ap_message generate_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                              gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                              srb_id_t            srb_id,
+                                              byte_buffer         rrc_container);
+
 class dummy_f1c_connection_client : public srs_du::f1c_connection_client
 {
 public:

@@ -53,7 +53,10 @@ const unsigned SCHEDULER_MAX_K0 = 15;
 const unsigned SCHEDULER_MAX_K1 = 15;
 
 /// [Implementation defined] Maximum allowed slot offset between DCI and its scheduled first PUSCH. Values {0,..,32}.
-const unsigned SCHEDULER_MAX_K2 = 15;
+/// \remark As per TS 38.306, \c ul-SchedulingOffset field in \c ueCapabilityInformation indicates whether the UE
+/// supports UL scheduling slot offset (K2) greater than 12. In order to support UEs not supporting k2 > 12, we restrict
+/// maximum value of k2 to 12.
+const unsigned SCHEDULER_MAX_K2 = 12;
 
 /// Maximum value of NTN cell specific Koffset. See TS 38.331
 const unsigned NTN_CELL_SPECIFIC_KOFFSET_MAX = 512;

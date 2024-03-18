@@ -24,6 +24,7 @@
 
 #include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/support/interpolator.h"
+#include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 
@@ -49,17 +50,14 @@ public:
 
   /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
   port_channel_estimator_average_impl(std::unique_ptr<interpolator>                interp,
-                                      std::unique_ptr<dft_processor>               idft_proc,
+                                      std::unique_ptr<time_alignment_estimator>    ta_estimator_,
                                       port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy_) :
-    fd_smoothing_strategy(fd_smoothing_strategy_), freq_interpolator(std::move(interp)), idft(std::move(idft_proc))
+    fd_smoothing_strategy(fd_smoothing_strategy_),
+    freq_interpolator(std::move(interp)),
+    ta_estimator(std::move(ta_estimator_))
   {
     srsran_assert(freq_interpolator, "Invalid interpolator.");
-    srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE,
-                  "The port channel estimator requires an inverse (not direct) DFT processor.");
-    srsran_assert(idft->get_size() == DFT_SIZE,
-                  "The port channel estimator requires an iDFT of size {}, provided {}.",
-                  static_cast<unsigned>(DFT_SIZE),
-                  idft->get_size());
+    srsran_assert(ta_estimator, "Invalid TA estimator.");
   }
 
   // See interface for documentation.
@@ -88,8 +86,8 @@ private:
   /// REs without pilots.
   std::unique_ptr<interpolator> freq_interpolator;
 
-  /// Inverse DFT processor of size \c DFT_SIZE.
-  std::unique_ptr<dft_processor> idft;
+  /// Time alignment estimator.
+  std::unique_ptr<time_alignment_estimator> ta_estimator;
 
   /// Buffer of received signal samples corresponding to pilots.
   dmrs_symbol_list rx_pilots;

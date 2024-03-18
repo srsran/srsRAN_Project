@@ -74,6 +74,41 @@ TEST_F(du_high_tester, when_two_concurrent_ccch_msg_are_received_then_two_ue_con
   ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs[1], to_rnti(0x4602)));
 }
 
+TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // Ensure DU<->CU-UP tunnel was created.
+  ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
+
+  // Forward several DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+  }
+
+  // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
+  unsigned bytes_sched = 0;
+  phy.cell.last_dl_data.reset();
+  while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
+    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+  })) {
+    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+      }
+    }
+    phy.cell.last_dl_data.reset();
+  }
+  ASSERT_GE(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
+      << "Not enough PDSCH grants were scheduled to meet the enqueued PDCP PDUs";
+}
+
 TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
 {
   // Create UE.
@@ -89,19 +124,6 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     this->run_slot();
 
-    // Handle PUCCH of the SRB message containing RRC Release.
-    for (const pucch_info& pucch : this->phy.cell.last_ul_res->ul_res->pucchs) {
-      if (pucch.format == srsran::pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
-        mac_uci_indication_message uci_msg;
-        uci_msg.sl_rx = this->phy.cell.last_ul_res->slot;
-        uci_msg.ucis  = {mac_uci_pdu{
-             .rnti = to_rnti(0x4601),
-             .pdu  = mac_uci_pdu::pucch_f0_or_f1_type{.harq_info = mac_uci_pdu::pucch_f0_or_f1_type::harq_information{
-                                                          .harqs = {uci_pucch_f0_or_f1_harq_values::ack}}}}};
-        this->du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_msg);
-      }
-    }
-
     // Stop loop, When UE Context Release complete has been sent to CU.
     if (not cu_notifier.last_f1ap_msgs.empty()) {
       break;
@@ -111,6 +133,43 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
   ASSERT_TRUE(is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(),
                                                    (gnb_du_ue_f1ap_id_t)cmd->gnb_du_ue_f1ap_id,
                                                    (gnb_cu_ue_f1ap_id_t)cmd->gnb_cu_ue_f1ap_id));
+}
+
+TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_stops)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // CU-UP forwards many DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+  }
+
+  // DU receives UE Context Release Request.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = generate_ue_context_release_command();
+  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Ensure the DU does not keep to schedule DRB PDUs.
+  unsigned bytes_sched = 0;
+  phy.cell.last_dl_data.reset();
+  while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
+    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+  })) {
+    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+      }
+    }
+    phy.cell.last_dl_data.reset();
+  }
+  ASSERT_LT(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
+      << "Scheduler did not stop scheduling DRB after UE context release request reception";
 }
 
 TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)

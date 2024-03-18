@@ -46,7 +46,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_48)
 
   // R/LCID MAC subheader = R|R|LCID = 0x34  ->  LCID=52
   // MAC SDU (UL CCCH)    = {0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
-  byte_buffer msg({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
+  byte_buffer msg = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length
@@ -74,7 +74,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_64)
 
   // R/LCID MAC subheader = R|R|LCID = 0x00  ->  LCID = 0
   // MAC SDU (UL CCCH)    = {0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}  (Random 8B sequence)
-  byte_buffer msg({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
+  byte_buffer msg = byte_buffer::create({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -99,7 +99,7 @@ TEST(mac_ul_subpdu, decode_short_bsr)
 
   // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=61
   // MAC CE Short BSR = {0x59}  LCG ID = 2, Buffer size = 25
-  byte_buffer msg({0x3d, 0x59});
+  byte_buffer msg = byte_buffer::create({0x3d, 0x59}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -129,7 +129,7 @@ TEST(mac_ul_subpdu, decode_short_trunc_bsr)
 
   // R/LCID MAC subheader = R|R|LCID = 0x3b or LCID=59
   // MAC CE Short BSR = {0xae}  LCG ID = 2, Buffer size = 14
-  byte_buffer msg({0x3b, 0xae});
+  byte_buffer msg = byte_buffer::create({0x3b, 0xae}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -164,7 +164,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_2_lcgs)
   // R/F/LCID/L MAC subheader = 0x3b - F=0, LCID=62, L=3
   // MAC CE Long BSR = {0x81, 0xd9, 0xab}  LCG_ID_7=true, LCG_ID_0= true
   // Buffer size(LCG_ID_0) = 217 (0xd9), Buffer size(LCG_ID_7) = 171 (0xab)
-  byte_buffer msg({0x3e, 0x03, 0x81, 0xd9, 0xab});
+  byte_buffer msg = byte_buffer::create({0x3e, 0x03, 0x81, 0xd9, 0xab}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -206,7 +206,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_4_lcgs)
   // MAC CE Long BSR = {0x5a, 0x02, 0x04, 0x05, 0x07}
   // LCG_ID_6=true, LCG_ID_4=true, LCG_ID_3=true, LCG_ID_1=true
   // Buffer size(LCG_ID_1)=2, Buffer size(LCG_ID_3)=4, Buffer size(LCG_ID_4)=5, Buffer size(LCG_ID_6)=7
-  byte_buffer msg({0x3e, 0x05, 0x5a, 0x02, 0x04, 0x05, 0x07});
+  byte_buffer msg = byte_buffer::create({0x3e, 0x05, 0x5a, 0x02, 0x04, 0x05, 0x07}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -249,7 +249,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_8_lcgs)
   // MAC CE Long BSR = {0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
   // All LCG_ID set to true (0xff)
   // Buffer size(LCG_ID_0)=1, ..., Buffer size(LCG_ID_n)=n+1, ... , Buffer size(LCG_ID_7)=8
-  byte_buffer msg({0x3e, 0x9, 0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+  byte_buffer msg = byte_buffer::create({0x3e, 0x9, 0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -287,7 +287,7 @@ TEST(mac_ul_subpdu, decode_long_trunc_bsr)
   // R/F/LCID/L MAC subheader = 0x3c - F=0, LCID=61, L=3
   // MAC CE Long Truncated  BSR = {0x81, 0xd9, 0xab}  LCG_ID_7=true, LCG_ID_0= true
   // Buffer size_1 = 217 (0xd9), Buffer size_2 = 171 (0xab)
-  byte_buffer msg({0x3c, 0x3, 0x45, 0xd9, 0xab});
+  byte_buffer msg = byte_buffer::create({0x3c, 0x3, 0x45, 0xd9, 0xab}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -324,7 +324,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
 
   // R/LCID MAC subheader = R|R|LCID = 0x3a or LCID=61
   // MAC CE C-RNTI = {0x46, 0x01}, RNTI=0x4601
-  byte_buffer msg({0x3a, 0x46, 0x01});
+  byte_buffer msg = byte_buffer::create({0x3a, 0x46, 0x01}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -355,7 +355,7 @@ TEST(mac_ul_subpdu, decode_single_entry_phr)
   // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
   // MAC CE SE PHR = {0x27, 0x2f}
 
-  byte_buffer msg({0x39, 0x27, 0x2f});
+  byte_buffer msg = byte_buffer::create({0x39, 0x27, 0x2f}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -392,7 +392,7 @@ TEST(mac_ul_subpdu, decode_subpdu_padding)
   // R/LCID MAC subheader = R|R|LCID = 0x3f or LCID=63
   // Padding = {0x00, 0x00}  - 2B of padding
 
-  byte_buffer msg({0x3f, 0x00, 0x00});
+  byte_buffer msg = byte_buffer::create({0x3f, 0x00, 0x00}).value();
   ASSERT_TRUE(subpdu.unpack(msg));
 
   // Test expected length.
@@ -414,7 +414,7 @@ TEST(mac_ul_pdu, decode_crnti_ce_and_sbsr)
 
   // subPDU_1 = [ R/LCID MAC subheader (1 byte) | MAC CE C-RNTI ]
   // R/LCID MAC subheader = R|R|LCID = 0x3a or LCID=58
-  byte_buffer msg = {0x3a, 0x46, 0x1};
+  byte_buffer msg = byte_buffer::create({0x3a, 0x46, 0x1}).value();
 
   // subPDU_2 = [ R/LCID MAC subheader (1 byte) | MAC CE Short BSR ]
   // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=63
@@ -448,7 +448,7 @@ TEST(mac_ul_pdu, decode_ul_ccch_and_padding)
   // MAC SDU (UL CCCH)    = {0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
   // subPDU_2 = [ R/LCID MAC subheader (1 byte) | padding (3bytes) ]
   // R/LCID MAC subheader = R|R|LCID = 0x3f or LCID=63
-  byte_buffer msg({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
+  byte_buffer msg = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value();
   ASSERT_TRUE(pdu.unpack(msg));
 
   // Test expected PDU.
@@ -477,9 +477,9 @@ TEST(mac_ul_pdu, decode_short_sdu)
   //               ...
   // |            PAYLOAD            |  Octet L + 2
 
-  size_t      L    = test_rgen::uniform_int<unsigned>(1, 255);
-  lcid_t      lcid = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+  size_t      L       = test_rgen::uniform_int<unsigned>(1, 255);
+  lcid_t      lcid    = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
+  byte_buffer payload = byte_buffer::create(test_rgen::random_vector<uint8_t>(L)).value();
 
   byte_buffer msg;
   bit_encoder enc(msg);
@@ -514,9 +514,9 @@ TEST(mac_ul_pdu, decode_long_sdu)
   //               ...
   // |            PAYLOAD            |  Octet L + 3
 
-  size_t      L    = test_rgen::uniform_int<unsigned>(256, 1000);
-  lcid_t      lcid = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+  size_t      L       = test_rgen::uniform_int<unsigned>(256, 1000);
+  lcid_t      lcid    = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
+  byte_buffer payload = byte_buffer::create(test_rgen::random_vector<uint8_t>(L)).value();
 
   byte_buffer msg;
   bit_encoder enc(msg);
@@ -541,7 +541,7 @@ TEST(mac_ul_pdu, decode_bad_mac_pdu)
 {
   mac_ul_sch_pdu pdu;
 
-  byte_buffer msg(std::vector<uint8_t>(11, 0x0));
+  byte_buffer msg = byte_buffer::create(std::vector<uint8_t>(11, 0x0)).value();
   ASSERT_FALSE(pdu.unpack(msg));
   ASSERT_EQ(pdu.nof_subpdus(), 0);
 }
@@ -550,9 +550,9 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
 {
   constexpr unsigned nof_subpdus_per_pdu = 1000;
 
-  size_t      L    = 1;
-  lcid_t      lcid = srsran::LCID_SRB1;
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+  size_t      L       = 1;
+  lcid_t      lcid    = srsran::LCID_SRB1;
+  byte_buffer payload = byte_buffer::create(test_rgen::random_vector<uint8_t>(L)).value();
 
   byte_buffer msg;
   bit_encoder enc(msg);
@@ -572,9 +572,9 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
 
 TEST(mac_ul_pdu, handle_the_case_when_pdu_length_is_too_short_to_decode_length_prefix)
 {
-  size_t      L    = 1;
-  lcid_t      lcid = srsran::LCID_SRB1;
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+  size_t      L       = 1;
+  lcid_t      lcid    = srsran::LCID_SRB1;
+  byte_buffer payload = byte_buffer::create(test_rgen::random_vector<uint8_t>(L)).value();
 
   byte_buffer msg;
   bit_encoder enc(msg);

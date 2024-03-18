@@ -282,6 +282,7 @@ public:
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
     cqi_value                                               cqi;
     unsigned                                                nof_layers;
+    bool                                                    is_fallback{false};
   };
 
   struct dl_ack_info_result {
@@ -323,7 +324,8 @@ public:
               unsigned   max_harq_nof_retxs,
               uint8_t    harq_bit_idx,
               cqi_value  cqi,
-              unsigned   nof_layers);
+              unsigned   nof_layers,
+              bool       is_fallback = false);
 
   /// \brief Called on every TB retransmission, when only one TB is active. This function assumes that the HARQ TB is
   /// in pending new_retx state.

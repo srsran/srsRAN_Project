@@ -61,7 +61,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
   for (uint32_t i = count + 5; i > count; i--) {
     byte_buffer test_pdu;
     get_test_pdu(i, test_pdu);
-    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu)});
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
 
     // Check status report while Rx'ing PDUs in reverse order (bitmap present)
     status_report = pdcp_rx->compile_status_report();
@@ -83,7 +83,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
 
   byte_buffer test_pdu;
   get_test_pdu(count, test_pdu);
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
 
   // Check status report in the final state (no bitmap present)
   status_report = pdcp_rx->compile_status_report();
@@ -131,11 +131,11 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
 
   byte_buffer test_pdu1;
   get_test_pdu(count + (9000 - 5) * 8, test_pdu1); // Rx PDU with a COUNT value at max capacity of the report
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
   byte_buffer test_pdu2;
   get_test_pdu(count + 1 + (9000 - 5) * 8, test_pdu2); // Rx PDU with a COUNT value beyond max capacity of the report
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
 
   // Check status report in the final state (truncated bitmap present)
   status_report = pdcp_rx->compile_status_report();
@@ -185,7 +185,7 @@ TEST_P(pdcp_rx_status_report_test, rx_status_report)
   enc.pack(0xcafe, 16);
 
   // Put into PDCP Rx entity
-  pdcp_rx->handle_pdu(byte_buffer_chain{buf.deep_copy()});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(buf.deep_copy().value()).value());
 
   // Check the status report was forwared to the Tx entity
   ASSERT_FALSE(test_frame->status_report_queue.empty());

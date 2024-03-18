@@ -157,23 +157,21 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
 {
   dl_ssb_pdu pdu;
 
-  pdu.phys_cell_id                                   = generate_pci();
-  pdu.beta_pss_profile_nr                            = beta_pss_profile_type::dB_0;
-  pdu.ssb_block_index                                = generate_block_index();
-  pdu.ssb_subcarrier_offset                          = generate_subcarrier_offset();
-  pdu.ssb_offset_pointA                              = generate_offset_point_A();
-  pdu.bch_payload_flag                               = bch_payload_type::phy_full;
-  pdu.bch_payload.phy_mib_pdu.cell_barred            = generate_bool();
-  pdu.bch_payload.phy_mib_pdu.intrafreq_reselection  = generate_bool();
-  pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position    = static_cast<dmrs_typeA_pos>(generate_bool());
-  pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1      = 43;
-  pdu.ssb_maintenance_v3.ssb_pdu_index               = 0;
-  pdu.ssb_maintenance_v3.case_type                   = generate_case_pattern();
-  pdu.ssb_maintenance_v3.scs                         = subcarrier_spacing::kHz240;
-  pdu.ssb_maintenance_v3.L_max                       = 4;
-  pdu.ssb_maintenance_v3.beta_pss_profile_sss        = std::numeric_limits<int16_t>::min();
-  pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = std::numeric_limits<int16_t>::min();
-  pdu.precoding_and_beamforming                      = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.phys_cell_id                                  = generate_pci();
+  pdu.beta_pss_profile_nr                           = beta_pss_profile_type::dB_0;
+  pdu.ssb_block_index                               = generate_block_index();
+  pdu.ssb_subcarrier_offset                         = generate_subcarrier_offset();
+  pdu.ssb_offset_pointA                             = generate_offset_point_A();
+  pdu.bch_payload_flag                              = bch_payload_type::phy_full;
+  pdu.bch_payload.phy_mib_pdu.cell_barred           = generate_bool();
+  pdu.bch_payload.phy_mib_pdu.intrafreq_reselection = generate_bool();
+  pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position   = static_cast<dmrs_typeA_pos>(generate_bool());
+  pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1     = 43;
+  pdu.ssb_maintenance_v3.ssb_pdu_index              = 0;
+  pdu.ssb_maintenance_v3.case_type                  = generate_case_pattern();
+  pdu.ssb_maintenance_v3.scs                        = subcarrier_spacing::kHz240;
+  pdu.ssb_maintenance_v3.L_max                      = 4;
+  pdu.precoding_and_beamforming                     = build_valid_tx_precoding_and_beamforming_pdu();
 
   return pdu;
 }
@@ -215,8 +213,6 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   dl_pdcch_pdu_maintenance_v3::maintenance_info& dci_v3 = pdu.maintenance_v3.info.back();
   dci_v3.dci_index                                      = 2;
   dci_v3.collocated_AL16_candidate                      = generate_bool();
-  dci_v3.pdcch_data_power_offset_profile_sss            = -32768;
-  dci_v3.pdcch_dmrs_power_offset_profile_sss            = -32768;
 
   pdu.parameters_v4.params.emplace_back();
   pdu.parameters_v4.params.back().nid_pdcch_dmrs = generate_uint16();
@@ -252,7 +248,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.start_symbol_index                 = 3;
   pdu.nr_of_symbols                      = 5;
   pdu.power_control_offset_profile_nr    = 6;
-  pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
+  pdu.power_control_offset_ss_profile_nr = fapi::power_control_offset_ss::dB3;
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
   pdu.dl_dmrs_symb_pos                   = 0;
   pdu.precoding_and_beamforming          = build_valid_tx_precoding_and_beamforming_pdu();
@@ -268,8 +264,6 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.pdsch_maintenance_v3.num_coreset_rm_patterns              = 0;
   pdu.pdsch_maintenance_v3.pdcch_pdu_index                      = 4;
   pdu.pdsch_maintenance_v3.dci_index                            = 3;
-  pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss  = -32768;
-  pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss  = -32768;
   pdu.pdsch_maintenance_v3.max_num_cbg_per_tb                   = 4;
 
   // Maintenance v4
@@ -282,23 +276,22 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 {
   dl_csi_rs_pdu pdu;
 
-  pdu.scs                                                   = subcarrier_spacing::kHz15;
-  pdu.cp                                                    = cyclic_prefix::NORMAL;
-  pdu.start_rb                                              = 23;
-  pdu.num_rbs                                               = 28;
-  pdu.type                                                  = csi_rs_type::CSI_RS_NZP;
-  pdu.row                                                   = 1;
-  pdu.freq_domain                                           = {1, 0, 0, 0, 0, 0};
-  pdu.symb_L0                                               = 8;
-  pdu.symb_L1                                               = 7;
-  pdu.cdm_type                                              = csi_rs_cdm_type::no_CDM;
-  pdu.freq_density                                          = csi_rs_freq_density_type::three;
-  pdu.scramb_id                                             = 123;
-  pdu.power_control_offset_profile_nr                       = 0;
-  pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;
-  pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
-  pdu.csi_rs_maintenance_v3.csi_rs_pdu_index                = 0;
-  pdu.precoding_and_beamforming                             = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.scs                                    = subcarrier_spacing::kHz15;
+  pdu.cp                                     = cyclic_prefix::NORMAL;
+  pdu.start_rb                               = 23;
+  pdu.num_rbs                                = 28;
+  pdu.type                                   = csi_rs_type::CSI_RS_NZP;
+  pdu.row                                    = 1;
+  pdu.freq_domain                            = {1, 0, 0, 0, 0, 0};
+  pdu.symb_L0                                = 8;
+  pdu.symb_L1                                = 7;
+  pdu.cdm_type                               = csi_rs_cdm_type::no_CDM;
+  pdu.freq_density                           = csi_rs_freq_density_type::three;
+  pdu.scramb_id                              = 123;
+  pdu.power_control_offset_profile_nr        = 0;
+  pdu.power_control_offset_ss_profile_nr     = power_control_offset_ss::dB0;
+  pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = 0;
+  pdu.precoding_and_beamforming              = build_valid_tx_precoding_and_beamforming_pdu();
 
   return pdu;
 }

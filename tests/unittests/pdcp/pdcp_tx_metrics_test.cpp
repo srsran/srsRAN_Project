@@ -46,7 +46,7 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     pdcp_tx->set_ciphering(security::ciphering_enabled::on);
 
     // Write SDU
-    byte_buffer sdu = {sdu1};
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
 

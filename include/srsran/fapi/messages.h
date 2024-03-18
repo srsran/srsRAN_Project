@@ -112,8 +112,6 @@ struct dl_pdcch_pdu_maintenance_v3 {
   struct maintenance_info {
     uint16_t dci_index;
     uint8_t  collocated_AL16_candidate;
-    int16_t  pdcch_dmrs_power_offset_profile_sss;
-    int16_t  pdcch_data_power_offset_profile_sss;
   };
 
   static_vector<maintenance_info, MAX_NUM_DCIS_PER_PDCCH_PDU> info;
@@ -159,7 +157,6 @@ struct dl_dci_pdu {
   uint8_t                          cce_index;
   uint8_t                          aggregation_level;
   tx_precoding_and_beamforming_pdu precoding_and_beamforming;
-  uint8_t                          beta_pdcch_1_0;
   int8_t                           power_control_offset_ss_profile_nr;
   dci_payload                      payload;
   // Vendor specific parameters.
@@ -227,16 +224,9 @@ struct dl_pdsch_maintenance_parameters_v3 {
   //: TODO: determine max size of this array
   static_vector<uint8_t, 16>  lte_crs_rm_pattern;
   static_vector<uint16_t, 16> csi_for_rm;
-  int16_t                     pdsch_dmrs_power_offset_profile_sss;
-  int16_t                     pdsch_data_power_offset_profile_sss;
   uint8_t                     max_num_cbg_per_tb;
   //: TODO: determine max size of this array.
   static_vector<uint8_t, 16> cbg_tx_information;
-};
-
-/// PDSCH PTRS maintenance parameters added in FAPIv3.
-struct dl_pdsch_ptrs_maintenance_v3 {
-  int16_t pdsch_ptrs_power_offset_profile_sss;
 };
 
 struct dl_pdsch_parameters_v4 {
@@ -263,10 +253,32 @@ struct dl_pdsch_codeword {
 enum class low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
 enum class resource_allocation_type : uint8_t { type_0, type_1 };
 enum class vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
-enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss = 255 };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
 enum class dmrs_cfg_type : uint8_t { type_1, type_2 };
+
+/// Power control offset SS defined as 'ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE' as per SCF-222 v4.0
+/// section 2.2.4.5.
+enum class power_control_offset_ss : uint8_t { dB_minus_3, dB0, dB3, dB6 };
+
+/// Converts the given value to a power control offset SS value.
+inline power_control_offset_ss to_power_control_offset_ss(int value)
+{
+  switch (value) {
+    case -3:
+      return power_control_offset_ss::dB_minus_3;
+    case 0:
+      return power_control_offset_ss::dB0;
+    case 3:
+      return power_control_offset_ss::dB3;
+    case 6:
+      return power_control_offset_ss::dB6;
+    default:
+      srsran_assert(0, "Invalid power control offset SS '{}'", value);
+      break;
+  }
+  return power_control_offset_ss::dB0;
+}
 
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {
@@ -317,13 +329,12 @@ struct dl_pdsch_pdu {
   uint8_t                                              nr_of_symbols;
   // :TODO: PTRS
   tx_precoding_and_beamforming_pdu         precoding_and_beamforming;
-  uint8_t                                  power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb                   power_control_offset_ss_profile_nr;
+  int                                      power_control_offset_profile_nr;
+  power_control_offset_ss                  power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
   inline_tb_crc_type                       is_inline_tb_crc;
   std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;
   dl_pdsch_maintenance_parameters_v3       pdsch_maintenance_v3;
-  dl_pdsch_ptrs_maintenance_v3             ptrs_maintenance_v3;
   // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
   /// Vendor specific parameters.
@@ -333,7 +344,6 @@ struct dl_pdsch_pdu {
 /// CSI-RS maintenance parameters added in FAPIv3.
 struct dl_csi_rs_maintenance_v3 {
   uint16_t csi_rs_pdu_index;
-  int16_t  csi_rs_power_offset_profile_sss;
 };
 
 /// Downlink CSI-RS PDU information.
@@ -350,8 +360,8 @@ struct dl_csi_rs_pdu {
   csi_rs_cdm_type                   cdm_type;
   csi_rs_freq_density_type          freq_density;
   uint16_t                          scramb_id;
-  uint8_t                           power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb            power_control_offset_ss_profile_nr;
+  int                               power_control_offset_profile_nr;
+  power_control_offset_ss           power_control_offset_ss_profile_nr;
   tx_precoding_and_beamforming_pdu  precoding_and_beamforming;
   dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4
@@ -381,8 +391,6 @@ struct dl_ssb_maintenance_v3 {
   ssb_pattern_case   case_type;
   subcarrier_spacing scs;
   uint8_t            L_max;
-  int16_t            ss_pbch_block_power_scaling;
-  int16_t            beta_pss_profile_sss;
 };
 
 /// PSS EPRE to SSS EPRE in a SS/PBCH block.

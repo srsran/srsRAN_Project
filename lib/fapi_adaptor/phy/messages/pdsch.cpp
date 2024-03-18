@@ -54,16 +54,16 @@ static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsc
   }
 }
 
-static float get_power_control_offset_ss_dB(fapi::nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr)
+static float get_power_control_offset_ss_dB(fapi::power_control_offset_ss power_control_offset_ss_profile_nr)
 {
   switch (power_control_offset_ss_profile_nr) {
-    case fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3:
+    case fapi::power_control_offset_ss::dB_minus_3:
       return -3.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB0:
+    case fapi::power_control_offset_ss::dB0:
       return +0.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB3:
+    case fapi::power_control_offset_ss::dB3:
       return +3.0F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB6:
+    case fapi::power_control_offset_ss::dB6:
     default:
       break;
   }
@@ -73,49 +73,12 @@ static float get_power_control_offset_ss_dB(fapi::nzp_csi_rs_epre_to_ssb power_c
 /// Fills the power related parameters in the PDSCH PDU.
 static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
-  // Determine if ProfileNR is enabled.
-  bool use_profileNR =
-      (fapi_pdu.power_control_offset_ss_profile_nr != fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss);
+  proc_pdu.ratio_pdsch_data_to_sss_dB = get_power_control_offset_ss_dB(fapi_pdu.power_control_offset_ss_profile_nr) +
+                                        static_cast<float>(fapi_pdu.power_control_offset_profile_nr);
 
-  // Depending on the profile to use.
-  if (use_profileNR) {
-    // Load Data to SSS ratio from NR profile.
-    srsran_assert(fapi_pdu.power_control_offset_profile_nr !=
-                      std::numeric_limits<decltype(fapi_pdu.power_control_offset_profile_nr)>::max(),
-                  "Expected SSS profile.");
-
-    // Calculate the power offset between NZP-CSI-RS to PDSCH data.
-    float power_control_offset_dB = static_cast<float>(fapi_pdu.power_control_offset_profile_nr - 8);
-
-    // Calculate the power offset between NZP-CSI-RS to SSS.
-    float power_control_offset_ss_dB = get_power_control_offset_ss_dB(fapi_pdu.power_control_offset_ss_profile_nr);
-
-    proc_pdu.ratio_pdsch_data_to_sss_dB = power_control_offset_dB + power_control_offset_ss_dB;
-  } else {
-    // Load Data to SSS ratio from SSS profile.
-    srsran_assert(fapi_pdu.power_control_offset_profile_nr ==
-                      std::numeric_limits<decltype(fapi_pdu.power_control_offset_profile_nr)>::max(),
-                  "Expected SSS profile.");
-    srsran_assert(fapi_pdu.power_control_offset_ss_profile_nr == fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
-                  "Expected SSS profile.");
-    srsran_assert(
-        fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
-            std::numeric_limits<decltype(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss)>::min(),
-        "Expected SSS profile.");
-    proc_pdu.ratio_pdsch_data_to_sss_dB =
-        static_cast<float>(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss) * 0.001F;
-  }
-
-  // Use direct value if SSS profile is used.
-  if (fapi_pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss !=
-      std::numeric_limits<decltype(fapi_pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss)>::min()) {
-    proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
-        static_cast<float>(fapi_pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss) * 0.001F;
-  } else {
-    // Otherwise, determines the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
-    proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
-        proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
-  }
+  // Determine the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
+  proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
+      proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
 }
 
 static unsigned get_interleaver_size(fapi::vrb_to_prb_mapping_type vrb_to_prb_mapping)

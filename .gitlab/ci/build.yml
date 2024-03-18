@@ -544,7 +544,7 @@ intermediate commits:
     SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    - git fetch origin --depth=20 $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
       TEST_MODE=none
       for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)
@@ -1777,8 +1777,6 @@ basic avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: manual
-      allow_failure: true
   retry: 2
   interruptible: false
   variables:

@@ -301,8 +301,7 @@ void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_) :
   cfg(cfg_),
   max_dl_slot_alloc_delay(SCHEDULER_MAX_K0),
-  max_ul_slot_alloc_delay(SCHEDULER_MAX_K0 + std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA) +
-                          cfg.ntn_cs_koffset)
+  max_ul_slot_alloc_delay(get_max_slot_ul_alloc_delay(cfg.ntn_cs_koffset))
 {
   // Create cell_slot_resource_allocator objects.
   std::vector<scs_specific_carrier> dl_scs_carriers, ul_scs_carriers;

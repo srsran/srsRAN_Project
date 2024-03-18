@@ -124,48 +124,9 @@ TEST(dl_pdcch_pdu_builder, valid_dci_tx_power_parameters_passes)
     dl_pdcch_pdu_builder builder(pdu);
     dl_dci_pdu_builder   builder_dci = builder.add_dl_dci();
 
-    // Leave the optional power unset for -8 to test it is being set internally to -127.
-    optional<float> power;
-    if (i != -8) {
-      power = i;
-    }
+    builder_dci.set_tx_power_info_parameter(i);
 
-    builder_dci.set_tx_power_info_parameter(power);
-
-    ASSERT_EQ(power ? static_cast<int>(power.value()) : -127, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
-  }
-}
-
-TEST(dl_pdcch_pdu_builder, valid_maintenance_v3_dci_parameters_passes)
-{
-  bool collocated = true;
-
-  for (int dmrs_power = -4; dmrs_power != 4; ++dmrs_power) {
-    for (int data_power = -4; data_power != 4; ++data_power) {
-      dl_pdcch_pdu         pdu;
-      dl_pdcch_pdu_builder builder(pdu);
-      dl_dci_pdu_builder   builder_dci = builder.add_dl_dci();
-
-      // Leave the optional power unset for 0 to test it is being set internally to -32768.
-      optional<float> dmrs;
-      if (dmrs_power != 0) {
-        dmrs = dmrs_power;
-      }
-
-      // Leave the optional power unset for 0 to test it is being set internally to -32768.
-      optional<float> data;
-      if (data_power != 0) {
-        data = data_power;
-      }
-
-      builder_dci.set_maintenance_v3_dci_parameters(collocated, dmrs, data);
-
-      ASSERT_EQ(collocated, pdu.maintenance_v3.info[0].collocated_AL16_candidate);
-      ASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
-                pdu.maintenance_v3.info[0].pdcch_dmrs_power_offset_profile_sss);
-      ASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
-                pdu.maintenance_v3.info[0].pdcch_data_power_offset_profile_sss);
-    }
+    ASSERT_EQ(i, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
   }
 }
 

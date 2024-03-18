@@ -141,8 +141,6 @@ static float convert_to_beta_pss(const fapi::dl_ssb_pdu& fapi_pdu)
       return 0.F;
     case fapi::beta_pss_profile_type::dB_3:
       return 3.F;
-    case fapi::beta_pss_profile_type::beta_pss_profile_sss:
-      return fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss * 0.001F;
     default:
       // NOTE: Unreachable code as the FAPI message should have been validated.
       srsran_assert(0, "Invalid beta PSS profile");

@@ -44,7 +44,7 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
   // Write 5 SDU
   int n_pdus = 5;
   for (int i = 0; i < n_pdus; i++) {
-    byte_buffer sdu = {sdu1};
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
 
@@ -69,7 +69,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   // Write 5 SDU
   int n_pdus = 5;
   for (int i = 0; i < n_pdus; i++) {
-    byte_buffer sdu = {sdu1};
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
   ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
@@ -93,7 +93,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   // Write 5 SDU
   int n_pdus = 5;
   for (int i = 0; i < n_pdus; i++) {
-    byte_buffer sdu = {sdu1};
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
   tick_all(5);

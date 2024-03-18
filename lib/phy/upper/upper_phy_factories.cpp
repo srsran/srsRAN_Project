@@ -347,9 +347,13 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
     report_fatal_error_if_not(prach_factory, "Invalid PRACH detector pool factory.");
   }
 
+  std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+      create_time_alignment_estimator_dft_factory(dft_factory);
+  report_fatal_error_if_not(ta_estimator_factory, "Invalid TA estimator factory.");
+
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory =
-      create_port_channel_estimator_factory_sw(dft_factory);
+      create_port_channel_estimator_factory_sw(ta_estimator_factory);
 
   std::shared_ptr<channel_equalizer_factory>  equalizer_factory    = create_channel_equalizer_factory_zf();
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
@@ -423,7 +427,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   // Create channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-      create_port_channel_estimator_factory_sw(dft_factory);
+      create_port_channel_estimator_factory_sw(ta_estimator_factory);
   report_fatal_error_if_not(port_chan_estimator_factory, "Invalid port channel estimator factory.");
 
   std::shared_ptr<dmrs_pucch_estimator_factory> pucch_dmrs_factory =

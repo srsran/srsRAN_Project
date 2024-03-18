@@ -65,7 +65,7 @@ protected:
 /// Test the RRC setup with connected AMF
 TEST_F(rrc_ue_dl_info_transfer, when_srb2_missing_dl_info_tranfer_goes_over_srb1)
 {
-  send_dl_info_transfer({0x00, 0x01, 0x02, 0x03});
+  send_dl_info_transfer(byte_buffer::create({0x00, 0x01, 0x02, 0x03}).value());
   ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
 }
 
@@ -73,6 +73,6 @@ TEST_F(rrc_ue_dl_info_transfer, when_srb2_missing_dl_info_tranfer_goes_over_srb1
 TEST_F(rrc_ue_dl_info_transfer, when_srb2_present_dl_info_tranfer_goes_over_srb2)
 {
   create_srb2();
-  send_dl_info_transfer({0x00, 0x01, 0x02, 0x03});
+  send_dl_info_transfer(byte_buffer::create({0x00, 0x01, 0x02, 0x03}).value());
   ASSERT_EQ(get_last_srb(), srb_id_t::srb2);
 }

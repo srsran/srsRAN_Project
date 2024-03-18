@@ -61,12 +61,14 @@ void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
 {
   logger.log_debug("F1-U bearer received PDU");
+
   // handle T-PDU
-  if (!msg.t_pdu.empty()) {
+  if (msg.t_pdu.has_value() && !msg.t_pdu->empty()) {
     ue_inactivity_timer.run(); // restart inactivity timer due to UL PDU
-    logger.log_debug("Delivering T-PDU of size={}", msg.t_pdu.length());
-    rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu));
+    logger.log_debug("Delivering T-PDU of size={}", msg.t_pdu->length());
+    rx_sdu_notifier.on_new_sdu(std::move(*msg.t_pdu));
   }
+
   // handle transmit notifications
   if (msg.data_delivery_status.has_value()) {
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();

@@ -120,16 +120,16 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
   }
 }
 
-unsigned ue::pending_dl_newtx_bytes() const
+unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
 {
-  return dl_lc_ch_mgr.pending_bytes();
+  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
-unsigned ue::pending_dl_srb0_newtx_bytes() const
+unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const
 {
-  unsigned pending_bytes = dl_lc_ch_mgr.pending_bytes(LCID_SRB0);
+  unsigned pending_bytes = dl_lc_ch_mgr.pending_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1);
 
-  if (pending_bytes > 0) {
+  if (pending_bytes != 0) {
     // In case SRB0 has data, only allocate SRB0 and CEs.
     return pending_bytes + dl_lc_ch_mgr.pending_ue_con_res_id_ce_bytes();
   }
@@ -168,18 +168,19 @@ bool ue::has_pending_sr() const
   return ul_lc_ch_mgr.has_pending_sr();
 }
 
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, lcid_t lcid)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes);
+  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, lcid);
   return total_subpdu_bytes;
 }
 
-unsigned ue::build_dl_srb0_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
+unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, bool is_srb0)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes);
+  total_subpdu_bytes +=
+      allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, is_srb0 ? LCID_SRB0 : LCID_SRB1);
   return total_subpdu_bytes;
 }

@@ -291,31 +291,15 @@ INSTANTIATE_TEST_SUITE_P(nof_symbols,
 INSTANTIATE_TEST_SUITE_P(profile_nr,
                          validate_pdsch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_pdsch_pdu>{
-                                              "Ratio PDSCH EPRE to NZP CSI-RSEPRE",
+                                              "Ratio PDSCH EPRE to NZP CSI-RS EPRE",
                                               [](dl_pdsch_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr                          = value;
-                                                pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = -32768;
+                                                pdu.power_control_offset_profile_nr = value;
                                               }}),
-                                          testing::Values(test_case_data{0, true},
-                                                          test_case_data{12, true},
-                                                          test_case_data{23, true},
-                                                          test_case_data{24, false})));
-
-INSTANTIATE_TEST_SUITE_P(profile_nr_2,
-                         validate_pdsch_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_pdsch_pdu>{
-                                              "Ratio PDSCH EPRE to NZP CSI-RSEPRE",
-                                              [](dl_pdsch_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr = 255;
-                                                pdu.power_control_offset_ss_profile_nr =
-                                                    (value == -32768) ? srsran::fapi::nzp_csi_rs_epre_to_ssb::dB3
-                                                                      : nzp_csi_rs_epre_to_ssb::L1_use_profile_sss;
-                                                pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = value;
-                                              }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), false},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), true},
+                                          testing::Values(test_case_data{unsigned(-9), false},
+                                                          test_case_data{unsigned(-8), true},
                                                           test_case_data{0, true},
-                                                          test_case_data{32767, true})));
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(offset_ss_profile_nr,
                          validate_pdsch_pdu_field,
@@ -323,28 +307,13 @@ INSTANTIATE_TEST_SUITE_P(offset_ss_profile_nr,
                                               "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE",
                                               [](dl_pdsch_pdu& pdu, int value) {
                                                 pdu.power_control_offset_ss_profile_nr =
-                                                    static_cast<nzp_csi_rs_epre_to_ssb>(value);
-                                                pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = -32768;
+                                                    static_cast<power_control_offset_ss>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{2, true},
                                                           test_case_data{3, true},
-                                                          test_case_data{4, false})));
-
-INSTANTIATE_TEST_SUITE_P(offset_ss_profile_nr_2,
-                         validate_pdsch_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_pdsch_pdu>{
-                                              "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE",
-                                              [](dl_pdsch_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr = (value == -32768) ? 3 : 255;
-                                                pdu.power_control_offset_ss_profile_nr =
-                                                    nzp_csi_rs_epre_to_ssb::L1_use_profile_sss;
-                                                pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = value;
-                                              }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), false},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), true},
-                                                          test_case_data{0, true},
-                                                          test_case_data{32767, true})));
+                                                          test_case_data{4, false},
+                                                          test_case_data{255, false})));
 
 INSTANTIATE_TEST_SUITE_P(
     is_inline_tb_crc,
@@ -580,10 +549,9 @@ TEST(validate_pdsch_pdu, invalid_pdu_fails)
   dl_pdsch_pdu pdu = build_valid_dl_pdsch_pdu();
 
   // Force 3 errors.
-  pdu.bwp_size                                                 = 2690;
-  pdu.power_control_offset_profile_nr                          = 255;
-  pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = -32768;
-  pdu.cws[0].qam_mod_order                                     = 1;
+  pdu.bwp_size                        = 2690;
+  pdu.power_control_offset_profile_nr = 255;
+  pdu.cws[0].qam_mod_order            = 1;
   validator_report report(0, 0);
   EXPECT_FALSE(validate_dl_pdsch_pdu(pdu, report));
   // Assert 3 reports were generated.

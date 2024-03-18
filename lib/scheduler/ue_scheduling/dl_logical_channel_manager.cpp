@@ -49,18 +49,18 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
   }
 }
 
-unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes)
+unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
 {
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
 
-  lcid_t lcid = get_max_prio_lcid();
-  if (lcid == lcid_t::INVALID_LCID) {
+  lcid_t lcid_with_prio = lcid == lcid_t::INVALID_LCID ? get_max_prio_lcid() : lcid;
+  if (lcid_with_prio == lcid_t::INVALID_LCID) {
     return 0;
   }
 
   // Update Buffer Status of allocated LCID.
-  return allocate_mac_sdu(subpdu, lcid, rem_bytes);
+  return allocate_mac_sdu(subpdu, lcid_with_prio, rem_bytes);
 }
 
 lcid_t dl_logical_channel_manager::get_max_prio_lcid() const
@@ -76,6 +76,8 @@ lcid_t dl_logical_channel_manager::get_max_prio_lcid() const
 
 unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes)
 {
+  srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+
   unsigned lch_bytes = pending_bytes(lcid);
   if (lch_bytes == 0 or rem_bytes <= MIN_MAC_SDU_SUBHEADER_SIZE) {
     return 0;
@@ -90,7 +92,7 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {
-    // avoid invalid combination of MAC subPDU and subheader size.
+    // Avoid invalid combination of MAC subPDU and subheader size.
     alloc_bytes--;
   }
   unsigned sdu_size = get_mac_sdu_size(alloc_bytes);
@@ -142,23 +144,24 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   return alloc_bytes;
 }
 
-unsigned srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+unsigned
+srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs, lcid_t lcid)
 {
   unsigned rem_tbs = total_tbs;
 
-  // if we do not have enough bytes to fit MAC subheader, skip MAC SDU allocation.
+  // If we do not have enough bytes to fit MAC subheader, skip MAC SDU allocation.
   // Note: We assume upper layer accounts for its own subheaders when updating the buffer state.
   while (rem_tbs > MAX_MAC_SDU_SUBHEADER_SIZE and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
-    unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs);
+    unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs, lcid);
     if (alloc_bytes == 0) {
       break;
     }
 
-    // add new subPDU.
+    // Add new subPDU.
     tb_info.lc_chs_to_sched.push_back(subpdu);
 
-    // update remaining space taking into account the MAC SDU subheader.
+    // Update remaining space taking into account the MAC SDU subheader.
     rem_tbs -= alloc_bytes;
   }
 
@@ -176,10 +179,10 @@ unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
       break;
     }
 
-    // add new subPDU.
+    // Add new subPDU.
     tb_info.lc_chs_to_sched.push_back(subpdu);
 
-    // update remaining space taking into account the MAC CE subheader.
+    // Update remaining space taking into account the MAC CE subheader.
     rem_tbs -= alloc_bytes;
   }
   return total_tbs - rem_tbs;
@@ -221,10 +224,10 @@ srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channe
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes != 0) {
-      // add new subPDU.
+      // Add new subPDU.
       tb_info.lc_chs_to_sched.push_back(subpdu);
 
-      // update remaining space taking into account the MAC CE subheader.
+      // Update remaining space taking into account the MAC CE subheader.
       rem_tbs -= alloc_bytes;
     }
   }

@@ -46,7 +46,8 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
   exec_pool(exec_pool_),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
-  logger(logger_)
+  logger(logger_),
+  task_sched(MAX_NOF_UES)
 {
 }
 
@@ -72,14 +73,12 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   // Create UE executors
   // TODO, these should be created within the same function, so that UL, DL and CTRL executors
   // can point to the same executor.
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_dl_exec = exec_pool.create_dl_pdu_executor();
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ul_exec = exec_pool.create_ul_pdu_executor();
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> ue_ctrl_exec = exec_pool.create_ctrl_executor();
+  std::unique_ptr<ue_executor_mapper> ue_exec_mapper = exec_pool.create_ue_executor_mapper();
 
   // Create executor-specific timer factories
-  timer_factory ue_dl_timer_factory   = {timers, *ue_dl_exec};
-  timer_factory ue_ul_timer_factory   = {timers, *ue_ul_exec};
-  timer_factory ue_ctrl_timer_factory = {timers, *ue_ctrl_exec};
+  timer_factory ue_dl_timer_factory   = {timers, ue_exec_mapper->dl_pdu_executor()};
+  timer_factory ue_ul_timer_factory   = {timers, ue_exec_mapper->ul_pdu_executor()};
+  timer_factory ue_ctrl_timer_factory = {timers, ue_exec_mapper->ctrl_executor()};
 
   // Create UE object
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
@@ -87,9 +86,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      e1ap,
                                                                      net_config,
                                                                      n3_config,
-                                                                     std::move(ue_dl_exec),
-                                                                     std::move(ue_ul_exec),
-                                                                     std::move(ue_ctrl_exec),
+                                                                     std::move(ue_exec_mapper),
                                                                      ue_dl_timer_factory,
                                                                      ue_ul_timer_factory,
                                                                      ue_ctrl_timer_factory,
@@ -106,15 +103,24 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
 
 void ue_manager::remove_ue(ue_index_t ue_index)
 {
-  logger.debug("Scheduling ue_index={} deletion", ue_index);
+  logger.debug("ue={}: Scheduling UE deletion", ue_index);
   srsran_assert(ue_db.contains(ue_index), "Remove UE called for nonexistent ue_index={}", ue_index);
 
   // TODO: remove lookup maps
 
-  // remove UE from database
-  ue_db.erase(ue_index);
+  task_sched.schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-  logger.info("Removed ue_index={}", ue_index);
+    // Stop UE activity.
+    CORO_AWAIT(ue_db[ue_index]->stop());
+
+    // remove UE from database
+    ue_db.erase(ue_index);
+
+    logger.info("ue={}: UE removed", ue_index);
+
+    CORO_RETURN();
+  });
 }
 
 ue_index_t ue_manager::get_next_ue_index()

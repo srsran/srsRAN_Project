@@ -30,7 +30,7 @@ namespace srsran {
 ///
 /// The parameters are used in TS38.211 Section 6.4.1.4.3 and they are derived from TS38.211 Table 6.4.1.4.3-1.
 struct srs_configuration {
-  /// Sounding reference signal bandwidth in physical resource blocks, corresponds to the parameter \f$m_{SRS,b}\f$.
+  /// Sounding Reference Signal bandwidth in physical resource blocks, corresponds to the parameter \f$m_{SRS,b}\f$.
   unsigned m_srs;
   /// Number of frequency hopping locations, corresponds to parameter \f$N_{b}\f$.
   unsigned N;

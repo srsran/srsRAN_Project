@@ -86,7 +86,7 @@ TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
   packer->handle_message(ngap_msg);
 
   // print packed message and TV
-  byte_buffer tv({ng_setup_request_packed, sizeof(ng_setup_request_packed)});
+  byte_buffer tv = byte_buffer::create({ng_setup_request_packed, sizeof(ng_setup_request_packed)}).value();
   test_logger.debug(tv.begin(), tv.end(), "Test vector ({} bytes):", tv.length());
   test_logger.debug(gw->last_pdu.begin(), gw->last_pdu.end(), "Packed PDU ({} bytes):", gw->last_pdu.length());
 

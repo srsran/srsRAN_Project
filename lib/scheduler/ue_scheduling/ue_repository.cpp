@@ -21,6 +21,7 @@
  */
 
 #include "ue_repository.h"
+#include "../cell/resource_grid_util.h"
 
 using namespace srsran;
 
@@ -65,15 +66,23 @@ static auto search_rnti(const std::vector<std::pair<rnti_t, du_ue_index_t>>& rnt
 
 void ue_repository::slot_indication(slot_point sl_tx)
 {
-  for (ue_config_delete_event& p : ues_to_rem) {
-    if (not p.valid()) {
+  last_sl_tx = sl_tx;
+
+  for (std::pair<slot_point, ue_config_delete_event>& p : ues_to_rem) {
+    auto& rem_ev = p.second;
+    if (not rem_ev.valid()) {
       // Already removed.
       continue;
     }
-    const du_ue_index_t ue_idx = p.ue_index();
+    if (p.first > sl_tx) {
+      // UE is not yet ready to be removed as there may be still pending allocations for it in the resource grid.
+      continue;
+    }
+
+    const du_ue_index_t ue_idx = rem_ev.ue_index();
     if (not ues.contains(ue_idx)) {
       logger.error("ue={}: Unexpected UE removal from UE repository", ue_idx);
-      p.reset();
+      rem_ev.reset();
       continue;
     }
     ue&    u     = *ues[ue_idx];
@@ -96,13 +105,13 @@ void ue_repository::slot_indication(slot_point sl_tx)
     ues.erase(ue_idx);
 
     // Marks UE config removal as complete.
-    p.reset();
+    rem_ev.reset();
 
     logger.debug("ue={} rnti={}: UE has been successfully removed.", ue_idx, crnti);
   }
 
   // In case the elements at the front of the ring has been marked for removal, pop them from the queue.
-  while (not ues_to_rem.empty() and not ues_to_rem[0].valid()) {
+  while (not ues_to_rem.empty() and not ues_to_rem[0].second.valid()) {
     ues_to_rem.pop();
   }
 
@@ -128,10 +137,16 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
 {
   if (contains(ev.ue_index())) {
     // Start deactivation of UE bearers.
-    ues[ev.ue_index()]->deactivate();
+    auto& u = ues[ev.ue_index()];
+    u->deactivate();
 
     // Register UE for later removal.
-    ues_to_rem.push(std::move(ev));
+    // We define a time window when the UE removal is not allowed, as there are pending CSI/SR PDUs in the resource grid
+    // ready to be sent to the PHY. Removing the UE earlier would mean that its PUCCH resources would become available
+    // to a newly created UE and there could be a PUCCH collision.
+    slot_point rem_slot =
+        last_sl_tx + get_max_slot_ul_alloc_delay(u->get_pcell().cfg().cell_cfg_common.ntn_cs_koffset) + 1;
+    ues_to_rem.push(std::make_pair(rem_slot, std::move(ev)));
   }
 }
 

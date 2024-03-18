@@ -100,7 +100,7 @@ srsran::srs_cu_cp::generate_ue_rrc_context_creation_request(ue_index_t ue_index,
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
       "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
       "c400");
-  req.du_to_cu_rrc_container = {tmp.begin(), tmp.end()};
+  req.du_to_cu_rrc_container = byte_buffer::create(tmp.begin(), tmp.end()).value();
 
   return req;
 }

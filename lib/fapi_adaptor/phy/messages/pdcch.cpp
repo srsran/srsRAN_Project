@@ -34,7 +34,6 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
                      const precoding_matrix_repository& pm_repo)
 {
   const auto& fapi_dci    = fapi_pdu.dl_dci[i_dci];
-  const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i_dci];
   const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i_dci];
 
   pdcch_processor::dci_description& dci = proc_pdu.dci;
@@ -46,14 +45,8 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
   dci.cce_index         = fapi_dci.cce_index;
   dci.aggregation_level = fapi_dci.aggregation_level;
 
-  dci.dmrs_power_offset_dB = (fapi_dci.power_control_offset_ss_profile_nr == -127)
-                                 ? static_cast<float>(fapi_dci_v3.pdcch_dmrs_power_offset_profile_sss) * 0.001F
-                                 : static_cast<float>(fapi_dci.power_control_offset_ss_profile_nr);
-
-  dci.data_power_offset_dB = (fapi_dci_v3.pdcch_data_power_offset_profile_sss ==
-                              std::numeric_limits<decltype(fapi_dci_v3.pdcch_data_power_offset_profile_sss)>::min())
-                                 ? dci.dmrs_power_offset_dB
-                                 : float(fapi_dci_v3.pdcch_data_power_offset_profile_sss) * 0.001F;
+  dci.dmrs_power_offset_dB = fapi_dci.power_control_offset_ss_profile_nr;
+  dci.data_power_offset_dB = dci.dmrs_power_offset_dB;
 
   // Unpack the payload.
   dci.payload.resize(fapi_dci.payload.size());

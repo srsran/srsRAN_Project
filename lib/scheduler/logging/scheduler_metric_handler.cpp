@@ -64,19 +64,25 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
     if (crc_pdu.tb_crc_success) {
       u.data.sum_ul_tb_bytes += tbs.value();
     }
+    if (crc_pdu.time_advance_offset.has_value()) {
+      u.last_ta = crc_pdu.time_advance_offset->to_seconds();
+    }
   }
 }
 
-void scheduler_metrics_handler::handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi)
+void scheduler_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
 {
-  if (ues.contains(ue_index)) {
-    auto& u = ues[ue_index];
-    if (csi.first_tb_wideband_cqi.has_value()) {
-      u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
-    }
-    if (csi.ri.has_value()) {
-      u.last_ri = csi.ri->to_uint();
-    }
+  u.data.nof_pucch_snr_reports++;
+  u.data.sum_pucch_snrs += sinr;
+}
+
+void scheduler_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
+{
+  if (csi.first_tb_wideband_cqi.has_value()) {
+    u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
+  }
+  if (csi.ri.has_value()) {
+    u.last_ri = csi.ri->to_uint();
   }
 }
 
@@ -104,13 +110,42 @@ void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool
   }
 }
 
-void scheduler_metrics_handler::handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr)
+void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu)
 {
-  if (ues.contains(ue_index)) {
-    auto& u = ues[ue_index];
-    if (pucch_sinr.has_value()) {
-      u.data.nof_pucch_snr_reports++;
-      u.data.sum_pucch_snrs += pucch_sinr.value();
+  if (ues.contains(pdu.ue_index)) {
+    auto& u = ues[pdu.ue_index];
+
+    if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu)) {
+      auto& f1 = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu);
+
+      if (f1.ul_sinr.has_value()) {
+        handle_pucch_sinr(u, f1.ul_sinr.value());
+      }
+
+      if (f1.time_advance_offset.has_value()) {
+        u.last_ta = f1.time_advance_offset.value().to_seconds();
+      }
+    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu)) {
+      auto& f2 = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu);
+
+      if (f2.ul_sinr.has_value()) {
+        handle_pucch_sinr(u, f2.ul_sinr.value());
+      }
+
+      if (f2.csi.has_value()) {
+        handle_csi_report(u, f2.csi.value());
+      }
+
+      if (f2.time_advance_offset.has_value()) {
+        u.last_ta = f2.time_advance_offset.value().to_seconds();
+      }
+    } else {
+      // PUSCH case.
+      auto& pusch = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(pdu.pdu);
+
+      if (pusch.csi.has_value()) {
+        handle_csi_report(u, pusch.csi.value());
+      }
     }
   }
 }
@@ -135,7 +170,11 @@ void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication
     auto& u = ues[phr_ind.ue_index];
 
     // Store last PHR.
-    u.last_phr = phr_ind.phr;
+    if (not phr_ind.phr.get_phr().empty()) {
+      // Log the floor of the average of the PH interval.
+      interval<int> rg = phr_ind.phr.get_phr().front().ph;
+      u.last_phr       = (rg.start() + rg.stop()) / 2;
+    }
   }
 }
 
@@ -248,7 +287,10 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  // TODO: update PUSCH and PUCCH SNR metrics based on indications.
+  if (last_ta >= 0) {
+    ret.last_ta = std::chrono::microseconds{static_cast<unsigned>(last_ta * 1e6)};
+  }
+  ret.last_phr = last_phr;
 
   // Reset UE stats metrics on every report.
   reset();

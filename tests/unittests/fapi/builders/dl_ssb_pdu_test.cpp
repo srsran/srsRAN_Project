@@ -63,28 +63,6 @@ TEST(dl_ssb_pdu_builder, valid_maintenance_v3_parameters_passes)
   ASSERT_EQ(Lmax, v3.L_max);
 }
 
-TEST(dl_ssb_pdu_builder, valid_maintenance_v3_tx_power_parameters_passes)
-{
-  for (bool enable : {true, false}) {
-    dl_ssb_pdu         pdu;
-    dl_ssb_pdu_builder builder(pdu);
-
-    optional<float> pss_profile_sss;
-    optional<float> ss_power_block;
-    if (enable) {
-      pss_profile_sss.emplace(18.307);
-      ss_power_block.emplace(-8.607);
-    }
-
-    builder.set_maintenance_v3_tx_power_info(ss_power_block, pss_profile_sss);
-
-    const dl_ssb_maintenance_v3& v3 = pdu.ssb_maintenance_v3;
-
-    ASSERT_EQ(enable ? 18307 : -32768, v3.beta_pss_profile_sss);
-    ASSERT_EQ(enable ? -860 : -32768, v3.ss_pbch_block_power_scaling);
-  }
-}
-
 TEST(dl_ssb_pdu_builder, valid_bch_payload_passes)
 {
   dl_ssb_pdu         pdu;

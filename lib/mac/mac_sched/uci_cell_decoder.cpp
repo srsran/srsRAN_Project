@@ -84,18 +84,18 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
   uci_indication ind{};
   ind.slot_rx    = msg.sl_rx;
   ind.cell_index = cell_index;
-  for (unsigned i = 0; i != msg.ucis.size(); ++i) {
+  for (const auto& mac_uci : msg.ucis) {
     uci_indication::uci_pdu& uci_pdu = ind.ucis.emplace_back();
-    uci_pdu.crnti                    = msg.ucis[i].rnti;
-    uci_pdu.ue_index                 = rnti_table[msg.ucis[i].rnti];
-    if (ind.ucis[i].ue_index == INVALID_DU_UE_INDEX) {
+    uci_pdu.crnti                    = mac_uci.rnti;
+    uci_pdu.ue_index                 = rnti_table[mac_uci.rnti];
+    if (uci_pdu.ue_index == INVALID_DU_UE_INDEX) {
       ind.ucis.pop_back();
       logger.info("rnti={}: Discarding UCI PDU. Cause: No UE with provided RNTI exists.", uci_pdu.crnti);
       continue;
     }
 
-    if (variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(msg.ucis[i].pdu)) {
-      const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(msg.ucis[i].pdu);
+    if (variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(mac_uci.pdu)) {
+      const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_uci.pdu);
 
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
       if (pucch.ul_sinr.has_value()) {
@@ -140,20 +140,20 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
 
           // Report ACK for RLF detection purposes.
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
-      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
-    } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu)) {
-      const auto& pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
-      auto&       pdu   = ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
+      uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
+    } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(mac_uci.pdu)) {
+      const auto& pusch = variant_get<mac_uci_pdu::pusch_type>(mac_uci.pdu);
+      auto&       pdu   = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
       if (pusch.harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().is_valid, pusch.harq_info->payload);
 
         // Report ACK for RLF detection purposes.
         for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
 
@@ -180,13 +180,13 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
         if (pusch.csi_part1_info->is_valid) {
-          rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, true);
+          rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, true);
         }
       }
 
-    } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
-      const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
-      auto&       pdu   = ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
+    } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_uci.pdu)) {
+      const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_uci.pdu);
+      auto&       pdu   = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
 
       if (pucch.ul_sinr.has_value()) {
         pdu.ul_sinr.emplace(pucch.ul_sinr.value());
@@ -203,7 +203,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
         // Report ACK for RLF detection purposes.
         for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, cell_index, harq_st == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq_st == mac_harq_ack_report_status::ack);
         }
       }
 
@@ -228,7 +228,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
         }
         // We consider any status other than "crc_pass" as non-decoded CSI.
-        rlf_handler.handle_csi(ind.ucis[i].ue_index, cell_index, pucch.csi_part1_info->is_valid);
+        rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, pucch.csi_part1_info->is_valid);
       }
     }
   }

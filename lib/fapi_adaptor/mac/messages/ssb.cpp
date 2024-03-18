@@ -59,8 +59,6 @@ void srsran::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& bui
 
   builder.set_maintenance_v3_basic_parameters(mac_pdu.ssb_case, mac_pdu.scs, mac_pdu.L_max);
 
-  builder.set_maintenance_v3_tx_power_info({}, {});
-
   const ssb_mib_data_pdu& mib_pdu = mac_pdu.mib_data;
   builder.set_bch_payload_phy_full(
       mib_pdu.dmrs_typeA_pos, mib_pdu.pdcch_config_sib1, mib_pdu.cell_barred, mib_pdu.intra_freq_reselection);

@@ -37,6 +37,8 @@ namespace srsran {
 /// Generic hardware-accelerated implementation of the PDSCH encoder.
 class pdsch_encoder_hw_impl : public pdsch_encoder
 {
+  static constexpr units::bytes CODEWORD_MAX_SIZE = pdsch_constants::CODEWORD_MAX_SIZE.round_up_to_bytes();
+
 public:
   /// CRC calculators used in shared channels.
   struct sch_crc {
@@ -107,7 +109,7 @@ private:
   static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
 
   /// Buffer for storing temporary encoded and packed codeblock.
-  static_vector<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> codeblock_packed;
+  static_vector<uint8_t, CODEWORD_MAX_SIZE.value()> codeblock_packed;
 
   /// \brief Computes the segmentation parameters required by the hardware-accelerated PDSCH encoder function.
   /// \param[out] hw_cfg          Hardware-accelerated PDSCH encoder configuration parameters.

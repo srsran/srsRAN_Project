@@ -63,10 +63,7 @@ protected:
 
   std::unique_ptr<gtpu_tunnel_rx_upper_dummy> gtpu_tunnel;
   manual_task_worker                          teid_worker{128};
-
-  task_worker          worker{"GTP-U demux#0", 128};
-  task_worker_executor exec{worker};
-  null_dlt_pcap        dummy_pcap;
+  null_dlt_pcap                               dummy_pcap;
 
   std::unique_ptr<gtpu_demux> dut;
   srslog::basic_logger&       test_logger = srslog::fetch_basic_logger("TEST", false);
@@ -76,10 +73,10 @@ protected:
 TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 {
   sockaddr_storage src_addr = {};
-  byte_buffer      pdu{gtpu_ping_vec_teid_1};
+  byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_1).value();
 
   dut->handle_pdu(std::move(pdu), src_addr);
-  worker.wait_pending_tasks();
+  teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
@@ -87,11 +84,11 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 {
   sockaddr_storage src_addr = {};
-  byte_buffer      pdu{gtpu_ping_vec_teid_1};
+  byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_1).value();
   dut->add_tunnel(gtpu_teid_t{0x1}, teid_worker, gtpu_tunnel.get());
 
   dut->handle_pdu(std::move(pdu), src_addr);
-  worker.wait_pending_tasks();
+  teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), sizeof(gtpu_ping_vec_teid_1));
 }
@@ -99,12 +96,12 @@ TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 {
   sockaddr_storage src_addr = {};
-  byte_buffer      pdu{gtpu_ping_vec_teid_1};
+  byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_1).value();
   dut->add_tunnel(gtpu_teid_t{0x1}, teid_worker, gtpu_tunnel.get());
   dut->remove_tunnel(gtpu_teid_t{0x1});
 
   dut->handle_pdu(std::move(pdu), src_addr);
-  worker.wait_pending_tasks();
+  teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
@@ -112,11 +109,17 @@ TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 TEST_F(gtpu_demux_test, when_different_tunnel_registered_pdu_is_dropped)
 {
   sockaddr_storage src_addr = {};
-  byte_buffer      pdu{gtpu_ping_vec_teid_2};
+  byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_2).value();
   dut->add_tunnel(gtpu_teid_t{0x1}, teid_worker, gtpu_tunnel.get());
 
   dut->handle_pdu(std::move(pdu), src_addr);
-  worker.wait_pending_tasks();
+  teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
+}
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

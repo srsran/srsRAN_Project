@@ -54,7 +54,7 @@ protected:
     ul_ccch_indication_message ccch_ind{};
     ccch_ind.cell_index = to_du_cell_index(0);
     ccch_ind.tc_rnti    = rnti;
-    ccch_ind.subpdu     = {0, 1, 2, 3, 4, 5};
+    ccch_ind.subpdu     = byte_buffer::create({0, 1, 2, 3, 4, 5}).value();
     return ccch_ind;
   }
 

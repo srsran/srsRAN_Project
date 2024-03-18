@@ -46,7 +46,7 @@ struct nru_pdcp_sn_discard_block {
   uint8_t block_size = 0;
 };
 
-typedef static_vector<nru_pdcp_sn_discard_block, nru_max_nof_pdcp_sn_discard_blocks> nru_pdcp_sn_discard_blocks;
+using nru_pdcp_sn_discard_blocks = static_vector<nru_pdcp_sn_discard_block, nru_max_nof_pdcp_sn_discard_blocks>;
 
 /// Range of consecutive NR-U SNs that have been lost. Part of NR-U DL Data Delivery Status (PDU Type 1).
 ///
@@ -60,7 +60,7 @@ struct nru_lost_nru_sn_range {
   uint32_t nru_sn_end = 0;
 };
 
-typedef static_vector<nru_lost_nru_sn_range, nru_max_nof_lost_nru_sn_ranges> nru_lost_nru_sn_ranges;
+using nru_lost_nru_sn_ranges = static_vector<nru_lost_nru_sn_range, nru_max_nof_lost_nru_sn_ranges>;
 
 /// NR-U DL User Data (PDU Type 0).
 ///
@@ -145,7 +145,7 @@ struct nru_dl_message {
 /// NR-U UL message exchanged from node the peer node (DU) to the node holding a PDCP entity (CU-UP).
 struct nru_ul_message {
   /// Transport PDU, e.g. PDCP PDU.
-  byte_buffer_chain t_pdu;
+  optional<byte_buffer_chain> t_pdu;
   /// NR-U DL Data Delivery Status.
   optional<nru_dl_data_delivery_status> data_delivery_status;
   /// NR-U Assistance Information.

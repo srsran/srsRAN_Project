@@ -26,12 +26,12 @@
 
 using namespace srsran;
 
-// DLT PCAP values for different layers
-constexpr uint16_t PCAP_NGAP_DLT = 152;
-constexpr uint16_t PCAP_E1AP_DLT = 153;
-constexpr uint16_t PCAP_F1AP_DLT = 154;
-constexpr uint16_t PCAP_E2AP_DLT = 155;
-constexpr uint16_t PCAP_GTPU_DLT = 156;
+// DLT PCAP values for different layers.
+static constexpr uint16_t PCAP_NGAP_DLT = 152;
+static constexpr uint16_t PCAP_E1AP_DLT = 153;
+static constexpr uint16_t PCAP_F1AP_DLT = 154;
+static constexpr uint16_t PCAP_E2AP_DLT = 155;
+static constexpr uint16_t PCAP_GTPU_DLT = 156;
 
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
@@ -57,7 +57,11 @@ void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
     // skip.
     return;
   }
-  writer.write_pdu(byte_buffer(pdu));
+  auto pdu_buffer = byte_buffer::create(pdu);
+  if (pdu_buffer.is_error()) {
+    return;
+  }
+  writer.write_pdu(std::move(pdu_buffer.value()));
 }
 
 void dlt_pcap_impl::push_pdu(byte_buffer pdu)

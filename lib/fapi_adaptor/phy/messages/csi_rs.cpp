@@ -29,19 +29,18 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-/// Translates the \c nzp_csi_rs_epre_to_ssb enum to a linear amplitude value.
-static float translate_amplitude(fapi::nzp_csi_rs_epre_to_ssb power)
+/// Translates the \c power_controñ_offset_ss enum to a linear amplitude value.
+static float translate_amplitude(fapi::power_control_offset_ss power)
 {
   switch (power) {
-    case fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3:
+    case fapi::power_control_offset_ss::dB_minus_3:
       return 0.5F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB0:
+    case fapi::power_control_offset_ss::dB0:
       return 1.F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB3:
+    case fapi::power_control_offset_ss::dB3:
       return 2.F;
-    case fapi::nzp_csi_rs_epre_to_ssb::dB6:
+    case fapi::power_control_offset_ss::dB6:
       return 4.F;
-    case fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss:
     default:
       return 1.F;
   }

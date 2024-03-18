@@ -227,8 +227,10 @@ private:
 class pusch_processor_pool_factory : public pusch_processor_factory
 {
 public:
-  pusch_processor_pool_factory(std::shared_ptr<pusch_processor_factory> factory_, unsigned max_nof_processors_) :
-    factory(std::move(factory_)), max_nof_processors(max_nof_processors_)
+  pusch_processor_pool_factory(std::shared_ptr<pusch_processor_factory> factory_,
+                               unsigned                                 max_nof_processors_,
+                               bool                                     blocking_) :
+    factory(std::move(factory_)), max_nof_processors(max_nof_processors_), blocking(blocking_)
   {
     srsran_assert(factory, "Invalid PUSCH factory.");
   }
@@ -244,7 +246,7 @@ public:
       processor = factory->create();
     }
 
-    return std::make_unique<pusch_processor_pool>(processors);
+    return std::make_unique<pusch_processor_pool>(processors, blocking);
   }
 
   std::unique_ptr<pusch_processor> create(srslog::basic_logger& logger) override
@@ -258,7 +260,7 @@ public:
       processor = factory->create(logger);
     }
 
-    return std::make_unique<pusch_processor_pool>(processors);
+    return std::make_unique<pusch_processor_pool>(processors, blocking);
   }
 
   std::unique_ptr<pusch_pdu_validator> create_validator() override { return factory->create_validator(); }
@@ -266,6 +268,7 @@ public:
 private:
   std::shared_ptr<pusch_processor_factory> factory;
   unsigned                                 max_nof_processors;
+  bool                                     blocking;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory
@@ -309,9 +312,11 @@ srsran::create_pusch_processor_factory_sw(pusch_processor_factory_sw_configurati
 }
 
 std::shared_ptr<pusch_processor_factory>
-srsran::create_pusch_processor_pool(std::shared_ptr<pusch_processor_factory> factory, unsigned max_nof_processors)
+srsran::create_pusch_processor_pool(std::shared_ptr<pusch_processor_factory> factory,
+                                    unsigned                                 max_nof_processors,
+                                    bool                                     blocking)
 {
-  return std::make_shared<pusch_processor_pool_factory>(std::move(factory), max_nof_processors);
+  return std::make_shared<pusch_processor_pool_factory>(std::move(factory), max_nof_processors, blocking);
 }
 
 std::unique_ptr<pusch_processor> pusch_processor_factory::create(srslog::basic_logger& logger)

@@ -191,8 +191,12 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   ue_ctxt.logger.log_info("Sending UlNasTransportMessage");
 
-  // Forward message to AMF
-  ngap_notifier.on_new_message(ngap_msg);
+  // Schedule transmission of UL NAS transport message to AMF
+  task_sched.schedule_async_task(msg.ue_index, launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
+                                   CORO_BEGIN(ctx);
+                                   ngap_notifier.on_new_message(ngap_msg);
+                                   CORO_RETURN();
+                                 }));
 }
 
 void ngap_impl::handle_message(const ngap_message& msg)
@@ -726,11 +730,12 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
     }
     ue_index = ue_ctxt_list[ran_ue_id].ue_ids.ue_index;
   } else {
-    logger.info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause{}", msg_cause);
+    logger.info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause: " + msg_cause);
     return;
   }
 
-  ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause{}", msg_cause);
+  ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication{}",
+                                         msg_cause.empty() ? "" : ". Cause: " + msg_cause);
 
   // Request UE release
   task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {

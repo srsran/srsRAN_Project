@@ -163,22 +163,20 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
   f1_0.redundancy_version  = rv;
 }
 
-void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   search_space_id              ss_id,
-                                   crb_interval                 crbs,
-                                   unsigned                     time_resource,
-                                   unsigned                     k1,
-                                   unsigned                     pucch_res_indicator,
-                                   unsigned                     dai,
-                                   sch_mcs_index                mcs_index,
-                                   uint8_t                      rv,
-                                   const dl_harq_process&       h_dl)
+void srsran::build_dci_f1_0_c_rnti(dci_dl_info&               dci,
+                                   const search_space_info&   ss_info,
+                                   const bwp_downlink_common& init_dl_bwp,
+                                   crb_interval               crbs,
+                                   unsigned                   time_resource,
+                                   unsigned                   k1,
+                                   unsigned                   pucch_res_indicator,
+                                   unsigned                   dai,
+                                   sch_mcs_index              mcs_index,
+                                   uint8_t                    rv,
+                                   const dl_harq_process&     h_dl)
 {
-  const search_space_info&     ss_info           = ue_cell_cfg.search_space(ss_id);
   const coreset_configuration& cs_cfg            = *ss_info.coreset;
   const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common;
-  const bwp_downlink_common&   init_dl_bwp       = *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common;
   const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
 
   dci.type                           = dci_dl_rnti_config_type::c_rnti_f1_0;

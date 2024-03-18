@@ -109,7 +109,8 @@ class pusch_processor_pool : public pusch_processor
 {
 public:
   /// Creates a PUSCH processor pool from a list of processors. Ownership is transferred to the pool.
-  explicit pusch_processor_pool(span<std::unique_ptr<pusch_processor>> processors_) : free_list(processors_.size())
+  explicit pusch_processor_pool(span<std::unique_ptr<pusch_processor>> processors_, bool blocking_) :
+    free_list(processors_.size()), blocking(blocking_)
   {
     unsigned index = 0;
     for (std::unique_ptr<pusch_processor>& processor : processors_) {
@@ -125,11 +126,24 @@ public:
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override
   {
-    // Try to get a worker.
-    optional<unsigned> index = free_list.try_pop();
+    // Try to get an available worker.
+    optional<unsigned> index;
+    do {
+      index = free_list.try_pop();
+    } while (blocking && !index.has_value());
 
     // If no worker is available.
     if (!index.has_value()) {
+      // Prepare dummy results.
+      pusch_processor_result_data results;
+      results.data.tb_crc_ok            = false;
+      results.data.nof_codeblocks_total = 0;
+      results.data.ldpc_decoder_stats.reset();
+      results.csi = channel_state_information();
+
+      // Report SCH results.
+      notifier.on_sch(results);
+
       srslog::fetch_basic_logger("PHY").warning("Insufficient number of PUSCH processors. Dropping PUSCH {:s}.", pdu);
       return;
     }
@@ -141,6 +155,7 @@ public:
 private:
   std::vector<detail::pusch_processor_wrapper> processors;
   detail::pusch_processor_free_list            free_list;
+  bool                                         blocking;
 };
 
 } // namespace srsran

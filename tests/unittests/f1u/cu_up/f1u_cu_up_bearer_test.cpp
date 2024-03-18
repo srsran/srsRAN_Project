@@ -181,7 +181,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, 0xcc);
   pdcp_tx_pdu sdu1;
-  sdu1.buf     = tx_pdcp_pdu1.deep_copy();
+  sdu1.buf     = tx_pdcp_pdu1.deep_copy().value();
   sdu1.pdcp_sn = pdcp_sn + 22;
 
   // transmit a PDU to piggy-back previous discard
@@ -241,13 +241,13 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   pdcp_tx_pdu sdu1;
-  sdu1.buf     = tx_pdcp_pdu1.deep_copy();
+  sdu1.buf     = tx_pdcp_pdu1.deep_copy().value();
   sdu1.pdcp_sn = pdcp_sn;
   f1u->handle_sdu(std::move(sdu1));
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   pdcp_tx_pdu sdu2;
-  sdu2.buf     = tx_pdcp_pdu2.deep_copy();
+  sdu2.buf     = tx_pdcp_pdu2.deep_copy().value();
   sdu2.pdcp_sn = pdcp_sn + 1;
   f1u->handle_sdu(std::move(sdu2));
 
@@ -286,7 +286,9 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
 
   byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   nru_ul_message msg1;
-  msg1.t_pdu = byte_buffer_chain{rx_pdcp_pdu1.deep_copy()};
+  auto           chain1 = byte_buffer_chain::create(rx_pdcp_pdu1.deep_copy().value());
+  EXPECT_FALSE(chain1.is_error());
+  msg1.t_pdu = std::move(chain1.value());
   f1u->handle_pdu(std::move(msg1));
 
   // UL PDUs restart inactivity timer, hence further ticks shall not expire the timer
@@ -295,7 +297,9 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
 
   byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   nru_ul_message msg2;
-  msg2.t_pdu = byte_buffer_chain{rx_pdcp_pdu2.deep_copy()};
+  auto           chain2 = byte_buffer_chain::create(rx_pdcp_pdu2.deep_copy().value());
+  EXPECT_FALSE(chain2.is_error());
+  msg2.t_pdu = std::move(chain2.value());
   f1u->handle_pdu(std::move(msg2));
 
   // UL PDUs restart inactivity timer, hence further ticks shall not expire the timer

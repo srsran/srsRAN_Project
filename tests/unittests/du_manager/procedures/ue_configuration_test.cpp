@@ -200,14 +200,15 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
-  byte_buffer test_payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
+  byte_buffer                         test_payload =
+      byte_buffer::create({test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))}).value();
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}));
 
   // Forward MAC Rx SDU through SRB2 (UL).
   // > Add dummy RLC data header.
-  byte_buffer mac_rx_sdu(dummy_rlc_header);
+  byte_buffer mac_rx_sdu = byte_buffer::create(dummy_rlc_header).value();
   // > Append data buffer.
   ASSERT_TRUE(mac_rx_sdu.append(test_payload.copy()));
   // > Push MAC Rx SDU through MAC logical channel.
@@ -223,7 +224,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Check arrival of MAC Tx SDU to MAC logical channel.
   std::vector<uint8_t> mac_tx_sdu(test_payload.length() + dummy_rlc_header.size());
   size_t               nwritten = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(mac_tx_sdu);
-  byte_buffer          extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten);
+  byte_buffer          extracted_payload =
+      byte_buffer::create(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten).value();
   ASSERT_EQ(test_payload, extracted_payload)
       << fmt::format("Byte buffers do not match:\n{}\n{}\n", test_payload, extracted_payload);
 }
@@ -231,7 +233,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1u_bearers_are_connected)
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
-  byte_buffer test_payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
+  byte_buffer                         test_payload =
+      byte_buffer::create(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))).value();
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {drb_id_t::drb1}));
@@ -239,7 +242,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 
   // Forward MAC Rx SDU through DRB1 (UL).
   // > Add dummy RLC data header.
-  byte_buffer mac_sdu(dummy_rlc_header);
+  byte_buffer mac_sdu = byte_buffer::create(dummy_rlc_header).value();
   // > Append data buffer.
   ASSERT_TRUE(mac_sdu.append(test_payload.copy()));
   // > Push MAC Rx SDU through MAC logical channel.
@@ -257,7 +260,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Check arrival of MAC Tx SDU to MAC logical channel.
   std::vector<uint8_t> mac_tx_sdu(test_payload.length() + dummy_rlc_header.size());
   unsigned             nwritten = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(mac_tx_sdu);
-  byte_buffer          extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten);
+  byte_buffer          extracted_payload =
+      byte_buffer::create(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.begin() + nwritten).value();
   ASSERT_EQ(test_payload, extracted_payload);
 }
 

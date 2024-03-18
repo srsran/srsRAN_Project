@@ -198,32 +198,16 @@ static bool validate_aggregation_level(message_type_id msg_type, unsigned value,
   return false;
 }
 
-/// Validates the power control offset SS profile NR and the PDCCH DMRS power offset profile SSS properties of the PDCCH
-/// PDU, as per SCF-222 v4.0 section 3.4.2.1.
-static bool validate_power_control_offset_profile_nr(message_type_id   msg_type,
-                                                     int               power_control_offset_ss_profile_nr,
-                                                     int               dmrs_power_profile_sss,
-                                                     validator_report& report)
+/// Validates the power control offset SS profile NR property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
+static bool validate_power_control_offset_ss_profile_nr(message_type_id   msg_type,
+                                                        int               power_control_offset_ss,
+                                                        validator_report& report)
 {
-  static constexpr int USE_PROFILE_SSS       = -127;
-  static constexpr int MIN_VALUE_PROFILE_NR  = -8;
-  static constexpr int MAX_VALUE_PROFILE_NR  = 8;
-  static constexpr int USE_PROFILE_NR        = -32768;
-  static constexpr int MIN_VALUE_PROFILE_SSS = -32767;
-  static constexpr int MAX_VALUE_PROFILE_SSS = 32767;
+  static constexpr int MIN_VALUE = -8;
+  static constexpr int MAX_VALUE = 8;
 
-  if (power_control_offset_ss_profile_nr == USE_PROFILE_SSS && MIN_VALUE_PROFILE_SSS <= dmrs_power_profile_sss &&
-      dmrs_power_profile_sss <= MAX_VALUE_PROFILE_SSS) {
-    return true;
-  }
-
-  if (dmrs_power_profile_sss == USE_PROFILE_NR && MIN_VALUE_PROFILE_NR <= power_control_offset_ss_profile_nr &&
-      power_control_offset_ss_profile_nr <= MAX_VALUE_PROFILE_NR) {
-    return true;
-  }
-
-  report.append(dmrs_power_profile_sss, "DMRS Power offset", msg_type, pdu_type);
-  return false;
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, power_control_offset_ss, "Power control offset SS", msg_type, pdu_type, report);
 }
 
 /// Validates the collocated AL16 candidate property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
@@ -265,8 +249,7 @@ bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
     // NOTE: N-RNTI PDCCH data field uses the whole range of the variable, so it will not be checked.
     result &= validate_cce_index(msg_type, dci.cce_index, report);
     result &= validate_aggregation_level(msg_type, dci.aggregation_level, report);
-    result &= validate_power_control_offset_profile_nr(
-        msg_type, dci.power_control_offset_ss_profile_nr, dci_v3.pdcch_dmrs_power_offset_profile_sss, report);
+    result &= validate_power_control_offset_ss_profile_nr(msg_type, dci.power_control_offset_ss_profile_nr, report);
     // NOTE: DCI index uses the whole range of the variable, so it will not be checked.
     result &= validate_collocated_al16_candidate(msg_type, dci_v3.collocated_AL16_candidate, report);
     // NOTE: PDCCH DMRS power offset profile NR uses the whole range of the variable, so it will not be checked.

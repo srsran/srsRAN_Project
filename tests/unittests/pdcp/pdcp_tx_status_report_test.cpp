@@ -47,7 +47,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
       // Write SDU
-      byte_buffer sdu = {sdu1};
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
@@ -81,7 +81,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     enc.pack(0b10100000, 8);
 
     // Handle this status report
-    pdcp_tx->on_status_report(byte_buffer_chain{std::move(buf)});
+    pdcp_tx->on_status_report(byte_buffer_chain::create(std::move(buf)).value());
 
     // Verify discard
     {
@@ -141,7 +141,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
       // Write SDU
-      byte_buffer sdu = {sdu1};
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 

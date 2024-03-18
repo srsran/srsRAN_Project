@@ -153,18 +153,12 @@ static void pdcch_conversion_benchmark()
 
     builder_dci.set_basic_parameters(
         to_rnti(0), nid_data_dist(gen), n_rnti_dist(gen), cce_dist(gen), aggregation_dist(gen));
-    optional<float> profile_nr;
-    profile_nr.emplace(power_dist(gen));
-    builder_dci.set_tx_power_info_parameter(profile_nr);
+    builder_dci.set_tx_power_info_parameter(power_dist(gen));
     builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_basic_parameters(275, 0).add_prg(0, {});
 
     // Payload.
     dci_payload payload;
     builder_dci.set_payload(payload);
-
-    optional<float> profile_data;
-    optional<float> profile_dmrs;
-    builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
     builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
 
     pdcch_processor::pdu_t             proc_pdu;

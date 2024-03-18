@@ -78,7 +78,7 @@ class dummy_f1c_bearer : public f1c_bearer
 {
 public:
   byte_buffer       last_rx_pdu;
-  byte_buffer_chain last_tx_sdu;
+  byte_buffer_chain last_tx_sdu = byte_buffer_chain::create().value();
 
   void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
   void handle_sdu(byte_buffer_chain sdu) override { last_tx_sdu = std::move(sdu); }
@@ -192,7 +192,7 @@ public:
   optional<nru_dl_message> last_pdu;
   optional<uint32_t>       last_highest_transmitted_pdcp_sn;
   optional<uint32_t>       last_highest_delivered_pdcp_sn;
-  byte_buffer_chain        last_sdu;
+  byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
 
   f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
 

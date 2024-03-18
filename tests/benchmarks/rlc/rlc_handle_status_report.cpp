@@ -137,12 +137,16 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
     rlc->set_status_provider(tester.get());
 
     for (int i = 0; i < 2048; i++) {
-      rlc_sdu     sdu;
-      byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
-      byte_buffer sdu_buf      = {0x00, 0x01, 0x02, 0x04};
-      sdu.pdcp_sn              = i;
-      sdu.buf                  = std::move(pdcp_hdr_buf);
-      report_error_if_not(sdu.buf.append(std::move(sdu_buf)), "Failed to allocate SDU");
+      rlc_sdu sdu;
+      auto    pdcp_hdr = byte_buffer::create({0x80, 0x00, 0x16});
+      report_error_if_not(!pdcp_hdr.is_error(), "Failed to allocate byte_buffer");
+      byte_buffer pdcp_hdr_buf = std::move(pdcp_hdr.value());
+      auto        sdu_buf      = byte_buffer::create({0x00, 0x01, 0x02, 0x04});
+      report_error_if_not(!sdu_buf.is_error(), "Failed to allocate byte_buffer");
+      byte_buffer sdu_buffer = std::move(sdu_buf.value());
+      sdu.pdcp_sn            = i;
+      sdu.buf                = std::move(pdcp_hdr_buf);
+      report_error_if_not(sdu.buf.append(std::move(sdu_buffer)), "Failed to allocate SDU");
       rlc->handle_sdu(std::move(sdu));
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);

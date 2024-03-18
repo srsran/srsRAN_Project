@@ -51,7 +51,8 @@ set(SOURCES
         support/csi_report_helpers.cpp
         cell_scheduler.cpp
         scheduler_factory.cpp
-        scheduler_impl.cpp)
+        scheduler_impl.cpp
+        support/csi_rs_helper.cpp)
 
 add_library(srsran_sched STATIC ${SOURCES}
         $<TARGET_OBJECTS:sched_config_manager>

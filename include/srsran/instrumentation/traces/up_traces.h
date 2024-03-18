@@ -26,7 +26,12 @@
 
 namespace srsran {
 
+/// Set to true for enabling user-plane related traces.
+#ifndef SRSRAN_UP_TRACE
 constexpr bool UP_TRACE_ENABLED = false;
+#else
+constexpr bool UP_TRACE_ENABLED = true;
+#endif
 
 /// UP event tracing. This tracer is used to analyze latencies in the CU-UP/DU high processing
 /// of the user plane traffic.

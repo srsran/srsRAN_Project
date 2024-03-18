@@ -50,10 +50,9 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*              cu_cp_exec      = nullptr;
-  task_executor*              cu_up_ctrl_exec = nullptr; ///< CU-UP executor for control
-  task_executor*              cu_up_dl_exec   = nullptr; ///< CU-UP executor for DL data flow
-  task_executor*              cu_up_ul_exec   = nullptr; ///< CU-UP executor for UL data flow
+  task_executor*              cu_cp_exec       = nullptr;
+  task_executor*              cu_up_ctrl_exec  = nullptr; ///< CU-UP executor for control
+  task_executor*              cu_up_io_ul_exec = nullptr; ///< CU-UP executor for UL data flow
   std::vector<task_executor*> lower_phy_tx_exec;
   std::vector<task_executor*> lower_phy_rx_exec;
   std::vector<task_executor*> lower_phy_dl_exec;
@@ -75,7 +74,7 @@ struct worker_manager {
   task_executor*              cu_up_e2_exec    = nullptr;
   task_executor*              metrics_hub_exec = nullptr;
 
-  std::unique_ptr<cu_up_executor_pool> cu_up_exec_mapper;
+  std::unique_ptr<srs_cu_up::cu_up_executor_pool> cu_up_exec_mapper;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 

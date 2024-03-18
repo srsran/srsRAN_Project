@@ -204,7 +204,8 @@ public:
     }
     if (lcid != current_sdu_lcid) {
       if (current_sdu_lcid != lcid_t::INVALID_LCID) {
-        fmt::format_to(fmtbuf, "SDU: lcid={} nof_sdus={} total_size={}", current_sdu_lcid, nof_sdus, sum_bytes);
+        fmt::format_to(
+            fmtbuf, "{}SDU: lcid={} nof_sdus={} total_size={}", separator(), current_sdu_lcid, nof_sdus, sum_bytes);
       }
       current_sdu_lcid = lcid;
       nof_sdus         = 1;
@@ -239,10 +240,11 @@ public:
 
     // Log pending LCID SDUs.
     if (current_sdu_lcid != lcid_t::INVALID_LCID) {
-      fmt::format_to(fmtbuf, "SDU: lcid={} nof_sdus={} total_size={}", current_sdu_lcid, nof_sdus, sum_bytes);
+      fmt::format_to(
+          fmtbuf, "{}SDU: lcid={} nof_sdus={} total_size={}", separator(), current_sdu_lcid, nof_sdus, sum_bytes);
     }
 
-    logger.info("DL PDU: ue={} rnti={} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU: ue={} rnti={} size={}:{}", ue_index, rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:

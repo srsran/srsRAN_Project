@@ -325,13 +325,6 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
           if (nof_dl_slots > nof_ul_slots) {
             break;
           }
-          // [Implementation-defined] For UL heavy TDD configuration, we avoid allocating PUSCH too far in the future.
-          // Reason: Scheduling PUSCH at slot k2 > nof_ul_slots results in CRC=KO when tested with COTS UE.
-          if (k2 > nof_ul_slots) {
-            // Remove last added PUSCH Time Domain resource since k2 > nof_ul_slots.
-            result.pop_back();
-            break;
-          }
         }
       }
     }

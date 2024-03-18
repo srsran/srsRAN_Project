@@ -23,12 +23,15 @@
 /// \file
 /// \brief In this file, we test the correct behaviour of the scheduler when removing UEs.
 
+#include "lib/scheduler/cell/resource_grid_util.h"
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
+
+const unsigned MAX_UCI_SLOT_DELAY = get_max_slot_ul_alloc_delay(0);
 
 // Setup the log spy to intercept error and warning log entries when removing a UE.
 srsran::log_sink_spy& test_spy = []() -> srsran::log_sink_spy& {
@@ -60,10 +63,31 @@ protected:
     scheduler_test_bench::add_ue(ue_cfg, true);
   }
 
+  bool is_rnti_scheduled(rnti_t rnti) const
+  {
+    if (srsran::find_ue_dl_pdcch(rnti, *last_sched_res_list[0]) != nullptr) {
+      return true;
+    }
+    if (srsran::find_ue_ul_pdcch(rnti, *last_sched_res_list[0]) != nullptr) {
+      return true;
+    }
+    if (find_ue_pdsch(rnti, *last_sched_res_list[0]) != nullptr) {
+      return true;
+    }
+    if (find_ue_pucch(rnti, *last_sched_res_list[0]) != nullptr) {
+      return true;
+    }
+    if (find_ue_pusch(rnti, *last_sched_res_list[0]) != nullptr) {
+      return true;
+    }
+    return false;
+  }
+
   static const lcid_t test_lcid_drb = LCID_MIN_DRB;
 };
 
-TEST_F(sched_ue_removal_test, when_ue_has_no_pending_txs_then_ue_removal_is_immediate)
+TEST_F(sched_ue_removal_test,
+       when_ue_has_no_pending_txs_then_ue_removal_waits_for_all_pending_csi_and_sr_to_be_scheduled)
 {
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
@@ -71,14 +95,27 @@ TEST_F(sched_ue_removal_test, when_ue_has_no_pending_txs_then_ue_removal_is_imme
   add_ue(ue_index, rnti);
   ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
-  // Remove UE.
+  // Schedule UE removal.
   rem_ue(ue_index);
 
-  const unsigned REM_TIMEOUT = 1;
-  for (unsigned i = 0; not notif.last_ue_index_deleted.has_value() and i != REM_TIMEOUT; ++i) {
+  // All pending UCI for this UE should be scheduled within this window.
+  for (unsigned i = 0; i != MAX_UCI_SLOT_DELAY; ++i) {
     run_slot();
+    ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
   }
+
+  // UE is finally removed.
+  run_slot();
+  ASSERT_TRUE(notif.last_ue_index_deleted.has_value());
   ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
+  ASSERT_FALSE(this->is_rnti_scheduled(rnti));
+
+  // No more allocations for this UE are possible.
+  const unsigned MAX_COUNT = 100;
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    ASSERT_FALSE(this->is_rnti_scheduled(rnti));
+  }
 }
 
 TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for_harq_clear_before_deleting_ue)
@@ -104,6 +141,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   ASSERT_NE(alloc, nullptr);
 
   // Schedule UE removal.
+  slot_point rem_slot = next_slot;
   rem_ue(ue_index);
 
   // Wait for the right slot for ACK.
@@ -137,12 +175,22 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   }
   this->sched->handle_uci_indication(uci);
 
-  // The UE should be removed at this point.
-  const unsigned REM_TIMEOUT = 1;
+  // Wait for all pendign UCI PDUs to be sent to the PHY.
+  const unsigned REM_TIMEOUT = MAX_UCI_SLOT_DELAY - (next_slot - rem_slot) + 1;
   for (unsigned i = 0; not notif.last_ue_index_deleted.has_value() and i != REM_TIMEOUT; ++i) {
     run_slot();
   }
+
+  // The UE should be removed at this point.
   ASSERT_EQ(notif.last_ue_index_deleted, ue_index);
+  ASSERT_FALSE(this->is_rnti_scheduled(rnti));
+
+  // No more allocations for this RNTI are possible.
+  const unsigned MAX_COUNT = 100;
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    ASSERT_FALSE(this->is_rnti_scheduled(rnti));
+  }
 }
 
 TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_cause_log_warnings)
@@ -157,10 +205,11 @@ TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_c
 
   // Remove UE.
   rem_ue(ue_index);
-  const unsigned REM_TIMEOUT = 1;
-  for (unsigned i = 0; not notif.last_ue_index_deleted.has_value() and i != REM_TIMEOUT; ++i) {
+  for (unsigned i = 0; i != MAX_UCI_SLOT_DELAY; ++i) {
     run_slot();
+    ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
   }
+  run_slot();
   ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
 
   // CSI arrives to Scheduler for the removed UE.

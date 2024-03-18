@@ -31,7 +31,7 @@ rb_helper::find_next_empty_interval(const prb_bitmap& used_rb_bitmap, size_t sta
   int rb_start = used_rb_bitmap.find_lowest(start_crb_idx, std::min(used_rb_bitmap.size(), last_crb_idx), false);
   if (rb_start != -1) {
     int rb_end = used_rb_bitmap.find_lowest(rb_start + 1, std::min(used_rb_bitmap.size(), last_crb_idx), true);
-    return {(uint32_t)rb_start, (uint32_t)(rb_end < 0 ? used_rb_bitmap.size() : rb_end)};
+    return {(uint32_t)rb_start, (uint32_t)(rb_end < 0 ? std::min(used_rb_bitmap.size(), last_crb_idx) : rb_end)};
   }
   return {};
 }

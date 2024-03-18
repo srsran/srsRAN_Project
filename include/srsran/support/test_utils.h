@@ -283,6 +283,8 @@ public:
     return uniform_int(std::numeric_limits<Integer>::min(), std::numeric_limits<Integer>::max());
   }
 
+  static bool bernoulli(double p) { return std::bernoulli_distribution(p)(get()); }
+
   /// \brief Return a vector of integers with specified size filled with random values.
   template <typename Integer>
   static std::vector<Integer> random_vector(size_t sz)

@@ -35,7 +35,7 @@ void queue_unqueue_test()
   rlc_sdu_queue_lockfree tx_queue(4096, logger);
 
   // Write 1 SDU
-  byte_buffer buf       = {0x00, 0x01};
+  byte_buffer buf       = byte_buffer::create({0x00, 0x01}).value();
   rlc_sdu     write_sdu = {std::move(buf), 10};
   TESTASSERT(tx_queue.write(std::move(write_sdu)));
 
@@ -52,7 +52,7 @@ void queue_unqueue_test()
   TESTASSERT_EQ(0, tx_queue.size_bytes());
 
   // Check SDU
-  byte_buffer expected_msg({0x00, 0x01});
+  byte_buffer expected_msg = byte_buffer::create({0x00, 0x01}).value();
   TESTASSERT(read_sdu.pdcp_sn.has_value());
   TESTASSERT_EQ(10, read_sdu.pdcp_sn.value());
   TESTASSERT(expected_msg == read_sdu.buf);

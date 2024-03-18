@@ -47,6 +47,10 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const zp_
   csi_rs.type    = csi_rs_type::CSI_RS_ZP;
   fill_csi_rs_info_res_map(csi_rs, zp_csi_rs_res.res_mapping);
 
+  csi_rs.scrambling_id        = 0;
+  csi_rs.power_ctrl_offset    = 0;
+  csi_rs.power_ctrl_offset_ss = 0;
+
   return csi_rs;
 }
 

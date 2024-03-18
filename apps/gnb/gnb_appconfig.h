@@ -819,11 +819,11 @@ struct pcap_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  struct {
+  struct rlc_metrics {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
-  struct {
+  struct pdcp_metrics {
     unsigned report_period = 0; // PDCP report period in ms
   } pdcp;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
@@ -833,6 +833,7 @@ struct metrics_appconfig {
   std::string addr                     = "127.0.0.1";
   uint16_t    port                     = 55555;
   bool        autostart_stdout_metrics = false;
+  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
 };
 
 /// Lower physical layer thread profiles.

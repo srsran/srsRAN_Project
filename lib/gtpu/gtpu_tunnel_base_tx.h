@@ -64,7 +64,12 @@ protected:
   void send_pdu(byte_buffer buf, const ::sockaddr_storage& peer_sockaddr)
   {
     if (gtpu_pcap.is_write_enabled()) {
-      gtpu_pcap.push_pdu(buf.deep_copy());
+      auto buf_copy = buf.deep_copy();
+      if (buf_copy.is_error()) {
+        logger.log_warning("Unable to deep copy buffer for PCAP writer");
+      } else {
+        gtpu_pcap.push_pdu(std::move(buf_copy.value()));
+      }
     }
 
     upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);

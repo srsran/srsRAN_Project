@@ -107,18 +107,22 @@ def test_viavi_manual(
         gnb_startup_timeout=gnb_startup_timeout,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
+        max_rb_size=-1,
     )
 
 
 @mark.parametrize(
-    "campaign_filename, test_name, test_timeout, post_commands",
+    "campaign_filename, test_name, test_timeout, post_commands, max_rb_size",
     (
-        param("C:\\ci\\CI 4x4 ORAN-FH.xml", "1UE static DL + UL UDP - Dell", 45 * 60, "", id="1UE Bidirectional UDP"),
+        param(
+            "C:\\ci\\CI 4x4 ORAN-FH.xml", "1UE static DL + UL UDP - Dell", 45 * 60, "", -1, id="1UE Bidirectional UDP"
+        ),
         param(
             "C:\\ci\\CI 4x4 ORAN-FH.xml",
             "32UE static DL + UL UDP - Dell",
             45 * 60,
-            "cell_cfg pdsch --max_rb_size 45",
+            "",
+            45,
             id="32UE Bidirectional UDP",
         ),
     ),
@@ -139,6 +143,7 @@ def test_viavi(
     test_name: str,
     test_timeout: int,
     post_commands: str,
+    max_rb_size: int,
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -167,6 +172,7 @@ def test_viavi(
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         post_commands=post_commands,
+        max_rb_size=max_rb_size,
     )
 
 
@@ -191,6 +197,7 @@ def _test_viavi(
     log_search: bool = True,
     warning_as_errors: bool = False,
     post_commands: str = "",
+    max_rb_size: int = -1,
 ):
     """
     Runs a test using Viavi
@@ -201,8 +208,18 @@ def _test_viavi(
                 "gnb_id": 1,
                 "log_level": "warning",
                 "pcap": False,
+                "max_rb_size": max_rb_size,
+                "dl_arfcn": 625000,
+                "band": 78,
+                "channel_bandwidth_MHz": 100,
+                "common_scs": 30,
+                "tac": 7,
+                "pci": 1,
+                "nof_antennas_dl": 4,
+                "nof_antennas_ul": 1,
+                "prach_config_index": 159,
             },
-            "templates": {"cell": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
+            "templates": {"extra": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
     if metrics_server is not None:

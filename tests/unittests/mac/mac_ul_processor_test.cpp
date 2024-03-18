@@ -246,7 +246,7 @@ TEST(mac_ul_processor, decode_ul_ccch_48bit)
   // Create PDU content.
   // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
   // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
-  byte_buffer payload({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
+  byte_buffer payload = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}).value();
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(tc_rnti, payload);
@@ -274,7 +274,7 @@ TEST(mac_ul_processor, decode_ul_ccch_64bit)
   // Create PDU content.
   // R/LCID MAC subheader | MAC SDU (UL CCCH 64 bits)
   // { 0x00  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}  (Random 8B sequence)
-  byte_buffer payload({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
+  byte_buffer payload = byte_buffer::create({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}).value();
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(tc_rnti, payload);
@@ -303,7 +303,7 @@ TEST(mac_ul_processor, decode_short_bsr)
   // Create PDU content.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
-  byte_buffer pdu({0x3d, 0x59});
+  byte_buffer pdu = byte_buffer::create({0x3d, 0x59}).value();
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
@@ -332,7 +332,7 @@ TEST(mac_ul_processor, decode_short_trunc_bsr)
   // Create PDU content.
   // R/LCID MAC subheader | MAC CE Short Truncated BSR
   // { 0x3b | 0xae}
-  byte_buffer pdu({0x3b, 0xae});
+  byte_buffer pdu = byte_buffer::create({0x3b, 0xae}).value();
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
@@ -361,7 +361,7 @@ TEST(mac_ul_processor, decode_long_bsr)
   // Create PDU content.
   // R/F/LCID/L MAC subheader | MAC CE Short BSR
   // { 0x3e, 0x03 | 0x81, 0xd9, 0xab }
-  byte_buffer pdu({0x3e, 0x03, 0x81, 0xd9, 0xab});
+  byte_buffer pdu = byte_buffer::create({0x3e, 0x03, 0x81, 0xd9, 0xab}).value();
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
@@ -389,7 +389,7 @@ TEST(mac_ul_processor, decode_invalid_long_bsr)
   // Create PDU content.
   // R/F/LCID/L MAC subheader | MAC CE Long BSR
   // { 0x3e, 0x03 | 0x81, 0xd9, 0xab }
-  byte_buffer pdu({0x3e, 0x02, 0x1, 0xff});
+  byte_buffer pdu = byte_buffer::create({0x3e, 0x02, 0x1, 0xff}).value();
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
@@ -418,7 +418,7 @@ TEST(mac_ul_processor, decode_crnti_ce)
   // Create PDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
-  byte_buffer pdu({0x3a, 0x46, 0x01});
+  byte_buffer pdu = byte_buffer::create({0x3a, 0x46, 0x01}).value();
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(tc_rnti, pdu);
@@ -445,11 +445,11 @@ TEST(mac_ul_processor, decode_crnti_ce_and_sbsr)
   // > Create MAC CE C-RNTI subPDU.
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
-  ASSERT_TRUE(payload.append(byte_buffer{0x3a, 0x46, 0x01}));
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x3a, 0x46, 0x01}).value()));
   // > Create MAC CE Short BSR subPDU.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
-  ASSERT_TRUE(payload.append(byte_buffer{0x3d, 0x59}));
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x3d, 0x59}).value()));
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
 
@@ -483,12 +483,12 @@ TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
   // > Create subPDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
-  byte_buffer ce_crnti({0x3a, 0x46, 0x01});
+  byte_buffer ce_crnti = byte_buffer::create({0x3a, 0x46, 0x01}).value();
   ASSERT_TRUE(payload.append(ce_crnti));
   // > Create subPDU content.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
-  byte_buffer sbsr({0x3d, 0x59});
+  byte_buffer sbsr = byte_buffer::create({0x3d, 0x59}).value();
   ASSERT_TRUE(payload.append(sbsr));
 
   // Send RX data indication to MAC UL
@@ -521,7 +521,7 @@ TEST(mac_ul_processor, verify_single_entry_phr)
 
   // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
   // MAC CE SE PHR = {0x27, 0x2f}
-  byte_buffer pdu({0x39, 0x27, 0x2f});
+  byte_buffer pdu = byte_buffer::create({0x39, 0x27, 0x2f}).value();
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
@@ -553,11 +553,11 @@ TEST(mac_ul_processor, when_ul_ccch_and_phr_are_received_then_phr_is_ignored)
   // > MAC subPDU with UL-CCCH:
   // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
   // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
-  ASSERT_TRUE(payload.append(byte_buffer{0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}));
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}).value()));
   // > MAC subPDU with PHR:
   // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
   // MAC CE SE PHR = {0x27, 0x2f}
-  ASSERT_TRUE(payload.append(byte_buffer{0x39, 0x27, 0x2f}));
+  ASSERT_TRUE(payload.append(byte_buffer::create({0x39, 0x27, 0x2f}).value()));
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
@@ -576,7 +576,7 @@ TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac
   // Create PDU content. The PDU is made of several SDUs with size equal to UL-CCCH CE to be decodeable.
   byte_buffer pdu;
   // R/F/LCID MAC subheader | MAC CE UL-CCCH 64
-  byte_buffer ul_ccch({0x0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+  byte_buffer ul_ccch = byte_buffer::create({0x0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}).value();
   ASSERT_TRUE(pdu.append(ul_ccch));
   ASSERT_TRUE(pdu.append(ul_ccch));
   ASSERT_TRUE(pdu.append(ul_ccch));

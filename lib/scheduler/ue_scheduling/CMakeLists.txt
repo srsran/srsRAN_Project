@@ -29,7 +29,7 @@ set(SOURCES
         ue_cell.cpp
         ue_cell_grid_allocator.cpp
         ue_event_manager.cpp
-        ue_srb0_scheduler.cpp
+        ue_fallback_scheduler.cpp
         ue_scheduler_impl.cpp
         ue_repository.cpp)
 

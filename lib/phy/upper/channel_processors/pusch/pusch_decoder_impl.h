@@ -30,6 +30,7 @@
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include <atomic>
 
 namespace srsran {
 
@@ -108,6 +109,51 @@ public:
   void set_nof_softbits(units::bits nof_softbits) override;
 
 private:
+  /// Internal states for verifying the component coherence.
+  enum class internal_states : uint8_t {
+    /// \brief The decoder is not configured for decoding.
+    ///
+    /// The decoder only accepts new transmissions. It transitions to \c collecting when a new transmission is
+    /// configured.
+    ///
+    idle = 0,
+    /// \brief The decoder is collecting soft bits.
+    ///
+    /// It can simultaneously decode. It transitions to \c decoded if it finishes decoding prior \c on_end_softbits is
+    /// called. In this case, the decoder shall not notify the ending of processing.
+    ///
+    /// It transitions to \c decoding if \c on_end_softbits is called before the asynchronous decoding finishes.
+    collecting,
+    /// \brief The decoder does not accept soft bits and it is decoding.
+    ///
+    /// It transitions to \c idle when it finishes decoding. In this case, the decoder shall notify the end of the
+    /// processing.
+    decoding,
+    /// \brief The decoder finished decoding all codeblocks asynchronously before \c on_end_softbits is called.
+    ///
+    /// It transitions to \c idle when \c on_end_softbits is called. In this case, the decoder notifies the end of the
+    /// processing.
+    decoded
+  };
+
+  /// Convert an internal state to a string.
+  static const char* to_string(internal_states state)
+  {
+    switch (state) {
+      default:
+      case internal_states::idle:
+        return "idle";
+      case internal_states::collecting:
+        return "collecting";
+      case internal_states::decoding:
+        return "decoding";
+      case internal_states::decoded:
+        return "decoded";
+    }
+  }
+
+  /// Current internal state.
+  std::atomic<internal_states> current_state = {internal_states::idle};
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_rx> segmenter;
   /// Pointer to a codeblock decoder.

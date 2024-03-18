@@ -41,49 +41,37 @@ constexpr auto default_wait_timeout = std::chrono::seconds(3);
 namespace srsran {
 
 /// Dummy CU-UP executor pool used for testing
-class dummy_cu_up_executor_pool final : public cu_up_executor_pool
+class dummy_cu_up_executor_pool final : public srs_cu_up::cu_up_executor_pool
 {
+  class dummy_pdu_session_executor_mapper_impl : public srs_cu_up::ue_executor_mapper
+  {
+  public:
+    dummy_pdu_session_executor_mapper_impl(task_executor& exec_) : exec(&exec_) {}
+
+    task_executor& ctrl_executor() override { return *exec; }
+    task_executor& ul_pdu_executor() override { return *exec; }
+    task_executor& dl_pdu_executor() override { return *exec; }
+
+    async_task<void> stop() override
+    {
+      return launch_async([](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
+    }
+
+    task_executor* exec;
+  };
+
 public:
   dummy_cu_up_executor_pool(task_executor* test_executor_) : test_executor(test_executor_) {}
-  using ptr = std::unique_ptr<task_executor, unique_function<void(task_executor*)>>;
 
-  ptr create_ul_pdu_executor() override
+  std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_dl_pdu_executor() override
-  {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
-  }
-
-  ptr create_ctrl_executor() override
-  {
-    return {test_executor, [this](task_executor* p) {
-              if (p != nullptr) {
-                dealloc_pdu_executor(p);
-              }
-            }};
+    return std::make_unique<dummy_pdu_session_executor_mapper_impl>(*test_executor);
   }
 
 private:
-  void dealloc_pdu_executor(task_executor* exec)
-  {
-    // do nothing.
-  }
-  void dealloc_ctrl_executor(task_executor* exec)
-  {
-    // do nothing.
-  }
-
   task_executor* test_executor;
 };
 
@@ -170,7 +158,7 @@ public:
   {
     // Forward T-PDU to PDCP
     srsran_assert(rx_sdu_notifier != nullptr, "The rx_sdu_notifier must not be a nullptr!");
-    rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu));
+    rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu.value()));
   }
 
   void discard_sdu(uint32_t pdcp_sn) final { tx_discard_sdu_list.push_back(pdcp_sn); };

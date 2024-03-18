@@ -58,7 +58,7 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   pdu.add_ue_con_res_id(conres);
   span<const uint8_t> result = pdu.get();
 
-  byte_buffer expected{0b00111110};
+  byte_buffer expected = byte_buffer::create({0b00111110}).value();
   ASSERT_TRUE(expected.append(conres));
   ASSERT_EQ(result, expected);
 }
@@ -82,7 +82,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()});
+  pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value());
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -115,7 +115,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()}), payload.length() + HEADER_LEN);
+  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value()), payload.length() + HEADER_LEN);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -144,7 +144,7 @@ public:
     for (unsigned i = 0; i != nof_bytes; ++i) {
       mac_sdu_buf[i] = test_rgen::uniform_int<uint8_t>();
     }
-    last_sdus.emplace_back(mac_sdu_buf.first(nof_bytes));
+    last_sdus.emplace_back(byte_buffer::create(mac_sdu_buf.first(nof_bytes)).value());
     return nof_bytes;
   }
 

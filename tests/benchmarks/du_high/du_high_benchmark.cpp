@@ -699,8 +699,11 @@ public:
     mac_rx_data_indication rx_ind;
     rx_ind.sl_rx      = next_sl_tx - tx_rx_delay;
     rx_ind.cell_index = to_du_cell_index(0);
-    rx_ind.pdus.push_back(mac_rx_pdu{
-        du_ue_index_to_rnti(ue_idx), 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
+    rx_ind.pdus.push_back(
+        mac_rx_pdu{du_ue_index_to_rnti(ue_idx),
+                   0,
+                   0,
+                   byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()});
     du_hi->get_pdu_handler().handle_rx_data_indication(std::move(rx_ind));
 
     // Wait for UE Context Modification Response to arrive to CU.
@@ -740,19 +743,19 @@ public:
           pdcp_sn_list[bearer_idx] = (pdcp_sn_list[bearer_idx] + 1) % (1U << 18U);
           // We perform a deep-copy of the byte buffer to better simulate a real deployment, where there is stress over
           // the byte buffer pool.
-          byte_buffer pdu_copy = pdcp_pdu.deep_copy();
-          if (pdu_copy.empty()) {
+          auto pdu_copy = pdcp_pdu.deep_copy();
+          if (pdu_copy.is_error()) {
             test_logger.warning("Byte buffer segment pool depleted");
             return;
           }
           if (i == nof_dl_pdus_per_slot - 1 and last_dl_pdu_size != 0) {
             // If it is last DL PDU.
-            if (!pdu_copy.resize(last_dl_pdu_size)) {
+            if (!pdu_copy.value().resize(last_dl_pdu_size)) {
               test_logger.warning("Unable to resize PDU to {} bytes", last_dl_pdu_size);
               return;
             }
           }
-          du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy), .pdcp_sn = pdcp_sn_list[bearer_idx]});
+          du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
         }
       }
     })) {
@@ -1002,7 +1005,7 @@ public:
 
   // Construct LBSR MAC subPDU for LCG 1.
   // NOTE: LBSR buffer size is populated in the constructor.
-  byte_buffer bsr_mac_subpdu{0x3e, 0x02, 0x02};
+  byte_buffer bsr_mac_subpdu = byte_buffer::create({0x3e, 0x02, 0x02}).value();
 
   /// Size of the UL Buffer status report to push for UL Tx.
   unsigned ul_bsr_bytes;

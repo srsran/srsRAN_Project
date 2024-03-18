@@ -158,6 +158,9 @@ void ue_configuration_procedure::update_ue_context()
     auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
     srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for {}", drbtoadd.five_qi);
 
+    // TODO: Adjust QoS characteristics passed while creating a DRB since one DRB can contain multiple QoS flow of
+    //  varying 5QI.
+
     // Create DU DRB instance.
     std::unique_ptr<du_ue_drb> drb = create_drb(ue->ue_index,
                                                 ue->pcell_index,
@@ -169,7 +172,9 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
                                                 du_params,
-                                                ue->get_rlc_rlf_notifier());
+                                                ue->get_rlc_rlf_notifier(),
+                                                get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
+                                                drbtoadd.gbr_flow_info);
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;

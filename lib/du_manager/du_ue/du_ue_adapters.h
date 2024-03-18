@@ -232,19 +232,22 @@ class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 public:
   void connect(rlc_tx_lower_layer_interface& rlc_tx) { rlc_handler = &rlc_tx; }
 
+  void disconnect() { connected = false; }
+
   size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
     srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
-    return rlc_handler->pull_pdu(mac_sdu_buf);
+    return SRSRAN_LIKELY(connected.load(std::memory_order_relaxed)) ? rlc_handler->pull_pdu(mac_sdu_buf) : 0;
   }
 
   unsigned on_buffer_state_update() override
   {
     srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
-    return rlc_handler->get_buffer_state();
+    return SRSRAN_LIKELY(connected.load(std::memory_order_relaxed)) ? rlc_handler->get_buffer_state() : 0;
   }
 
 private:
+  std::atomic<bool>             connected{true};
   rlc_tx_lower_layer_interface* rlc_handler = nullptr;
 };
 

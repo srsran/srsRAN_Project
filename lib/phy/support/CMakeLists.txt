@@ -20,6 +20,8 @@
 
 add_library(srsran_phy_support STATIC
         interpolator/interpolator_linear_impl.cpp
+        time_alignment_estimator/time_alignment_estimator_dft_impl.cpp
+        time_alignment_estimator/time_alignment_estimator_factories.cpp
         prach_buffer_pool_impl.cpp
         re_pattern.cpp
         resource_grid_impl.cpp

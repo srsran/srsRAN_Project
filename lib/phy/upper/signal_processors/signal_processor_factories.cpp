@@ -34,6 +34,7 @@
 #include "sss_processor_impl.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/support_formatters.h"
+#include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 
 using namespace srsran;
@@ -235,10 +236,10 @@ private:
 class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 {
 public:
-  explicit port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f) :
-    dft_factory(std::move(dft_f))
+  explicit port_channel_estimator_factory_sw(std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory_) :
+    ta_estimator_factory(std::move(ta_estimator_factory_))
   {
-    srsran_assert(dft_factory, "Invalid DFT factory.");
+    srsran_assert(ta_estimator_factory, "Invalid TA estimator factory.");
   }
 
   std::unique_ptr<port_channel_estimator>
@@ -246,17 +247,12 @@ public:
   {
     std::unique_ptr<interpolator> interp = create_interpolator();
 
-    dft_processor::configuration idft_config;
-    idft_config.size                         = port_channel_estimator_average_impl::DFT_SIZE;
-    idft_config.dir                          = dft_processor::direction::INVERSE;
-    std::unique_ptr<dft_processor> idft_proc = dft_factory->create(idft_config);
-
     return std::make_unique<port_channel_estimator_average_impl>(
-        std::move(interp), std::move(idft_proc), fd_smoothing_strategy);
+        std::move(interp), ta_estimator_factory->create(), fd_smoothing_strategy);
   }
 
 private:
-  std::shared_ptr<dft_processor_factory> dft_factory;
+  std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory;
 };
 
 class pss_processor_factory_sw : public pss_processor_factory
@@ -320,9 +316,9 @@ srsran::create_nzp_csi_rs_generator_pool_factory(std::shared_ptr<nzp_csi_rs_gene
 }
 
 std::shared_ptr<port_channel_estimator_factory>
-srsran::create_port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f)
+srsran::create_port_channel_estimator_factory_sw(std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory)
 {
-  return std::make_shared<port_channel_estimator_factory_sw>(std::move(dft_f));
+  return std::make_shared<port_channel_estimator_factory_sw>(std::move(ta_estimator_factory));
 }
 
 std::shared_ptr<pss_processor_factory> srsran::create_pss_processor_factory_sw()

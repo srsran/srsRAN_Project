@@ -91,6 +91,12 @@ pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                
                                                    pusch_decoder_notifier&             notifier,
                                                    const pusch_decoder::configuration& cfg)
 {
+  internal_states previous_state = current_state.exchange(internal_states::collecting);
+  srsran_assert(previous_state == internal_states::idle,
+                "Invalid state. It was expected to be {} but it was {}.",
+                to_string(internal_states::idle),
+                to_string(previous_state));
+
   transport_block  = transport_block_;
   unique_rm_buffer = std::move(unique_rm_buffer_);
   result_notifier  = &notifier;
@@ -133,6 +139,12 @@ pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                
 
 span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned block_size)
 {
+  internal_states state = current_state.load();
+  srsran_assert(state == internal_states::collecting,
+                "Invalid state. It was expected to be {} but it was {}.",
+                to_string(internal_states::collecting),
+                state);
+
   // Makes sure the block size does not overflow the buffer.
   srsran_assert(softbits_count + block_size <= softbits_buffer.size(),
                 "The sum of current buffer number of elements (i.e., {}) and the block size (i.e., {}), exceeds the "
@@ -146,6 +158,12 @@ span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned bloc
 
 void pusch_decoder_impl::set_nof_softbits(units::bits nof_softbits)
 {
+  internal_states state = current_state.load();
+  srsran_assert(state == internal_states::collecting,
+                "Invalid state. It was expected to be {} but it was {}.",
+                to_string(internal_states::collecting),
+                to_string(state));
+
   nof_ulsch_softbits.emplace(nof_softbits);
 
   unsigned modulation_order = get_bits_per_symbol(current_config.mod);
@@ -188,6 +206,12 @@ void pusch_decoder_impl::set_nof_softbits(units::bits nof_softbits)
 
 void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbits)
 {
+  internal_states state = current_state.load();
+  srsran_assert(state == internal_states::collecting,
+                "Invalid state. It was expected to be {} but it was {}.",
+                to_string(internal_states::collecting),
+                state);
+
   span<log_likelihood_ratio> block = get_next_block_view(softbits.size());
 
   // Copy only if the soft bits do not match.
@@ -213,6 +237,7 @@ void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbi
 
 void pusch_decoder_impl::on_end_softbits()
 {
+  // Verify the number of bits match with the configured one.
   srsran_assert(!nof_ulsch_softbits.has_value() || (nof_ulsch_softbits.value() == units::bits(softbits_count)),
                 "The number of UL-SCH softbits, i.e., {}, does not match the expected value, i.e., {}.",
                 softbits_count,
@@ -231,8 +256,31 @@ void pusch_decoder_impl::on_end_softbits()
                   "The number of provided softbits (i.e. {}), does not match the expected number (i.e. {}).",
                   softbits_count,
                   nof_ulsch_softbits->value());
+
+    // Try to transition from collecting to decoding.
+    internal_states expected_state = internal_states::collecting;
+    if (!current_state.compare_exchange_strong(expected_state, internal_states::decoding)) {
+      // If the previous state was not collecting, the only valid state is decoded.
+      internal_states state = current_state.load();
+      srsran_assert(state == internal_states::decoded,
+                    "Invalid state. It was expected to be {} but it was {}.",
+                    to_string(internal_states::decoded),
+                    to_string(state));
+
+      // In this case, all the codeblocks have already been decoded. Notify the completion.
+      join_and_notify();
+    }
+
+    // All codeblocks have already been forked. There is nothing else to do.
     return;
   }
+
+  // Transition to decoding.
+  internal_states previous_state = current_state.exchange(internal_states::decoding);
+  srsran_assert(previous_state == internal_states::collecting,
+                "Invalid state. It was expected to be {} but it was {}.",
+                to_string(internal_states::collecting),
+                to_string(previous_state));
 
   srsran_assert(!nof_ulsch_softbits.has_value(),
                 "The number of CW softbits has been provided and not all CB decoding tasks have been dispatched.");
@@ -335,6 +383,12 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
 
 void pusch_decoder_impl::join_and_notify()
 {
+  // Transition to decoded if the current state is collecting. In this case, skip notifying.
+  internal_states expected_state_collecting = internal_states::collecting;
+  if (current_state.compare_exchange_strong(expected_state_collecting, internal_states::decoded)) {
+    return;
+  }
+
   unsigned   nof_cbs = codeblock_llrs.size();
   span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
 
@@ -385,6 +439,14 @@ void pusch_decoder_impl::join_and_notify()
 
   // Finally report decoding result.
   result_notifier->on_sch_data(stats);
+
+  // Transition back to idle.
+  internal_states previous_state = current_state.exchange(internal_states::idle);
+  srsran_assert((previous_state == internal_states::decoding) || (previous_state == internal_states::decoded),
+                "Invalid state. It expected to be {} or {} but it was {}.",
+                to_string(internal_states::decoding),
+                to_string(internal_states::decoded),
+                to_string(previous_state));
 }
 
 unsigned pusch_decoder_impl::concatenate_codeblocks()

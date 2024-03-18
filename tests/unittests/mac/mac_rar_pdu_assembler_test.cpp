@@ -88,7 +88,7 @@ static bool is_rapid_subpdu(span<const uint8_t> rar_pdu)
 /// Decode RAR UL PDU as per TS 38.321, Section 6.2.2 and 6.2.3.
 rar_ul_grant decode_ul_grant(span<const uint8_t> rar_subpdu)
 {
-  byte_buffer  buf = rar_subpdu;
+  byte_buffer  buf = byte_buffer::create(rar_subpdu).value();
   bit_decoder  dec(buf);
   rar_ul_grant ret{};
 

@@ -84,11 +84,7 @@ public:
 class dl_ssb_pdu_builder
 {
 public:
-  explicit dl_ssb_pdu_builder(dl_ssb_pdu& pdu_) : pdu(pdu_), v3(pdu_.ssb_maintenance_v3)
-  {
-    v3.ss_pbch_block_power_scaling = std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min();
-    v3.beta_pss_profile_sss        = std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min();
-  }
+  explicit dl_ssb_pdu_builder(dl_ssb_pdu& pdu_) : pdu(pdu_), v3(pdu_.ssb_maintenance_v3) {}
 
   /// Sets the basic parameters for the fields of the SSB/PBCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU.
@@ -170,39 +166,6 @@ public:
     return *this;
   }
 
-  /// Sets the SSB power information and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
-  dl_ssb_pdu_builder& set_maintenance_v3_tx_power_info(optional<float> power_scaling_ss_pbch_dB,
-                                                       optional<float> pss_to_sss_ratio_dB)
-  {
-    // Power scaling in SS-PBCH in hundredths of dBs.
-    int ss_block_power = (power_scaling_ss_pbch_dB) ? static_cast<int>(power_scaling_ss_pbch_dB.value() * 100) : -32768;
-    srsran_assert(ss_block_power <= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max(),
-                  "SS PBCH block power scaling ({}) exceeds the maximum ({}).",
-                  ss_block_power,
-                  std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max());
-    srsran_assert(ss_block_power >= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min(),
-                  "SS PBCH block power scaling ({}) does not reach the minimum ({}).",
-                  ss_block_power,
-                  std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min());
-    v3.ss_pbch_block_power_scaling = static_cast<decltype(v3.ss_pbch_block_power_scaling)>(ss_block_power);
-
-    // SSS to PSS ratio in thousandths of dBs.
-    int beta_pss = (pss_to_sss_ratio_dB) ? static_cast<int>(pss_to_sss_ratio_dB.value() * 1000) : -32768;
-    srsran_assert(beta_pss <= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max(),
-                  "PSS to SSS ratio ({}) exceeds the maximum ({}).",
-                  beta_pss,
-                  std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max());
-    srsran_assert(beta_pss >= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min(),
-                  "PSS to SSS ratio ({}) does not reach the minimum ({}).",
-                  beta_pss,
-                  std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min());
-
-    v3.beta_pss_profile_sss = static_cast<decltype(v3.beta_pss_profile_sss)>(beta_pss);
-
-    return *this;
-  }
-
   /// Returns a transmission precoding and beamforming PDU builder of this SSB PDU.
   tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
@@ -226,10 +189,7 @@ public:
                      dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4_) :
     pdu(pdu_), pdu_v3(pdu_v3_), pdu_v4(pdu_v4_)
   {
-    pdu_v3.pdcch_data_power_offset_profile_sss =
-        std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min();
-    pdu_v3.pdcch_dmrs_power_offset_profile_sss =
-        std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min();
+    pdu_v3.collocated_AL16_candidate = false;
   }
 
   /// Sets the basic parameters for the fields of the DL DCI PDU.
@@ -251,22 +211,9 @@ public:
 
   /// Sets the transmission power info parameters for the fields of the DL DCI PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
-  dl_dci_pdu_builder& set_tx_power_info_parameter(optional<float> power_control_offset_ss_profile_nr_dB)
+  dl_dci_pdu_builder& set_tx_power_info_parameter(int power_control_offset_ss_dB)
   {
-    int value = (power_control_offset_ss_profile_nr_dB)
-                    ? static_cast<int>(power_control_offset_ss_profile_nr_dB.value())
-                    : -127;
-
-    srsran_assert(value <= std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max(),
-                  "SS profile NR ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max());
-    srsran_assert(value >= std::numeric_limits<int8_t>::min(),
-                  "SS profile NR ({}) does not reach the minimum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::min());
-
-    pdu.power_control_offset_ss_profile_nr = static_cast<decltype(pdu.power_control_offset_ss_profile_nr)>(value);
+    pdu.power_control_offset_ss_profile_nr = power_control_offset_ss_dB;
 
     return *this;
   }
@@ -276,52 +223,6 @@ public:
   dl_dci_pdu_builder& set_payload(const dci_payload& payload)
   {
     pdu.payload = payload;
-
-    return *this;
-  }
-
-  /// Sets the maintenance v3 DCI parameters of the PDCCH PDU.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU maintenance FAPIv3.
-  dl_dci_pdu_builder& set_maintenance_v3_dci_parameters(bool            collocated_al16_candidate_present,
-                                                        optional<float> pdcch_dmrs_power_offset_profile_sss_dB,
-                                                        optional<float> pdcch_data_power_offset_profile_sss_dB)
-  {
-    pdu_v3.collocated_AL16_candidate = collocated_al16_candidate_present;
-
-    static constexpr int USE_OTHER_FIELDS =
-        std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min();
-
-    int value = (pdcch_dmrs_power_offset_profile_sss_dB)
-                    ? static_cast<int>(pdcch_dmrs_power_offset_profile_sss_dB.value() * 1000)
-                    : USE_OTHER_FIELDS;
-
-    srsran_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max(),
-                  "PDCCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max());
-    srsran_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min(),
-                  "PDCCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min());
-
-    pdu_v3.pdcch_dmrs_power_offset_profile_sss =
-        static_cast<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>(value);
-
-    value = (pdcch_data_power_offset_profile_sss_dB)
-                ? static_cast<int>(pdcch_data_power_offset_profile_sss_dB.value() * 1000)
-                : USE_OTHER_FIELDS;
-
-    srsran_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max(),
-                  "PDCCH data power offset profile SSS ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max());
-    srsran_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min(),
-                  "PDCCH data power offset profile SSS ({}) is under the minimum ({}).",
-                  value,
-                  std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min());
-
-    pdu_v3.pdcch_data_power_offset_profile_sss =
-        static_cast<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>(value);
 
     return *this;
   }
@@ -608,19 +509,11 @@ public:
 
   /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>          power_control_offset_profile_nr,
-                                                     nzp_csi_rs_epre_to_ssb ss_profile_nr)
+  dl_pdsch_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
+                                                     power_control_offset_ss power_control_offset_ss)
   {
-    unsigned power_profile_nr =
-        power_control_offset_profile_nr ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U) : 255U;
-
-    srsran_assert(power_profile_nr <= std::numeric_limits<uint8_t>::max(),
-                  "Power control offset Profile NR value exceeds the maximum ({}).",
-                  power_profile_nr);
-
-    pdu.power_control_offset_profile_nr = static_cast<uint8_t>(power_profile_nr);
-
-    pdu.power_control_offset_ss_profile_nr = ss_profile_nr;
+    pdu.power_control_offset_profile_nr    = power_control_offset;
+    pdu.power_control_offset_ss_profile_nr = power_control_offset_ss;
 
     return *this;
   }
@@ -730,74 +623,11 @@ public:
     return *this;
   }
 
-  /// Sets the maintenance v3 Tx power info parameters for the fields of the PDSCH PDU.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
-  dl_pdsch_pdu_builder& set_maintenance_v3_tx_power_info_parameters(optional<float> dmrs_power_offset_profile_sss,
-                                                                    optional<float> data_power_offset_profile_sss)
-  {
-    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
-
-    int value = (dmrs_power_offset_profile_sss) ? static_cast<int>(dmrs_power_offset_profile_sss.value() * 1000)
-                                                : USE_OTHER_FIELDS;
-
-    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
-                  "PDSCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::max());
-    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::min());
-
-    pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = static_cast<int16_t>(value);
-
-    value = (data_power_offset_profile_sss) ? static_cast<int>(data_power_offset_profile_sss.value() * 1000)
-                                            : USE_OTHER_FIELDS;
-
-    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
-                  "PDSCH data power offset profile SSS ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::max());
-    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH data power offset profile SSS ({}) is under the minimum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::min());
-
-    pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss = static_cast<int16_t>(value);
-
-    return *this;
-  }
-
   /// Sets the maintenance v3 CBG retx control parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
   dl_pdsch_pdu_builder& set_maintenance_v3_cbg_tx_crtl_parameters(uint8_t max_num_cbg_per_tb)
   {
     pdu.pdsch_maintenance_v3.max_num_cbg_per_tb = max_num_cbg_per_tb;
-
-    return *this;
-  }
-
-  /// Sets the PDSCH-PTRS Tx power info parameter for the fields of the PDSCH PDU.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PTRS maintenance
-  /// parameters v3.
-  dl_pdsch_pdu_builder& set_ptrs_maintenance_v3_tx_power_info_parameters(optional<float> ptrs_power_offset_profile_sss)
-  {
-    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
-
-    int value = ptrs_power_offset_profile_sss ? static_cast<int>(ptrs_power_offset_profile_sss.value() * 1000)
-                                              : USE_OTHER_FIELDS;
-
-    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
-                  "PDSCH PTRS power offset profile SSS ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::max());
-
-    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH PTRS power offset profile SSS ({}) is under the minimum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::min());
-
-    pdu.ptrs_maintenance_v3.pdsch_ptrs_power_offset_profile_sss = static_cast<int16_t>(value);
 
     return *this;
   }
@@ -888,43 +718,11 @@ public:
 
   /// Sets the CSI-RS PDU tx power info parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
-  dl_csi_rs_pdu_builder& set_tx_power_info_parameters(optional<float>        power_control_offset_profile_nr,
-                                                      nzp_csi_rs_epre_to_ssb ss_profile_nr)
+  dl_csi_rs_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
+                                                      power_control_offset_ss power_control_offset_ss)
   {
-    pdu.power_control_offset_ss_profile_nr = ss_profile_nr;
-
-    unsigned value = (power_control_offset_profile_nr)
-                         ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U)
-                         : std::numeric_limits<uint8_t>::max();
-
-    srsran_assert(value <= std::numeric_limits<uint8_t>::max(),
-                  "Ratio of PDSCH EPRE to NZP CSI-RS EPRE ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<uint8_t>::max());
-
-    pdu.power_control_offset_profile_nr = static_cast<uint8_t>(value);
-
-    return *this;
-  }
-
-  /// Sets the CSI-RS PDU mainterance v3 tx power info parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
-  dl_csi_rs_pdu_builder& set_maintenance_v3_tx_power_info_parameters(optional<float> profile_sss_dB)
-  {
-    int value =
-        (profile_sss_dB) ? static_cast<int>(profile_sss_dB.value() * 1000.F) : std::numeric_limits<int16_t>::min();
-
-    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
-                  "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::max());
-
-    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
-                  value,
-                  std::numeric_limits<int16_t>::min());
-
-    pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = static_cast<int16_t>(value);
+    pdu.power_control_offset_ss_profile_nr = power_control_offset_ss;
+    pdu.power_control_offset_profile_nr    = power_control_offset;
 
     return *this;
   }

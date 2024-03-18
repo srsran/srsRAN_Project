@@ -245,6 +245,9 @@ private:
   // List of configured logical channels
   std::vector<logical_channel_config> lc_list;
 
+  // List of QoS information for DRBs.
+  std::vector<sched_drb_qos_info> drb_qos_list;
+
   // List of cells configured for a UE.
   slotted_id_vector<du_cell_index_t, std::unique_ptr<ue_cell_configuration>> du_cells;
 

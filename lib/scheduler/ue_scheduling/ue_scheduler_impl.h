@@ -30,9 +30,9 @@
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
+#include "ue_fallback_scheduler.h"
 #include "ue_repository.h"
 #include "ue_scheduler.h"
-#include "ue_srb0_scheduler.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -80,13 +80,13 @@ private:
     /// PUCCH scheduler.
     uci_scheduler_impl uci_sched;
 
-    /// SRB0 scheduler.
-    ue_srb0_scheduler srb0_sched;
+    /// Fallback scheduler.
+    ue_fallback_scheduler fallback_sched;
 
     cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_repository& ues) :
       cell_res_alloc(params.cell_res_alloc),
       uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-      srb0_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues)
+      fallback_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues)
     {
     }
   };

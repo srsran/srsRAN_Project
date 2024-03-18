@@ -41,9 +41,7 @@
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 #endif // HWACC_PUSCH_ENABLED
-#include <condition_variable>
 #include <getopt.h>
-#include <mutex>
 #include <random>
 
 using namespace srsran;
@@ -136,12 +134,9 @@ static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>> 
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
 
 // Thread shared variables.
-static std::mutex              mutex_pending_count;
-static std::mutex              mutex_finish_count;
-static std::condition_variable cvar_count;
-static std::atomic<bool>       thread_quit   = {};
-static unsigned                pending_count = 0;
-static unsigned                finish_count  = 0;
+static std::atomic<bool>     thread_quit   = {};
+static std::atomic<int>      pending_count = {0};
+static std::atomic<unsigned> finish_count  = {0};
 
 #ifdef HWACC_PUSCH_ENABLED
 static bool        ext_softbuffer = true;
@@ -162,7 +157,7 @@ struct test_profile {
                                                   {modulation_scheme::QAM16, 658.0F},
                                                   {modulation_scheme::QAM64, 873.0F},
                                                   {modulation_scheme::QAM256, 948.0F}};
-  std::vector<unsigned>            rv_set      = {0, 2};
+  std::vector<unsigned>            rv_set      = {0};
 };
 
 // Profile selected during test execution.
@@ -576,9 +571,13 @@ static pusch_processor_factory& get_pusch_processor_factory()
   }
   TESTASSERT(dft_factory, "Cannot create DFT factory.");
 
+  std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+      create_time_alignment_estimator_dft_factory(dft_factory);
+  TESTASSERT(ta_estimator_factory, "Cannot create TA estimator factory.");
+
   // Create port channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-      create_port_channel_estimator_factory_sw(dft_factory);
+      create_port_channel_estimator_factory_sw(ta_estimator_factory);
   TESTASSERT(port_chan_estimator_factory);
 
   // Create DM-RS for PUSCH channel estimator.
@@ -637,7 +636,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory = create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
-  pusch_proc_factory = create_pusch_processor_pool(std::move(pusch_proc_factory), nof_threads);
+  pusch_proc_factory = create_pusch_processor_pool(std::move(pusch_proc_factory), nof_threads, true);
   TESTASSERT(pusch_proc_factory);
 
   return *pusch_proc_factory;
@@ -664,8 +663,6 @@ static void thread_process(pusch_processor&              proc,
                            unsigned                      tbs,
                            const resource_grid_reader&   grid)
 {
-  pusch_processor_result_notifier_adaptor result_notifier;
-
   // Compute the number of codeblocks.
   unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
 
@@ -686,33 +683,26 @@ static void thread_process(pusch_processor&              proc,
   // Prepare receive data buffer.
   std::vector<uint8_t> data(tbs / 8);
 
-  // Notify finish count.
-  {
-    std::unique_lock<std::mutex> lock(mutex_finish_count);
-    finish_count++;
-    cvar_count.notify_all();
-  }
-
   while (!thread_quit) {
-    // Wait for pending.
-    {
-      std::unique_lock<std::mutex> lock(mutex_pending_count);
-      while (pending_count == 0) {
-        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
+    // If the pending count is equal to or lower than zero, wait for a new start.
+    while (pending_count.fetch_sub(1) <= 0) {
+      // Wait for pending to non-negative.
+      while (pending_count.load() <= 0) {
+        // Sleep.
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
 
         // Quit if signaled.
         if (thread_quit) {
           return;
         }
       }
-      pending_count--;
     }
+
+    // Prepare notifier.
+    pusch_processor_result_notifier_adaptor result_notifier;
 
     // Reserve buffer.
     unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
-
-    // Reset notifier.
-    result_notifier.reset();
 
     // Process PDU.
     proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
@@ -721,11 +711,7 @@ static void thread_process(pusch_processor&              proc,
     result_notifier.wait_for_completion();
 
     // Notify finish count.
-    {
-      std::unique_lock<std::mutex> lock(mutex_finish_count);
-      finish_count++;
-      cvar_count.notify_all();
-    }
+    ++finish_count;
   }
 }
 
@@ -834,8 +820,9 @@ int main(int argc, char** argv)
     TESTASSERT(validator->is_valid(config));
 
     // Reset finish counter.
-    finish_count = 0;
-    thread_quit  = false;
+    finish_count  = 0;
+    pending_count = 0;
+    thread_quit   = false;
 
     // Prepare threads for the current case.
     std::vector<unique_thread> threads(nof_threads);
@@ -850,11 +837,8 @@ int main(int argc, char** argv)
     }
 
     // Wait for finish thread init.
-    {
-      std::unique_lock<std::mutex> lock(mutex_finish_count);
-      while (finish_count != nof_threads) {
-        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
-      }
+    while (pending_count.load() != -static_cast<int>(nof_threads)) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
@@ -872,21 +856,14 @@ int main(int argc, char** argv)
                    peak_throughput_Mbps);
 
     // Run the benchmark.
-    perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, []() {
+    perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, []() mutable {
       // Notify start.
-      {
-        std::unique_lock<std::mutex> lock(mutex_pending_count);
-        pending_count = nof_threads * batch_size_per_thread;
-        finish_count  = 0;
-        cvar_count.notify_all();
-      }
+      finish_count  = 0;
+      pending_count = nof_threads * batch_size_per_thread;
 
       // Wait for finish.
-      {
-        std::unique_lock<std::mutex> lock(mutex_finish_count);
-        while (finish_count != (nof_threads * batch_size_per_thread)) {
-          cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
-        }
+      while (finish_count.load() != (nof_threads * batch_size_per_thread)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     });
 

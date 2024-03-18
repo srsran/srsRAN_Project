@@ -778,6 +778,10 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
   if (cfg_req.lc_config_list.has_value()) {
     lc_list = cfg_req.lc_config_list.value();
   }
+  // Update QoS information of DRBs.
+  if (not cfg_req.drb_qos_list.empty()) {
+    drb_qos_list = cfg_req.drb_qos_list;
+  }
 
   // Update UE dedicated cell configs.
   if (cfg_req.cells.has_value()) {

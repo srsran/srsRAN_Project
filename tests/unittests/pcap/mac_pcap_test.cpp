@@ -236,8 +236,10 @@ void write_pcap_nr_thread_function_spans(srsran::mac_pcap* pcap, uint32_t num_pd
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (byte_buffer)
 void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus)
 {
-  srsran::byte_buffer tv = {
-      0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
+  srsran::byte_buffer tv =
+      byte_buffer::create(
+          {0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00})
+          .value();
   int                         crnti   = 0x01011;
   int                         ue_id   = 2;
   int                         harqid  = 0;
@@ -262,7 +264,6 @@ void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t 
 void write_pcap_nr_thread_function_large_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus)
 {
   srsran::byte_buffer tv = srsran::make_byte_buffer(
-
       "44057e80042080042045000578b506400040066c1c0a2d0001"
       "0a2d0003145196440dc78535f4439577801001fd348500000101080a7e069e553740bf250a43116ae9c7fb384dde95580b51f982cee5b1d7"
       "2ffb703548c3f9a9220c5434ff30c1d04affa45a62c111fa45e4099dfec3dd946df21545009889b77dcda48b80de4903c13b8844a6dcb31e"
@@ -1689,9 +1690,7 @@ void write_pcap_nr_thread_function_large_byte_buffer(srsran::mac_pcap* pcap, uin
       "b620b47ba9fefa47b9cbbc7fc97c17ae9713dffaad490e42f40093106a92df63200253682f2e32f1a7fcb7bbe6ef37abe0fc5275b3d99b9d"
       "dd97149c9b466d622b7a641f5a8916dc81cf160f8938185057a770ef7b20de955e30fa904ddc828b97f7e4ad111462dd9bb9b724f8b29d42"
       "c94a12d6ad43edf2697ffa4a62c12ab00378912b106efd2c50e8c46a3a1f8b682c11f8702ce1591e27042413e38c340def44b68a94a4e761"
-      "beb25106cf2e60c0aa9f8c0f745bdc1ecb8e9bfe71e9b4846bbea0dc5d2d982d17176c3119432b90e3a8f48195d21a06"
-
-  );
+      "beb25106cf2e60c0aa9f8c0f745bdc1ecb8e9bfe71e9b4846bbea0dc5d2d982d17176c3119432b90e3a8f48195d21a06");
 
   int                         crnti   = 0x01011;
   int                         ue_id   = 2;

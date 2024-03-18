@@ -62,7 +62,9 @@ std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
                     ul_tnls,
                     teid_pool,
                     du_mng->params,
-                    rlf_notifier);
+                    rlf_notifier,
+                    qos_characteristics{},
+                    nullopt);
 }
 
 TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)

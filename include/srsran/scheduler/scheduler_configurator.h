@@ -30,6 +30,8 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
+#include "srsran/ran/qos/five_qi_qos_mapping.h"
+#include "srsran/ran/qos/qos_info.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
@@ -114,6 +116,16 @@ struct sched_ue_resource_alloc_config {
   unsigned max_pusch_harq_retxs = 4;
 };
 
+/// QoS parameters associated with a DRB provided to the scheduler.
+struct sched_drb_qos_info {
+  /// Logical Channel ID.
+  lcid_t lcid;
+  /// QoS characteristics associated with the logical channel.
+  qos_characteristics qos_info;
+  /// QoS information present only for GBR QoS flows.
+  optional<gbr_qos_info_t> gbr_qos_info;
+};
+
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
@@ -124,6 +136,8 @@ struct sched_ue_config_request {
   optional<std::vector<cell_config_dedicated>> cells;
   /// Resource allocation configuration for the given UE.
   optional<sched_ue_resource_alloc_config> res_alloc_cfg;
+  /// List of QoS information for DRBs.
+  std::vector<sched_drb_qos_info> drb_qos_list;
 };
 
 /// Request to create a new UE in scheduler.

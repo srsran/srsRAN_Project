@@ -51,6 +51,16 @@ public:
   {
     srsran_assert(msg_handler != nullptr, "Adapter is disconnected");
 
+    if (pcap_writer.is_write_enabled()) {
+      byte_buffer   packed_pdu;
+      asn1::bit_ref bref{packed_pdu};
+      if (msg.pdu.pack(bref) == asn1::SRSASN_SUCCESS) {
+        pcap_writer.push_pdu(std::move(packed_pdu));
+      } else {
+        logger.warning("Failed to encode NGAP Tx PDU.");
+      }
+    }
+
     if (msg.pdu.type().value == asn1::ngap::ngap_pdu_c::types_opts::init_msg and
         msg.pdu.init_msg().value.type().value ==
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request) {

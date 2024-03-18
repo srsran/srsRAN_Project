@@ -44,7 +44,7 @@ class cu_up final : public cu_up_interface
 {
 public:
   explicit cu_up(const cu_up_configuration& cfg_);
-  ~cu_up();
+  ~cu_up() override;
 
   // cu_up_interface
   void start() override;
@@ -80,7 +80,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Holds DL executor for the control TEID.
-  std::unique_ptr<task_executor, unique_function<void(task_executor*)>> dl_exec;
+  std::unique_ptr<ue_executor_mapper> ctrl_exec_mapper;
 
   // Components
   std::atomic<bool>                    e1ap_connected = {false};

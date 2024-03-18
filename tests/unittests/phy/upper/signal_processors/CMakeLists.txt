@@ -32,6 +32,10 @@ target_link_libraries(sss_processor_test srsran_signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
 
 if (USE_PHY_TESTVECTORS)
+    add_executable(srs_estimator_vectortest srs/srs_estimator_vectortest.cpp)
+    target_link_libraries(srs_estimator_vectortest srsran_signal_processors srsvec srsran_sequence_generators srslog gtest gtest_main)
+    add_test_vector(srs_estimator_vectortest srs/srs_estimator_test_data.tar.gz "")
+
     add_executable(dmrs_pbch_processor_test dmrs_pbch_processor_test.cpp)
     target_link_libraries(dmrs_pbch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog)
     add_test_vector(dmrs_pbch_processor_test dmrs_pbch_processor_test_data.tar.gz "")

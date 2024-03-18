@@ -83,8 +83,12 @@ private:
   // Mapping of RNTIs to UE indexes.
   std::vector<std::pair<rnti_t, du_ue_index_t>> rnti_to_ue_index_lookup;
 
-  // Queue of UEs marked for later removal.
-  ring_buffer<ue_config_delete_event> ues_to_rem{MAX_NOF_DU_UES};
+  // Queue of UEs marked for later removal. For each UE, we store the slot after which its removal can be safely
+  // carried out, and the original UE removal command.
+  ring_buffer<std::pair<slot_point, ue_config_delete_event>> ues_to_rem{MAX_NOF_DU_UES};
+
+  // Last slot indication.
+  slot_point last_sl_tx;
 };
 
 } // namespace srsran

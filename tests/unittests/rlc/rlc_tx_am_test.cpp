@@ -158,7 +158,7 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
                      /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
     }
@@ -177,7 +177,7 @@ protected:
       pdu_buf.resize(data_pdu_size);
       size_t pdu_len = rlc->pull_pdu(pdu_buf);
       pdu_buf.resize(pdu_len);
-      out_pdus[i] = byte_buffer_chain{byte_buffer{pdu_buf}};
+      out_pdus[i] = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
 
       // Check PDU size
       EXPECT_EQ(out_pdus[i].length(), data_pdu_size);
@@ -225,7 +225,7 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
                      /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
     }
@@ -245,7 +245,7 @@ protected:
       seg_buf.resize(pdu_size);
       size_t seg_len = rlc->pull_pdu(seg_buf);
       seg_buf.resize(seg_len);
-      out_pdus[i] = byte_buffer_chain{byte_buffer{seg_buf}};
+      out_pdus[i] = byte_buffer_chain::create(byte_buffer::create(seg_buf).value()).value();
 
       // Check PDU size
       EXPECT_GT(out_pdus[i].length(), header_size);
@@ -328,8 +328,12 @@ TEST_P(rlc_tx_am_test, create_new_entity)
 
 TEST_P(rlc_tx_am_test, tx_without_segmentation)
 {
-  const uint32_t    n_pdus = 5;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = 5;
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, 1);
   tx_full_pdus(pdus, n_pdus, 5);
@@ -347,7 +351,21 @@ TEST_P(rlc_tx_am_test, tx_small_grant_)
   const uint32_t so_size     = 2;
   const uint32_t pdu_size    = header_size + so_size + (sdu_size / n_splits);
 
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size);
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size);
@@ -457,7 +475,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
     sdu_bufs[i] = create_sdu(sdu_size, i);
 
     // write SDU into upper end
-    rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
                    /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
     rlc->handle_sdu(std::move(sdu));
   }
@@ -571,7 +589,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
     sdu_bufs[i] = create_sdu(sdu_size, i);
 
     // write SDU into upper end
-    rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
                    /* pdcp_sn = */ (pdcp_sn_start + i) % pdcp_sn_mod}; // no std::move, keep copy for later comparison
     rlc->handle_sdu(std::move(sdu));
   }
@@ -672,9 +690,13 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
 
 TEST_P(rlc_tx_am_test, invalid_status_report_ack_sn_larger_than_tx_next)
 {
-  const uint32_t    sdu_size = 3;
-  const uint32_t    n_pdus   = 5;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    sdu_size     = 3;
+  const uint32_t    n_pdus       = 5;
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
 
@@ -698,7 +720,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -721,7 +747,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   pdu_buf.resize(sdu_size + header_min_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_EQ(retx_pdu, pdus[nack.nack_sn]);
@@ -749,7 +775,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   const uint32_t    so_size         = 2;
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -770,13 +800,12 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   // Read ReTx in segments
   std::vector<uint8_t> pdu_buf;
   size_t               pdu_len;
-  byte_buffer_chain    retx_pdu;
   for (uint32_t i = 0; i < sdu_size; i++) {
     uint32_t header_size = i == 0 ? header_min_size : header_max_size;
     pdu_buf.resize(1 + header_size);
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
-    retx_pdu = byte_buffer_chain{byte_buffer{pdu_buf}};
+    byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
     logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
     logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
     EXPECT_TRUE(
@@ -784,7 +813,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
     EXPECT_EQ(tester->bsr_count, n_bsr);
 
     // Check SI
-    rlc_si_field si, si_expect;
+    rlc_si_field si;
+    rlc_si_field si_expect;
     si = static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11);
     if (i == 0) {
       // first segment
@@ -818,7 +848,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -845,7 +879,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   pdu_buf.resize(sdu_size + header_min_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(
@@ -876,7 +910,13 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   const uint32_t    so_size         = 2;
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -903,7 +943,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   pdu_buf.resize(sdu_size + header_max_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
@@ -935,7 +975,13 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   const uint32_t    so_size         = 2;
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -962,7 +1008,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   pdu_buf.resize(sdu_size + header_max_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
@@ -994,11 +1040,24 @@ TEST_P(rlc_tx_am_test, retx_of_sn_under_segmentation_is_trimmed_to_already_sent_
 
   const uint32_t n_splits = 3;
 
-  const uint32_t    n_pdus      = n_sdus * n_splits - 1;
-  const uint32_t    header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
-  const uint32_t    so_size     = 2;
-  const uint32_t    pdu_size    = header_size + so_size + (sdu_size / n_splits);
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = n_sdus * n_splits - 1;
+  const uint32_t    header_size  = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t    so_size      = 2;
+  const uint32_t    pdu_size     = header_size + so_size + (sdu_size / n_splits);
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
@@ -1048,11 +1107,26 @@ TEST_P(rlc_tx_am_test, retx_of_sn_under_segmentation_is_ignored_for_unsent_bytes
 
   const uint32_t n_splits = 3;
 
-  const uint32_t    n_pdus      = n_sdus * n_splits - 1;
-  const uint32_t    header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
-  const uint32_t    so_size     = 2;
-  const uint32_t    pdu_size    = header_size + so_size + (sdu_size / n_splits);
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = n_sdus * n_splits - 1;
+  const uint32_t    header_size  = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t    so_size      = 2;
+  const uint32_t    pdu_size     = header_size + so_size + (sdu_size / n_splits);
+  byte_buffer_chain pdus[n_pdus] = {
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+  };
 
   const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
@@ -1112,11 +1186,26 @@ TEST_P(rlc_tx_am_test, retx_only_sent_bytes_of_sn_under_segmentation)
 
   const uint32_t n_splits = 3;
 
-  const uint32_t    n_pdus      = n_sdus * n_splits - 1;
-  const uint32_t    header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
-  const uint32_t    so_size     = 2;
-  const uint32_t    pdu_size    = header_size + so_size + (sdu_size / n_splits);
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = n_sdus * n_splits - 1;
+  const uint32_t    header_size  = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t    so_size      = 2;
+  const uint32_t    pdu_size     = header_size + so_size + (sdu_size / n_splits);
+  byte_buffer_chain pdus[n_pdus] = {
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+  };
 
   const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
@@ -1161,7 +1250,13 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1188,7 +1283,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   pdu_buf.resize(sdu_size + header_min_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(
@@ -1217,7 +1312,13 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+         byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1244,7 +1345,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   pdu_buf.resize(sdu_size + header_min_size);
   pdu_len = rlc->pull_pdu(pdu_buf);
   pdu_buf.resize(pdu_len);
-  byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+  byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(
@@ -1268,9 +1369,22 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
 
 TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 {
-  const uint32_t    sdu_size = 3;
-  const uint32_t    n_pdus   = 12;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    sdu_size     = 3;
+  const uint32_t    n_pdus       = 12;
+  byte_buffer_chain pdus[n_pdus] = {
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
 
@@ -1320,9 +1434,22 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 
 TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 {
-  const uint32_t    sdu_size = 3;
-  const uint32_t    n_pdus   = 12;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    sdu_size     = 3;
+  const uint32_t    n_pdus       = 12;
+  byte_buffer_chain pdus[n_pdus] = {
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+  };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
 
@@ -1401,7 +1528,11 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    short_size      = header_min_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
@@ -1448,7 +1579,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   uint32_t sn_start = cardinality(to_number(sn_size)) - 2;
   uint32_t nack_sn  = sn_start + 1;
@@ -1486,7 +1621,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
     pdu_buf.resize(sdu_size + header_min_size);
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
-    byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+    byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
     logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
     logger.debug(pdus[i - sn_start].begin(), pdus[i - sn_start].end(), "pdus[{}]:", i - sn_start);
     EXPECT_TRUE(std::equal(retx_pdu.begin() + 1, retx_pdu.end(), pdus[i - sn_start].begin() + 1)); // skip header P bit
@@ -1512,7 +1647,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   uint32_t sn_start = cardinality(to_number(sn_size)) - 2;
   uint32_t nack_sn  = sn_start + 1;
@@ -1550,7 +1689,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
     pdu_buf.resize(sdu_size + header_min_size);
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
-    byte_buffer_chain retx_pdu{byte_buffer{pdu_buf}};
+    byte_buffer_chain retx_pdu = byte_buffer_chain::create(byte_buffer::create(pdu_buf).value()).value();
     logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
     logger.debug(pdus[i - sn_start].begin(), pdus[i - sn_start].end(), "pdus[{}]:", i - sn_start);
     ASSERT_EQ(retx_pdu.length(), pdus[i - sn_start].length());
@@ -1712,8 +1851,12 @@ TEST_P(rlc_tx_am_test, status_report_trim)
 
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 {
-  const uint32_t    n_pdus = 5;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = 5;
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t sdu_size        = 10;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
@@ -1745,7 +1888,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1760,7 +1904,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1775,7 +1920,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1784,8 +1930,14 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 {
-  const uint32_t    n_pdus = 5;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = 5;
+  byte_buffer_chain pdus[n_pdus] = {
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+  };
 
   const uint32_t sdu_size        = 10;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
@@ -1796,7 +1948,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   // push SDU to SDU queue so that it is not empty
   uint32_t    n_bsr   = tester->bsr_count;
   byte_buffer sdu_buf = create_sdu(sdu_size, 7);
-  rlc_sdu     sdu     = {sdu_buf.deep_copy(), /* pdcp_sn = */ 7}; // no std::move - keep local copy for later comparison
+  rlc_sdu sdu = {sdu_buf.deep_copy().value(), /* pdcp_sn = */ 7}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
@@ -1812,7 +1964,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
   }
 
@@ -1839,7 +1992,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
   }
 
@@ -1852,7 +2006,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
   }
 
@@ -1865,15 +2020,20 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     pdu_len = rlc->pull_pdu(pdu_buf);
     pdu_buf.resize(pdu_len);
     rlc_am_pdu_header pdu_hdr = {};
-    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
   }
 }
 
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
 {
-  const uint32_t    n_pdus = 5;
-  byte_buffer_chain pdus[n_pdus];
+  const uint32_t    n_pdus       = 5;
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t sdu_size        = 10;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
@@ -1910,7 +2070,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
       pdu_len = rlc->pull_pdu(pdu_buf);
       pdu_buf.resize(pdu_len);
       rlc_am_pdu_header pdu_hdr = {};
-      ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu_buf.begin(), pdu_buf.end()), sn_size, &pdu_hdr));
+      ASSERT_TRUE(
+          rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
       EXPECT_TRUE(pdu_hdr.p);
       EXPECT_EQ(tester->bsr, pdu_size);
       EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1926,7 +2087,11 @@ TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1963,7 +2128,11 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
   const uint32_t    sdu_size        = 3;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus];
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;

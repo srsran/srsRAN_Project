@@ -265,20 +265,22 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator.has_value());
 
-  // If we allocate the same UE twice, the scheduler is expected to allocate a different PUCCH common resource.
+  // If we allocate the same UE twice, the scheduler is expected to fail, as we don't support PUCCH multiplexing on
+  // PUCCH common resources.
   optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_res_indicator_1.has_value());
-  ASSERT_NE(pucch_res_indicator_1.value(), pucch_res_indicator.value());
+  ASSERT_FALSE(pucch_res_indicator_1.has_value());
 }
 
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
 {
   // For this specific n_cce value (1) and for d_pri = {0,...,7}, we get 8 r_pucch values. This is the maximum number of
   // UEs we can allocate.
-  for (unsigned n_ue = 0; n_ue != 8; ++n_ue) {
+  for (uint16_t n_ue = 0; n_ue != 8; ++n_ue) {
+    t_bench.add_ue();
+    du_ue_index_t            ue_idx = to_du_ue_index(static_cast<uint16_t>(t_bench.get_main_ue().ue_index) + n_ue);
     const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+        t_bench.res_grid, t_bench.get_ue(ue_idx).crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
     ASSERT_TRUE(pucch_res_indicator.has_value());
   }
 

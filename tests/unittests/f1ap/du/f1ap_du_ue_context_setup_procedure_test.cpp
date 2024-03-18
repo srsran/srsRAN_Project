@@ -76,7 +76,7 @@ protected:
 
     auto& du_to_f1_resp                  = this->f1ap_du_cfg_handler.next_ue_context_update_response;
     du_to_f1_resp.result                 = true;
-    du_to_f1_resp.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+    du_to_f1_resp.du_to_cu_rrc_container = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
       du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
       for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
@@ -160,8 +160,9 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
   // UL data through created SRB2 reaches F1-C.
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
   f1c_bearer* srb2 = this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added[0].bearer;
-  byte_buffer ul_rrc_msg{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  srb2->handle_sdu(byte_buffer_chain{ul_rrc_msg.copy()});
+  byte_buffer ul_rrc_msg =
+      byte_buffer::create(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))).value();
+  srb2->handle_sdu(byte_buffer_chain::create(ul_rrc_msg.copy()).value());
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.type().value,
             f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer);
@@ -234,7 +235,7 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
                            0x20, 0x08, 0x08, 0x95, 0x75, 0x5b, 0x0c, 0x00, 0xb8, 0x40, 0x01, 0x00};
     // 000500440000080028000200160029400340a127003f00090002f899000bc614e0006b0001000009000100004a00060000490001080032400a09000320080895755b0c00b8400100
 
-    byte_buffer    buf(msg);
+    byte_buffer    buf = byte_buffer::create(msg).value();
     asn1::cbit_ref bref(buf);
     ASSERT_EQ(ue_ctxt_setup_req.pdu.unpack(bref), asn1::SRSASN_SUCCESS);
   }

@@ -134,9 +134,16 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
     logger.error("Failed to get E2SM interface, RAN function {} not in allowed list", ran_func_id);
     return false;
   }
+
+  auto action_def_buf = action.ric_action_definition.deep_copy();
+  if (action_def_buf.is_error()) {
+    logger.warning("Failed to deep copy a byte_buffer");
+    return false;
+  }
+
   if (e2sm->action_supported(action)) {
     subscriptions[ric_request_id.ric_requestor_id].subscription_info.action_list.push_back(
-        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
+        {std::move(action_def_buf.value()), action.ric_action_id, action.ric_action_type});
     return true;
   }
 

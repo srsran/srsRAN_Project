@@ -96,7 +96,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cfg(), pdsch_td_cfg);
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, &cfg(), pdsch_td_cfg);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
       pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());

@@ -44,13 +44,23 @@ public:
   dl_logical_channel_manager();
 
   /// \brief Activate/Deactivate Bearer.
-  void set_status(lcid_t lcid, bool active) { channels[lcid].active = active; }
+  void set_status(lcid_t lcid, bool active)
+  {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+    channels[lcid].active = active;
+  }
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(span<const logical_channel_config> log_channels_configs);
 
   /// \brief Verifies if logical channel is activated for DL.
-  bool is_active(lcid_t lcid) const { return channels[lcid].active; }
+  bool is_active(lcid_t lcid) const
+  {
+    if (lcid > LCID_MAX_DRB) {
+      return false;
+    }
+    return channels[lcid].active;
+  }
 
   /// \brief Checks whether the UE has pending data.
   /// \remark Excludes data for SRB0.
@@ -113,6 +123,7 @@ public:
   /// \brief Update DL buffer status for a given LCID.
   void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status)
   {
+    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
     channels[lcid].buf_st = buffer_status;
   }
 
@@ -129,7 +140,7 @@ public:
   /// \brief Allocates highest priority MAC SDU within space of \c rem_bytes bytes. Updates \c lch_info with allocated
   /// bytes for the MAC SDU (no MAC subheader).
   /// \return Allocated bytes for MAC SDU (with subheader).
-  unsigned allocate_mac_sdu(dl_msg_lc_info& lch_info, unsigned rem_bytes);
+  unsigned allocate_mac_sdu(dl_msg_lc_info& lch_info, unsigned rem_bytes, lcid_t lcid = INVALID_LCID);
 
   /// \brief Allocates next MAC CE within space of \c rem_bytes bytes. Updates \c lch_info with allocated bytes for the
   /// MAC CE.
@@ -167,8 +178,13 @@ private:
 /// \param[in] tb_info TB on which MAC subPDUs will be stored.
 /// \param[in] lch_mng UE DL logical channel manager.
 /// \param[in] total_tbs available space in bytes for subPDUs.
+/// \param[in] lcid if provided, LCID of the logical channel to be allocated. Otherwise, the LCID with higher priority
+/// is chosen.
 /// \return Total number of bytes allocated (including MAC subheaders).
-unsigned allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs);
+unsigned allocate_mac_sdus(dl_msg_tb_info&             tb_info,
+                           dl_logical_channel_manager& lch_mng,
+                           unsigned                    total_tbs,
+                           lcid_t                      lcid = INVALID_LCID);
 
 /// \brief Allocate MAC subPDUs for pending MAC CEs.
 /// \param[in] tb_info TB on which MAC subPDUs will be stored.

@@ -258,52 +258,52 @@ inline bool get_pdu_test_vector_algo1(pdcp_sn_size sn_size, uint32_t count, byte
   if (sn_size == pdcp_sn_size::size12bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo1_count0_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count0_snlen12).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo1_count1_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count1_snlen12).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo1_count2_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count2_snlen12).value();
         return true;
       case 2047:
-        exp_pdu = byte_buffer{pdu1_algo1_count2047_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count2047_snlen12).value();
         return true;
       case 2048:
-        exp_pdu = byte_buffer{pdu1_algo1_count2048_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count2048_snlen12).value();
         return true;
       case 2049:
-        exp_pdu = byte_buffer{pdu1_algo1_count2049_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count2049_snlen12).value();
         return true;
       case 4095:
-        exp_pdu = byte_buffer{pdu1_algo1_count4095_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count4095_snlen12).value();
         return true;
       case 4096:
-        exp_pdu = byte_buffer{pdu1_algo1_count4096_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count4096_snlen12).value();
         return true;
       case 4097:
-        exp_pdu = byte_buffer{pdu1_algo1_count4097_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count4097_snlen12).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo1_count262143_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262143_snlen12).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo1_count262144_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262144_snlen12).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo1_count262145_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262145_snlen12).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo1_count262146_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262146_snlen12).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo1_count262147_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262147_snlen12).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo1_count262148_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262148_snlen12).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo1_count4294967295_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count4294967295_snlen12).value();
         return true;
       default:
         return false;
@@ -311,49 +311,49 @@ inline bool get_pdu_test_vector_algo1(pdcp_sn_size sn_size, uint32_t count, byte
   } else if (sn_size == pdcp_sn_size::size18bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo1_count0_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count0_snlen18).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo1_count1_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count1_snlen18).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo1_count2_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count2_snlen18).value();
         return true;
       case 131071:
-        exp_pdu = byte_buffer{pdu1_algo1_count131071_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count131071_snlen18).value();
         return true;
       case 131072:
-        exp_pdu = byte_buffer{pdu1_algo1_count131072_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count131072_snlen18).value();
         return true;
       case 131073:
-        exp_pdu = byte_buffer{pdu1_algo1_count131073_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count131073_snlen18).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo1_count262143_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262143_snlen18).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo1_count262144_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262144_snlen18).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo1_count262145_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262145_snlen18).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo1_count262146_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262146_snlen18).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo1_count262147_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262147_snlen18).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo1_count262148_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count262148_snlen18).value();
         return true;
       case 334103:
-        exp_pdu = byte_buffer{pdu1_algo1_count334103_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count334103_snlen18).value();
         return true;
       case 334104:
-        exp_pdu = byte_buffer{pdu1_algo1_count334104_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count334104_snlen18).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo1_count4294967295_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo1_count4294967295_snlen18).value();
         return true;
       default:
         return false;
@@ -374,52 +374,52 @@ inline bool get_pdu_test_vector_algo2(pdcp_sn_size sn_size, uint32_t count, byte
   if (sn_size == pdcp_sn_size::size12bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo2_count0_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count0_snlen12).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo2_count1_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count1_snlen12).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo2_count2_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count2_snlen12).value();
         return true;
       case 2047:
-        exp_pdu = byte_buffer{pdu1_algo2_count2047_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count2047_snlen12).value();
         return true;
       case 2048:
-        exp_pdu = byte_buffer{pdu1_algo2_count2048_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count2048_snlen12).value();
         return true;
       case 2049:
-        exp_pdu = byte_buffer{pdu1_algo2_count2049_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count2049_snlen12).value();
         return true;
       case 4095:
-        exp_pdu = byte_buffer{pdu1_algo2_count4095_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count4095_snlen12).value();
         return true;
       case 4096:
-        exp_pdu = byte_buffer{pdu1_algo2_count4096_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count4096_snlen12).value();
         return true;
       case 4097:
-        exp_pdu = byte_buffer{pdu1_algo2_count4097_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count4097_snlen12).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo2_count262143_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262143_snlen12).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo2_count262144_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262144_snlen12).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo2_count262145_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262145_snlen12).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo2_count262146_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262146_snlen12).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo2_count262147_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262147_snlen12).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo2_count262148_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262148_snlen12).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo2_count4294967295_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count4294967295_snlen12).value();
         return true;
       default:
         return false;
@@ -427,49 +427,49 @@ inline bool get_pdu_test_vector_algo2(pdcp_sn_size sn_size, uint32_t count, byte
   } else if (sn_size == pdcp_sn_size::size18bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo2_count0_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count0_snlen18).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo2_count1_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count1_snlen18).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo2_count2_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count2_snlen18).value();
         return true;
       case 131071:
-        exp_pdu = byte_buffer{pdu1_algo2_count131071_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count131071_snlen18).value();
         return true;
       case 131072:
-        exp_pdu = byte_buffer{pdu1_algo2_count131072_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count131072_snlen18).value();
         return true;
       case 131073:
-        exp_pdu = byte_buffer{pdu1_algo2_count131073_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count131073_snlen18).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo2_count262143_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262143_snlen18).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo2_count262144_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262144_snlen18).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo2_count262145_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262145_snlen18).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo2_count262146_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262146_snlen18).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo2_count262147_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262147_snlen18).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo2_count262148_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count262148_snlen18).value();
         return true;
       case 334103:
-        exp_pdu = byte_buffer{pdu1_algo2_count334103_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count334103_snlen18).value();
         return true;
       case 334104:
-        exp_pdu = byte_buffer{pdu1_algo2_count334104_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count334104_snlen18).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo2_count4294967295_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo2_count4294967295_snlen18).value();
         return true;
       default:
         return false;
@@ -490,52 +490,52 @@ inline bool get_pdu_test_vector_algo3(pdcp_sn_size sn_size, uint32_t count, byte
   if (sn_size == pdcp_sn_size::size12bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo3_count0_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count0_snlen12).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo3_count1_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count1_snlen12).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo3_count2_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count2_snlen12).value();
         return true;
       case 2047:
-        exp_pdu = byte_buffer{pdu1_algo3_count2047_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count2047_snlen12).value();
         return true;
       case 2048:
-        exp_pdu = byte_buffer{pdu1_algo3_count2048_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count2048_snlen12).value();
         return true;
       case 2049:
-        exp_pdu = byte_buffer{pdu1_algo3_count2049_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count2049_snlen12).value();
         return true;
       case 4095:
-        exp_pdu = byte_buffer{pdu1_algo3_count4095_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count4095_snlen12).value();
         return true;
       case 4096:
-        exp_pdu = byte_buffer{pdu1_algo3_count4096_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count4096_snlen12).value();
         return true;
       case 4097:
-        exp_pdu = byte_buffer{pdu1_algo3_count4097_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count4097_snlen12).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo3_count262143_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262143_snlen12).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo3_count262144_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262144_snlen12).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo3_count262145_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262145_snlen12).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo3_count262146_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262146_snlen12).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo3_count262147_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262147_snlen12).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo3_count262148_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262148_snlen12).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo3_count4294967295_snlen12};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count4294967295_snlen12).value();
         return true;
       default:
         return false;
@@ -543,49 +543,49 @@ inline bool get_pdu_test_vector_algo3(pdcp_sn_size sn_size, uint32_t count, byte
   } else if (sn_size == pdcp_sn_size::size18bits) {
     switch (count) {
       case 0:
-        exp_pdu = byte_buffer{pdu1_algo3_count0_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count0_snlen18).value();
         return true;
       case 1:
-        exp_pdu = byte_buffer{pdu1_algo3_count1_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count1_snlen18).value();
         return true;
       case 2:
-        exp_pdu = byte_buffer{pdu1_algo3_count2_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count2_snlen18).value();
         return true;
       case 131071:
-        exp_pdu = byte_buffer{pdu1_algo3_count131071_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count131071_snlen18).value();
         return true;
       case 131072:
-        exp_pdu = byte_buffer{pdu1_algo3_count131072_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count131072_snlen18).value();
         return true;
       case 131073:
-        exp_pdu = byte_buffer{pdu1_algo3_count131073_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count131073_snlen18).value();
         return true;
       case 262143:
-        exp_pdu = byte_buffer{pdu1_algo3_count262143_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262143_snlen18).value();
         return true;
       case 262144:
-        exp_pdu = byte_buffer{pdu1_algo3_count262144_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262144_snlen18).value();
         return true;
       case 262145:
-        exp_pdu = byte_buffer{pdu1_algo3_count262145_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262145_snlen18).value();
         return true;
       case 262146:
-        exp_pdu = byte_buffer{pdu1_algo3_count262146_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262146_snlen18).value();
         return true;
       case 262147:
-        exp_pdu = byte_buffer{pdu1_algo3_count262147_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262147_snlen18).value();
         return true;
       case 262148:
-        exp_pdu = byte_buffer{pdu1_algo3_count262148_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count262148_snlen18).value();
         return true;
       case 334103:
-        exp_pdu = byte_buffer{pdu1_algo3_count334103_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count334103_snlen18).value();
         return true;
       case 334104:
-        exp_pdu = byte_buffer{pdu1_algo3_count334104_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count334104_snlen18).value();
         return true;
       case 4294967295:
-        exp_pdu = byte_buffer{pdu1_algo3_count4294967295_snlen18};
+        exp_pdu = byte_buffer::create(pdu1_algo3_count4294967295_snlen18).value();
         return true;
       default:
         return false;

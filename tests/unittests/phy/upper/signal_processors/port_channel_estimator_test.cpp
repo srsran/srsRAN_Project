@@ -67,7 +67,11 @@ protected:
       }
       ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
 
-      ch_est_factory = create_port_channel_estimator_factory_sw(std::move(dft_factory));
+      std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
+          create_time_alignment_estimator_dft_factory(dft_factory);
+      ASSERT_NE(ta_estimator_factory, nullptr) << "Cannot create TA estimator factory.";
+
+      ch_est_factory = create_port_channel_estimator_factory_sw(std::move(ta_estimator_factory));
       ASSERT_NE(ch_est_factory, nullptr);
     }
   }

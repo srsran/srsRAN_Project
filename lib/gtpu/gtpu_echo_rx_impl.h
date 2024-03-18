@@ -73,15 +73,26 @@ protected:
         // For Supported Extension Headers Notification [...], the Sequence Number shall be ignored by the receiver,
         // even though the S flag is set to '1'.
         return;
-      case GTPU_MSG_ERROR_INDICATION:
-        // TODO: unpack and print information elements; add handling
-        logger.log_info(pdu.buf.begin(), pdu.buf.end(), "Received error indication from peer");
-        // TS 29.281 Sec. 7.3.1: Error Indication
-        // When a GTP-U node receives a G-PDU for which no EPS Bearer context, PDP context, PDU Session, MBMS Bearer
-        // context, or RAB exists, the GTP-U node shall discard the G - PDU.If the TEID of the incoming G-PDU is
-        // different from the value 'all zeros' the GTP-U node shall also return a GTP error indication to the
-        // originating node.
+      case GTPU_MSG_ERROR_INDICATION: {
+        gtpu_msg_error_indication err_ind = {};
+        byte_buffer               msg     = gtpu_extract_msg(std::move(pdu));
+        bool                      msg_ok  = gtpu_read_msg_error_indication(err_ind, msg, logger.get_basic_logger());
+        if (!msg_ok) {
+          logger.log_error(pdu.buf.begin(), pdu.buf.end(), "Received malfomed error indication from peer");
+          return;
+        }
+        logger.log_info("Received error indication from peer. {}", err_ind);
+        // TODO: implement handling as specified in TS 23.527 Sec. 5.3.3.1:
+        // Upon receipt of a GTP-U Error Indication, the 5G-AN shall proceed as follows:
+        // - if the GTP-U Error Indication was received from an UPF over a NG-U tunnel that is not an indirect
+        // forwarding tunnel, the 5G-AN shall initiate a PDU Session Resource Notify procedure and release immediately
+        // the resources of the PDU session for which the Error Indication was received;
+        // - if the GTP-U Error Indication was received from a peer5G-AN over a Xn-U direct forwarding tunnel or an UPF
+        // over a NG-U indirect forwarding tunnel, the 5G-AN may ignore the error indication or delete the forwarding
+        // tunnel context locally without deleting the corresponding PDU session and bearers.
+        // NOTE: The 5G-AN behaviour for dual connectivity is not described in this specification.
         return;
+      }
       case GTPU_MSG_END_MARKER:
         // TODO: unpack and print information elements; add handling
         logger.log_warning("Discarded PDU. Cause: 'End marker' not supported");

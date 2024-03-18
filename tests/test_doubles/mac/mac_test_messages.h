@@ -22,13 +22,25 @@
 
 #pragma once
 
+#include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/mac/mac_pdu_handler.h"
 
 namespace srsran {
+
+struct pucch_info;
+
 namespace test_helpers {
 
 /// Creates a CCCH message with the given RNTI.
 mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
+
+mac_rx_data_indication create_pdu_with_sdu(slot_point sl_rx, rnti_t rnti, lcid_t lcid);
+
+/// \brief Generate MAC UCI PDU from PUCCH information, with all HARQ-ACKs set to ACK, SRs set as not detected and CSI
+/// set as 1s.
+mac_uci_pdu create_uci_pdu(const pucch_info& pucch);
+
+mac_uci_indication_message create_uci_indication(slot_point sl_rx, span<const pucch_info> pucchs);
 
 } // namespace test_helpers
 } // namespace srsran

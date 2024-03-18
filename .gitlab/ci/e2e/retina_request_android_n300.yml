@@ -30,15 +30,15 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 12
-      limits: 12
+      requests: 10
+      limits: 10
     memory:
-      requests: "24G"
-      limits: "24G"
+      requests: "14G"
+      limits: "14G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
-  taints: ["retina"]
+  taints: ["manual-testing"]
   resources:
     - type: sdr
       model: n3xx

@@ -171,27 +171,13 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Power control offset",
                                               [](dl_csi_rs_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr                       = value;
-                                                pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
+                                                pdu.power_control_offset_profile_nr = value;
                                               }}),
-                                          testing::Values(test_case_data{0, true},
-                                                          test_case_data{12, true},
-                                                          test_case_data{23, true},
-                                                          test_case_data{24, false})));
-
-INSTANTIATE_TEST_SUITE_P(Power_control_offset_v3,
-                         validate_csi_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
-                                              "Power control offset",
-                                              [](dl_csi_rs_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr                       = 255;
-                                                pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = value;
-                                              }}),
-                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32767)), true},
+                                          testing::Values(test_case_data{unsigned(-9), false},
+                                                          test_case_data{unsigned(-8), true},
                                                           test_case_data{0, true},
-                                                          test_case_data{32767, true},
-                                                          test_case_data{static_cast<unsigned>(int16_t(-32768)),
-                                                                         false})));
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(Power_control_offset_SS_profile_NR,
                          validate_csi_pdu_field,
@@ -199,15 +185,14 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset_SS_profile_NR,
                                               "Power control offset SS profile NR",
                                               [](dl_csi_rs_pdu& pdu, int value) {
                                                 pdu.power_control_offset_ss_profile_nr =
-                                                    static_cast<nzp_csi_rs_epre_to_ssb>(value);
-                                                pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
+                                                    static_cast<power_control_offset_ss>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},
                                                           test_case_data{3, true},
                                                           test_case_data{4, false},
                                                           test_case_data{254, false},
-                                                          test_case_data{255, true})));
+                                                          test_case_data{255, false})));
 
 /// Valid PDU should pass.
 TEST(validate_csi_pdu, valid_pdu_passes)

@@ -116,9 +116,23 @@ cpu_architecture_info::cpu_description cpu_architecture_info::discover_cpu_archi
 
   // Parse /sys/devices/system/cpu/cpu*/topology/thread_siblings_list to get the lists of logical cores belonging to
   // the same physical core.
-  std::set<std::string> thread_siblings_set;
-  std::string           cpu_system_path = "/sys/devices/system/cpu";
-  ::DIR*                dir             = ::opendir(cpu_system_path.c_str());
+  auto sort_function = [](std::string a, std::string b) {
+    auto get_first_cpu = [](const std::string& line) {
+      std::string        str;
+      std::istringstream iss(line);
+      std::getline(iss, str, ',');
+      if (str.find('-') != std::string::npos) {
+        std::getline(iss, str, '-');
+      }
+      return parse_one_cpu(str);
+    };
+    unsigned cpu_id_a = get_first_cpu(a);
+    unsigned cpu_id_b = get_first_cpu(b);
+    return cpu_id_a < cpu_id_b;
+  };
+  std::set<std::string, decltype(sort_function)> thread_siblings_set(sort_function);
+  std::string                                    cpu_system_path = "/sys/devices/system/cpu";
+  ::DIR*                                         dir             = ::opendir(cpu_system_path.c_str());
   if (dir) {
     ::dirent*     entry;
     struct ::stat info;
@@ -143,7 +157,7 @@ cpu_architecture_info::cpu_description cpu_architecture_info::discover_cpu_archi
   for (const auto& mask : thread_siblings_set) {
     cpuinfo.logical_cpu_lists.emplace_back();
     auto& bitmask = cpuinfo.logical_cpu_lists.back();
-    bitmask.resize(cpuinfo.nof_cpus);
+    bitmask.resize(CPU_SETSIZE);
 
     std::istringstream iss(mask);
     while (iss.good()) {

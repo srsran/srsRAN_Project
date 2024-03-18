@@ -23,7 +23,6 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <cstdint>
@@ -168,11 +167,33 @@ struct gtpu_extension_header {
 };
 
 /// GTP-U information element for "Recovery". See TS 29.281 Sec. 8.2
+///
+/// The value of the restart counter shall be set to 0 by the sending entity and ignored by the receiving entity. This
+/// information element is used in GTP user plane due to backwards compatibility reasons.
+///
 /// IE format: TV
 struct gtpu_ie_recovery {
-  /// The value of the restart counter shall be set to 0 by the sending entity and ignored by the receiving entity. This
-  /// information element is used in GTP user plane due to backwards compatibility reasons.
+  /// Restart counter (always 0)
   uint8_t restart_counter = 0;
+};
+
+/// GTPU information element for "Tunnel Endpoint Identifier Data I". See TS 29.281 Sec. 8.3
+///
+/// The Tunnel Endpoint Identifier Data I information element contains the Tunnel Endpoint Identifier used by a GTP
+/// entity for the user plane.
+///
+/// IE format: TV
+struct gtpu_ie_teid_i {
+  /// Tunnel Endpoint Identifier Data I
+  uint32_t teid_i = 0;
+};
+
+struct gtpu_ie_gtpu_peer_address {
+  using ipv4_addr_t = std::array<uint8_t, 4>;
+  using ipv6_addr_t = std::array<uint8_t, 16>;
+
+  /// IPv4 or IPv6 Address
+  variant<ipv4_addr_t, ipv6_addr_t> gtpu_peer_address;
 };
 
 /// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6
@@ -265,11 +286,26 @@ bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& l
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
 
-/// Extracts the T-PDU of a dissected GTP-U PDU by advancing its internal PDU buffer by the header length and returning
-/// that object. Any other content of the dissected PDU (e.g. header extensions) will be invalidated.
-/// \param dissected_pdu The dissected GTP-U PDU from which the T-PDU shall be extracted.
+/// Extracts the GTP-U message (i.e. the information elements or the G-PDU) of a dissected GTP-U PDU by advancing its
+/// internal PDU buffer by the header length and returning that object. Any other content of the dissected PDU (e.g.
+/// header extensions) will be invalidated.
+///
+/// \param dissected_pdu The dissected GTP-U PDU from which the message shall be extracted.
 /// \return The T-PDU of the dissected GTP-U PDU.
-byte_buffer gtpu_extract_t_pdu(gtpu_dissected_pdu&& dissected_pdu);
+byte_buffer gtpu_extract_msg(gtpu_dissected_pdu&& dissected_pdu);
+
+/// GTP-U Tunnel Management Message: Error Indication. See TS 29.281 Sec. 7.3.1
+struct gtpu_msg_error_indication {
+  /// Tunnel Endpoint Identifier Data I
+  gtpu_ie_teid_i teid_i;
+  /// GTP-U Peer Adddress
+  gtpu_ie_gtpu_peer_address gtpu_peer_address;
+};
+
+/// Reads and unpacks a GTP-U error indication message.
+bool gtpu_read_msg_error_indication(gtpu_msg_error_indication& error_indication,
+                                    const byte_buffer&         pdu,
+                                    srslog::basic_logger&      logger);
 
 } // namespace srsran
 
@@ -327,6 +363,78 @@ struct formatter<srsran::gtpu_extension_header_type> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_string(ext_type));
+  }
+};
+
+template <>
+struct formatter<srsran::gtpu_ie_teid_i> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::gtpu_ie_teid_i& ie, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "teid_i={:#x}", ie.teid_i);
+  }
+};
+
+template <>
+struct formatter<srsran::gtpu_ie_gtpu_peer_address> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::gtpu_ie_gtpu_peer_address& ie, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (srsran::variant_holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
+      auto& addr = srsran::variant_get<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
+      return format_to(ctx.out(), "peer_addr={}.{}.{}.{}", addr[0], addr[1], addr[2], addr[3]);
+    }
+    if (srsran::variant_holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address)) {
+      auto& addr = srsran::variant_get<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address);
+      return format_to(ctx.out(),
+                       "peer_addr={:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}",
+                       addr[0],
+                       addr[1],
+                       addr[2],
+                       addr[3],
+                       addr[4],
+                       addr[5],
+                       addr[6],
+                       addr[7],
+                       addr[8],
+                       addr[9],
+                       addr[10],
+                       addr[11],
+                       addr[12],
+                       addr[13],
+                       addr[14],
+                       addr[15]);
+    }
+    return format_to(ctx.out(), "peer_addr={{na}}", ie);
+  }
+};
+
+template <>
+struct formatter<srsran::gtpu_msg_error_indication> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::gtpu_msg_error_indication& err_ind, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{} {}", err_ind.teid_i, err_ind.gtpu_peer_address);
   }
 };
 } // namespace fmt

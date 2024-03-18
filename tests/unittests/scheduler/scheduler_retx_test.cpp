@@ -178,7 +178,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
     ASSERT_NE(pdcch, nullptr) << "Failed to allocate DL HARQ newtxs";
   }
 
-  // Set buffer state to zero, so that no newtxs get allocated once the current harqs become empty.
+  // Set buffer state to zero, so that no newtxs get allocated once the current latest_harq_states become empty.
   srslog::fetch_basic_logger("TEST").info("-- Setting DL BS=0, which will stop new DL grants --");
   bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 0});
   bench.run_slot(to_du_cell_index(0));
@@ -222,7 +222,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_crc_arrives_then_ul_harq_eventually
     ASSERT_NE(pdcch, nullptr) << "Failed to allocate UL HARQ newtxs";
   }
 
-  // Set buffer state to zero, so that no newtxs get allocated once the current harqs become empty.
+  // Set buffer state to zero, so that no newtxs get allocated once the current latest_harq_states become empty.
   srslog::fetch_basic_logger("TEST").info("-- Setting BSR=0, which will stop new UL grants --");
   bsr.reported_lcgs[0].nof_bytes = 0;
   bench.push_bsr(bsr);

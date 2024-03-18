@@ -53,9 +53,9 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   // RX PDU 2 and 3, none should arrive.
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu3)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -100,9 +100,9 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
   // RX PDU 2 and 3, none should arrive.
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu3)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -147,9 +147,9 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   // RX PDU 2 and 3, none should arrive.
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu3)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
   ASSERT_EQ(0, test_frame->sdu_queue.size());
 
   // Check PDCP state.
@@ -173,7 +173,7 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   ASSERT_EQ(true, pdcp_rx->is_reordering_timer_running());
 
   // Deliver first PDU
-  pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
   ASSERT_EQ(3, test_frame->sdu_queue.size());
 }
 

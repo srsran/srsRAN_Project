@@ -19,14 +19,16 @@
 #
 
 set(SOURCES
+        pucch/dmrs_pucch_processor_format1_impl.cpp
+        pucch/dmrs_pucch_processor_format2_impl.cpp
+        srs/srs_estimator_factory.cpp
+        srs/srs_estimator_generic_impl.cpp
         dmrs_pbch_processor_impl.cpp
         dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
         dmrs_pusch_estimator_impl.cpp
         nzp_csi_rs_generator_impl.cpp
         port_channel_estimator_average_impl.cpp
-        pucch/dmrs_pucch_processor_format1_impl.cpp
-        pucch/dmrs_pucch_processor_format2_impl.cpp
         signal_processor_factories.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp

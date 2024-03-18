@@ -29,6 +29,7 @@
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/srsran_assert.h"
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 
@@ -60,14 +61,13 @@ public:
                   srs_constants::max_nof_rx_ports);
     srsran_assert(nof_tx_ports <= srs_constants::max_nof_tx_ports,
                   "The number of transmit ports (i.e., {}) exceeds the maximum (i.e., {}).",
-                  nof_rx_ports,
-                  srs_constants::max_nof_rx_ports);
+                  nof_tx_ports,
+                  srs_constants::max_nof_tx_ports);
   }
 
   /// \brief Constructs a channel matrix with the desired number of receive and transmit ports.
   ///
-  /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients
-  /// values.
+  /// Creates a channel matrix with the specified dimensions, and sets its contents to the provided coefficients.
   ///
   /// \param[in] coefficients Channel coefficient list, arranged by i) receive port and ii) transmit port.
   /// \param[in] nof_rx_ports Number of receive ports.
@@ -136,10 +136,12 @@ public:
     return *this;
   }
 
-  /// \brief Overload equality comparison operator.
-  /// \param[in] other Channel matrix to compare against.
-  /// \return \c true if both channel matrices are exactly the same, \c false otherwise.
-  bool operator==(const srs_channel_matrix& other) const
+  /// \brief Near equal comparison method.
+  /// \param[in] other     Channel matrix to compare against.
+  /// \param[in] tolerance Maximum absolute error tolerated for considering two propagation channel coefficients equal.
+  /// \return \c true if the absolute error between both channel matrices is lower than \c tolerance, \c false
+  ///         otherwise.
+  bool is_near(const srs_channel_matrix& other, float tolerance) const
   {
     unsigned nof_rx_ports = get_nof_rx_ports();
     unsigned nof_tx_ports = get_nof_tx_ports();
@@ -151,9 +153,10 @@ public:
       return false;
     }
 
-    for (unsigned i_layer = 0; i_layer != nof_rx_ports; ++i_layer) {
-      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-        if (get_coefficient(i_layer, i_port) != other.get_coefficient(i_layer, i_port)) {
+    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+      for (unsigned i_tx_port = 0; i_tx_port != nof_tx_ports; ++i_tx_port) {
+        float error = std::abs(get_coefficient(i_rx_port, i_tx_port) - other.get_coefficient(i_rx_port, i_tx_port));
+        if (error > tolerance) {
           return false;
         }
       }
@@ -161,9 +164,6 @@ public:
 
     return true;
   }
-
-  /// Overload inequality comparison operator.
-  bool operator!=(const srs_channel_matrix& other) const { return !(*this == other); }
 
   /// Gets the current number of receive ports.
   unsigned get_nof_rx_ports() const { return data.get_dimension_size(dims::rx_port); }

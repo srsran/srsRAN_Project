@@ -35,7 +35,7 @@ ul_ccch_indication_message srsran::srs_du::create_test_ul_ccch_message(rnti_t rn
   ul_ccch_msg.cell_index = to_du_cell_index(0);
   ul_ccch_msg.tc_rnti    = rnti;
   ul_ccch_msg.slot_rx    = {0, test_rgen::uniform_int<unsigned>(0, 10239)};
-  ul_ccch_msg.subpdu     = test_rgen::random_vector<uint8_t>(6);
+  ul_ccch_msg.subpdu     = byte_buffer::create(test_rgen::random_vector<uint8_t>(6)).value();
   return ul_ccch_msg;
 }
 

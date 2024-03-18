@@ -163,7 +163,7 @@ public:
 
   size_t on_new_tx_sdu(span<uint8_t> mac_sdu_buf) override
   {
-    previous_tx_sdu = test_rgen::random_vector<uint8_t>(mac_sdu_buf.size());
+    previous_tx_sdu = byte_buffer::create(test_rgen::random_vector<uint8_t>(mac_sdu_buf.size())).value();
     auto out_it     = mac_sdu_buf.begin();
     for (span<const uint8_t> seg : previous_tx_sdu.segments()) {
       out_it = std::copy(seg.begin(), seg.end(), out_it);

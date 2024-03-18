@@ -83,7 +83,7 @@ public:
     for (uint8_t byte : pdu) {
       report_error_if_not(buf.append(byte), "Failed to allocate byte buffer");
     }
-    pdcp_rx_lower->handle_pdu(byte_buffer_chain{std::move(buf)});
+    pdcp_rx_lower->handle_pdu(byte_buffer_chain::create(std::move(buf)).value());
   }
 
   // RLC -> F1 -> RRC

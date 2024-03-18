@@ -76,33 +76,11 @@ TEST(dl_csi_pdu_builder, valid_tx_power_info_parameters_passes)
     dl_csi_rs_pdu         pdu;
     dl_csi_rs_pdu_builder builder(pdu);
 
-    nzp_csi_rs_epre_to_ssb ss = nzp_csi_rs_epre_to_ssb::dB3;
-    optional<float>        profile_nr;
-    if (power) {
-      profile_nr.emplace(power);
-    }
+    power_control_offset_ss ss = power_control_offset_ss::dB3;
 
-    builder.set_tx_power_info_parameters(profile_nr, ss);
+    builder.set_tx_power_info_parameters(power, ss);
 
     ASSERT_EQ(ss, pdu.power_control_offset_ss_profile_nr);
-    ASSERT_EQ(profile_nr ? static_cast<unsigned>(profile_nr.value() + 8) : 255, pdu.power_control_offset_profile_nr);
-  }
-}
-
-TEST(dl_csi_pdu_builder, valid_maintenance_v3_tx_power_parameters_passes)
-{
-  for (auto power : {0, -8}) {
-    dl_csi_rs_pdu         pdu;
-    dl_csi_rs_pdu_builder builder(pdu);
-
-    optional<float> profile_sss;
-    if (power) {
-      profile_sss.emplace(power);
-    }
-
-    builder.set_maintenance_v3_tx_power_info_parameters(profile_sss);
-
-    ASSERT_EQ(profile_sss ? static_cast<int>(profile_sss.value() * 1000.F) : -32768,
-              pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss);
+    ASSERT_EQ(power, pdu.power_control_offset_profile_nr);
   }
 }

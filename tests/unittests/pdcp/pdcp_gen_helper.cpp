@@ -158,7 +158,7 @@ int main(int argc, char** argv)
   pdcp_tx->set_ciphering(security::ciphering_enabled::on);
 
   // Write SDU
-  byte_buffer sdu = {sdu1};
+  byte_buffer sdu = byte_buffer::create(sdu1).value();
   pdcp_tx->handle_sdu(std::move(sdu));
   logger.info(frame.pdu_queue.front().buf.begin(),
               frame.pdu_queue.front().buf.end(),

@@ -177,7 +177,25 @@ f1ap_message srsran::srs_du::generate_ue_context_release_command()
   dl_msg->srb_id_present        = true;
   dl_msg->srb_id                = 1;
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container         = byte_buffer{0x1, 0x2, 0x3, 0x4};
+  dl_msg->rrc_container         = byte_buffer::create({0x1, 0x2, 0x3, 0x4}).value();
+
+  return msg;
+}
+
+f1ap_message srsran::srs_du::generate_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                              gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                              srb_id_t            srb_id,
+                                                              byte_buffer         rrc_container)
+{
+  using namespace asn1::f1ap;
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+  dl_rrc_msg_transfer_s& dl_msg = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+  dl_msg->gnb_du_ue_f1ap_id     = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+  dl_msg->gnb_cu_ue_f1ap_id     = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  dl_msg->srb_id                = srb_id_to_uint(srb_id);
+  dl_msg->rrc_container         = std::move(rrc_container);
 
   return msg;
 }
@@ -307,8 +325,9 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   }
 
   // Generate DU manager response to UE context update.
-  f1ap_du_cfg_handler.next_ue_context_update_response.result                 = true;
-  f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+  f1ap_du_cfg_handler.next_ue_context_update_response.result = true;
+  f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container =
+      byte_buffer::create({0x1, 0x2, 0x3}).value();
 
   // Send UE CONTEXT SETUP REQUEST message to F1AP.
   f1ap->handle_message(msg);

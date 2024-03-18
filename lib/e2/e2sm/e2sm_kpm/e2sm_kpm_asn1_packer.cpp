@@ -87,9 +87,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ran_function_desc.ran_function_name.ran_function_e2_sm_oid.resize(oid.size());
   ran_function_desc.ran_function_name.ran_function_description.resize(func_description.size());
 
-  ran_function_desc.ran_function_name.ran_function_short_name.from_string(short_name.c_str());
-  ran_function_desc.ran_function_name.ran_function_e2_sm_oid.from_string(oid.c_str());
-  ran_function_desc.ran_function_name.ran_function_description.from_string(func_description.c_str());
+  ran_function_desc.ran_function_name.ran_function_short_name.from_string(short_name);
+  ran_function_desc.ran_function_name.ran_function_e2_sm_oid.from_string(oid);
+  ran_function_desc.ran_function_name.ran_function_description.from_string(func_description);
   ran_function_desc.ext = false;
   // Add ric_event_trigger_style item.
   ric_event_trigger_style_item_s ric_event_trigger_style_item;
@@ -107,9 +107,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 1;
   ric_report_style_item.meas_info_action_list.clear();
-  for (auto metric : meas_provider.get_supported_metric_names(E2_NODE_LEVEL)) {
+  for (const auto& metric : meas_provider.get_supported_metric_names(E2_NODE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
-    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_name.from_string(metric);
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
@@ -122,9 +122,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 1;
   ric_report_style_item.meas_info_action_list.clear();
-  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+  for (const auto& metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
-    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_name.from_string(metric);
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
@@ -137,9 +137,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 2;
   ric_report_style_item.meas_info_action_list.clear();
-  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+  for (const auto& metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
-    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_name.from_string(metric);
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
@@ -152,9 +152,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 3;
   ric_report_style_item.meas_info_action_list.clear();
-  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+  for (const auto& metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
-    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_name.from_string(metric);
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
@@ -167,9 +167,9 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 3;
   ric_report_style_item.meas_info_action_list.clear();
-  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+  for (const auto& metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
-    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_name.from_string(metric);
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
@@ -183,6 +183,6 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
     return err_buf;
   }
 
-  asn1::unbounded_octstring<true> ran_function_description(buf.begin(), buf.end());
+  asn1::unbounded_octstring<true> ran_function_description(std::move(buf));
   return ran_function_description;
 }

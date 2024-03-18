@@ -25,7 +25,7 @@
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/support/math_utils.h"
-#include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsran;
@@ -33,7 +33,7 @@ using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
 
-static void pdcch_conversion_test()
+TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
 {
   // Random generators.
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
@@ -48,7 +48,6 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> aggregation_dist(0, 4);
   std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
-  std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
 
   auto                               pm_tools = generate_precoding_matrix_tables(1);
   const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
@@ -61,7 +60,7 @@ static void pdcch_conversion_test()
           for (auto type : {fapi::pdcch_coreset_type::pbch_or_coreset0, fapi::pdcch_coreset_type::other}) {
             for (auto precoder : {coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
                                   coreset_configuration::precoder_granularity_type::all_contiguous_rbs}) {
-              for (int power_nr = -9; power_nr != -7; ++power_nr) {
+              for (int power_nr = -8; power_nr != -7; ++power_nr) {
                 for (int power = -33; power != 3; power += 3) {
                   unsigned sfn                = sfn_dist(gen);
                   unsigned slot               = slot_dist(gen);
@@ -75,7 +74,6 @@ static void pdcch_conversion_test()
                   unsigned aggregation        = pow2(aggregation_dist(gen));
                   unsigned nid_dmrs           = nid_dmrs_dist(gen);
                   unsigned nid_data           = nid_data_dist(gen);
-                  float    power_dmrs         = power_dmrs_dist(gen);
 
                   fapi::dl_pdcch_pdu         pdu;
                   fapi::dl_pdcch_pdu_builder builder(pdu);
@@ -100,28 +98,14 @@ static void pdcch_conversion_test()
                   auto builder_dci = builder.add_dl_dci();
 
                   builder_dci.set_basic_parameters(to_rnti(0), nid_data, n_rnti, cce, aggregation);
-                  optional<float> profile_nr;
-                  optional<float> profile_dmrs;
-                  if (power_nr != -9) {
-                    profile_nr.emplace(power_nr);
-                  } else {
-                    profile_dmrs.emplace(power_dmrs);
-                  }
 
-                  builder_dci.set_tx_power_info_parameter(profile_nr);
+                  builder_dci.set_tx_power_info_parameter(power_nr);
                   builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_basic_parameters(275, 0).add_prg(0,
                                                                                                                   {});
 
                   // Payload.
                   dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
                   builder_dci.set_payload(payload);
-
-                  optional<float> profile_data;
-                  if (power != -33) {
-                    profile_data.emplace(power);
-                  }
-
-                  builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
                   builder_dci.set_parameters_v4_dci(nid_dmrs);
 
                   pdcch_processor::pdu_t proc_pdu;
@@ -129,61 +113,57 @@ static void pdcch_conversion_test()
                   convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot, 0, pm_repo);
 
                   // Test basic parameters.
-                  TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());
-                  TESTASSERT_EQ(slot, proc_pdu.slot.slot_index());
-                  TESTASSERT_EQ(cp, proc_pdu.cp.value);
+                  ASSERT_EQ(sfn, proc_pdu.slot.sfn());
+                  ASSERT_EQ(slot, proc_pdu.slot.slot_index());
+                  ASSERT_EQ(cp, proc_pdu.cp.value);
 
                   // Test coreset parameters.
-                  TESTASSERT_EQ(bwp_size, proc_pdu.coreset.bwp_size_rb);
-                  TESTASSERT_EQ(bwp_start, proc_pdu.coreset.bwp_start_rb);
-                  TESTASSERT_EQ(start_symbol_index, proc_pdu.coreset.start_symbol_index);
-                  TESTASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
+                  ASSERT_EQ(bwp_size, proc_pdu.coreset.bwp_size_rb);
+                  ASSERT_EQ(bwp_start, proc_pdu.coreset.bwp_start_rb);
+                  ASSERT_EQ(start_symbol_index, proc_pdu.coreset.start_symbol_index);
+                  ASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
 
                   if (type == fapi::pdcch_coreset_type::pbch_or_coreset0) {
-                    TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
-                               pdcch_processor::cce_to_reg_mapping_type::CORESET0);
-                    TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
-                    TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
-                    TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
+                    ASSERT_TRUE(proc_pdu.coreset.cce_to_reg_mapping ==
+                                pdcch_processor::cce_to_reg_mapping_type::CORESET0);
+                    ASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
+                    ASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
+                    ASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
                   } else {
                     if (cce_reg_mapping == fapi::cce_to_reg_mapping_type::non_interleaved) {
-                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
-                                 pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED);
-                      TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
-                      TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
-                      TESTASSERT_EQ(0, proc_pdu.coreset.shift_index);
+                      ASSERT_TRUE(proc_pdu.coreset.cce_to_reg_mapping ==
+                                  pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED);
+                      ASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
+                      ASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
+                      ASSERT_EQ(0, proc_pdu.coreset.shift_index);
                     } else {
-                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
-                                 pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED);
-                      TESTASSERT_EQ(reg_bundle, proc_pdu.coreset.reg_bundle_size);
-                      TESTASSERT_EQ(interleaver_size, proc_pdu.coreset.interleaver_size);
-                      TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
+                      ASSERT_TRUE(proc_pdu.coreset.cce_to_reg_mapping ==
+                                  pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED);
+                      ASSERT_EQ(reg_bundle, proc_pdu.coreset.reg_bundle_size);
+                      ASSERT_EQ(interleaver_size, proc_pdu.coreset.interleaver_size);
+                      ASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
                     }
                   }
 
                   // Test DCI.
-                  TESTASSERT_EQ(n_rnti, proc_pdu.dci.n_rnti);
-                  TESTASSERT_EQ(cce, proc_pdu.dci.cce_index);
-                  TESTASSERT_EQ(aggregation, proc_pdu.dci.aggregation_level);
-                  TESTASSERT_EQ(nid_data, proc_pdu.dci.n_id_pdcch_data);
-                  TESTASSERT_EQ(nid_dmrs, proc_pdu.dci.n_id_pdcch_dmrs);
+                  ASSERT_EQ(n_rnti, proc_pdu.dci.n_rnti);
+                  ASSERT_EQ(cce, proc_pdu.dci.cce_index);
+                  ASSERT_EQ(aggregation, proc_pdu.dci.aggregation_level);
+                  ASSERT_EQ(nid_data, proc_pdu.dci.n_id_pdcch_data);
+                  ASSERT_EQ(nid_dmrs, proc_pdu.dci.n_id_pdcch_dmrs);
 
                   // Test powers.
-                  TESTASSERT(std::fabs((profile_nr ? profile_nr.value() : profile_dmrs.value()) -
-                                       proc_pdu.dci.dmrs_power_offset_dB) < 0.001F);
-                  TESTASSERT(std::fabs((profile_data ? profile_data.value()
-                                        : profile_nr ? profile_nr.value()
-                                                     : profile_dmrs.value()) -
-                                       proc_pdu.dci.data_power_offset_dB) < 0.001F);
+                  ASSERT_TRUE(std::fabs((power_nr - proc_pdu.dci.dmrs_power_offset_dB)) < 0.001F);
+                  ASSERT_TRUE(std::fabs((power_nr - proc_pdu.dci.data_power_offset_dB)) < 0.001F);
 
                   // Test vectors.
                   for (unsigned i = 0, e = payload.size(); i != e; ++i) {
-                    TESTASSERT_EQ(payload.test(i), bool(proc_pdu.dci.payload[i]));
+                    ASSERT_EQ(payload.test(i), bool(proc_pdu.dci.payload[i]));
                   }
 
                   // Test frequency domain resources.
                   for (unsigned i = 0, e = 45; i != e; ++i) {
-                    TESTASSERT_EQ(freq_domain.test(i), bool(proc_pdu.coreset.frequency_resources.test(i)));
+                    ASSERT_EQ(freq_domain.test(i), bool(proc_pdu.coreset.frequency_resources.test(i)));
                   }
                 }
               }
@@ -193,10 +173,4 @@ static void pdcch_conversion_test()
       }
     }
   }
-}
-
-int main()
-{
-  pdcch_conversion_test();
-  fmt::print("PDCCH FAPI to PHY message conversion OK\n");
 }

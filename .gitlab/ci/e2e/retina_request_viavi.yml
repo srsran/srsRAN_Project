@@ -12,13 +12,13 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 18
+      requests: 20
     memory:
       requests: "64G"
       limits: "64G"
     hugepages-1Gi:
-      requests: 2Gi
-      limits: 2Gi
+      requests: 4Gi
+      limits: 4Gi
     ephemeral-storage:
       requests: "20G"
       limits: "20G"

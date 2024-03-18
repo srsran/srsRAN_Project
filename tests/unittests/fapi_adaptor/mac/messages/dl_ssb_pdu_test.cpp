@@ -46,8 +46,6 @@ TEST(mac_fapi_ssb_pdu_conversor_test, valid_pdu_should_pass)
   ASSERT_EQ(static_cast<unsigned>(pdu.ssb_case), static_cast<unsigned>(fapi_pdu.ssb_maintenance_v3.case_type));
   ASSERT_EQ(pdu.L_max, fapi_pdu.ssb_maintenance_v3.L_max);
   ASSERT_EQ(static_cast<unsigned>(pdu.scs), static_cast<unsigned>(fapi_pdu.ssb_maintenance_v3.scs));
-  ASSERT_EQ(std::numeric_limits<int16_t>::min(), fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss);
-  ASSERT_EQ(std::numeric_limits<int16_t>::min(), fapi_pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling);
 
   // MIB.
   ASSERT_EQ(fapi::bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);

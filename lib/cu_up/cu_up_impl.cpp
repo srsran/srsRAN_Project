@@ -68,15 +68,16 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
-  dl_exec = cfg.ue_exec_pool->create_dl_pdu_executor();
-  report_error_if_not(dl_exec != nullptr, "Could not create CU-UP executor for control TEID");
+  ctrl_exec_mapper = cfg.ue_exec_pool->create_ue_executor_mapper();
+  report_error_if_not(ctrl_exec_mapper != nullptr, "Could not create CU-UP executor for control TEID");
 
   // Create GTP-U echo and register it at demux
   gtpu_echo_creation_message ngu_echo_msg = {};
   ngu_echo_msg.gtpu_pcap                  = cfg.gtpu_pcap;
   ngu_echo_msg.tx_upper                   = &gtpu_gw_adapter;
   ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
-  ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, *dl_exec, ngu_echo->get_rx_upper_layer_interface());
+  ngu_demux->add_tunnel(
+      GTPU_PATH_MANAGEMENT_TEID, ctrl_exec_mapper->dl_pdu_executor(), ngu_echo->get_rx_upper_layer_interface());
 
   // Connect layers
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);

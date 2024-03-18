@@ -45,7 +45,7 @@ public:
   static const char* name() { return "Inter CU Handover Target Routine"; }
 
 private:
-  void                              fill_e1ap_bearer_context_setup_request(const security::sec_as_config& sec_info);
+  bool                              fill_e1ap_bearer_context_setup_request(const security::sec_as_config& sec_info);
   optional<security::sec_as_config> generate_security_keys(security::security_context& sec_context);
   void                              create_srb1();
   ngap_handover_resource_allocation_response generate_handover_resource_allocation_response(bool success);

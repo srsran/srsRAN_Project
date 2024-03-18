@@ -260,9 +260,8 @@ struct cell_resource_allocator {
   /// Having access to past decisions is useful during the handling of error indications.
   static const size_t RING_MAX_HISTORY_SIZE = 8;
   /// Number of slots managed by this container.
-  static const size_t RING_ALLOCATOR_SIZE =
-      get_allocator_ring_size_gt_min(RING_MAX_HISTORY_SIZE + SCHEDULER_MAX_K0 + NTN_CELL_SPECIFIC_KOFFSET_MAX +
-                                     std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
+  static const size_t RING_ALLOCATOR_SIZE = get_allocator_ring_size_gt_min(
+      RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(NTN_CELL_SPECIFIC_KOFFSET_MAX));
 
   /// Cell configuration
   const cell_configuration& cfg;

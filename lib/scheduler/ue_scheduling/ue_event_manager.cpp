@@ -90,9 +90,10 @@ public:
 
       // Forward DL BO update to UE.
       u.handle_dl_buffer_state_indication(dl_bo);
-      if (dl_bo.lcid == LCID_SRB0) {
-        // Signal SRB0 scheduler with the new SRB0 buffer state.
-        parent.du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(dl_bo.ue_index);
+      if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
+        // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+        parent.du_cells[u.get_pcell().cell_index].fallback_sched->handle_dl_buffer_state_indication_srb(
+            dl_bo.ue_index, dl_bo.lcid == LCID_SRB0);
       }
 
       // Log event.
@@ -301,18 +302,18 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
             return;
           }
 
+          // Process Timing Advance Offset.
+          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
+            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
+          }
+
           // Log event.
           ev_logger.enqueue(scheduler_event_logger::crc_event{
               crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
-
-          // Process Timing Advance Offset.
-          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
-            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
-          }
         },
         "CRC",
         true);
@@ -351,9 +352,6 @@ void ue_event_manager::handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep
 
   // Log event.
   ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), csi_rep});
-
-  // Report the CSI metric.
-  metrics_handler.handle_csi_report(ue_cc.ue_index, csi_rep);
 }
 
 void ue_event_manager::handle_uci_indication(const uci_indication& ind)
@@ -365,9 +363,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
     cell_specific_events[ind.cell_index].emplace(
         uci.ue_index,
-        [this, uci_sl = ind.slot_rx, uci_pdu = uci.pdu](ue_cell& ue_cc) {
-          if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu);
+        [this, uci_sl = ind.slot_rx, uci_pdu = uci](ue_cell& ue_cc) {
+          if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu.pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu.pdu);
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
@@ -383,9 +381,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
             }
 
-            // Report the PUCCH SINR metric.
-            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
-
             const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
             // Process Timing Advance Offset.
             if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
@@ -393,8 +388,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
 
-          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu);
+          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu);
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
@@ -406,8 +401,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               handle_csi(ue_cc, *pdu.csi);
             }
 
-          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu);
+          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu.pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu.pdu);
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
@@ -429,9 +424,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               handle_csi(ue_cc, *pdu.csi);
             }
 
-            // Report the PUCCH metric to the scheduler.
-            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
-
             const bool is_uci_valid = not pdu.harqs.empty() or
                                       (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
                                       pdu.csi.has_value();
@@ -441,6 +433,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
           }
+
+          // Report the UCI PDU to the metrics handler.
+          metrics_handler.handle_uci_pdu_indication(uci_pdu);
         },
         "UCI",
         // Note: We do not warn if the UE is not found, because there is this transient period when the UE
@@ -649,16 +644,16 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 }
 
 void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
-                                ue_srb0_scheduler&       srb0_sched,
+                                ue_fallback_scheduler&   fallback_sched,
                                 uci_scheduler_impl&      uci_sched)
 {
   const du_cell_index_t cell_index = cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  du_cells[cell_index].cfg        = &cell_res_grid.cfg;
-  du_cells[cell_index].res_grid   = &cell_res_grid;
-  du_cells[cell_index].srb0_sched = &srb0_sched;
-  du_cells[cell_index].uci_sched  = &uci_sched;
+  du_cells[cell_index].cfg            = &cell_res_grid.cfg;
+  du_cells[cell_index].res_grid       = &cell_res_grid;
+  du_cells[cell_index].fallback_sched = &fallback_sched;
+  du_cells[cell_index].uci_sched      = &uci_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

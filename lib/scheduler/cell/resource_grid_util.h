@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/scheduler/sched_consts.h"
+
 namespace srsran {
 
 /// \brief Retrieves the resource grid allocator ring size greater than given minimum value.
@@ -46,6 +48,12 @@ constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
     return 40;
   }
   return 640;
+}
+
+/// \brief Retrieves how far in advance the scheduler can allocate resources in the UL resource grid.
+constexpr inline unsigned get_max_slot_ul_alloc_delay(unsigned ntn_cs_koffset)
+{
+  return SCHEDULER_MAX_K0 + std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA) + ntn_cs_koffset;
 }
 
 } // namespace srsran

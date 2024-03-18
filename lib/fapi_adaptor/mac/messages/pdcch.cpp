@@ -113,12 +113,9 @@ void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
                                      to_nof_cces(dci.info->cces.aggr_lvl));
 
     // This parameter is not passed by the MAC, set it to zero.
-    dci_builder.set_tx_power_info_parameter(0.F);
+    dci_builder.set_tx_power_info_parameter(dci.info->tx_pwr.pwr_ctrl_offset_ss);
 
     fill_precoding_and_beamforming(dci_builder, pm_mapper, cell_nof_prbs);
-
-    // These parameters are not passed by the MAC, leave them as disabled.
-    dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});
 
     dci_builder.set_parameters_v4_dci(dci.info->n_id_pdcch_dmrs);
 

@@ -116,7 +116,8 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = create_sdu(sdu_size, count);
-  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
+                         /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -125,12 +126,11 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
-  byte_buffer_chain pdu;
-
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  pdu                           = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  byte_buffer_chain    pdu =
+      byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
   pcell_worker.run_pending_tasks();
@@ -141,7 +141,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read another PDU from lower end but there is nothing to read
   tx_pdu.resize(sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
-  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), 0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
@@ -151,7 +151,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   sdu_buf = create_sdu(sdu_size, count);
-  sdu     = {sdu_buf.deep_copy(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
+  sdu     = {sdu_buf.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
@@ -161,7 +161,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read PDU from lower end with insufficient space for the whole SDU
   tx_pdu.resize(sdu_size - 1);
   nwritten = rlc->pull_pdu(tx_pdu);
-  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), 0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
@@ -171,7 +171,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   byte_buffer sdu_buf2 = create_sdu(sdu_size, count);
-  sdu = {sdu_buf2.deep_copy(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
+  sdu = {sdu_buf2.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -183,7 +183,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read first PDU from lower end with oversized space
   tx_pdu.resize(3 * sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
-  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
   pcell_worker.run_pending_tasks();
@@ -194,7 +194,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read second PDU from lower end with oversized space
   tx_pdu.resize(3 * sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
-  pdu      = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf2);
   pcell_worker.run_pending_tasks();
@@ -211,7 +211,8 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = create_sdu(sdu_size, count);
-  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_sn = */ count}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
+                         /* pdcp_sn = */ count}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -228,12 +229,11 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 0);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
 
-  byte_buffer_chain pdu;
-
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  pdu                           = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  byte_buffer_chain    pdu =
+      byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
   pcell_worker.run_pending_tasks();
@@ -250,7 +250,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = create_sdu(sdu_size, count);
-  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
+                         /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -260,10 +261,10 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   EXPECT_EQ(tester->bsr_count, 1);
 
   // read PDU from lower end
-  byte_buffer_chain    pdu;
   std::vector<uint8_t> tx_pdu(sdu_size - 1);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  pdu                           = byte_buffer_slice{span<uint8_t>(tx_pdu.data(), nwritten)};
+  byte_buffer_chain    pdu =
+      byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
 
   rlc_tx_metrics m = rlc->get_metrics();
   ASSERT_EQ(m.mode, rlc_mode::tm);

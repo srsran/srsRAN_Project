@@ -517,8 +517,6 @@ android n300:
 viavi:
   stage: rf
   extends: .e2e-run
-  when: manual
-  allow_failure: true
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"

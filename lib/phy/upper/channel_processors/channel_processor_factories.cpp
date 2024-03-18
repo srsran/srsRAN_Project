@@ -466,8 +466,10 @@ public:
 class pdsch_processor_pool_factory : public pdsch_processor_factory
 {
 public:
-  pdsch_processor_pool_factory(std::shared_ptr<pdsch_processor_factory> factory_, unsigned max_nof_processors_) :
-    factory(std::move(factory_)), max_nof_processors(max_nof_processors_)
+  pdsch_processor_pool_factory(std::shared_ptr<pdsch_processor_factory> factory_,
+                               unsigned                                 max_nof_processors_,
+                               bool                                     blocking_) :
+    factory(std::move(factory_)), max_nof_processors(max_nof_processors_), blocking(blocking_)
   {
     srsran_assert(factory, "Invalid PDSCH processor factory.");
     srsran_assert(max_nof_processors >= 1,
@@ -483,7 +485,7 @@ public:
       processor = factory->create();
     }
 
-    return std::make_unique<pdsch_processor_pool>(processors);
+    return std::make_unique<pdsch_processor_pool>(processors, blocking);
   }
 
   std::unique_ptr<pdsch_processor> create(srslog::basic_logger& logger, bool enable_logging_broadcast) override
@@ -494,7 +496,7 @@ public:
       processor = factory->create(logger, enable_logging_broadcast);
     }
 
-    return std::make_unique<pdsch_processor_pool>(processors);
+    return std::make_unique<pdsch_processor_pool>(processors, blocking);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override { return factory->create_validator(); }
@@ -502,6 +504,7 @@ public:
 private:
   std::shared_ptr<pdsch_processor_factory> factory;
   unsigned                                 max_nof_processors;
+  bool                                     blocking;
 };
 
 class prach_detector_factory_sw : public prach_detector_factory
@@ -955,9 +958,10 @@ srsran::create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx
 
 std::shared_ptr<pdsch_processor_factory>
 srsran::create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory,
-                                    unsigned                                 max_nof_processors)
+                                    unsigned                                 max_nof_processors,
+                                    bool                                     blocking)
 {
-  return std::make_shared<pdsch_processor_pool_factory>(std::move(pdsch_proc_factory), max_nof_processors);
+  return std::make_shared<pdsch_processor_pool_factory>(std::move(pdsch_proc_factory), max_nof_processors, blocking);
 }
 
 std::shared_ptr<prach_detector_factory>

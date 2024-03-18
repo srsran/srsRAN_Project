@@ -74,12 +74,12 @@ void test_bit_encoder()
 
   // byte_buffer:  [10101000][00001  000][00010  000][00011___]
   // Written bits:      [000  00001][000  00010][000  00011]
-  byte_buffer vec = {0b1, 0b10, 0b11};
+  byte_buffer vec = byte_buffer::create({0b1, 0b10, 0b11}).value();
   enc.pack_bytes(vec);
   TESTASSERT_EQ(4, enc.nof_bytes());
   TESTASSERT_EQ(5 + 3 * 8, enc.nof_bits());
   TESTASSERT_EQ(5, enc.next_bit_offset());
-  byte_buffer vec2 = {0b10101000, 0b00001000, 0b00010000, 0b00011000};
+  byte_buffer vec2 = byte_buffer::create({0b10101000, 0b00001000, 0b00010000, 0b00011000}).value();
   TESTASSERT(bytes == vec2);
 
   // TEST: alignment padding.
@@ -136,7 +136,7 @@ void test_bit_encoder()
       0x40, // two MSBs contain LSBs of 0x01
   };
 
-  TESTASSERT(bytes == byte_buffer{packed_vec});
+  TESTASSERT(bytes == byte_buffer::create(packed_vec).value());
 }
 
 void test_bit_encoder_bool()
@@ -146,7 +146,7 @@ void test_bit_encoder_bool()
   uint8_t     dummy          = 0;
   bool        bit1           = true;
   bool        bit0           = false;
-  byte_buffer expected_bytes = {0x02};
+  byte_buffer expected_bytes = byte_buffer::create({0x02}).value();
 
   enc.pack(dummy, 6);
   enc.pack(bit1, 1);
@@ -160,7 +160,7 @@ void test_bit_encoder_uint64_aligned()
   byte_buffer bytes;
   bit_encoder enc(bytes);
   uint64_t    val64          = 0xc00f00000000f001;
-  byte_buffer expected_bytes = {0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01};
+  byte_buffer expected_bytes = byte_buffer::create({0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01}).value();
 
   TESTASSERT_EQ(0, enc.nof_bytes());
   TESTASSERT_EQ(0, enc.nof_bits());
@@ -179,7 +179,7 @@ void test_bit_encoder_uint64_offset()
   bit_encoder enc(bytes);
   uint8_t     val1           = 1;
   uint64_t    val64          = 0xc00f00000000f001;
-  byte_buffer expected_bytes = {0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80};
+  byte_buffer expected_bytes = byte_buffer::create({0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80}).value();
 
   TESTASSERT_EQ(0, enc.nof_bytes());
   TESTASSERT_EQ(0, enc.nof_bits());
@@ -232,7 +232,7 @@ void test_bit_decoder_empty_buffer()
 
 void test_bit_decoder()
 {
-  byte_buffer          bytes = {0b1, 0b10, 0b11, 0b100};
+  byte_buffer          bytes = byte_buffer::create({0b1, 0b10, 0b11, 0b100}).value();
   bit_decoder          dec(bytes);
   uint32_t             val;
   std::vector<uint8_t> vec;
@@ -308,9 +308,48 @@ void test_bit_decoder()
   TESTASSERT_EQ(4 * 8, dec.nof_bits());
 }
 
+void test_bit_decoder_bytes()
+{
+  byte_buffer          bytes = byte_buffer::create({0b1, 0b10, 0b11, 0b100}).value();
+  bit_decoder          dec(bytes);
+  std::vector<uint8_t> vec;
+
+  TESTASSERT_EQ(0, dec.nof_bytes());
+  TESTASSERT_EQ(0, dec.nof_bits());
+  TESTASSERT(bytes == dec.data());
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:   [00000001]
+  vec.resize(1);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(1, dec.nof_bytes());
+  TESTASSERT_EQ(8, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b1, vec[0]);
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:             [00000010][00000011]
+  vec.resize(2);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(3, dec.nof_bytes());
+  TESTASSERT_EQ(24, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b10, vec[0]);
+  TESTASSERT_EQ(0b11, vec[1]);
+
+  // byte_buffer: [00000001][00000010][00000011][00000100]
+  // Read bits:                                 [00000100]
+  vec.resize(1);
+  TESTASSERT(dec.unpack_bytes(vec));
+  TESTASSERT_EQ(4, dec.nof_bytes());
+  TESTASSERT_EQ(32, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(0b100, vec[0]);
+}
+
 void test_bit_decoder_bool()
 {
-  byte_buffer bytes = {0x02};
+  byte_buffer bytes = byte_buffer::create({0x02}).value();
   bit_decoder dec(bytes);
   uint8_t     dummy;
   bool        bit1, bit0;
@@ -325,7 +364,7 @@ void test_bit_decoder_bool()
 
 void test_bit_decoder_uint64_aligned()
 {
-  byte_buffer bytes = {0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01};
+  byte_buffer bytes = byte_buffer::create({0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01}).value();
   bit_decoder dec(bytes);
   uint64_t    val;
 
@@ -342,7 +381,7 @@ void test_bit_decoder_uint64_aligned()
 
 void test_bit_decoder_uint64_offset()
 {
-  byte_buffer bytes = {0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80};
+  byte_buffer bytes = byte_buffer::create({0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80}).value();
   bit_decoder dec(bytes);
   uint64_t    val;
 
@@ -371,6 +410,7 @@ int main()
   test_bit_encoder_uint64_offset();
   test_bit_decoder_empty_buffer();
   test_bit_decoder();
+  test_bit_decoder_bytes();
   test_bit_decoder_bool();
   test_bit_decoder_uint64_aligned();
   test_bit_decoder_uint64_offset();

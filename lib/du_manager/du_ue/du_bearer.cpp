@@ -107,6 +107,7 @@ void du_drb_connector::disconnect()
   // Disconnect MAC <-> RLC interface.
   mac_rx_sdu_notifier.disconnect();
   rlc_tx_buffer_state_notif.disconnect();
+  mac_tx_sdu_notifier.disconnect();
 }
 
 void du_ue_drb::stop()
@@ -125,7 +126,9 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                       span<const up_transport_layer_info>  uluptnl_info_list,
                                                       gtpu_teid_pool&                      teid_pool,
                                                       const du_manager_params&             du_params,
-                                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier)
+                                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier,
+                                                      const qos_characteristics&           qos_info,
+                                                      optional<gbr_qos_info_t>             gbr_qos_info)
 {
   srsran_assert(not is_srb(lcid), "Invalid DRB LCID={}", lcid);
   srsran_assert(not uluptnl_info_list.empty(), "Invalid UP TNL Info list");
@@ -144,11 +147,13 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
 
   // > Setup DRB config
-  drb->drb_id  = drb_id;
-  drb->lcid    = lcid;
-  drb->rlc_cfg = rlc_cfg;
-  drb->f1u_cfg = f1u_cfg;
-  drb->mac_cfg = mac_cfg;
+  drb->drb_id       = drb_id;
+  drb->lcid         = lcid;
+  drb->rlc_cfg      = rlc_cfg;
+  drb->f1u_cfg      = f1u_cfg;
+  drb->mac_cfg      = mac_cfg;
+  drb->qos_info     = qos_info;
+  drb->gbr_qos_info = gbr_qos_info;
 
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
