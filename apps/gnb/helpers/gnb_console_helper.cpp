@@ -17,8 +17,12 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <vector>
 
 using namespace srsran;
+
+// List of possible log channels that can be dynamically changed.
+static const std::vector<std::string> dynamic_log_channels = {"PHY", "MAC", "SCHED", "RLC", "PDCP"};
 
 // Parses integer values from a console command.
 template <typename Integer>
@@ -191,6 +195,19 @@ void gnb_console_helper::handle_log_command(const std::list<std::string>& args)
   std::string level_str = args.back();
   std::transform(level_str.begin(), level_str.end(), level_str.begin(), ::toupper);
 
+  // Check if the log channel exists.
+  if (std::find(dynamic_log_channels.begin(), dynamic_log_channels.end(), channel_str) == dynamic_log_channels.end()) {
+    fmt::print(
+        "Invalid {} log channel. Valid channels are: {}\n", channel_str, span<const std::string>(dynamic_log_channels));
+    return;
+  }
+
+  // Check if the log channel exists.
+  if (srslog::find_logger<srslog::basic_logger>(channel_str) == nullptr) {
+    fmt::print("Nonexistent {} log channel.\n", channel_str);
+    return;
+  }
+
   // Convert to enum and check if it is valid.
   srslog::basic_levels level = srslog::str_to_basic_level(level_str);
   if (level_str != basic_level_to_string(level)) {
@@ -210,10 +227,23 @@ void gnb_console_helper::handle_sleep_command(const std::list<std::string>& args
     return;
   }
 
-  double seconds = std::strtod(args.front().c_str(), nullptr);
+  // Parse seconds.
+  char*   val     = nullptr;
+  int64_t seconds = std::strtol(args.front().c_str(), &val, 10);
 
-  std::chrono::microseconds microseconds(static_cast<uint64_t>(seconds * 1e6));
-  std::this_thread::sleep_for(microseconds);
+  // Verify the argument is numeric.
+  if (val != args.front().c_str() + args.front().size()) {
+    fmt::print("The provided seconds is not a number.\n");
+    return;
+  }
+
+  // Verify it is not negative.
+  if (seconds < 0) {
+    fmt::print("The number of seconds to sleep cannot be negative.\n");
+    return;
+  }
+
+  std::this_thread::sleep_for(std::chrono::seconds(seconds));
 }
 
 void gnb_console_helper::handle_command(const std::string& command)
@@ -259,6 +289,9 @@ void gnb_console_helper::print_help()
   fmt::print("\ttx_gain <port> <gain>: set Tx gain\n");
   fmt::print("\trx_gain <port> <gain>: set Rx gain\n");
   fmt::print("\tlog <channel> <level>: set log level for the given channel (experimental)\n");
+  fmt::print("\t                       Allowed channels are: {}\n", span<const std::string>(dynamic_log_channels));
+  fmt::print("\t                       Note: Certain log messages might not be available if they depend on\n");
+  fmt::print("\t                       logging decorators that are not instanced with the initial log level.\n");
   fmt::print("\tsleep <seconds>:       stops the execution of console sequential commands for the specified time\n");
   fmt::print("\n");
 }
