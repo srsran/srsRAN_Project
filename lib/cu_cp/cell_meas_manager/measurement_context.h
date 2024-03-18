@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/meas_types.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -18,6 +20,59 @@ namespace srs_cu_cp {
 struct meas_context_t {
   meas_obj_id_t   meas_obj_id   = meas_obj_id_t::invalid;
   report_cfg_id_t report_cfg_id = report_cfg_id_t::invalid;
+};
+
+class cell_meas_manager_ue_context
+{
+public:
+  /// \brief Get the next available meas id.
+  meas_id_t allocate_meas_id()
+  {
+    // return invalid when no meas id is available
+    if (meas_ids.size() == MAX_NOF_MEAS) {
+      return meas_id_t::invalid;
+    }
+
+    auto new_meas_id = (meas_id_t)meas_ids.find_first_empty();
+    if (new_meas_id == meas_id_t::max) {
+      return meas_id_t::invalid;
+    }
+    meas_ids.emplace(meas_id_to_uint(new_meas_id));
+    return new_meas_id;
+  }
+
+  void remove_meas_id(meas_id_t meas_id) { meas_ids.erase(meas_id_to_uint(meas_id)); }
+
+  /// \brief Get the next available meas obj id.
+  meas_obj_id_t allocate_meas_obj_id()
+  {
+    // return invalid when no meas obj id is available
+    if (meas_obj_ids.size() == MAX_NOF_MEAS_OBJ) {
+      return meas_obj_id_t::invalid;
+    }
+
+    auto new_meas_obj_id = (meas_obj_id_t)meas_obj_ids.find_first_empty();
+    if (new_meas_obj_id == meas_obj_id_t::max) {
+      return meas_obj_id_t::invalid;
+    }
+    meas_obj_ids.emplace(meas_obj_id_to_uint(new_meas_obj_id));
+    return new_meas_obj_id;
+  }
+
+  void remove_meas_obj_id(meas_obj_id_t meas_obj_id) { meas_obj_ids.erase(meas_obj_id_to_uint(meas_obj_id)); }
+
+  slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;     // 0 is reserved for invalid meas_id
+  slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids; // 0 is reserved for invalid meas_obj_id
+
+  std::map<meas_id_t, meas_context_t>   meas_id_to_meas_context;
+  std::map<meas_obj_id_t, nr_cell_id_t> meas_obj_id_to_nci;
+
+  cell_meas_manager_ue_context()
+  {
+    // Mark zero index as occupied as the first valid meas(-obj) ID is 1.
+    meas_ids.emplace(0);
+    meas_obj_ids.emplace(0);
+  }
 };
 
 } // namespace srs_cu_cp

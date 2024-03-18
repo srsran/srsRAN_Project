@@ -55,7 +55,7 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
-  ue_index_t             ue_index = ue_index_t::min;
+  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
   nr_cell_id_t           cid      = 0;
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
@@ -67,7 +67,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are
 {
   create_default_manager();
 
-  ue_index_t             ue_index = ue_index_t::min;
+  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
   nr_cell_id_t           cid      = 5;
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
@@ -79,7 +79,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
 {
   create_default_manager();
 
-  ue_index_t ue_index = ue_index_t::min;
+  ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
 
   meas_obj_id_t meas_obj_id = meas_obj_id_t::min;
   for (unsigned cid = 0; cid < 2; ++cid) {
@@ -93,7 +93,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
 {
   create_default_manager();
 
-  ue_index_t         ue_index = ue_index_t::min;
+  ue_index_t         ue_index = ue_mng.add_ue(uint_to_du_index(0));
   const nr_cell_id_t nci      = 1;
 
   // get current config
@@ -116,7 +116,7 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
 {
   create_default_manager();
 
-  ue_index_t         ue_index = ue_index_t::min;
+  ue_index_t         ue_index = ue_mng.add_ue(uint_to_du_index(0));
   const nr_cell_id_t nci      = 1;
 
   // get current config
@@ -139,7 +139,7 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_n
   // Create a manager without ncells and without report config.
   create_manager_without_ncells_and_periodic_report();
 
-  ue_index_t             ue_index = ue_index_t::min;
+  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
   nr_cell_id_t           cid      = 0;
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, cid);
 
@@ -151,7 +151,7 @@ TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_remo
 {
   create_default_manager();
 
-  ue_index_t         ue_index    = ue_index_t::min;
+  ue_index_t         ue_index    = ue_mng.add_ue(uint_to_du_index(0));
   const nr_cell_id_t initial_nci = 0;
 
   // Make sure meas_cfg is created (no previous meas config provided)

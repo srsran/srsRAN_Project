@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/cu_cp/cell_meas_manager/cell_meas_manager_impl.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -45,6 +46,11 @@ protected:
 
   std::unique_ptr<cell_meas_manager> manager;
   dummy_mobility_manager             mobility_manager;
+  manual_task_worker                 ctrl_worker{128};
+  timer_manager                      timers;
+  ue_configuration                   ue_config;
+  up_resource_manager_cfg            up_config;
+  ue_manager                         ue_mng{ue_config, up_config, timers, ctrl_worker};
 };
 
 } // namespace srs_cu_cp

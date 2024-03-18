@@ -36,7 +36,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
   mobility_mng(config_.mobility_config.mobility_manager_config, du_db, ue_mng),
-  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier),
+  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -296,7 +296,6 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                        e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
                                        f1ap_adapters.at(du_index),
                                        ngap_adapter,
-                                       cell_meas_mng,
                                        ue_mng,
                                        logger);
 }

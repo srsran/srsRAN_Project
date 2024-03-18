@@ -15,8 +15,9 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
-                                     cell_meas_mobility_manager_notifier& mobility_mng_notifier_) :
-  cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), logger(srslog::fetch_basic_logger("CU-CP"))
+                                     cell_meas_mobility_manager_notifier& mobility_mng_notifier_,
+                                     ue_manager&                          ue_mng_) :
+  cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
   srsran_assert(is_valid_configuration(cfg), "Invalid cell measurement configuration");
   log_cells(logger, cfg);
@@ -43,12 +44,12 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
     return meas_cfg;
   }
 
+  auto& ue_meas_context = ue_mng.get_measurement_context(ue_index);
   // If no ue context for the current UE exists, create a new one.
-  if (ue_contexts.find(ue_index) == ue_contexts.end()) {
+  if (!ue_meas_context.has_value()) {
     logger.debug("ue={}: Creating new measurement context", ue_index);
-    ue_contexts.emplace(ue_index, cell_meas_manager_ue_context{});
+    ue_meas_context = cell_meas_manager_ue_context{};
   }
-  auto& ue_context = ue_contexts.at(ue_index);
 
   // Create fresh config.
   meas_cfg.emplace();
@@ -61,16 +62,16 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
     // Remove measurement objects.
     for (const auto& meas_obj : old_cfg.meas_obj_to_add_mod_list) {
       logger.debug("ue={}: Removing meas_obj_id={}", ue_index, meas_obj.meas_obj_id);
-      ue_context.remove_meas_obj_id(meas_obj.meas_obj_id);
-      ue_context.meas_obj_id_to_nci.erase(meas_obj.meas_obj_id);
+      ue_meas_context.value().remove_meas_obj_id(meas_obj.meas_obj_id);
+      ue_meas_context.value().meas_obj_id_to_nci.erase(meas_obj.meas_obj_id);
       new_cfg.meas_obj_to_rem_list.push_back(meas_obj.meas_obj_id);
     }
 
     // Remove measurement IDs.
     for (const auto& meas_id : old_cfg.meas_id_to_add_mod_list) {
       logger.debug("ue={}: Removing meas_id={}", ue_index, meas_id.meas_id);
-      ue_context.remove_meas_id(meas_id.meas_id);
-      ue_context.meas_id_to_meas_context.erase(meas_id.meas_id);
+      ue_meas_context.value().remove_meas_id(meas_id.meas_id);
+      ue_meas_context.value().meas_id_to_meas_context.erase(meas_id.meas_id);
       new_cfg.meas_id_to_rem_list.push_back(meas_id.meas_id);
     }
 
@@ -83,14 +84,14 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
   // Add periodic report configuration for the serving cell.
   // Create meas object for serving cell if periodic report cfg is set
   if (cell_config.periodic_report_cfg_id.has_value()) {
-    if (ue_context.meas_obj_ids.size() == MAX_NOF_MEAS_OBJ) {
+    if (ue_meas_context.value().meas_obj_ids.size() == MAX_NOF_MEAS_OBJ) {
       logger.warning("ue={}: Can't add periodical report config for serving cell. Maximum ({}) reached",
                      ue_index,
                      MAX_NOF_MEAS_OBJ);
     } else {
       // add meas obj to add mod
       rrc_meas_obj_to_add_mod meas_obj;
-      meas_obj.meas_obj_id               = ue_context.allocate_meas_obj_id();
+      meas_obj.meas_obj_id               = ue_meas_context.value().allocate_meas_obj_id();
       auto& meas_obj_nr                  = meas_obj.meas_obj_nr.emplace();
       meas_obj_nr.ssb_freq               = cell_config.serving_cell_cfg.ssb_arfcn;
       meas_obj_nr.ssb_subcarrier_spacing = cell_config.serving_cell_cfg.ssb_scs;
@@ -105,7 +106,7 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
       new_cfg.meas_obj_to_add_mod_list.push_back(meas_obj);
 
       // add meas obj id to lookup
-      ue_context.meas_obj_id_to_nci.emplace(meas_obj.meas_obj_id, serving_nci);
+      ue_meas_context.value().meas_obj_id_to_nci.emplace(meas_obj.meas_obj_id, serving_nci);
 
       // add report cfg to add mod
       rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
@@ -117,14 +118,14 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
       // Add meas id to link the neighbor cell and the report together.
       rrc_meas_id_to_add_mod meas_id_to_add_mod;
 
-      meas_id_to_add_mod.meas_id       = ue_context.allocate_meas_id();
+      meas_id_to_add_mod.meas_id       = ue_meas_context.value().allocate_meas_id();
       meas_id_to_add_mod.meas_obj_id   = meas_obj.meas_obj_id;
       meas_id_to_add_mod.report_cfg_id = cell_config.periodic_report_cfg_id.value();
 
       new_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
       // add meas id to lookup
-      ue_context.meas_id_to_meas_context.emplace(
+      ue_meas_context.value().meas_id_to_meas_context.emplace(
           meas_id_to_add_mod.meas_id, meas_context_t{meas_id_to_add_mod.meas_obj_id, meas_id_to_add_mod.report_cfg_id});
     }
   }
@@ -144,7 +145,7 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
 
     // add meas obj to add mod
     rrc_meas_obj_to_add_mod meas_obj;
-    meas_obj.meas_obj_id = ue_context.allocate_meas_obj_id();
+    meas_obj.meas_obj_id = ue_meas_context.value().allocate_meas_obj_id();
     meas_obj.meas_obj_nr.emplace();
     auto& meas_obj_nr                  = meas_obj.meas_obj_nr.value();
     meas_obj_nr.ssb_freq               = meas_cell_config.serving_cell_cfg.ssb_arfcn;
@@ -160,7 +161,7 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
     new_cfg.meas_obj_to_add_mod_list.push_back(meas_obj);
 
     // add meas obj id to lookup
-    ue_context.meas_obj_id_to_nci.emplace(meas_obj.meas_obj_id, ncell.nci);
+    ue_meas_context.value().meas_obj_id_to_nci.emplace(meas_obj.meas_obj_id, ncell.nci);
 
     // add report cfg to add mod
     for (const auto& report_cfg_id : ncell.report_cfg_ids) {
@@ -173,14 +174,14 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
       // Add meas id to link the neighbor cell and the report together.
       rrc_meas_id_to_add_mod meas_id_to_add_mod;
 
-      meas_id_to_add_mod.meas_id       = ue_context.allocate_meas_id();
+      meas_id_to_add_mod.meas_id       = ue_meas_context.value().allocate_meas_id();
       meas_id_to_add_mod.meas_obj_id   = meas_obj.meas_obj_id;
       meas_id_to_add_mod.report_cfg_id = report_cfg_id;
 
       new_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
       // add meas id to lookup
-      ue_context.meas_id_to_meas_context.emplace(
+      ue_meas_context.value().meas_id_to_meas_context.emplace(
           meas_id_to_add_mod.meas_id, meas_context_t{meas_id_to_add_mod.meas_obj_id, meas_id_to_add_mod.report_cfg_id});
     }
   }
@@ -252,15 +253,16 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
 {
   logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
 
+  auto& ue_meas_context = ue_mng.get_measurement_context(ue_index);
   // Verify measurement context exists for this UE.
-  if (ue_contexts.find(ue_index) == ue_contexts.end()) {
+  if (!ue_meas_context.has_value()) {
     logger.debug("ue={}: No measurement context found", ue_index);
     return;
   }
-  auto& ue_context = ue_contexts.at(ue_index);
 
   // Verify meas_id is valid.
-  if (ue_context.meas_id_to_meas_context.find(meas_results.meas_id) == ue_context.meas_id_to_meas_context.end()) {
+  if (ue_meas_context.value().meas_id_to_meas_context.find(meas_results.meas_id) ==
+      ue_meas_context.value().meas_id_to_meas_context.end()) {
     logger.debug("ue={} Measurement result for unknown meas_id={} received", ue_index, meas_results.meas_id);
     return;
   }
@@ -318,15 +320,4 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
       }
     }
   }
-}
-
-void cell_meas_manager::remove_ue_context(ue_index_t ue_index)
-{
-  if (ue_contexts.find(ue_index) == ue_contexts.end()) {
-    logger.debug("ue={}: Can't remove UE measurement context. Cause: Context not found", ue_index);
-    return;
-  }
-
-  logger.debug("ue={}: Measurement context removed", ue_index);
-  ue_contexts.erase(ue_index);
 }
