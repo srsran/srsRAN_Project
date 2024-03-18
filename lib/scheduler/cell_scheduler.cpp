@@ -100,7 +100,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   csi_sch.run_slot(res_grid[0]);
 
   // > Schedule SIB1 and SI-message signalling.
-  sib1_sch.schedule_sib1(res_grid[0], sl_tx);
+  sib1_sch.run_slot(res_grid, sl_tx);
   si_msg_sch.run_slot(res_grid[0]);
 
   // > Schedule PUCCH guardbands.
