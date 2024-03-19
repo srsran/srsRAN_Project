@@ -11,6 +11,7 @@ target_include_directories(mobility_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(mobility_test_helpers srsran_cu_cp srsran_e1ap e1ap_test_helpers f1ap_test_helpers rrc_ue_test_helpers ngap_test_helpers srsran_support f1ap_asn1 srslog)
 
 set(SOURCES inter_du_handover_routine_test.cpp
+            inter_cu_handover_routine_test.cpp
             handover_reconfiguration_routine_test.cpp)
 
 add_executable(cu_cp_mobility_test ${SOURCES})

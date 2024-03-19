@@ -89,21 +89,31 @@ cu_cp_test::cu_cp_test()
   cell_cfg_1.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
   cell_cfg_1.serving_cell_cfg.nci    = 0x19b0;
   cell_cfg_1.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
-  neighbor_cell_meas_config ncell_1;
-  ncell_1.nci = 0x19b1;
-  ncell_1.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
-  cell_cfg_1.ncells.push_back(ncell_1);
+  cell_cfg_1.ncells.push_back({0x19b1, {uint_to_report_cfg_id(2)}});
+  // Add external cell (for inter CU handover tests)
+  cell_cfg_1.ncells.push_back({0x19c0, {uint_to_report_cfg_id(2)}});
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19b0, cell_cfg_1);
 
   cell_meas_config cell_cfg_2;
   cell_cfg_2.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
   cell_cfg_2.serving_cell_cfg.nci    = 0x19b1;
   cell_cfg_2.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
-  neighbor_cell_meas_config ncell_2;
-  ncell_2.nci = 0x19b0;
-  ncell_2.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
-  cell_cfg_2.ncells.push_back(ncell_2);
+  cell_cfg_2.ncells.push_back({0x19b0, {uint_to_report_cfg_id(2)}});
   cfg.mobility_config.meas_manager_config.cells.emplace(0x19b1, cell_cfg_2);
+
+  // Add an external cell
+  cell_meas_config cell_cfg_3;
+  cell_cfg_3.periodic_report_cfg_id     = uint_to_report_cfg_id(1);
+  cell_cfg_3.serving_cell_cfg.nci       = 0x19c0;
+  cell_cfg_3.serving_cell_cfg.gnb_id    = gnb_id_t{412, 32};
+  cell_cfg_3.serving_cell_cfg.pci       = 3;
+  cell_cfg_3.serving_cell_cfg.ssb_arfcn = 632628;
+  cell_cfg_3.serving_cell_cfg.band      = nr_band::n78;
+  cell_cfg_3.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz15;
+  cell_cfg_3.serving_cell_cfg.ssb_mtc   = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
+
+  cell_cfg_3.ncells.push_back({0x19b0, {uint_to_report_cfg_id(2)}});
+  cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_3);
 
   // Add periodic event
   rrc_report_cfg_nr periodic_report_cfg;
