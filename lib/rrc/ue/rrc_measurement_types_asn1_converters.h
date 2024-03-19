@@ -33,27 +33,27 @@ inline rrc_ssb_mtc asn1_to_ssb_mtc(const asn1::rrc_nr::ssb_mtc_s& asn1_ssb_mtc)
   // periodicity and offset
   switch (asn1_ssb_mtc.periodicity_and_offset.type()) {
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf5:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)5;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf5;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf5();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf10:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)10;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf10;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf10();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf20:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)20;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf20;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf20();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf40:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)40;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf40;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf40();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf80:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)80;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf80;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf80();
       break;
     case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf160:
-      ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)160;
+      ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf160;
       ssb_mtc.periodicity_and_offset.offset      = asn1_ssb_mtc.periodicity_and_offset.sf160();
       break;
     default:

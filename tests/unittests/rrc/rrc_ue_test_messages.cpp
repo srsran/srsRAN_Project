@@ -50,7 +50,7 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
 
   rrc_ssb_mtc smtc1;
 
-  smtc1.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)20;
+  smtc1.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf20;
   smtc1.periodicity_and_offset.offset      = 0;
   smtc1.dur                                = 2;
   meas_obj_nr.smtc1                        = smtc1;

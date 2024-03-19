@@ -209,7 +209,10 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -237,7 +240,10 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -268,8 +274,11 @@ TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_relea
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
   test_preamble_ue_full_attach(
-      du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   // Inject PduSessionResourceReleaseCommand
   cu_cp_obj->get_ngap_message_handler().handle_message(
@@ -296,7 +305,10 @@ TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Command
   cu_cp_obj->get_ngap_message_handler().handle_message(
@@ -325,7 +337,10 @@ TEST_F(cu_cp_test,
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Command
   cu_cp_obj->get_ngap_message_handler().handle_message(
@@ -372,7 +387,10 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Request
   cu_cp_obj->get_f1c_handler()
@@ -447,7 +465,10 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   // Attach second UE with RRC Reestablishment Request
   {
@@ -496,7 +517,10 @@ TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
 
   // Attach second UE with RRC Reestablishment Request
   {
@@ -546,9 +570,11 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
   ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
-
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
   test_preamble_ue_full_attach(
-      du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   // Attach second UE with RRC Reestablishment Request
   {

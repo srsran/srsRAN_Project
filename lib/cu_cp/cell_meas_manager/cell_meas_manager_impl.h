@@ -42,7 +42,7 @@ public:
   optional<rrc_meas_cfg>
   get_measurement_config(ue_index_t ue_index, nr_cell_id_t nci, optional<rrc_meas_cfg> current_meas_config = {});
   optional<cell_meas_config> get_cell_config(nr_cell_id_t nci);
-  void                       update_cell_config(nr_cell_id_t                                  nci,
+  bool                       update_cell_config(nr_cell_id_t                                  nci,
                                                 const serving_cell_meas_config&               serv_cell_cfg,
                                                 const std::vector<neighbor_cell_meas_config>& ncells = {});
   void                       report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
@@ -51,7 +51,7 @@ private:
   /// \brief Generate measurement objects for the given cell configuration.
   void generate_measurement_objects_for_serving_cells();
 
-  bool update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg);
+  void update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg);
 
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;

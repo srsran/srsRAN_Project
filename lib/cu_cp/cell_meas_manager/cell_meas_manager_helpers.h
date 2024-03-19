@@ -18,9 +18,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Perform sanity check on configuration struct.
-bool is_valid_configuration(const cell_meas_manager_cfg& cfg);
-
 /// \brief Log configured cells.
 void log_cells(const srslog::basic_logger& logger, const cell_meas_manager_cfg& cfg);
 
@@ -51,6 +48,8 @@ void generate_report_config(const cell_meas_manager_cfg&  cfg,
                             const report_cfg_id_t         report_cfg_id,
                             rrc_meas_cfg&                 meas_cfg,
                             cell_meas_manager_ue_context& ue_meas_context);
+
+rrc_meas_obj_nr generate_measurement_object(const serving_cell_meas_config& cfg);
 
 /// \brief Check whether the given measurement objects are the same.
 bool is_duplicate(const rrc_meas_obj_nr& obj_1, const rrc_meas_obj_nr& obj_2);

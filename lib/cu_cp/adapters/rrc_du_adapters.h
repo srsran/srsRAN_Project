@@ -25,7 +25,7 @@ public:
     meas_config_handler = &meas_config_handler_;
   }
 
-  void on_cell_config_update_request(nr_cell_id_t                           nci,
+  bool on_cell_config_update_request(nr_cell_id_t                           nci,
                                      const serving_cell_meas_config&        serv_cell_cfg,
                                      std::vector<neighbor_cell_meas_config> ncells = {}) override
   {

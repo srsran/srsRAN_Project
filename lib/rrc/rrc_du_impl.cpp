@@ -89,7 +89,10 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
                  nr_band_to_uint(meas_cfg.band.value()),
                  meas_cfg.ssb_arfcn.value(),
                  to_string(meas_cfg.ssb_scs.value()));
-    meas_config_notifier.on_cell_config_update_request(served_cell.served_cell_info.nr_cgi.nci, meas_cfg);
+    if (!meas_config_notifier.on_cell_config_update_request(served_cell.served_cell_info.nr_cgi.nci, meas_cfg)) {
+      logger.error("Failed to update cell config for cell={:#x}", meas_cfg.nci);
+      return false;
+    }
   }
 
   return true;

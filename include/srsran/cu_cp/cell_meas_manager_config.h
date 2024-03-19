@@ -16,6 +16,7 @@
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace srsran {
@@ -60,7 +61,8 @@ struct cell_meas_manager_cfg {
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns
 /// true if config is valid, false otherwise.
-bool is_valid_configuration(const cell_meas_manager_cfg& cfg);
+bool is_valid_configuration(const cell_meas_manager_cfg&                                cfg,
+                            const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object = {});
 
 /// \brief Same as config validation but additionally verfies that the measurement related parameters are present for
 /// all cells.

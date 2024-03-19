@@ -52,41 +52,43 @@ bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
   return true;
 }
 
-bool srsran::srs_cu_cp::is_valid_configuration(const cell_meas_manager_cfg& cfg)
+bool srsran::srs_cu_cp::is_valid_configuration(
+    const cell_meas_manager_cfg&                                cfg,
+    const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object)
 {
-  bool                      serving_cell_periodic_reports_enabled = false;
   std::vector<nr_cell_id_t> ncis;
   // Verify neighbor cell lists: cell id must not be included in neighbor cell list.
   for (const auto& cell : cfg.cells) {
     const auto& nci = cell.first;
     if (std::find(ncis.begin(), ncis.end(), nci) != ncis.end()) {
-      srslog::fetch_basic_logger(LOG_CHAN).error("Cell {} already present, but must be unique", nci);
+      srslog::fetch_basic_logger(LOG_CHAN).error("Cell {:#x} already present, but must be unique", nci);
       return false;
     }
     ncis.push_back(nci);
 
-    if (cell.second.periodic_report_cfg_id.has_value()) {
-      serving_cell_periodic_reports_enabled = true;
-    }
-    for (const auto& ncell_nci : cell.second.ncells) {
-      if (nci == ncell_nci.nci) {
-        srslog::fetch_basic_logger(LOG_CHAN).error("Cell {} must not be its own neighbor", nci);
-        return false;
+    if (!ssb_freq_to_meas_object.empty()) {
+      const auto& serving_cell_cfg = cell.second.serving_cell_cfg;
+      if (serving_cell_cfg.ssb_arfcn.has_value()) {
+        ssb_frequency_t ssb_freq = serving_cell_cfg.ssb_arfcn.value();
+        if (ssb_freq_to_meas_object.find(ssb_freq) != ssb_freq_to_meas_object.end()) {
+          // Check if the measurement object is already present.
+          rrc_meas_obj_nr meas_obj_nr = generate_measurement_object(serving_cell_cfg);
+          if (!is_duplicate(meas_obj_nr, ssb_freq_to_meas_object.at(ssb_freq))) {
+            // If a measurement object for this ssb_freq is already present but not an update, we reject the update.
+            srslog::fetch_basic_logger(LOG_CHAN).error(
+                "Measurement object for ssb_freq={} already exists, but has different ssb_scs, smtc1 and/or smtc2",
+                ssb_freq);
+            return false;
+          }
+        }
       }
     }
-  }
 
-  if (not cfg.cells.empty()) {
-    // At least one event shall be configured.
-    if (cfg.report_config_ids.empty()) {
-      srslog::fetch_basic_logger(LOG_CHAN).error("At least one event must be configured");
-      return false;
-    }
-
-    if (serving_cell_periodic_reports_enabled && cfg.report_config_ids.size() < 2) {
-      srslog::fetch_basic_logger(LOG_CHAN).error(
-          "At least one event beside the periodical report config for the serving cell must be configured");
-      return false;
+    for (const auto& ncell_nci : cell.second.ncells) {
+      if (nci == ncell_nci.nci) {
+        srslog::fetch_basic_logger(LOG_CHAN).error("Cell {:#x} must not be its own neighbor", nci);
+        return false;
+      }
     }
   }
 
@@ -185,6 +187,23 @@ void srsran::srs_cu_cp::generate_report_config(const cell_meas_manager_cfg&  cfg
   // add meas id to lookup
   ue_meas_context.meas_id_to_meas_context.emplace(
       meas_id_to_add_mod.meas_id, meas_context_t{meas_id_to_add_mod.meas_obj_id, meas_id_to_add_mod.report_cfg_id});
+}
+
+rrc_meas_obj_nr srsran::srs_cu_cp::generate_measurement_object(const serving_cell_meas_config& cfg)
+{
+  rrc_meas_obj_nr meas_obj_nr;
+
+  meas_obj_nr.ssb_freq               = cfg.ssb_arfcn;
+  meas_obj_nr.ssb_subcarrier_spacing = cfg.ssb_scs;
+  meas_obj_nr.smtc1                  = cfg.ssb_mtc;
+
+  // Mandatory fields.
+  meas_obj_nr.ref_sig_cfg.ssb_cfg_mob.emplace().derive_ssb_idx_from_cell = true;
+  meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8; // TODO: remove hardcoded values
+  meas_obj_nr.quant_cfg_idx                                              = 1; // TODO: remove hardcoded values
+  meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(cfg.band.value());
+
+  return meas_obj_nr;
 }
 
 bool srsran::srs_cu_cp::is_duplicate(const rrc_meas_obj_nr& obj_1, const rrc_meas_obj_nr& obj_2)

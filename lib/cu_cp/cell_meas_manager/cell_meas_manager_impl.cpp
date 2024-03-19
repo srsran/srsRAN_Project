@@ -23,7 +23,7 @@ cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
                                      ue_manager&                          ue_mng_) :
   cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
-  srsran_assert(is_valid_configuration(cfg), "Invalid cell measurement configuration");
+  srsran_assert(is_valid_configuration(cfg, ssb_freq_to_meas_object), "Invalid cell measurement configuration");
   generate_measurement_objects_for_serving_cells();
   log_cells(logger, cfg);
 }
@@ -92,7 +92,8 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
     }
 
     for (const auto& ncell : cell_config.ncells) {
-      if (cfg.cells.at(ncell.nci).serving_cell_cfg.ssb_arfcn.value() == ssb_freq) {
+      if (is_complete(cfg.cells.at(ncell.nci).serving_cell_cfg) &&
+          cfg.cells.at(ncell.nci).serving_cell_cfg.ssb_arfcn.value() == ssb_freq) {
         logger.debug("ue={}: Adding neighbor cell nci={:#x} to measurement config", ue_index, ncell.nci);
         for (const auto& report_cfg_id : ncell.report_cfg_ids) {
           generate_report_config(cfg, ncell.nci, report_cfg_id, new_cfg, ue_meas_context);
@@ -122,10 +123,13 @@ optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
   return cell_cfg;
 }
 
-void cell_meas_manager::update_cell_config(nr_cell_id_t                                  nci,
+bool cell_meas_manager::update_cell_config(nr_cell_id_t                                  nci,
                                            const serving_cell_meas_config&               serv_cell_cfg,
                                            const std::vector<neighbor_cell_meas_config>& ncells)
 {
+  // Store old config to revert if new config is invalid.
+  cell_meas_manager_cfg tmp_cfg = cfg;
+
   if (cfg.cells.find(nci) == cfg.cells.end()) {
     logger.debug("No configuration to update for nci={:#x}. Adding configuration", nci);
 
@@ -146,6 +150,12 @@ void cell_meas_manager::update_cell_config(nr_cell_id_t                         
     }
   }
 
+  if (!is_valid_configuration(cfg, ssb_freq_to_meas_object)) {
+    logger.warning("Invalid cell measurement configuration");
+    cfg = tmp_cfg;
+    return false;
+  }
+
   if (!is_complete(serv_cell_cfg)) {
     logger.debug("Added/Updated incomplete cell measurement configuration for nci={:#x}", nci);
   } else {
@@ -155,6 +165,8 @@ void cell_meas_manager::update_cell_config(nr_cell_id_t                         
   }
 
   log_cells(logger, cfg);
+
+  return true;
 }
 
 optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
@@ -247,7 +259,7 @@ void cell_meas_manager::generate_measurement_objects_for_serving_cells()
   log_meas_objects(logger, ssb_freq_to_meas_object);
 }
 
-bool cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg)
+void cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg)
 {
   srsran_assert(is_complete(serving_cell_cfg), "Incomplete measurement object update for nci={:#x}", nci);
 
@@ -263,22 +275,13 @@ bool cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const servin
   if (ssb_freq_to_meas_object.find(ssb_freq) != ssb_freq_to_meas_object.end()) {
     // If the measurement object is already present, we ignore the duplicate.
     logger.debug("Measurement object for ssb_freq={} already exists", ssb_freq);
-    return false;
+    return;
   }
   ssb_freq_to_meas_object.emplace(ssb_freq, rrc_meas_obj_nr{});
-  auto& meas_obj_nr = ssb_freq_to_meas_object.at(ssb_freq);
 
-  meas_obj_nr.ssb_freq               = serving_cell_cfg.ssb_arfcn;
-  meas_obj_nr.ssb_subcarrier_spacing = serving_cell_cfg.ssb_scs;
-  meas_obj_nr.smtc1                  = serving_cell_cfg.ssb_mtc;
-
-  // Mandatory fields.
-  meas_obj_nr.ref_sig_cfg.ssb_cfg_mob.emplace().derive_ssb_idx_from_cell = true;
-  meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8; // TODO: remove hardcoded values
-  meas_obj_nr.quant_cfg_idx                                              = 1; // TODO: remove hardcoded values
-  meas_obj_nr.freq_band_ind_nr.emplace() = nr_band_to_uint(serving_cell_cfg.band.value());
+  ssb_freq_to_meas_object.at(ssb_freq) = generate_measurement_object(serving_cell_cfg);
 
   // TODO: Add optional fields.
 
-  return true;
+  return;
 }

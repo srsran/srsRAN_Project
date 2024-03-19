@@ -57,7 +57,7 @@ void cell_meas_manager_test::create_default_manager()
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                 = 1;
-    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.periodicity  = rrc_periodicity_and_offset::periodicity_t::sf5;
     ssb_mtc.periodicity_and_offset.offset       = 0;
     cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }
@@ -78,7 +78,7 @@ void cell_meas_manager_test::create_default_manager()
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                 = 1;
-    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.periodicity  = rrc_periodicity_and_offset::periodicity_t::sf5;
     ssb_mtc.periodicity_and_offset.offset       = 0;
     cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }
@@ -216,7 +216,7 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                 = 1;
-    ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.periodicity  = rrc_periodicity_and_offset::periodicity_t::sf5;
     ssb_mtc.periodicity_and_offset.offset       = 0;
     cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   }

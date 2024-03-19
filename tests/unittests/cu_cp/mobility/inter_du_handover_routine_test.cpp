@@ -38,11 +38,13 @@ protected:
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
-    test_preamble_ue_full_attach(
-        du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-
+    // Connect AMF, DU, CU-UP.
+    test_preamble_all_connected(du_index, pci);
     // Attach target DU.
     test_du_attach(target_du_index, target_du_id, target_nrcell_id, target_pci);
+    // Attach UE.
+    test_preamble_ue_full_attach(
+        du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
     // Assert single UE attached to source DU.
     ASSERT_EQ(get_nof_ues_in_source_du(), 1);
@@ -190,8 +192,8 @@ private:
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
   gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
-  nr_cell_id_t        target_nrcell_id = 34;
-  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x22};
+  nr_cell_id_t        target_nrcell_id = 0x19b1;
+  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x19b1};
   unsigned            target_pci       = 2;
 
   ue_index_t source_ue_index = uint_to_ue_index(0);

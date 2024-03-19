@@ -91,7 +91,7 @@ protected:
     meas_timing.freq_and_timing.value().ssb_subcarrier_spacing  = subcarrier_spacing::kHz15;
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.dur = 5;
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.periodicity =
-        (rrc_periodicity_and_offset::periodicity_t)10;
+        rrc_periodicity_and_offset::periodicity_t::sf10;
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.offset = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);

@@ -29,7 +29,7 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
   cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   rrc_ssb_mtc ssb_mtc;
   ssb_mtc.dur                                 = 1;
-  ssb_mtc.periodicity_and_offset.periodicity  = (rrc_periodicity_and_offset::periodicity_t)5;
+  ssb_mtc.periodicity_and_offset.periodicity  = rrc_periodicity_and_offset::periodicity_t::sf5;
   ssb_mtc.periodicity_and_offset.offset       = 0;
   cell_cfg.serving_cell_cfg.ssb_mtc.emplace() = ssb_mtc;
   ASSERT_TRUE(is_complete(cell_cfg.serving_cell_cfg));
@@ -39,17 +39,6 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 {
   cell_meas_manager_cfg cfg = {};
   ASSERT_TRUE(is_valid_configuration(cfg));
-}
-
-TEST_F(cell_meas_manager_test, when_empty_neighbor_is_defined_but_no_event_configured_validation_fails)
-{
-  cell_meas_manager_cfg cfg = {};
-  cell_meas_config      cell_cfg;
-  cell_cfg.serving_cell_cfg.nci = 0x19b0;
-  cell_cfg.serving_cell_cfg.pci = 1;
-  cfg.cells.insert({cell_cfg.serving_cell_cfg.nci, cell_cfg});
-
-  ASSERT_FALSE(is_valid_configuration(cfg));
 }
 
 TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_are_available)
@@ -200,17 +189,17 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                = 1;
-    ssb_mtc.periodicity_and_offset.periodicity = (rrc_periodicity_and_offset::periodicity_t)5;
+    ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf5;
     ssb_mtc.periodicity_and_offset.offset      = 0;
     serving_cell_cfg.ssb_mtc.emplace()         = ssb_mtc;
   }
 
   // Update cell config for cell 1
-  manager->update_cell_config(initial_nci, serving_cell_cfg);
+  ASSERT_TRUE(manager->update_cell_config(initial_nci, serving_cell_cfg));
 
   // Update cell config for cell 2
   serving_cell_cfg.nci = target_nci;
-  manager->update_cell_config(target_nci, serving_cell_cfg);
+  ASSERT_TRUE(manager->update_cell_config(target_nci, serving_cell_cfg));
 
   // Make sure meas_cfg is created and contains measurement objects to add mod
   optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
@@ -228,4 +217,49 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   ASSERT_EQ(target_meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_nr.value().ssb_freq,
             serving_cell_cfg.ssb_arfcn);
   ASSERT_EQ(target_meas_cfg.value().report_cfg_to_add_mod_list.size(), 2);
+}
+
+TEST_F(cell_meas_manager_test, when_invalid_cell_config_update_received_then_config_is_not_updated)
+{
+  create_manager_with_incomplete_cells_and_periodic_report_at_target_cell();
+
+  ue_index_t         ue_index    = ue_mng.add_ue(uint_to_du_index(0));
+  const nr_cell_id_t initial_nci = 0x19b0;
+  const nr_cell_id_t target_nci  = 0x19b1;
+
+  // Make sure no meas_cfg is created (incomplete cell config)
+  ASSERT_FALSE(manager->get_measurement_config(ue_index, initial_nci).has_value());
+  ASSERT_FALSE(manager->get_measurement_config(ue_index, target_nci).has_value());
+
+  serving_cell_meas_config serving_cell_cfg;
+  serving_cell_cfg.nci       = initial_nci;
+  serving_cell_cfg.pci       = 1;
+  serving_cell_cfg.band      = nr_band::n78;
+  serving_cell_cfg.ssb_arfcn = 632628;
+  serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz30;
+  {
+    rrc_ssb_mtc ssb_mtc;
+    ssb_mtc.dur                                = 1;
+    ssb_mtc.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf5;
+    ssb_mtc.periodicity_and_offset.offset      = 0;
+    serving_cell_cfg.ssb_mtc                   = ssb_mtc;
+  }
+
+  // Update cell config for cell 1
+  ASSERT_TRUE(manager->update_cell_config(initial_nci, serving_cell_cfg));
+
+  // Update cell config for cell 2 with different scs for same ssb_freq
+  serving_cell_cfg.nci     = target_nci;
+  serving_cell_cfg.ssb_scs = subcarrier_spacing::kHz15;
+
+  ASSERT_FALSE(manager->update_cell_config(target_nci, serving_cell_cfg));
+
+  // Make sure meas_cfg is created for cell 1 and contains measurement objects to add mod
+  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
+  ASSERT_TRUE(initial_meas_cfg.has_value());
+  ASSERT_TRUE(initial_meas_cfg.value().meas_obj_to_add_mod_list.empty());
+  ASSERT_TRUE(initial_meas_cfg.value().report_cfg_to_add_mod_list.empty());
+
+  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
+  ASSERT_FALSE(target_meas_cfg.has_value());
 }

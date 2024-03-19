@@ -279,11 +279,11 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
   cell_meas_mng.report_measurement(ue_index, meas_results);
 }
 
-void cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t                           nci,
+bool cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t                           nci,
                                                    const serving_cell_meas_config&        serv_cell_cfg,
                                                    std::vector<neighbor_cell_meas_config> ncells)
 {
-  cell_meas_mng.update_cell_config(nci, serv_cell_cfg, ncells);
+  return cell_meas_mng.update_cell_config(nci, serv_cell_cfg, ncells);
 }
 
 void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
