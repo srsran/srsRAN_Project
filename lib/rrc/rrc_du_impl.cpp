@@ -74,16 +74,17 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
 
     // fill cell meas config
     serving_cell_meas_config meas_cfg;
-    meas_cfg.nci  = served_cell.served_cell_info.nr_cgi.nci;
-    meas_cfg.pci  = served_cell.served_cell_info.nr_pci;
-    meas_cfg.band = cell_info.band;
+    meas_cfg.nci    = served_cell.served_cell_info.nr_cgi.nci;
+    meas_cfg.gnb_id = cfg.gnb_id;
+    meas_cfg.pci    = served_cell.served_cell_info.nr_pci;
+    meas_cfg.band   = cell_info.band;
     // TODO: which meas timing to use here?
     meas_cfg.ssb_mtc   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_meas_timing_cfg;
     meas_cfg.ssb_arfcn = cell_info.meas_timings.begin()->freq_and_timing.value().carrier_freq;
     meas_cfg.ssb_scs   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_subcarrier_spacing;
 
     // Update cell config in cell meas manager
-    logger.debug("Updating cell={} with band={} ssb_arfcn={} ssb_scs={}",
+    logger.debug("Updating cell={:#x} with band={} ssb_arfcn={} ssb_scs={}",
                  meas_cfg.nci,
                  nr_band_to_uint(meas_cfg.band.value()),
                  meas_cfg.ssb_arfcn.value(),

@@ -93,6 +93,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.tac                  = cell.tac;
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
+  out_cfg.rrc_config.gnb_id                         = config.gnb_id;
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
   out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(config);
