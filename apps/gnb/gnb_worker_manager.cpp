@@ -171,7 +171,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // for UL data plane.
   cu_up_strands.push_back(
       strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}}});
+              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
   const unsigned nof_cu_up_ue_strands = 16;
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     cu_up_strands.push_back(
