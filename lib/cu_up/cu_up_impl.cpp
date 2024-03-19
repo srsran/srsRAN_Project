@@ -28,7 +28,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
   srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
-  srsran_assert(cfg.n3_gw != nullptr, "Invalid N3 gateway");
+  srsran_assert(cfg.ngu_gw != nullptr, "Invalid N3 gateway");
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
@@ -60,13 +60,14 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // Connect GTP-U DEMUX to adapter.
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
-  // Establish new N3 connection to the UPF and connect the instantiated connection to the GTP-U DEMUX adapter.
-  ngu_session = cfg.n3_gw->create(gw_data_gtpu_demux_adapter);
+  // Establish new NG-U session and connect the instantiated session to the GTP-U DEMUX adapter, so that the latter
+  // is called when new NG-U DL PDUs are received.
+  ngu_session = cfg.ngu_gw->create(gw_data_gtpu_demux_adapter);
   if (ngu_session == nullptr) {
-    return;
+    report_error("Unable to allocate the required NG-U network resources");
   }
 
-  // Connect GTPU GW adapter to N3 connection.
+  // Connect GTPU GW adapter to NG-U session in order to send UL PDUs.
   gtpu_gw_adapter.connect_network_gateway(*ngu_session);
 
   // Create TEID allocator
