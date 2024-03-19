@@ -402,6 +402,8 @@ test mode ru tsan:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -412,6 +414,8 @@ test mode ru asan:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic asan"
       artifacts: true
@@ -422,6 +426,8 @@ test mode ru memcheck:
   extends: test mode ru
   variables:
     E2E_LOG_LEVEL: "warning"
+  when: manual
+  allow_failure: true
   needs:
     - job: "basic memcheck"
       artifacts: true

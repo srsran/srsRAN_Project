@@ -36,7 +36,7 @@ MEDIUM_BITRATE = int(15e6)
 HIGH_BITRATE = int(50e6)
 MAX_BITRATE = int(600e6)
 
-ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
+ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s"
 
 # TDD throughput (empirical measurements, might become outdated if RF conditions change)
 tdd_ul_udp = defaultdict(
@@ -399,10 +399,10 @@ def test_zmq_4x4_mimo(
     (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
 )
 @mark.parametrize(
-    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    "band, common_scs, bandwidth, bitrate",
     (
-        param(3, 15, 20, LOW_BITRATE, True, id=ZMQ_ID),
-        param(41, 30, 20, LOW_BITRATE, True, id=ZMQ_ID),
+        param(3, 15, 20, LOW_BITRATE, id=ZMQ_ID),
+        param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),
     ),
 )
 @mark.zmq
@@ -417,7 +417,6 @@ def test_zmq_smoke(
     band: int,
     common_scs: int,
     bandwidth: int,
-    always_download_artifacts: bool,
     bitrate: int,
     protocol: IPerfProto,
     direction: IPerfDir,
@@ -442,7 +441,7 @@ def test_zmq_smoke(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=always_download_artifacts,
+        always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=10,
     )
@@ -464,16 +463,16 @@ def test_zmq_smoke(
     ),
 )
 @mark.parametrize(
-    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    "band, common_scs, bandwidth, bitrate",
     (
         # ZMQ
-        param(3, 15, 5, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 50, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 50, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 5, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(3, 15, 10, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(3, 15, 20, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(3, 15, 50, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(41, 30, 10, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(41, 30, 20, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(41, 30, 50, MEDIUM_BITRATE, id=ZMQ_ID),
     ),
 )
 @mark.zmq
@@ -490,7 +489,6 @@ def test_zmq(
     band: int,
     common_scs: int,
     bandwidth: int,
-    always_download_artifacts: bool,
     bitrate: int,
     protocol: IPerfProto,
     direction: IPerfDir,
@@ -515,7 +513,7 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=always_download_artifacts,
+        always_download_artifacts=False,
         bitrate_threshold=0,
         gnb_post_cmd="log --hex_max_size=32 cu_cp --inactivity_timer=600",
     )
