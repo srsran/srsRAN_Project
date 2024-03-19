@@ -78,6 +78,8 @@ public:
     data_notifier.on_new_pdu(std::move(pdu), src_addr);
   }
 
+  optional<uint16_t> get_n3_bind_port() override { return udp_gw->get_bind_port(); }
+
 private:
   io_broker&                                   io_brk;
   network_gateway_data_notifier_with_src_addr& data_notifier;
@@ -140,6 +142,8 @@ public:
     // Forward PDU to registered data notifier.
     data_notifier.on_new_pdu(std::move(pdu), src_addr);
   }
+
+  optional<uint16_t> get_n3_bind_port() override { return nullopt; }
 
 private:
   local_upf_stub&                              upf_stub;

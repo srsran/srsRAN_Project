@@ -99,6 +99,7 @@ protected:
     app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
+    n3_gw        = create_udp_n3_connection_factory(udp_network_gateway_config{}, *broker, *executor);
     upf_addr_str = "127.0.0.1";
   }
 
@@ -111,7 +112,7 @@ protected:
     cfg.io_ul_executor               = executor.get();
     cfg.e1ap.e1ap_conn_client        = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
-    cfg.epoll_broker                 = broker.get();
+    cfg.n3_gw                        = n3_gw.get();
     cfg.timers                       = app_timers.get();
     cfg.qos[uint_to_five_qi(9)]      = {};
     cfg.gtpu_pcap                    = &dummy_pcap;
@@ -137,6 +138,7 @@ protected:
   dummy_inner_f1u_bearer                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
   std::unique_ptr<io_broker>                  broker;
+  std::unique_ptr<n3_connection_factory>      n3_gw;
   std::unique_ptr<dummy_cu_up_executor_pool>  exec_pool;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");

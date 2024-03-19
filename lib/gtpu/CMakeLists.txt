@@ -15,4 +15,4 @@ set(SOURCES gtpu_tunnel_ngu_factory.cpp
         n3_connection_factory.cpp)
 
 add_library(srsran_gtpu STATIC ${SOURCES})
-target_link_libraries(srsran_gtpu srsran_psup srsran_support)
+target_link_libraries(srsran_gtpu srsran_psup srsran_support srsran_gateway)

@@ -24,6 +24,8 @@ class n3_connection : public udp_network_gateway_data_handler, public network_ga
 {
 public:
   virtual ~n3_connection() = default;
+
+  virtual optional<uint16_t> get_n3_bind_port() = 0;
 };
 
 /// \brief Factory that instantiates N3 connections.

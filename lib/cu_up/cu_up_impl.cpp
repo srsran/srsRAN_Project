@@ -28,7 +28,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
   srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
-  srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
+  srsran_assert(cfg.n3_gw != nullptr, "Invalid N3 gateway");
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
@@ -39,16 +39,6 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   assert_cu_up_configuration_valid(cfg);
 
   /// > Create and connect upper layers
-
-  // Create NG-U gateway, bind/open later (after GTP-U demux is connected)
-  udp_network_gateway_config ngu_gw_config = {};
-  ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
-  ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
-  ngu_gw_config.bind_interface             = cfg.net_cfg.n3_bind_interface;
-  ngu_gw_config.rx_max_mmsg                = cfg.net_cfg.n3_rx_max_mmsg;
-  // other params
-  udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter, *cfg.io_ul_executor};
-  ngu_gw                                          = create_udp_network_gateway(ngu_gw_msg);
 
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
@@ -67,18 +57,17 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ngu_demux->add_tunnel(
       GTPU_PATH_MANAGEMENT_TEID, ctrl_exec_mapper->dl_pdu_executor(), ngu_echo->get_rx_upper_layer_interface());
 
-  // Connect layers
+  // Connect GTP-U DEMUX to adapter.
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
-  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
-  // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
-  if (not ngu_gw->create_and_bind()) {
-    logger.error("Failed to create and connect N3 gateway");
+  // Establish new N3 connection to the UPF and connect the instantiated connection to the GTP-U DEMUX adapter.
+  ngu_session = cfg.n3_gw->create(gw_data_gtpu_demux_adapter);
+  if (ngu_session == nullptr) {
+    return;
   }
-  bool success = cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
-  if (!success) {
-    logger.error("Failed to register N3 (GTP-U) network gateway at IO broker. socket_fd={}", ngu_gw->get_socket_fd());
-  }
+
+  // Connect GTPU GW adapter to N3 connection.
+  gtpu_gw_adapter.connect_network_gateway(*ngu_session);
 
   // Create TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};
@@ -160,11 +149,7 @@ void cu_up::stop()
   statistics_report_timer.stop();
 
   // CU-UP stops listening to new GTPU Rx PDUs.
-  if (ngu_gw) {
-    if (not cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd())) {
-      logger.warning("Failed to stop NG-U gateway socket");
-    }
-  }
+  ngu_session.reset();
 
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};

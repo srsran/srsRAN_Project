@@ -68,11 +68,10 @@ struct cu_up_configuration {
   task_executor*         io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
   task_executor*         cu_up_e2_exec  = nullptr;
   e1ap_config_params     e1ap;
-  f1u_cu_up_gateway*     f1u_gateway  = nullptr;
-  n3_connection_factory* n3_gw        = nullptr;
-  io_broker*             epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
-  timer_manager*         timers       = nullptr;
-  dlt_pcap*              gtpu_pcap    = nullptr;
+  f1u_cu_up_gateway*     f1u_gateway = nullptr;
+  n3_connection_factory* n3_gw       = nullptr;
+  timer_manager*         timers      = nullptr;
+  dlt_pcap*              gtpu_pcap   = nullptr;
 
   std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 
