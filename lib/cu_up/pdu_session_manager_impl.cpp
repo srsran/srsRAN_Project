@@ -495,7 +495,7 @@ void pdu_session_manager_impl::disconnect_pdu_session(pdu_session_id_t pdu_sessi
   auto& pdu_session = pdu_sessions.at(pdu_session_id);
   pdu_session->stop();
   for (const auto& drb : pdu_session->drbs) {
-    if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
+    if (!f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
       logger.log_error(
           "{} could not remove ul_teid at session termination. ul_teid={}", pdu_session_id, drb.second->f1u_ul_teid);
     }
