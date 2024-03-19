@@ -13,11 +13,11 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 5
+      limits: 5
     memory:
-      requests: "12G"
-      limits: "12G"
+      requests: "5G"
+      limits: "5G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
@@ -33,11 +33,11 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 6
+      limits: 6
     memory:
-      requests: "12G"
-      limits: "12G"
+      requests: "6G"
+      limits: "6G"
     ephemeral-storage:
       requests: "9G"
       limits: "9G"
