@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -18,16 +18,16 @@
 
 namespace srsran {
 
-/// Complex exponential table.
+/// Complex sinusoid table.
 class complex_exponential_table
 {
 public:
   /// \brief Creates a complex exponential table.
   ///
-  /// The table is filled as \f$x[n]=A\cdot e^{j2\pi\frac{n}{N}}\f$.
+  /// The table contains the sequence \f$x[n]=A\cdot e^{j2\pi\frac{n}{N}}\f$, \f$n \in \{0, 1, \dots, N-1\}\f$.
   ///
-  /// \param table_size_ Table size, parameter \f$N\f$.
-  /// \param scale       Complex exponential amplitude, parameter \f$A\f$.
+  /// \param[in] table_size_ Table size, parameter \f$N\f$.
+  /// \param[in] amplitude   Complex exponential amplitude, parameter \f$A\f$.
   complex_exponential_table(unsigned table_size_, float amplitude) : table_size(table_size_), table(table_size_)
   {
     std::generate(table.begin(), table.end(), [this, amplitude, n = 0]() mutable {
@@ -42,16 +42,17 @@ public:
   /// \brief Gets a coefficient from the table.
   /// \param[in] index Coefficient index.
   /// \remark An assertion is triggered if the index exceeds the table size.
-  const cf_t& operator[](unsigned index) const
+  cf_t operator[](unsigned index) const
   {
     srsran_assert(index < table_size, "Index (i.e., {}) exceeds the table size (i.e., {})", index, table_size);
     return table[index];
   }
 
-  /// \brief Generates a complex exponential.
-  /// \param[out] out       Complex exponential destination.
-  /// \param[in]  initial   Initial complex exponential argument.
-  /// \param[in]  frequency Complex exponential discrete frequency.
+  /// \brief Generates a complex sinusoid from the table.
+  ///
+  /// \param[out] out       Output complex sinusoid: <tt>out[n] = x[(initial + n * frequency) % N]</tt>.
+  /// \param[in]  initial   Initial argument.
+  /// \param[in]  frequency Discrete angular frequency.
   void generate(span<cf_t> out, std::size_t initial, std::size_t frequency) const
   {
     std::generate(out.begin(), out.end(), [this, frequency, n = initial]() mutable {
@@ -61,19 +62,18 @@ public:
     });
   }
 
-  /// \brief Generate complex exponential from a vector of unsigned indexes.
-  /// \param[out] out Complex exponential destination.
-  /// \param[in]  in  Complex exponential indexes.
-  template <typename Integer>
+  /// \brief Samples the table complex sinusoid at the given unsigned indices.
+  /// \param[out] out Output sequence: <tt>out[n] = x[in[n] % N]</tt>, \f$in[n]\ge-N\f$
+  /// \param[in]  in  Sampling indices.
   void generate(span<cf_t> out, span<const unsigned> in) const
   {
     srsran_assert(in.size() == out.size(), "The input and output sizes must be equal.");
-    std::transform(in.begin(), in.end(), out.begin(), [this](Integer index) { return table[index % table_size]; });
+    std::transform(in.begin(), in.end(), out.begin(), [this](unsigned index) { return table[index % table_size]; });
   }
 
-  /// \brief Generate complex exponential from a vector of signed indexes.
-  /// \param[out] out Complex exponential destination.
-  /// \param[in]  in  Complex exponential indexes.
+  /// \brief Samples the table complex sinusoid at the given signed indices.
+  /// \param[out] out Output sequence: <tt>out[n] = x[(in[n] + N) % N]</tt>.
+  /// \param[in]  in  Sampling indices.
   void generate(span<cf_t> out, span<const int> in) const
   {
     srsran_assert(in.size() == out.size(), "The input and output sizes must be equal.");
