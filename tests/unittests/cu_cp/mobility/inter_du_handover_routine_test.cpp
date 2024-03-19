@@ -255,7 +255,7 @@ TEST_F(inter_du_handover_routine_test, when_bearer_context_modification_fails_th
   // Inject UE Context Release Complete
   inject_ue_context_release_complete(get_target_du_index());
 
-  // TODO: Verify new UE has been deleted in target DU again.
+  // Verify new UE has been deleted in target DU again.
   ASSERT_EQ(get_nof_ues_in_source_du(), 1);
   ASSERT_EQ(get_nof_ues_in_target_du(), 0);
 }
@@ -265,17 +265,8 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
-  request.target_pci                      = get_target_pci();
-  request.source_ue_index                 = get_source_ue();
-  request.target_du_index                 = get_target_du_index();
-  request.cgi                             = get_target_cgi();
-
-  start_procedure(request);
-
   // Start handover by injecting measurement report
-  // TODO: Replace manual task worker to allow execution of tasks on source and target UE for context transfer
-  // inject_rrc_meas_report();
+  inject_rrc_meas_report();
 
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();
@@ -289,11 +280,7 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
   // Inject UE Context Release Complete
   inject_ue_context_release_complete(get_source_du_index());
 
-  ASSERT_TRUE(procedure_ready());
-
-  // HO succeed.
-  ASSERT_TRUE(get_result().success);
-
+  // Verify that the HO was successful and the UE has been deleted in source DU.
   ASSERT_EQ(get_nof_ues_in_source_du(), 0);
   ASSERT_EQ(get_nof_ues_in_target_du(), 1);
 }
