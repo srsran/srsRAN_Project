@@ -27,7 +27,10 @@ public:
   virtual ~cell_meas_mobility_manager_notifier() = default;
 
   /// \brief Notifies that a neighbor cell became stronger than the current serving cell.
-  virtual void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+  virtual void on_neighbor_better_than_spcell(ue_index_t   ue_index,
+                                              gnb_id_t     neighbor_gnb_id,
+                                              nr_cell_id_t neighbor_nci,
+                                              pci_t        neighbor_pci) = 0;
 };
 
 /// Basic cell manager implementation

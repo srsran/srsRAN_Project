@@ -185,6 +185,8 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
     return;
   }
 
+  auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
+
   // Ignore id with periodic measurements.
 
   // For meas_id with e.g. A3 event configured:
@@ -194,8 +196,8 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
     if (serv_cell.meas_result_best_neigh_cell.has_value()) {
       // Report this cell.
       if (serv_cell.meas_result_best_neigh_cell.value().pci.has_value()) {
-        mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index,
-                                                             serv_cell.meas_result_best_neigh_cell.value().pci.value());
+        mobility_mng_notifier.on_neighbor_better_than_spcell(
+            ue_index, meas_ctxt.gnb_id, meas_ctxt.nci, serv_cell.meas_result_best_neigh_cell.value().pci.value());
         return;
       }
     }
@@ -233,7 +235,8 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
                     strongest_neighbor.value(),
                     max_rsrp,
                     serv_cell_rsrp.value());
-        mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index, strongest_neighbor.value());
+        mobility_mng_notifier.on_neighbor_better_than_spcell(
+            ue_index, meas_ctxt.gnb_id, meas_ctxt.nci, strongest_neighbor.value());
         return;
       }
     }
@@ -269,11 +272,5 @@ void cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const servin
     logger.debug("Measurement object for ssb_freq={} already exists", ssb_freq);
     return;
   }
-  ssb_freq_to_meas_object.emplace(ssb_freq, rrc_meas_obj_nr{});
-
-  ssb_freq_to_meas_object.at(ssb_freq) = generate_measurement_object(serving_cell_cfg);
-
-  // TODO: Add optional fields.
-
-  return;
+  ssb_freq_to_meas_object.emplace(ssb_freq, generate_measurement_object(serving_cell_cfg));
 }

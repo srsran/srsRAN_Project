@@ -42,9 +42,10 @@ void cell_meas_manager_test::create_default_manager()
   // Add 2 cells - one being the neighbor of the other one
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.nci   = 0x19b0;
-  cell_cfg.serving_cell_cfg.pci   = 1;
-  cell_cfg.periodic_report_cfg_id = uint_to_report_cfg_id(1);
+  cell_cfg.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
+  cell_cfg.serving_cell_cfg.nci    = 0x19b0;
+  cell_cfg.serving_cell_cfg.pci    = 1;
+  cell_cfg.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
 
   neighbor_cell_meas_config ncell_meas_cfg;
   ncell_meas_cfg.nci = 0x19b1;
@@ -136,8 +137,9 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   // Add 2 cells - one being the neighbor of the other one
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.nci = 0x19b0;
-  cell_cfg.serving_cell_cfg.pci = 1;
+  cell_cfg.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
+  cell_cfg.serving_cell_cfg.nci    = 0x19b0;
+  cell_cfg.serving_cell_cfg.pci    = 1;
 
   neighbor_cell_meas_config ncell_meas_cfg;
   ncell_meas_cfg.nci = 0x19b1;
@@ -208,7 +210,8 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   // Add serving cell
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.nci = 0x19b0;
+  cell_cfg.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
+  cell_cfg.serving_cell_cfg.nci    = 0x19b0;
 
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;

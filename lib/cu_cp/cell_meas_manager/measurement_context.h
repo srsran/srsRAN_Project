@@ -10,9 +10,14 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/pci.h"
 #include "srsran/rrc/meas_types.h"
+#include "srsran/srslog/srslog.h"
 #include <map>
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -20,6 +25,9 @@ namespace srs_cu_cp {
 struct meas_context_t {
   meas_obj_id_t   meas_obj_id   = meas_obj_id_t::invalid;
   report_cfg_id_t report_cfg_id = report_cfg_id_t::invalid;
+  gnb_id_t        gnb_id;
+  nr_cell_id_t    nci;
+  pci_t           pci;
 };
 
 class cell_meas_manager_ue_context

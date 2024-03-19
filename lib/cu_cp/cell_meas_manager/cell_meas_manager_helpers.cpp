@@ -29,8 +29,8 @@ void srsran::srs_cu_cp::log_cells(const srslog::basic_logger& logger, const cell
 bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
 {
   // All mandatory values must be present.
-  if (!cfg.pci.has_value() || !cfg.band.has_value() || !cfg.ssb_mtc.has_value() || !cfg.ssb_arfcn.has_value() ||
-      !cfg.ssb_scs.has_value()) {
+  if (!cfg.gnb_id.has_value() || !cfg.pci.has_value() || !cfg.band.has_value() || !cfg.ssb_mtc.has_value() ||
+      !cfg.ssb_arfcn.has_value() || !cfg.ssb_scs.has_value()) {
     return false;
   }
   // Call validators of individual params.
@@ -185,8 +185,13 @@ void srsran::srs_cu_cp::generate_report_config(const cell_meas_manager_cfg&  cfg
   meas_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
   // add meas id to lookup
-  ue_meas_context.meas_id_to_meas_context.emplace(
-      meas_id_to_add_mod.meas_id, meas_context_t{meas_id_to_add_mod.meas_obj_id, meas_id_to_add_mod.report_cfg_id});
+  auto serving_cell_cfg = cfg.cells.at(nci).serving_cell_cfg;
+  ue_meas_context.meas_id_to_meas_context.emplace(meas_id_to_add_mod.meas_id,
+                                                  meas_context_t{meas_id_to_add_mod.meas_obj_id,
+                                                                 meas_id_to_add_mod.report_cfg_id,
+                                                                 serving_cell_cfg.gnb_id.value(),
+                                                                 serving_cell_cfg.nci,
+                                                                 serving_cell_cfg.pci.value()});
 }
 
 rrc_meas_obj_nr srsran::srs_cu_cp::generate_measurement_object(const serving_cell_meas_config& cfg)
@@ -202,6 +207,8 @@ rrc_meas_obj_nr srsran::srs_cu_cp::generate_measurement_object(const serving_cel
   meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8; // TODO: remove hardcoded values
   meas_obj_nr.quant_cfg_idx                                              = 1; // TODO: remove hardcoded values
   meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(cfg.band.value());
+
+  // TODO: Add optional fields.
 
   return meas_obj_nr;
 }
