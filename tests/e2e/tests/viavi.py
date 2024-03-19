@@ -199,7 +199,7 @@ def _test_viavi(
                 "max_rb_size": max_rb_size,
                 "dl_arfcn": 625000,
                 "band": 78,
-                "channel_bandwidth_MHz": 100,
+                "bandwidth": 100,
                 "common_scs": 30,
                 "tac": 7,
                 "pci": 1,
