@@ -87,15 +87,16 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {
-      ncell_str = ncell_str + std::to_string(ncell.nci) + " ";
+      ncell_str += fmt::format("{:#x} ", ncell.nci);
     }
     ncell_str = ncell_str + "]";
 
     return format_to(
         ctx.out(),
-        "nci={:#x} complete={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
+        "nci={:#x} complete={} gnb_id={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
         cfg.serving_cell_cfg.nci,
         is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
+        cfg.serving_cell_cfg.gnb_id.has_value() ? to_string(cfg.serving_cell_cfg.gnb_id.value().id) : "?",
         cfg.serving_cell_cfg.pci.has_value() ? to_string(cfg.serving_cell_cfg.pci.value()) : "?",
         cfg.serving_cell_cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.serving_cell_cfg.band.value())) : "?",
         cfg.serving_cell_cfg.ssb_arfcn.has_value() ? to_string(cfg.serving_cell_cfg.ssb_arfcn.value()) : "?",
