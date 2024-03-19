@@ -208,7 +208,6 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   cell_meas_manager_cfg cfg;
 
   // Add serving cell
-
   cell_meas_config cell_cfg;
   cell_cfg.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
   cell_cfg.serving_cell_cfg.nci    = 0x19b0;

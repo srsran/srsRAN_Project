@@ -64,6 +64,7 @@ cu_cp_test::cu_cp_test()
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // RRC config
+  cfg.rrc_config.gnb_id             = {411, 32};
   cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
   cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
                                        security::integrity_algorithm::nia1,
