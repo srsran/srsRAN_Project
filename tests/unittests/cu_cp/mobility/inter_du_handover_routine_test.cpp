@@ -8,8 +8,6 @@
  *
  */
 
-#include "inter_du_handover_routine_test_helpers.h"
-#include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "mobility_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
@@ -207,7 +205,7 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_then_ho_fails)
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
+  cu_cp_inter_du_handover_request request = {};
   request.target_pci                      = INVALID_PCI;
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
