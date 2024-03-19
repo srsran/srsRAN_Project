@@ -42,9 +42,7 @@ public:
   optional<rrc_meas_cfg>
   get_measurement_config(ue_index_t ue_index, nr_cell_id_t nci, optional<rrc_meas_cfg> current_meas_config = {});
   optional<cell_meas_config> get_cell_config(nr_cell_id_t nci);
-  bool                       update_cell_config(nr_cell_id_t                                  nci,
-                                                const serving_cell_meas_config&               serv_cell_cfg,
-                                                const std::vector<neighbor_cell_meas_config>& ncells = {});
+  bool                       update_cell_config(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg);
   void                       report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
 private:

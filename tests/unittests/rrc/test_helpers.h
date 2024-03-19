@@ -151,9 +151,7 @@ private:
 class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
 {
 public:
-  bool on_cell_config_update_request(nr_cell_id_t                           nci,
-                                     const serving_cell_meas_config&        serv_cell_cfg,
-                                     std::vector<neighbor_cell_meas_config> ncells = {}) override
+  bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override
   {
     return true;
   }

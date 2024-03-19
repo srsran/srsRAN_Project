@@ -68,9 +68,7 @@ public:
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler
-  bool handle_cell_config_update_request(nr_cell_id_t                           nci,
-                                         const serving_cell_meas_config&        serv_cell_cfg,
-                                         std::vector<neighbor_cell_meas_config> ncells = {}) override;
+  bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_ue_removal_interface
   void handle_ue_removal_request(ue_index_t ue_index) override;

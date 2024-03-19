@@ -123,9 +123,7 @@ optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
   return cell_cfg;
 }
 
-bool cell_meas_manager::update_cell_config(nr_cell_id_t                                  nci,
-                                           const serving_cell_meas_config&               serv_cell_cfg,
-                                           const std::vector<neighbor_cell_meas_config>& ncells)
+bool cell_meas_manager::update_cell_config(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   // Store old config to revert if new config is invalid.
   cell_meas_manager_cfg tmp_cfg = cfg;
@@ -135,7 +133,6 @@ bool cell_meas_manager::update_cell_config(nr_cell_id_t                         
 
     cell_meas_config meas_cfg;
     meas_cfg.serving_cell_cfg = serv_cell_cfg;
-    meas_cfg.ncells           = ncells;
 
     cfg.cells.emplace(nci, meas_cfg);
   } else {
@@ -143,11 +140,6 @@ bool cell_meas_manager::update_cell_config(nr_cell_id_t                         
 
     // Update serving cell config
     cfg.cells.at(nci).serving_cell_cfg = serv_cell_cfg;
-
-    // Update neighbor cells
-    if (!ncells.empty()) {
-      cfg.cells.at(nci).ncells = ncells;
-    }
   }
 
   if (!is_valid_configuration(cfg, ssb_freq_to_meas_object)) {

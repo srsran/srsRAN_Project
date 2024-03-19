@@ -246,10 +246,7 @@ public:
   /// \brief Handle a request to update the measurement related parameters for the given cell id.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
-  virtual bool handle_cell_config_update_request(nr_cell_id_t                           nci,
-                                                 const serving_cell_meas_config&        serv_cell_cfg,
-                                                 std::vector<neighbor_cell_meas_config> ncells = {}) = 0;
+  virtual bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) = 0;
 };
 
 /// Interface to request handover.
