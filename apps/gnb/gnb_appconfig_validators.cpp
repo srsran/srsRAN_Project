@@ -649,22 +649,22 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_ap
       return false;
     }
 
-    if (cell.gnb_id_bit_length.has_value() &&
-        (config_helpers::get_gnb_id(cell.nr_cell_id, cell.gnb_id_bit_length.value()) == gnb_id)) {
-      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
-          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
-        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
-                   "ssb_offset and "
-                   "ssb_duration must not be configured in the mobility config\n");
-        return false;
-      }
-    } else {
+    // Check if cell is an external managed cell
+    if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
       if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
           !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
         fmt::print(
             "For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
             "ssb_duration must be configured in the mobility config\n");
+        return false;
+      }
+    } else {
+      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
+          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
+        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+                   "ssb_offset and "
+                   "ssb_duration must not be configured in the mobility config\n");
         return false;
       }
     }
