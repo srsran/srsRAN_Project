@@ -17,6 +17,8 @@ namespace srsran {
 
 class io_broker;
 
+namespace srs_cu_up {
+
 /// Handler of a N3 connection between CU-UP and UPF.
 class n3_connection : public udp_network_gateway_data_handler, public network_gateway_data_notifier_with_src_addr
 {
@@ -61,4 +63,5 @@ public:
 /// \return Returns a factory of N3 connections.
 std::unique_ptr<n3_connection_factory> create_no_upf_n3_connection_factory(local_upf_stub& upf_stub);
 
+} // namespace srs_cu_up
 } // namespace srsran

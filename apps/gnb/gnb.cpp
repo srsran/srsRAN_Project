@@ -29,6 +29,7 @@
 
 #include "adapters/e1ap_gateway_local_connector.h"
 #include "adapters/f1c_gateway_local_connector.h"
+#include "srsran/gtpu/n3_connection_factory.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 
@@ -478,6 +479,18 @@ int main(int argc, char** argv)
   cu_up_cfg.gtpu_pcap             = gtpu_p.get();
   cu_up_cfg.timers                = cu_timers;
   cu_up_cfg.qos                   = generate_cu_up_qos_config(gnb_cfg);
+
+  // Create N3 gateway.
+  std::unique_ptr<srs_cu_up::n3_connection_factory> n3_gw;
+  {
+    udp_network_gateway_config ngu_gw_config = {};
+    ngu_gw_config.bind_address               = cu_up_cfg.net_cfg.n3_bind_addr;
+    ngu_gw_config.bind_port                  = cu_up_cfg.net_cfg.n3_bind_port;
+    ngu_gw_config.bind_interface             = cu_up_cfg.net_cfg.n3_bind_interface;
+    ngu_gw_config.rx_max_mmsg                = cu_up_cfg.net_cfg.n3_rx_max_mmsg;
+    n3_gw = srs_cu_up::create_udp_n3_connection_factory(ngu_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
+  }
+  cu_up_cfg.n3_gw = n3_gw.get();
 
   // create and start CU-UP
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);

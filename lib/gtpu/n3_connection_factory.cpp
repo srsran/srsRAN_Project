@@ -13,6 +13,7 @@
 #include "srsran/support/io/io_broker.h"
 
 using namespace srsran;
+using namespace srs_cu_up;
 
 class udp_n3_connection final : public n3_connection
 {
@@ -111,9 +112,9 @@ private:
 } // namespace
 
 std::unique_ptr<n3_connection_factory>
-srsran::create_udp_n3_connection_factory(const udp_network_gateway_config& config,
-                                         io_broker&                        io_brk,
-                                         task_executor&                    io_tx_executor)
+srsran::srs_cu_up::create_udp_n3_connection_factory(const udp_network_gateway_config& config,
+                                                    io_broker&                        io_brk,
+                                                    task_executor&                    io_tx_executor)
 {
   return std::make_unique<udp_n3_connection_factory>(config, io_brk, io_tx_executor);
 }
@@ -163,7 +164,7 @@ private:
 
 } // namespace
 
-std::unique_ptr<n3_connection_factory> srsran::create_no_upf_n3_connection_factory(local_upf_stub& upf_stub)
+std::unique_ptr<n3_connection_factory> srsran::srs_cu_up::create_no_upf_n3_connection_factory(local_upf_stub& upf_stub)
 {
   return std::make_unique<no_upf_n3_connection_factory>(upf_stub);
 }
