@@ -53,7 +53,7 @@ public:
 class f1u_trx_test
 {
 public:
-  byte_buffer create_sdu_byte_buffer(uint32_t sdu_size, uint8_t first_byte = 0) const
+  static byte_buffer create_sdu_byte_buffer(uint32_t sdu_size, uint8_t first_byte = 0)
   {
     byte_buffer sdu_buf;
     for (uint32_t k = 0; k < sdu_size; ++k) {
@@ -387,7 +387,10 @@ TEST_F(f1u_cu_up_test, rx_delivery_notification)
   EXPECT_TRUE(tester->tx_msg_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
-  ASSERT_FALSE(tester->highest_delivered_pdcp_sn_list.empty());
+
+  ASSERT_TRUE(tester->highest_delivered_pdcp_sn_list.empty()); // UL PDU should not yet arrive (due to defer)
+  ue_worker.run_pending_tasks();
+  ASSERT_FALSE(tester->highest_delivered_pdcp_sn_list.empty()); // now it should arrive
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), highest_pdcp_sn);
 
   tester->highest_delivered_pdcp_sn_list.pop_front();
