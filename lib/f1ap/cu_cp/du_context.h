@@ -18,7 +18,7 @@ namespace srs_cu_cp {
 
 /// Context of the DU that has setup an F1 connection to the CU-CP.
 struct du_context {
-  gnb_du_id_t du_id;
+  gnb_du_id_t du_id = gnb_du_id_t::invalid;
   std::string du_name;
 };
 

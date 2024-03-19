@@ -403,7 +403,10 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
   // Custom formattable object whose formatting function will run in the log backend.
   auto rx_pdu_log_entry =
       make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
-        fmt::format_to(ctx.out(), "{} PDU GNB-DU-ID={}", is_rx ? "Rx" : "Tx", du_id);
+        fmt::format_to(ctx.out(), "{} PDU", is_rx ? "Rx" : "Tx");
+        if (du_id != srsran::gnb_du_id_t::invalid) {
+          fmt::format_to(ctx.out(), " GNB-DU-ID={}", du_id);
+        }
         if (ue_idx != ue_index_t::invalid) {
           fmt::format_to(ctx.out(), " ue={}", ue_idx);
         }
