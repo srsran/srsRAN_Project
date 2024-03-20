@@ -100,7 +100,7 @@ def test_ue(
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
-                ue_definition=UEDefinition(zmq_ip=gnb_def.zmq_ip, zmq_port_array=gnb_def.zmq_port_array[:nof_ant]),
+                ue_definition=UEDefinition(zmq_ip=gnb_def.zmq_ip, zmq_port_array=gnb_def.zmq_port_array),
                 fivegc_definition=fivegc_def,
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
