@@ -128,48 +128,32 @@ namespace {
 class no_core_ngu_tnl_pdu_session final : public ngu_tnl_pdu_session
 {
 public:
-  no_core_ngu_tnl_pdu_session(local_upf_stub& upf_stub_, network_gateway_data_notifier_with_src_addr& data_notifier_) :
-    upf_stub(upf_stub_), data_notifier(data_notifier_)
-  {
-    upf_stub.register_tx_pdu_handler(*this);
-  }
-
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override
   {
-    upf_stub.handle_pdu(std::move(pdu), dest_addr);
+    // Do nothing.
   }
 
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
   {
-    // Forward PDU to registered data notifier.
-    data_notifier.on_new_pdu(std::move(pdu), src_addr);
+    // Do nothing.
   }
 
   optional<uint16_t> get_bind_port() override { return nullopt; }
-
-private:
-  local_upf_stub&                              upf_stub;
-  network_gateway_data_notifier_with_src_addr& data_notifier;
 };
 
 /// Implementation of the NG-U gateway for the case a local UPF stub is used.
 class no_core_ngu_gateway : public ngu_gateway
 {
 public:
-  no_core_ngu_gateway(local_upf_stub& upf_stub_) : upf_stub(upf_stub_) {}
-
   std::unique_ptr<ngu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
   {
-    return std::make_unique<no_core_ngu_tnl_pdu_session>(upf_stub, data_notifier);
+    return std::make_unique<no_core_ngu_tnl_pdu_session>();
   }
-
-private:
-  local_upf_stub& upf_stub;
 };
 
 } // namespace
 
-std::unique_ptr<ngu_gateway> srsran::srs_cu_up::create_no_core_ngu_gateway(local_upf_stub& upf_stub)
+std::unique_ptr<ngu_gateway> srsran::srs_cu_up::create_no_core_ngu_gateway()
 {
-  return std::make_unique<no_core_ngu_gateway>(upf_stub);
+  return std::make_unique<no_core_ngu_gateway>();
 }

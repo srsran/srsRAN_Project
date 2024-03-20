@@ -481,13 +481,15 @@ int main(int argc, char** argv)
 
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  {
+  if (not gnb_cfg.amf_cfg.no_core) {
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = cu_up_cfg.net_cfg.n3_bind_addr;
     ngu_gw_config.bind_port                  = cu_up_cfg.net_cfg.n3_bind_port;
     ngu_gw_config.bind_interface             = cu_up_cfg.net_cfg.n3_bind_interface;
     ngu_gw_config.rx_max_mmsg                = cu_up_cfg.net_cfg.n3_rx_max_mmsg;
     ngu_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
+  } else {
+    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
   }
   cu_up_cfg.ngu_gw = ngu_gw.get();
 

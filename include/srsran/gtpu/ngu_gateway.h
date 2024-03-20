@@ -58,25 +58,11 @@ public:
 std::unique_ptr<ngu_gateway>
 create_udp_ngu_gateway(const udp_network_gateway_config& config, io_broker& io_brk, task_executor& io_tx_executor);
 
-/// \brief Instance of a stub UPF using a local N3 connection (no sockets).
-class local_upf_stub
-{
-public:
-  virtual ~local_upf_stub() = default;
-
-  /// Called when the UPF receives a new packed PDU from the CU-UP.
-  virtual void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) = 0;
-
-  /// Register the handler of the PDUs transmitted by the UPF to the CU-UP.
-  virtual void register_tx_pdu_handler(network_gateway_data_notifier_with_src_addr& data_notifier) = 0;
-};
-
-/// \brief Creates a NG-U gateway that establish direct local links to a stub UPF.
+/// \brief Creates a NG-U gateway that establishes a connection to a null/dummy UPF.
 ///
 /// This type of NG-U gateway is useful when testing the CU-UP without a real UPF.
-/// \param[in] Stub of an UPF that will be co-located with the CU-UP.
 /// \return Returns the instantiated NG-U gateway.
-std::unique_ptr<ngu_gateway> create_no_core_ngu_gateway(local_upf_stub& upf_stub);
+std::unique_ptr<ngu_gateway> create_no_core_ngu_gateway();
 
 } // namespace srs_cu_up
 } // namespace srsran
