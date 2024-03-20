@@ -33,6 +33,8 @@ struct mac_crc_pdu {
   bool tb_crc_success;
   /// PUSCH SINR, in dBs.
   optional<float> ul_sinr_metric;
+  /// PUSCH RSRP, in dBFS.
+  optional<float> ul_rsrp_metric;
   /// Time alignment.
   phy_time_unit time_advance_offset;
 };

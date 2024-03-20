@@ -246,6 +246,10 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.8 Table CRC.indication message body.
+  static constexpr float MIN_UL_RSRP_VALUE_DBFS = -128.0F;
+  static constexpr float MAX_UL_RSRP_VALUE_DBFS = 0.0F;
+
   builder.add_pdu(handle,
                   result.rnti,
                   optional<uint8_t>(),
@@ -257,7 +261,8 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   {},
                   result.csi.get_time_alignment().to_seconds() * 1e9,
                   {},
-                  {});
+                  clamp(result.csi.get_rsrp_dB(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS),
+                  false);
 
   error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
   if (!validation_result) {

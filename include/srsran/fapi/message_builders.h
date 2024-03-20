@@ -1007,7 +1007,7 @@ public:
                                           optional<int>       timing_advance_offset_in_ns,
                                           optional<float>     rssi_dB,
                                           optional<float>     rsrp,
-                                          bool                rsrp_use_dBm = true)
+                                          bool                rsrp_use_dBm = false)
   {
     auto& pdu = msg.pdus.emplace_back();
 
@@ -1077,7 +1077,7 @@ public:
                                                 optional<float> avg_rssi_dB,
                                                 optional<float> rsrp,
                                                 optional<float> avg_snr_dB,
-                                                bool            rsrp_use_dBm = true)
+                                                bool            rsrp_use_dBm = false)
 
   {
     pdu.handle       = handle;
@@ -1175,7 +1175,7 @@ public:
                                       optional<float> avg_rssi,
                                       optional<float> rsrp,
                                       optional<float> avg_snr,
-                                      bool            rsrp_use_dBm = true)
+                                      bool            rsrp_use_dBm = false)
   {
     auto& pdu = msg.pdus.emplace_back();
 
@@ -1212,7 +1212,7 @@ public:
                                                 optional<int>      timing_advance_offset_ns,
                                                 optional<float>    rssi,
                                                 optional<float>    rsrp,
-                                                bool               rsrp_use_dBm = true)
+                                                bool               rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1349,7 +1349,7 @@ public:
                                                            optional<int>      timing_advance_offset_ns,
                                                            optional<float>    rssi,
                                                            optional<float>    rsrp,
-                                                           bool               rsrp_use_dBm = true)
+                                                           bool               rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1471,7 +1471,7 @@ public:
                                                              optional<int>      timing_advance_offset_ns,
                                                              optional<float>    rssi,
                                                              optional<float>    rsrp,
-                                                             bool               rsrp_use_dBm = true)
+                                                             bool               rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();

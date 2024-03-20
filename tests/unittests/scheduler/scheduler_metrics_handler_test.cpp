@@ -89,6 +89,7 @@ TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_
   ASSERT_EQ(ue_metrics.ul_nof_ok, 0);
   ASSERT_EQ(ue_metrics.ul_nof_nok, 0);
   ASSERT_EQ(ue_metrics.pusch_snr_db, 0);
+  ASSERT_EQ(ue_metrics.pusch_rsrp_db, -std::numeric_limits<float>::infinity());
   ASSERT_EQ(ue_metrics.pucch_snr_db, 0);
   ASSERT_EQ(ue_metrics.cqi, 0);
   ASSERT_EQ(ue_metrics.bsr, 0);

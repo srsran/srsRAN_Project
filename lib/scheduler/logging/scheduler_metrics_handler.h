@@ -67,22 +67,24 @@ private:
   struct ue_metric_context {
     /// \brief In this struct we store all the metadata that is reset at every report.
     struct non_persistent_data {
-      unsigned count_uci_harq_acks   = 0;
-      unsigned count_uci_harqs       = 0;
-      unsigned count_crc_acks        = 0;
-      unsigned count_crc_pdus        = 0;
-      unsigned dl_mcs                = 0;
-      unsigned nof_dl_cws            = 0;
-      unsigned ul_mcs                = 0;
-      unsigned nof_puschs            = 0;
-      uint64_t sum_dl_tb_bytes       = 0;
-      uint64_t sum_ul_tb_bytes       = 0;
-      double   sum_pusch_snrs        = 0;
-      double   sum_pucch_snrs        = 0;
-      unsigned nof_pucch_snr_reports = 0;
-      unsigned nof_pusch_snr_reports = 0;
-      unsigned dl_prbs_used          = 0;
-      unsigned ul_prbs_used          = 0;
+      unsigned count_uci_harq_acks    = 0;
+      unsigned count_uci_harqs        = 0;
+      unsigned count_crc_acks         = 0;
+      unsigned count_crc_pdus         = 0;
+      unsigned dl_mcs                 = 0;
+      unsigned nof_dl_cws             = 0;
+      unsigned ul_mcs                 = 0;
+      unsigned nof_puschs             = 0;
+      uint64_t sum_dl_tb_bytes        = 0;
+      uint64_t sum_ul_tb_bytes        = 0;
+      double   sum_pusch_snrs         = 0;
+      double   sum_pucch_snrs         = 0;
+      double   sum_pusch_rsrp         = 0;
+      unsigned nof_pucch_snr_reports  = 0;
+      unsigned nof_pusch_snr_reports  = 0;
+      unsigned nof_pusch_rsrp_reports = 0;
+      unsigned dl_prbs_used           = 0;
+      unsigned ul_prbs_used           = 0;
     };
     pci_t                                  pci;
     unsigned                               nof_prbs;

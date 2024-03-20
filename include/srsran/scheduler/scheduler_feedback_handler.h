@@ -53,6 +53,7 @@ struct ul_crc_pdu_indication {
   harq_id_t       harq_id;
   bool            tb_crc_success;
   optional<float> ul_sinr_metric;
+  optional<float> ul_rsrp_metric;
   /// \brief Timing Advance Offset measured for the UE.
   optional<phy_time_unit> time_advance_offset;
 };

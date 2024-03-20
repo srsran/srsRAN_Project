@@ -52,9 +52,10 @@ static void print_header()
 {
   fmt::print("\n");
   fmt::print(
-      "          |--------------------DL---------------------|-------------------UL------------------------------\n");
-  fmt::print(
-      " pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr    ta  phr\n");
+      "          "
+      "|--------------------DL---------------------|-------------------------UL------------------------------\n");
+  fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  rsrp  mcs  brate   ok  nok  (%)    bsr    "
+             "ta  phr\n");
 }
 
 static std::string float_to_string(float f, int digits, int field_width)
@@ -163,6 +164,16 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       fmt::print(" {:>5.1f}", clamp(ue.pusch_snr_db, -99.9f, 99.9f));
+    } else {
+      fmt::print(" {:>5.5}", "n/a");
+    }
+
+    if (!std::isinf(ue.pusch_rsrp_db) && !std::isnan(ue.pusch_rsrp_db)) {
+      if (ue.pusch_rsrp_db >= 0.0F) {
+        fmt::print(" {:>5.5}", "ovl");
+      } else {
+        fmt::print(" {:>5.1f}", clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
+      }
     } else {
       fmt::print(" {:>5.5}", "n/a");
     }

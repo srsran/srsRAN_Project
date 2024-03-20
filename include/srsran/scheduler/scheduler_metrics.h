@@ -31,6 +31,7 @@ struct scheduler_ue_metrics {
   unsigned                            dl_nof_ok;
   unsigned                            dl_nof_nok;
   float                               pusch_snr_db;
+  float                               pusch_rsrp_db;
   float                               pucch_snr_db;
   sch_mcs_index                       ul_mcs;
   double                              ul_prbs_used;

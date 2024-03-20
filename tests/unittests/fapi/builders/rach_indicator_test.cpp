@@ -51,7 +51,7 @@ TEST(rach_indication_builder, valid_basic_parameters_passes)
   ASSERT_EQ(ra_id_d, pdu.ra_index);
   ASSERT_EQ(rssi ? static_cast<unsigned>((rssi.value() + 140.F) * 1000) : std::numeric_limits<uint32_t>::max(),
             pdu.avg_rssi);
-  ASSERT_EQ(rsrp ? static_cast<unsigned>((rsrp.value() + 140.F) * 10.F) : std::numeric_limits<uint16_t>::max(),
+  ASSERT_EQ(rsrp ? static_cast<unsigned>((rsrp.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max(),
             pdu.rsrp);
   ASSERT_EQ(snr ? (snr.value() + 64) * 2 : std::numeric_limits<uint8_t>::max(), pdu.avg_snr);
   ASSERT_EQ(1, pdu.preambles.size());

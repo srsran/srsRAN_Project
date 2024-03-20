@@ -62,10 +62,10 @@ static float to_uci_ul_rssi(unsigned rssi)
   return static_cast<float>(rssi - 1280) * 0.1F;
 }
 
-/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
-static float to_uci_ul_rsrp(unsigned rsrp)
+/// Converts the given FAPI UCI RSRP to dBFS as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_rsrp(uint16_t rsrp)
 {
-  return static_cast<float>(rsrp - 1400) * 0.1F;
+  return (static_cast<float>(rsrp) - 1280.0F) * 0.1F;
 }
 
 /// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
@@ -73,6 +73,15 @@ static optional<float> convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr)
 {
   if (fapi_ul_sinr != std::numeric_limits<decltype(fapi_ul_sinr)>::min()) {
     return to_uci_ul_sinr(fapi_ul_sinr);
+  }
+  return nullopt;
+}
+
+/// Converts the given FAPI UCI RSRP to dBFS as per SCF-222 v4.0 section 3.4.9.
+static optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
+{
+  if (fapi_rsrp != std::numeric_limits<decltype(fapi_rsrp)>::max()) {
+    return to_uci_ul_rsrp(fapi_rsrp);
   }
   return nullopt;
 }
@@ -124,6 +133,7 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
     pdu.rnti           = fapi_pdu.rnti;
     pdu.tb_crc_success = fapi_pdu.tb_crc_status_ok;
     pdu.ul_sinr_metric = convert_fapi_to_mac_ul_sinr(fapi_pdu.ul_sinr_metric);
+    pdu.ul_rsrp_metric = convert_fapi_to_mac_rsrp(fapi_pdu.rsrp);
     if (fapi_pdu.timing_advance_offset_ns != std::numeric_limits<decltype(fapi_pdu.timing_advance_offset_ns)>::min()) {
       pdu.time_advance_offset = phy_time_unit::from_seconds(fapi_pdu.timing_advance_offset_ns * 1e-9);
     }
@@ -145,15 +155,6 @@ static optional<float> convert_fapi_to_mac_rssi(uint16_t fapi_rssi)
 {
   if (fapi_rssi != std::numeric_limits<decltype(fapi_rssi)>::max()) {
     return to_uci_ul_rssi(fapi_rssi);
-  }
-  return nullopt;
-}
-
-/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
-static optional<float> convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp)
-{
-  if (fapi_rsrp != std::numeric_limits<decltype(fapi_rsrp)>::max()) {
-    return to_uci_ul_rsrp(fapi_rsrp);
   }
   return nullopt;
 }
