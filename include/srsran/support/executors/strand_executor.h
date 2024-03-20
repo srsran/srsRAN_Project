@@ -47,6 +47,8 @@ struct strand_queue {
     return queue.template try_push<Priority>(std::move(task));
   }
 
+  bool try_pop(unique_task& task) { return queue.try_pop(task); }
+
   template <enqueue_priority Priority>
   auto get_enqueuer()
   {
@@ -73,6 +75,8 @@ struct strand_queue<QueuePolicy> {
   {
     return queue.try_push(std::move(task));
   }
+
+  bool try_pop(unique_task& task) { return queue.try_pop(task); }
 
   template <enqueue_priority Priority>
   auto get_enqueuer()
@@ -227,17 +231,20 @@ protected:
   // Run all tasks that have been enqueued in the strand, and unlocks the strand.
   void run_enqueued_tasks()
   {
-    unique_task task;
-    uint32_t    queue_size = this->job_count.load(std::memory_order_acquire);
-    while (queue_size > 0) {
+    unique_task    task;
+    uint32_t       queue_size       = this->job_count.load(std::memory_order_acquire);
+    const unsigned max_pop_failures = 1000;
+    for (unsigned fail_counter = 0; queue_size > 0;) {
       unsigned run_count = 0;
-      for (; run_count != queue_size and queue.queue.try_pop(task); ++run_count) {
+      for (; run_count != queue_size and queue.try_pop(task); ++run_count) {
         task();
       }
-      if (run_count != queue_size) {
-        // Unexpected failure to pop enqueued tasks. It might be due to queue shutdown.
+      if (run_count != queue_size and ++fail_counter == max_pop_failures) {
+        // Unexpected failure to pop enqueued tasks. Possible reasons:
+        // - Are you using an SPSC queue with multiple consumers?
+        // - The MPMC queue has spurious failures (the max_pop_failure should have accounted for that though)
         srslog::fetch_basic_logger("ALL").warning(
-            "Couldn't run all pending tasks stored in strand in the thread {}. run_count={} queue_size={}",
+            "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
             this_thread_name(),
             run_count,
             queue_size);
@@ -245,7 +252,7 @@ protected:
 
       // We have run all the tasks that were enqueued since when we computed queue_size.
       // Recompute the queue_size to check if there are tasks that were enqueued in the meantime.
-      queue_size = this->job_count.fetch_sub(queue_size, std::memory_order_acq_rel) - queue_size;
+      queue_size = this->job_count.fetch_sub(run_count, std::memory_order_acq_rel) - run_count;
     }
   }
 
@@ -263,7 +270,7 @@ protected:
     unique_task dropped_task;
     while (queue_size > 0) {
       unsigned run_count = 0;
-      for (; run_count != queue_size and this->queue.queue.try_pop(dropped_task); ++run_count) {
+      for (; run_count != queue_size and this->queue.try_pop(dropped_task); ++run_count) {
         // do nothing with popped task.
       }
       queue_size = this->job_count.fetch_sub(run_count, std::memory_order_acq_rel) - run_count;
