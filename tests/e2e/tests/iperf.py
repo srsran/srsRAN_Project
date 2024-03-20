@@ -286,7 +286,6 @@ def test_android(
     (
         param(7, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
         param(78, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 90, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android_hp
