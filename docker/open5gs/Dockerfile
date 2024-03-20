@@ -46,7 +46,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     iproute2 \
     iptables \
     iputils-ping \
-    netcat \
+    netcat-openbsd \
     iperf \
     iperf3 \
     libtalloc-dev \
@@ -62,7 +62,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-ins
     && apt-get autoremove && apt-get clean
 
 # To set a fixed version of open5gs use
-ARG OPEN5GS_VERSION=v2.6.6
+ARG OPEN5GS_VERSION=v2.7.0
 RUN echo $OPEN5GS_VERSION > ./open5gsversion
 # get latest open5gs tag (must be stored in a file, because docker does not allow to use the return value directly)
 # RUN git ls-remote --tags https://github.com/open5gs/open5gs | sort -t '/' -k 3 -V | awk -F/ '{ print $3 }' | awk '!/\^\{\}/' | tail -n 1 > ./open5gsversion
