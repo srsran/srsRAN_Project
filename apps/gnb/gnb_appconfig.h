@@ -34,7 +34,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/cpu_architecture_info.h"
-#include "srsran/support/unique_thread.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/units.h"
 #include <map>
 #include <string>

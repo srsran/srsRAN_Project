@@ -13,7 +13,7 @@ add_subdirectory(version)
 set(SOURCES
         backtrace.cpp
         math_utils.cpp
-        unique_thread.cpp
+        executors/unique_thread.cpp
         executors/task_worker.cpp
         executors/task_worker_pool.cpp
         executors/task_execution_manager.cpp

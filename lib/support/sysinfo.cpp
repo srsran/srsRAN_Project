@@ -9,7 +9,7 @@
  */
 
 #include "srsran/support/sysinfo.h"
-#include "srsran/support/unique_thread.h"
+#include "srsran/support/executors/unique_thread.h"
 #include <fstream>
 #include <sstream>
 #include <string>

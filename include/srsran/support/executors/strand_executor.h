@@ -13,6 +13,7 @@
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_executor_utils.h"
+#include "srsran/support/executors/thread_utils.h"
 
 namespace srsran {
 
@@ -235,13 +236,16 @@ protected:
       }
       if (run_count != queue_size) {
         // Unexpected failure to pop enqueued tasks. It might be due to queue shutdown.
-        srslog::fetch_basic_logger("ALL").info(
-            "Couldn't run all pending tasks in strand. run_count={} queue_size={}", run_count, queue_size);
+        srslog::fetch_basic_logger("ALL").warning(
+            "Couldn't run all pending tasks stored in strand in the thread {}. run_count={} queue_size={}",
+            this_thread_name(),
+            run_count,
+            queue_size);
       }
 
       // We have run all the tasks that were enqueued since when we computed queue_size.
       // Recompute the queue_size to check if there are tasks that were enqueued in the meantime.
-      queue_size = this->job_count.fetch_sub(run_count, std::memory_order_acq_rel) - run_count;
+      queue_size = this->job_count.fetch_sub(queue_size, std::memory_order_acq_rel) - queue_size;
     }
   }
 
@@ -251,7 +255,11 @@ protected:
     // Note: Since we acquired the task_strand, the task enqueued in this call should always be the first being
     // popped. Note: If there is a single producer, only the task enqueued in this call will be popped. Note: As we
     // currently hold the strand, there is no concurrent thread popping tasks.
-    uint32_t    queue_size = this->job_count.load(std::memory_order_acquire);
+    uint32_t queue_size = this->job_count.load(std::memory_order_acquire);
+
+    srslog::fetch_basic_logger("ALL").warning("Failed to dispatch {} tasks stored in strand. Discarding them...",
+                                              queue_size);
+
     unique_task dropped_task;
     while (queue_size > 0) {
       unsigned run_count = 0;
