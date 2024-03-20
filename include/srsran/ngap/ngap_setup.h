@@ -30,7 +30,7 @@ struct ngap_supported_ta_item {
 };
 
 struct ngap_ng_setup_request {
-  unsigned                            max_setup_retries = 5;
+  unsigned                            max_setup_retries = 1;
   cu_cp_global_gnb_id                 global_ran_node_id;
   std::string                         ran_node_name;
   std::vector<ngap_supported_ta_item> supported_ta_list;
