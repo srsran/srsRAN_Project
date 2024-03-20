@@ -99,7 +99,6 @@ protected:
     app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
-    ngu_gw       = create_udp_ngu_gateway(udp_network_gateway_config{}, *broker, *executor);
     upf_addr_str = "127.0.0.1";
   }
 
@@ -124,7 +123,18 @@ protected:
     return cfg;
   }
 
-  void init(const cu_up_configuration& cfg) { cu_up = create_cu_up(cfg); }
+  void init(const cu_up_configuration& cfg)
+  {
+    udp_network_gateway_config udp_cfg{};
+    udp_cfg.bind_interface = cfg.net_cfg.n3_bind_interface;
+    udp_cfg.bind_address   = cfg.net_cfg.n3_bind_addr;
+    udp_cfg.bind_port      = cfg.net_cfg.n3_bind_port;
+    ngu_gw                 = create_udp_ngu_gateway(udp_cfg, *broker, *executor);
+
+    auto cfg_copy   = cfg;
+    cfg_copy.ngu_gw = ngu_gw.get();
+    cu_up           = create_cu_up(cfg_copy);
+  }
 
   void TearDown() override
   {
