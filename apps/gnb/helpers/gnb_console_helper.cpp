@@ -22,7 +22,7 @@
 using namespace srsran;
 
 // List of possible log channels that can be dynamically changed.
-static const std::vector<std::string> dynamic_log_channels = {"PHY", "MAC", "SCHED", "RLC", "PDCP"};
+static const std::vector<std::string> dynamic_log_channels = {"PHY"};
 
 // Parses integer values from a console command.
 template <typename Integer>
