@@ -84,8 +84,7 @@ private:
   const ether::vlan_frame_params             vlan_params;
   const ru_compression_params                compr_params;
   sequence_identifier_generator              up_seq_gen;
-  std::shared_ptr<ether::eth_frame_pool>     frame_pool_ptr;
-  ether::eth_frame_pool&                     frame_pool;
+  std::shared_ptr<ether::eth_frame_pool>     frame_pool;
   std::unique_ptr<iq_compressor>             compressor_sel;
   std::unique_ptr<ether::vlan_frame_builder> eth_builder;
   std::unique_ptr<ecpri::packet_builder>     ecpri_builder;

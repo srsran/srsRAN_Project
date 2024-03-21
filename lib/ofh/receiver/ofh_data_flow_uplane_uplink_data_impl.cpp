@@ -18,13 +18,12 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
     const data_flow_uplane_uplink_data_impl_config&  config,
     data_flow_uplane_uplink_data_impl_dependencies&& dependencies) :
   logger(*dependencies.logger),
-  ul_cplane_context_repo_ptr(dependencies.ul_cplane_context_repo_ptr),
-  ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
+  ul_cplane_context_repo(std::move(dependencies.ul_cplane_context_repo)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   rx_symbol_writer(config.ul_eaxc, *dependencies.logger, dependencies.ul_context_repo),
   notification_sender(*dependencies.logger, dependencies.ul_context_repo, dependencies.notifier)
 {
-  srsran_assert(ul_cplane_context_repo_ptr, "Invalid control plane repository");
+  srsran_assert(ul_cplane_context_repo, "Invalid control plane repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
 }
 
@@ -59,7 +58,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
 
   const uplane_message_params& params = results.params;
   expected<ul_cplane_context>  ex_cp_context =
-      ul_cplane_context_repo.get(params.slot, params.symbol_id, params.filter_index, eaxc);
+      ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
   if (!ex_cp_context) {
     logger.info("Dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', symbol '{}' "

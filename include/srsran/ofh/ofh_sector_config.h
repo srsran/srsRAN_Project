@@ -121,7 +121,7 @@ struct sector_dependencies {
   std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
   /// Optional Ethernet gateway.
   optional<std::unique_ptr<ether::gateway>> eth_gateway;
-  /// Optional  Ethernet receiver.
+  /// Optional Ethernet receiver.
   optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 

@@ -33,15 +33,11 @@ class dummy_frame_notifier : public frame_notifier
 static dummy_frame_notifier dummy_notifier;
 
 dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
-                                       std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                                       std::shared_ptr<dpdk_port_context> port_ctx_,
                                        srslog::basic_logger&              logger_) :
-  logger(logger_),
-  executor(executor_),
-  notifier(dummy_notifier),
-  port_ctx_ptr(std::move(port_ctx_ptr_)),
-  port_ctx(*port_ctx_ptr)
+  logger(logger_), executor(executor_), notifier(dummy_notifier), port_ctx(std::move(port_ctx_))
 {
-  srsran_assert(port_ctx_ptr, "Invalid port context");
+  srsran_assert(port_ctx, "Invalid port context");
 }
 
 void dpdk_receiver_impl::start(frame_notifier& notifier_)
@@ -97,13 +93,13 @@ void dpdk_receiver_impl::receive_loop()
 void dpdk_receiver_impl::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-  unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
+  unsigned num_frames = ::rte_eth_rx_burst(port_ctx->get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
   }
 
-  for (auto mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
+  for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
     std::array<uint8_t, MAX_BUFFER_SIZE> buffer;
 
     ::rte_vlan_strip(mbuf);

@@ -64,8 +64,7 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   ru_nof_prbs(config.ru_nof_prbs),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
-  frame_pool_ptr(dependencies.frame_pool),
-  frame_pool(*frame_pool_ptr),
+  frame_pool(std::move(dependencies.frame_pool)),
   compressor_sel(std::move(dependencies.compressor_sel)),
   eth_builder(std::move(dependencies.eth_builder)),
   ecpri_builder(std::move(dependencies.ecpri_builder)),
@@ -75,7 +74,7 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(compressor_sel, "Invalid compressor selector");
   srsran_assert(up_builder, "Invalid User-Plane message builder");
-  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(frame_pool, "Invalid frame pool");
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
@@ -105,7 +104,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
        symbol_id != symbol_end;
        ++symbol_id) {
     slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
-    scoped_frame_buffer scoped_buffer(frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
+    scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
     if (scoped_buffer.empty()) {
       logger.warning("Not enough space in the buffer pool to create a downlink User-Plane message for slot '{}' and "
                      "eAxC '{}', symbol_id '{}'",

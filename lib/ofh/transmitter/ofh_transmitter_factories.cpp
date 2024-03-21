@@ -45,8 +45,8 @@ create_data_flow_cplane_sched(const transmitter_config&                         
 
   data_flow_cplane_scheduling_commands_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
-  dependencies.ul_cplane_context_repo = ul_cplane_context_repo;
-  dependencies.frame_pool             = frame_pool;
+  dependencies.ul_cplane_context_repo = std::move(ul_cplane_context_repo);
+  dependencies.frame_pool             = std::move(frame_pool);
   dependencies.eth_builder            = ether::create_vlan_frame_builder();
   dependencies.ecpri_builder          = ecpri::create_ecpri_packet_builder();
   dependencies.cp_builder             = (tx_config.is_downlink_static_compr_hdr_enabled)
@@ -73,7 +73,7 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
   dependencies.logger        = &logger;
-  dependencies.frame_pool    = frame_pool;
+  dependencies.frame_pool    = std::move(frame_pool);
   dependencies.eth_builder   = ether::create_vlan_frame_builder();
   dependencies.ecpri_builder = ecpri::create_ecpri_packet_builder();
 
@@ -104,7 +104,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
                         task_executor&                                    executor)
 {
   auto data_flow_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
-      create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo), executor);
+      create_data_flow_cplane_sched(tx_config, logger, frame_pool, std::move(ul_cp_context_repo)), executor);
   auto data_flow_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
       create_data_flow_uplane_data(tx_config, logger, frame_pool), executor);
 
@@ -122,7 +122,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
     dl_dependencies.logger           = &logger;
     dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
     dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-    dl_dependencies.frame_pool_ptr   = frame_pool;
+    dl_dependencies.frame_pool       = frame_pool;
 
     return std::make_unique<downlink_manager_broadcast_impl>(dl_config, std::move(dl_dependencies));
   }
@@ -140,7 +140,7 @@ create_downlink_manager(const transmitter_config&                         tx_con
   dl_dependencies.logger           = &logger;
   dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
   dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-  dl_dependencies.frame_pool_ptr   = frame_pool;
+  dl_dependencies.frame_pool       = frame_pool;
 
   return std::make_unique<downlink_manager_impl>(dl_config, std::move(dl_dependencies));
 }
@@ -161,11 +161,11 @@ create_uplink_request_handler(const transmitter_config&                         
   config.cp                  = tx_config.cp;
 
   uplink_request_handler_impl_dependencies dependencies;
-  dependencies.logger         = &logger;
-  dependencies.ul_slot_repo   = ul_slot_context_repo;
-  dependencies.ul_prach_repo  = prach_context_repo;
-  dependencies.frame_pool_ptr = frame_pool;
-  dependencies.data_flow      = create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo);
+  dependencies.logger        = &logger;
+  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
+  dependencies.ul_prach_repo = std::move(prach_context_repo);
+  dependencies.frame_pool    = frame_pool;
+  dependencies.data_flow = create_data_flow_cplane_sched(tx_config, logger, frame_pool, std::move(ul_cp_context_repo));
 
   return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
 }
@@ -221,8 +221,12 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       create_downlink_manager(tx_config, logger, frame_pool, ul_cp_context_repo, downlink_executor);
 
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
-      create_uplink_request_handler(
-          tx_config, logger, frame_pool, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
+      create_uplink_request_handler(tx_config,
+                                    logger,
+                                    frame_pool,
+                                    std::move(prach_context_repo),
+                                    std::move(ul_slot_context_repo),
+                                    std::move(ul_cp_context_repo)),
       downlink_executor);
 
   dependencies.eth_gateway = std::move(eth_gateway);
@@ -248,7 +252,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                                                              tx_executor,
                                                                              downlink_executor,
                                                                              std::move(eth_gateway),
-                                                                             prach_context_repo,
-                                                                             ul_slot_context_repo,
-                                                                             ul_cp_context_repo));
+                                                                             std::move(prach_context_repo),
+                                                                             std::move(ul_slot_context_repo),
+                                                                             std::move(ul_cp_context_repo)));
 }

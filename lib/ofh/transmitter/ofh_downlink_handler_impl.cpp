@@ -45,13 +45,12 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
       to_numerology_value(config.scs)),
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
-  frame_pool_ptr(dependencies.frame_pool_ptr),
-  frame_pool(*frame_pool_ptr),
+  frame_pool(std::move(dependencies.frame_pool)),
   err_notifier(dummy_err_notifier)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
-  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(frame_pool, "Invalid frame pool");
 }
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid)
@@ -62,7 +61,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                 grid.get_nof_ports());
 
   // Clear any stale buffers associated with the context slot.
-  frame_pool.clear_downlink_slot(context.slot, logger);
+  frame_pool->clear_downlink_slot(context.slot, logger);
 
   if (window_checker.is_late(context.slot)) {
     err_notifier.get().on_late_downlink_message({context.slot, sector_id});

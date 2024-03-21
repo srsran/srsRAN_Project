@@ -18,10 +18,10 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
                                                    const tx_window_timing_parameters&     timing_params_,
                                                    std::unique_ptr<ether::gateway>        gw,
                                                    std::shared_ptr<ether::eth_frame_pool> frame_pool) :
-  logger(logger_), pool_ptr(frame_pool), pool(*pool_ptr), gateway(std::move(gw)), timing_params(timing_params_)
+  logger(logger_), pool(std::move(frame_pool)), gateway(std::move(gw)), timing_params(timing_params_)
 {
   srsran_assert(gateway, "Invalid Ethernet gateway");
-  srsran_assert(pool_ptr, "Invalid frame pool");
+  srsran_assert(pool, "Invalid frame pool");
 }
 
 void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> frame_burst)
@@ -38,7 +38,7 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     const ether::frame_pool_interval&                   interval,
     static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst)
 {
-  auto frame_buffers = pool.read_frame_buffers(interval);
+  auto frame_buffers = pool->read_frame_buffers(interval);
   if (frame_buffers.empty()) {
     return;
   }
@@ -83,7 +83,7 @@ void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
   transmit_frame_burst(frame_burst);
 
   // Clear sent buffers.
-  pool.clear_sent_frame_buffers(interval_cp_dl);
-  pool.clear_sent_frame_buffers(interval_cp_ul);
-  pool.clear_sent_frame_buffers(interval_up);
+  pool->clear_sent_frame_buffers(interval_cp_dl);
+  pool->clear_sent_frame_buffers(interval_cp_ul);
+  pool->clear_sent_frame_buffers(interval_up);
 }
