@@ -515,6 +515,7 @@ def test_zmq(
         time_alignment_calibration=0,
         always_download_artifacts=False,
         bitrate_threshold=0,
+        ue_stop_timeout=1,
         gnb_post_cmd="log --hex_max_size=32 cu_cp --inactivity_timer=600",
     )
 
