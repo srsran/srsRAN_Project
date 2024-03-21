@@ -268,7 +268,7 @@ protected:
       }
       if (run_count != queue_size) {
         // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
-        // consumers?
+        // producers?
         srslog::fetch_basic_logger("ALL").error(
             "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
             this_thread_name(),
