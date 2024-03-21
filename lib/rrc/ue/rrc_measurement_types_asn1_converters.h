@@ -773,6 +773,13 @@ inline asn1::rrc_nr::nr_rs_type_e rrc_nr_rs_type_to_asn1(const rrc_nr_rs_type& r
   return asn1_rs_type;
 }
 
+inline asn1::rrc_nr::report_interv_e report_interval_to_asn1(uint32_t report_interval)
+{
+  asn1::rrc_nr::report_interv_e asn1_report_interval;
+
+  return asn1_report_interval;
+}
+
 inline asn1::rrc_nr::periodical_report_cfg_s
 periodical_report_cfg_to_rrc_asn1(const rrc_periodical_report_cfg& periodical_report_cfg)
 {
@@ -780,8 +787,13 @@ periodical_report_cfg_to_rrc_asn1(const rrc_periodical_report_cfg& periodical_re
 
   // rs type
   asn1_periodical_report_cfg.rs_type = rrc_nr_rs_type_to_asn1(periodical_report_cfg.rs_type);
-  // report interv
-  asn1::number_to_enum(asn1_periodical_report_cfg.report_interv, periodical_report_cfg.report_interv);
+  // report interv. This struct mixes ms and minutes so we need to convert the value before conversion
+  if (periodical_report_cfg.report_interv < 60000) {
+    asn1::number_to_enum(asn1_periodical_report_cfg.report_interv, periodical_report_cfg.report_interv);
+  } else {
+    asn1::number_to_enum(asn1_periodical_report_cfg.report_interv, periodical_report_cfg.report_interv / 60000);
+  }
+
   // report amount
   asn1::number_to_enum(asn1_periodical_report_cfg.report_amount, periodical_report_cfg.report_amount);
   // report quant cell
@@ -917,7 +929,12 @@ event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_trigge
   asn1_event_triggered_cfg.rs_type = rrc_nr_rs_type_to_asn1(event_triggered_cfg.rs_type);
 
   // report interv
-  asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv);
+  // report interv. This struct mixes ms and minutes so we need to convert the value before conversion
+  if (event_triggered_cfg.report_interv < 60000) {
+    asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv);
+  } else {
+    asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv / 60000);
+  }
 
   // report amount
   asn1::number_to_enum(asn1_event_triggered_cfg.report_amount, event_triggered_cfg.report_amount);

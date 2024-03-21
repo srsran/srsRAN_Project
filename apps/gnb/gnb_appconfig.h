@@ -669,7 +669,6 @@ struct cu_cp_neighbor_cell_appconfig_item {
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
   uint64_t           nr_cell_id; ///< Cell id.
-  std::string        rat = "nr"; ///< RAT of this neighbor cell.
   optional<unsigned> periodic_report_cfg_id;
 
   // These parameters must only be set for external cells

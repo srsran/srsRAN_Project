@@ -282,7 +282,6 @@ static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appcon
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
   app.add_option("--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
-  app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
   app.add_option("--periodic_report_cfg_id",
                  config.periodic_report_cfg_id,
                  "Periodical report configuration for the serving cell")
@@ -295,7 +294,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   app.add_option("--ssb_period", config.ssb_period, "SSB period in ms")->check(CLI::IsMember({5, 10, 20, 40, 80, 160}));
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
-  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
+  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration")->check(CLI::IsMember({1, 2, 3, 4, 5}));
 
   // report configuration parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -321,14 +320,24 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_report_appconfig& r
       ->check(CLI::Range(1, 64));
   app.add_option("--report_type", report_params.report_type, "Type of the report configuration")
       ->check(CLI::IsMember({"periodical", "event_triggered"}));
-  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms");
-  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type");
-  app.add_option("--a3_offset_db", report_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms")
+      ->check(
+          CLI::IsMember({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000}));
+  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type")
+      ->check(CLI::IsMember({"rsrp", "rsrq", "sinr"}));
+  app.add_option("--a3_offset_db",
+                 report_params.a3_offset_db,
+                 "A3 offset in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+      ->check(CLI::Range(-30, 30));
   app.add_option(
-      "--a3_hysteresis_db", report_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+         "--a3_hysteresis_db",
+         report_params.a3_hysteresis_db,
+         "A3 hysteresis in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+      ->check(CLI::Range(0, 30));
   app.add_option("--a3_time_to_trigger_ms",
                  report_params.a3_time_to_trigger_ms,
-                 "Time in ms during which A3 condition must be met before measurement report trigger");
+                 "Time in ms during which A3 condition must be met before measurement report trigger")
+      ->check(CLI::IsMember({0, 40, 64, 80, 100, 128, 160, 256, 320, 480, 512, 640, 1024, 1280, 2560, 5120}));
 }
 
 static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)

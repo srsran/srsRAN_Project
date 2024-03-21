@@ -352,7 +352,7 @@ struct rrc_meas_report_quant {
 
 struct rrc_periodical_report_cfg {
   rrc_nr_rs_type                  rs_type;
-  uint16_t                        report_interv;
+  uint32_t                        report_interv;
   int8_t                          report_amount;
   rrc_meas_report_quant           report_quant_cell;
   uint8_t                         max_report_cells;
