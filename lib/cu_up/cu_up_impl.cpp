@@ -156,6 +156,9 @@ void cu_up::stop()
   }
   logger.debug("CU-UP stopping...");
 
+  // Start statistics report timer
+  statistics_report_timer.stop();
+
   // CU-UP stops listening to new GTPU Rx PDUs.
   if (ngu_gw) {
     if (not cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd())) {
