@@ -22,6 +22,7 @@
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/rlc/rlc_config.h"
+#include <set>
 
 using namespace srsran;
 
@@ -641,12 +642,36 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 
 static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_appconfig& config)
 {
+  // check that report config ids are unique
+  std::map<unsigned, std::string> report_cfg_ids_to_report_type;
+  for (const auto& report_cfg : config.report_configs) {
+    if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
+      fmt::print("Report config ids must be unique\n");
+      return false;
+    }
+    report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
+  }
+
   // check cu_cp_cell_config
   for (const auto& cell : config.cells) {
+    std::set<nr_cell_id_t> ncis;
+    if (ncis.emplace(cell.nr_cell_id).second == false) {
+      fmt::print("Cells must be unique ({:#x} already present)\n");
+      return false;
+    }
+
     if (cell.ssb_period.has_value() && cell.ssb_offset.has_value() &&
         cell.ssb_offset.value() >= cell.ssb_period.value()) {
       fmt::print("ssb_offset must be smaller than ssb_period\n");
       return false;
+    }
+
+    // check that for the serving cell only periodic reports are configured
+    if (cell.periodic_report_cfg_id.has_value()) {
+      if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
+        fmt::print("For the serving cell only periodic reports are allowed\n");
+        return false;
+      }
     }
 
     // Check if cell is an external managed cell
