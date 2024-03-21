@@ -160,6 +160,11 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
+  if (ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_info("Dropping UlNasTransportMessage. UE is already scheduled for release");
+    return;
+  }
+
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_NAS_TRANSPORT);
