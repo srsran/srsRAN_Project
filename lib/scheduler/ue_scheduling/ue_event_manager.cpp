@@ -48,7 +48,7 @@ public:
     pending_evs.push(key);
   }
 
-  void slot_indication()
+  void slot_indication(slot_point sl)
   {
     // Retrieve pending UEs.
     pending_evs.slot_indication();
@@ -78,10 +78,11 @@ public:
 
       // Forward DL BO update to UE.
       u.handle_dl_buffer_state_indication(dl_bo);
-      if (dl_bo.lcid == LCID_SRB0 or (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
+      if ((dl_bo.lcid == LCID_SRB0 and u.has_pending_dl_newtx_bytes(LCID_SRB0)) or
+          (u.get_pcell().is_in_fallback_mode() and dl_bo.lcid == LCID_SRB1)) {
         // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
         parent.du_cells[u.get_pcell().cell_index].fallback_sched->handle_dl_buffer_state_indication_srb(
-            dl_bo.ue_index, dl_bo.lcid == LCID_SRB0);
+            dl_bo.ue_index, dl_bo.lcid == LCID_SRB0, sl, dl_bo.bs);
       }
 
       // Log event.
@@ -596,7 +597,7 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
   }
 
   if (new_slot_detected) {
-    dl_bo_mng->slot_indication();
+    dl_bo_mng->slot_indication(sl);
   }
 }
 
