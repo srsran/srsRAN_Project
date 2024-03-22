@@ -366,8 +366,8 @@ def iperf_sequentially(
             logging.warning(
                 "Iperf %s [%s %s] failed due to %s",
                 ue_attached_info.ipv4,
-                _iperf_proto_to_str(iperf_request.proto),
-                _iperf_dir_to_str(iperf_request.direction),
+                _iperf_proto_to_str(protocol),
+                _iperf_dir_to_str(direction),
                 ErrorReportedByAgent(err).details,
             )
         sleep(sleep_between_retries)
@@ -402,8 +402,8 @@ def iperf_start(
     logging.info(
         "Iperf %s [%s %s] started",
         ue_attached_info.ipv4,
-        _iperf_proto_to_str(iperf_request.proto),
-        _iperf_dir_to_str(iperf_request.direction),
+        _iperf_proto_to_str(protocol),
+        _iperf_dir_to_str(direction),
     )
 
     return (task, iperf_request)
