@@ -128,8 +128,36 @@ def test_ue(
 
 
 @mark.test_mode
-# pylint: disable=too-many-arguments
 def test_ru(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+):
+    """
+    Run gnb in test mode ru dummy.
+    """
+    _test_ru(retina_manager, retina_data, gnb)
+
+
+@mark.test_mode_not_crash
+def test_ru_not_crash(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+):
+    """
+    Run gnb with sanitizers in test mode ru dummy.
+    It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
+    """
+    _test_ru(retina_manager, retina_data, gnb, warning_as_errors=False, fail_if_kos=True)
+
+
+# pylint: disable=too-many-arguments
+def _test_ru(
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -146,10 +174,6 @@ def test_ru(
     warning_as_errors: bool = True,
     fail_if_kos: bool = True,
 ):  # pylint: disable=too-many-locals
-    """
-    Run gnb in test mode.
-    """
-
     # Configuration
     with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
         tmp_file.write(" ")  # Make it not empty to overwrite default one

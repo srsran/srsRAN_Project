@@ -400,8 +400,8 @@ test mode ru:
 
 test mode ru tsan:
   extends: test mode ru
-  when: manual
-  allow_failure: true
+  variables:
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -410,8 +410,8 @@ test mode ru tsan:
 
 test mode ru asan:
   extends: test mode ru
-  when: manual
-  allow_failure: true
+  variables:
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic asan"
       artifacts: true
@@ -420,8 +420,8 @@ test mode ru asan:
 
 test mode ru memcheck:
   extends: test mode ru
-  when: manual
-  allow_failure: true
+  variables:
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic memcheck"
       artifacts: true
