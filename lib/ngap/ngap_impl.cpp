@@ -264,7 +264,11 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     logger.warning("ran_ue_id={} amf_ue_id={}: Dropping DlNasTransportMessage. UE context does not exist",
                    msg->ran_ue_ngap_id,
                    msg->amf_ue_ngap_id);
-    send_error_indication(ngap_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    send_error_indication(ngap_notifier,
+                          logger,
+                          {},
+                          uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                          ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -272,7 +276,10 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping DlNasTransportMessage. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(msg->amf_ue_ngap_id)});
     return;
   }
 
@@ -311,7 +318,10 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping InitialContextSetup. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
   }
 
@@ -384,7 +394,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceSetupRequest. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
   }
 
@@ -448,7 +461,10 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceModifyRequest. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
   }
 
@@ -511,7 +527,10 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceReleaseCommand. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(command->amf_ue_ngap_id)});
     return;
   }
 
@@ -590,7 +609,10 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping UeContextReleaseCommand. UE is already scheduled for release");
-    schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                amf_ue_id});
     return;
   }
 
@@ -622,8 +644,12 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   // start routine
   task_sched.schedule_async_task(
       ue_ctxt.ue_ids.ue_index,
-      launch_async<ngap_ue_context_release_procedure>(
-          msg, ue_ctxt.ue_ids, ue->get_du_processor_control_notifier(), ngap_notifier, ue_ctxt.logger));
+      launch_async<ngap_ue_context_release_procedure>(msg,
+                                                      ue_ctxt.ue_ids,
+                                                      stored_error_indications,
+                                                      ue->get_du_processor_control_notifier(),
+                                                      ngap_notifier,
+                                                      ue_ctxt.logger));
 }
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)

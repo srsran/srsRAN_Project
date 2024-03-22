@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ngap_context.h"
+#include "ngap_error_indication_helper.h"
 #include "procedures/ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
 #include "srsran/asn1/ngap/ngap.h"
@@ -136,6 +137,8 @@ private:
 
   /// Repository of UE Contexts.
   ngap_ue_context_list ue_ctxt_list;
+
+  std::unordered_map<ue_index_t, error_indication_request_t> stored_error_indications;
 
   ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
