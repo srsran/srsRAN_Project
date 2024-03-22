@@ -151,9 +151,6 @@ private:
   ngap_to_cu_cp_task_scheduler ngap_task_sched;
   ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
 
-  // F1AP to CU-CP adapter
-  f1ap_cu_cp_adapter f1ap_cu_cp_notifier;
-
   // RRC DU to CU-CP adapters
   rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;
 

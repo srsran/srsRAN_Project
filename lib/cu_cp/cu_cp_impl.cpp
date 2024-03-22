@@ -43,7 +43,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              get_cu_cp_ue_context_handler(),
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
-                             f1ap_cu_cp_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              du_processor_task_sched,
@@ -61,7 +60,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, *this);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
-  f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(mobility_mng);
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   conn_notifier.connect_node_connection_handler(controller);

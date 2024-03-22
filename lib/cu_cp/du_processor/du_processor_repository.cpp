@@ -118,7 +118,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                                         *du_ctxt.f1ap_tx_pdu_notifier,
                                                                         cfg.e1ap_ctrl_notifier,
                                                                         cfg.ngap_ctrl_notifier,
-                                                                        cfg.f1ap_cu_cp_notifier,
                                                                         cfg.ue_nas_pdu_notifier,
                                                                         cfg.ue_ngap_ctrl_notifier,
                                                                         cfg.meas_config_notifier,
