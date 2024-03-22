@@ -131,7 +131,14 @@ public:
     });
   }
 
-  void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
+  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Requested a UE removal", ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
 
   optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
                                                        nr_cell_id_t           nci,

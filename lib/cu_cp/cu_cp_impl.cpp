@@ -10,6 +10,7 @@
 
 #include "cu_cp_impl.h"
 #include "metrics_handler/metrics_handler_impl.h"
+#include "routines/ue_removal_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -51,7 +52,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  routine_mng(ue_mng.get_task_sched()),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
@@ -282,18 +282,19 @@ bool cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t nci, const servi
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }
 
-void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
+async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 {
   du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
   auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
-  routine_mng.start_ue_removal_routine(ue_index,
-                                       rrc_du_adapters.at(du_index),
-                                       e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
-                                       f1ap_adapters.at(du_index),
-                                       ngap_adapter,
-                                       ue_mng,
-                                       logger);
+
+  return launch_async<ue_removal_routine>(ue_index,
+                                          rrc_du_adapters.at(du_index),
+                                          e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
+                                          f1ap_adapters.at(du_index),
+                                          ngap_adapter,
+                                          ue_mng,
+                                          logger);
 }
 
 // private

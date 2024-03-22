@@ -98,7 +98,7 @@ public:
     }
   }
 
-  void on_ue_removal_required(ue_index_t ue_index) override
+  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
   {
     logger.info("ue={}: Received a UE removal request", ue_index);
 
@@ -113,6 +113,11 @@ public:
         rrc_removal_handler->remove_ue(ue_index);
       }
     }
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
   async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override

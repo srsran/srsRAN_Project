@@ -186,7 +186,7 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_transfer(ue_index, old_ue_index);
   }
 
-  void on_ue_removal_required(ue_index_t ue_index) override
+  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
   {
     srsran_assert(ue_removal_handler != nullptr, "CU-CP UE removal handler must not be nullptr");
     return ue_removal_handler->handle_ue_removal_request(ue_index);

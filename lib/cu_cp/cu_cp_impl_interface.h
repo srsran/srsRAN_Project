@@ -269,7 +269,7 @@ public:
 
   /// \brief Completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
-  virtual void handle_ue_removal_request(ue_index_t ue_index) = 0;
+  virtual async_task<void> handle_ue_removal_request(ue_index_t ue_index) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,

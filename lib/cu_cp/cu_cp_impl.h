@@ -71,7 +71,7 @@ public:
   bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_ue_removal_interface
-  void handle_ue_removal_request(ue_index_t ue_index) override;
+  async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
 
   metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
 

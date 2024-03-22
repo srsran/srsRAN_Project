@@ -71,7 +71,8 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
 
   {
     // Remove UE
-    cu_cp_notifier.on_ue_removal_required(command.ue_index);
+    CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(command.ue_index));
+    // Note: From this point the UE is removed and only the stored context can be accessed.
   }
 
   CORO_RETURN(release_complete);

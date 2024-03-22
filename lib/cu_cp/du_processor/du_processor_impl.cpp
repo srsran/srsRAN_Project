@@ -257,7 +257,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   du_cell_index_t pcell_index = find_cell(req.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
     logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
-    cu_cp_notifier.on_ue_removal_required(req.ue_index);
+    task_sched.schedule_async_task(req.ue_index, cu_cp_notifier.on_ue_removal_required(req.ue_index));
     return {};
   }
   const pci_t pci = cell_db.at(pcell_index).pci;
