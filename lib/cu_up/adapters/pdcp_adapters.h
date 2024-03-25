@@ -79,7 +79,7 @@ public:
   void on_new_pdu(pdcp_tx_pdu pdu) override
   {
     if (f1u_handler == nullptr) {
-      srslog::fetch_basic_logger("PDCP").warning("Unconnected F1-U handler. Dropping PDCP PDU");
+      srslog::fetch_basic_logger("PDCP").info("Dropped DL PDU. F1-U handler is not connected");
     } else {
       f1u_handler->handle_sdu(std::move(pdu));
     }
