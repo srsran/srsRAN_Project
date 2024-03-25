@@ -184,10 +184,18 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
                     "The codeword block size (i.e., {}) must be multiple of the number of bits per RE (i.e., {}).",
                     codeword_block.size(),
                     nof_bits_per_re);
-      nof_block_subc = std::min(nof_block_subc, static_cast<unsigned>(codeword_block.size()) / nof_bits_per_re);
 
       // Extract mask for the block.
+      // First, get the mask of data REs in the current block of received symbols.
       re_symbol_mask_type block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
+      // Next, get the number of subcarriers needed to carry the current codeword block.
+      unsigned nof_required_subc = static_cast<unsigned>(codeword_block.size()) / nof_bits_per_re;
+      // Ensure the number of data REs in the block of received symbols is not larger than the codeword block (expressed
+      // as a number of subcarriers).
+      while (block_re_mask.count() > nof_required_subc) {
+        --nof_block_subc;
+        block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
+      }
 
       // Number of data Resource Elements in a slot for a single Rx port.
       unsigned nof_re_port = static_cast<unsigned>(block_re_mask.count());
