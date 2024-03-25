@@ -990,10 +990,34 @@ unsigned ue_fallback_scheduler::ue_srb1_buffer_state(du_ue_index_t ue_idx, slot_
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
+  // Remove any UE that is no longer in fallback mode; this can happen in case of overallocation, or when the GNB
+  // detects a false NACK from PUCCH. Existing the fallback mode is an indication that the fallback transmission was
+  // completed successfully.
+  for (auto ue_it = pending_ues.begin(); ue_it != pending_ues.end();) {
+    if (not ues.contains(ue_it->ue_index)) {
+      ue_it = pending_ues.erase(ue_it);
+      continue;
+    }
+    if (not ues[ue_it->ue_index].get_pcell().is_in_fallback_mode()) {
+      logger.debug("ue_idx={}: Erasing UE as not in fallback mode", ue_it->ue_index, sl);
+      ue_it = pending_ues.erase(ue_it);
+      continue;
+    }
+    ++ue_it;
+  }
+
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
   // elements are potential candidate for retransmissions.
   for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index)) {
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      continue;
+    }
+
+    if (not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode()) {
+      logger.debug("ue_idx={}: Erasing UE from rtx_queue as not in fallback mode", it_ue_harq->ue_index, sl);
+      const unsigned tb_index = 0U;
+      it_ue_harq->h_dl->cancel_harq_retxs(tb_index);
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }
@@ -1031,13 +1055,4 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ++ue_it;
     }
   }
-
-  //
-  //  // Update the SRB1 buffer state for all UEs that have pending transmissions.
-  //  for (auto& ue : pending_ues) {
-  //    if (ue.is_srb0) {
-  //      continue;
-  //    }
-  //    update_ue_srb1_buffer_state(ue.ue_index, sl);
-  //  }
 }
