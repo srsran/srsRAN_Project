@@ -20,8 +20,6 @@
  *
  */
 
-#include "inter_du_handover_routine_test_helpers.h"
-#include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "mobility_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
@@ -50,11 +48,13 @@ protected:
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
-    test_preamble_ue_full_attach(
-        du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-
+    // Connect AMF, DU, CU-UP.
+    test_preamble_all_connected(du_index, pci);
     // Attach target DU.
     test_du_attach(target_du_index, target_du_id, target_nrcell_id, target_pci);
+    // Attach UE.
+    test_preamble_ue_full_attach(
+        du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
     // Assert single UE attached to source DU.
     ASSERT_EQ(get_nof_ues_in_source_du(), 1);
@@ -202,8 +202,8 @@ private:
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
   gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
-  nr_cell_id_t        target_nrcell_id = 34;
-  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x22};
+  nr_cell_id_t        target_nrcell_id = 0x19b1;
+  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x19b1};
   unsigned            target_pci       = 2;
 
   ue_index_t source_ue_index = uint_to_ue_index(0);
@@ -217,7 +217,7 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_then_ho_fails)
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
+  cu_cp_inter_du_handover_request request = {};
   request.target_pci                      = INVALID_PCI;
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
@@ -265,7 +265,7 @@ TEST_F(inter_du_handover_routine_test, when_bearer_context_modification_fails_th
   // Inject UE Context Release Complete
   inject_ue_context_release_complete(get_target_du_index());
 
-  // TODO: Verify new UE has been deleted in target DU again.
+  // Verify new UE has been deleted in target DU again.
   ASSERT_EQ(get_nof_ues_in_source_du(), 1);
   ASSERT_EQ(get_nof_ues_in_target_du(), 0);
 }
@@ -275,17 +275,8 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
-  request.target_pci                      = get_target_pci();
-  request.source_ue_index                 = get_source_ue();
-  request.target_du_index                 = get_target_du_index();
-  request.cgi                             = get_target_cgi();
-
-  start_procedure(request);
-
   // Start handover by injecting measurement report
-  // TODO: Replace manual task worker to allow execution of tasks on source and target UE for context transfer
-  // inject_rrc_meas_report();
+  inject_rrc_meas_report();
 
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();
@@ -299,11 +290,7 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
   // Inject UE Context Release Complete
   inject_ue_context_release_complete(get_source_du_index());
 
-  ASSERT_TRUE(procedure_ready());
-
-  // HO succeed.
-  ASSERT_TRUE(get_result().success);
-
+  // Verify that the HO was successful and the UE has been deleted in source DU.
   ASSERT_EQ(get_nof_ues_in_source_du(), 0);
   ASSERT_EQ(get_nof_ues_in_target_du(), 1);
 }

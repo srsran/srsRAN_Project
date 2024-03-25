@@ -50,7 +50,7 @@ public:
   void start() override;
   void stop() override;
 
-  optional<uint16_t> get_n3_bind_port() override { return ngu_gw->get_bind_port(); }
+  optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
 
   // cu_up_e1ap_interface
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
@@ -85,7 +85,7 @@ private:
   // Components
   std::atomic<bool>                    e1ap_connected = {false};
   std::unique_ptr<e1ap_interface>      e1ap;
-  std::unique_ptr<udp_network_gateway> ngu_gw;
+  std::unique_ptr<ngu_tnl_pdu_session> ngu_session;
   std::unique_ptr<gtpu_demux>          ngu_demux;
   std::unique_ptr<gtpu_echo>           ngu_echo;
   std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;

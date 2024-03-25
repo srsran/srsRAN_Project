@@ -246,7 +246,7 @@ private:
 static std::unique_ptr<downlink_processor_pool>
 create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> factory, const upper_phy_config& config)
 {
-  srslog::basic_logger& dl_phy_logger = srslog::fetch_basic_logger("DL-PHY", true);
+  srslog::basic_logger& dl_phy_logger = srslog::fetch_basic_logger("PHY", true);
   dl_phy_logger.set_level(config.log_level);
   dl_phy_logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
@@ -276,7 +276,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
         dl_proc = factory->create(processor_config);
       } else {
         // Fetch and configure logger.
-        srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i_proc), true);
+        srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
         logger.set_level(config.log_level);
         logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
@@ -481,7 +481,7 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
   config_pool.num_sectors = 1;
 
   // Fetch and configure logger.
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY", true);
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
   logger.set_level(config.log_level);
   logger.set_hex_dump_max_size(config.logger_max_hex_size);
 

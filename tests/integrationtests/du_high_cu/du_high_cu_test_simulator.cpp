@@ -42,7 +42,7 @@ static void init_loggers()
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("CU-F1").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("RRC").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("NGAP").set_level(srslog::basic_levels::debug);

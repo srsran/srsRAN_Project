@@ -709,7 +709,8 @@ inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_g
   gnb_id.plmn_id = asn1_gnb_id.plmn_id.to_string();
 
   // gnb id
-  gnb_id.gnb_id = asn1_gnb_id.gnb_id.gnb_id().to_number();
+  gnb_id.gnb_id.id         = asn1_gnb_id.gnb_id.gnb_id().to_number();
+  gnb_id.gnb_id.bit_length = asn1_gnb_id.gnb_id.gnb_id().length();
 
   return gnb_id;
 }

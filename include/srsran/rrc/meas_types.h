@@ -24,6 +24,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
@@ -87,17 +88,24 @@ inline report_cfg_id_t uint_to_report_cfg_id(uint8_t id)
 }
 
 struct rrc_periodicity_and_offset {
-  optional<uint8_t> sf5;
-  optional<uint8_t> sf10;
-  optional<uint8_t> sf20;
-  optional<uint8_t> sf40;
-  optional<uint8_t> sf80;
-  optional<uint8_t> sf160;
+  enum class periodicity_t : uint8_t { sf5 = 5, sf10 = 10, sf20 = 20, sf40 = 40, sf80 = 80, sf160 = 160 };
+  periodicity_t periodicity;
+  uint8_t       offset;
+};
+
+inline bool operator==(const rrc_periodicity_and_offset& lhs, const rrc_periodicity_and_offset& rhs)
+{
+  return lhs.periodicity == rhs.periodicity && lhs.offset == rhs.offset;
 };
 
 struct rrc_ssb_mtc {
   rrc_periodicity_and_offset periodicity_and_offset;
   uint8_t                    dur;
+};
+
+inline bool operator==(const rrc_ssb_mtc& lhs, const rrc_ssb_mtc& rhs)
+{
+  return lhs.periodicity_and_offset == rhs.periodicity_and_offset && lhs.dur == rhs.dur;
 };
 
 struct rrc_ss_rssi_meas {
@@ -119,6 +127,11 @@ struct rrc_meas_timing {
 struct rrc_ssb_mtc2 {
   std::vector<pci_t> pci_list;
   uint8_t            periodicity;
+};
+
+inline bool operator==(const rrc_ssb_mtc2& lhs, const rrc_ssb_mtc2& rhs)
+{
+  return lhs.periodicity == rhs.periodicity && lhs.pci_list == rhs.pci_list;
 };
 
 struct rrc_ssb_to_measure {
@@ -222,8 +235,10 @@ struct rrc_pci_range_elem {
   rrc_pci_range pci_range;
 };
 
+using ssb_frequency_t = uint32_t;
+
 struct rrc_meas_obj_nr {
-  optional<uint32_t>                ssb_freq;
+  optional<ssb_frequency_t>         ssb_freq; // SSB ARFCN value
   optional<subcarrier_spacing>      ssb_subcarrier_spacing;
   optional<rrc_ssb_mtc>             smtc1;
   optional<rrc_ssb_mtc2>            smtc2;
@@ -349,7 +364,7 @@ struct rrc_meas_report_quant {
 
 struct rrc_periodical_report_cfg {
   rrc_nr_rs_type                  rs_type;
-  uint16_t                        report_interv;
+  uint32_t                        report_interv;
   int8_t                          report_amount;
   rrc_meas_report_quant           report_quant_cell;
   uint8_t                         max_report_cells;
@@ -591,3 +606,48 @@ struct rrc_meas_results {
 
 } // namespace srs_cu_cp
 } // namespace srsran
+
+namespace fmt {
+
+// Cell meas config formatter
+template <>
+struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    std::string smtc1_str = "";
+    std::string smtc2_str = "";
+
+    if (meas_object.smtc1.has_value()) {
+      smtc1_str = fmt::format(" smtc1: periodicity={} offset={} dur={}",
+                              meas_object.smtc1.value().periodicity_and_offset.periodicity,
+                              meas_object.smtc1.value().periodicity_and_offset.offset,
+                              meas_object.smtc1.value().dur);
+    }
+
+    if (meas_object.smtc2.has_value()) {
+      smtc2_str = " smtc2: pci_list=[ ";
+      for (const auto& pci : meas_object.smtc2.value().pci_list) {
+        smtc2_str = smtc2_str + std::to_string(pci) + " ";
+      }
+      smtc2_str = fmt::format("{}] periodicity={}", smtc2_str, meas_object.smtc2.value().periodicity);
+    }
+
+    return format_to(
+        ctx.out(),
+        "ssb_freq={} ssb_scs={}{}{}",
+        meas_object.ssb_freq.has_value() ? fmt::to_string(meas_object.ssb_freq.value()) : "?",
+        meas_object.ssb_subcarrier_spacing.has_value() ? to_string(meas_object.ssb_subcarrier_spacing.value()) : "?",
+        smtc1_str,
+        smtc2_str);
+  }
+};
+
+} // namespace fmt

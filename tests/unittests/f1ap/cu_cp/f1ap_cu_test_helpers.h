@@ -93,21 +93,6 @@ private:
   std::vector<std::unique_ptr<f1ap_message_notifier>> du_tx_notifiers;
 };
 
-/// Adapter between F1AP and CU-CP
-class dummy_f1ap_ue_removal_notifier : public f1ap_ue_removal_notifier
-{
-public:
-  void on_ue_removal_required(ue_index_t ue_index) override
-  {
-    logger.info("ue={}: Requested UE removal", ue_index);
-    last_removed_ue = ue_index;
-  }
-
-private:
-  ue_index_t            last_removed_ue = ue_index_t::invalid;
-  srslog::basic_logger& logger          = srslog::fetch_basic_logger("TEST");
-};
-
 class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
 {
 public:
@@ -234,7 +219,7 @@ protected:
     optional<gnb_du_ue_f1ap_id_t> du_ue_id;
   };
 
-  f1ap_cu_test();
+  f1ap_cu_test(const f1ap_configuration& f1ap_cfg = {});
   ~f1ap_cu_test() override;
 
   /// \brief Helper method to successfully create UE instance in F1AP.
@@ -242,6 +227,8 @@ protected:
 
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
   test_ue& run_ue_context_setup();
+
+  void tick();
 
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
@@ -251,7 +238,6 @@ protected:
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;
   dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
-  dummy_f1ap_ue_removal_notifier    f1ap_cu_cp_notifier;
   timer_manager                     timers;
   manual_task_worker                ctrl_worker{128};
   std::unique_ptr<f1ap_cu>          f1ap;

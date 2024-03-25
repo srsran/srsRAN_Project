@@ -22,13 +22,18 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_types.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Generate a Inter DU Handover Request.
-cu_cp_inter_du_handover_request generate_inter_du_handover_request();
+/// Configuration for F1AP CU-CP.
+struct f1ap_configuration {
+  /// Timeout for UE context setup procedure (Implementation-defined).
+  std::chrono::milliseconds ue_context_setup_timeout = std::chrono::milliseconds(1000);
+  /// Whether to enable JSON logging of F1AP Tx and Rx messages.
+  bool json_log_enabled = false;
+};
 
 } // namespace srs_cu_cp
 } // namespace srsran

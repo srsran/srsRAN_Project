@@ -92,6 +92,12 @@ public:
     return it != ues.end() ? &it->second : nullptr;
   }
 
+  const f1ap_ue_context* find(gnb_cu_ue_f1ap_id_t cu_ue_id) const
+  {
+    auto it = ues.find(cu_ue_id);
+    return it != ues.end() ? &it->second : nullptr;
+  }
+
   const f1ap_ue_context* find(ue_index_t ue_idx) const
   {
     auto it = ue_index_to_ue_f1ap_id.find(ue_idx);

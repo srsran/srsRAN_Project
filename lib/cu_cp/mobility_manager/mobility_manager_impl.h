@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "../ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
-#include "srsran/cu_cp/ue_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -37,20 +37,26 @@ public:
   virtual ~mobility_manager_measurement_handler() = default;
 
   /// \brief Handle event where neighbor became better than serving cell.
-  virtual void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+  virtual void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
+                                                  gnb_id_t     neighbor_gnb_id,
+                                                  nr_cell_id_t neighbor_nci,
+                                                  pci_t        neighbor_pci) = 0;
 };
 
 /// Basic cell manager implementation
 class mobility_manager final : public mobility_manager_measurement_handler
 {
 public:
-  mobility_manager(const mobility_manager_cfg& cfg, cu_cp_f1c_handler& du_db_, du_processor_ue_manager& ue_mng_);
+  mobility_manager(const mobility_manager_cfg& cfg, cu_cp_f1c_handler& du_db_, ue_manager& ue_mng_);
   ~mobility_manager() = default;
 
-  void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override;
+  void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
+                                          gnb_id_t     neighbor_gnb_id,
+                                          nr_cell_id_t neighbor_nci,
+                                          pci_t        neighbor_pci) override;
 
 private:
-  void handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
+  void handle_inter_cu_handover(ue_index_t source_ue_index, gnb_id_t target_gnb_id, nr_cell_id_t target_nci);
   void handle_inter_du_handover(ue_index_t source_ue_index,
                                 pci_t      neighbor_pci,
                                 du_index_t source_du_index,
@@ -59,8 +65,8 @@ private:
 
   mobility_manager_cfg cfg;
 
-  cu_cp_f1c_handler&       du_db;
-  du_processor_ue_manager& ue_mng;
+  cu_cp_f1c_handler& du_db;
+  ue_manager&        ue_mng;
 
   srslog::basic_logger& logger;
 };

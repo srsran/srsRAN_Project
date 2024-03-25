@@ -27,9 +27,9 @@
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
-#include "srsran/support/unique_thread.h"
 #ifdef HWACC_PDSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"

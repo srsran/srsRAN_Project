@@ -49,6 +49,7 @@ markers = [
   "zmq_4x4_mimo",
   "zmq_srsue",
   "test_mode",
+  "test_mode_not_crash",
   "viavi",
   "viavi_manual",
 ]

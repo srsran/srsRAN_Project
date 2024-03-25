@@ -336,7 +336,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
     t_bench.sched_res_logger.on_slot_start();
 
     // Run SIB1 scheduler.
-    sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -401,7 +401,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
     t_bench.sched_res_logger.on_slot_start();
 
     // Run SIB1 scheduler.
-    sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -462,7 +462,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     ssb_sched.schedule_ssb(t_bench.get_slot_res_grid());
 
     // Run SIB1 scheduler.
-    sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -728,7 +728,7 @@ protected:
       t_bench.sched_res_logger.on_slot_start();
 
       // Run SIB1 scheduler.
-      sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+      sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
       auto& res_slot_grid = t_bench.get_slot_res_grid();
 

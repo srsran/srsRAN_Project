@@ -22,6 +22,7 @@
 
 #include "cu_cp_impl.h"
 #include "metrics_handler/metrics_handler_impl.h"
+#include "routines/ue_removal_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -48,14 +49,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
   mobility_mng(config_.mobility_config.mobility_manager_config, du_db, ue_mng),
-  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier),
+  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
-                             f1ap_cu_cp_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              du_processor_task_sched,
@@ -64,7 +64,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  routine_mng(ue_mng.get_task_sched()),
   controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
@@ -73,7 +72,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, *this);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
-  f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(mobility_mng);
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   conn_notifier.connect_node_connection_handler(controller);
@@ -291,26 +289,24 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
   cell_meas_mng.report_measurement(ue_index, meas_results);
 }
 
-void cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t                           nci,
-                                                   const serving_cell_meas_config&        serv_cell_cfg,
-                                                   std::vector<neighbor_cell_meas_config> ncells)
+bool cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg)
 {
-  cell_meas_mng.update_cell_config(nci, serv_cell_cfg, ncells);
+  return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }
 
-void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
+async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 {
   du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
   auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
-  routine_mng.start_ue_removal_routine(ue_index,
-                                       rrc_du_adapters.at(du_index),
-                                       e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
-                                       f1ap_adapters.at(du_index),
-                                       ngap_adapter,
-                                       cell_meas_mng,
-                                       ue_mng,
-                                       logger);
+
+  return launch_async<ue_removal_routine>(ue_index,
+                                          rrc_du_adapters.at(du_index),
+                                          e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
+                                          f1ap_adapters.at(du_index),
+                                          ngap_adapter,
+                                          ue_mng,
+                                          logger);
 }
 
 // private

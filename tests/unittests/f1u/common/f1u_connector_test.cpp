@@ -156,6 +156,7 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   sdu.buf     = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
+  ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
 
   // Check DU-> CU-UP path
   byte_buffer du_buf       = make_byte_buffer("DCBA");
@@ -164,9 +165,9 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   ASSERT_FALSE(du_slice_buf.is_error());
   byte_buffer_chain du_slice = std::move(du_slice_buf.value());
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-
-  ASSERT_EQ(du_rx.last_sdu, du_exp);
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+  ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
+  ue_worker.run_pending_tasks();
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
 
   // Delete CU bearer
   cu_bearer.reset();
@@ -213,6 +214,7 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   sdu.buf     = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
+  ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
 
   // Check DU-> CU-UP path
   byte_buffer du_buf       = make_byte_buffer("DCBA");
@@ -221,9 +223,9 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   ASSERT_FALSE(du_slice_buf.is_error());
   byte_buffer_chain du_slice = std::move(du_slice_buf.value());
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-
-  ASSERT_EQ(du_rx.last_sdu, du_exp);
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+  ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
+  ue_worker.run_pending_tasks();
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
 
   // Delete DU bearer
   du_gw->remove_du_bearer(dl_tnl);
@@ -231,7 +233,7 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   // Check DU-> CU-UP path is properly detached
   byte_buffer du_buf2 = make_byte_buffer("LMNO");
   pdcp_tx_pdu sdu2;
-  sdu.buf = std::move(cu_buf);
+  sdu2.buf = std::move(du_buf2);
   cu_bearer->get_tx_sdu_handler().handle_sdu(sdu2);
   ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
 }
@@ -270,6 +272,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
     sdu.buf     = std::move(cu_buf);
     sdu.pdcp_sn = 0;
     cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
+    ASSERT_EQ(du_rx1.last_sdu, du_exp);
 
     // Check DU-> CU-UP path
     byte_buffer du_buf       = make_byte_buffer("DCBA");
@@ -278,9 +281,9 @@ TEST_F(f1u_connector_test, update_du_f1u)
     ASSERT_FALSE(du_slice_buf.is_error());
     byte_buffer_chain du_slice = std::move(du_slice_buf.value());
     du_bearer1->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-
-    ASSERT_EQ(du_rx1.last_sdu, du_exp);
-    ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+    ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
+    ue_worker.run_pending_tasks();
+    ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
   }
 
   logger.info("Attach new DU bearer");

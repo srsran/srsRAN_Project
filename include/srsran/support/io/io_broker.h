@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/support/unique_thread.h"
+#include "srsran/support/executors/unique_thread.h"
 
 namespace srsran {
 

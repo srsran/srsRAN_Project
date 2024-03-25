@@ -123,7 +123,7 @@ protected:
     cfg.io_ul_executor               = executor.get();
     cfg.e1ap.e1ap_conn_client        = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
-    cfg.epoll_broker                 = broker.get();
+    cfg.ngu_gw                       = ngu_gw.get();
     cfg.timers                       = app_timers.get();
     cfg.qos[uint_to_five_qi(9)]      = {};
     cfg.gtpu_pcap                    = &dummy_pcap;
@@ -135,7 +135,18 @@ protected:
     return cfg;
   }
 
-  void init(const cu_up_configuration& cfg) { cu_up = create_cu_up(cfg); }
+  void init(const cu_up_configuration& cfg)
+  {
+    udp_network_gateway_config udp_cfg{};
+    udp_cfg.bind_interface = cfg.net_cfg.n3_bind_interface;
+    udp_cfg.bind_address   = cfg.net_cfg.n3_bind_addr;
+    udp_cfg.bind_port      = cfg.net_cfg.n3_bind_port;
+    ngu_gw                 = create_udp_ngu_gateway(udp_cfg, *broker, *executor);
+
+    auto cfg_copy   = cfg;
+    cfg_copy.ngu_gw = ngu_gw.get();
+    cu_up           = create_cu_up(cfg_copy);
+  }
 
   void TearDown() override
   {
@@ -149,6 +160,7 @@ protected:
   dummy_inner_f1u_bearer                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
   std::unique_ptr<io_broker>                  broker;
+  std::unique_ptr<ngu_gateway>                ngu_gw;
   std::unique_ptr<dummy_cu_up_executor_pool>  exec_pool;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");

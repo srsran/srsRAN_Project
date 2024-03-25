@@ -51,7 +51,6 @@ du_processor_test::du_processor_test()
                                          f1ap_pdu_notifier,
                                          e1ap_ctrl_notifier,
                                          ngap_ctrl_notifier,
-                                         f1ap_cu_cp_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_du_cu_cp_notifier,

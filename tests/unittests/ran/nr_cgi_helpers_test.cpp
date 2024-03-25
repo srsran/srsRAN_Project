@@ -46,5 +46,15 @@ TEST(nr_cgi_helpers_test, nr_cell_identity_validity)
 
 TEST(nr_cgi_helpers_test, make_nr_cell_identity_test)
 {
-  ASSERT_EQ(srsran::config_helpers::make_nr_cell_identity(411, 32, 0), 6576);
+  ASSERT_EQ(srsran::config_helpers::make_nr_cell_identity({411, 32}, 0), 6576U);
+  ASSERT_EQ(srsran::config_helpers::make_nr_cell_identity({411, 22}, 0), 6733824U);
+}
+
+TEST(nr_cgi_helpers_test, get_gnb_id_test)
+{
+  ASSERT_EQ(srsran::config_helpers::get_gnb_id(6576, 32).id, 411U);
+  ASSERT_EQ(srsran::config_helpers::get_gnb_id(6576, 32).bit_length, 32U);
+
+  ASSERT_EQ(srsran::config_helpers::get_gnb_id(6733824, 22).id, 411U);
+  ASSERT_EQ(srsran::config_helpers::get_gnb_id(6733824, 22).bit_length, 22U);
 }

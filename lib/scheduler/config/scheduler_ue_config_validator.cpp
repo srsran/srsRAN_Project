@@ -43,6 +43,13 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
     HANDLE_ERROR(validate_pucch_cfg(cell.serv_cell_cfg, cell_cfg.dl_carrier.nof_ant));
 
     HANDLE_ERROR(validate_csi_meas_cfg(cell.serv_cell_cfg, cell_cfg.tdd_cfg_common));
+
+    // At the moment, we only support the situation where all UEs have the same NZP-CSI-RS list.
+    if (cell.serv_cell_cfg.csi_meas_cfg.has_value() and
+        not cell.serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list.empty()) {
+      VERIFY(cell.serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list == cell_cfg.nzp_csi_rs_list,
+             "The NZP-CSI-RS Resource lists for the UE and the cell do not match");
+    }
   }
 
   // TODO: Validate other parameters.

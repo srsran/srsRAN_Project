@@ -29,7 +29,7 @@ def add_user(imsi, key="00112233445566778899aabbccddeeff", op=None,
                         "arp": {"priority_level": 8, "pre_emption_capability": 1, "pre_emption_vulnerability": 1}
                     },
                     "ue": {
-                        "addr": ip_alloc
+                        "ipv4": ip_alloc
                     }
                 },
                 {

@@ -29,6 +29,8 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+struct du_context;
+
 /// \brief Convert the F1 Setup Request from ASN.1 to a request to be sent to the CU-CP.
 /// \param[in] asn1_request The ASN.1 type F1 Setup Request.
 /// \return Request to setup DU.
@@ -43,6 +45,7 @@ du_setup_request create_du_setup_request(const asn1::f1ap::f1_setup_request_s& a
 /// \param[in] du_setup_notif The notifier to send the DU setup request to the CU-CP.
 /// \param[in] logger The logger.
 void handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
+                               du_context&                           du_ctxt,
                                f1ap_message_notifier&                pdu_notifier,
                                du_setup_notifier&                    du_setup_notif,
                                srslog::basic_logger&                 logger);

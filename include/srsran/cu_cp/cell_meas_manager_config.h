@@ -23,10 +23,12 @@
 #pragma once
 
 #include "srsran/ran/band_helper.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace srsran {
@@ -37,9 +39,10 @@ namespace srs_cu_cp {
 /// Note that some optional values need to be provided by the DU upon F1Setup.
 
 struct serving_cell_meas_config {
-  nr_cell_id_t nci; ///< The NR cell identifier.
+  nr_cell_id_t nci;    ///< The NR cell identifier.
+  gnb_id_t     gnb_id; ///< gNodeB identifier
   /// If not set in config must be provided by config update after DU attach.
-  optional<unsigned>           gnb_id;    ///< gNodeB identifier
+  optional<pci_t>              pci;       ///< Physical cell identifier.
   optional<nr_band>            band;      ///< NR band.
   optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
   optional<unsigned>           ssb_arfcn; ///< SSB ARFCN.
@@ -70,7 +73,8 @@ struct cell_meas_manager_cfg {
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns
 /// true if config is valid, false otherwise.
-bool is_valid_configuration(const cell_meas_manager_cfg& cfg);
+bool is_valid_configuration(const cell_meas_manager_cfg&                                cfg,
+                            const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object = {});
 
 /// \brief Same as config validation but additionally verfies that the measurement related parameters are present for
 /// all cells.
@@ -97,15 +101,17 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {
-      ncell_str = ncell_str + std::to_string(ncell.nci) + " ";
+      ncell_str += fmt::format("{:#x} ", ncell.nci);
     }
     ncell_str = ncell_str + "]";
 
     return format_to(
         ctx.out(),
-        "nci={} complete={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
+        "nci={:#x} complete={} gnb_id={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
         cfg.serving_cell_cfg.nci,
         is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
+        cfg.serving_cell_cfg.gnb_id.id,
+        cfg.serving_cell_cfg.pci.has_value() ? to_string(cfg.serving_cell_cfg.pci.value()) : "?",
         cfg.serving_cell_cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.serving_cell_cfg.band.value())) : "?",
         cfg.serving_cell_cfg.ssb_arfcn.has_value() ? to_string(cfg.serving_cell_cfg.ssb_arfcn.value()) : "?",
         cfg.serving_cell_cfg.ssb_scs.has_value() ? to_string(cfg.serving_cell_cfg.ssb_scs.value()) : "?",

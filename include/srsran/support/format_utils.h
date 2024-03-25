@@ -255,6 +255,33 @@ private:
   fmt::memory_buffer format_buffer;
 };
 
+namespace detail {
+
+template <typename FormatFunc>
+class custom_formattable
+{
+public:
+  custom_formattable(FormatFunc func_) : format(std::move(func_)) {}
+
+  /// Functor that takes a "FormatContext& ctx" as argument.
+  FormatFunc format;
+};
+
+} // namespace detail
+
+/// \brief Creates a formattable object, whose format function is the passed functor/lambda \c func.
+///
+/// This function is useful to defer the formatting logic to the point where the format is actually needed (e.g.
+/// logging backend).
+/// \tparam FormatFunc Type of the format function.
+/// \param func Format function to be called when formatting is needed.
+/// \return Formattable object.
+template <typename FormatFunc>
+detail::custom_formattable<FormatFunc> make_formattable(FormatFunc func)
+{
+  return detail::custom_formattable<FormatFunc>(std::move(func));
+}
+
 } // namespace srsran
 
 namespace fmt {
@@ -264,6 +291,16 @@ struct basic_fmt_parser {
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
+  }
+};
+
+template <typename FormatFunc>
+struct formatter<srsran::detail::custom_formattable<FormatFunc>> : public basic_fmt_parser {
+public:
+  template <typename FormatContext>
+  auto format(const srsran::detail::custom_formattable<FormatFunc>& f, FormatContext& ctx)
+  {
+    return f.format(ctx);
   }
 };
 

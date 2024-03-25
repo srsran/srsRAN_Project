@@ -25,6 +25,7 @@
 #include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
+#include "../cell_meas_manager/measurement_context.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler.h"
 #include "srsran/cu_cp/ue_manager.h"
@@ -206,6 +207,12 @@ public:
   /// \brief Get the RRC to CU-CP adapter of the UE.
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
 
+  /// \brief Set/update the measurement context of the UE.
+  void update_meas_context(cell_meas_manager_ue_context meas_ctxt) { meas_context = std::move(meas_ctxt); }
+
+  /// \brief Get the measurement context of the UE.
+  cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
+
 private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
@@ -226,9 +233,10 @@ private:
   optional<ngap_ue_t> ngap_ue_context;
 
   // cu-cp ue context
-  ngap_rrc_ue_adapter  ngap_rrc_ue_ev_notifier;
-  cu_cp_rrc_ue_adapter cu_cp_rrc_ue_ev_notifier;
-  rrc_ue_cu_cp_adapter rrc_ue_cu_cp_ev_notifier;
+  ngap_rrc_ue_adapter          ngap_rrc_ue_ev_notifier;
+  cu_cp_rrc_ue_adapter         cu_cp_rrc_ue_ev_notifier;
+  rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
+  cell_meas_manager_ue_context meas_context;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
@@ -358,6 +366,14 @@ public:
   std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override;
 
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
+
+  cell_meas_manager_ue_context& get_measurement_context(ue_index_t ue_index)
+  {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
+
+    return ues.at(ue_index).get_meas_context();
+  }
 
 private:
   /// \brief Get the next available UE index.

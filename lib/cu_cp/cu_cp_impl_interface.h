@@ -258,10 +258,7 @@ public:
   /// \brief Handle a request to update the measurement related parameters for the given cell id.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
-  virtual void handle_cell_config_update_request(nr_cell_id_t                           nci,
-                                                 const serving_cell_meas_config&        serv_cell_cfg,
-                                                 std::vector<neighbor_cell_meas_config> ncells = {}) = 0;
+  virtual bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) = 0;
 };
 
 /// Interface to request handover.
@@ -284,7 +281,7 @@ public:
 
   /// \brief Completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
-  virtual void handle_ue_removal_request(ue_index_t ue_index) = 0;
+  virtual async_task<void> handle_ue_removal_request(ue_index_t ue_index) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,

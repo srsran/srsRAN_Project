@@ -40,7 +40,7 @@ public:
 static upper_phy_timing_notifier_dummy notifier_dummy;
 
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
-  logger(srslog::fetch_basic_logger("Upper PHY", true)),
+  logger(srslog::fetch_basic_logger("PHY", true)),
   sector_id(config.sector_id),
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),

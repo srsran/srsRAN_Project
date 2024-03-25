@@ -26,11 +26,11 @@
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/support/executors/task_executor.h"
-#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -55,6 +55,7 @@ struct cu_cp_configuration {
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;
   mobility_configuration mobility_config;
+  f1ap_configuration     f1ap_config;
   security_indication_t  default_security_indication; // default if not signaled via NGAP
   std::chrono::seconds   statistics_report_period;    // CU-CP statistics report period in seconds
 };

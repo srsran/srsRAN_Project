@@ -186,7 +186,7 @@ protected:
 
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
-    cfg.gnb_id           = 123;
+    cfg.gnb_id           = {123, 22};
 
     sctp_network_gateway_config nw_config;
     nw_config.connection_name = "NearRT-RIC";

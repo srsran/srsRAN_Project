@@ -29,6 +29,7 @@
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"
 
 using namespace srsran;
@@ -226,6 +227,8 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
   HANDLE_CODE(validate_sib1_cfg(msg, expert_cfg));
 
   HANDLE_CODE(validate_paging_cfg(expert_cfg));
+
+  HANDLE_CODE(validate_nzp_csi_rs_list(msg.nzp_csi_rs_res_list, msg.tdd_ul_dl_cfg_common));
 
   // TODO: Validate other parameters.
   return {};

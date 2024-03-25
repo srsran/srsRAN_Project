@@ -53,7 +53,7 @@ from retina.protocol.ue_pb2_grpc import UEStub
 
 RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in the sdr
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
-GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
+GNB_STARTUP_TIMEOUT: int = 2  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 1 * 60
 
@@ -378,8 +378,8 @@ def iperf_sequentially(
             logging.warning(
                 "Iperf %s [%s %s] failed due to %s",
                 ue_attached_info.ipv4,
-                _iperf_proto_to_str(iperf_request.proto),
-                _iperf_dir_to_str(iperf_request.direction),
+                _iperf_proto_to_str(protocol),
+                _iperf_dir_to_str(direction),
                 ErrorReportedByAgent(err).details,
             )
         sleep(sleep_between_retries)
@@ -414,8 +414,8 @@ def iperf_start(
     logging.info(
         "Iperf %s [%s %s] started",
         ue_attached_info.ipv4,
-        _iperf_proto_to_str(iperf_request.proto),
-        _iperf_dir_to_str(iperf_request.direction),
+        _iperf_proto_to_str(protocol),
+        _iperf_dir_to_str(direction),
     )
 
     return (task, iperf_request)

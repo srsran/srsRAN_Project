@@ -23,8 +23,8 @@
 #include "srsran/support/event_tracing.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/format_utils.h"
-#include "srsran/support/unique_thread.h"
 #include <sched.h>
 
 using namespace srsran;

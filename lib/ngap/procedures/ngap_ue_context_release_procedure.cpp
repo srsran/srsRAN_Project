@@ -30,13 +30,15 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
-    const cu_cp_ue_context_release_command& command_,
-    const ngap_ue_ids&                      ue_ids_,
-    ngap_du_processor_control_notifier&     du_processor_ctrl_notifier_,
-    ngap_message_notifier&                  amf_notifier_,
-    ngap_ue_logger&                         logger_) :
+    const cu_cp_ue_context_release_command&                     command_,
+    const ngap_ue_ids&                                          ue_ids_,
+    std::unordered_map<ue_index_t, error_indication_request_t>& stored_error_indications_,
+    ngap_du_processor_control_notifier&                         du_processor_ctrl_notifier_,
+    ngap_message_notifier&                                      amf_notifier_,
+    ngap_ue_logger&                                             logger_) :
   command(command_),
   ue_ids(ue_ids_),
+  stored_error_indications(stored_error_indications_),
   du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
   amf_notifier(amf_notifier_),
   logger(logger_)
@@ -61,6 +63,14 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
   // Note: From this point the UE is removed and only the stored context can be accessed.
 
   send_ue_context_release_complete();
+
+  // Send ErrorIndication if it was stored for this UE
+  if (stored_error_indications.find(ue_ids.ue_index) != stored_error_indications.end()) {
+    const auto& req = stored_error_indications.at(ue_ids.ue_index);
+    send_error_indication(amf_notifier, logger.get_basic_logger(), req.ran_ue_id, req.amf_ue_id, req.cause);
+    // Remove stored error indication
+    stored_error_indications.erase(ue_ids.ue_index);
+  }
 
   logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN();

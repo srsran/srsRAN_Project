@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../cu_cp_controller/node_connection_notifier.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/rrc/rrc_config.h"
 
 namespace srsran {
@@ -36,6 +37,7 @@ struct du_processor_config_t {
   du_connection_notifier* du_setup_notif = nullptr;
   rrc_cfg_t               rrc_cfg;                     // TODO: do we put subcomponent configs here?
   security_indication_t   default_security_indication; // default if not signaled via NGAP
+  f1ap_configuration      f1ap_cfg;
 };
 
 } // namespace srs_cu_cp

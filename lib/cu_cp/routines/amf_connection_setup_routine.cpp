@@ -82,7 +82,7 @@ async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_req
 {
   // Prepare request to send to ng.
   ngap_ng_setup_request request = fill_ng_setup_request();
-  request.max_setup_retries     = 5;
+  request.max_setup_retries     = 1;
 
   // Initiate NG Setup Request.
   return ngap_ctrl_notifier.on_ng_setup_request(request);

@@ -38,18 +38,6 @@ enum ue_context_release_cause : uint16_t {
   nulltype      = 5
 };
 
-/// Interface to inform about changes to the AMF state.
-class rrc_amf_connection_handler
-{
-public:
-  virtual ~rrc_amf_connection_handler() = default;
-
-  /// \brief Handle a successful AMF connection.
-  virtual void handle_amf_connection() = 0;
-  /// \brief Handle a dropped AMF connection.
-  virtual void handle_amf_connection_drop() = 0;
-};
-
 /// This interface represents the data entry point for the RRC receiving PDUs on the UL-CCCH logical channel.
 /// The lower-layers will use this class to pass PDUs into the RRC.
 class rrc_ul_ccch_pdu_handler

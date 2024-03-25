@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/asn1/rrc_nr/ul_ccch_msg_ies.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc_types.h"
 
 namespace srsran {

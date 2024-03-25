@@ -26,6 +26,7 @@
 #include "common/f1ap_asn1_utils.h"
 #include "cu_cp/ue_context/f1ap_cu_ue_transaction_manager.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/support/async/async_task.h"
 
@@ -35,7 +36,8 @@ namespace srs_cu_cp {
 class ue_context_setup_procedure
 {
 public:
-  ue_context_setup_procedure(const f1ap_ue_context_setup_request& request_,
+  ue_context_setup_procedure(const f1ap_configuration&            f1ap_cfg,
+                             const f1ap_ue_context_setup_request& request_,
                              f1ap_ue_context_list&                ue_ctxt_list_,
                              f1ap_du_processor_notifier&          du_processor_notifier_,
                              f1ap_message_notifier&               f1ap_notif_,
@@ -57,6 +59,7 @@ private:
   /// Creates procedure result to send back to procedure caller.
   f1ap_ue_context_setup_response handle_procedure_result();
 
+  const f1ap_configuration&           f1ap_cfg;
   const f1ap_ue_context_setup_request request;
   f1ap_ue_context_list&               ue_ctxt_list;
   f1ap_du_processor_notifier&         du_processor_notifier;

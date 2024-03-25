@@ -33,6 +33,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct rrc_cfg_t {
+  /// The gNodeB identifier to use for measurement configs.
+  gnb_id_t gnb_id;
   /// PDCP config to use when UE SRB2 are configured.
   srb_pdcp_config srb2_cfg;
   /// Configuration for available 5QI.

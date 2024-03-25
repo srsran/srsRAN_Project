@@ -25,10 +25,10 @@
 
 using namespace srsran;
 
-low_papr_sequence_collection_impl::low_papr_sequence_collection_impl(const low_papr_sequence_generator& generator,
-                                                                     unsigned                           m,
-                                                                     unsigned                           delta,
-                                                                     span<const float>                  alphas)
+low_papr_sequence_collection_impl::low_papr_sequence_collection_impl(low_papr_sequence_generator& generator,
+                                                                     unsigned                     m,
+                                                                     unsigned                     delta,
+                                                                     span<const float>            alphas)
 
 {
   // Calculate sequence length.
@@ -49,7 +49,7 @@ low_papr_sequence_collection_impl::low_papr_sequence_collection_impl(const low_p
     for (unsigned v = 0; v != nof_bases; ++v) {
       for (unsigned alpha_idx = 0; alpha_idx != nof_alphas; ++alpha_idx) {
         // Generate a sequence for each alpha.
-        generator.generate(pregen_signals.get_view<1>({u, v, alpha_idx}), u, v, alphas[alpha_idx]);
+        generator.generate(pregen_signals.get_view<1>({u, v, alpha_idx}), u, v, alpha_idx, nof_alphas);
       }
     }
   }

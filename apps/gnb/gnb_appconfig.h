@@ -31,6 +31,7 @@
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -45,7 +46,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/cpu_architecture_info.h"
-#include "srsran/support/unique_thread.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/units.h"
 #include <map>
 #include <string>
@@ -679,18 +680,19 @@ struct cu_cp_neighbor_cell_appconfig_item {
 
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t    nr_cell_id; ///< Cell id.
-  std::string rat = "nr"; ///< RAT of this neighbor cell.
-
-  // TODO: Add optional SSB parameters.
+  uint64_t           nr_cell_id; ///< Cell id.
   optional<unsigned> periodic_report_cfg_id;
-  optional<unsigned> gnb_id; ///< gNodeB identifier
-  optional<nr_band>  band;
-  optional<unsigned> ssb_arfcn;
-  optional<unsigned> ssb_scs;
-  optional<unsigned> ssb_period;
-  optional<unsigned> ssb_offset;
-  optional<unsigned> ssb_duration;
+
+  // These parameters must only be set for external cells
+  // TODO: Add optional SSB parameters.
+  optional<unsigned> gnb_id_bit_length; ///< gNodeB identifier bit length.
+  optional<pci_t>    pci;               ///< PCI.
+  optional<nr_band>  band;              ///< NR band.
+  optional<unsigned> ssb_arfcn;         ///< SSB ARFCN.
+  optional<unsigned> ssb_scs;           ///< SSB subcarrier spacing.
+  optional<unsigned> ssb_period;        ///< SSB period.
+  optional<unsigned> ssb_offset;        ///< SSB offset.
+  optional<unsigned> ssb_duration;      ///< SSB duration.
 
   std::vector<cu_cp_neighbor_cell_appconfig_item> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
@@ -729,6 +731,12 @@ struct security_appconfig {
   std::string nia_preference_list        = "nia2,nia1,nia3";
 };
 
+/// \brief F1AP-CU configuration parameters.
+struct f1ap_cu_appconfig {
+  /// Timeout for the UE context setup procedure in milliseconds.
+  unsigned ue_context_setup_timeout = 1000;
+};
+
 struct cu_cp_appconfig {
   uint16_t           max_nof_dus               = 6;
   uint16_t           max_nof_cu_ups            = 6;
@@ -737,6 +745,7 @@ struct cu_cp_appconfig {
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;
+  f1ap_cu_appconfig  f1ap_config;
 };
 
 struct cu_up_appconfig {
@@ -780,6 +789,8 @@ struct log_appconfig {
   optional<unsigned> phy_rx_symbols_port = 0;
   /// If true, prints the PRACH frequency-domain symbols.
   bool phy_rx_symbols_prach = false;
+  /// Enable JSON generation for the F1AP Tx and Rx PDUs.
+  bool f1ap_json_enabled = false;
   /// Set to a valid file path to enable tracing and write the trace to the file.
   std::string tracing_filename;
 };
@@ -1242,9 +1253,7 @@ struct gnb_appconfig {
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// gNodeB identifier.
-  uint32_t gnb_id = 411;
-  /// Length of gNB identity in bits. Values {22,...,32}.
-  uint8_t gnb_id_bit_length = 32;
+  gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.
@@ -1253,6 +1262,8 @@ struct gnb_appconfig {
   cu_cp_appconfig cu_cp_cfg;
   /// CU-CP configuration.
   cu_up_appconfig cu_up_cfg;
+  /// F1AP configuration.
+  f1ap_cu_appconfig f1ap_cfg;
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.

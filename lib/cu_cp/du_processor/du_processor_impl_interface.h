@@ -378,7 +378,7 @@ public:
 
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
-  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+  virtual async_task<void> on_ue_removal_required(ue_index_t ue_index) = 0;
 
   /// \brief Notify the CU-CP to transfer and remove ue contexts.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.

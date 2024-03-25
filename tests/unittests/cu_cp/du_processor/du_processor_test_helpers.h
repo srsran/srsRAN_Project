@@ -67,7 +67,6 @@ protected:
   dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
   dummy_du_processor_ngap_control_notifier              ngap_ctrl_notifier;
-  dummy_f1ap_ue_removal_notifier                        f1ap_cu_cp_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter                            rrc_du_cu_cp_notifier;

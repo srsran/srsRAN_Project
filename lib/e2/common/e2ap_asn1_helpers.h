@@ -78,7 +78,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   // Global e2 node ID
   setup->global_e2node_id.crit = asn1::crit_opts::reject;
   auto& gnb_id                 = setup->global_e2node_id.value.set_gnb();
-  gnb_id.global_g_nb_id.gnb_id.gnb_id().from_number(e2ap_config.gnb_id, 28);
+  gnb_id.global_g_nb_id.gnb_id.gnb_id().from_number(e2ap_config.gnb_id.id, e2ap_config.gnb_id.bit_length);
   // convert PLMN to BCD
   uint32_t plmn_bcd = plmn_string_to_bcd(e2ap_config.plmn);
   gnb_id.global_g_nb_id.plmn_id.from_number(plmn_bcd);

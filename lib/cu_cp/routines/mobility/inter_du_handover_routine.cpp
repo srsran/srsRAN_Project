@@ -123,7 +123,8 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                        logger,
                                        false)) {
       logger.warning("ue={}: \"{}\" failed to create UE context at target DU", command.source_ue_index, name());
-      cu_cp_notifier.on_ue_removal_required(target_ue_context_setup_request.ue_index);
+      CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(target_ue_context_setup_request.ue_index));
+      // Note: From this point the UE is removed and only the stored context can be accessed.
       CORO_EARLY_RETURN(response_msg);
     }
   }

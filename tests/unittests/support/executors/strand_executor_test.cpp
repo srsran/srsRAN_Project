@@ -35,18 +35,27 @@ void run_count_test(task_executor&       strand,
                     unsigned             nof_producers,
                     const WaitCondition& wait_tasks_to_run)
 {
+  srslog::init();
+
   ASSERT_EQ(total_increments % nof_producers, 0);
   const unsigned increments_per_producer = total_increments / nof_producers;
 
   std::vector<unsigned> result;
 
-  unsigned unsync_count   = 0;
-  auto     inc_count_task = [&unsync_count, &result]() { result.push_back(unsync_count++); };
+  unsigned              unsync_count = 0;
+  std::atomic<unsigned> sync_finished{0};
+  auto                  inc_count_task      = [&unsync_count, &result]() { result.push_back(unsync_count++); };
+  auto                  last_inc_count_task = [&unsync_count, &result, &sync_finished]() {
+    result.push_back(unsync_count++);
+    sync_finished++;
+    fmt::print("Strand {} finished\n", unsync_count - 1);
+  };
 
-  auto push_increments = [&strand, &inc_count_task, increments_per_producer]() {
-    for (unsigned i = 0; i != increments_per_producer; ++i) {
+  auto push_increments = [&strand, &inc_count_task, increments_per_producer, last_inc_count_task]() {
+    for (unsigned i = 0; i != increments_per_producer - 1; ++i) {
       ASSERT_TRUE(strand.defer(inc_count_task));
     }
+    ASSERT_TRUE(strand.defer(last_inc_count_task));
   };
 
   std::vector<unique_thread> pushers;
@@ -58,13 +67,17 @@ void run_count_test(task_executor&       strand,
     t.join();
   }
 
-  wait_tasks_to_run();
+  while (sync_finished.load() != nof_producers) {
+    wait_tasks_to_run();
+  }
 
   std::vector<unsigned> expected(total_increments);
   std::iota(expected.begin(), expected.end(), 0);
 
   ASSERT_TRUE(std::equal(result.begin(), result.end(), expected.begin(), expected.end())) << fmt::format(
       "Sizes={}, {}. Result: {}", result.size(), expected.size(), fmt::join(result.begin(), result.end(), ", "));
+
+  wait_tasks_to_run();
 }
 
 TEST(strand_executor_test, dispatch_to_single_worker_causes_no_race_conditions)

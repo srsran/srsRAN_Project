@@ -66,6 +66,10 @@ public:
   void handle_tx_gain_command(const std::list<std::string>& gain_args);
   void handle_rx_gain_command(const std::list<std::string>& gain_args);
 
+  void handle_log_command(const std::list<std::string>& gain_args);
+
+  void handle_sleep_command(const std::list<std::string>& gain_args);
+
 private:
   void stdin_handler(int fd);
   void handle_command(const std::string& command);

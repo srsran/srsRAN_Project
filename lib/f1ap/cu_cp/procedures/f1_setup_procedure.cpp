@@ -22,6 +22,7 @@
 
 #include "f1_setup_procedure.h"
 #include "../../common/asn1_helpers.h"
+#include "../du_context.h"
 #include "../f1ap_asn1_converters.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
@@ -176,6 +177,7 @@ static f1ap_message create_f1_setup_reject(const asn1::f1ap::f1_setup_request_s&
 }
 
 void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
+                                                  du_context&                           du_ctxt,
                                                   f1ap_message_notifier&                pdu_notifier,
                                                   du_setup_notifier&                    du_setup_notif,
                                                   srslog::basic_logger&                 logger)
@@ -187,6 +189,9 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
     pdu_notifier.on_new_message(create_f1_setup_reject(request, msgerr.error().first));
     return;
   }
+
+  du_ctxt.du_id   = (gnb_du_id_t)request->gnb_du_id;
+  du_ctxt.du_name = request->gnb_du_name_present ? request->gnb_du_name.to_string() : "unnamed";
 
   // Request DU setup to CU-CP.
   du_setup_request du_req          = create_du_setup_request(request);
@@ -202,12 +207,6 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   } else {
     // DU has been accepted.
     f1ap_msg = create_f1_setup_response(request, variant_get<du_setup_result::accepted>(request_outcome.result));
-  }
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_msg.pdu.to_json(js);
-    logger.debug("Containerized F1SetupResponse: {}", js.to_string());
   }
 
   // Send F1AP PDU to F1-C.

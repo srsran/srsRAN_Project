@@ -183,7 +183,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   // for UL data plane.
   cu_up_strands.push_back(
       strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}}});
+              {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
   const unsigned nof_cu_up_ue_strands = 16;
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     cu_up_strands.push_back(
@@ -192,7 +192,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                  concurrent_queue_policy::lockfree_mpmc,
                  appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
                 {fmt::format("ue_up_dl_exec#{}", i),
-                 concurrent_queue_policy::lockfree_spsc,
+                 concurrent_queue_policy::lockfree_mpmc,
                  appcfg.cu_up_cfg.gtpu_queue_size}}});
   }
 

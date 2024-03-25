@@ -28,6 +28,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
@@ -79,10 +80,10 @@ struct cu_up_configuration {
   task_executor*       io_ul_executor = nullptr; ///< CU-UP executor for UL data IO
   task_executor*       cu_up_e2_exec  = nullptr;
   e1ap_config_params   e1ap;
-  f1u_cu_up_gateway*   f1u_gateway  = nullptr;
-  io_broker*           epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
-  timer_manager*       timers       = nullptr;
-  dlt_pcap*            gtpu_pcap    = nullptr;
+  f1u_cu_up_gateway*   f1u_gateway = nullptr;
+  ngu_gateway*         ngu_gw      = nullptr;
+  timer_manager*       timers      = nullptr;
+  dlt_pcap*            gtpu_pcap   = nullptr;
 
   std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 

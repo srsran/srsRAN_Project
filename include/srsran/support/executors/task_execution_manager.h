@@ -22,11 +22,11 @@
 
 #pragma once
 
+#include "unique_thread.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/unique_thread.h"
 #include <unordered_map>
 
 namespace srsran {

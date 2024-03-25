@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/support/unique_thread.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "fmt/ostream.h"
 #include <cstdio>
 #include <pthread.h>

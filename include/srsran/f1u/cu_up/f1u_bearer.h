@@ -44,6 +44,7 @@ public:
   f1u_bearer& operator=(const f1u_bearer&) = delete;
   f1u_bearer& operator=(f1u_bearer&&)      = delete;
 
+  virtual void                stop()               = 0;
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() = 0;
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() = 0;
 };

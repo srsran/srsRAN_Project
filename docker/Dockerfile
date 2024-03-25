@@ -22,7 +22,7 @@
 # Stage 1: Build #
 ##################
 
-ARG OS_VERSION=22.04
+ARG OS_VERSION=24.04
 FROM ubuntu:$OS_VERSION as builder
 
 # Adding the complete repo to the context, in /src folder

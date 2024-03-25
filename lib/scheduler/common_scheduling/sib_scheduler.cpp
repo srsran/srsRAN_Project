@@ -67,7 +67,21 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 };
 
-void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_point sl_point)
+void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point)
+{
+  if (first_run_slot) {
+    // First call to run_slot. Schedule SIB1s when relevant across cell resource grid.
+    for (unsigned i = 0; i < res_alloc.max_dl_slot_alloc_delay + 1; ++i) {
+      schedule_sib1(res_alloc[i]);
+    }
+    first_run_slot = false;
+  } else {
+    // Schedule SIB1 in last scheduled slot + 1 slot if relevant.
+    schedule_sib1(res_alloc[res_alloc.max_dl_slot_alloc_delay]);
+  }
+}
+
+void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
 {
   // NOTE:
   // - [Implementation defined]
@@ -79,6 +93,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
   // The sib1_period_slots is expressed in unit of slots.
   // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
+  slot_point     sl_point          = res_grid.slot;
   const unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
 
   // For each beam, check if the SIB1 needs to be allocated in this slot.

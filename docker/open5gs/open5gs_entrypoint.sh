@@ -6,7 +6,7 @@ export UE_IP_RANGE="${UE_IP_BASE}.0/24"
 envsubst < open5gs-5gc.yml.in > open5gs-5gc.yml
 
 # create dummy interfaces on localhost ip range for open5gs entities to bind to
-for IP in {2..20}
+for IP in {2..22}
 do
     ip link add name lo$IP type dummy
     ip ad ad 127.0.0.$IP/24 dev lo$IP

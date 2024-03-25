@@ -82,6 +82,8 @@ pdsch_config make_default_pdsch_config(const cell_config_builder_params_extended
 
 pdcch_config make_ue_dedicated_pdcch_config(const cell_config_builder_params_extended& params = {});
 
+csi_meas_config make_csi_meas_config(const cell_config_builder_params_extended& params = {});
+
 /// \brief Creates a default UE Serving Cell configuration.
 serving_cell_config
 create_default_initial_ue_serving_cell_config(const cell_config_builder_params_extended& params = {});

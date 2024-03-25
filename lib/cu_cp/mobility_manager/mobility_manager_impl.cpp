@@ -22,18 +22,20 @@
 
 #include "mobility_manager_impl.h"
 #include "../du_processor/du_processor_impl_interface.h"
+#include "srsran/ran/nr_cgi.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_,
-                                   cu_cp_f1c_handler&          du_db_,
-                                   du_processor_ue_manager&    ue_mng_) :
+mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_, cu_cp_f1c_handler& du_db_, ue_manager& ue_mng_) :
   cfg(cfg_), du_db(du_db_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
-void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci)
+void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
+                                                          gnb_id_t     neighbor_gnb_id,
+                                                          nr_cell_id_t neighbor_nci,
+                                                          pci_t        neighbor_pci)
 {
   if (!cfg.trigger_handover_from_measurements) {
     logger.debug("ue={}: Ignoring better neighbor pci={}", ue_index, neighbor_pci);
@@ -44,7 +46,7 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t ue_index, p
   du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == du_index_t::invalid) {
     logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);
-    handle_inter_cu_handover(ue_index, neighbor_pci);
+    handle_inter_cu_handover(ue_index, neighbor_gnb_id, neighbor_nci);
     return;
   }
 
@@ -53,10 +55,10 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t ue_index, p
     logger.info("Trigger intra DU handover");
     // TODO: Prepare request and call notifier.
     return;
-  } else {
-    logger.info("ue={}: Trigger inter DU handover from source_du={} to target_du={}", ue_index, source_du, target_du);
-    handle_inter_du_handover(ue_index, neighbor_pci, source_du, target_du);
   }
+
+  logger.info("ue={}: Trigger inter DU handover from source_du={} to target_du={}", ue_index, source_du, target_du);
+  handle_inter_du_handover(ue_index, neighbor_pci, source_du, target_du);
 }
 
 void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
@@ -104,7 +106,28 @@ void mobility_manager::handle_intra_du_handover(ue_index_t source_ue_index, pci_
   // TODO: prepare call
 }
 
-void mobility_manager::handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
+void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
+                                                gnb_id_t     target_gnb_id,
+                                                nr_cell_id_t target_nci)
 {
+  du_index_t source_du_index = ue_mng.find_du_ue(source_ue_index)->get_du_index();
+
+  du_processor_ue_task_handler&  ue_task = du_db.get_du(source_du_index).get_du_processor_ue_task_handler();
+  du_processor_mobility_handler& mob     = du_db.get_du(source_du_index).get_mobility_handler();
+
+  cu_cp_inter_ngran_node_n2_handover_request request = {};
+  request.ue_index                                   = source_ue_index;
+  request.gnb_id                                     = target_gnb_id;
+  request.nci                                        = target_nci;
+
+  // Trigger Inter DU handover routine on the DU processor of the source DU.
+  cu_cp_inter_ngran_node_n2_handover_response response;
+  auto ho_trigger = [request, response, &mob](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(response, mob.handle_inter_ngran_node_n2_handover_request(request));
+    CORO_RETURN();
+  };
+  ue_task.handle_ue_async_task(request.ue_index, launch_async(std::move(ho_trigger)));
+
   // TODO: prepare NGAP call
 }

@@ -132,7 +132,8 @@ void inter_cu_handover_target_routine::operator()(
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
       logger.warning("ue={}: \"{}\" failed to setup UE context at DU", request.ue_index, name());
-      cu_cp_notifier.on_ue_removal_required(ue_context_setup_response.ue_index);
+      CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(ue_context_setup_response.ue_index));
+      // Note: From this point the UE is removed and only the stored context can be accessed.
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }

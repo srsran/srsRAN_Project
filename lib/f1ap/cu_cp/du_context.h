@@ -20,14 +20,19 @@
  *
  */
 
-#include "inter_du_handover_routine_test_helpers.h"
+#pragma once
 
-using namespace srsran;
-using namespace srs_cu_cp;
+#include "srsran/ran/gnb_du_id.h"
+#include <string>
 
-cu_cp_inter_du_handover_request srsran::srs_cu_cp::generate_inter_du_handover_request()
-{
-  cu_cp_inter_du_handover_request req = {};
+namespace srsran {
+namespace srs_cu_cp {
 
-  return req;
+/// Context of the DU that has setup an F1 connection to the CU-CP.
+struct du_context {
+  gnb_du_id_t du_id = gnb_du_id_t::invalid;
+  std::string du_name;
 };
+
+} // namespace srs_cu_cp
+} // namespace srsran

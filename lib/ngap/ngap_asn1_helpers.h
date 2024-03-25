@@ -50,7 +50,8 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
   // fill global ran node id
   asn1_request->global_ran_node_id.set_global_gnb_id();
   asn1_request->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
-  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(request.global_ran_node_id.gnb_id);
+  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(
+      request.global_ran_node_id.gnb_id.id, request.global_ran_node_id.gnb_id.bit_length);
   asn1_request->global_ran_node_id.global_gnb_id().plmn_id.from_number(
       plmn_string_to_bcd(request.global_ran_node_id.plmn_id));
 
@@ -908,7 +909,8 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
         asn1_global_ran_node_id.set_global_gnb_id().plmn_id.from_string(
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().plmn_id);
         asn1_global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id().from_number(
-            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id);
+            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.id,
+            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.bit_length);
       } else if (cu_cp_recommended_ran_node_item.amf_paging_target.is_tai) {
         // add tai
         auto& asn1_tai = asn1_recommended_ran_node_item.amf_paging_target.set_tai();

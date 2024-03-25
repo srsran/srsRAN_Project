@@ -751,6 +751,15 @@ pdcch_config srsran::config_helpers::make_ue_dedicated_pdcch_config(const cell_c
   return pdcch_cfg;
 }
 
+csi_meas_config srsran::config_helpers::make_csi_meas_config(const cell_config_builder_params_extended& params)
+{
+  // Parameters used to generate list of CSI resources.
+  const csi_helper::csi_builder_params csi_params = make_default_csi_builder_params(params);
+
+  // Generate CSI resources.
+  return csi_helper::make_csi_meas_config(csi_params);
+}
+
 serving_cell_config
 srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params_extended& params)
 {
@@ -771,11 +780,8 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
 
   // > CSI-MeasConfig.
   if (params.csi_rs_enabled) {
-    // Parameters used to generate list of CSI resources.
-    const csi_helper::csi_builder_params csi_params = make_default_csi_builder_params(params);
-
     // Generate CSI resources.
-    serv_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
+    serv_cell.csi_meas_cfg = make_csi_meas_config(params);
   }
 
   // > TAG-ID.

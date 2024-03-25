@@ -29,10 +29,10 @@
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -499,7 +499,7 @@ struct cu_cp_recommended_cells_for_paging {
 
 struct cu_cp_global_gnb_id {
   std::string plmn_id;
-  uint64_t    gnb_id;
+  gnb_id_t    gnb_id;
 };
 
 struct cu_cp_amf_paging_target {
@@ -584,7 +584,7 @@ struct cu_cp_inter_du_handover_response {
 
 struct cu_cp_inter_ngran_node_n2_handover_request {
   ue_index_t   ue_index = ue_index_t::invalid;
-  unsigned     gnb_id;
+  gnb_id_t     gnb_id;
   nr_cell_id_t nci;
 };
 

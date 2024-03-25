@@ -32,8 +32,8 @@ namespace srs_cu_up {
 class network_gateway_data_gtpu_demux_adapter : public srsran::network_gateway_data_notifier_with_src_addr
 {
 public:
-  network_gateway_data_gtpu_demux_adapter()  = default;
-  ~network_gateway_data_gtpu_demux_adapter() = default;
+  network_gateway_data_gtpu_demux_adapter()           = default;
+  ~network_gateway_data_gtpu_demux_adapter() override = default;
 
   void connect_gtpu_demux(gtpu_demux_rx_upper_layer_interface& gtpu_demux_) { gtpu_demux = &gtpu_demux_; }
 

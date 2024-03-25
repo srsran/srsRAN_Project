@@ -27,5 +27,5 @@ set(SOURCES
 
 add_executable(cell_meas_manager_test ${SOURCES})
 target_include_directories(cell_meas_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(cell_meas_manager_test cell_meas_manager_helpers)
+target_link_libraries(cell_meas_manager_test cell_meas_manager_helpers cu_cp_test_helpers)
 gtest_discover_tests(cell_meas_manager_test PROPERTIES "LABELS;cell_meas_manager")

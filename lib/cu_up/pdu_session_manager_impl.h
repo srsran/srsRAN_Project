@@ -67,6 +67,9 @@ public:
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
   size_t                          get_nof_pdu_sessions() override;
 
+  void disconnect_pdu_session(pdu_session_id_t pdu_session_id);
+  void disconnect_all_pdu_sessions();
+
   /// \brief Function used to allocate a local NG-U TEID
   /// This function allocates a new TEID based on the UE id, and PDU session ID.
   /// The allocation should look like this,

@@ -20,85 +20,74 @@
  *
  */
 
-#include "srsran/phy/constants.h"
+#include "low_papr_sequence_generator_test_data.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsran/srsvec/compare.h"
-#include "srsran/support/math_utils.h"
-#include "srsran/support/srsran_test.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
 
 using namespace srsran;
 
-int main()
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
-  std::vector<unsigned>                   sizes = {6, 12, 18, 24, 36, 768};
-  std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
-
-  // Generate alphas.
-  std::array<float, NRE> alphas;
-  std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
-    return M_PI_4 * static_cast<float>(n++) / static_cast<float>(NRE);
-  });
-
-  // Create generator factory.
-  std::shared_ptr<low_papr_sequence_generator_factory> generator_factory =
-      create_low_papr_sequence_generator_sw_factory();
-  TESTASSERT(generator_factory);
-
-  std::shared_ptr<low_papr_sequence_collection_factory> collection_factory =
-      create_low_papr_sequence_collection_sw_factory(generator_factory);
-  TESTASSERT(collection_factory);
-
-  // Create generator.
-  std::unique_ptr<low_papr_sequence_generator> generator = generator_factory->create();
-  TESTASSERT(generator);
-
-  // For each possible size...
-  for (unsigned M_zc : sizes) {
-    // Calculate parameter m and delta.
-    unsigned m      = divide_ceil(M_zc, NRE);
-    unsigned delta  = 0;
-    unsigned trials = 4;
-    while ((m * NRE) / pow2(delta) != M_zc) {
-      if ((m * NRE) / pow2(delta) < M_zc) {
-        m *= 3;
-      } else {
-        delta++;
-      }
-
-      // Count calculation trial and make sure it does not exceed the maximum number of trials.
-      --trials;
-      TESTASSERT(trials, "Size M_zc={} cannot derive m and delta.", M_zc);
-    }
-
-    // Create collection.
-    std::unique_ptr<low_papr_sequence_collection> collection = collection_factory->create(m, delta, alphas);
-
-    // Iterate all possible groups.
-    for (unsigned u = 0; u < 30; ++u) {
-      unsigned nof_bases = 2;
-      if ((NRE / 2) <= M_zc && M_zc <= (5 * NRE)) {
-        nof_bases = 1;
-      }
-
-      // Iterate all possible bases.
-      for (unsigned v = 0; v < nof_bases; ++v) {
-        // Iterate all alpha indexes.
-        for (unsigned alpha_idx = 0; alpha_idx != alphas.size(); ++alpha_idx) {
-          // Get sequence from collection
-          span<const cf_t> sequence = collection->get(u, v, alpha_idx);
-
-          // Generate sequence.
-          std::vector<cf_t> sequence2(M_zc);
-          generator->generate(sequence2, u, v, alphas[alpha_idx]);
-
-          // Assert sequence matches with generator.
-          TESTASSERT(srsvec::equal(sequence, sequence2), "Collected and generated sequences do not match.");
-
-          // Assert the sequence with an external reference.
-          // ...
-        }
-      }
-    }
-  }
+  fmt::print(os,
+             "u={} v={} n_cs={} n_cs_max={} M_zc={}",
+             test_case.context.u,
+             test_case.context.v,
+             test_case.context.n_cs,
+             test_case.context.n_cs_max,
+             test_case.context.M_zc);
+  return os;
 }
+
+std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
+bool operator==(span<const cf_t> left, span<const cf_t> right)
+{
+  return std::equal(
+      left.begin(), left.end(), right.begin(), right.end(), [](cf_t a, cf_t b) { return std::abs(a - b) < 1e-5; });
+}
+
+} // namespace srsran
+
+namespace {
+
+class LowPaprSequenceGeneratorFixture : public ::testing::TestWithParam<test_case_t>
+{
+protected:
+  void SetUp() override
+  {
+    std::shared_ptr<low_papr_sequence_generator_factory> factory = create_low_papr_sequence_generator_sw_factory();
+    ASSERT_NE(factory, nullptr);
+
+    generator = factory->create();
+    ASSERT_NE(generator, nullptr);
+  }
+
+  std::unique_ptr<low_papr_sequence_generator> generator = nullptr;
+};
+
+} // namespace
+
+TEST_P(LowPaprSequenceGeneratorFixture, FromVector)
+{
+  const test_case_t& test_case = GetParam();
+
+  std::vector<cf_t> sequence(test_case.context.M_zc);
+  generator->generate(
+      sequence, test_case.context.u, test_case.context.v, test_case.context.n_cs, test_case.context.n_cs_max);
+
+  std::vector<cf_t> expected_sequence = test_case.sequence.read();
+
+  ASSERT_EQ(span<const cf_t>(sequence), span<const cf_t>(expected_sequence));
+}
+
+INSTANTIATE_TEST_SUITE_P(LowPaprSequenceGenerator,
+                         LowPaprSequenceGeneratorFixture,
+                         ::testing::ValuesIn(low_papr_sequence_generator_test_data));

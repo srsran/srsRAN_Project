@@ -143,7 +143,14 @@ public:
     });
   }
 
-  void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
+  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Requested a UE removal", ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
 
   optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
                                                        nr_cell_id_t           nci,
@@ -163,10 +170,9 @@ private:
 class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
 {
 public:
-  void on_cell_config_update_request(nr_cell_id_t                           nci,
-                                     const serving_cell_meas_config&        serv_cell_cfg,
-                                     std::vector<neighbor_cell_meas_config> ncells = {}) override
+  bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override
   {
+    return true;
   }
 };
 

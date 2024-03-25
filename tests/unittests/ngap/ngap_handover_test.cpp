@@ -66,7 +66,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
 
   ngap_handover_preparation_request request = {};
   request.ue_index                          = ue_index;
-  request.gnb_id                            = 1;
+  request.gnb_id                            = {1, 22};
   request.nci                               = 1;
 
   // Action 1: Launch HO preparation procedure

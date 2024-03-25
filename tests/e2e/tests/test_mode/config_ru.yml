@@ -55,18 +55,12 @@ buffer_pool:
 
 expert_execution:
   affinities:
-    isolated_cpus: 2-9,14-21
-    low_priority_cpus: 4-9,16-21
-    low_priority_pinning: mask
+    low_priority_cpus: 6-10,18-22
   cell_affinities:
-    - l1_dl_cpus: 4-9,16-21
-      l1_dl_pinning: mask
-      l1_ul_cpus: 4-9,16-21
-      l1_ul_pinning: mask
-      l2_cell_cpus: 3
-      l2_cell_pinning: mask
-      ru_cpus: 4-9,16-21
-      ru_pinning: mask
+    - l1_dl_cpus: 2-10,14-22
+      l1_ul_cpus: 2-10,14-22
+      l2_cell_cpus: 1,13
+      ru_cpus: 2-10,14-22
 
 expert_phy:
   max_request_headroom_slots: 3

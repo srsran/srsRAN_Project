@@ -44,10 +44,10 @@ public:
   /// \param[in] m         Parameter \f$m\f$.
   /// \param[in] delta     Parameter \f$\delta\f$.
   /// \param[in] alphas    List with the possible \f$\alpha\f$.
-  low_papr_sequence_collection_impl(const low_papr_sequence_generator& generator,
-                                    unsigned                           m,
-                                    unsigned                           delta,
-                                    span<const float>                  alphas);
+  low_papr_sequence_collection_impl(low_papr_sequence_generator& generator,
+                                    unsigned                     m,
+                                    unsigned                     delta,
+                                    span<const float>            alphas);
 
   // See interface for documentation.
   span<const cf_t> get(unsigned u, unsigned v, unsigned alpha_idx) const override;

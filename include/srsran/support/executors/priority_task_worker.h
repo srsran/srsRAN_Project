@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "unique_thread.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/detail/tuple_utils.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/unique_thread.h"
 
 namespace srsran {
 

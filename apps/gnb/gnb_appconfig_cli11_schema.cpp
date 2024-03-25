@@ -109,6 +109,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
                  "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
                  "\"phy_rx_symbols_filename\" is set.")
       ->capture_default_str();
+  app.add_option("--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
+      ->always_capture_default();
   app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
@@ -292,20 +294,19 @@ static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appcon
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
   app.add_option("--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
-  app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
   app.add_option("--periodic_report_cfg_id",
                  config.periodic_report_cfg_id,
                  "Periodical report configuration for the serving cell")
       ->check(CLI::Range(1, 64));
-  ;
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
-
-  app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
+  app.add_option("--gnb_id_bit_length", config.gnb_id_bit_length, "gNodeB identifier bit length")
+      ->check(CLI::Range(22, 32));
+  app.add_option("--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
-  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
+  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms")->check(CLI::IsMember({5, 10, 20, 40, 80, 160}));
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
-  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
+  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration")->check(CLI::IsMember({1, 2, 3, 4, 5}));
 
   // report configuration parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -331,14 +332,24 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_report_appconfig& r
       ->check(CLI::Range(1, 64));
   app.add_option("--report_type", report_params.report_type, "Type of the report configuration")
       ->check(CLI::IsMember({"periodical", "event_triggered"}));
-  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms");
-  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type");
-  app.add_option("--a3_offset_db", report_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms")
+      ->check(
+          CLI::IsMember({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000}));
+  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type")
+      ->check(CLI::IsMember({"rsrp", "rsrq", "sinr"}));
+  app.add_option("--a3_offset_db",
+                 report_params.a3_offset_db,
+                 "A3 offset in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+      ->check(CLI::Range(-30, 30));
   app.add_option(
-      "--a3_hysteresis_db", report_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+         "--a3_hysteresis_db",
+         report_params.a3_hysteresis_db,
+         "A3 hysteresis in dB used for measurement report trigger. Note the actual value is field value * 0.5 dB")
+      ->check(CLI::Range(0, 30));
   app.add_option("--a3_time_to_trigger_ms",
                  report_params.a3_time_to_trigger_ms,
-                 "Time in ms during which A3 condition must be met before measurement report trigger");
+                 "Time in ms during which A3 condition must be met before measurement report trigger")
+      ->check(CLI::IsMember({0, 40, 64, 80, 100, 128, 160, 256, 320, 480, 512, 640, 1024, 1280, 2560, 5120}));
 }
 
 static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)
@@ -427,6 +438,13 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
       ->capture_default_str();
 }
 
+static void configure_cli11_f1ap_args(CLI::App& app, f1ap_cu_appconfig& f1ap_params)
+{
+  app.add_option(
+         "--ue_context_setup_timeout", f1ap_params.ue_context_setup_timeout, "UE context setup timeout in milliseconds")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option(
@@ -453,6 +471,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
   configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
+
+  CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP configuration");
+  configure_cli11_f1ap_args(*f1ap_subcmd, cu_cp_params.f1ap_config);
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
@@ -2433,8 +2454,8 @@ static void configure_cli11_fapi_args(CLI::App& app, fapi_appconfig& config)
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg)
 {
   gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
-  app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
-  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
+  app.add_option("--gnb_id", gnb_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();

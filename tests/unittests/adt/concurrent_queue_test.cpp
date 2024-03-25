@@ -21,8 +21,8 @@
  */
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/unique_thread.h"
 #include <gtest/gtest.h>
 
 // Disable GCC 5's -Wsuggest-override warnings in gtest.

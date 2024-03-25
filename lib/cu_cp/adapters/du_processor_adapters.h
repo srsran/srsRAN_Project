@@ -102,10 +102,10 @@ public:
     cu_cp_handler->handle_rrc_ue_creation(ue_index, rrc_ue, *ngap_du_notifier);
   }
 
-  void on_ue_removal_required(ue_index_t ue_index) override
+  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
   {
     srsran_assert(ue_removal_handler != nullptr, "CU-CP UE Removal handler must not be nullptr");
-    ue_removal_handler->handle_ue_removal_request(ue_index);
+    return ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
   async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override

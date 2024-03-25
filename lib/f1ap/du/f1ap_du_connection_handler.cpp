@@ -45,7 +45,7 @@ f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1
                                                        f1ap_message_handler&  f1ap_pdu_handler_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),
-  logger(srslog::fetch_basic_logger("F1-DU"))
+  logger(srslog::fetch_basic_logger("DU-F1"))
 {
 }
 

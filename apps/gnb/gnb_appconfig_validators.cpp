@@ -27,12 +27,14 @@
 #include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/rlc/rlc_config.h"
+#include <set>
 
 using namespace srsran;
 
@@ -650,16 +652,80 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
-/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
-static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
+static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_appconfig& config)
 {
-  // only check if the pdu_session_setup_timout is larger than T310
+  // check that report config ids are unique
+  std::map<unsigned, std::string> report_cfg_ids_to_report_type;
+  for (const auto& report_cfg : config.report_configs) {
+    if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
+      fmt::print("Report config ids must be unique\n");
+      return false;
+    }
+    report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
+  }
+
+  // check cu_cp_cell_config
+  for (const auto& cell : config.cells) {
+    std::set<nr_cell_id_t> ncis;
+    if (ncis.emplace(cell.nr_cell_id).second == false) {
+      fmt::print("Cells must be unique ({:#x} already present)\n");
+      return false;
+    }
+
+    if (cell.ssb_period.has_value() && cell.ssb_offset.has_value() &&
+        cell.ssb_offset.value() >= cell.ssb_period.value()) {
+      fmt::print("ssb_offset must be smaller than ssb_period\n");
+      return false;
+    }
+
+    // check that for the serving cell only periodic reports are configured
+    if (cell.periodic_report_cfg_id.has_value()) {
+      if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
+        fmt::print("For the serving cell only periodic reports are allowed\n");
+        return false;
+      }
+    }
+
+    // Check if cell is an external managed cell
+    if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
+      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
+          !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
+          !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
+        fmt::print(
+            "For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
+            "ssb_duration must be configured in the mobility config\n");
+        return false;
+      }
+    } else {
+      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
+          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
+        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+                   "ssb_offset and "
+                   "ssb_duration must not be configured in the mobility config\n");
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
+static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
+{
+  // check if the pdu_session_setup_timout is larger than T310
   if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
     fmt::print("pdu_session_setup_timeout ({}ms) must be larger than T310 ({}ms)\n",
                config.pdu_session_setup_timeout * 1000,
                sib_cfg.ue_timers_and_constants.t310);
     return false;
   }
+
+  // validate mobility config
+  if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -1290,7 +1356,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
+  if (!validate_cu_cp_appconfig(config.gnb_id, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
     return false;
   }
 

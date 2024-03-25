@@ -72,14 +72,10 @@ make_default_sched_cell_configuration_request(const config_helpers::cell_config_
       default_pucch_builder_params, sched_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   if (params.csi_rs_enabled) {
-    csi_helper::csi_builder_params csi_params{};
-    csi_params.pci           = params.pci;
-    csi_params.nof_rbs       = sched_req.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
-    csi_params.nof_ports     = params.nof_dl_ports;
-    csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
-
-    sched_req.zp_csi_rs_list      = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
-    sched_req.nzp_csi_rs_res_list = csi_helper::make_nzp_csi_rs_resource_list(csi_params);
+    csi_meas_config csi_meas      = config_helpers::make_csi_meas_config(params);
+    pdsch_config    pdsch         = config_helpers::make_default_pdsch_config(params);
+    sched_req.zp_csi_rs_list      = pdsch.zp_csi_rs_res_list;
+    sched_req.nzp_csi_rs_res_list = csi_meas.nzp_csi_rs_res_list;
   }
 
   return sched_req;

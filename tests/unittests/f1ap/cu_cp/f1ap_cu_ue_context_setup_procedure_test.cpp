@@ -29,9 +29,13 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
+const std::chrono::milliseconds procedure_timeout{100};
+
 class f1ap_cu_ue_context_setup_test : public f1ap_cu_test
 {
 protected:
+  f1ap_cu_ue_context_setup_test() : f1ap_cu_test(f1ap_configuration{.ue_context_setup_timeout = procedure_timeout}) {}
+
   void start_procedure(const f1ap_ue_context_setup_request& req)
   {
     t = f1ap->handle_ue_context_setup_request(req, {});
@@ -106,5 +110,17 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_failure_received_then_proced
   f1ap->handle_message(response);
 
   // The UE CONTEXT SETUP FAILURE was received and the F1AP-CU completed the procedure with failure.
+  ASSERT_TRUE(was_ue_context_setup_failure_received());
+}
+
+TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_procedure_timeouts_then_procedure_unsuccessful)
+{
+  // Start UE CONTEXT SETUP procedure and return back the failure response from the DU.
+  this->start_procedure(create_ue_context_setup_request({drb_id_t::drb1}));
+
+  for (unsigned i = 0; i != procedure_timeout.count(); ++i) {
+    ASSERT_FALSE(was_ue_context_setup_failure_received());
+    this->tick();
+  }
   ASSERT_TRUE(was_ue_context_setup_failure_received());
 }

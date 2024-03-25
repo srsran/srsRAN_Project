@@ -32,7 +32,7 @@ using namespace asn1::f1ap;
 f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_procedure(
     const asn1::f1ap::ue_context_mod_request_s& msg,
     f1ap_du_ue&                                 ue_) :
-  ue(ue_), logger(srslog::fetch_basic_logger("F1AP-DU"))
+  ue(ue_), logger(srslog::fetch_basic_logger("DU-F1"))
 {
   create_du_request(msg);
 }

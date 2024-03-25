@@ -164,12 +164,15 @@ TEST_P(ChannelEstFixture, test)
   grid.write(grid_entries);
   ch_estimator->compute(estimates, grid, 0, pilots_arranged, cfg);
 
+  // Calculate the tolerance for the measured TA. It assumes a DFT size of 4096 and a maximum error of ±1 sample.
+  double tolerance_ta_us = 1e3 / (4096 * scs_to_khz(test_params.cfg.scs));
+
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
   ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, tolerance);
   ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, tolerance);
   ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, tolerance);
   ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, tolerance);
-  ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance);
+  ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
 }
 
 INSTANTIATE_TEST_SUITE_P(ChannelEstSuite, ChannelEstFixture, ::testing::ValuesIn(port_channel_estimator_test_data));

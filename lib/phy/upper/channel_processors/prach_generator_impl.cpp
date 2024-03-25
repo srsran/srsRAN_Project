@@ -21,33 +21,21 @@
  */
 
 #include "prach_generator_impl.h"
+#include "srsran/phy/support/complex_exponential_table.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
-namespace {
-
-template <unsigned L>
-class prach_generator_cexp_table : public std::array<cf_t, 4UL * L>
-{
-public:
-  prach_generator_cexp_table()
-  {
-    std::generate(this->begin(), this->end(), [n = 0]() mutable {
-      return std::sqrt(static_cast<float>(L)) *
-             std::polar(1.0F, static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(2UL * L));
-    });
-  }
-};
-
 // Complex exponential look-up table for short preambles.
-const prach_generator_cexp_table<prach_constants::SHORT_SEQUENCE_LENGTH> cexp_table_short;
-
-const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> cexp_table_long;
-
-} // namespace
+static const complex_exponential_table
+    cexp_table_short(4 * prach_constants::SHORT_SEQUENCE_LENGTH,
+                     std::sqrt(static_cast<float>(prach_constants::SHORT_SEQUENCE_LENGTH)));
+// Complex exponential look-up table for long preambles.
+static const complex_exponential_table
+    cexp_table_long(4 * prach_constants::LONG_SEQUENCE_LENGTH,
+                    std::sqrt(static_cast<float>(prach_constants::LONG_SEQUENCE_LENGTH)));
 
 unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
 {

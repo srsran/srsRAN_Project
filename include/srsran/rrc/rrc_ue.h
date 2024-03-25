@@ -30,6 +30,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
@@ -337,7 +338,7 @@ public:
 
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
-  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+  virtual async_task<void> on_ue_removal_required(ue_index_t ue_index) = 0;
 };
 
 /// Interface to notify about measurements

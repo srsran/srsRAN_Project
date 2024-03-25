@@ -35,11 +35,15 @@ public:
   virtual ~low_papr_sequence_generator() = default;
 
   /// \brief Generates a \f$r^{(\alpha, \delta)}_{u,v}\f$ sequence as per TS38.211 Section 5.2.2.
+  ///
+  /// The cyclic shift \f$\alpha=2\pi\frac{n_{cs}}{n_{cs}^{max}}\f$ is split into the numerator and denominator.
+  ///
   /// \param[out] sequence Provides the destination buffer and the sequence length.
   /// \param[in] u         Sequence group {0, ..., 29}.
   /// \param[in] v         Sequence number {0, 1}.
-  /// \param[in] alpha     Cyclic shift (i.e., parameter \f$\alpha\f$).
-  virtual void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const = 0;
+  /// \param[in] alpha_num Cyclic shift numerator, parameter \f$n_{cs}\f$.
+  /// \param[in] alpha_den Cyclic shift denominator, parameter \f$n_{cs}^{max}\f$.
+  virtual void generate(span<cf_t> sequence, unsigned u, unsigned v, unsigned alpha_num, unsigned alpha_den) = 0;
 };
 
 } // namespace srsran

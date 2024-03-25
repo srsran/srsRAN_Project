@@ -143,11 +143,12 @@ private:
 public:
   std::list<uint32_t> tx_discard_sdu_list;
 
-  dummy_inner_f1u_bearer()  = default;
-  ~dummy_inner_f1u_bearer() = default;
+  dummy_inner_f1u_bearer()           = default;
+  ~dummy_inner_f1u_bearer() override = default;
 
-  virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
-  virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+  void                stop() override {}
+  f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
+  f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
   void connect_f1u_rx_sdu_notifier(srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier_)
   {
@@ -202,10 +203,17 @@ public:
     inner(inner_), disconnector(disconnector_), ul_up_tnl_info(ul_up_tnl_info_)
   {
   }
-  virtual ~dummy_f1u_bearer() { disconnector.disconnect_cu_bearer(ul_up_tnl_info); }
+  void stop() override
+  {
+    if (not stopped) {
+      disconnector.disconnect_cu_bearer(ul_up_tnl_info);
+    }
+    stopped = true;
+  }
+  ~dummy_f1u_bearer() override { stop(); }
 
-  virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
-  virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+  f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
+  f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
   void connect_f1u_rx_sdu_notifier(srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier_)
   {
@@ -219,6 +227,7 @@ public:
   void handle_sdu(pdcp_tx_pdu sdu) final { inner.handle_sdu(std::move(sdu)); }
 
 private:
+  bool                                stopped = false;
   dummy_inner_f1u_bearer&             inner;
   srs_cu_up::f1u_bearer_disconnector& disconnector;
   up_transport_layer_info             ul_up_tnl_info;

@@ -22,10 +22,11 @@
 
 #pragma once
 
-#include "cpu_architecture_info.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/strong_type.h"
 #include "srsran/adt/unique_function.h"
+#include "srsran/support/cpu_architecture_info.h"
+#include "srsran/support/executors/thread_utils.h"
 #include <string>
 #include <thread>
 
@@ -247,9 +248,6 @@ private:
 
   std::thread thread_handle;
 };
-
-/// Get caller thread name.
-const char* this_thread_name();
 
 /// Print caller thread priority.
 void print_this_thread_priority();

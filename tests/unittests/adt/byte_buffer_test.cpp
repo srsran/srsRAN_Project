@@ -22,8 +22,8 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/detail/byte_buffer_segment_pool.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/unique_thread.h"
 #include <condition_variable>
 #include <gtest/gtest.h>
 #include <list>

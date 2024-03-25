@@ -84,9 +84,7 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
   /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
-  virtual void on_cell_config_update_request(nr_cell_id_t                           nci,
-                                             const serving_cell_meas_config&        serv_cell_cfg_,
-                                             std::vector<neighbor_cell_meas_config> ncells_ = {}) = 0;
+  virtual bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
 };
 
 /// Handle RRC UE removal

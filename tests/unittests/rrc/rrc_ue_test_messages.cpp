@@ -24,6 +24,7 @@
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/security/security.h"
 
@@ -61,9 +62,10 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
 
   rrc_ssb_mtc smtc1;
 
-  smtc1.periodicity_and_offset.sf20 = 0;
-  smtc1.dur                         = 2;
-  meas_obj_nr.smtc1                 = smtc1;
+  smtc1.periodicity_and_offset.periodicity = rrc_periodicity_and_offset::periodicity_t::sf20;
+  smtc1.periodicity_and_offset.offset      = 0;
+  smtc1.dur                                = 2;
+  meas_obj_nr.smtc1                        = smtc1;
 
   rrc_ssb_cfg_mob ssb_cfg_mob;
   ssb_cfg_mob.derive_ssb_idx_from_cell = true;

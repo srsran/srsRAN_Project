@@ -32,7 +32,7 @@ namespace config_helpers {
 inline e2ap_configuration make_default_e2ap_config()
 {
   e2ap_configuration cfg{};
-  cfg.gnb_id            = 411;
+  cfg.gnb_id            = {411, 22};
   cfg.ran_node_name     = "srsgnb01";
   cfg.plmn              = "00101";
   cfg.max_setup_retries = 5;

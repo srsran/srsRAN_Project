@@ -49,10 +49,18 @@ public:
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
-  ~f1u_bearer_impl() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
+  ~f1u_bearer_impl() override { stop(); }
 
   f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+
+  void stop() override
+  {
+    if (not stopped) {
+      disconnector.disconnect_cu_bearer(ul_tnl_info);
+    }
+    stopped = true;
+  }
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(pdcp_tx_pdu sdu) override;
@@ -70,6 +78,7 @@ public:
   void on_expired_dl_notif_timer();
 
 private:
+  bool                      stopped = false;
   f1u_bearer_logger         logger;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;

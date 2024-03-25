@@ -89,14 +89,6 @@ protected:
     (*ue_cfg.cfg.cells)[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->format_2_common_param->max_c_rate =
         srsran::max_pucch_code_rate::dot_35;
 
-    // find valid CSI report slot offset.
-    if ((*ue_cfg.cfg.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
-      optional<unsigned> slot_offset = find_next_tdd_full_ul_slot(testparams.tdd_cfg);
-      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-          (*ue_cfg.cfg.cells)[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
-          .report_slot_offset = *slot_offset;
-    }
-
     this->add_ue(ue_cfg);
   }
 

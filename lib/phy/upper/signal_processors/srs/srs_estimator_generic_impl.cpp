@@ -78,7 +78,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 
         // Generate sequence.
         static_vector<cf_t, max_seq_length> sequence(info.sequence_length);
-        deps.sequence_generator->generate(sequence, info.sequence_group, info.sequence_number, info.alpha);
+        deps.sequence_generator->generate(
+            sequence, info.sequence_group, info.sequence_number, info.n_cs, info.n_cs_max);
 
         static_vector<cf_t, max_seq_length> rx_sequence(info.sequence_length);
         extract_sequence(rx_sequence, grid, i_rx_port, i_symbol, info.mapping_initial_subcarrier, info.comb_size);

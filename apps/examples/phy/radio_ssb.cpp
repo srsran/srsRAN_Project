@@ -586,7 +586,7 @@ int main(int argc, char** argv)
   rx_symbol_handler_example rx_symbol_handler(log_level);
 
   // Create lower PHY error adapter logger.
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("Low-PHY");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
   logger.set_level(srslog::str_to_basic_level(log_level));
 
   // Create adapters.

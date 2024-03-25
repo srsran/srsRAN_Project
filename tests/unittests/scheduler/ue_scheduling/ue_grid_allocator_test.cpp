@@ -37,10 +37,9 @@ class ue_grid_allocator_tester : public ::testing::Test
 protected:
   ue_grid_allocator_tester() :
     cell_cfg(*[this]() {
-      cell_config_builder_params params;
-      params.dl_arfcn       = 536020;
-      params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
-      auto* cfg             = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(params));
+      cfg_builder_params.dl_arfcn       = 536020;
+      cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
     }())
@@ -50,9 +49,10 @@ protected:
 
   ue& add_ue(du_ue_index_t ue_index, const std::initializer_list<lcid_t>& lcids_to_activate)
   {
-    sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
-    ue_creation_req.ue_index                          = ue_index;
-    ue_creation_req.crnti                             = to_rnti(0x4601 + (unsigned)ue_index);
+    sched_ue_creation_request_message ue_creation_req =
+        test_helpers::create_default_sched_ue_creation_request(cfg_builder_params);
+    ue_creation_req.ue_index = ue_index;
+    ue_creation_req.crnti    = to_rnti(0x4601 + (unsigned)ue_index);
     for (lcid_t lcid : lcids_to_activate) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
@@ -91,8 +91,9 @@ protected:
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   scheduler_harq_timeout_dummy_handler    harq_timeout_handler;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics_ue_handler};
-  const cell_configuration& cell_cfg;
+  cell_config_builder_params cfg_builder_params;
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics_ue_handler};
+  const cell_configuration&  cell_cfg;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
   dummy_uci_allocator            dummy_uci_alloc;
@@ -121,7 +122,8 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
 TEST_F(ue_grid_allocator_tester,
        when_grant_inside_coreset_start_and_coreset0_end_rb_lims_for_css_then_allocation_is_successful)
 {
-  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
   // Change SS type to common.
   (*ue_creation_req.cfg.cells)[0]
       .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
@@ -150,7 +152,8 @@ TEST_F(ue_grid_allocator_tester,
 
 TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_table_is_used)
 {
-  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
   (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
   ue_creation_req.ue_index                                                       = to_du_ue_index(0);
@@ -175,7 +178,8 @@ TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_
 
 TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_table_set_in_pdsch_cfg)
 {
-  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
   (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
   ue_creation_req.ue_index                                                       = to_du_ue_index(0);

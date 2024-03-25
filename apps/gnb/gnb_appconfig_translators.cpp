@@ -50,29 +50,9 @@ static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
 {
   srs_cu_cp::rrc_ssb_mtc ssb_mtc;
-  switch (period) {
-    case 5:
-      ssb_mtc.periodicity_and_offset.sf5.emplace() = offset;
-      break;
-    case 10:
-      ssb_mtc.periodicity_and_offset.sf10.emplace() = offset;
-      break;
-    case 20:
-      ssb_mtc.periodicity_and_offset.sf20.emplace() = offset;
-      break;
-    case 40:
-      ssb_mtc.periodicity_and_offset.sf40.emplace() = offset;
-      break;
-    case 80:
-      ssb_mtc.periodicity_and_offset.sf80.emplace() = offset;
-      break;
-    case 160:
-      ssb_mtc.periodicity_and_offset.sf160.emplace() = offset;
-      break;
-    default:
-      report_error("Invalid SSB periodicity {}\n", period);
-  }
-  ssb_mtc.dur = duration;
+  ssb_mtc.periodicity_and_offset.periodicity = (srs_cu_cp::rrc_periodicity_and_offset::periodicity_t)period;
+  ssb_mtc.periodicity_and_offset.offset      = offset;
+  ssb_mtc.dur                                = duration;
 
   return ssb_mtc;
 }
@@ -125,6 +105,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.tac                  = cell.tac;
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
+  out_cfg.rrc_config.gnb_id                         = config.gnb_id;
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
   out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(config);
@@ -149,21 +130,38 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
       config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;
 
+  // F1AP-CU config.
+  out_cfg.f1ap_config.ue_context_setup_timeout =
+      std::chrono::milliseconds{config.cu_cp_cfg.f1ap_config.ue_context_setup_timeout};
+  out_cfg.f1ap_config.json_log_enabled = config.log_cfg.f1ap_json_enabled;
+
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
     srs_cu_cp::cell_meas_config meas_cfg_item;
-    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.nr_cell_id;
-    meas_cfg_item.serving_cell_cfg.gnb_id    = app_cfg_item.gnb_id;
+    meas_cfg_item.serving_cell_cfg.nci = app_cfg_item.nr_cell_id;
+    if (app_cfg_item.periodic_report_cfg_id.has_value()) {
+      meas_cfg_item.periodic_report_cfg_id =
+          srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
+    }
+
+    if (app_cfg_item.gnb_id_bit_length.has_value()) {
+      meas_cfg_item.serving_cell_cfg.gnb_id =
+          config_helpers::get_gnb_id(app_cfg_item.nr_cell_id, app_cfg_item.gnb_id_bit_length.value());
+    }
+    meas_cfg_item.serving_cell_cfg.pci       = app_cfg_item.pci;
     meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
     meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
     if (app_cfg_item.ssb_scs.has_value()) {
       meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
           to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));
     }
-    if (app_cfg_item.periodic_report_cfg_id.has_value()) {
-      meas_cfg_item.periodic_report_cfg_id =
-          srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
+    if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
+        app_cfg_item.ssb_period.has_value()) {
+      // Add MTC config.
+      meas_cfg_item.serving_cell_cfg.ssb_mtc.emplace() = generate_rrc_ssb_mtc(
+          app_cfg_item.ssb_period.value(), app_cfg_item.ssb_offset.value(), app_cfg_item.ssb_duration.value());
     }
+
     for (const auto& ncell : app_cfg_item.ncells) {
       srs_cu_cp::neighbor_cell_meas_config ncell_meas_cfg;
       ncell_meas_cfg.nci = ncell.nr_cell_id;
@@ -172,12 +170,6 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
       }
 
       meas_cfg_item.ncells.push_back(ncell_meas_cfg);
-    }
-    if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
-        app_cfg_item.ssb_period.has_value()) {
-      // Add MTC config.
-      meas_cfg_item.serving_cell_cfg.ssb_mtc.emplace() = generate_rrc_ssb_mtc(
-          app_cfg_item.ssb_period.value(), app_cfg_item.ssb_offset.value(), app_cfg_item.ssb_duration.value());
     }
 
     // Store config.
@@ -546,7 +538,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // Set the rest of the parameters.
     out_cell.nr_cgi.plmn      = base_cell.plmn;
-    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
+    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, cell_id);
     out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = param.search_space0_index;
 

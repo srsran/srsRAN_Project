@@ -199,17 +199,6 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
-/// Interface to notify about necessary UE removals.
-class f1ap_ue_removal_notifier
-{
-public:
-  virtual ~f1ap_ue_removal_notifier() = default;
-
-  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
-};
-
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
                 public f1ap_event_handler,

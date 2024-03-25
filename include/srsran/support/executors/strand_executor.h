@@ -25,6 +25,7 @@
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_executor_utils.h"
+#include "srsran/support/executors/thread_utils.h"
 
 namespace srsran {
 
@@ -58,6 +59,20 @@ struct strand_queue {
     return queue.template try_push<Priority>(std::move(task));
   }
 
+  bool pop(unique_task& task)
+  {
+    constexpr std::chrono::microseconds time_to_wait{1000};
+    std::chrono::microseconds           telapsed{0};
+    do {
+      if (queue.try_pop(task)) {
+        return true;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds{1});
+      telapsed += std::chrono::microseconds{1};
+    } while (telapsed < time_to_wait);
+    return false;
+  }
+
   template <enqueue_priority Priority>
   auto get_enqueuer()
   {
@@ -83,6 +98,20 @@ struct strand_queue<QueuePolicy> {
   bool try_push(unique_task task)
   {
     return queue.try_push(std::move(task));
+  }
+
+  bool pop(unique_task& task)
+  {
+    constexpr std::chrono::microseconds time_to_wait{1000};
+    std::chrono::microseconds           telapsed{0};
+    do {
+      if (queue.try_pop(task)) {
+        return true;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds{1});
+      telapsed += std::chrono::microseconds{1};
+    } while (telapsed < time_to_wait);
+    return false;
   }
 
   template <enqueue_priority Priority>
@@ -241,14 +270,23 @@ protected:
     unique_task task;
     uint32_t    queue_size = this->job_count.load(std::memory_order_acquire);
     while (queue_size > 0) {
+      // Note: We use a blocking pop because (in theory) at this point we have the guarantee that at least one task
+      // is stored in the queue (job_count > 0). However, we still apply a timeout policy to catch unexpected
+      // situations or invalid states of the strand. We could not use a non-blocking pop because some of the MPMC
+      // queue implementations have spurious failures.
       unsigned run_count = 0;
-      for (; run_count != queue_size and queue.queue.try_pop(task); ++run_count) {
+      for (; run_count != queue_size and queue.pop(task); ++run_count) {
         task();
       }
       if (run_count != queue_size) {
-        // Unexpected failure to pop enqueued tasks. It might be due to queue shutdown.
-        srslog::fetch_basic_logger("ALL").info(
-            "Couldn't run all pending tasks in strand. run_count={} queue_size={}", run_count, queue_size);
+        // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
+        // producers?
+        srslog::fetch_basic_logger("ALL").error(
+            "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
+            this_thread_name(),
+            run_count,
+            queue_size);
+        run_count = queue_size;
       }
 
       // We have run all the tasks that were enqueued since when we computed queue_size.
@@ -263,12 +301,25 @@ protected:
     // Note: Since we acquired the task_strand, the task enqueued in this call should always be the first being
     // popped. Note: If there is a single producer, only the task enqueued in this call will be popped. Note: As we
     // currently hold the strand, there is no concurrent thread popping tasks.
-    uint32_t    queue_size = this->job_count.load(std::memory_order_acquire);
+    uint32_t queue_size = this->job_count.load(std::memory_order_acquire);
+
+    srslog::fetch_basic_logger("ALL").warning("Failed to dispatch {} tasks stored in strand. Discarding them...",
+                                              queue_size);
+
     unique_task dropped_task;
     while (queue_size > 0) {
       unsigned run_count = 0;
-      for (; run_count != queue_size and this->queue.queue.try_pop(dropped_task); ++run_count) {
+      for (; run_count != queue_size and this->queue.pop(dropped_task); ++run_count) {
         // do nothing with popped task.
+        if (run_count != queue_size) {
+          // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
+          // producers?
+          srslog::fetch_basic_logger("ALL").error(
+              "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
+              this_thread_name(),
+              run_count,
+              queue_size);
+        }
       }
       queue_size = this->job_count.fetch_sub(run_count, std::memory_order_acq_rel) - run_count;
     }

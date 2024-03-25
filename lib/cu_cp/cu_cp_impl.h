@@ -80,12 +80,10 @@ public:
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler
-  void handle_cell_config_update_request(nr_cell_id_t                           nci,
-                                         const serving_cell_meas_config&        serv_cell_cfg,
-                                         std::vector<neighbor_cell_meas_config> ncells = {}) override;
+  bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_ue_removal_interface
-  void handle_ue_removal_request(ue_index_t ue_index) override;
+  async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
 
   metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
 
@@ -164,9 +162,6 @@ private:
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;
   ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
-
-  // F1AP to CU-CP adapter
-  f1ap_cu_cp_adapter f1ap_cu_cp_notifier;
 
   // RRC DU to CU-CP adapters
   rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;

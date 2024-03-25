@@ -129,7 +129,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   }
 
   // Notify CU-CP to remove the old UE
-  cu_cp_notifier.on_ue_removal_required(reestablishment_context.ue_index);
+  CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(reestablishment_context.ue_index));
+
+  // Note: From this point the UE is removed and only the stored context can be accessed.
 
   CORO_RETURN();
 }

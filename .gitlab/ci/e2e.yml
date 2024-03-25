@@ -386,14 +386,12 @@ test mode ue memcheck:
 test mode ru:
   stage: zmq
   extends: .e2e-run
-  when: manual
-  allow_failure: true
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"
     MARKERS: "test_mode"
     KEYWORDS: "test_ru"
-    E2E_LOG_LEVEL: "info"
+    E2E_LOG_LEVEL: "warning"
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
@@ -403,9 +401,7 @@ test mode ru:
 test mode ru tsan:
   extends: test mode ru
   variables:
-    E2E_LOG_LEVEL: "warning"
-  when: manual
-  allow_failure: true
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -415,9 +411,7 @@ test mode ru tsan:
 test mode ru asan:
   extends: test mode ru
   variables:
-    E2E_LOG_LEVEL: "warning"
-  when: manual
-  allow_failure: true
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic asan"
       artifacts: true
@@ -427,9 +421,7 @@ test mode ru asan:
 test mode ru memcheck:
   extends: test mode ru
   variables:
-    E2E_LOG_LEVEL: "warning"
-  when: manual
-  allow_failure: true
+    MARKERS: "test_mode_not_crash"
   needs:
     - job: "basic memcheck"
       artifacts: true
