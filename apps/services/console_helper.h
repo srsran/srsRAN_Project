@@ -35,11 +35,11 @@ public:
 /// \brief Helper class to manager interaction with console, i.e. reading from stdin as well as writing
 /// to stdout to print traces. Class uses the IO broker to register callback handlers. When they are
 /// called they run in the context of the IO broker thread.
-class gnb_console_helper : public app_state_notifier
+class console_helper : public app_state_notifier
 {
 public:
-  gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_, bool autostart_stdout_metrics_ = false);
-  ~gnb_console_helper();
+  console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_, bool autostart_stdout_metrics_ = false);
+  ~console_helper();
 
   scheduler_ue_metrics_notifier& get_stdout_metrics_notifier() { return metrics_plotter; };
   scheduler_ue_metrics_notifier& get_json_metrics_notifier() { return metrics_json; };

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "gnb_appconfig.h"
-#include "gnb_os_sched_affinity_manager.h"
+#include "../gnb/gnb_appconfig.h"
+#include "os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
 #include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
@@ -84,13 +84,13 @@ private:
   std::vector<du_high_executor_storage>    du_high_executors;
   std::vector<std::vector<task_executor*>> du_low_dl_executors;
 
-  /// Manager of execution contexts and respective executors instantiated by the gNB application.
+  /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
 
-  gnb_os_sched_affinity_manager low_prio_affinity_mng;
+  os_sched_affinity_manager low_prio_affinity_mng;
 
   /// CPU affinity bitmask manager per cell.
-  std::vector<gnb_os_sched_affinity_manager> affinity_mng;
+  std::vector<os_sched_affinity_manager> affinity_mng;
 
   /// Helper method to create workers with non zero priority.
   void create_prio_worker(const std::string&                                    name,

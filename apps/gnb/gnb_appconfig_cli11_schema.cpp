@@ -2093,7 +2093,7 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "--l1_dl_pinning",
       [&config](const std::string& value) {
         config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_dl_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+        if (config.l1_dl_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
           report_error("Incorrect value={} used in {} property", value, "l1_dl_pinning");
         }
       },
@@ -2103,7 +2103,7 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "--l1_ul_pinning",
       [&config](const std::string& value) {
         config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_ul_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+        if (config.l1_ul_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
           report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
         }
       },
@@ -2113,7 +2113,7 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "--l2_cell_pinning",
       [&config](const std::string& value) {
         config.l2_cell_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l2_cell_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+        if (config.l2_cell_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
           report_error("Incorrect value={} used in {} property", value, "l2_cell_pinning");
         }
       },
@@ -2123,7 +2123,7 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, cpu_affinities_cel
       "--ru_pinning",
       [&config](const std::string& value) {
         config.ru_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.ru_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+        if (config.ru_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
           report_error("Incorrect value={} used in {} property", value, "ru_pinning");
         }
       },
@@ -2225,7 +2225,7 @@ static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_ap
       "--low_priority_pinning",
       [&config](const std::string& value) {
         config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.low_priority_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+        if (config.low_priority_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
           report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
         }
       },

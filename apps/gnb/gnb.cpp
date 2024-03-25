@@ -38,13 +38,13 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
-#include "gnb_worker_manager.h"
+#include "apps/services/worker_manager.h"
 
-#include "helpers/gnb_console_helper.h"
-#include "helpers/metrics_hub.h"
-#include "helpers/rlc_metrics_plotter_json.h"
+#include "apps/services/console_helper.h"
+#include "apps/services/metrics_hub.h"
+#include "apps/services/rlc_metrics_plotter_json.h"
 
-#include "gnb_du_factory.h"
+#include "apps/modules/flexible_du/split_ru_dynamic/dynamic_du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -54,7 +54,7 @@
 #include "srsran/ru/ru_ofh_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "gnb_e2_metric_connector_manager.h"
+#include "apps/services/e2_metric_connector_manager.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
@@ -413,7 +413,7 @@ int main(int argc, char** argv)
   rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 
   // Create console helper object for commands and metrics printing.
-  gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);

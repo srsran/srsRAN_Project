@@ -8,8 +8,8 @@
  *
  */
 
-#include "gnb_worker_manager.h"
-#include "lib/du_high/du_high_executor_strategies.h"
+#include "worker_manager.h"
+#include "../../lib/du_high/du_high_executor_strategies.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 
@@ -17,10 +17,10 @@ using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
-static std::vector<gnb_os_sched_affinity_config>
+static std::vector<os_sched_affinity_config>
 build_affinity_manager_dependencies(const cpu_affinities_cell_appconfig& affinities)
 {
-  std::vector<gnb_os_sched_affinity_config> out;
+  std::vector<os_sched_affinity_config> out;
   out.push_back(affinities.l1_ul_cpu_cfg);
   out.push_back(affinities.l1_dl_cpu_cfg);
   out.push_back(affinities.l2_cell_cpu_cfg);
@@ -201,7 +201,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         {{"cell_exec#" + cell_id_str, task_priority::max - 1},
          {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
-        affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
+        affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
 
     if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", du_cell_worker.name);
@@ -222,7 +222,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
           {{exec_name}},
           std::chrono::microseconds{50},
           os_thread_realtime_priority::max() - 6,
-          affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
+          affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
       if (!exec_mng.add_execution_context(create_execution_context(buffered_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", buffered_worker.name);
       }
@@ -298,7 +298,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
     create_prio_worker("phy_worker",
                        task_worker_queue_size,
                        {{"phy_exec"}},
-                       affinity_mng.front().calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl),
+                       affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
                        os_thread_realtime_priority::max());
 
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
@@ -319,12 +319,12 @@ void worker_manager::create_du_low_executors(bool                       is_block
 
       std::vector<os_sched_affinity_bitmask> ul_cpu_masks;
       for (unsigned w = 0; w != nof_ul_workers; ++w) {
-        ul_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul));
+        ul_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_ul));
       }
 
       std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
-        dl_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl));
+        dl_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_dl));
       }
 
       // Instantiate PHY UL workers.
@@ -343,7 +343,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
       create_prio_worker(name_prach,
                          task_worker_queue_size,
                          {{prach_exec}},
-                         affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul),
+                         affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_ul),
                          os_thread_realtime_priority::max() - 2);
       upper_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + cell_id_str));
 
@@ -372,7 +372,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
       const auto                             prio               = os_thread_realtime_priority::max() - 30;
       std::vector<os_sched_affinity_bitmask> cpu_masks;
       for (unsigned w = 0; w != nof_pusch_decoder_workers; ++w) {
-        cpu_masks.push_back(low_prio_affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority));
+        cpu_masks.push_back(low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
       }
 
       create_worker_pool(name_pusch_decoder,
@@ -416,7 +416,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
                                   {{exec_name}},
                                   std::chrono::microseconds{0},
                                   os_thread_realtime_priority::max() - 0,
-                                  affinity_mng.front().calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
+                                  affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru)};
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
     }
@@ -434,7 +434,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
       const auto                             prio = os_thread_realtime_priority::max() - 5;
       std::vector<os_sched_affinity_bitmask> cpu_masks;
       for (unsigned w = 0; w != nof_ofh_dl_workers; ++w) {
-        cpu_masks.push_back(affinity_mng[i].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
+        cpu_masks.push_back(affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru));
       }
       create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
       ru_dl_exec[i] = exec_mng.executors().at(exec_name);
@@ -450,7 +450,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
                                     {{exec_name}},
                                     std::chrono::microseconds{5},
                                     os_thread_realtime_priority::max() - 1,
-                                    affinity_mng[i].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
+                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -467,7 +467,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
                                     {{exec_name}},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 1,
-                                    affinity_mng[i].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
+                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -484,14 +484,14 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   create_prio_worker("radio",
                      task_worker_queue_size,
                      {{"radio_exec"}},
-                     affinity_mng.front().calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
+                     affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru));
   radio_exec = exec_mng.executors().at("radio_exec");
 
   // Radio Unit statistics worker and executor.
   create_prio_worker("ru_stats_worker",
                      1,
                      {{"ru_printer_exec"}},
-                     low_prio_affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority));
+                     low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
   ru_printer_exec = exec_mng.executors().at("ru_printer_exec");
 
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
@@ -517,7 +517,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         create_prio_worker(name,
                            128,
                            {{exec_name}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
 
         task_executor* phy_exec = exec_mng.executors().at(exec_name);
@@ -539,12 +539,12 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         create_prio_worker(name_dl,
                            128,
                            {{exec_dl}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
         create_prio_worker(name_ul,
                            2,
                            {{exec_ul}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
 
         lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_dl));
@@ -569,22 +569,22 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         create_prio_worker(name_tx,
                            128,
                            {{exec_tx}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
         create_prio_worker(name_rx,
                            1,
                            {{exec_rx}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 2);
         create_prio_worker(name_dl,
                            128,
                            {{exec_dl}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
         create_prio_worker(name_ul,
                            128,
                            {{exec_ul}},
-                           affinity_mng[cell_id].calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 3);
 
         lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_tx));
@@ -621,7 +621,7 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
   create_prio_worker("ru_dummy",
                      task_worker_queue_size,
                      {{"ru_dummy"}},
-                     affinity_mng.front().calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                     affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
   radio_exec = exec_mng.executors().at("ru_dummy");
 }

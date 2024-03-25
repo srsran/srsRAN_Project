@@ -8,7 +8,7 @@
  *
  */
 
-#include "gnb_e2_metric_connector_manager.h"
+#include "e2_metric_connector_manager.h"
 
 using namespace srsran;
 

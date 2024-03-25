@@ -8,8 +8,7 @@
  *
  */
 
-#include "gnb_console_helper.h"
-#include "string_helpers.h"
+#include "console_helper.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/build_info/build_info.h"
@@ -21,10 +20,10 @@
 
 using namespace srsran;
 
-// List of possible log channels that can be dynamically changed.
+/// List of possible log channels that can be dynamically changed.
 static const std::vector<std::string> dynamic_log_channels = {"PHY"};
 
-// Parses integer values from a console command.
+/// Parses integer values from a console command.
 template <typename Integer>
 static expected<Integer, std::string> parse_int(const std::string& value)
 {
@@ -37,7 +36,7 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   }
 }
 
-// Parses floating point values from a console command and attempts to store them in a double.
+/// Parses floating point values from a console command and attempts to store them in a double.
 static expected<double, std::string> parse_double(const std::string& value)
 {
   try {
@@ -49,9 +48,30 @@ static expected<double, std::string> parse_double(const std::string& value)
   }
 }
 
-gnb_console_helper::gnb_console_helper(io_broker&           io_broker_,
-                                       srslog::log_channel& log_chan_,
-                                       bool                 autostart_stdout_metrics_) :
+/// Splits a given string into multiple elements given a delimiter. The elements are casted to the specified type.
+/// Insertable It is the list data-type. It needs to implement insert(iterator, element)
+/// \param input It is the input string
+/// \param delimiter Character used for indicating the end of the strings
+/// \param list contains the parsed values
+template <class Insertable>
+static void string_parse_list(const std::string& input, char delimiter, Insertable& list)
+{
+  std::stringstream ss(input);
+
+  // Removes all possible elements of the list
+  list.clear();
+
+  while (ss.good()) {
+    std::string substr;
+    std::getline(ss, substr, delimiter);
+
+    if (not substr.empty()) {
+      list.insert(list.end(), substr);
+    }
+  }
+}
+
+console_helper::console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_, bool autostart_stdout_metrics_) :
   logger(srslog::fetch_basic_logger("GNB")),
   io_broker_handle(io_broker_),
   metrics_json(log_chan_),
@@ -68,7 +88,7 @@ gnb_console_helper::gnb_console_helper(io_broker&           io_broker_,
   }
 }
 
-gnb_console_helper::~gnb_console_helper()
+console_helper::~console_helper()
 {
   bool success = io_broker_handle.unregister_fd(STDIN_FILENO);
   if (!success) {
@@ -76,7 +96,7 @@ gnb_console_helper::~gnb_console_helper()
   }
 }
 
-void gnb_console_helper::stdin_handler(int fd)
+void console_helper::stdin_handler(int fd)
 {
   static const unsigned               read_chunk = 256;
   std::array<uint8_t, 4 * read_chunk> buffer;
@@ -110,14 +130,14 @@ void gnb_console_helper::stdin_handler(int fd)
   std::string input_line(buffer.begin(), buffer.begin() + total_bytes_read);
 
   std::list<std::string> cmd_list;
-  srsran::string_parse_list(input_line, ';', cmd_list);
+  string_parse_list(input_line, ';', cmd_list);
   for (auto& cmd : cmd_list) {
     cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.cend());
     handle_command(cmd);
   }
 }
 
-void gnb_console_helper::handle_tx_gain_command(const std::list<std::string>& gain_args)
+void console_helper::handle_tx_gain_command(const std::list<std::string>& gain_args)
 {
   if (!radio_controller.has_value()) {
     fmt::print("Interactive radio control is not supported for the current GNB configuration.\n");
@@ -148,7 +168,7 @@ void gnb_console_helper::handle_tx_gain_command(const std::list<std::string>& ga
   fmt::print("Tx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
 }
 
-void gnb_console_helper::handle_rx_gain_command(const std::list<std::string>& gain_args)
+void console_helper::handle_rx_gain_command(const std::list<std::string>& gain_args)
 {
   if (!radio_controller.has_value()) {
     fmt::print("Interactive radio control is not supported for the current GNB configuration.\n");
@@ -179,7 +199,7 @@ void gnb_console_helper::handle_rx_gain_command(const std::list<std::string>& ga
   fmt::print("Rx gain set to {} dB for port {}.\n", gain_dB.value(), port_id.value());
 }
 
-void gnb_console_helper::handle_log_command(const std::list<std::string>& args)
+void console_helper::handle_log_command(const std::list<std::string>& args)
 {
   // Verify that the number of arguments is valid.
   if (args.size() != 2) {
@@ -219,7 +239,7 @@ void gnb_console_helper::handle_log_command(const std::list<std::string>& args)
   channel.set_level(level);
 }
 
-void gnb_console_helper::handle_sleep_command(const std::list<std::string>& args)
+void console_helper::handle_sleep_command(const std::list<std::string>& args)
 {
   // Verify that the number of arguments is valid.
   if (args.size() != 1) {
@@ -246,7 +266,7 @@ void gnb_console_helper::handle_sleep_command(const std::list<std::string>& args
   std::this_thread::sleep_for(std::chrono::seconds(seconds));
 }
 
-void gnb_console_helper::handle_command(const std::string& command)
+void console_helper::handle_command(const std::string& command)
 {
   // Print help message if the command is empty.
   if (command.empty()) {
@@ -256,7 +276,7 @@ void gnb_console_helper::handle_command(const std::string& command)
 
   // Break the command into a list of arguments.
   std::list<std::string> arg_list;
-  srsran::string_parse_list(command, ' ', arg_list);
+  string_parse_list(command, ' ', arg_list);
 
   srsran_assert(!arg_list.empty(), "Parsing empty command argument list");
 
@@ -281,7 +301,7 @@ void gnb_console_helper::handle_command(const std::string& command)
   }
 }
 
-void gnb_console_helper::print_help()
+void console_helper::print_help()
 {
   fmt::print("Available commands:\n");
   fmt::print("\tt:                     start/stop console trace\n");
@@ -296,22 +316,22 @@ void gnb_console_helper::print_help()
   fmt::print("\n");
 }
 
-void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
+void console_helper::set_cells(const span<du_cell_config>& cells_)
 {
   cells = {cells_.begin(), cells_.end()};
 }
 
-void gnb_console_helper::set_ru_controller(ru_controller& controller)
+void console_helper::set_ru_controller(ru_controller& controller)
 {
   radio_controller.emplace(&controller);
 }
 
-void gnb_console_helper::on_app_starting()
+void console_helper::on_app_starting()
 {
   fmt::print("\n--== srsRAN gNB (commit {}) ==--\n\n", get_build_hash());
 }
 
-void gnb_console_helper::on_app_running()
+void console_helper::on_app_running()
 {
   for (const auto& cell : cells) {
     fmt::print("Cell pci={}, bw={} MHz, dl_arfcn={} (n{}), dl_freq={} MHz, dl_ssb_arfcn={}, ul_freq={} MHz\n",
@@ -333,7 +353,7 @@ void gnb_console_helper::on_app_running()
   }
 }
 
-void gnb_console_helper::on_app_stopping()
+void console_helper::on_app_stopping()
 {
   fmt::print("Stopping ..\n");
 }

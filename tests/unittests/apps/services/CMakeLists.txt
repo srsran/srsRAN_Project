@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_executable(metrics_plotter_stdout_test metrics_plotter_stdout_test.cpp ${CMAKE_SOURCE_DIR}/apps/gnb/helpers/metrics_plotter_stdout.cpp)
-target_link_libraries(metrics_plotter_stdout_test srsran_support)
+add_executable(metrics_plotter_stdout_test metrics_plotter_stdout_test.cpp)
+target_link_libraries(metrics_plotter_stdout_test srsran_support srsran_app_services)
 add_test(metrics_plotter_stdout_test metrics_plotter_stdout_test)
 include_directories(${CMAKE_SOURCE_DIR}/apps/gnb/helpers)

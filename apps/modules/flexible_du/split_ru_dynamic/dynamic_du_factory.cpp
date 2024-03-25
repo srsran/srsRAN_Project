@@ -8,10 +8,10 @@
  *
  */
 
-#include "gnb_du_factory.h"
-#include "gnb_appconfig_translators.h"
-#include "gnb_e2_metric_connector_manager.h"
-#include "helpers/gnb_console_helper.h"
+#include "dynamic_du_factory.h"
+#include "../../../gnb/gnb_appconfig_translators.h"
+#include "../../../services/console_helper.h"
+#include "../../../services/e2_metric_connector_manager.h"
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
@@ -84,7 +84,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       timer_manager&                        timer_mng,
                                                       mac_pcap&                             mac_p,
                                                       rlc_pcap&                             rlc_p,
-                                                      gnb_console_helper&                   console_helper,
+                                                      console_helper&                       console_helper,
                                                       e2_connection_client&                 e2_client_handler,
                                                       e2_metric_connector_manager&          e2_metric_connectors,
                                                       rlc_metrics_notifier&                 rlc_json_metrics,

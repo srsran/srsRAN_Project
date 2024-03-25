@@ -6,7 +6,4 @@
 # the distribution.
 #
 
-add_subdirectory(examples)
-add_subdirectory(gnb)
-add_subdirectory(modules)
-add_subdirectory(services)
+add_subdirectory(split_ru_dynamic)

@@ -8,7 +8,7 @@
  *
  */
 
-#include "metrics_plotter_stdout.h"
+#include "../../../apps/services/metrics_plotter_stdout.h"
 
 using namespace srsran;
 
