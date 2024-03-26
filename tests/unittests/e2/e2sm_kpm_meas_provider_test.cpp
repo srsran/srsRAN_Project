@@ -157,8 +157,8 @@ TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
-      ->ra_nfunctions_accepted.value[0]
-      ->ra_nfunction_id_item()
+      ->ran_functions_accepted.value[0]
+      ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -187,19 +187,19 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   }
 
   // Define E2SM_KPM action format 5.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 5;
-  e2_sm_kpm_action_definition_format5_s& action_def_f5 =
+  e2sm_kpm_action_definition_format5_s& action_def_f5 =
       action_def.action_definition_formats.set_action_definition_format5();
 
-  action_def_f5.matching_ueid_list.resize(nof_ues);
+  action_def_f5.matching_ue_id_list.resize(nof_ues);
   for (unsigned i = 0; i < nof_ues; i++) {
-    action_def_f5.matching_ueid_list[i].ue_id.set_gnb_du_ueid() = generate_ueid_gnb_du(ue_ids[i]);
+    action_def_f5.matching_ue_id_list[i].ue_id.set_gnb_du_ue_id() = generate_ueid_gnb_du(ue_ids[i]);
   }
 
-  e2_sm_kpm_action_definition_format1_s& subscript_info = action_def_f5.subscription_info;
-  subscript_info.cell_global_id_present                 = false;
-  subscript_info.granul_period                          = 100;
+  e2sm_kpm_action_definition_format1_s& subscript_info = action_def_f5.sub_info;
+  subscript_info.cell_global_id_present                = false;
+  subscript_info.granul_period                         = 100;
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcPacketDropRateDl");
@@ -221,7 +221,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   nof_records = subscript_info.meas_info_list.size();
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -253,8 +253,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -314,9 +314,9 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   }
 
   // Define E2SM_KPM action format 1.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 1;
-  e2_sm_kpm_action_definition_format1_s& action_def_f1 =
+  e2sm_kpm_action_definition_format1_s& action_def_f1 =
       action_def.action_definition_formats.set_action_definition_format1();
   action_def_f1.cell_global_id_present = false;
   action_def_f1.granul_period          = 100;
@@ -333,7 +333,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeUL");
   action_def_f1.meas_info_list.push_back(meas_info_item);
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -365,8 +365,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;

@@ -12,7 +12,7 @@
 #include <future>
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_rc;
+using namespace asn1::e2sm;
 using namespace srsran;
 
 e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(du_configurator& du_configurator_,
@@ -27,7 +27,7 @@ uint32_t e2sm_rc_control_action_du_executor_base::get_action_id()
 }
 
 bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
-    asn1::e2sm_rc::ran_function_definition_ctrl_action_item_s& action_item)
+    asn1::e2sm::ran_function_definition_ctrl_action_item_s& action_item)
 {
   action_item.ric_ctrl_action_id = action_id;
   action_item.ric_ctrl_action_name.from_string(action_name);
@@ -75,8 +75,8 @@ e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(d
 
 bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const e2sm_ric_control_request& req)
 {
-  const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
-      variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
+  const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
+      variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
 
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) == action_params.end()) {
@@ -106,11 +106,11 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
 du_mac_sched_control_config
 e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_)
 {
-  du_mac_sched_control_config        ctrl_config = {};
-  const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
-      variant_get<e2_sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
-  const e2_sm_rc_ctrl_msg_format1_s& ctrl_msg =
-      variant_get<e2_sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
+  du_mac_sched_control_config       ctrl_config = {};
+  const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
+      variant_get<e2sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+  const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
+      variant_get<e2sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
 
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
@@ -138,25 +138,25 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
       du_response_.harq_processes_result and du_response_.max_prb_alloc_result and du_response_.min_prb_alloc_result;
 
   // Always fill outcome here, it will be decided later whether it should be included in the e2 response.
-  e2sm_response.ric_ctrl_outcome_present        = true;
-  e2_sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2_sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome)
-                                                      .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
+  e2sm_response.ric_ctrl_outcome_present       = true;
+  e2sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome)
+                                                     .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
 
   // TODO: fill outcome properly
-  e2_sm_rc_ctrl_outcome_format1_item_s test_outcome;
+  e2sm_rc_ctrl_outcome_format1_item_s test_outcome;
   test_outcome.ran_param_id                    = 1;
   test_outcome.ran_param_value.set_value_int() = 100;
   ctrl_outcome.ran_p_list.push_back(test_outcome);
 
   if (du_config_req_.min_prb_alloc.has_value()) {
-    e2_sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
+    e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
     min_prb_outcome.ran_param_id                    = 11;
     min_prb_outcome.ran_param_value.set_value_int() = du_config_req_.min_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
   }
 
   if (du_config_req_.max_prb_alloc.has_value()) {
-    e2_sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
+    e2sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
     max_prb_outcome.ran_param_id                    = 12;
     max_prb_outcome.ran_param_value.set_value_int() = du_config_req_.max_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
