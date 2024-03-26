@@ -32,14 +32,12 @@ public:
 
   void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_, const up_transport_layer_info& dl_tnl_info_)
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
     handler = &handler_;
     dl_tnl_info.emplace(dl_tnl_info_);
   }
 
   void detach_du_handler(const up_transport_layer_info& dl_tnl_info_)
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
     if (dl_tnl_info == dl_tnl_info_) {
       handler = nullptr;
       dl_tnl_info.reset();
@@ -52,7 +50,6 @@ public:
 
   void on_new_pdu(nru_dl_message msg) override
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
     if (handler == nullptr) {
       logger.log_info("Cannot handle NR-U DL message. DU bearer does not exist.");
       return;
@@ -65,7 +62,6 @@ private:
   srs_cu_up::f1u_bearer_logger logger;
 
   srs_du::f1u_rx_pdu_handler* handler = nullptr;
-  std::mutex                  handler_mutex;
 
   optional<up_transport_layer_info> dl_tnl_info;
 };
