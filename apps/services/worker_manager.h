@@ -60,9 +60,9 @@ struct worker_manager {
   task_executor*              radio_exec      = nullptr;
   task_executor*              ru_printer_exec = nullptr;
   task_executor*              ru_timing_exec  = nullptr;
+  std::vector<task_executor*> ru_txrx_exec;
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
-  std::vector<task_executor*> ru_tx_exec;
   std::vector<task_executor*> ru_rx_exec;
   task_executor*              cu_cp_e2_exec    = nullptr;
   task_executor*              cu_up_e2_exec    = nullptr;

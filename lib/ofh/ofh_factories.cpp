@@ -125,7 +125,7 @@ static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receive
 create_txrx(const sector_configuration&                     sector_cfg,
             std::optional<std::unique_ptr<ether::gateway>>  eth_gateway,
             std::optional<std::unique_ptr<ether::receiver>> eth_receiver,
-            task_executor&                                  rx_executor,
+            task_executor&                                  eth_rx_executor,
             srslog::basic_logger&                           logger)
 {
   if (eth_gateway && eth_receiver) {
@@ -134,10 +134,10 @@ create_txrx(const sector_configuration&                     sector_cfg,
   }
 
 #ifdef DPDK_FOUND
-  auto eth_txrx = (sector_cfg.uses_dpdk) ? create_dpdk_txrx(sector_cfg, rx_executor, logger)
-                                         : create_socket_txrx(sector_cfg, rx_executor, logger);
+  auto eth_txrx = (sector_cfg.uses_dpdk) ? create_dpdk_txrx(sector_cfg, eth_rx_executor, logger)
+                                         : create_socket_txrx(sector_cfg, eth_rx_executor, logger);
 #else
-  auto eth_txrx = create_socket_txrx(sector_cfg, rx_executor, logger);
+  auto eth_txrx = create_socket_txrx(sector_cfg, eth_rx_executor, logger);
 #endif
   if (eth_gateway) {
     eth_txrx.first = std::move(eth_gateway.value());
@@ -162,19 +162,25 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
   auto eth_txrx = create_txrx(sector_cfg,
                               std::move(sector_deps.eth_gateway),
                               std::move(sector_deps.eth_receiver),
-                              *sector_deps.receiver_executor,
+                              *sector_deps.txrx_executor,
                               *sector_deps.logger);
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
-  auto receiver  = create_receiver(
-      rx_config, *sector_deps.logger, std::move(eth_txrx.second), sector_deps.notifier, prach_repo, slot_repo, cp_repo);
+  auto receiver  = create_receiver(rx_config,
+                                  *sector_deps.logger,
+                                  *sector_deps.uplink_executor,
+                                  std::move(eth_txrx.second),
+                                  sector_deps.notifier,
+                                  prach_repo,
+                                  slot_repo,
+                                  cp_repo);
 
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
   auto transmitter = create_transmitter(tx_config,
                                         *sector_deps.logger,
-                                        *sector_deps.transmitter_executor,
+                                        *sector_deps.txrx_executor,
                                         *sector_deps.downlink_executor,
                                         std::move(eth_txrx.first),
                                         prach_repo,

@@ -96,6 +96,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 static receiver_impl_dependencies
 resolve_receiver_dependencies(const receiver_config&                            receiver_cfg,
                               srslog::basic_logger&                             logger,
+                              task_executor&                                    uplink_executor,
                               std::unique_ptr<ether::receiver>                  eth_receiver,
                               std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
@@ -104,7 +105,8 @@ resolve_receiver_dependencies(const receiver_config&                            
 {
   receiver_impl_dependencies dependencies;
 
-  dependencies.logger = &logger;
+  dependencies.logger   = &logger;
+  dependencies.executor = &uplink_executor;
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
     dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);
@@ -131,6 +133,7 @@ resolve_receiver_dependencies(const receiver_config&                            
 std::unique_ptr<receiver>
 srsran::ofh::create_receiver(const receiver_config&                            receiver_cfg,
                              srslog::basic_logger&                             logger,
+                             task_executor&                                    uplink_executor,
                              std::unique_ptr<ether::receiver>                  eth_rx,
                              std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                              std::shared_ptr<prach_context_repository>         prach_context_repo,
@@ -139,6 +142,7 @@ srsran::ofh::create_receiver(const receiver_config&                            r
 {
   auto rx_deps = resolve_receiver_dependencies(receiver_cfg,
                                                logger,
+                                               uplink_executor,
                                                std::move(eth_rx),
                                                std::move(notifier),
                                                std::move(prach_context_repo),

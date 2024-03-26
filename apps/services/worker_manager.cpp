@@ -550,39 +550,43 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
       create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
       ru_dl_exec[i] = exec_mng.executors().at(exec_name);
     }
-
-    // Executor for Open Fronthaul messages transmission.
-    {
-      const std::string name      = "ru_tx_" + std::to_string(i);
-      const std::string exec_name = "ru_tx_exec_" + std::to_string(i);
-
-      const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
-                                    {{exec_name}},
-                                    std::chrono::microseconds{5},
-                                    os_thread_realtime_priority::max() - 1,
-                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
-      }
-      ru_tx_exec.push_back(exec_mng.executors().at(exec_name));
-    }
-
-    // Executor for Open Fronthaul messages reception.
+    // Executor for Open Fronthaul messages decoding.
     {
       const std::string name      = "ru_rx_" + std::to_string(i);
       const std::string exec_name = "ru_rx_exec_" + std::to_string(i);
 
+      // The generic locking queue type is used here to avoid polling for new tasks and thus for saving CPU resources
+      // with a price of higher latency (it is acceptable for UL tasks that have lower priority compared to DL).
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, 2},
+                                    {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
                                     {{exec_name}},
-                                    std::chrono::microseconds{1},
-                                    os_thread_realtime_priority::max() - 1,
+                                    std::nullopt,
+                                    os_thread_realtime_priority::max() - 6,
                                     affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
       ru_rx_exec.push_back(exec_mng.executors().at(exec_name));
+    }
+  }
+  // Executor for Open Fronthaul messages transmission and reception.
+  {
+    unsigned nof_txrx_workers = std::max(static_cast<unsigned>(std::ceil(nof_cells / 2.0f)), 1U);
+
+    for (unsigned i = 0; i != nof_txrx_workers; ++i) {
+      const std::string name      = "ru_txrx_#" + std::to_string(i);
+      const std::string exec_name = "ru_txrx_exec_#" + std::to_string(i);
+
+      const single_worker ru_worker{name,
+                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                    {{exec_name}},
+                                    std::chrono::microseconds{1},
+                                    os_thread_realtime_priority::max() - 1,
+                                    affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru)};
+      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      }
+      ru_txrx_exec.push_back(exec_mng.executors().at(exec_name));
     }
   }
 }

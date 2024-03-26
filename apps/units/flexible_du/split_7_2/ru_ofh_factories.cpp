@@ -15,6 +15,9 @@
 
 using namespace srsran;
 
+// Number of OFH sectors served by a single executor for transmitter and receiver tasks.
+static const unsigned NOF_SECTORS_PER_TXRX_EXECUTOR = 2;
+
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_ofh_executors_and_notifiers(unsigned                            nof_sectors,
                                                      ru_ofh_dependencies&                dependencies,
@@ -33,10 +36,11 @@ static void configure_ru_ofh_executors_and_notifiers(unsigned                   
   for (unsigned i = 0; i != nof_sectors; ++i) {
     dependencies.sector_dependencies.emplace_back();
     ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
-    sector_deps.logger                      = dependencies.logger;
-    sector_deps.receiver_executor           = workers.ru_rx_exec[i];
-    sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
-    sector_deps.downlink_executor           = workers.ru_dl_exec[i];
+    // Note, one executor for transmitter and receiver tasks is shared per two sectors.
+    sector_deps.txrx_executor     = workers.ru_txrx_exec[i / NOF_SECTORS_PER_TXRX_EXECUTOR];
+    sector_deps.uplink_executor   = workers.ru_rx_exec[i];
+    sector_deps.downlink_executor = workers.ru_dl_exec[i];
+    sector_deps.logger            = dependencies.logger;
   }
 }
 

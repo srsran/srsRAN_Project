@@ -117,10 +117,10 @@ struct ru_ofh_sector_dependencies {
   srslog::basic_logger* logger = nullptr;
   /// Downlink task executor.
   task_executor* downlink_executor;
-  /// Receiver task executor.
-  task_executor* receiver_executor = nullptr;
-  /// Transmitter task executor.
-  task_executor* transmitter_executor = nullptr;
+  /// Uplink task executor.
+  task_executor* uplink_executor = nullptr;
+  /// Message transmitter and receiver task executor.
+  task_executor* txrx_executor = nullptr;
   /// Optional Ethernet gateway.
   std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
   /// Optional Ethernet receiver.

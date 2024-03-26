@@ -15,8 +15,8 @@
 using namespace srsran;
 using namespace ofh;
 
-message_receiver::message_receiver(const message_receiver_config&  config,
-                                   message_receiver_dependencies&& dependencies) :
+message_receiver_impl::message_receiver_impl(const message_receiver_config&  config,
+                                             message_receiver_dependencies&& dependencies) :
   logger(*dependencies.logger),
   nof_symbols(config.nof_symbols),
   scs(config.scs),
@@ -39,8 +39,15 @@ message_receiver::message_receiver(const message_receiver_config&  config,
   srsran_assert(eth_receiver, "Invalid Ethernet receiver");
 }
 
-void message_receiver::on_new_frame(span<const uint8_t> payload)
+void message_receiver_impl::on_new_frame(ether::unique_rx_buffer buffer)
 {
+  process_new_frame(std::move(buffer));
+}
+
+void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
+{
+  span<const uint8_t> payload = buffer.data();
+
   ether::vlan_frame_params eth_params;
   span<const uint8_t>      ecpri_pdu = vlan_decoder->decode(payload, eth_params);
   if (ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params)) {
@@ -98,7 +105,7 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   ofh_tracer << trace_event("ofh_receiver_decode_data", decode_tp);
 }
 
-bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
+bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
 {
   if (ecpri_params.header.msg_type != ecpri::message_type::iq_data) {
     logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eCPRI message type is not for IQ data");
@@ -119,7 +126,7 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
   return false;
 }
 
-bool message_receiver::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
+bool message_receiver_impl::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
     logger.debug(

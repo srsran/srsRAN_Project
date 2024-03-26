@@ -285,14 +285,10 @@ public:
   }
 
   // See interface for documentation.
-  void on_new_frame(span<const uint8_t> payload) override
+  void on_new_frame(unique_rx_buffer buffer) override
   {
-    if (!executor.execute([this, payload, rx_payload = [payload]() -> std::array<uint8_t, MAX_BUFFER_SIZE> {
-          std::array<uint8_t, MAX_BUFFER_SIZE> buffer;
-          std::memcpy(buffer.data(), payload.data(), payload.size());
-          return buffer;
-        }()]() { process_new_frame(span<const uint8_t>(rx_payload.data(), payload.size())); })) {
-      logger.warning("Failed to dispatch uplink task");
+    if (!executor.execute([this, b = std::move(buffer)]() mutable { process_new_frame(std::move(b)); })) {
+      logger.warning("Failed to dispatch receiver task");
     }
   }
 
@@ -301,8 +297,10 @@ public:
   unsigned get_statistics() const { return nof_rx_cplane_packets.load(std::memory_order_relaxed); }
 
 private:
-  void process_new_frame(span<const uint8_t> payload)
+  void process_new_frame(unique_rx_buffer buffer)
   {
+    span<const uint8_t> payload = buffer.data();
+
     if (!packet_inspector::is_uplink_cplane(payload, logger)) {
       return;
     }
