@@ -10,7 +10,7 @@
 
 /*******************************************************************************
  *
- *                       3GPP TS ASN1 E2SM v03.00 (2023)
+ *                       3GPP TS ASN1 E2SM v05.00 (2024)
  *
  ******************************************************************************/
 
@@ -58,6 +58,7 @@ namespace e2sm {
 #define ASN1_E2SM_MAX_EARFCN 65535
 #define ASN1_E2SM_MAX_NR_ARFCN 3279165
 #define ASN1_E2SM_MAXNOOF_NR_CELL_BANDS 32
+#define ASN1_E2SM_MAX_NROF_SS_BS_1 63
 #define ASN1_E2SM_MAXNOOF_CELLS 16384
 #define ASN1_E2SM_MAXNOOF_RIC_STYLES 63
 #define ASN1_E2SM_MAXNOOF_MEAS_INFO 65535
@@ -89,6 +90,19 @@ struct ran_param_value_type_choice_list_s;
 /*******************************************************************************
  *                              Struct Definitions
  ******************************************************************************/
+
+// EUTRA-CGI ::= SEQUENCE
+struct eutra_cgi_s {
+  bool                             ext = false;
+  fixed_octstring<3, true>         plmn_id;
+  fixed_bitstring<28, false, true> eutra_cell_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
 
 // GNB-ID ::= CHOICE
 struct gnb_id_c {
@@ -169,6 +183,69 @@ struct ng_enb_id_c {
 private:
   types                                             type_;
   choice_buffer_t<fixed_bitstring<21, false, true>> c;
+
+  void destroy_();
+};
+
+// NR-CGI ::= SEQUENCE
+struct nr_cgi_s {
+  bool                             ext = false;
+  fixed_octstring<3, true>         plmn_id;
+  fixed_bitstring<36, false, true> nr_cell_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// CGI ::= CHOICE
+struct cgi_c {
+  struct types_opts {
+    enum options { nr_cgi, eutra_cgi, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  using types = enumerated<types_opts, true>;
+
+  // choice methods
+  cgi_c() = default;
+  cgi_c(const cgi_c& other);
+  cgi_c& operator=(const cgi_c& other);
+  ~cgi_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  nr_cgi_s& nr_cgi()
+  {
+    assert_choice_type(types::nr_cgi, type_, "CGI");
+    return c.get<nr_cgi_s>();
+  }
+  eutra_cgi_s& eutra_cgi()
+  {
+    assert_choice_type(types::eutra_cgi, type_, "CGI");
+    return c.get<eutra_cgi_s>();
+  }
+  const nr_cgi_s& nr_cgi() const
+  {
+    assert_choice_type(types::nr_cgi, type_, "CGI");
+    return c.get<nr_cgi_s>();
+  }
+  const eutra_cgi_s& eutra_cgi() const
+  {
+    assert_choice_type(types::eutra_cgi, type_, "CGI");
+    return c.get<eutra_cgi_s>();
+  }
+  nr_cgi_s&    set_nr_cgi();
+  eutra_cgi_s& set_eutra_cgi();
+
+private:
+  types                                  type_;
+  choice_buffer_t<eutra_cgi_s, nr_cgi_s> c;
 
   void destroy_();
 };
@@ -307,6 +384,41 @@ struct ue_id_gnb_cu_cp_f1ap_id_item_s {
   void        to_json(json_writer& j) const;
 };
 
+// Beam-ID ::= CHOICE
+struct beam_id_c {
+  struct types_opts {
+    enum options { nr_beam_id, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  using types = enumerated<types_opts, true>;
+
+  // choice methods
+  types       type() const { return types::nr_beam_id; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  uint8_t&       nr_beam_id() { return c; }
+  const uint8_t& nr_beam_id() const { return c; }
+
+private:
+  uint8_t c;
+};
+
+// Cell-RNTI ::= SEQUENCE
+struct cell_rnti_s {
+  bool     ext    = false;
+  uint32_t c_rnti = 0;
+  cgi_c    cell_global_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // GlobalENB-ID ::= SEQUENCE
 struct global_enb_id_s {
   bool                     ext = false;
@@ -434,6 +546,7 @@ struct ue_id_en_gnb_s {
   ue_id_gnb_cu_cp_e1ap_id_list_l gnb_cu_cp_ue_e1ap_id_list;
   fixed_octstring<8, true>       ran_ue_id;
   // ...
+  copy_ptr<cell_rnti_s> cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -453,6 +566,7 @@ struct ue_id_enb_s {
   uint16_t        m_enb_ue_x2ap_id_ext = 0;
   global_enb_id_s global_enb_id;
   // ...
+  copy_ptr<cell_rnti_s> cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -481,6 +595,7 @@ struct ue_id_gnb_du_s {
   uint64_t                 gnb_cu_ue_f1ap_id = 0;
   fixed_octstring<8, true> ran_ue_id;
   // ...
+  copy_ptr<cell_rnti_s> cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -503,6 +618,7 @@ struct ue_id_gnb_s {
   global_gnb_id_s                global_gnb_id;
   // ...
   copy_ptr<global_ng_ran_node_id_c> global_ng_ran_node_id;
+  copy_ptr<cell_rnti_s>             cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -515,6 +631,7 @@ struct ue_id_ng_enb_du_s {
   bool     ext                   = false;
   uint64_t ng_enb_cu_ue_w1_ap_id = 0;
   // ...
+  copy_ptr<cell_rnti_s> cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -535,6 +652,7 @@ struct ue_id_ng_enb_s {
   global_ng_enb_id_s global_ng_enb_id;
   // ...
   copy_ptr<global_ng_ran_node_id_c> global_ng_ran_node_id;
+  copy_ptr<cell_rnti_s>             cell_rnti;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -709,37 +827,11 @@ private:
   void destroy_();
 };
 
-// EUTRA-CGI ::= SEQUENCE
-struct eutra_cgi_s {
-  bool                             ext = false;
-  fixed_octstring<3, true>         plmn_id;
-  fixed_bitstring<28, false, true> eutra_cell_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // GlobalenGNB-ID ::= SEQUENCE
 struct globalen_gnb_id_s {
   bool                     ext = false;
   fixed_octstring<3, true> plmn_id;
   en_gnb_id_c              en_gnb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// NR-CGI ::= SEQUENCE
-struct nr_cgi_s {
-  bool                             ext = false;
-  fixed_octstring<3, true>         plmn_id;
-  fixed_bitstring<36, false, true> nr_cell_id;
   // ...
 
   // sequence methods
@@ -761,56 +853,6 @@ struct nr_freq_info_s {
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
-};
-
-// CGI ::= CHOICE
-struct cgi_c {
-  struct types_opts {
-    enum options { nr_cgi, eutra_cgi, /*...*/ nulltype } value;
-
-    const char* to_string() const;
-  };
-  using types = enumerated<types_opts, true>;
-
-  // choice methods
-  cgi_c() = default;
-  cgi_c(const cgi_c& other);
-  cgi_c& operator=(const cgi_c& other);
-  ~cgi_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  nr_cgi_s& nr_cgi()
-  {
-    assert_choice_type(types::nr_cgi, type_, "CGI");
-    return c.get<nr_cgi_s>();
-  }
-  eutra_cgi_s& eutra_cgi()
-  {
-    assert_choice_type(types::eutra_cgi, type_, "CGI");
-    return c.get<eutra_cgi_s>();
-  }
-  const nr_cgi_s& nr_cgi() const
-  {
-    assert_choice_type(types::nr_cgi, type_, "CGI");
-    return c.get<nr_cgi_s>();
-  }
-  const eutra_cgi_s& eutra_cgi() const
-  {
-    assert_choice_type(types::eutra_cgi, type_, "CGI");
-    return c.get<eutra_cgi_s>();
-  }
-  nr_cgi_s&    set_nr_cgi();
-  eutra_cgi_s& set_eutra_cgi();
-
-private:
-  types                                  type_;
-  choice_buffer_t<eutra_cgi_s, nr_cgi_s> c;
-
-  void destroy_();
 };
 
 // InterfaceID-E1 ::= SEQUENCE
@@ -1405,6 +1447,45 @@ private:
   pod_choice_buffer_t c;
 
   void destroy_();
+};
+
+// PartialUEID ::= SEQUENCE
+struct partial_ue_id_s {
+  bool                     ext                           = false;
+  bool                     amf_ue_ngap_id_present        = false;
+  bool                     guami_present                 = false;
+  bool                     gnb_cu_ue_f1ap_id_present     = false;
+  bool                     gnb_cu_cp_ue_e1ap_id_present  = false;
+  bool                     ran_ue_id_present             = false;
+  bool                     m_ng_ran_ue_xn_ap_id_present  = false;
+  bool                     global_ng_ran_node_id_present = false;
+  bool                     cell_rnti_present             = false;
+  bool                     ng_enb_cu_ue_w1_ap_id_present = false;
+  bool                     m_enb_ue_x2ap_id_present      = false;
+  bool                     m_enb_ue_x2ap_id_ext_present  = false;
+  bool                     global_enb_id_present         = false;
+  bool                     mme_ue_s1ap_id_present        = false;
+  bool                     gummei_present                = false;
+  uint64_t                 amf_ue_ngap_id                = 0;
+  guami_s                  guami;
+  uint64_t                 gnb_cu_ue_f1ap_id    = 0;
+  uint64_t                 gnb_cu_cp_ue_e1ap_id = 0;
+  fixed_octstring<8, true> ran_ue_id;
+  uint64_t                 m_ng_ran_ue_xn_ap_id = 0;
+  global_ng_ran_node_id_c  global_ng_ran_node_id;
+  cell_rnti_s              cell_rnti;
+  uint64_t                 ng_enb_cu_ue_w1_ap_id = 0;
+  uint16_t                 m_enb_ue_x2ap_id      = 0;
+  uint16_t                 m_enb_ue_x2ap_id_ext  = 0;
+  global_enb_id_s          global_enb_id;
+  uint64_t                 mme_ue_s1ap_id = 0;
+  gummei_s                 gummei;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
 };
 
 // QoSID ::= CHOICE

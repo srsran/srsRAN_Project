@@ -455,7 +455,7 @@ private:
     for (unsigned ue_idx = 0; ue_idx < presence.size(); ue_idx++) {
       if (presence[ue_idx] and cond_satisfied[ue_idx]) {
         ue_id_c        ueid;
-        ue_id_gnb_du_s ueid_gnb_du;
+        ue_id_gnb_du_s ueid_gnb_du{};
         ueid_gnb_du.gnb_cu_ue_f1ap_id = ue_ids[ue_idx];
         ueid_gnb_du.ran_ue_id_present = false;
         ueid.set_gnb_du_ue_id()       = ueid_gnb_du;

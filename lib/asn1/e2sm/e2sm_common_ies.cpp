@@ -16,6 +16,31 @@ using namespace asn1::e2sm;
  *                                Struct Methods
  ******************************************************************************/
 
+// EUTRA-CGI ::= SEQUENCE
+SRSASN_CODE eutra_cgi_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(plmn_id.pack(bref));
+  HANDLE_CODE(eutra_cell_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE eutra_cgi_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(plmn_id.unpack(bref));
+  HANDLE_CODE(eutra_cell_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void eutra_cgi_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("pLMNIdentity", plmn_id.to_string());
+  j.write_str("eUTRACellIdentity", eutra_cell_id.to_string());
+  j.end_obj();
+}
+
 // GNB-ID ::= CHOICE
 void gnb_id_c::to_json(json_writer& j) const
 {
@@ -205,6 +230,167 @@ const char* ng_enb_id_c::types_opts::to_string() const
 {
   static const char* names[] = {"macroNgENB-ID", "shortMacroNgENB-ID", "longMacroNgENB-ID"};
   return convert_enum_idx(names, 3, value, "ng_enb_id_c::types");
+}
+
+// NR-CGI ::= SEQUENCE
+SRSASN_CODE nr_cgi_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(plmn_id.pack(bref));
+  HANDLE_CODE(nr_cell_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE nr_cgi_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(plmn_id.unpack(bref));
+  HANDLE_CODE(nr_cell_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void nr_cgi_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("pLMNIdentity", plmn_id.to_string());
+  j.write_str("nRCellIdentity", nr_cell_id.to_string());
+  j.end_obj();
+}
+
+// CGI ::= CHOICE
+void cgi_c::destroy_()
+{
+  switch (type_) {
+    case types::nr_cgi:
+      c.destroy<nr_cgi_s>();
+      break;
+    case types::eutra_cgi:
+      c.destroy<eutra_cgi_s>();
+      break;
+    default:
+      break;
+  }
+}
+void cgi_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::nr_cgi:
+      c.init<nr_cgi_s>();
+      break;
+    case types::eutra_cgi:
+      c.init<eutra_cgi_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+  }
+}
+cgi_c::cgi_c(const cgi_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::nr_cgi:
+      c.init(other.c.get<nr_cgi_s>());
+      break;
+    case types::eutra_cgi:
+      c.init(other.c.get<eutra_cgi_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+  }
+}
+cgi_c& cgi_c::operator=(const cgi_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::nr_cgi:
+      c.set(other.c.get<nr_cgi_s>());
+      break;
+    case types::eutra_cgi:
+      c.set(other.c.get<eutra_cgi_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+  }
+
+  return *this;
+}
+nr_cgi_s& cgi_c::set_nr_cgi()
+{
+  set(types::nr_cgi);
+  return c.get<nr_cgi_s>();
+}
+eutra_cgi_s& cgi_c::set_eutra_cgi()
+{
+  set(types::eutra_cgi);
+  return c.get<eutra_cgi_s>();
+}
+void cgi_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::nr_cgi:
+      j.write_fieldname("nR-CGI");
+      c.get<nr_cgi_s>().to_json(j);
+      break;
+    case types::eutra_cgi:
+      j.write_fieldname("eUTRA-CGI");
+      c.get<eutra_cgi_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE cgi_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
+      break;
+    case types::eutra_cgi:
+      HANDLE_CODE(c.get<eutra_cgi_s>().pack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE cgi_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
+      break;
+    case types::eutra_cgi:
+      HANDLE_CODE(c.get<eutra_cgi_s>().unpack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "cgi_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* cgi_c::types_opts::to_string() const
+{
+  static const char* names[] = {"nR-CGI", "eUTRA-CGI"};
+  return convert_enum_idx(names, 2, value, "cgi_c::types");
 }
 
 // ENB-ID ::= CHOICE
@@ -515,6 +701,63 @@ void ue_id_gnb_cu_cp_f1ap_id_item_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// Beam-ID ::= CHOICE
+void beam_id_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("nR-Beam-ID", c);
+  j.end_obj();
+}
+SRSASN_CODE beam_id_c::pack(bit_ref& bref) const
+{
+  pack_enum(bref, type());
+  HANDLE_CODE(pack_integer(bref, c, (uint8_t)0u, (uint8_t)63u, false, true));
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE beam_id_c::unpack(cbit_ref& bref)
+{
+  types e;
+  unpack_enum(e, bref);
+  if (e != type()) {
+    log_invalid_choice_id(e, "beam_id_c");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  HANDLE_CODE(unpack_integer(c, bref, (uint8_t)0u, (uint8_t)63u, false, true));
+  return SRSASN_SUCCESS;
+}
+
+const char* beam_id_c::types_opts::to_string() const
+{
+  static const char* names[] = {"nR-Beam-ID"};
+  return convert_enum_idx(names, 1, value, "beam_id_c::types");
+}
+
+// Cell-RNTI ::= SEQUENCE
+SRSASN_CODE cell_rnti_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, c_rnti, (uint32_t)0u, (uint32_t)65535u, false, true));
+  HANDLE_CODE(cell_global_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE cell_rnti_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(c_rnti, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+  HANDLE_CODE(cell_global_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void cell_rnti_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("c-RNTI", c_rnti);
+  j.write_fieldname("cell-Global-ID");
+  cell_global_id.to_json(j);
+  j.end_obj();
+}
+
 // GlobalENB-ID ::= SEQUENCE
 SRSASN_CODE global_enb_id_s::pack(bit_ref& bref) const
 {
@@ -789,6 +1032,13 @@ SRSASN_CODE ue_id_en_gnb_s::pack(bit_ref& bref) const
     HANDLE_CODE(ran_ue_id.pack(bref));
   }
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ue_id_en_gnb_s::unpack(cbit_ref& bref)
@@ -815,6 +1065,13 @@ SRSASN_CODE ue_id_en_gnb_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ran_ue_id.unpack(bref));
   }
 
+  if (ext) {
+    unpack_presence_flag(cell_rnti, bref);
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ue_id_en_gnb_s::to_json(json_writer& j) const
@@ -839,6 +1096,12 @@ void ue_id_en_gnb_s::to_json(json_writer& j) const
   if (ran_ue_id_present) {
     j.write_str("ran-UEID", ran_ue_id.to_string());
   }
+  if (ext) {
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
+    }
+  }
   j.end_obj();
 }
 
@@ -862,6 +1125,13 @@ SRSASN_CODE ue_id_enb_s::pack(bit_ref& bref) const
     HANDLE_CODE(global_enb_id.pack(bref));
   }
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ue_id_enb_s::unpack(cbit_ref& bref)
@@ -883,6 +1153,13 @@ SRSASN_CODE ue_id_enb_s::unpack(cbit_ref& bref)
     HANDLE_CODE(global_enb_id.unpack(bref));
   }
 
+  if (ext) {
+    unpack_presence_flag(cell_rnti, bref);
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ue_id_enb_s::to_json(json_writer& j) const
@@ -900,6 +1177,12 @@ void ue_id_enb_s::to_json(json_writer& j) const
   if (global_enb_id_present) {
     j.write_fieldname("globalENB-ID");
     global_enb_id.to_json(j);
+  }
+  if (ext) {
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
+    }
   }
   j.end_obj();
 }
@@ -950,6 +1233,13 @@ SRSASN_CODE ue_id_gnb_du_s::pack(bit_ref& bref) const
     HANDLE_CODE(ran_ue_id.pack(bref));
   }
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ue_id_gnb_du_s::unpack(cbit_ref& bref)
@@ -962,6 +1252,13 @@ SRSASN_CODE ue_id_gnb_du_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ran_ue_id.unpack(bref));
   }
 
+  if (ext) {
+    unpack_presence_flag(cell_rnti, bref);
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ue_id_gnb_du_s::to_json(json_writer& j) const
@@ -970,6 +1267,12 @@ void ue_id_gnb_du_s::to_json(json_writer& j) const
   j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
   if (ran_ue_id_present) {
     j.write_str("ran-UEID", ran_ue_id.to_string());
+  }
+  if (ext) {
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
+    }
   }
   j.end_obj();
 }
@@ -1004,9 +1307,13 @@ SRSASN_CODE ue_id_gnb_s::pack(bit_ref& bref) const
 
   if (ext) {
     HANDLE_CODE(bref.pack(global_ng_ran_node_id.is_present(), 1));
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
 
     if (global_ng_ran_node_id.is_present()) {
       HANDLE_CODE(global_ng_ran_node_id->pack(bref));
+    }
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -1042,9 +1349,13 @@ SRSASN_CODE ue_id_gnb_s::unpack(cbit_ref& bref)
 
   if (ext) {
     unpack_presence_flag(global_ng_ran_node_id, bref);
+    unpack_presence_flag(cell_rnti, bref);
 
     if (global_ng_ran_node_id.is_present()) {
       HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
+    }
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -1084,6 +1395,10 @@ void ue_id_gnb_s::to_json(json_writer& j) const
       j.write_fieldname("globalNG-RANNode-ID");
       global_ng_ran_node_id->to_json(j);
     }
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
+    }
   }
   j.end_obj();
 }
@@ -1094,6 +1409,13 @@ SRSASN_CODE ue_id_ng_enb_du_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ue_id_ng_enb_du_s::unpack(cbit_ref& bref)
@@ -1101,12 +1423,25 @@ SRSASN_CODE ue_id_ng_enb_du_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
 
+  if (ext) {
+    unpack_presence_flag(cell_rnti, bref);
+
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ue_id_ng_enb_du_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
+  if (ext) {
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
+    }
+  }
   j.end_obj();
 }
 
@@ -1132,9 +1467,13 @@ SRSASN_CODE ue_id_ng_enb_s::pack(bit_ref& bref) const
 
   if (ext) {
     HANDLE_CODE(bref.pack(global_ng_ran_node_id.is_present(), 1));
+    HANDLE_CODE(bref.pack(cell_rnti.is_present(), 1));
 
     if (global_ng_ran_node_id.is_present()) {
       HANDLE_CODE(global_ng_ran_node_id->pack(bref));
+    }
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->pack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -1160,9 +1499,13 @@ SRSASN_CODE ue_id_ng_enb_s::unpack(cbit_ref& bref)
 
   if (ext) {
     unpack_presence_flag(global_ng_ran_node_id, bref);
+    unpack_presence_flag(cell_rnti, bref);
 
     if (global_ng_ran_node_id.is_present()) {
       HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
+    }
+    if (cell_rnti.is_present()) {
+      HANDLE_CODE(cell_rnti->unpack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -1187,6 +1530,10 @@ void ue_id_ng_enb_s::to_json(json_writer& j) const
     if (global_ng_ran_node_id.is_present()) {
       j.write_fieldname("globalNG-RANNode-ID");
       global_ng_ran_node_id->to_json(j);
+    }
+    if (cell_rnti.is_present()) {
+      j.write_fieldname("cell-RNTI");
+      cell_rnti->to_json(j);
     }
   }
   j.end_obj();
@@ -1524,31 +1871,6 @@ const char* ue_id_c::types_opts::to_string() const
   return convert_enum_idx(names, 7, value, "ue_id_c::types");
 }
 
-// EUTRA-CGI ::= SEQUENCE
-SRSASN_CODE eutra_cgi_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(eutra_cell_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE eutra_cgi_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(eutra_cell_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void eutra_cgi_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_str("eUTRACellIdentity", eutra_cell_id.to_string());
-  j.end_obj();
-}
-
 // GlobalenGNB-ID ::= SEQUENCE
 SRSASN_CODE globalen_gnb_id_s::pack(bit_ref& bref) const
 {
@@ -1572,31 +1894,6 @@ void globalen_gnb_id_s::to_json(json_writer& j) const
   j.write_str("pLMN-Identity", plmn_id.to_string());
   j.write_fieldname("en-gNB-ID");
   en_gnb_id.to_json(j);
-  j.end_obj();
-}
-
-// NR-CGI ::= SEQUENCE
-SRSASN_CODE nr_cgi_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(nr_cell_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE nr_cgi_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(nr_cell_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void nr_cgi_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_str("nRCellIdentity", nr_cell_id.to_string());
   j.end_obj();
 }
 
@@ -1641,142 +1938,6 @@ void nr_freq_info_s::to_json(json_writer& j) const
     j.write_str("frequencyShift7p5khz", freq_shift7p5khz.to_string());
   }
   j.end_obj();
-}
-
-// CGI ::= CHOICE
-void cgi_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::eutra_cgi:
-      c.destroy<eutra_cgi_s>();
-      break;
-    default:
-      break;
-  }
-}
-void cgi_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::nr_cgi:
-      c.init<nr_cgi_s>();
-      break;
-    case types::eutra_cgi:
-      c.init<eutra_cgi_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-}
-cgi_c::cgi_c(const cgi_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::eutra_cgi:
-      c.init(other.c.get<eutra_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-}
-cgi_c& cgi_c::operator=(const cgi_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::eutra_cgi:
-      c.set(other.c.get<eutra_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-
-  return *this;
-}
-nr_cgi_s& cgi_c::set_nr_cgi()
-{
-  set(types::nr_cgi);
-  return c.get<nr_cgi_s>();
-}
-eutra_cgi_s& cgi_c::set_eutra_cgi()
-{
-  set(types::eutra_cgi);
-  return c.get<eutra_cgi_s>();
-}
-void cgi_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::nr_cgi:
-      j.write_fieldname("nR-CGI");
-      c.get<nr_cgi_s>().to_json(j);
-      break;
-    case types::eutra_cgi:
-      j.write_fieldname("eUTRA-CGI");
-      c.get<eutra_cgi_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE cgi_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::nr_cgi:
-      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
-      break;
-    case types::eutra_cgi:
-      HANDLE_CODE(c.get<eutra_cgi_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE cgi_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::nr_cgi:
-      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
-      break;
-    case types::eutra_cgi:
-      HANDLE_CODE(c.get<eutra_cgi_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* cgi_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nR-CGI", "eUTRA-CGI"};
-  return convert_enum_idx(names, 2, value, "cgi_c::types");
 }
 
 // InterfaceID-E1 ::= SEQUENCE
@@ -3099,6 +3260,186 @@ uint8_t group_id_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {5};
   return map_enum_number(numbers, 1, value, "group_id_c::types");
+}
+
+// PartialUEID ::= SEQUENCE
+SRSASN_CODE partial_ue_id_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(amf_ue_ngap_id_present, 1));
+  HANDLE_CODE(bref.pack(guami_present, 1));
+  HANDLE_CODE(bref.pack(gnb_cu_ue_f1ap_id_present, 1));
+  HANDLE_CODE(bref.pack(gnb_cu_cp_ue_e1ap_id_present, 1));
+  HANDLE_CODE(bref.pack(ran_ue_id_present, 1));
+  HANDLE_CODE(bref.pack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(global_ng_ran_node_id_present, 1));
+  HANDLE_CODE(bref.pack(cell_rnti_present, 1));
+  HANDLE_CODE(bref.pack(ng_enb_cu_ue_w1_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_present, 1));
+  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.pack(global_enb_id_present, 1));
+  HANDLE_CODE(bref.pack(mme_ue_s1ap_id_present, 1));
+  HANDLE_CODE(bref.pack(gummei_present, 1));
+
+  if (amf_ue_ngap_id_present) {
+    HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  }
+  if (guami_present) {
+    HANDLE_CODE(guami.pack(bref));
+  }
+  if (gnb_cu_ue_f1ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gnb_cu_cp_ue_e1ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (ran_ue_id_present) {
+    HANDLE_CODE(ran_ue_id.pack(bref));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xn_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_ng_ran_node_id_present) {
+    HANDLE_CODE(global_ng_ran_node_id.pack(bref));
+  }
+  if (cell_rnti_present) {
+    HANDLE_CODE(cell_rnti.pack(bref));
+  }
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  if (global_enb_id_present) {
+    HANDLE_CODE(global_enb_id.pack(bref));
+  }
+  if (mme_ue_s1ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, mme_ue_s1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gummei_present) {
+    HANDLE_CODE(gummei.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE partial_ue_id_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(amf_ue_ngap_id_present, 1));
+  HANDLE_CODE(bref.unpack(guami_present, 1));
+  HANDLE_CODE(bref.unpack(gnb_cu_ue_f1ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(gnb_cu_cp_ue_e1ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(ran_ue_id_present, 1));
+  HANDLE_CODE(bref.unpack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(global_ng_ran_node_id_present, 1));
+  HANDLE_CODE(bref.unpack(cell_rnti_present, 1));
+  HANDLE_CODE(bref.unpack(ng_enb_cu_ue_w1_ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.unpack(global_enb_id_present, 1));
+  HANDLE_CODE(bref.unpack(mme_ue_s1ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(gummei_present, 1));
+
+  if (amf_ue_ngap_id_present) {
+    HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  }
+  if (guami_present) {
+    HANDLE_CODE(guami.unpack(bref));
+  }
+  if (gnb_cu_ue_f1ap_id_present) {
+    HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gnb_cu_cp_ue_e1ap_id_present) {
+    HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (ran_ue_id_present) {
+    HANDLE_CODE(ran_ue_id.unpack(bref));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xn_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_ng_ran_node_id_present) {
+    HANDLE_CODE(global_ng_ran_node_id.unpack(bref));
+  }
+  if (cell_rnti_present) {
+    HANDLE_CODE(cell_rnti.unpack(bref));
+  }
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_present) {
+    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  if (global_enb_id_present) {
+    HANDLE_CODE(global_enb_id.unpack(bref));
+  }
+  if (mme_ue_s1ap_id_present) {
+    HANDLE_CODE(unpack_integer(mme_ue_s1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gummei_present) {
+    HANDLE_CODE(gummei.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void partial_ue_id_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  if (amf_ue_ngap_id_present) {
+    j.write_int("amf-UE-NGAP-ID", amf_ue_ngap_id);
+  }
+  if (guami_present) {
+    j.write_fieldname("guami");
+    guami.to_json(j);
+  }
+  if (gnb_cu_ue_f1ap_id_present) {
+    j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
+  }
+  if (gnb_cu_cp_ue_e1ap_id_present) {
+    j.write_int("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1ap_id);
+  }
+  if (ran_ue_id_present) {
+    j.write_str("ran-UEID", ran_ue_id.to_string());
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    j.write_int("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xn_ap_id);
+  }
+  if (global_ng_ran_node_id_present) {
+    j.write_fieldname("globalNG-RANNode-ID");
+    global_ng_ran_node_id.to_json(j);
+  }
+  if (cell_rnti_present) {
+    j.write_fieldname("cell-RNTI");
+    cell_rnti.to_json(j);
+  }
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
+  }
+  if (m_enb_ue_x2ap_id_present) {
+    j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
+  }
+  if (global_enb_id_present) {
+    j.write_fieldname("globalENB-ID");
+    global_enb_id.to_json(j);
+  }
+  if (mme_ue_s1ap_id_present) {
+    j.write_int("mME-UE-S1AP-ID", mme_ue_s1ap_id);
+  }
+  if (gummei_present) {
+    j.write_fieldname("gUMMEI");
+    gummei.to_json(j);
+  }
+  j.end_obj();
 }
 
 // QoSID ::= CHOICE

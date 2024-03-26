@@ -404,7 +404,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   // Report UEThpDl for all UEs with RSRP > -110 and RSRP < -50.
   // Add conditions, order is important. Labels has to be first.
   matching_cond_item_s matching_cond_item1;
-  meas_label_s         meas_label1;
+  meas_label_s         meas_label1{};
   meas_label1.five_qi_present                               = true;
   meas_label1.five_qi                                       = 1;
   matching_cond_item1.lc_or_present                         = true; // If false use OR, if true then use AND.

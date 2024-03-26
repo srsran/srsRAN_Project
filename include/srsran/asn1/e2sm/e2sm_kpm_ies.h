@@ -10,7 +10,7 @@
 
 /*******************************************************************************
  *
- *                       3GPP TS ASN1 E2SM v03.00 (2023)
+ *                       3GPP TS ASN1 E2SM v05.00 (2024)
  *
  ******************************************************************************/
 
@@ -25,6 +25,14 @@ namespace e2sm {
  *                              Struct Definitions
  ******************************************************************************/
 
+// MeasValueTestCond-Expression ::= ENUMERATED
+struct meas_value_test_cond_expression_opts {
+  enum options { equal, greaterthan, lessthan, contains, present, /*...*/ nulltype } value;
+
+  const char* to_string() const;
+};
+using meas_value_test_cond_expression_e = enumerated<meas_value_test_cond_expression_opts, true>;
+
 // S-NSSAI ::= SEQUENCE
 struct s_nssai_s {
   bool                     ext        = false;
@@ -38,6 +46,133 @@ struct s_nssai_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
+
+// TestCond-Value ::= CHOICE
+struct test_cond_value_c {
+  struct types_opts {
+    enum options {
+      value_int,
+      value_enum,
+      value_bool,
+      value_bit_s,
+      value_oct_s,
+      value_prt_s,
+      /*...*/ value_real,
+      nulltype
+    } value;
+
+    const char* to_string() const;
+  };
+  using types = enumerated<types_opts, true, 1>;
+
+  // choice methods
+  test_cond_value_c() = default;
+  test_cond_value_c(const test_cond_value_c& other);
+  test_cond_value_c& operator=(const test_cond_value_c& other);
+  ~test_cond_value_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  int64_t& value_int()
+  {
+    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  int64_t& value_enum()
+  {
+    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  bool& value_bool()
+  {
+    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    return c.get<bool>();
+  }
+  dyn_bitstring& value_bit_s()
+  {
+    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    return c.get<dyn_bitstring>();
+  }
+  unbounded_octstring<true>& value_oct_s()
+  {
+    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    return c.get<unbounded_octstring<true>>();
+  }
+  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s()
+  {
+    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+  }
+  real_s& value_real()
+  {
+    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    return c.get<real_s>();
+  }
+  const int64_t& value_int() const
+  {
+    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  const int64_t& value_enum() const
+  {
+    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  const bool& value_bool() const
+  {
+    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    return c.get<bool>();
+  }
+  const dyn_bitstring& value_bit_s() const
+  {
+    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    return c.get<dyn_bitstring>();
+  }
+  const unbounded_octstring<true>& value_oct_s() const
+  {
+    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    return c.get<unbounded_octstring<true>>();
+  }
+  const printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s() const
+  {
+    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+  }
+  const real_s& value_real() const
+  {
+    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    return c.get<real_s>();
+  }
+  int64_t&                                                 set_value_int();
+  int64_t&                                                 set_value_enum();
+  bool&                                                    set_value_bool();
+  dyn_bitstring&                                           set_value_bit_s();
+  unbounded_octstring<true>&                               set_value_oct_s();
+  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& set_value_prt_s();
+  real_s&                                                  set_value_real();
+
+private:
+  types type_;
+  choice_buffer_t<bool,
+                  dyn_bitstring,
+                  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
+                  real_s,
+                  unbounded_octstring<true>>
+      c;
+
+  void destroy_();
+};
+
+// LogicalOR ::= ENUMERATED
+struct lc_or_opts {
+  enum options { true_value, false_value, /*...*/ nulltype } value;
+
+  const char* to_string() const;
+};
+using lc_or_e = enumerated<lc_or_opts, true>;
 
 // MeasurementLabel ::= SEQUENCE
 struct meas_label_s {
@@ -129,12 +264,27 @@ struct meas_label_s {
   max_e_                   max;
   avg_e_                   avg;
   // ...
-  bool     ssb_idx_present              = false;
-  bool     non_go_b_b_fmode_idx_present = false;
-  bool     mimo_mode_idx_present        = false;
-  uint32_t ssb_idx                      = 1;
-  uint32_t non_go_b_b_fmode_idx         = 1;
-  uint8_t  mimo_mode_idx                = 1;
+  bool                ssb_idx_present              = false;
+  bool                non_go_b_b_fmode_idx_present = false;
+  bool                mimo_mode_idx_present        = false;
+  uint32_t            ssb_idx                      = 1;
+  uint32_t            non_go_b_b_fmode_idx         = 1;
+  uint8_t             mimo_mode_idx                = 1;
+  copy_ptr<cgi_c>     cell_global_id;
+  copy_ptr<beam_id_c> beam_id;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasValueReportCond ::= SEQUENCE
+struct meas_value_report_cond_s {
+  bool                              ext = false;
+  meas_value_test_cond_expression_e test_expr;
+  test_cond_value_c                 test_value;
+  // ...
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -204,14 +354,28 @@ struct label_info_item_s {
   void        to_json(json_writer& j) const;
 };
 
+// MatchCondReportItem ::= SEQUENCE
+struct match_cond_report_item_s {
+  bool                     ext           = false;
+  bool                     lc_or_present = false;
+  meas_value_report_cond_s meas_value_report_cond;
+  lc_or_e                  lc_or;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // MeasurementRecordItem ::= CHOICE
 struct meas_record_item_c {
   struct types_opts {
-    enum options { integer, real, no_value, /*...*/ nulltype } value;
+    enum options { integer, real, no_value, /*...*/ not_satisfied, nulltype } value;
 
     const char* to_string() const;
   };
-  using types = enumerated<types_opts, true>;
+  using types = enumerated<types_opts, true, 1>;
 
   // choice methods
   meas_record_item_c() = default;
@@ -247,6 +411,7 @@ struct meas_record_item_c {
   uint64_t& set_integer();
   real_s&   set_real();
   void      set_no_value();
+  void      set_not_satisfied();
 
 private:
   types                   type_;
@@ -493,125 +658,6 @@ private:
   void destroy_();
 };
 
-// TestCond-Value ::= CHOICE
-struct test_cond_value_c {
-  struct types_opts {
-    enum options {
-      value_int,
-      value_enum,
-      value_bool,
-      value_bit_s,
-      value_oct_s,
-      value_prt_s,
-      /*...*/ value_real,
-      nulltype
-    } value;
-
-    const char* to_string() const;
-  };
-  using types = enumerated<types_opts, true, 1>;
-
-  // choice methods
-  test_cond_value_c() = default;
-  test_cond_value_c(const test_cond_value_c& other);
-  test_cond_value_c& operator=(const test_cond_value_c& other);
-  ~test_cond_value_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  int64_t& value_int()
-  {
-    assert_choice_type(types::value_int, type_, "TestCond-Value");
-    return c.get<int64_t>();
-  }
-  int64_t& value_enum()
-  {
-    assert_choice_type(types::value_enum, type_, "TestCond-Value");
-    return c.get<int64_t>();
-  }
-  bool& value_bool()
-  {
-    assert_choice_type(types::value_bool, type_, "TestCond-Value");
-    return c.get<bool>();
-  }
-  dyn_bitstring& value_bit_s()
-  {
-    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
-    return c.get<dyn_bitstring>();
-  }
-  unbounded_octstring<true>& value_oct_s()
-  {
-    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
-    return c.get<unbounded_octstring<true>>();
-  }
-  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s()
-  {
-    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
-    return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-  }
-  real_s& value_real()
-  {
-    assert_choice_type(types::value_real, type_, "TestCond-Value");
-    return c.get<real_s>();
-  }
-  const int64_t& value_int() const
-  {
-    assert_choice_type(types::value_int, type_, "TestCond-Value");
-    return c.get<int64_t>();
-  }
-  const int64_t& value_enum() const
-  {
-    assert_choice_type(types::value_enum, type_, "TestCond-Value");
-    return c.get<int64_t>();
-  }
-  const bool& value_bool() const
-  {
-    assert_choice_type(types::value_bool, type_, "TestCond-Value");
-    return c.get<bool>();
-  }
-  const dyn_bitstring& value_bit_s() const
-  {
-    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
-    return c.get<dyn_bitstring>();
-  }
-  const unbounded_octstring<true>& value_oct_s() const
-  {
-    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
-    return c.get<unbounded_octstring<true>>();
-  }
-  const printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s() const
-  {
-    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
-    return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-  }
-  const real_s& value_real() const
-  {
-    assert_choice_type(types::value_real, type_, "TestCond-Value");
-    return c.get<real_s>();
-  }
-  int64_t&                                                 set_value_int();
-  int64_t&                                                 set_value_enum();
-  bool&                                                    set_value_bool();
-  dyn_bitstring&                                           set_value_bit_s();
-  unbounded_octstring<true>&                               set_value_oct_s();
-  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& set_value_prt_s();
-  real_s&                                                  set_value_real();
-
-private:
-  types type_;
-  choice_buffer_t<bool,
-                  dyn_bitstring,
-                  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
-                  real_s,
-                  unbounded_octstring<true>>
-      c;
-
-  void destroy_();
-};
-
 // BinRangeItem ::= SEQUENCE
 struct bin_range_item_s {
   bool              ext     = false;
@@ -628,6 +674,9 @@ struct bin_range_item_s {
 
 // LabelInfoList ::= SEQUENCE (SIZE (1..2147483647)) OF LabelInfoItem
 using label_info_list_l = dyn_array<label_info_item_s>;
+
+// MatchCondReportList ::= SEQUENCE (SIZE (1..32768)) OF MatchCondReportItem
+using match_cond_report_list_l = dyn_array<match_cond_report_item_s>;
 
 // MatchingUEidItem-PerGP ::= SEQUENCE
 struct matching_ue_id_item_per_gp_s {
@@ -713,14 +762,6 @@ struct test_cond_info_s {
 // BinRangeList ::= SEQUENCE (SIZE (1..65535)) OF BinRangeItem
 using bin_range_list_l = dyn_array<bin_range_item_s>;
 
-// LogicalOR ::= ENUMERATED
-struct lc_or_opts {
-  enum options { true_value, false_value, /*...*/ nulltype } value;
-
-  const char* to_string() const;
-};
-using lc_or_e = enumerated<lc_or_opts, true>;
-
 // MatchingCondItem-Choice ::= CHOICE
 struct matching_cond_item_choice_c {
   struct types_opts {
@@ -802,6 +843,7 @@ struct meas_info_item_s {
   meas_type_c       meas_type;
   label_info_list_l label_info_list;
   // ...
+  copy_ptr<match_cond_report_list_l> match_cond_report_list;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1155,7 +1197,7 @@ struct e2sm_kpm_ind_hdr_format1_s {
   bool                                  sender_name_present        = false;
   bool                                  sender_type_present        = false;
   bool                                  vendor_name_present        = false;
-  fixed_octstring<4, true>              collet_start_time;
+  fixed_octstring<8, true>              collet_start_time;
   printable_string<0, 15, false, true>  file_formatversion;
   printable_string<0, 400, false, true> sender_name;
   printable_string<0, 8, false, true>   sender_type;

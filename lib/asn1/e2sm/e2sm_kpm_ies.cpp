@@ -16,6 +16,13 @@ using namespace asn1::e2sm;
  *                                Struct Methods
  ******************************************************************************/
 
+// MeasValueTestCond-Expression ::= ENUMERATED
+const char* meas_value_test_cond_expression_opts::to_string() const
+{
+  static const char* names[] = {"equal", "greaterthan", "lessthan", "contains", "present"};
+  return convert_enum_idx(names, 5, value, "meas_value_test_cond_expression_e");
+}
+
 // S-NSSAI ::= SEQUENCE
 SRSASN_CODE s_nssai_s::pack(bit_ref& bref) const
 {
@@ -49,6 +56,273 @@ void s_nssai_s::to_json(json_writer& j) const
     j.write_str("sD", sd.to_string());
   }
   j.end_obj();
+}
+
+// TestCond-Value ::= CHOICE
+void test_cond_value_c::destroy_()
+{
+  switch (type_) {
+    case types::value_bool:
+      c.destroy<bool>();
+      break;
+    case types::value_bit_s:
+      c.destroy<dyn_bitstring>();
+      break;
+    case types::value_oct_s:
+      c.destroy<unbounded_octstring<true>>();
+      break;
+    case types::value_prt_s:
+      c.destroy<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+      break;
+    case types::value_real:
+      c.destroy<real_s>();
+      break;
+    default:
+      break;
+  }
+}
+void test_cond_value_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::value_int:
+      break;
+    case types::value_enum:
+      break;
+    case types::value_bool:
+      c.init<bool>();
+      break;
+    case types::value_bit_s:
+      c.init<dyn_bitstring>();
+      break;
+    case types::value_oct_s:
+      c.init<unbounded_octstring<true>>();
+      break;
+    case types::value_prt_s:
+      c.init<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+      break;
+    case types::value_real:
+      c.init<real_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+}
+test_cond_value_c::test_cond_value_c(const test_cond_value_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::value_int:
+      c.init(other.c.get<int64_t>());
+      break;
+    case types::value_enum:
+      c.init(other.c.get<int64_t>());
+      break;
+    case types::value_bool:
+      c.init(other.c.get<bool>());
+      break;
+    case types::value_bit_s:
+      c.init(other.c.get<dyn_bitstring>());
+      break;
+    case types::value_oct_s:
+      c.init(other.c.get<unbounded_octstring<true>>());
+      break;
+    case types::value_prt_s:
+      c.init(other.c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
+      break;
+    case types::value_real:
+      c.init(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+}
+test_cond_value_c& test_cond_value_c::operator=(const test_cond_value_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::value_int:
+      c.set(other.c.get<int64_t>());
+      break;
+    case types::value_enum:
+      c.set(other.c.get<int64_t>());
+      break;
+    case types::value_bool:
+      c.set(other.c.get<bool>());
+      break;
+    case types::value_bit_s:
+      c.set(other.c.get<dyn_bitstring>());
+      break;
+    case types::value_oct_s:
+      c.set(other.c.get<unbounded_octstring<true>>());
+      break;
+    case types::value_prt_s:
+      c.set(other.c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
+      break;
+    case types::value_real:
+      c.set(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+
+  return *this;
+}
+int64_t& test_cond_value_c::set_value_int()
+{
+  set(types::value_int);
+  return c.get<int64_t>();
+}
+int64_t& test_cond_value_c::set_value_enum()
+{
+  set(types::value_enum);
+  return c.get<int64_t>();
+}
+bool& test_cond_value_c::set_value_bool()
+{
+  set(types::value_bool);
+  return c.get<bool>();
+}
+dyn_bitstring& test_cond_value_c::set_value_bit_s()
+{
+  set(types::value_bit_s);
+  return c.get<dyn_bitstring>();
+}
+unbounded_octstring<true>& test_cond_value_c::set_value_oct_s()
+{
+  set(types::value_oct_s);
+  return c.get<unbounded_octstring<true>>();
+}
+printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& test_cond_value_c::set_value_prt_s()
+{
+  set(types::value_prt_s);
+  return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
+}
+real_s& test_cond_value_c::set_value_real()
+{
+  set(types::value_real);
+  return c.get<real_s>();
+}
+void test_cond_value_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::value_int:
+      j.write_int("valueInt", c.get<int64_t>());
+      break;
+    case types::value_enum:
+      j.write_int("valueEnum", c.get<int64_t>());
+      break;
+    case types::value_bool:
+      j.write_bool("valueBool", c.get<bool>());
+      break;
+    case types::value_bit_s:
+      j.write_str("valueBitS", c.get<dyn_bitstring>().to_string());
+      break;
+    case types::value_oct_s:
+      j.write_str("valueOctS", c.get<unbounded_octstring<true>>().to_string());
+      break;
+    case types::value_prt_s:
+      j.write_str("valuePrtS", c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().to_string());
+      break;
+    case types::value_real:
+      j.write_fieldname("valueReal");
+      c.get<real_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE test_cond_value_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
+      break;
+    case types::value_enum:
+      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
+      break;
+    case types::value_bool:
+      HANDLE_CODE(bref.pack(c.get<bool>(), 1));
+      break;
+    case types::value_bit_s:
+      HANDLE_CODE(c.get<dyn_bitstring>().pack(bref));
+      break;
+    case types::value_oct_s:
+      HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
+      break;
+    case types::value_prt_s:
+      HANDLE_CODE((c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().pack(bref)));
+      break;
+    case types::value_real: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<real_s>().pack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE test_cond_value_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
+      break;
+    case types::value_enum:
+      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
+      break;
+    case types::value_bool:
+      HANDLE_CODE(bref.unpack(c.get<bool>(), 1));
+      break;
+    case types::value_bit_s:
+      HANDLE_CODE(c.get<dyn_bitstring>().unpack(bref));
+      break;
+    case types::value_oct_s:
+      HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
+      break;
+    case types::value_prt_s:
+      HANDLE_CODE((c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().unpack(bref)));
+      break;
+    case types::value_real: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<real_s>().unpack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* test_cond_value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "valueInt", "valueEnum", "valueBool", "valueBitS", "valueOctS", "valuePrtS", "valueReal"};
+  return convert_enum_idx(names, 7, value, "test_cond_value_c::types");
+}
+
+// LogicalOR ::= ENUMERATED
+const char* lc_or_opts::to_string() const
+{
+  static const char* names[] = {"true", "false"};
+  return convert_enum_idx(names, 2, value, "lc_or_e");
 }
 
 // MeasurementLabel ::= SEQUENCE
@@ -145,6 +419,8 @@ SRSASN_CODE meas_label_s::pack(bit_ref& bref) const
     HANDLE_CODE(bref.pack(ssb_idx_present, 1));
     HANDLE_CODE(bref.pack(non_go_b_b_fmode_idx_present, 1));
     HANDLE_CODE(bref.pack(mimo_mode_idx_present, 1));
+    HANDLE_CODE(bref.pack(cell_global_id.is_present(), 1));
+    HANDLE_CODE(bref.pack(beam_id.is_present(), 1));
 
     if (ssb_idx_present) {
       HANDLE_CODE(pack_integer(bref, ssb_idx, (uint32_t)1u, (uint32_t)65535u, true, true));
@@ -154,6 +430,12 @@ SRSASN_CODE meas_label_s::pack(bit_ref& bref) const
     }
     if (mimo_mode_idx_present) {
       HANDLE_CODE(pack_integer(bref, mimo_mode_idx, (uint8_t)1u, (uint8_t)2u, true, true));
+    }
+    if (cell_global_id.is_present()) {
+      HANDLE_CODE(cell_global_id->pack(bref));
+    }
+    if (beam_id.is_present()) {
+      HANDLE_CODE(beam_id->pack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -251,6 +533,8 @@ SRSASN_CODE meas_label_s::unpack(cbit_ref& bref)
     HANDLE_CODE(bref.unpack(ssb_idx_present, 1));
     HANDLE_CODE(bref.unpack(non_go_b_b_fmode_idx_present, 1));
     HANDLE_CODE(bref.unpack(mimo_mode_idx_present, 1));
+    unpack_presence_flag(cell_global_id, bref);
+    unpack_presence_flag(beam_id, bref);
 
     if (ssb_idx_present) {
       HANDLE_CODE(unpack_integer(ssb_idx, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
@@ -260,6 +544,12 @@ SRSASN_CODE meas_label_s::unpack(cbit_ref& bref)
     }
     if (mimo_mode_idx_present) {
       HANDLE_CODE(unpack_integer(mimo_mode_idx, bref, (uint8_t)1u, (uint8_t)2u, true, true));
+    }
+    if (cell_global_id.is_present()) {
+      HANDLE_CODE(cell_global_id->unpack(bref));
+    }
+    if (beam_id.is_present()) {
+      HANDLE_CODE(beam_id->unpack(bref));
     }
   }
   return SRSASN_SUCCESS;
@@ -341,6 +631,14 @@ void meas_label_s::to_json(json_writer& j) const
     if (mimo_mode_idx_present) {
       j.write_int("mIMO-mode-Index", mimo_mode_idx);
     }
+    if (cell_global_id.is_present()) {
+      j.write_fieldname("cellGlobalID");
+      cell_global_id->to_json(j);
+    }
+    if (beam_id.is_present()) {
+      j.write_fieldname("beamID");
+      beam_id->to_json(j);
+    }
   }
   j.end_obj();
 }
@@ -385,6 +683,32 @@ const char* meas_label_s::avg_opts::to_string() const
 {
   static const char* names[] = {"true"};
   return convert_enum_idx(names, 1, value, "meas_label_s::avg_e_");
+}
+
+// MeasValueReportCond ::= SEQUENCE
+SRSASN_CODE meas_value_report_cond_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(test_expr.pack(bref));
+  HANDLE_CODE(test_value.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_value_report_cond_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(test_expr.unpack(bref));
+  HANDLE_CODE(test_value.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void meas_value_report_cond_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("testExpr", test_expr.to_string());
+  j.write_fieldname("testValue");
+  test_value.to_json(j);
+  j.end_obj();
 }
 
 // BinRangeValue ::= CHOICE
@@ -541,6 +865,42 @@ void label_info_item_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// MatchCondReportItem ::= SEQUENCE
+SRSASN_CODE match_cond_report_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(lc_or_present, 1));
+
+  HANDLE_CODE(meas_value_report_cond.pack(bref));
+  if (lc_or_present) {
+    HANDLE_CODE(lc_or.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE match_cond_report_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(lc_or_present, 1));
+
+  HANDLE_CODE(meas_value_report_cond.unpack(bref));
+  if (lc_or_present) {
+    HANDLE_CODE(lc_or.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void match_cond_report_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measValueReportCond");
+  meas_value_report_cond.to_json(j);
+  if (lc_or_present) {
+    j.write_str("logicalOR", lc_or.to_string());
+  }
+  j.end_obj();
+}
+
 // MeasurementRecordItem ::= CHOICE
 void meas_record_item_c::destroy_()
 {
@@ -564,6 +924,8 @@ void meas_record_item_c::set(types::options e)
       break;
     case types::no_value:
       break;
+    case types::not_satisfied:
+      break;
     case types::nulltype:
       break;
     default:
@@ -581,6 +943,8 @@ meas_record_item_c::meas_record_item_c(const meas_record_item_c& other)
       c.init(other.c.get<real_s>());
       break;
     case types::no_value:
+      break;
+    case types::not_satisfied:
       break;
     case types::nulltype:
       break;
@@ -602,6 +966,8 @@ meas_record_item_c& meas_record_item_c::operator=(const meas_record_item_c& othe
       c.set(other.c.get<real_s>());
       break;
     case types::no_value:
+      break;
+    case types::not_satisfied:
       break;
     case types::nulltype:
       break;
@@ -625,6 +991,10 @@ void meas_record_item_c::set_no_value()
 {
   set(types::no_value);
 }
+void meas_record_item_c::set_not_satisfied()
+{
+  set(types::not_satisfied);
+}
 void meas_record_item_c::to_json(json_writer& j) const
 {
   j.start_obj();
@@ -637,6 +1007,8 @@ void meas_record_item_c::to_json(json_writer& j) const
       c.get<real_s>().to_json(j);
       break;
     case types::no_value:
+      break;
+    case types::not_satisfied:
       break;
     default:
       log_invalid_choice_id(type_, "meas_record_item_c");
@@ -654,6 +1026,8 @@ SRSASN_CODE meas_record_item_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<real_s>().pack(bref));
       break;
     case types::no_value:
+      break;
+    case types::not_satisfied:
       break;
     default:
       log_invalid_choice_id(type_, "meas_record_item_c");
@@ -675,6 +1049,8 @@ SRSASN_CODE meas_record_item_c::unpack(cbit_ref& bref)
       break;
     case types::no_value:
       break;
+    case types::not_satisfied:
+      break;
     default:
       log_invalid_choice_id(type_, "meas_record_item_c");
       return SRSASN_ERROR_DECODE_FAIL;
@@ -684,8 +1060,8 @@ SRSASN_CODE meas_record_item_c::unpack(cbit_ref& bref)
 
 const char* meas_record_item_c::types_opts::to_string() const
 {
-  static const char* names[] = {"integer", "real", "noValue"};
-  return convert_enum_idx(names, 3, value, "meas_record_item_c::types");
+  static const char* names[] = {"integer", "real", "noValue", "notSatisfied"};
+  return convert_enum_idx(names, 4, value, "meas_record_item_c::types");
 }
 
 // TestCond-Expression ::= ENUMERATED
@@ -1070,266 +1446,6 @@ uint8_t test_cond_type_c::types_opts::to_number() const
   return 0;
 }
 
-// TestCond-Value ::= CHOICE
-void test_cond_value_c::destroy_()
-{
-  switch (type_) {
-    case types::value_bool:
-      c.destroy<bool>();
-      break;
-    case types::value_bit_s:
-      c.destroy<dyn_bitstring>();
-      break;
-    case types::value_oct_s:
-      c.destroy<unbounded_octstring<true>>();
-      break;
-    case types::value_prt_s:
-      c.destroy<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-      break;
-    case types::value_real:
-      c.destroy<real_s>();
-      break;
-    default:
-      break;
-  }
-}
-void test_cond_value_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::value_int:
-      break;
-    case types::value_enum:
-      break;
-    case types::value_bool:
-      c.init<bool>();
-      break;
-    case types::value_bit_s:
-      c.init<dyn_bitstring>();
-      break;
-    case types::value_oct_s:
-      c.init<unbounded_octstring<true>>();
-      break;
-    case types::value_prt_s:
-      c.init<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-      break;
-    case types::value_real:
-      c.init<real_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-  }
-}
-test_cond_value_c::test_cond_value_c(const test_cond_value_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::value_int:
-      c.init(other.c.get<int64_t>());
-      break;
-    case types::value_enum:
-      c.init(other.c.get<int64_t>());
-      break;
-    case types::value_bool:
-      c.init(other.c.get<bool>());
-      break;
-    case types::value_bit_s:
-      c.init(other.c.get<dyn_bitstring>());
-      break;
-    case types::value_oct_s:
-      c.init(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::value_prt_s:
-      c.init(other.c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
-      break;
-    case types::value_real:
-      c.init(other.c.get<real_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-  }
-}
-test_cond_value_c& test_cond_value_c::operator=(const test_cond_value_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::value_int:
-      c.set(other.c.get<int64_t>());
-      break;
-    case types::value_enum:
-      c.set(other.c.get<int64_t>());
-      break;
-    case types::value_bool:
-      c.set(other.c.get<bool>());
-      break;
-    case types::value_bit_s:
-      c.set(other.c.get<dyn_bitstring>());
-      break;
-    case types::value_oct_s:
-      c.set(other.c.get<unbounded_octstring<true>>());
-      break;
-    case types::value_prt_s:
-      c.set(other.c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>());
-      break;
-    case types::value_real:
-      c.set(other.c.get<real_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-  }
-
-  return *this;
-}
-int64_t& test_cond_value_c::set_value_int()
-{
-  set(types::value_int);
-  return c.get<int64_t>();
-}
-int64_t& test_cond_value_c::set_value_enum()
-{
-  set(types::value_enum);
-  return c.get<int64_t>();
-}
-bool& test_cond_value_c::set_value_bool()
-{
-  set(types::value_bool);
-  return c.get<bool>();
-}
-dyn_bitstring& test_cond_value_c::set_value_bit_s()
-{
-  set(types::value_bit_s);
-  return c.get<dyn_bitstring>();
-}
-unbounded_octstring<true>& test_cond_value_c::set_value_oct_s()
-{
-  set(types::value_oct_s);
-  return c.get<unbounded_octstring<true>>();
-}
-printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& test_cond_value_c::set_value_prt_s()
-{
-  set(types::value_prt_s);
-  return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
-}
-real_s& test_cond_value_c::set_value_real()
-{
-  set(types::value_real);
-  return c.get<real_s>();
-}
-void test_cond_value_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::value_int:
-      j.write_int("valueInt", c.get<int64_t>());
-      break;
-    case types::value_enum:
-      j.write_int("valueEnum", c.get<int64_t>());
-      break;
-    case types::value_bool:
-      j.write_bool("valueBool", c.get<bool>());
-      break;
-    case types::value_bit_s:
-      j.write_str("valueBitS", c.get<dyn_bitstring>().to_string());
-      break;
-    case types::value_oct_s:
-      j.write_str("valueOctS", c.get<unbounded_octstring<true>>().to_string());
-      break;
-    case types::value_prt_s:
-      j.write_str("valuePrtS", c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().to_string());
-      break;
-    case types::value_real:
-      j.write_fieldname("valueReal");
-      c.get<real_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE test_cond_value_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::value_int:
-      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
-      break;
-    case types::value_enum:
-      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
-      break;
-    case types::value_bool:
-      HANDLE_CODE(bref.pack(c.get<bool>(), 1));
-      break;
-    case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().pack(bref));
-      break;
-    case types::value_oct_s:
-      HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
-      break;
-    case types::value_prt_s:
-      HANDLE_CODE((c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().pack(bref)));
-      break;
-    case types::value_real: {
-      varlength_field_pack_guard varlen_scope(bref, true);
-      HANDLE_CODE(c.get<real_s>().pack(bref));
-    } break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE test_cond_value_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::value_int:
-      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
-      break;
-    case types::value_enum:
-      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
-      break;
-    case types::value_bool:
-      HANDLE_CODE(bref.unpack(c.get<bool>(), 1));
-      break;
-    case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().unpack(bref));
-      break;
-    case types::value_oct_s:
-      HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
-      break;
-    case types::value_prt_s:
-      HANDLE_CODE((c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>().unpack(bref)));
-      break;
-    case types::value_real: {
-      varlength_field_unpack_guard varlen_scope(bref, true);
-      HANDLE_CODE(c.get<real_s>().unpack(bref));
-    } break;
-    default:
-      log_invalid_choice_id(type_, "test_cond_value_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* test_cond_value_c::types_opts::to_string() const
-{
-  static const char* names[] = {
-      "valueInt", "valueEnum", "valueBool", "valueBitS", "valueOctS", "valuePrtS", "valueReal"};
-  return convert_enum_idx(names, 7, value, "test_cond_value_c::types");
-}
-
 // BinRangeItem ::= SEQUENCE
 SRSASN_CODE bin_range_item_s::pack(bit_ref& bref) const
 {
@@ -1561,13 +1677,6 @@ void test_cond_info_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-// LogicalOR ::= ENUMERATED
-const char* lc_or_opts::to_string() const
-{
-  static const char* names[] = {"true", "false"};
-  return convert_enum_idx(names, 2, value, "lc_or_e");
-}
-
 // MatchingCondItem-Choice ::= CHOICE
 void matching_cond_item_choice_c::destroy_()
 {
@@ -1756,6 +1865,13 @@ SRSASN_CODE meas_info_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(meas_type.pack(bref));
   HANDLE_CODE(pack_dyn_seq_of(bref, label_info_list, 1, 2147483647, true));
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(match_cond_report_list.is_present(), 1));
+
+    if (match_cond_report_list.is_present()) {
+      HANDLE_CODE(pack_dyn_seq_of(bref, *match_cond_report_list, 1, 32768, true));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE meas_info_item_s::unpack(cbit_ref& bref)
@@ -1764,6 +1880,13 @@ SRSASN_CODE meas_info_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(meas_type.unpack(bref));
   HANDLE_CODE(unpack_dyn_seq_of(label_info_list, bref, 1, 2147483647, true));
 
+  if (ext) {
+    unpack_presence_flag(match_cond_report_list, bref);
+
+    if (match_cond_report_list.is_present()) {
+      HANDLE_CODE(unpack_dyn_seq_of(*match_cond_report_list, bref, 1, 32768, true));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void meas_info_item_s::to_json(json_writer& j) const
@@ -1776,6 +1899,15 @@ void meas_info_item_s::to_json(json_writer& j) const
     e1.to_json(j);
   }
   j.end_array();
+  if (ext) {
+    if (match_cond_report_list.is_present()) {
+      j.start_array("matchCondReportList");
+      for (const auto& e1 : *match_cond_report_list) {
+        e1.to_json(j);
+      }
+      j.end_array();
+    }
+  }
   j.end_obj();
 }
 
