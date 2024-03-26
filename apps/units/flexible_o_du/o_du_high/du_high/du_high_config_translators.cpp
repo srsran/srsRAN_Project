@@ -141,6 +141,9 @@ static sib19_info create_sib19_info(const du_high_unit_config& config)
   if (config.ntn_cfg.value().k_mac.has_value()) {
     sib19.k_mac = config.ntn_cfg.value().k_mac.value();
   }
+  if (config.ntn_cfg.value().ntn_ul_sync_validity_dur.has_value()) {
+    sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur.value();
+  }
   if (config.ntn_cfg.value().ta_info.has_value()) {
     sib19.ta_info = config.ntn_cfg.value().ta_info.value();
   }

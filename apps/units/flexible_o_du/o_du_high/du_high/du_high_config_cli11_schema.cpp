@@ -1690,6 +1690,10 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
       ->capture_default_str()
       ->check(CLI::Range(0, 1023));
 
+  app.add_option("--ntn_ul_sync_validity_dur", ntn->ntn_ul_sync_validity_dur, "An UL sync validity duration")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
+
   ta_common_t& ta = config.ta_info.emplace();
   add_option(app, "--ta_common", ta.ta_common, "TA common offset");
 

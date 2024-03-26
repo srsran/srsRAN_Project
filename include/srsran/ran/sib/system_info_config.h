@@ -179,6 +179,7 @@ struct sib19_info {
   std::optional<epoch_time_t>                                            epoch_time;
   std::optional<uint16_t>                                                k_mac;
   std::optional<ta_common_t>                                             ta_info;
+  std::optional<uint16_t>                                                ntn_ul_sync_validity_dur;
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.

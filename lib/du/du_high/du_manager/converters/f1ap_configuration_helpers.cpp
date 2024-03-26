@@ -469,9 +469,9 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
     sib19.ntn_cfg_r17.kmac_r17         = sib19_params.k_mac.value();
   }
 
-  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present      = false;
-  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present      = false;
-  sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17_present = false;
+  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present = false;
+  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present = false;
+
   if (sib19_params.ta_info.has_value()) {
     sib19.ntn_cfg_r17.ta_info_r17_present                             = true;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17_present         = false;
@@ -479,6 +479,62 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_r17                       = sib19_params.ta_info.value().ta_common;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17                 = sib19_params.ta_info.value().ta_common_drift;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17 = sib19_params.ta_info.value().ta_common_drift_variant;
+  }
+
+  if (sib19_params.ntn_ul_sync_validity_dur.has_value()) {
+    sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17_present = true;
+    switch (sib19_params.ntn_ul_sync_validity_dur.value()) {
+      case 5:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s5;
+        break;
+      case 10:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s10;
+        break;
+      case 15:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s15;
+        break;
+      case 20:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s20;
+        break;
+      case 25:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s25;
+        break;
+      case 30:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s30;
+        break;
+      case 35:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s35;
+        break;
+      case 40:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s40;
+        break;
+      case 45:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s45;
+        break;
+      case 50:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s50;
+        break;
+      case 55:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s55;
+        break;
+      case 60:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s60;
+        break;
+      case 120:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s120;
+        break;
+      case 180:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s180;
+        break;
+      case 240:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s240;
+        break;
+      case 900:
+        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s900;
+        break;
+      default:
+        report_fatal_error("Invalid ntn_ul_sync_validity_dur {}.", sib19_params.ntn_ul_sync_validity_dur.value());
+    }
   }
 
   return sib19;

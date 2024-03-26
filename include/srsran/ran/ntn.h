@@ -59,6 +59,10 @@ struct ntn_config {
   unsigned cell_specific_koffset;
   /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB.
   std::optional<unsigned> k_mac;
+  /// A validity duration configured by the network for assistance information which indicates the maximum time duration
+  /// (from epochTime) during which the UE can apply assistance information without having acquired new assistance
+  /// information. Values {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900} seconds.
+  std::optional<unsigned> ntn_ul_sync_validity_dur;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
   std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
