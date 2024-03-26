@@ -242,8 +242,7 @@ public:
   /// \brief Get test pseudo-random generator.
   static std::mt19937& get()
   {
-    //    thread_local std::mt19937& random_generator = init(std::random_device{}());
-    thread_local std::mt19937& random_generator = init(2262628058);
+    thread_local std::mt19937& random_generator = init(std::random_device{}());
     return random_generator;
   }
 

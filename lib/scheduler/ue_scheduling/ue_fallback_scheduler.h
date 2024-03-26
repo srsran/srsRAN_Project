@@ -42,6 +42,9 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
+  static const size_t FALLBACK_SCHED_RING_BUFFER_SIZE =
+      get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
+
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
   void slot_indication(slot_point sl);
 
@@ -184,6 +187,11 @@ private:
   std::vector<ack_and_retx_tracker> ongoing_ues_ack_retxs;
 
   std::vector<slot_point> slots_without_pdxch_space;
+
+  // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
+  std::array<bool, FALLBACK_SCHED_RING_BUFFER_SIZE> slots_with_no_resources;
+  // Keeps track of the last slot_point used by \ref slots_with_no_resources.
+  slot_point last_sl_ind;
 
   std::vector<uint8_t> dci_1_0_k1_values;
 

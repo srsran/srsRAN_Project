@@ -39,7 +39,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   // NOTE: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
   dci_1_0_k1_values = {4, 5, 6, 7, 8};
-  slots_without_pdxch_space.reserve(max_dl_slots_ahead_sched + 1);
+  slots_with_no_resources.fill(false);
 }
 
 void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -47,10 +47,6 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Update the HARQ processes of UE with ongoing transmissions to check which ones still need to be acked or
   // retransmitted.
   slot_point sched_ref_slot = res_alloc[0].slot;
-
-  if (sched_ref_slot.count_val == 204) {
-    logger.debug("Stop here at slot {} count val {}", sched_ref_slot, static_cast<unsigned>(sched_ref_slot.count_val));
-  }
 
   slot_indication(sched_ref_slot);
 
@@ -169,7 +165,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
       ++next_ue;
     } else {
       logger.debug("Exiting scheduler");
-      return;
+      break; // Exit the scheduler. with return
     }
   }
 
@@ -278,8 +274,8 @@ ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
       return sched_outcome::exit_scheduler;
     }
 
-    if (std::find(slots_without_pdxch_space.begin(), slots_without_pdxch_space.end(), next_slot) !=
-        slots_without_pdxch_space.end()) {
+    if (slots_with_no_resources[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE]) {
+      logger.debug("rnti={}: Skipping slot {}. Cause: no PDSCH/PDCCH space available", u.crnti, next_slot);
       continue;
     }
 
@@ -314,6 +310,7 @@ ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
                    u.crnti,
                    is_srb0 ? "SRB0" : "SRB1");
       slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+      slots_with_no_resources[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       continue;
     }
 
@@ -406,7 +403,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_srb0(ue
           "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
       // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs
       // too.
-      slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+      slots_with_no_resources[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       return {};
     }
 
@@ -463,9 +460,10 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_srb0(ue
       pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.debug(
-        "rnti={}: Postponed SRB0 PDU scheduling for slot. Cause: No space in PDCCH.", u.crnti, pdsch_alloc.slot);
+        "rnti={}: Postponed SRB0 PDU scheduling for slot={}. Cause: No space in PDCCH.", u.crnti, pdsch_alloc.slot);
     // If there is no PDCCH space on this slot for this UE, then this slot should be avoided by the other UEs too.
     slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+    slots_with_no_resources[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
     return {};
   }
 
@@ -571,9 +569,9 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_srb1(ue
 
   if (unused_crbs.empty()) {
     logger.debug(
-        "rnti={}: Postponed SRB1 PDU scheduling for slot. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
+        "rnti={}: Postponed SRB1 PDU scheduling for slot={}. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
     // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
-    slots_without_pdxch_space.emplace_back(pdsch_alloc.slot);
+    slots_with_no_resources[pdsch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
     return {};
   }
 
@@ -639,7 +637,9 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_srb1(ue
   pdcch_dl_information*         pdcch =
       pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.debug("rnti={}: Postponed SRB1 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
+    logger.debug(
+        "rnti={}: Postponed SRB1 PDU scheduling for slot={}. Cause: No space in PDCCH.", u.crnti, pdcch_alloc.slot);
+    slots_with_no_resources[pdcch_alloc.slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
     return {};
   }
 
@@ -990,6 +990,12 @@ unsigned ue_fallback_scheduler::ue_srb1_buffer_state(du_ue_index_t ue_idx, slot_
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
+  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
+  srsran_sanity_check(not last_sl_ind.valid() or sl == last_sl_ind + 1, "Detected a skipped slot");
+
+  slots_with_no_resources[(sl - 1).to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
+  last_sl_ind                                                                   = sl;
+
   // Remove any UE that is no longer in fallback mode; this can happen in case of overallocation, or when the GNB
   // detects a false NACK from PUCCH. Existing the fallback mode is an indication that the fallback transmission was
   // completed successfully.

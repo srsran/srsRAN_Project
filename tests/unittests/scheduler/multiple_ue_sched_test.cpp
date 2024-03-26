@@ -203,15 +203,20 @@ protected:
     return cell_cfg;
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode)
+  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode, bool is_fallback = false)
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(mode);
-    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params);
+    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params, is_fallback);
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, const cell_config_builder_params& params)
+  void add_ue(du_ue_index_t                     ue_index,
+              lcid_t                            lcid_,
+              lcg_id_t                          lcgid_,
+              const cell_config_builder_params& params,
+              bool                              is_fallback = false)
   {
-    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(params);
+    auto ue_creation_req               = test_helpers::create_default_sched_ue_creation_request(params);
+    ue_creation_req.starts_in_fallback = is_fallback;
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
@@ -1171,7 +1176,8 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 
   // Add UE(s) and notify UL BSR + DL Buffer status with 110 value.
   // Assumption: LCID is SRB0.
-  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD);
+  const bool is_fallback = true;
+  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD, is_fallback);
 
   // Enqueue ConRes CE.
   bench->sch.handle_dl_mac_ce_indication(dl_mac_ce_indication{to_du_ue_index(0), lcid_dl_sch_t::UE_CON_RES_ID});
