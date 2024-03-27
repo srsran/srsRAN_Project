@@ -78,6 +78,8 @@ struct worker_manager {
   task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
 
 private:
+  static const unsigned nof_cu_up_ue_strands = 16;
+
   struct du_high_executor_storage {
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
   };
@@ -107,8 +109,14 @@ private:
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
-  /// Helper method that creates the low priority executors used by the application.
-  void create_low_prio_executors(const gnb_appconfig& appcfg);
+  execution_config_helper::worker_pool create_low_prio_workers(const gnb_appconfig& appcfg);
+  void                                 create_low_prio_executors(const gnb_appconfig& appcfg);
+  void                                 associate_low_prio_executors();
+
+  std::vector<execution_config_helper::single_worker> create_fapi_workers(const gnb_appconfig& appcfg);
+
+  std::vector<execution_config_helper::priority_multiqueue_worker>
+  create_du_hi_slot_workers(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the Distributed Unit executors.
   void create_du_executors(const gnb_appconfig& appcfg);
@@ -118,8 +126,7 @@ private:
                                unsigned                   nof_ul_workers,
                                unsigned                   nof_dl_workers,
                                unsigned                   nof_pusch_decoder_workers,
-                               span<const cell_appconfig> cells_cfg,
-                               unsigned                   pipeline_depth);
+                               span<const cell_appconfig> cells_cfg);
 
   /// Helper method that creates the Radio Unit executors.
   void create_ru_executors(const gnb_appconfig& appcfg);

@@ -37,6 +37,8 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg) :
   }
 
   create_low_prio_executors(appcfg);
+  associate_low_prio_executors();
+
   create_du_executors(appcfg);
   create_ru_executors(appcfg);
 }
@@ -113,6 +115,52 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
   }
 }
 
+std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_workers(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+  std::vector<single_worker> workers;
+
+  for (unsigned cell_id = 0; cell_id != appcfg.cells_cfg.size(); ++cell_id) {
+    const std::string name = "fapi#" + std::to_string(cell_id);
+
+    single_worker buffered_worker{name,
+                                  {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
+                                  // Left empty, is filled later.
+                                  {},
+                                  std::chrono::microseconds{50},
+                                  os_thread_realtime_priority::max() - 6,
+                                  affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+
+    workers.push_back(buffered_worker);
+  }
+
+  return workers;
+}
+
+std::vector<execution_config_helper::priority_multiqueue_worker>
+worker_manager::create_du_hi_slot_workers(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+  std::vector<priority_multiqueue_worker> workers;
+
+  for (unsigned cell_id = 0; cell_id != appcfg.cells_cfg.size(); ++cell_id) {
+    const std::string cell_id_str = std::to_string(cell_id);
+
+    const priority_multiqueue_worker du_cell_worker{
+        "du_cell#" + cell_id_str,
+        {{concurrent_queue_policy::lockfree_spsc, 4}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+        std::chrono::microseconds{10},
+        // Left empty, is filled later.
+        {},
+        os_thread_realtime_priority::max() - 2,
+        affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+
+    workers.push_back(du_cell_worker);
+  }
+
+  return workers;
+}
+
 void worker_manager::create_du_executors(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
@@ -124,49 +172,41 @@ void worker_manager::create_du_executors(const gnb_appconfig& appcfg)
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
   if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
-    const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
-    is_blocking_mode_active         = sdr_cfg.device_driver == "zmq";
+    const auto& sdr_cfg     = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
+    is_blocking_mode_active = sdr_cfg.device_driver == "zmq";
   }
 
   // FAPI message buffering executors.
   fapi_exec.resize(cells_cfg.size());
   std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
-  if (appcfg.fapi_cfg.l2_nof_slots_ahead != 0) {
-    for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
-      const std::string name      = "fapi#" + std::to_string(cell_id);
-      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
+  if (appcfg.fapi_cfg.l2_nof_slots_ahead) {
+    // Create workers.
+    auto workers = create_fapi_workers(appcfg);
 
-      const single_worker buffered_worker{
-          name,
-          {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-          {{exec_name}},
-          std::chrono::microseconds{50},
-          os_thread_realtime_priority::max() - 6,
-          affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
-      if (!exec_mng.add_execution_context(create_execution_context(buffered_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", buffered_worker.name);
+    for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
+      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
+      workers[cell_id].executors.emplace_back(exec_name);
+      // Create executor and associated workers.
+      if (!exec_mng.add_execution_context(create_execution_context(workers[cell_id]))) {
+        report_fatal_error("Failed to instantiate {} execution context", workers[cell_id].name);
       }
 
+      // Associate executor.
       fapi_exec[cell_id] = exec_mng.executors().at(exec_name);
     }
   }
 
   // Workers for handling cell slot indications of different cells.
+  auto slot_workers = create_du_hi_slot_workers(appcfg);
   for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
-    const std::string                cell_id_str = std::to_string(cell_id);
-    const priority_multiqueue_worker du_cell_worker{
-        "du_cell#" + cell_id_str,
-        {{concurrent_queue_policy::lockfree_spsc, 4}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-        std::chrono::microseconds{10},
-        // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
-        // synchronous.
-        {{"cell_exec#" + cell_id_str, task_priority::max - 1},
-         {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
-        os_thread_realtime_priority::max() - 2,
-        affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+    const std::string cell_id_str = std::to_string(cell_id);
 
-    if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
-      report_fatal_error("Failed to instantiate {} execution context", du_cell_worker.name);
+    slot_workers[cell_id].executors.emplace_back("cell_exec#" + cell_id_str, task_priority::max - 1);
+    slot_workers[cell_id].executors.push_back(
+        {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active});
+
+    if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
+      report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);
     }
   }
 
@@ -196,17 +236,12 @@ void worker_manager::create_du_executors(const gnb_appconfig& appcfg)
                           upper_phy_threads_cfg.nof_ul_threads,
                           upper_phy_threads_cfg.nof_dl_threads,
                           upper_phy_threads_cfg.nof_pusch_decoder_threads,
-                          cells_cfg,
-                          appcfg.expert_phy_cfg.max_processing_delay_slots);
+                          cells_cfg);
 }
 
-void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
+execution_config_helper::worker_pool worker_manager::create_low_prio_workers(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
-  const auto& exec_map = exec_mng.executors();
-
-  span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
-  const unsigned             nof_cells = cells_cfg.size();
 
   // Configure non-RT worker pool.
   worker_pool non_rt_pool{
@@ -214,15 +249,35 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
       appcfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads,
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-      {{"low_prio_exec", task_priority::max - 1}, // used for pcap writing.
-       {"high_prio_exec", task_priority::max},    // used for control plane and timer management.
-       {"cu_up_strand", // used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
-        task_priority::max,
-        {}, // define CU-UP strands below.
-        task_worker_queue_size}},
+      // Left empty, is filled later.
+      {},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
       std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
+
+  return non_rt_pool;
+}
+
+void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+  span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
+  const unsigned             nof_cells = cells_cfg.size();
+
+  // TODO: split executor creation and association to workers
+  worker_pool non_rt_pool = create_low_prio_workers(appcfg);
+
+  // Associate executors to the worker pool.
+  // Used for PCAP writing.
+  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
+  // Used for control plane and timer management.
+  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
+  // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
+  non_rt_pool.executors.push_back({"cu_up_strand",
+                                   task_priority::max,
+                                   {}, // define CU-UP strands below.
+                                   task_worker_queue_size});
+
   std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
   std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
   std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
@@ -254,7 +309,6 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
   cu_up_strands.push_back(
       strand{{{"cu_up_ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
               {"cu_up_io_ul_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}});
-  const unsigned nof_cu_up_ue_strands = 16;
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     cu_up_strands.push_back(
         strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
@@ -270,6 +324,12 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
+}
+
+void worker_manager::associate_low_prio_executors()
+{
+  using namespace execution_config_helper;
+  const auto& exec_map = exec_mng.executors();
 
   // Update executor pointer mapping
   cu_cp_exec       = exec_map.at("ctrl_exec");
@@ -281,8 +341,8 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
 
   // Create CU-UP execution mapper object.
   std::vector<task_executor*> ue_up_dl_execs(nof_cu_up_ue_strands, nullptr);
-  std::vector<task_executor*> ue_up_ul_execs   = {nof_cu_up_ue_strands, nullptr};
-  std::vector<task_executor*> ue_up_ctrl_execs = {nof_cu_up_ue_strands, nullptr};
+  std::vector<task_executor*> ue_up_ul_execs(nof_cu_up_ue_strands, nullptr);
+  std::vector<task_executor*> ue_up_ctrl_execs(nof_cu_up_ue_strands, nullptr);
   for (unsigned i = 0; i != nof_cu_up_ue_strands; ++i) {
     ue_up_dl_execs[i]   = exec_map.at(fmt::format("ue_up_dl_exec#{}", i));
     ue_up_ul_execs[i]   = exec_map.at(fmt::format("ue_up_ul_exec#{}", i));
@@ -296,8 +356,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
                                              unsigned                   nof_ul_workers,
                                              unsigned                   nof_dl_workers,
                                              unsigned                   nof_pusch_decoder_workers,
-                                             span<const cell_appconfig> cells_cfg,
-                                             unsigned                   pipeline_depth)
+                                             span<const cell_appconfig> cells_cfg)
 {
   using namespace execution_config_helper;
 
