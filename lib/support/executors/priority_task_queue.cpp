@@ -39,6 +39,7 @@ using queue_type =
 template <typename... Args>
 void detail::any_task_concurrent_queue::emplace(const concurrent_queue_params& params, Args&&... other_params)
 {
+  cap = params.size;
   switch (params.policy) {
     case concurrent_queue_policy::lockfree_mpmc:
       q = std::make_unique<queue_type<concurrent_queue_policy::lockfree_mpmc>>(params.size,
@@ -58,29 +59,27 @@ void detail::any_task_concurrent_queue::emplace(const concurrent_queue_params& p
                                                                               std::forward<Args>(other_params)...);
       break;
     default:
+      report_fatal_error("Invalid queue type");
       break;
   }
-  report_fatal_error("Invalid queue type");
 }
 
 // ---- priority_task_queue -----
 
-detail::priority_task_queue::priority_task_queue(span<const concurrent_queue_params> queue_params)
+detail::priority_task_queue::priority_task_queue(span<const concurrent_queue_params> queue_params,
+                                                 std::chrono::microseconds           wait_if_empty) :
+  wait_on_empty(wait_if_empty)
 {
-  queues.resize(queues.size());
+  queues.resize(queue_params.size());
 
   for (unsigned i = 0; i != queues.size(); ++i) {
     queues[i].emplace(queue_params[i], std::chrono::microseconds{10});
   }
 }
 
-size_t detail::priority_task_queue::get_queue_idx(task_priority prio) const
-{
-  return detail::enqueue_priority_to_queue_index(prio, queues.size());
-}
-
 void detail::priority_task_queue::request_stop()
 {
+  running = false;
   for (auto& q : queues) {
     q.request_stop();
   }
@@ -105,6 +104,17 @@ bool detail::priority_task_queue::try_pop(unique_task& t)
     if (queues[prio_idx].try_pop(t)) {
       return true;
     }
+  }
+  return false;
+}
+
+bool detail::priority_task_queue::pop_blocking(unique_task& t)
+{
+  while (running.load(std::memory_order_relaxed)) {
+    if (try_pop(t)) {
+      return true;
+    }
+    std::this_thread::sleep_for(wait_on_empty);
   }
   return false;
 }

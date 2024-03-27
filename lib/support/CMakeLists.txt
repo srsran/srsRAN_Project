@@ -14,6 +14,7 @@ set(SOURCES
         backtrace.cpp
         math_utils.cpp
         executors/priority_task_queue.cpp
+        executors/priority_task_worker.cpp
         executors/unique_thread.cpp
         executors/task_worker.cpp
         executors/task_worker_pool.cpp

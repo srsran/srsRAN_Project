@@ -310,10 +310,8 @@ public:
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.
 struct du_high_single_cell_worker_manager {
-  using cell_worker_type =
-      priority_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::lockfree_mpmc>;
-  using ue_worker_type =
-      priority_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc>;
+  using cell_worker_type                       = priority_task_worker;
+  using ue_worker_type                         = priority_task_worker;
   static const uint32_t task_worker_queue_size = 100000;
 
   explicit du_high_single_cell_worker_manager(span<unsigned> du_cell_cores) :
@@ -321,21 +319,24 @@ struct du_high_single_cell_worker_manager {
                 task_worker_queue_size,
                 os_thread_realtime_priority::max() - 20,
                 get_other_affinity_mask(du_cell_cores)),
-    cell_worker("du_cell",
-                {8, task_worker_queue_size},
-                std::chrono::microseconds{10},
-                os_thread_realtime_priority::max() - 10,
-                get_du_cell_affinity_mask(du_cell_cores)),
+    cell_worker(
+        "du_cell",
+        std::vector<concurrent_queue_params>({{concurrent_queue_policy::lockfree_spsc, 8},
+                                              {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}),
+        std::chrono::microseconds{10},
+        os_thread_realtime_priority::max() - 10,
+        get_du_cell_affinity_mask(du_cell_cores)),
     ue_worker("du_ue",
-              {task_worker_queue_size, task_worker_queue_size},
+              std::vector<concurrent_queue_params>({{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}),
               std::chrono::microseconds{500},
               os_thread_realtime_priority::max() - 50,
               get_other_affinity_mask(du_cell_cores)),
-    slot_exec(make_priority_task_worker_executor<enqueue_priority::max>(cell_worker)),
-    cell_exec(make_priority_task_worker_executor<enqueue_priority::max - 1>(cell_worker)),
-    ue_ctrl_exec(make_priority_task_worker_executor<enqueue_priority::max>(ue_worker)),
-    dl_exec(make_priority_task_worker_executor<enqueue_priority::max - 1>(ue_worker)),
-    ul_exec(make_priority_task_worker_executor<enqueue_priority::max>(ue_worker))
+    slot_exec(make_priority_task_worker_executor(enqueue_priority::max, cell_worker)),
+    cell_exec(make_priority_task_worker_executor(enqueue_priority::max - 1, cell_worker)),
+    ue_ctrl_exec(make_priority_task_worker_executor(enqueue_priority::max, ue_worker)),
+    dl_exec(make_priority_task_worker_executor(enqueue_priority::max - 1, ue_worker)),
+    ul_exec(make_priority_task_worker_executor(enqueue_priority::max, ue_worker))
   {
   }
 
@@ -370,16 +371,16 @@ struct du_high_single_cell_worker_manager {
     return mask;
   }
 
-  task_worker                                                           ctrl_worker;
-  cell_worker_type                                                      cell_worker;
-  ue_worker_type                                                        ue_worker;
-  task_worker_executor                                                  ctrl_exec{ctrl_worker};
-  priority_task_worker_executor<concurrent_queue_policy::lockfree_spsc> slot_exec;
-  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> cell_exec;
-  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> ue_ctrl_exec;
-  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> dl_exec;
-  priority_task_worker_executor<concurrent_queue_policy::lockfree_mpmc> ul_exec;
-  du_high_executor_mapper_impl                                          du_high_exec_mapper{
+  task_worker                   ctrl_worker;
+  cell_worker_type              cell_worker;
+  ue_worker_type                ue_worker;
+  task_worker_executor          ctrl_exec{ctrl_worker};
+  priority_task_worker_executor slot_exec;
+  priority_task_worker_executor cell_exec;
+  priority_task_worker_executor ue_ctrl_exec;
+  priority_task_worker_executor dl_exec;
+  priority_task_worker_executor ul_exec;
+  du_high_executor_mapper_impl  du_high_exec_mapper{
       std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_exec},
                                              std::initializer_list<task_executor*>{&slot_exec}),
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_ctrl_exec},

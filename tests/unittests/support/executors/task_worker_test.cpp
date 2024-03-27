@@ -211,18 +211,19 @@ TEST(spsc_task_worker_test, single_pushed_task_is_run)
 
 TEST(priority_task_worker_test, priorities_respected_on_queue)
 {
-  priority_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc> worker{
-      "WORKER", {16, 16}, std::chrono::microseconds{100}};
-  std::atomic<uint32_t> result{0};
+  std::vector<concurrent_queue_params> qparams{{concurrent_queue_policy::lockfree_mpmc, 16},
+                                               {concurrent_queue_policy::lockfree_mpmc, 16}};
+  priority_task_worker                 worker{"WORKER", qparams, std::chrono::microseconds{100}};
+  std::atomic<uint32_t>                result{0};
 
-  ASSERT_TRUE(worker.push_task<enqueue_priority::min>([&]() mutable {
+  ASSERT_TRUE(worker.push_task(task_priority::min, [&]() mutable {
     // This task should be executed last.
     for (unsigned i = 0; i != 16; ++i) {
-      ASSERT_TRUE(worker.push_task<enqueue_priority::max - 1>([&, i]() mutable { ASSERT_EQ(result++, 16 + i); }));
+      ASSERT_TRUE(worker.push_task(enqueue_priority::max - 1, [&, i]() mutable { ASSERT_EQ(result++, 16 + i); }));
     }
     // This task should be executed first.
     for (unsigned i = 0; i != 16; ++i) {
-      ASSERT_TRUE(worker.push_task<enqueue_priority::max>([&, i]() mutable { ASSERT_EQ(result++, i); }));
+      ASSERT_TRUE(worker.push_task(enqueue_priority::max, [&, i]() mutable { ASSERT_EQ(result++, i); }));
     }
   }));
 

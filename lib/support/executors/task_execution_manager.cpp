@@ -34,8 +34,8 @@ template <concurrent_queue_policy... QueuePolicies>
 struct execution_context_traits<task_worker_pool<QueuePolicies...>> {
   using params = execution_config_helper::worker_pool;
 };
-template <concurrent_queue_policy... QueuePolicies>
-struct execution_context_traits<priority_task_worker<QueuePolicies...>> {
+template <>
+struct execution_context_traits<priority_task_worker> {
   using params = execution_config_helper::priority_multiqueue_worker;
 };
 
@@ -464,20 +464,18 @@ srsran::create_execution_context(const execution_config_helper::worker_pool& par
 
 namespace {
 
-template <concurrent_queue_policy... QueuePolicies>
-struct priority_multiqueue_worker_context
-  : public common_task_execution_context<priority_task_worker<QueuePolicies...>> {
-  using base_type = common_task_execution_context<priority_task_worker<QueuePolicies...>>;
+struct priority_multiqueue_worker_context : public common_task_execution_context<priority_task_worker> {
+  using base_type = common_task_execution_context<priority_task_worker>;
 
   static std::unique_ptr<task_execution_context>
   create(const execution_config_helper::priority_multiqueue_worker& params)
   {
-    std::array<unsigned, sizeof...(QueuePolicies)> qsizes{};
-    for (unsigned i = 0; i != params.queues.size(); ++i) {
-      qsizes[i] = params.queues[i].size;
-    }
-    auto ctxt = std::make_unique<priority_multiqueue_worker_context>(
-        params.tracer, params.name, qsizes, params.spin_sleep_time, params.prio, params.mask);
+    auto ctxt = std::make_unique<priority_multiqueue_worker_context>(params.tracer,
+                                                                     params.name,
+                                                                     span<const concurrent_queue_params>(params.queues),
+                                                                     params.spin_sleep_time,
+                                                                     params.prio,
+                                                                     params.mask);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }
@@ -491,72 +489,25 @@ private:
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::executor& desc) override
   {
-    std::unique_ptr<task_executor> exec;
-    visit_executor(this->worker, desc.priority, [this, &exec, &desc](auto&& prio_exec) {
-      exec = decorate_executor(desc, prio_exec, this->task_tracer);
-    });
-    return exec;
+    return decorate_executor(desc, make_priority_task_worker_executor(desc.priority, this->worker), this->task_tracer);
   }
 
   typename base_type::task_executor_list create_strand_executors(const execution_config_helper::executor& desc) override
   {
     typename base_type::task_executor_list execs;
 
-    visit_executor(this->worker, desc.priority, [this, &execs, &desc](auto prio_exec) {
-      execs = this->create_strand_executors_helper(desc, std::move(prio_exec));
-    });
+    execs = this->create_strand_executors_helper(desc, make_priority_task_worker_executor(desc.priority, this->worker));
+
     return execs;
   }
 };
-
-constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 3U;
-
-// Special case to stop recursion for task queue policies.
-template <concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER<sizeof...(QueuePolicies), int> = 0>
-              std::unique_ptr<task_execution_context> create_execution_context_helper(
-                  const execution_config_helper::priority_multiqueue_worker& params)
-{
-  report_fatal_error("Workers with equal or more than {} queues are not supported",
-                     MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER);
-  return nullptr;
-};
-
-template <concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<sizeof...(QueuePolicies) <= MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
-std::unique_ptr<task_execution_context>
-create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
-{
-  size_t vec_size = sizeof...(QueuePolicies);
-  if (vec_size > params.queues.size()) {
-    return nullptr;
-  }
-  if (vec_size == params.queues.size()) {
-    return priority_multiqueue_worker_context<QueuePolicies...>::create(params);
-  }
-  switch (params.queues[vec_size].policy) {
-    case concurrent_queue_policy::locking_mpmc:
-      srslog::fetch_basic_logger("ALL").error("Unsupported MPMC queue policy");
-      return nullptr;
-    case concurrent_queue_policy::lockfree_spsc:
-      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::lockfree_spsc>(params);
-    case concurrent_queue_policy::locking_mpsc:
-      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::locking_mpsc>(params);
-    case concurrent_queue_policy::lockfree_mpmc:
-      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::lockfree_mpmc>(params);
-    default:
-      srslog::fetch_basic_logger("ALL").error("Unknown queue policy");
-      break;
-  }
-  return nullptr;
-}
 
 } // namespace
 
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::priority_multiqueue_worker& params)
 {
-  return create_execution_context_helper<>(params);
+  return priority_multiqueue_worker_context::create(params);
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */

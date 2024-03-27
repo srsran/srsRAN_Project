@@ -31,6 +31,8 @@ public:
   bool try_push(unique_task t) { return q->try_push(std::move(t)); }
   bool try_pop(unique_task& t) { return q->try_pop(t); }
 
+  size_t capacity() const { return cap; }
+
 private:
   class base_queue
   {
@@ -45,6 +47,8 @@ private:
   template <typename QueueType>
   class queue_impl;
 
+  size_t cap = 0;
+
   std::unique_ptr<base_queue> q;
 };
 
@@ -52,9 +56,9 @@ private:
 class priority_task_queue
 {
 public:
-  priority_task_queue(span<const concurrent_queue_params> queues);
+  priority_task_queue(span<const concurrent_queue_params> queues, std::chrono::microseconds wait_if_empty);
 
-  /// Interrupt all the queues.
+  /// Interrupt all blocking popping/pushing operations for this queue.
   void request_stop();
 
   /// Dispatch a task to be run. If the internal queue associated with the priority level is full, block caller.
@@ -65,13 +69,28 @@ public:
   /// return false.
   SRSRAN_NODISCARD bool try_push(task_priority prio, unique_task task);
 
-  /// Pop a pending task, considering its priority level.
-  bool try_pop(unique_task& t);
+  /// Pop a pending task, considering its priority level. If the queues are empty, return false.
+  SRSRAN_NODISCARD bool try_pop(unique_task& t);
+
+  /// \brief Pop a pending task, considering its priority level. If the queues are empty, this call blocks.
+  /// If the queues are stopped, this function returns false.
+  bool pop_blocking(unique_task& t);
+
+  SRSRAN_NODISCARD size_t queue_capacity(task_priority prio) const { return queues[get_queue_idx(prio)].capacity(); }
+
+  size_t nof_priority_levels() const { return queues.size(); }
 
 private:
-  size_t get_queue_idx(task_priority prio) const;
+  size_t get_queue_idx(task_priority prio) const
+  {
+    return detail::enqueue_priority_to_queue_index(prio, queues.size());
+  }
+
+  std::chrono::microseconds wait_on_empty;
 
   std::vector<any_task_concurrent_queue> queues;
+
+  std::atomic<bool> running{true};
 };
 
 } // namespace detail
