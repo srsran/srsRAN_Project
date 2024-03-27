@@ -321,9 +321,9 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   action_def_f1.cell_global_id_present = false;
   action_def_f1.granul_period          = 100;
 
-  meas_info_item_s meas_info_item;
+  meas_info_item_s meas_info_item{};
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcPacketDropRateDl"); // Dummy metric not supported.
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
