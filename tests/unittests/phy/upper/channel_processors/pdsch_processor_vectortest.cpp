@@ -225,7 +225,7 @@ private:
 
     if (factory_type == "concurrent") {
       worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-          NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
+          "pdsch_proc", NOF_CONCURRENT_THREADS, 128);
       executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
 
       return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,

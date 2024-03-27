@@ -22,10 +22,11 @@ public:
   {
   }
 
-  void request_stop() override { q.request_stop(); }
-  bool push_blocking(unique_task task) override { return q.push_blocking(std::move(task)); }
-  bool try_push(unique_task task) override { return q.try_push(std::move(task)); }
-  bool try_pop(unique_task& t) override { return q.try_pop(t); }
+  void   request_stop() override { q.request_stop(); }
+  bool   push_blocking(unique_task task) override { return q.push_blocking(std::move(task)); }
+  bool   try_push(unique_task task) override { return q.try_push(std::move(task)); }
+  bool   try_pop(unique_task& t) override { return q.try_pop(t); }
+  size_t size() const override { return q.size(); }
 
 private:
   QueueType q;
@@ -117,4 +118,13 @@ bool detail::priority_task_queue::pop_blocking(unique_task& t)
     std::this_thread::sleep_for(wait_on_empty);
   }
   return false;
+}
+
+size_t detail::priority_task_queue::size() const
+{
+  size_t total_size = 0;
+  for (const auto& q : queues) {
+    total_size += q.size();
+  }
+  return total_size;
 }

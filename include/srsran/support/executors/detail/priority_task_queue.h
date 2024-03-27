@@ -26,10 +26,11 @@ public:
   template <typename... Args>
   void emplace(const concurrent_queue_params& params, Args&&... other_params);
 
-  void request_stop() { q->request_stop(); }
-  bool push_blocking(unique_task t) { return q->push_blocking(std::move(t)); }
-  bool try_push(unique_task t) { return q->try_push(std::move(t)); }
-  bool try_pop(unique_task& t) { return q->try_pop(t); }
+  void   request_stop() { q->request_stop(); }
+  bool   push_blocking(unique_task t) { return q->push_blocking(std::move(t)); }
+  bool   try_push(unique_task t) { return q->try_push(std::move(t)); }
+  bool   try_pop(unique_task& t) { return q->try_pop(t); }
+  size_t size() const { return q->size(); }
 
   size_t capacity() const { return cap; }
 
@@ -37,11 +38,12 @@ private:
   class base_queue
   {
   public:
-    virtual ~base_queue()                        = default;
-    virtual void request_stop()                  = 0;
-    virtual bool push_blocking(unique_task task) = 0;
-    virtual bool try_push(unique_task task)      = 0;
-    virtual bool try_pop(unique_task& t)         = 0;
+    virtual ~base_queue()                          = default;
+    virtual void   request_stop()                  = 0;
+    virtual bool   push_blocking(unique_task task) = 0;
+    virtual bool   try_push(unique_task task)      = 0;
+    virtual bool   try_pop(unique_task& t)         = 0;
+    virtual size_t size() const                    = 0;
   };
 
   template <typename QueueType>
@@ -79,6 +81,9 @@ public:
   SRSRAN_NODISCARD size_t queue_capacity(task_priority prio) const { return queues[get_queue_idx(prio)].capacity(); }
 
   size_t nof_priority_levels() const { return queues.size(); }
+
+  /// Get number of pending tasks.
+  size_t size() const;
 
 private:
   size_t get_queue_idx(task_priority prio) const

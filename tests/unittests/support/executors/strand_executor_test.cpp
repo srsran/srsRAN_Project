@@ -88,7 +88,7 @@ TEST(strand_executor_test, dispatch_to_worker_pool_causes_no_race_conditions)
   static const unsigned nof_pushers    = 4;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{
-      nof_workers, nof_increments, "POOL", std::chrono::microseconds{100}};
+      "POOL", nof_workers, nof_increments, std::chrono::microseconds{100}};
   auto pool_exec   = task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool);
   auto strand_exec = make_strand_executor_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_exec, nof_increments);
 
@@ -125,7 +125,7 @@ TEST(strand_executor_test, multi_priorities_in_strand)
   static const std::array<unsigned, 2> qsizes      = {16, 16};
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{
-      nof_workers, qsize, "POOL", std::chrono::microseconds{100}};
+      "POOL", nof_workers, qsize, std::chrono::microseconds{100}};
   auto pool_exec = task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool);
   std::vector<std::unique_ptr<task_executor>> strand_execs =
       make_strand_executor_ptrs<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_spsc>(
