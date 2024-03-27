@@ -63,11 +63,10 @@ public:
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) { return *cells[cell_index]; }
 
 private:
-  mac_dl_config cfg;
+  mac_dl_config  cfg;
+  du_rnti_table& rnti_table;
 
   std::array<std::unique_ptr<mac_cell_processor>, MAX_NOF_DU_CELLS> cells;
-
-  mac_dl_ue_manager ue_mng;
 
   /// \brief Reference to MAC scheduler interface used by the MAC DL processor.
   mac_scheduler_cell_info_handler& sched;

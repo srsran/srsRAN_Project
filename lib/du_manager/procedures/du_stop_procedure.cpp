@@ -29,7 +29,7 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Stop all cells.
   CORO_AWAIT(cell_mng.stop());
 
-  proc_logger.log_progress("Stopped all cells.");
+  proc_logger.log_progress("Stopped all cells");
 
   // TODO: Call F1 Removal Request if not yet called.
 
