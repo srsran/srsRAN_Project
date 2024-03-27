@@ -152,7 +152,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index,
                                                                   bool          is_srb0,
                                                                   slot_point    sl,
-                                                                  unsigned      srb1_buffer_bytes)
+                                                                  unsigned      srb_buffer_bytes)
 {
   auto ue_it = std::find_if(pending_ues.begin(), pending_ues.end(), [ue_index, is_srb0](const srb_ue& ue) {
     return ue.ue_index == ue_index and ue.is_srb0 == is_srb0;
@@ -162,21 +162,22 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t 
   ue& u = ues[ue_index];
 
   if (ue_it != pending_ues.end()) {
-    // If a new Buffer Status Update is reported, update it in UE list.
-    if (u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-      update_srb1_buffer_after_rlc_bsu(ue_index, sl, srb1_buffer_bytes);
-    }
     // Remove the UE from the pending UE list when the Buffer Status Update is 0.
-    else {
+    if (not u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
       pending_ues.erase(ue_it);
+    }
+    // This case can happen only for SRB1; note that for SRB0 there is no segmentation and, when the UE already exists
+    // in the fallback scheduler, the RLC buffer state update can only be 0.
+    // For SRB1, due to the segmentation, we need to update the internal SRB1 buffer state.
+    else if (not is_srb0) {
+      update_srb1_buffer_after_rlc_bsu(ue_index, sl, srb_buffer_bytes);
     }
     return;
   }
 
   // The UE doesn't exist in the internal fallback scheduler list, add it.
   if (u.has_pending_dl_newtx_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1)) {
-    logger.debug("SRB1 sched: pushing ue_idx={} in queue for {}", ue_index, is_srb0 ? "SRB0" : "SRB1");
-    pending_ues.push_back({ue_index, is_srb0, srb1_buffer_bytes});
+    pending_ues.push_back({ue_index, is_srb0, srb_buffer_bytes});
   }
 }
 
@@ -787,8 +788,6 @@ unsigned ue_fallback_scheduler::fill_srb_grant(ue&                        u,
     }
   }
 
-  // This only accounts for the bytes pulled from the SRB1 buffer, excluding all MAC overhead or padding.
-
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
   h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);
 
@@ -960,7 +959,12 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_ues.erase(ue_it);
       continue;
     }
-    if (not ues[ue_it->ue_index].get_pcell().is_in_fallback_mode()) {
+    // For SRB1, due to segmentation and to pre-allocation, the scheduler might not be able to estimate precisely when
+    // the UE has received the SRB1 full buffer; we assume the UE has received the full SRB1 buffer data if UE exits
+    // fallback mode. This is not needed for SRB0, which doesn't allow segmentation.
+    // NOTE: There is a drawback to this, which is false positive detection of CSI or SRs. This can stop the scheduling
+    // even before it has completed the SRB1 allocation.
+    if ((not ue_it->is_srb0) and (not ues[ue_it->ue_index].get_pcell().is_in_fallback_mode())) {
       ue_it = pending_ues.erase(ue_it);
       continue;
     }
@@ -975,8 +979,13 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    // If the UE is no longer in fallback mode, it's safe to cancel all ongoing HARQ processes.
-    if (not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode()) {
+    // If the SRB1 UE is no longer in fallback mode, it's safe to cancel all ongoing HARQ processes.
+    // For SRB1, due to segmentation and to pre-allocation, the scheduler might not be able to estimate precisely when
+    // the UE has received the SRB1 full buffer; we assume the UE has received the full SRB1 buffer data if UE exits
+    // fallback mode. This is not needed for SRB0, which doesn't allow segmentation.
+    // NOTE: There is a drawback to this, which is false positive detection of CSI or SRs. This can stop the scheduling
+    // even before it has completed the SRB1 allocation.
+    if ((not it_ue_harq->is_srb0) and (not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode())) {
       const unsigned tb_index = 0U;
       it_ue_harq->h_dl->cancel_harq_retxs(tb_index);
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);

@@ -32,10 +32,8 @@ public:
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
-  void handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index,
-                                             bool          is_srb0,
-                                             slot_point    sl,
-                                             unsigned      srb1_buffer_bytes);
+  void
+  handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
