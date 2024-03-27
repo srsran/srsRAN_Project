@@ -895,45 +895,6 @@ protected:
       }
     }
 
-    void slot_indication(slot_point sl)
-    {
-      for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
-        harq_id_t h_id = to_harq_id(h_id_idx);
-
-        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
-          const unsigned tb_idx   = 0U;
-          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
-                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
-                                        : 0U;
-          pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
-          test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
-                            test_ue.crnti,
-                            sl,
-                            to_harq_id(h_dl.id),
-                            pending_srb1_bytes);
-          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
-        }
-
-        // Check if any HARQ process with pending transmissions is re-set by the scheduler.
-        if (latest_harq_states[h_id_idx] == h_state::pending_retx and test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
-          ++missing_retx;
-        }
-
-        // Save HARQ process latest.
-        if (test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
-          latest_harq_states[h_id_idx] = h_state::empty;
-        } else if (test_ue.get_pcell().harqs.dl_harq(h_id).is_waiting_ack()) {
-          latest_harq_states[h_id_idx] = h_state::waiting_ack;
-        } else {
-          latest_harq_states[h_id_idx] = h_state::pending_retx;
-        }
-      }
-
-      // Update HARQ process.
-      ack_harq_process(sl);
-    }
-
     void rlc_buffer_state_emulator(slot_point sl)
     {
       // Generate new traffic when at the proper slot.
@@ -985,6 +946,45 @@ protected:
         parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
         latest_rlc_update_slot.emplace(sl);
       }
+    }
+
+    void slot_indication(slot_point sl)
+    {
+      for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
+        harq_id_t h_id = to_harq_id(h_id_idx);
+
+        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
+          const unsigned tb_idx   = 0U;
+          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
+                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
+                                        : 0U;
+          pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
+          test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
+                            test_ue.crnti,
+                            sl,
+                            to_harq_id(h_dl.id),
+                            pending_srb1_bytes);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        }
+
+        // Check if any HARQ process with pending transmissions is re-set by the scheduler.
+        if (latest_harq_states[h_id_idx] == h_state::pending_retx and test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
+          ++missing_retx;
+        }
+
+        // Save HARQ process latest.
+        if (test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
+          latest_harq_states[h_id_idx] = h_state::empty;
+        } else if (test_ue.get_pcell().harqs.dl_harq(h_id).is_waiting_ack()) {
+          latest_harq_states[h_id_idx] = h_state::waiting_ack;
+        } else {
+          latest_harq_states[h_id_idx] = h_state::pending_retx;
+        }
+      }
+
+      // Update HARQ process.
+      ack_harq_process(sl);
     }
 
     void ack_harq_process(slot_point sl)
