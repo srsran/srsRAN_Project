@@ -36,7 +36,8 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg) :
     affinity_mng.emplace_back(build_affinity_manager_dependencies(cell));
   }
 
-  create_du_cu_executors(appcfg);
+  create_low_prio_executors(appcfg);
+  create_du_executors(appcfg);
   create_ru_executors(appcfg);
 }
 
@@ -112,10 +113,13 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
   }
 }
 
-void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
+void worker_manager::create_du_executors(const gnb_appconfig& appcfg)
 {
   using namespace execution_config_helper;
-  const auto& exec_map = exec_mng.executors();
+
+  span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
+  const unsigned             nof_cells = cells_cfg.size();
+  const auto&                exec_map  = exec_mng.executors();
 
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
@@ -123,6 +127,84 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
     is_blocking_mode_active         = sdr_cfg.device_driver == "zmq";
   }
+
+  // FAPI message buffering executors.
+  fapi_exec.resize(cells_cfg.size());
+  std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
+  if (appcfg.fapi_cfg.l2_nof_slots_ahead != 0) {
+    for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
+      const std::string name      = "fapi#" + std::to_string(cell_id);
+      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
+
+      const single_worker buffered_worker{
+          name,
+          {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
+          {{exec_name}},
+          std::chrono::microseconds{50},
+          os_thread_realtime_priority::max() - 6,
+          affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+      if (!exec_mng.add_execution_context(create_execution_context(buffered_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", buffered_worker.name);
+      }
+
+      fapi_exec[cell_id] = exec_mng.executors().at(exec_name);
+    }
+  }
+
+  // Workers for handling cell slot indications of different cells.
+  for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
+    const std::string                cell_id_str = std::to_string(cell_id);
+    const priority_multiqueue_worker du_cell_worker{
+        "du_cell#" + cell_id_str,
+        {{concurrent_queue_policy::lockfree_spsc, 4}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+        std::chrono::microseconds{10},
+        // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
+        // synchronous.
+        {{"cell_exec#" + cell_id_str, task_priority::max - 1},
+         {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
+        os_thread_realtime_priority::max() - 2,
+        affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+
+    if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
+      report_fatal_error("Failed to instantiate {} execution context", du_cell_worker.name);
+    }
+  }
+
+  // Instantiate DU-high executor mapper.
+  du_high_executors.resize(nof_cells);
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    auto&             du_item     = du_high_executors[i];
+    const std::string cell_id_str = std::to_string(i);
+
+    // DU-high executor mapper.
+    using exec_list       = std::initializer_list<task_executor*>;
+    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
+                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
+    auto ue_exec_mapper =
+        std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
+                                                   exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
+                                                   exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
+    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
+                                                                                 std::move(ue_exec_mapper),
+                                                                                 *exec_map.at("ctrl_exec"),
+                                                                                 *exec_map.at("timer_exec"),
+                                                                                 *exec_map.at("ctrl_exec"));
+  }
+
+  const upper_phy_threads_appconfig& upper_phy_threads_cfg = appcfg.expert_execution_cfg.threads.upper_threads;
+  create_du_low_executors(is_blocking_mode_active,
+                          upper_phy_threads_cfg.nof_ul_threads,
+                          upper_phy_threads_cfg.nof_dl_threads,
+                          upper_phy_threads_cfg.nof_pusch_decoder_threads,
+                          cells_cfg,
+                          appcfg.expert_phy_cfg.max_processing_delay_slots);
+}
+
+void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
+{
+  using namespace execution_config_helper;
+  const auto& exec_map = exec_mng.executors();
+
   span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
   const unsigned             nof_cells = cells_cfg.size();
 
@@ -189,48 +271,6 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
 
-  // Workers for handling cell slot indications of different cells.
-  for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
-    const std::string                cell_id_str = std::to_string(cell_id);
-    const priority_multiqueue_worker du_cell_worker{
-        "du_cell#" + cell_id_str,
-        {{concurrent_queue_policy::lockfree_spsc, 4}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-        std::chrono::microseconds{10},
-        // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
-        // synchronous.
-        {{"cell_exec#" + cell_id_str, task_priority::max - 1},
-         {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active}},
-        os_thread_realtime_priority::max() - 2,
-        affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
-
-    if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
-      report_fatal_error("Failed to instantiate {} execution context", du_cell_worker.name);
-    }
-  }
-
-  // FAPI message buffering executors.
-  fapi_exec.resize(cells_cfg.size());
-  std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
-  if (appcfg.fapi_cfg.l2_nof_slots_ahead != 0) {
-    for (unsigned cell_id = 0; cell_id != cells_cfg.size(); ++cell_id) {
-      const std::string name      = "fapi#" + std::to_string(cell_id);
-      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
-
-      const single_worker buffered_worker{
-          name,
-          {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-          {{exec_name}},
-          std::chrono::microseconds{50},
-          os_thread_realtime_priority::max() - 6,
-          affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
-      if (!exec_mng.add_execution_context(create_execution_context(buffered_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", buffered_worker.name);
-      }
-
-      fapi_exec[cell_id] = exec_mng.executors().at(exec_name);
-    }
-  }
-
   // Update executor pointer mapping
   cu_cp_exec       = exec_map.at("ctrl_exec");
   cu_cp_e2_exec    = exec_map.at("ctrl_exec");
@@ -250,35 +290,6 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
   }
   cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_pool(
       *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
-
-  // Instantiate DU-high executor mapper.
-  du_high_executors.resize(nof_cells);
-  for (unsigned i = 0; i != nof_cells; ++i) {
-    auto&             du_item     = du_high_executors[i];
-    const std::string cell_id_str = std::to_string(i);
-
-    // DU-high executor mapper.
-    using exec_list       = std::initializer_list<task_executor*>;
-    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
-                                                                   exec_list{exec_map.at("slot_exec#" + cell_id_str)});
-    auto ue_exec_mapper =
-        std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at(fmt::format("du_rb_prio_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_ul_exec#{}", i))},
-                                                   exec_list{exec_map.at(fmt::format("du_rb_dl_exec#{}", i))});
-    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
-                                                                                 std::move(ue_exec_mapper),
-                                                                                 *exec_map.at("ctrl_exec"),
-                                                                                 *exec_map.at("timer_exec"),
-                                                                                 *exec_map.at("ctrl_exec"));
-  }
-
-  const upper_phy_threads_appconfig& upper_phy_threads_cfg = appcfg.expert_execution_cfg.threads.upper_threads;
-  create_du_low_executors(is_blocking_mode_active,
-                          upper_phy_threads_cfg.nof_ul_threads,
-                          upper_phy_threads_cfg.nof_dl_threads,
-                          upper_phy_threads_cfg.nof_pusch_decoder_threads,
-                          cells_cfg,
-                          appcfg.expert_phy_cfg.max_processing_delay_slots);
 }
 
 void worker_manager::create_du_low_executors(bool                       is_blocking_mode_active,
@@ -308,7 +319,6 @@ void worker_manager::create_du_low_executors(bool                       is_block
       upper_pdsch_exec.push_back(exec_mng.executors().at("phy_exec"));
       du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("phy_exec"));
     }
-
   } else {
     // RF case.
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {

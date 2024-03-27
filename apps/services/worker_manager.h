@@ -107,8 +107,11 @@ private:
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
-  /// Helper method that creates the Control and Distributed Units executors.
-  void create_du_cu_executors(const gnb_appconfig& appcfg);
+  /// Helper method that creates the low priority executors used by the application.
+  void create_low_prio_executors(const gnb_appconfig& appcfg);
+
+  /// Helper method that creates the Distributed Unit executors.
+  void create_du_executors(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the low Distributed Unit executors.
   void create_du_low_executors(bool                       is_blocking_mode_active,
