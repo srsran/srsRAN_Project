@@ -289,7 +289,7 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
     ue_up_ctrl_execs[i] = exec_map.at(fmt::format("ue_up_ctrl_exec#{}", i));
   }
   cu_up_exec_mapper = srs_cu_up::make_cu_up_executor_pool(
-      *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs);
+      *exec_map.at("cu_up_ctrl_exec"), ue_up_dl_execs, ue_up_ul_execs, ue_up_ctrl_execs, *exec_map.at("low_prio_exec"));
 }
 
 void worker_manager::create_du_low_executors(bool                       is_blocking_mode_active,
