@@ -8,8 +8,8 @@
  *
  */
 
+#include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/priority_task_worker.h"
-#include "srsran/support/executors/task_executor_utils.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <future>

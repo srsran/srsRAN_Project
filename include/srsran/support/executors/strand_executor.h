@@ -11,8 +11,9 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/support/executors/detail/priority_task_queue.h"
+#include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_executor_utils.h"
 #include "srsran/support/executors/thread_utils.h"
 
 namespace srsran {
@@ -20,32 +21,13 @@ namespace srsran {
 namespace detail {
 
 // Specialization for strand with multiple queues of different priorities.
-template <concurrent_queue_policy... QueuePolicies>
-struct strand_queue {
-  explicit strand_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& strand_queue_sizes) :
-    queue(strand_queue_sizes, std::chrono::microseconds{0})
-  {
-  }
-  explicit strand_queue(span<const unsigned> strand_queue_sizes) :
-    queue(
-        [&strand_queue_sizes]() {
-          report_error_if_not(strand_queue_sizes.size() == sizeof...(QueuePolicies),
-                              "Number of queue sizes must match number of policies");
-          std::array<unsigned, sizeof...(QueuePolicies)> sizes;
-          for (size_t i = 0; i < sizeof...(QueuePolicies); ++i) {
-            sizes[i] = strand_queue_sizes[i];
-          }
-          return sizes;
-        }(),
-        std::chrono::microseconds{0})
+struct priority_strand_queue {
+  explicit priority_strand_queue(span<const concurrent_queue_params> strand_queue_params) :
+    queue(strand_queue_params, std::chrono::microseconds{0})
   {
   }
 
-  template <enqueue_priority Priority>
-  bool try_push(unique_task task)
-  {
-    return queue.template try_push<Priority>(std::move(task));
-  }
+  bool try_push(enqueue_priority prio, unique_task task) { return queue.try_push(prio, std::move(task)); }
 
   bool pop(unique_task& task)
   {
@@ -61,32 +43,15 @@ struct strand_queue {
     return false;
   }
 
-  template <enqueue_priority Priority>
-  auto get_enqueuer()
-  {
-    return queue.template get_non_blocking_enqueuer<Priority>();
-  }
-
-  concurrent_priority_queue<unique_task, QueuePolicies...> queue;
+  priority_task_queue queue;
 };
 
 // Specialization for strand with single queue.
 template <concurrent_queue_policy QueuePolicy>
-struct strand_queue<QueuePolicy> {
+struct strand_queue {
   explicit strand_queue(unsigned strand_queue_size) : queue(strand_queue_size) {}
-  explicit strand_queue(span<const unsigned> strand_queue_sizes) :
-    queue([&strand_queue_sizes]() {
-      report_error_if_not(strand_queue_sizes.size() == 1, "Number of queue sizes must match number of policies");
-      return strand_queue_sizes[0];
-    }())
-  {
-  }
 
-  template <enqueue_priority Priority>
-  bool try_push(unique_task task)
-  {
-    return queue.try_push(std::move(task));
-  }
+  bool try_push(unique_task task) { return queue.try_push(std::move(task)); }
 
   bool pop(unique_task& task)
   {
@@ -100,12 +65,6 @@ struct strand_queue<QueuePolicy> {
       telapsed += std::chrono::microseconds{1};
     } while (telapsed < time_to_wait);
     return false;
-  }
-
-  template <enqueue_priority Priority>
-  auto get_enqueuer()
-  {
-    return non_blocking_enqueuer<unique_task, QueuePolicy>{queue};
   }
 
   concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking> queue;
@@ -113,13 +72,19 @@ struct strand_queue<QueuePolicy> {
 
 } // namespace detail
 
-/// \brief Base class for task strand implementations.
-class base_task_strand
+namespace detail {
+
+template <typename Executor, typename QueueType>
+class task_strand_impl
 {
 public:
-  virtual ~base_task_strand() = default;
+  template <typename ExecType, typename... QueueParams>
+  explicit task_strand_impl(ExecType&& exec_, QueueParams&&... queue_params) :
+    out_exec(std::forward<ExecType>(exec_)), queue(std::forward<QueueParams>(queue_params)...)
+  {
+  }
 
-  /// Called once task is enqueued in the strand queue to assess whether the strand should be locked and dispatched.
+  // Called once task is enqueued in the strand queue to assess whether the strand should be locked and dispatched.
   bool handle_enqueued_task(bool is_execute)
   {
     // If the task_strand is acquired, it means that no other thread is running the pending tasks and we need to
@@ -130,126 +95,26 @@ public:
       // the running of all enqueued jobs, including the one we just enqueued in this call.
       return true;
     }
-    return this->dispatch_strand(is_execute);
-  }
 
-protected:
-  virtual bool dispatch_strand(bool is_execute) = 0;
-
-  // Number of jobs currently enqueued in the strand.
-  std::atomic<uint32_t> job_count{0};
-};
-
-namespace detail {
-
-template <concurrent_queue_policy QueuePolicy, typename StrandPtr>
-class task_strand_executor_impl final : public task_executor
-{
-public:
-  template <typename U>
-  task_strand_executor_impl(non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer_, U&& strand_) :
-    enqueuer(enqueuer_), strand(std::forward<U>(strand_))
-  {
-  }
-
-  SRSRAN_NODISCARD bool execute(unique_task task) override
-  {
-    // Enqueue task in task_strand queue.
-    if (not enqueuer.try_push(std::move(task))) {
-      // strand queue is full.
+    // Check if the adapted executor gives us permission to run pending tasks inline. An example of when this may
+    // happen is when the caller is running in the same execution context of the underlying task worker or task worker
+    // pool. However, this permission is still not a sufficient condition to simply call the task inline. For
+    // instance, if the execution context is a thread pool, we have to ensure that the task_strand is not already
+    // acquired by another thread of the same pool. If we do not do this, running the task inline would conflict with
+    // the task_strand strict serialization requirements. For this reason, we will always enqueue the task and try to
+    // acquire the task_strand.
+    bool dispatch_successful;
+    if (is_execute) {
+      dispatch_successful = detail::get_task_executor_ref(out_exec).execute([this]() { run_enqueued_tasks(); });
+    } else {
+      dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
+    }
+    if (not dispatch_successful) {
+      // Unable to dispatch executor job to run enqueued tasks.
+      this->handle_failed_task_dispatch();
       return false;
     }
-    return strand->handle_enqueued_task(true);
-  }
-
-  SRSRAN_NODISCARD bool defer(unique_task task) override
-  {
-    // Enqueue task in task_strand queue.
-    if (not enqueuer.try_push(std::move(task))) {
-      // strand queue is full.
-      return false;
-    }
-    return strand->handle_enqueued_task(false);
-  }
-
-private:
-  non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer;
-  StrandPtr                                       strand;
-};
-
-template <concurrent_queue_policy... QueuePolicies>
-class task_strand_with_queue : public base_task_strand
-{
-public:
-  /// Queue Policies of this strand.
-  static constexpr std::array<concurrent_queue_policy, sizeof...(QueuePolicies)> queue_policies{QueuePolicies...};
-
-  /// \brief Executor with a compile-time defined task priority that dispatches tasks to the associated strand.
-  ///
-  /// This executor does not control the lifetime of the strand.
-  template <enqueue_priority Priority>
-  using executor =
-      detail::task_strand_executor_impl<get_priority_queue_policy<QueuePolicies...>(Priority), base_task_strand*>;
-
-  template <typename... Args>
-  explicit task_strand_with_queue(Args&&... queue_params) : queue(std::forward<Args>(queue_params)...)
-  {
-  }
-
-  /// Number of priority levels supported by this strand.
-  static size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
-
-  template <enqueue_priority Priority>
-  SRSRAN_NODISCARD bool execute(unique_task task)
-  {
-    // Enqueue task in task_strand queue.
-    if (not this->queue.template try_push<Priority>(std::move(task))) {
-      return false;
-    }
-    return handle_enqueued_task(true);
-  }
-
-  template <enqueue_priority Priority>
-  SRSRAN_NODISCARD bool defer(unique_task task)
-  {
-    // Enqueue task in task_strand queue.
-    if (not this->queue.template try_push<Priority>(std::move(task))) {
-      return false;
-    }
-    return handle_enqueued_task(false);
-  }
-
-  template <enqueue_priority Priority = enqueue_priority::min>
-  executor<Priority> get_executor()
-  {
-    return executor<Priority>{this->queue.template get_enqueuer(), *this};
-  }
-
-  std::unique_ptr<task_executor> get_executor_ptr(enqueue_priority prio)
-  {
-    return get_executor_ptr_impl(prio, std::make_index_sequence<sizeof...(QueuePolicies)>{});
-  }
-
-  template <enqueue_priority Priority>
-  auto get_enqueuer()
-  {
-    return this->queue.template get_enqueuer<Priority>();
-  }
-
-protected:
-  template <size_t... Is>
-  std::unique_ptr<task_executor> get_executor_ptr_impl(enqueue_priority priority, std::index_sequence<Is...> /*unused*/)
-  {
-    const size_t                   idx = detail::enqueue_priority_to_queue_index(priority, sizeof...(QueuePolicies));
-    std::unique_ptr<task_executor> exec;
-    (void)std::initializer_list<int>{[this, idx, &exec]() {
-      if (idx == Is) {
-        exec = std::make_unique<executor<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies))>>(
-            this->queue.template get_enqueuer(), *this);
-      }
-      return 0;
-    }()...};
-    return exec;
+    return true;
   }
 
   // Run all tasks that have been enqueued in the strand, and unlocks the strand.
@@ -313,185 +178,239 @@ protected:
     }
   }
 
-  unique_task get_run_strand_task()
-  {
-    return [this]() { run_enqueued_tasks(); };
-  }
+  // Executor to which tasks are dispatched in serialized manner.
+  Executor out_exec;
 
-  // Queue of pending tasks waiting for their turn.
-  detail::strand_queue<QueuePolicies...> queue;
+  // Queue of pending tasks.
+  QueueType queue;
+
+  // Number of jobs currently enqueued in the strand.
+  std::atomic<uint32_t> job_count{0};
 };
 
-} // namespace detail
-
-/// \brief This class implements a strand of one or more enqueueing policies, each with a different priority.
-///
-/// \tparam Executor Executor that the strands dispatches tasks to.
-/// \tparam QueuePolicies Enqueueing policies for each of the task priority levels supported by the strand.
-template <typename Executor, concurrent_queue_policy... QueuePolicies>
-class task_strand final : public detail::task_strand_with_queue<QueuePolicies...>
+template <concurrent_queue_policy QueuePolicy, typename StrandPtr>
+class task_strand_executor_impl final : public task_executor
 {
-  using base_type = detail::task_strand_with_queue<QueuePolicies...>;
-
 public:
-  template <enqueue_priority Priority>
-  using executor = typename base_type::template executor<Priority>;
-
-  template <typename Exec, typename... Args>
-  explicit task_strand(Exec&& executor_, Args&&... queue_params) :
-    base_type(std::forward<Args>(queue_params)...), out_exec(std::forward<Exec>(executor_))
+  template <typename U>
+  task_strand_executor_impl(non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer_, U&& strand_) :
+    enqueuer(enqueuer_), strand(std::forward<U>(strand_))
   {
+  }
+
+  SRSRAN_NODISCARD bool execute(unique_task task) override
+  {
+    // Enqueue task in task_strand queue.
+    if (not enqueuer.try_push(std::move(task))) {
+      // strand queue is full.
+      return false;
+    }
+    return strand->handle_enqueued_task(true);
+  }
+
+  SRSRAN_NODISCARD bool defer(unique_task task) override
+  {
+    // Enqueue task in task_strand queue.
+    if (not enqueuer.try_push(std::move(task))) {
+      // strand queue is full.
+      return false;
+    }
+    return strand->handle_enqueued_task(false);
   }
 
 private:
-  bool dispatch_strand(bool is_execute) final
-  {
-    // Check if the adapted executor gives us permission to run pending tasks inline. An example of when this may
-    // happen is when the caller is running in the same execution context of the underlying task worker or task worker
-    // pool. However, this permission is still not a sufficient condition to simply call the task inline. For
-    // instance, if the execution context is a thread pool, we have to ensure that the task_strand is not already
-    // acquired by another thread of the same pool. If we do not do this, running the task inline would conflict with
-    // the task_strand strict serialization requirements. For this reason, we will always enqueue the task and try to
-    // acquire the task_strand.
-    bool dispatch_successful;
-    if (is_execute) {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).execute(this->get_run_strand_task());
-    } else {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).defer(this->get_run_strand_task());
-    }
-    if (not dispatch_successful) {
-      // Unable to dispatch executor job to run enqueued tasks.
-      this->handle_failed_task_dispatch();
-      return false;
-    }
-    return true;
-  }
-
-  // Executor to which tasks are dispatched in serialized manner.
-  Executor out_exec;
+  non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer;
+  StrandPtr                                       strand;
 };
 
-/// \brief Creates a task strand instance given a list of parameters
+} // namespace detail
+
+/// \brief This class implements a strand with a specified enqueueing policy, with no prioritization.
+///
+/// \tparam Executor Executor that the strands dispatches tasks to.
+/// \tparam QueuePolicy Enqueueing policy to dispatch tasks to the strand.
+template <typename OutExec, concurrent_queue_policy QueuePolicy>
+class task_strand final : public task_executor
+{
+public:
+  template <typename ExecType>
+  task_strand(ExecType&& out_exec, unsigned qsize) : impl(std::forward<ExecType>(out_exec), qsize)
+  {
+  }
+
+  SRSRAN_NODISCARD bool execute(unique_task task) override
+  {
+    // Enqueue task in task_strand queue.
+    if (not impl.queue.try_push(std::move(task))) {
+      return false;
+    }
+    return impl.handle_enqueued_task(true);
+  }
+
+  SRSRAN_NODISCARD bool defer(unique_task task) override
+  {
+    // Enqueue task in task_strand queue.
+    if (not impl.queue.try_push(std::move(task))) {
+      return false;
+    }
+    return impl.handle_enqueued_task(false);
+  }
+
+  /// Number of priority levels supported by this strand.
+  size_t nof_priority_levels() { return 1; }
+
+private:
+  detail::task_strand_impl<OutExec, detail::strand_queue<QueuePolicy>> impl;
+};
+
+/// \brief Task strand that supports multiple priority levels for the dispatched tasks.
+///
+/// \tparam OutExec Executor that the strands dispatches tasks to.
+template <typename OutExec>
+class priority_task_strand
+{
+public:
+  template <typename ExecType>
+  priority_task_strand(ExecType&& out_exec, span<const concurrent_queue_params> strand_queue_params) :
+    impl(std::forward<ExecType>(out_exec), strand_queue_params)
+  {
+  }
+
+  /// \brief Dispatch task with priority \c prio. If possible, the task can be run inline.
+  SRSRAN_NODISCARD bool execute(enqueue_priority prio, unique_task task)
+  {
+    // Enqueue task in task_strand queue.
+    if (not impl.queue.try_push(prio, std::move(task))) {
+      return false;
+    }
+    return impl.handle_enqueued_task(true);
+  }
+
+  /// \brief Dispatch task with priority \c prio. The task is never run inline.
+  SRSRAN_NODISCARD bool defer(enqueue_priority prio, unique_task task)
+  {
+    // Enqueue task in task_strand queue.
+    if (not impl.queue.try_push(prio, std::move(task))) {
+      return false;
+    }
+    return impl.handle_enqueued_task(false);
+  }
+
+  /// Number of priority levels supported by this strand.
+  size_t nof_priority_levels() { return impl.queue.queue.nof_priority_levels(); }
+
+private:
+  detail::task_strand_impl<OutExec, detail::priority_strand_queue> impl;
+};
+
+/// \brief Executor for a task strand with a single priority level and queueing policy \c QueuePolicy.
+template <typename OutExec, concurrent_queue_policy QueuePolicy>
+class task_strand_executor final : public task_executor
+{
+public:
+  task_strand_executor() = default;
+  task_strand_executor(task_strand<OutExec, QueuePolicy>& strand_) : strand(&strand_) {}
+
+  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(std::move(task)); }
+
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(std::move(task)); }
+
+private:
+  task_strand<OutExec, QueuePolicy>* strand = nullptr;
+};
+
+/// \brief Executor that dispatches tasks with a specified priority to a strand that supports multiple priority levels.
+template <typename StrandPtr>
+class priority_task_strand_executor final : public task_executor
+{
+public:
+  priority_task_strand_executor() = default;
+  priority_task_strand_executor(enqueue_priority prio_, StrandPtr strand_ptr) :
+    prio(prio_), strand(std::move(strand_ptr))
+  {
+  }
+
+  SRSRAN_NODISCARD bool execute(unique_task task) override { return strand->execute(prio, std::move(task)); }
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return strand->defer(prio, std::move(task)); }
+
+private:
+  enqueue_priority prio   = enqueue_priority::min;
+  StrandPtr        strand = nullptr;
+};
+
+/// \brief Creates a task strand instance with a single priority task level.
+template <typename OutExec>
+std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, const concurrent_queue_params& qparams)
+{
+  switch (qparams.policy) {
+    case concurrent_queue_policy::lockfree_mpmc:
+      return std::make_unique<task_strand<OutExec, concurrent_queue_policy::lockfree_mpmc>>(
+          std::forward<OutExec>(out_exec), qparams.size);
+    case concurrent_queue_policy::lockfree_spsc:
+      return std::make_unique<task_strand<OutExec, concurrent_queue_policy::lockfree_spsc>>(
+          std::forward<OutExec>(out_exec), qparams.size);
+    case concurrent_queue_policy::locking_mpmc:
+      return std::make_unique<task_strand<OutExec, concurrent_queue_policy::locking_mpmc>>(
+          std::forward<OutExec>(out_exec), qparams.size);
+    case concurrent_queue_policy::locking_mpsc:
+      return std::make_unique<task_strand<OutExec, concurrent_queue_policy::locking_mpsc>>(
+          std::forward<OutExec>(out_exec), qparams.size);
+    default:
+      break;
+  }
+  report_fatal_error("Unsupported queue policy.");
+  return nullptr;
+}
+
+/// \brief Creates a task strand instance with a single priority task level.
 template <concurrent_queue_policy QueuePolicy, typename OutExec>
-std::unique_ptr<task_strand<OutExec, QueuePolicy>> make_task_strand_ptr(OutExec&& out_exec, unsigned strand_queue_size)
+std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, unsigned strand_queue_size)
 {
   return std::make_unique<task_strand<OutExec, QueuePolicy>>(std::forward<OutExec>(out_exec), strand_queue_size);
 }
-template <concurrent_queue_policy... QueuePolicies, typename OutExec>
-std::unique_ptr<task_strand<OutExec, QueuePolicies...>> make_task_strand_ptr(OutExec&&            out_exec,
-                                                                             span<const unsigned> strand_queue_sizes)
-{
-  report_error_if_not(strand_queue_sizes.size() == sizeof...(QueuePolicies),
-                      "Number of queue sizes must match number of policies ({}!={})",
-                      strand_queue_sizes.size(),
-                      sizeof...(QueuePolicies));
-  return std::make_unique<task_strand<OutExec, QueuePolicies...>>(std::forward<OutExec>(out_exec), strand_queue_sizes);
-}
 
-/// \brief Executor with a compile-time defined task priority, that controls the lifetime of the associated strand.
-template <concurrent_queue_policy QueuePolicy>
-using shared_strand_executor = detail::task_strand_executor_impl<QueuePolicy, std::shared_ptr<base_task_strand>>;
-
-/// \brief Make a strand executor that manages the lifetime of a strand with a single queue.
-template <concurrent_queue_policy QueuePolicy, typename OutExec>
-std::unique_ptr<task_executor> make_strand_executor_ptr(OutExec&& out_exec, unsigned queue_size)
-{
-  auto strand   = make_task_strand_ptr<QueuePolicy, OutExec>(std::forward<OutExec>(out_exec), queue_size);
-  auto enqueuer = strand->template get_enqueuer<enqueue_priority::max>();
-
-  return std::make_unique<shared_strand_executor<QueuePolicy>>(enqueuer, std::move(strand));
-}
-
-namespace detail {
-
-template <concurrent_queue_policy... QueuePolicies, typename OutExec, size_t... Is>
-std::vector<std::unique_ptr<task_executor>>
-make_strand_executor_ptrs_helper(std::shared_ptr<task_strand<OutExec, QueuePolicies...>>& strand_shared,
-                                 std::index_sequence<Is...> /*unused*/)
-{
-  std::array<std::unique_ptr<task_executor>, sizeof...(QueuePolicies)> execs{
-      std::make_unique<shared_strand_executor<QueuePolicies>>(
-          strand_shared->template get_enqueuer<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies))>(),
-          strand_shared)...};
-
-  std::vector<std::unique_ptr<task_executor>> created_execs;
-  created_execs.resize(execs.size());
-  for (unsigned i = 0; i != created_execs.size(); ++i) {
-    created_execs[i] = std::move(execs[i]);
-  }
-  return created_execs;
-}
-
-} // namespace detail
-
-/// \brief Create all executors associated with a given strand. The executors will manage the strand lifetime via
-/// reference counting.
-template <concurrent_queue_policy... QueuePolicies, typename OutExec>
-std::vector<std::unique_ptr<task_executor>> make_strand_executor_ptrs(OutExec&& out_exec, span<const unsigned> qsizes)
-{
-  std::shared_ptr<task_strand<OutExec, QueuePolicies...>> strand_shared =
-      make_task_strand_ptr<QueuePolicies...>(std::forward<OutExec>(out_exec), qsizes);
-
-  return detail::make_strand_executor_ptrs_helper(strand_shared, std::make_index_sequence<sizeof...(QueuePolicies)>{});
-}
-
-namespace detail {
-
-constexpr size_t MAX_QUEUES_PER_STRAND = 3;
-
-// Special case to stop recursion for task queue policies.
-template <typename OutExec,
-          concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<(sizeof...(QueuePolicies) > MAX_QUEUES_PER_STRAND), int> = 0>
-std::vector<std::unique_ptr<task_executor>>
-make_strand_executors_iter_helper(OutExec&& out_exec, span<const concurrent_queue_params> strand_queues)
-{
-  report_fatal_error("Strands with equal or more than {} queues are not supported", MAX_QUEUES_PER_STRAND);
-  return {};
-};
-
-template <typename OutExec,
-          concurrent_queue_policy... QueuePolicies,
-          std::enable_if_t<sizeof...(QueuePolicies) <= MAX_QUEUES_PER_STRAND, int> = 0>
-std::vector<std::unique_ptr<task_executor>>
-make_strand_executors_iter_helper(OutExec&& out_exec, span<const concurrent_queue_params> strand_queues)
-{
-  constexpr static size_t Is = sizeof...(QueuePolicies);
-  if (strand_queues.empty() or Is > strand_queues.size()) {
-    return {};
-  }
-  if (Is == strand_queues.size()) {
-    std::array<unsigned, Is> strand_queue_sizes;
-    for (unsigned i = 0; i != strand_queues.size(); ++i) {
-      strand_queue_sizes[i] = strand_queues[i].size;
-    }
-    return make_strand_executor_ptrs<QueuePolicies...>(std::forward<OutExec>(out_exec),
-                                                       span<const unsigned>(strand_queue_sizes));
-  }
-
-  switch (strand_queues[Is].policy) {
-    case concurrent_queue_policy::lockfree_mpmc: {
-      return make_strand_executors_iter_helper<OutExec, QueuePolicies..., concurrent_queue_policy::lockfree_mpmc>(
-          std::forward<OutExec>(out_exec), strand_queues);
-    } break;
-    case concurrent_queue_policy::lockfree_spsc: {
-      return make_strand_executors_iter_helper<OutExec, QueuePolicies..., concurrent_queue_policy::lockfree_spsc>(
-          std::forward<OutExec>(out_exec), strand_queues);
-    } break;
-    default:
-      report_fatal_error("Unsupported queue policy.");
-  }
-  return {};
-}
-
-} // namespace detail
-
-/// \brief Creates a list of task executors associated with a strand that points to the provided out executor.
+/// \brief Creates a task strand instance with several priority task levels.
 template <typename OutExec>
-std::vector<std::unique_ptr<task_executor>> make_strand_executor_ptrs(OutExec&&                           out_exec,
-                                                                      span<const concurrent_queue_params> strand_queues)
+std::unique_ptr<priority_task_strand<OutExec>>
+make_priority_task_strand_ptr(OutExec&& out_exec, span<const concurrent_queue_params> qparams)
 {
-  return detail::make_strand_executors_iter_helper<OutExec>(std::forward<OutExec>(out_exec), strand_queues);
+  return std::make_unique<priority_task_strand<OutExec>>(std::forward<OutExec>(out_exec), qparams);
+}
+
+/// \brief Creates a task executor with a given priority for a strand that supports multiple priorities.
+template <typename StrandPtr>
+priority_task_strand_executor<StrandPtr> make_priority_task_executor(enqueue_priority prio, StrandPtr strand_ptr)
+{
+  return {prio, std::move(strand_ptr)};
+}
+template <typename StrandPtr>
+std::unique_ptr<task_executor> make_priority_task_executor_ptr(enqueue_priority prio, StrandPtr strand_ptr)
+{
+  return std::make_unique<priority_task_strand_executor<StrandPtr>>(prio, std::move(strand_ptr));
+}
+
+template <typename StrandPtr>
+std::vector<priority_task_strand_executor<StrandPtr>> make_priority_task_executors(StrandPtr strand_ptr)
+{
+  std::vector<priority_task_strand_executor<StrandPtr>> ret;
+  const unsigned                                        nof_levels = strand_ptr->nof_priority_levels();
+  ret.reserve(nof_levels);
+  for (unsigned i = 0; i != nof_levels; ++i) {
+    ret.push_back(make_priority_task_executor(detail::queue_index_to_enqueue_priority(i, nof_levels), strand_ptr));
+  }
+  return ret;
+}
+
+template <typename StrandPtr>
+std::vector<std::unique_ptr<task_executor>> make_priority_task_executor_ptrs(StrandPtr strand_ptr)
+{
+  std::vector<std::unique_ptr<task_executor>> ret;
+  const unsigned                              nof_levels = strand_ptr->nof_priority_levels();
+  ret.reserve(nof_levels);
+  for (unsigned i = 0; i != nof_levels; ++i) {
+    ret.push_back(make_priority_task_executor_ptr(detail::queue_index_to_enqueue_priority(i, nof_levels), strand_ptr));
+  }
+  return ret;
 }
 
 } // namespace srsran

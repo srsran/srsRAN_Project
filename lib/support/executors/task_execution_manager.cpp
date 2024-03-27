@@ -60,8 +60,9 @@ std::unique_ptr<task_executor> decorate_executor(const execution_config_helper::
 {
   std::unique_ptr<task_executor> ret;
   if (desc.strand_queue_size.has_value()) {
-    ret = make_strand_executor_ptr<concurrent_queue_policy::lockfree_mpmc>(std::forward<Exec>(exec),
-                                                                           desc.strand_queue_size.value());
+    // Convert executor into a strand.
+    ret = std::make_unique<task_strand<Exec, concurrent_queue_policy::lockfree_mpmc>>(std::forward<Exec>(exec),
+                                                                                      desc.strand_queue_size.value());
   } else {
     ret = exec_to_ptr(std::forward<Exec>(exec));
   }
@@ -174,24 +175,35 @@ protected:
   {
     task_executor_list execs;
     for (const execution_config_helper::strand& strand_cfg : desc.strands) {
-      std::vector<execution_config_helper::task_queue> queues(strand_cfg.queues.size());
-      for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
-        queues[i] = execution_config_helper::task_queue{strand_cfg.queues[i].policy, strand_cfg.queues[i].size};
-      }
-      std::vector<std::unique_ptr<task_executor>> strand_execs;
-      if (desc.strand_queue_size.has_value()) {
-        strand_execs = make_strand_executor_ptrs(make_strand_executor_ptr<concurrent_queue_policy::lockfree_mpmc>(
-                                                     std::forward<OutExec>(basic_exec), *desc.strand_queue_size),
-                                                 span<const concurrent_queue_params>(queues));
+      report_fatal_error_if_not(
+          strand_cfg.queues.size() > 0, "No queues were defined for the strand in executor {}", desc.name);
+
+      if (strand_cfg.queues.size() > 1) {
+        // Multiple priorities case.
+
+        // Create priority strand.
+        std::vector<concurrent_queue_params> qparams(strand_cfg.queues.size());
+        for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
+          qparams[i].policy = strand_cfg.queues[i].policy;
+          qparams[i].size   = strand_cfg.queues[i].size;
+        }
+        std::shared_ptr<priority_task_strand<OutExec>> shared_strand =
+            make_priority_task_strand_ptr(std::forward<OutExec>(basic_exec), qparams);
+
+        // Create executors that own the strand through reference counting.
+        for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
+          enqueue_priority prio = detail::queue_index_to_enqueue_priority(i, strand_cfg.queues.size());
+          execs.emplace_back(strand_cfg.queues[0].name, make_priority_task_executor_ptr(prio, shared_strand));
+        }
       } else {
-        strand_execs =
-            make_strand_executor_ptrs(std::forward<OutExec>(basic_exec), span<const concurrent_queue_params>(queues));
-      }
-      if (strand_execs.size() != strand_cfg.queues.size()) {
-        return {};
-      }
-      for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
-        execs.emplace_back(strand_cfg.queues[i].name, std::move(strand_execs[i]));
+        // Single priority level case.
+        concurrent_queue_params qparams;
+        qparams.policy  = strand_cfg.queues[0].policy;
+        qparams.size    = strand_cfg.queues[0].size;
+        auto strand_ptr = make_task_strand_ptr<OutExec>(std::forward<OutExec>(basic_exec), qparams);
+
+        // Strand becomes the executor.
+        execs.emplace_back(strand_cfg.queues[0].name, std::move(strand_ptr));
       }
     }
     return execs;
