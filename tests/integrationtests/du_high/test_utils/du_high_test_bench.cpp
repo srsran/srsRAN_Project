@@ -105,14 +105,16 @@ void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
 {
   bool result =
       test_exec.execute([this,
+                         slot,
                          dl_sched_res = cached_dl_res.has_value() ? *cached_dl_res->dl_res : dl_sched_result{},
                          ul_sched_res = cached_ul_res.has_value() ? *cached_ul_res->ul_res : ul_sched_result{},
                          dl_res_copy  = cached_dl_res,
                          dl_data_copy = cached_dl_data,
                          ul_res_copy  = cached_ul_res]() mutable {
-        last_dl_res  = dl_res_copy;
-        last_dl_data = dl_data_copy;
-        last_ul_res  = ul_res_copy;
+        last_slot_res = slot;
+        last_dl_res   = dl_res_copy;
+        last_dl_data  = dl_data_copy;
+        last_ul_res   = ul_res_copy;
         if (last_dl_res.has_value()) {
           last_dl_sched_res   = dl_sched_res;
           last_dl_res->dl_res = &last_dl_sched_res;
@@ -317,16 +319,19 @@ void du_high_test_bench::run_slot()
 
   // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test main
   // thread).
-  const unsigned                       MAX_COUNT = 1000;
-  const optional<mac_dl_sched_result>& dl_result = phy.cell.last_dl_res;
-  for (unsigned count = 0; count < MAX_COUNT and (not dl_result.has_value() or dl_result->slot != next_slot); ++count) {
+  const unsigned MAX_COUNT = 1000;
+  for (unsigned count = 0; count < MAX_COUNT and phy.cell.last_slot_res != next_slot; ++count) {
     // Process tasks dispatched to the test main thread (e.g. L2 slot result)
     workers.test_worker.run_pending_tasks();
 
     // Wait for tasks to arrive to test thread.
     std::this_thread::sleep_for(std::chrono::milliseconds{1});
   }
-  EXPECT_TRUE(dl_result.has_value() and dl_result->slot == next_slot);
+  EXPECT_EQ(phy.cell.last_slot_res, next_slot);
+  const optional<mac_dl_sched_result>& dl_result = phy.cell.last_dl_res;
+  if (dl_result.has_value()) {
+    EXPECT_TRUE(dl_result->slot == next_slot);
+  }
 
   ++next_slot;
 

@@ -23,6 +23,7 @@ public:
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
   void on_cell_results_completion(slot_point slot) override;
 
+  slot_point                    last_slot_res;
   optional<mac_dl_sched_result> last_dl_res;
   optional<mac_dl_data_result>  last_dl_data;
   optional<mac_ul_sched_result> last_ul_res;
