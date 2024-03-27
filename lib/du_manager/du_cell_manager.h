@@ -43,6 +43,12 @@ public:
     return cells[cell_index]->cfg;
   }
 
+  async_task<void> start(du_cell_index_t cell_index);
+
+  async_task<void> stop(du_cell_index_t cell_index);
+
+  async_task<void> stop();
+
 private:
   struct cell_t {
     bool           active = false;
@@ -57,6 +63,7 @@ private:
   void add_cell(const du_cell_config& cfg);
 
   const du_manager_params& cfg;
+  srslog::basic_logger&    logger;
 
   std::vector<std::unique_ptr<cell_t>> cells;
 };

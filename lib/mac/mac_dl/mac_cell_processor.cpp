@@ -62,7 +62,12 @@ async_task<void> mac_cell_processor::start()
 
 async_task<void> mac_cell_processor::stop()
 {
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() { state = cell_state::inactive; });
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() {
+    // Set cell state to inactive to stop answering to slot indications.
+    state = cell_state::inactive;
+
+    logger.info("cell={}: Cell was stopped.", cell_cfg.cell_index);
+  });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
