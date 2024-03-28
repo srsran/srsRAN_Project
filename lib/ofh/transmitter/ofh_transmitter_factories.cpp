@@ -35,7 +35,7 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
   config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
-  config.vlan_params.tci             = tx_config.tci;
+  config.vlan_params.tci             = tx_config.tci_cp;
   config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
   config.vlan_params.mac_src_address = tx_config.mac_src_address;
   config.dl_compr_params             = tx_config.dl_compr_params;
@@ -66,7 +66,7 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
   config.dl_eaxc                     = tx_config.dl_eaxc;
   config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
-  config.vlan_params.tci             = tx_config.tci;
+  config.vlan_params.tci             = tx_config.tci_up;
   config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
   config.vlan_params.mac_src_address = tx_config.mac_src_address;
   config.compr_params                = tx_config.dl_compr_params;

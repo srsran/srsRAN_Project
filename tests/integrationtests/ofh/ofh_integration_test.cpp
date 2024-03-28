@@ -971,7 +971,8 @@ static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
   sector_cfg.mac_src_address                 = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   sector_cfg.mac_dst_address                 = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   sector_cfg.mtu_size                        = test_params.mtu;
-  sector_cfg.tci                             = vlan_tag;
+  sector_cfg.tci_cp                          = vlan_tag;
+  sector_cfg.tci_up                          = vlan_tag;
   sector_cfg.scs                             = test_params.scs;
   sector_cfg.bw                              = test_params.bw;
   sector_cfg.cp                              = cyclic_prefix::NORMAL;

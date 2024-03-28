@@ -1924,7 +1924,12 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
       ->check(CLI::Range(1500, 9600));
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
-  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
+  app.add_option("--vlan_tag_cp", config.vlan_tag_cp, "C-Plane V-LAN identifier")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4094));
+  app.add_option("--vlan_tag_up", config.vlan_tag_up, "U-Plane V-LAN identifier")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4094));
   app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
   app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
   app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();

@@ -30,7 +30,8 @@ ru_ofh:
     - network_interface: enp1s0f0                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: 70:b3:d5:e1:5b:06                              # RU MAC address.
       du_mac_addr: 80:61:5f:0d:df:aa                              # DU MAC address.
-      vlan_tag: 5                                                 # VLAN tag value.
+      vlan_tag_cp: 5                                              # VLAN tag value for C-Plane.
+      vlan_tag_up: 5                                              # VLAN tag value for U-Plane.
       prach_port_id: [4]                                          # PRACH eAxC port value.
       dl_port_id: [0, 1]                                          # Downlink eAxC port values.
       ul_port_id: [0, 1]                                          # Uplink eAxC port values.

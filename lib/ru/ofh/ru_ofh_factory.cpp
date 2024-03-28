@@ -29,7 +29,8 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.mtu_size                    = sector_cfg.mtu_size;
   ofh_sector_config.mac_dst_address             = sector_cfg.mac_dst_address;
   ofh_sector_config.mac_src_address             = sector_cfg.mac_src_address;
-  ofh_sector_config.tci                         = sector_cfg.tci;
+  ofh_sector_config.tci_cp                      = sector_cfg.tci_cp;
+  ofh_sector_config.tci_up                      = sector_cfg.tci_up;
   ofh_sector_config.tx_window_timing_params     = sector_cfg.tx_window_timing_params;
   ofh_sector_config.rx_window_timing_params     = sector_cfg.rx_window_timing_params;
   ofh_sector_config.cp                          = sector_cfg.cp;
