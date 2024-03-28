@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_high_test_bench.h"
+#include "du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
@@ -150,7 +150,7 @@ static void init_loggers()
   srslog::init();
 }
 
-du_high_test_bench::du_high_test_bench() :
+du_high_env_simulator::du_high_env_simulator() :
   cu_notifier(workers.test_worker),
   phy(workers.test_worker),
   du_high_cfg([this]() {
@@ -184,7 +184,7 @@ du_high_test_bench::du_high_test_bench() :
   run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
 }
 
-du_high_test_bench::~du_high_test_bench()
+du_high_env_simulator::~du_high_env_simulator()
 {
   du_hi->stop();
 
@@ -192,7 +192,7 @@ du_high_test_bench::~du_high_test_bench()
   workers.stop();
 }
 
-bool du_high_test_bench::run_until(unique_function<bool()> condition, unsigned max_slot_count)
+bool du_high_env_simulator::run_until(unique_function<bool()> condition, unsigned max_slot_count)
 {
   for (unsigned count = 0; count != max_slot_count; ++count) {
     if (condition()) {
@@ -203,7 +203,7 @@ bool du_high_test_bench::run_until(unique_function<bool()> condition, unsigned m
   return false;
 }
 
-bool du_high_test_bench::add_ue(rnti_t rnti)
+bool du_high_env_simulator::add_ue(rnti_t rnti)
 {
   if (ues.count(rnti) > 0) {
     return false;
@@ -229,7 +229,7 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   return ret;
 }
 
-bool du_high_test_bench::run_rrc_setup(rnti_t rnti)
+bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
 {
   auto it = ues.find(rnti);
   if (it == ues.end()) {
@@ -277,7 +277,7 @@ bool du_high_test_bench::run_rrc_setup(rnti_t rnti)
   return true;
 }
 
-bool du_high_test_bench::run_ue_context_setup(rnti_t rnti)
+bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 {
   auto it = ues.find(rnti);
   if (it == ues.end()) {
@@ -312,7 +312,7 @@ bool du_high_test_bench::run_ue_context_setup(rnti_t rnti)
   return true;
 }
 
-void du_high_test_bench::run_slot()
+void du_high_env_simulator::run_slot()
 {
   // Signal slot indication to l2.
   du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
@@ -339,7 +339,7 @@ void du_high_test_bench::run_slot()
   handle_slot_results();
 }
 
-void du_high_test_bench::handle_slot_results()
+void du_high_env_simulator::handle_slot_results()
 {
   // Auto-generate UCI indications.
   if (phy.cell.last_ul_res.has_value() and this->phy.cell.last_ul_res->ul_res != nullptr) {

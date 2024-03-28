@@ -12,7 +12,7 @@
 /// \brief Tests that check the transmission of Paging messages by the DU-high class.
 
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
-#include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
+#include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
@@ -24,7 +24,7 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-class paging_tester : public du_high_test_bench, public testing::Test
+class paging_tester : public du_high_env_simulator, public testing::Test
 {};
 
 f1ap_message generate_paging_message(uint64_t five_g_tmsi, const nr_cell_global_id_t& nr_cgi)

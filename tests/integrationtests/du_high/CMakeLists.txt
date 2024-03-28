@@ -8,7 +8,7 @@
 
 set_directory_properties(PROPERTIES LABELS "du_high;integrationtest")
 
-add_library(du_high_test_bench test_utils/du_high_test_bench.cpp)
+add_library(du_high_test_bench test_utils/du_high_env_simulator.cpp)
 target_link_libraries(du_high_test_bench srsran_du_high mac_test_doubles f1ap_test_doubles)
 target_include_directories(du_high_test_bench PRIVATE ${CMAKE_SOURCE_DIR})
 

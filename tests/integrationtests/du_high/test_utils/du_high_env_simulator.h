@@ -40,11 +40,11 @@ bool is_ue_context_release_complete_valid(const f1ap_message& msg,
                                           gnb_du_ue_f1ap_id_t du_ue_id,
                                           gnb_cu_ue_f1ap_id_t cu_ue_id);
 
-class du_high_test_bench
+class du_high_env_simulator
 {
 public:
-  du_high_test_bench();
-  virtual ~du_high_test_bench();
+  du_high_env_simulator();
+  virtual ~du_high_env_simulator();
 
   bool add_ue(rnti_t rnti);
 
