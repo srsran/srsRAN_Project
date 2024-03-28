@@ -113,8 +113,8 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     // For every DL slot.
     if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty())
-          << "The UE configuration is leading to some DL slots staying empty";
+      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty()) << fmt::format(
+          "The UE configuration is leading to slot {} not having DL UE grant scheduled", this->last_result_slot());
     }
 
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
