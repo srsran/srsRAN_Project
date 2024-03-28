@@ -8,11 +8,11 @@ amf:
 
 ru_ofh:
   ru_bandwidth_MHz: 100                                           # RU instantaneous bandwidth.
-  t1a_max_cp_dl: 500                                              # Maximum T1a on Control-Plane for Downlink in microseconds.
-  t1a_min_cp_dl: 250                                              # Minimum T1a on Control-Plane for Downlink in microseconds.
-  t1a_max_cp_ul: 465                                              # Maximum T1a on Control-Plane for Uplink in microseconds.
-  t1a_min_cp_ul: 250                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
-  t1a_max_up: 250                                                 # Maximum T1a on User-Plane in microseconds.
+  t1a_max_cp_dl: 535                                              # Maximum T1a on Control-Plane for Downlink in microseconds.
+  t1a_min_cp_dl: 286                                              # Minimum T1a on Control-Plane for Downlink in microseconds.
+  t1a_max_cp_ul: 535                                              # Maximum T1a on Control-Plane for Uplink in microseconds.
+  t1a_min_cp_ul: 286                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
+  t1a_max_up: 390                                                 # Maximum T1a on User-Plane in microseconds.
   t1a_min_up: 80                                                  # Minimum T1a on User-Plane in microseconds.
   ta4_max: 500                                                    # Maximum Ta4 on User-Plane in microseconds.
   ta4_min: 25                                                     # Minimum Ta4 on User-Plane in microseconds.
