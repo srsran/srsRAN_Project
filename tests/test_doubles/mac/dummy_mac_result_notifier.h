@@ -42,10 +42,11 @@ private:
 /// specify through which task executor the results are transferred and stored.
 struct phy_test_dummy : public mac_result_notifier {
 public:
-  phy_test_dummy(task_executor& exec_) : cell(exec_) {}
+  phy_test_dummy(unsigned nof_cells, task_executor& exec_) : cells(nof_cells, phy_cell_test_dummy(exec_)) {}
 
-  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
-  phy_cell_test_dummy       cell;
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cells[cell_index]; }
+
+  std::vector<phy_cell_test_dummy> cells;
 };
 
 } // namespace srsran

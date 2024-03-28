@@ -150,10 +150,10 @@ static void init_loggers()
   srslog::init();
 }
 
-du_high_env_simulator::du_high_env_simulator() :
+du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
   cu_notifier(workers.test_worker),
-  phy(workers.test_worker),
-  du_high_cfg([this]() {
+  phy(params.nof_cells, workers.test_worker),
+  du_high_cfg([this, params]() {
     init_loggers();
 
     du_high_configuration cfg{};
@@ -165,12 +165,20 @@ du_high_env_simulator::du_high_env_simulator() :
     cfg.gnb_du_id    = 0;
     cfg.gnb_du_name  = "srsdu";
     cfg.du_bind_addr = transport_layer_address::create_from_string("127.0.0.1");
-    cfg.cells        = {config_helpers::make_default_du_cell_config()};
-    cfg.qos          = config_helpers::make_default_du_qos_config_list(0);
-    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-    cfg.mac_cfg      = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.mac_p        = &mac_pcap;
-    cfg.rlc_p        = &rlc_pcap;
+
+    cfg.cells.reserve(params.nof_cells);
+    cell_config_builder_params builder_params;
+    for (unsigned i = 0; i < params.nof_cells; ++i) {
+      builder_params.pci = (pci_t)i;
+      cfg.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
+      cfg.cells.back().nr_cgi.nci = i;
+    }
+
+    cfg.qos       = config_helpers::make_default_du_qos_config_list(0);
+    cfg.sched_cfg = config_helpers::make_default_scheduler_expert_config();
+    cfg.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+    cfg.mac_p     = &mac_pcap;
+    cfg.rlc_p     = &rlc_pcap;
 
     return cfg;
   }()),
@@ -203,7 +211,7 @@ bool du_high_env_simulator::run_until(unique_function<bool()> condition, unsigne
   return false;
 }
 
-bool du_high_env_simulator::add_ue(rnti_t rnti)
+bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
 {
   if (ues.count(rnti) > 0) {
     return false;
@@ -212,7 +220,7 @@ bool du_high_env_simulator::add_ue(rnti_t rnti)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
-  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti));
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
   bool ret =
@@ -224,7 +232,7 @@ bool du_high_env_simulator::add_ue(rnti_t rnti)
   gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
       cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
   gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++);
-  ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id}));
+  ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id, cell_index}));
 
   return ret;
 }
@@ -235,16 +243,18 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
   if (it == ues.end()) {
     return false;
   }
+  const ue_sim_context& u        = it->second;
+  const auto&           phy_cell = phy.cells[u.pcell_index];
 
   // Send DL RRC Message which contains RRC Setup.
   f1ap_message msg = generate_dl_rrc_message_transfer(
-      *it->second.du_ue_id, *it->second.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
+      *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
   du_hi->get_f1ap_message_handler().handle_message(msg);
 
   // Wait for contention resolution to be sent to the PHY.
   bool ret = run_until([&]() {
-    if (phy.cell.last_dl_res.has_value() and phy.cell.last_dl_res.value().dl_res != nullptr) {
-      auto& dl_res = *phy.cell.last_dl_res.value().dl_res;
+    if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
+      auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
       for (const dl_msg_alloc& grant : dl_res.ue_grants) {
         if (grant.pdsch_cfg.rnti == rnti and
             std::any_of(grant.tb_list[0].lc_chs_to_sched.begin(),
@@ -314,37 +324,41 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
 void du_high_env_simulator::run_slot()
 {
-  // Signal slot indication to l2.
-  du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
+  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+    // Signal slot indication to l2.
+    du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
 
-  // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test main
-  // thread).
-  const unsigned MAX_COUNT = 1000;
-  for (unsigned count = 0; count < MAX_COUNT and phy.cell.last_slot_res != next_slot; ++count) {
-    // Process tasks dispatched to the test main thread (e.g. L2 slot result)
-    workers.test_worker.run_pending_tasks();
+    // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
+    // main thread).
+    const unsigned MAX_COUNT = 1000;
+    for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
+      // Process tasks dispatched to the test main thread (e.g. L2 slot result)
+      workers.test_worker.run_pending_tasks();
 
-    // Wait for tasks to arrive to test thread.
-    std::this_thread::sleep_for(std::chrono::milliseconds{1});
-  }
-  EXPECT_EQ(phy.cell.last_slot_res, next_slot);
-  const optional<mac_dl_sched_result>& dl_result = phy.cell.last_dl_res;
-  if (dl_result.has_value()) {
-    EXPECT_TRUE(dl_result->slot == next_slot);
+      // Wait for tasks to arrive to test thread.
+      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    }
+    EXPECT_EQ(phy.cells[i].last_slot_res, next_slot);
+    const optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
+    if (dl_result.has_value()) {
+      EXPECT_TRUE(dl_result->slot == next_slot);
+    }
+
+    // Process results.
+    handle_slot_results(to_du_cell_index(i));
   }
 
   ++next_slot;
-
-  // Process results.
-  handle_slot_results();
 }
 
-void du_high_env_simulator::handle_slot_results()
+void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
 {
+  auto& phy_cell = phy.cells[cell_index];
+
   // Auto-generate UCI indications.
-  if (phy.cell.last_ul_res.has_value() and this->phy.cell.last_ul_res->ul_res != nullptr) {
-    const ul_sched_result& ul_res = *this->phy.cell.last_ul_res->ul_res;
-    slot_point             sl_rx  = this->phy.cell.last_ul_res->slot;
+  if (phy_cell.last_ul_res.has_value() and phy_cell.last_ul_res->ul_res != nullptr) {
+    const ul_sched_result& ul_res = *phy_cell.last_ul_res->ul_res;
+    slot_point             sl_rx  = phy_cell.last_ul_res->slot;
 
     if (not ul_res.pucchs.empty()) {
       mac_uci_indication_message uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.pucchs);

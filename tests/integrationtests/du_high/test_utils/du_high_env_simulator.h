@@ -40,13 +40,18 @@ bool is_ue_context_release_complete_valid(const f1ap_message& msg,
                                           gnb_du_ue_f1ap_id_t du_ue_id,
                                           gnb_cu_ue_f1ap_id_t cu_ue_id);
 
+/// Parameters to set the DU-high environment simulator.
+struct du_high_env_sim_params {
+  unsigned nof_cells = 1;
+};
+
 class du_high_env_simulator
 {
 public:
-  du_high_env_simulator();
+  du_high_env_simulator(du_high_env_sim_params params = du_high_env_sim_params{});
   virtual ~du_high_env_simulator();
 
-  bool add_ue(rnti_t rnti);
+  bool add_ue(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0));
 
   /// Run the RRC setup procedure for the given RNTI from the moment the CU-CP sends an RRC Setup (via DL RRC Message
   /// Transfer) until the CU receives the RRC Setup Complete (via UL RRC Message Transfer).
@@ -58,7 +63,7 @@ public:
 
   bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
 
-  virtual void handle_slot_results();
+  virtual void handle_slot_results(du_cell_index_t cell_index);
 
   du_high_worker_manager  workers;
   dummy_f1c_test_client   cu_notifier;
@@ -78,6 +83,7 @@ private:
     rnti_t                        rnti = rnti_t::INVALID_RNTI;
     optional<gnb_du_ue_f1ap_id_t> du_ue_id;
     optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    du_cell_index_t               pcell_index;
   };
 
   std::unordered_map<rnti_t, ue_sim_context> ues;

@@ -70,7 +70,7 @@ TEST_F(paging_tester, when_paging_message_is_received_its_relayed_to_ue)
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     this->run_slot();
 
-    for (const auto& pg_grant : this->phy.cell.last_dl_res->dl_res->paging_grants) {
+    for (const auto& pg_grant : this->phy.cells[0].last_dl_res->dl_res->paging_grants) {
       const auto& pg_ue_it =
           std::find_if(pg_grant.paging_ue_list.begin(), pg_grant.paging_ue_list.end(), [](const paging_ue_info& ue) {
             return ue.paging_type_indicator == srsran::paging_ue_info::cn_ue_paging_identity and

@@ -82,16 +82,16 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
   unsigned bytes_sched = 0;
-  phy.cell.last_dl_data.reset();
+  phy.cells[0].last_dl_data.reset();
   while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
-    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+    return phy.cells[0].last_dl_data.has_value() and not phy.cells[0].last_dl_data.value().ue_pdus.empty();
   })) {
-    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
-      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+    for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
       }
     }
-    phy.cell.last_dl_data.reset();
+    phy.cells[0].last_dl_data.reset();
   }
   ASSERT_GE(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
       << "Not enough PDSCH grants were scheduled to meet the enqueued PDCP PDUs";
@@ -145,16 +145,16 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
 
   // Ensure the DU does not keep to schedule DRB PDUs.
   unsigned bytes_sched = 0;
-  phy.cell.last_dl_data.reset();
+  phy.cells[0].last_dl_data.reset();
   while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
-    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+    return phy.cells[0].last_dl_data.has_value() and not phy.cells[0].last_dl_data.value().ue_pdus.empty();
   })) {
-    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
-      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+    for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
       }
     }
-    phy.cell.last_dl_data.reset();
+    phy.cells[0].last_dl_data.reset();
   }
   ASSERT_LT(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
       << "Scheduler did not stop scheduling DRB after UE context release request reception";
