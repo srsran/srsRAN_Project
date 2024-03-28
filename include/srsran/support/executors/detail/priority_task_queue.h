@@ -54,7 +54,10 @@ private:
   std::unique_ptr<base_queue> q;
 };
 
-/// List of task queues with different priority levels.
+/// \brief Concurrent task queue, where the caller specifies the task priority while pushing it to the queue.
+///
+/// The prioritization is achieved via multiple queues. The pop functions will always start with the highest priority
+/// queue until it is depleted, and then move to the second highest priority queue, and so on.
 class priority_task_queue
 {
 public:
@@ -71,7 +74,7 @@ public:
   /// return false.
   SRSRAN_NODISCARD bool try_push(task_priority prio, unique_task task);
 
-  /// Pop a pending task, considering its priority level. If the queues are empty, return false.
+  /// \brief Pop a pending task, considering its priority level. If the queues are empty, return false.
   SRSRAN_NODISCARD bool try_pop(unique_task& t);
 
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, this call blocks.

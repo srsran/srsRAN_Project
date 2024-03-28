@@ -64,6 +64,10 @@ public:
   void stop();
 
 private:
+  /// \brief Task run in instantiated thread. It will keep popping tasks until the worker is stopped.
+  ///
+  /// The prioritization is achieved via multiple queues. The pop functions will always start with the highest priority
+  /// queue until it is depleted, and then move to the second highest priority queue, and so on.
   void run_pop_task_loop();
 
   // Task queues with different priorities. The first queue is the highest priority queue.
