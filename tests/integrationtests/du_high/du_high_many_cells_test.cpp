@@ -59,7 +59,8 @@ TEST_P(du_high_many_cells_tester, when_du_high_initiated_then_f1_setup_is_sent_w
   }
 }
 
-TEST_P(du_high_many_cells_tester, when_ccch_msg_in_a_cell_then_ue_context_is_created_in_same_cell)
+TEST_P(du_high_many_cells_tester,
+       when_ccch_msg_received_in_a_cell_then_init_ul_rrc_message_with_matching_cgi_is_sent_to_cu)
 {
   // Add one UE per cell
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
