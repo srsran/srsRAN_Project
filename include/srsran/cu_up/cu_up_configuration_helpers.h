@@ -23,6 +23,33 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_list = {};
   {
+    // 5QI=1
+    srs_cu_up::cu_up_qos_config cfg{};
+    cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
+    cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+
+    qos_list[uint_to_five_qi(1)] = cfg;
+  }
+  {
+    // 5QI=2
+    srs_cu_up::cu_up_qos_config cfg{};
+    cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
+    cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+
+    qos_list[uint_to_five_qi(2)] = cfg;
+  }
+  {
+    // 5QI=5
+    srs_cu_up::cu_up_qos_config cfg{};
+    cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
+    cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+
+    qos_list[uint_to_five_qi(5)] = cfg;
+  }
+  {
     // 5QI=7
     srs_cu_up::cu_up_qos_config cfg{};
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
