@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <linux/if_packet.h>
+#include <mutex>
 #include <net/if.h>
 #include <netinet/ether.h>
 #include <random>

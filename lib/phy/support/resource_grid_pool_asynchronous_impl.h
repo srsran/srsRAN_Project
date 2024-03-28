@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"

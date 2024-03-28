@@ -9,6 +9,7 @@
  */
 
 #include "radio_notifier_sample.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"

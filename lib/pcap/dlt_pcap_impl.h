@@ -14,7 +14,6 @@
 #include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/dlt_pcap.h"
-#include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
 

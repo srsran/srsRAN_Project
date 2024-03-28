@@ -11,15 +11,31 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/span.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace detail {
 
+static constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, size_t nof_priority_levels)
+{
+  if (nof_priority_levels == 0) {
+    return 0;
+  }
+  size_t queue_idx = std::numeric_limits<size_t>::max() - static_cast<size_t>(prio);
+  return queue_idx < nof_priority_levels ? queue_idx : nof_priority_levels - 1;
+}
+
+static constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_idx, size_t nof_priority_levels)
+{
+  return static_cast<enqueue_priority>(std::numeric_limits<size_t>::max() - queue_idx);
+}
+
 /// \brief Priority of a task, used to specify which queue the priority_task_queue will use to dispatch the task. The
 /// higher the priority, the lower its integer value representation.
 using task_priority = enqueue_priority;
 
+/// \brief Concurrent queue for any policy and wait policy.
 class any_task_concurrent_queue
 {
 public:

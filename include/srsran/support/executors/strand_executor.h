@@ -15,6 +15,7 @@
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/thread_utils.h"
+#include <thread>
 
 namespace srsran {
 
@@ -186,41 +187,6 @@ public:
 
   // Number of jobs currently enqueued in the strand.
   std::atomic<uint32_t> job_count{0};
-};
-
-template <concurrent_queue_policy QueuePolicy, typename StrandPtr>
-class task_strand_executor_impl final : public task_executor
-{
-public:
-  template <typename U>
-  task_strand_executor_impl(non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer_, U&& strand_) :
-    enqueuer(enqueuer_), strand(std::forward<U>(strand_))
-  {
-  }
-
-  SRSRAN_NODISCARD bool execute(unique_task task) override
-  {
-    // Enqueue task in task_strand queue.
-    if (not enqueuer.try_push(std::move(task))) {
-      // strand queue is full.
-      return false;
-    }
-    return strand->handle_enqueued_task(true);
-  }
-
-  SRSRAN_NODISCARD bool defer(unique_task task) override
-  {
-    // Enqueue task in task_strand queue.
-    if (not enqueuer.try_push(std::move(task))) {
-      // strand queue is full.
-      return false;
-    }
-    return strand->handle_enqueued_task(false);
-  }
-
-private:
-  non_blocking_enqueuer<unique_task, QueuePolicy> enqueuer;
-  StrandPtr                                       strand;
 };
 
 } // namespace detail

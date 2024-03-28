@@ -11,7 +11,7 @@
 #pragma once
 
 #include "pusch_codeblock_decoder.h"
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mutexed_mpsc_queue.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
