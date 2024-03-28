@@ -9,6 +9,7 @@
  */
 
 #include "test_utils/du_high_env_simulator.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -22,6 +23,12 @@ namespace {
 struct test_params {
   unsigned nof_cells = 1;
 };
+
+/// Formatter for test params.
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("nof_cells={}", value.nof_cells);
+}
 
 } // namespace
 
@@ -49,6 +56,28 @@ TEST_P(du_high_many_cells_tester, when_du_high_initiated_then_f1_setup_is_sent_w
     ASSERT_TRUE(unique_pcis.insert(serv_cell.served_cell_info.nr_pci).second);
     ASSERT_TRUE(unique_cgis.insert(serv_cell.served_cell_info.nr_cgi.nr_cell_id.to_number()).second)
         << fmt::format("CGI={:#x} repeated", serv_cell.served_cell_info.nr_cgi.nr_cell_id.to_number());
+  }
+}
+
+TEST_P(du_high_many_cells_tester, when_ccch_msg_in_a_cell_then_ue_context_is_created_in_same_cell)
+{
+  // Add one UE per cell
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    // Reset previous F1 message.
+    cu_notifier.last_f1ap_msgs.clear();
+
+    // Inject UL-CCCH with RRC Setup.
+    rnti_t rnti = to_rnti(0x4601 + i);
+    du_hi->get_pdu_handler().handle_rx_data_indication(
+        test_helpers::create_ccch_message(next_slot, rnti, to_du_cell_index(i)));
+
+    // Wait for F1AP message to be propagated to the CU-CP.
+    this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+
+    // Ensure the F1AP Initial UL RRC message is correct.
+    ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
+    ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(
+        cu_notifier.last_f1ap_msgs.back(), rnti, du_high_cfg.cells[i].nr_cgi));
   }
 }
 
