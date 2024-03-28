@@ -362,7 +362,7 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
 
     if (not ul_res.pucchs.empty()) {
       mac_uci_indication_message uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.pucchs);
-      this->du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
+      this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind);
     }
   }
 }

@@ -77,7 +77,7 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
@@ -135,7 +135,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
   // DU receives UE Context Release Request.

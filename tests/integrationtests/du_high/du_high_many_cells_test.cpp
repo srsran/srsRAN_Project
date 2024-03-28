@@ -13,6 +13,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -79,6 +80,72 @@ TEST_P(du_high_many_cells_tester,
     ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
     ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(
         cu_notifier.last_f1ap_msgs.back(), rnti, du_high_cfg.cells[i].nr_cgi));
+  }
+}
+
+TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic_flows_in_separate_cells)
+{
+  // Create one UE per cell.
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    cu_up_sim.last_drb_id.reset();
+
+    rnti_t rnti = to_rnti(0x4601 + i);
+    ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
+    ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(run_ue_context_setup(rnti));
+
+    // Ensure DU<->CU-UP tunnel was created.
+    ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
+  }
+
+  // Forward several DRB PDUs to all UEs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
+  for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
+    for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+      cu_up_sim.created_du_notifs[c]->on_new_sdu(f1u_pdu);
+    }
+  }
+
+  // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
+  unsigned              bytes_sched          = 0;
+  const unsigned        expected_bytes_sched = nof_pdcp_pdus * pdcp_pdu_size * GetParam().nof_cells;
+  std::vector<unsigned> bytes_sched_per_cell(GetParam().nof_cells, 0);
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    phy.cells[i].last_dl_data.reset();
+  }
+  while (bytes_sched < expected_bytes_sched and this->run_until([this]() {
+    for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+      if (phy.cells[i].last_dl_data.has_value() and not phy.cells[i].last_dl_data.value().ue_pdus.empty()) {
+        return true;
+      }
+    }
+    return false;
+  })) {
+    for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
+      auto& phy_cell = phy.cells[c];
+      if (not phy_cell.last_dl_data.has_value()) {
+        continue;
+      }
+      for (unsigned i = 0; i != phy_cell.last_dl_data.value().ue_pdus.size(); ++i) {
+        auto& ue_grant = phy_cell.last_dl_res.value().dl_res->ue_grants[i];
+        ASSERT_EQ(ue_grant.pdsch_cfg.rnti, to_rnti(0x4601 + c))
+            << fmt::format("c-rnti={} scheduled in the wrong cell={}", ue_grant.pdsch_cfg.rnti, c);
+
+        // Update the total number of bytes scheduled.
+        if (ue_grant.pdsch_cfg.codewords[0].new_data) {
+          bytes_sched += phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
+          bytes_sched_per_cell[c] += phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
+        }
+      }
+      phy.cells[c].last_dl_data.reset();
+    }
+  }
+  ASSERT_GE(bytes_sched, expected_bytes_sched)
+      << "Not enough PDSCH grants were scheduled to meet the enqueued PDCP PDUs";
+
+  for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
+    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size);
   }
 }
 
