@@ -9,6 +9,7 @@
  */
 
 #include "ofh_data_flow_uplane_uplink_data_impl.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/serdes/ofh_message_decoder_properties.h"
 
 using namespace srsran;
@@ -29,10 +30,13 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
 
 void data_flow_uplane_uplink_data_impl::decode_type1_message(unsigned eaxc, span<const uint8_t> message)
 {
+  trace_point decode_tp = ofh_tracer.now();
+
   uplane_message_decoder_results results;
   if (!uplane_decoder->decode(results, message)) {
     return;
   }
+  ofh_tracer << trace_event("ofh_receiver_uplane_decode", decode_tp);
 
   if (should_uplane_packet_be_filtered(eaxc, results)) {
     return;

@@ -10,6 +10,7 @@
 
 #include "ofh_message_transmitter_impl.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -38,7 +39,10 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     const ether::frame_pool_interval&                   interval,
     static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst)
 {
-  auto frame_buffers = pool->read_frame_buffers(interval);
+  trace_point pool_access_tp = ofh_tracer.now();
+  auto        frame_buffers  = pool->read_frame_buffers(interval);
+  ofh_tracer << trace_event("ofh_tx_pool_access", pool_access_tp);
+
   if (frame_buffers.empty()) {
     return;
   }
@@ -59,6 +63,8 @@ void message_transmitter_impl::enqueue_messages_into_burst(
 
 void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
 {
+  trace_point tp = ofh_tracer.now();
+
   static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
 
   // Enqueue pending DL Control-Plane messages.
@@ -80,10 +86,14 @@ void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
   enqueue_messages_into_burst(interval_up, frame_burst);
 
   // Transmit the data.
+  trace_point tp_dpdk = ofh_tracer.now();
   transmit_frame_burst(frame_burst);
+  ofh_tracer << trace_event("ofh_dpdk_tx", tp_dpdk);
 
   // Clear sent buffers.
   pool->clear_sent_frame_buffers(interval_cp_dl);
   pool->clear_sent_frame_buffers(interval_cp_ul);
   pool->clear_sent_frame_buffers(interval_up);
+
+  ofh_tracer << trace_event("ofh_message_transmitter", tp);
 }

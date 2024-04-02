@@ -11,6 +11,7 @@
 #include "ofh_downlink_handler_impl.h"
 #include "helpers.h"
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
@@ -60,6 +61,8 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                 dl_eaxc.size(),
                 grid.get_nof_ports());
 
+  trace_point tp = ofh_tracer.now();
+
   // Clear any stale buffers associated with the context slot.
   frame_pool->clear_downlink_slot(context.slot, logger);
 
@@ -71,6 +74,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
         context.slot,
         context.sector);
     l1_tracer << instant_trace_event{"handle_dl_data_late", instant_trace_event::cpu_scope::thread};
+    ofh_tracer << trace_event("ofh_handle_dl_late", tp);
     return;
   }
 
@@ -97,4 +101,5 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
     uplane_context.eaxc = dl_eaxc[cell_port_id];
     data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
+  ofh_tracer << trace_event("ofh_handle_downlink", tp);
 }

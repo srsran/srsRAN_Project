@@ -68,7 +68,8 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   compressor_sel(std::move(dependencies.compressor_sel)),
   eth_builder(std::move(dependencies.eth_builder)),
   ecpri_builder(std::move(dependencies.ecpri_builder)),
-  up_builder(std::move(dependencies.up_builder))
+  up_builder(std::move(dependencies.up_builder)),
+  formatted_trace_names(config.dl_eaxc)
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
@@ -81,7 +82,10 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
     const data_flow_uplane_resource_grid_context& context,
     const resource_grid_reader&                   grid)
 {
+  trace_point tp = ofh_tracer.now();
   enqueue_section_type_1_message_symbol_burst(context, grid);
+
+  ofh_tracer << trace_event(formatted_trace_names[context.eaxc].c_str(), tp);
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
@@ -103,6 +107,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
   for (unsigned symbol_id = context.symbol_range.start(), symbol_end = context.symbol_range.length();
        symbol_id != symbol_end;
        ++symbol_id) {
+    trace_point         pool_access_tp = ofh_tracer.now();
     slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
     scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
     if (scoped_buffer.empty()) {
@@ -113,6 +118,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
                      symbol_id);
       return;
     }
+    ofh_tracer << trace_event("ofh_uplane_pool_access", pool_access_tp);
 
     span<const cf_t> iq_data;
     if (SRSRAN_LIKELY(ru_nof_prbs == grid.get_nof_subc())) {
@@ -143,6 +149,8 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
         continue;
       }
+
+      ofh_tracer << instant_trace_event{"ofh_uplane_symbol", instant_trace_event::cpu_scope::thread};
 
       const uplane_message_params& up_params =
           generate_dl_ofh_user_parameters(context.slot, symbol_id, fragment_start_prb, fragment_nof_prbs, compr_params);

@@ -14,7 +14,7 @@ set(SOURCES
         vlan_ethernet_frame_decoder_impl.cpp)
 
 add_library(srsran_ofh_ethernet STATIC ${SOURCES})
-target_link_libraries(srsran_ofh_ethernet srslog)
+target_link_libraries(srsran_ofh_ethernet srslog srsran_instrumentation)
 
 if (DPDK_FOUND)
     add_subdirectory(dpdk)
