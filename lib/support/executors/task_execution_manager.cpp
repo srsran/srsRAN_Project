@@ -171,8 +171,12 @@ protected:
   }
 
   template <typename OutExec>
-  task_executor_list create_strand_executors_helper(const execution_config_helper::executor& desc, OutExec&& basic_exec)
+  task_executor_list create_strand_executors_helper(const execution_config_helper::executor& desc,
+                                                    const OutExec&                           basic_exec)
   {
+    static_assert(std::is_copy_constructible<OutExec>::value, "Method only supported for copyable executor types");
+    using exec_type = std::decay_t<OutExec>;
+
     task_executor_list execs;
     for (const execution_config_helper::strand& strand_cfg : desc.strands) {
       report_fatal_error_if_not(
@@ -187,20 +191,20 @@ protected:
           qparams[i].policy = strand_cfg.queues[i].policy;
           qparams[i].size   = strand_cfg.queues[i].size;
         }
-        std::shared_ptr<priority_task_strand<OutExec>> shared_strand =
-            make_priority_task_strand_ptr(std::forward<OutExec>(basic_exec), qparams);
+        auto strand_ptr = make_priority_task_strand_ptr(exec_type{basic_exec}, qparams);
+        std::shared_ptr<priority_task_strand<exec_type>> shared_strand = std::move(strand_ptr);
 
         // Create executors that own the strand through reference counting.
         for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
           enqueue_priority prio = detail::queue_index_to_enqueue_priority(i, strand_cfg.queues.size());
-          execs.emplace_back(strand_cfg.queues[0].name, make_priority_task_executor_ptr(prio, shared_strand));
+          execs.emplace_back(strand_cfg.queues[i].name, make_priority_task_executor_ptr(prio, shared_strand));
         }
       } else {
         // Single priority level case.
         concurrent_queue_params qparams;
         qparams.policy  = strand_cfg.queues[0].policy;
         qparams.size    = strand_cfg.queues[0].size;
-        auto strand_ptr = make_task_strand_ptr<OutExec>(std::forward<OutExec>(basic_exec), qparams);
+        auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, qparams);
 
         // Strand becomes the executor.
         execs.emplace_back(strand_cfg.queues[0].name, std::move(strand_ptr));
