@@ -944,8 +944,15 @@ void ue_fallback_scheduler::update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_id
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
-  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
-  srsran_sanity_check(not last_sl_ind.valid() or sl == last_sl_ind + 1, "Detected a skipped slot");
+  // If there is any skipped slot, reset \ref slots_with_no_pdxch_space for all the skipped slots.
+  if (SRSRAN_LIKELY(last_sl_ind.valid())) {
+    while (SRSRAN_UNLIKELY(last_sl_ind + 1 != sl)) {
+      logger.info("UE fallback scheduler: Detected skipped slot={}.", last_sl_ind + 1);
+      // Reset the flag that indicates that there are no resources for the slot that has passed.
+      slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
+      ++last_sl_ind;
+    }
+  }
 
   // Reset the flag that indicates that there are no resources for the slot that has passed.
   slots_with_no_pdxch_space[(sl - 1).to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
