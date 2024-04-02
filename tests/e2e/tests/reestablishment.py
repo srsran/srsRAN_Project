@@ -50,9 +50,9 @@ def test_zmq_reestablishment(
     ZMQ Attach / reestablishment
     """
 
-    test_duration_sec = 15 * 60
-    reestablishment_interval = 30  # seconds
-    reestablishment_count = int(test_duration_sec / reestablishment_interval)
+    test_duration_per_ue_sec = 100
+    reestablishment_interval = 10  # seconds
+    reestablishment_count = int(test_duration_per_ue_sec / reestablishment_interval)
 
     _ping_and_reestablishment_multi_ues(
         retina_manager=retina_manager,
@@ -69,7 +69,7 @@ def test_zmq_reestablishment(
         always_download_artifacts=always_download_artifacts,
         reestablishment_count=reestablishment_count,
         reestablishment_interval=reestablishment_interval,
-        ping_count=test_duration_sec,
+        ping_count=test_duration_per_ue_sec,
         warning_as_errors=True,
     )
 
@@ -115,14 +115,21 @@ def _ping_and_reestablishment_multi_ues(
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
-    logging.info("Starting Pings in background")
-    ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count)
+    for index, ue_stub in enumerate(ue_array):
+        # Start pings and reestablishment
+        logging.info("Starting Pings and reestablishment in background")
+        ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count)
+
+        for _ in range(reestablishment_count):
+            ue_reestablishment(ue_stub, reestablishment_interval)
+            time.sleep(reestablishment_interval)
+
+        ping_wait_until_finish(ping_task_array, index)
+
+    ping_count_end = 20
+    # Start ping in end and wait
+    logging.info("Starting Pings in end and wait")
+    ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, ping_count_end))
     logging.info("Pings running for %s UEs", len(ue_array))
-
-    for _ in range(reestablishment_count):
-        ue_reestablishment(ue_array)
-        time.sleep(reestablishment_interval)
-
-    ping_wait_until_finish(ping_task_array)
 
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
