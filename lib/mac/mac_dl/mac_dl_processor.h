@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
-#include "dl_sch_logical_channel_mapper.h"
 #include "mac_cell_processor.h"
+#include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"

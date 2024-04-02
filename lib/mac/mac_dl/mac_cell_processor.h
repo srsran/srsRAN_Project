@@ -12,8 +12,8 @@
 
 #include "../mac_ctrl/mac_config.h"
 #include "cell_dl_harq_buffer_pool.h"
-#include "dl_sch_logical_channel_mapper.h"
 #include "dl_sch_pdu_assembler.h"
+#include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "paging_pdu_assembler.h"
 #include "rar_pdu_assembler.h"
@@ -90,7 +90,7 @@ private:
   mac_cell_result_notifier&       phy_cell;
 
   // Mapper of upper-layer bearers to MAC logical channels in the DL direction.
-  dl_sch_logical_channel_mapper ue_mng;
+  mac_dl_ue_repository ue_mng;
 
   // Pool of DL HARQ buffers used for UE PDSCH.
   cell_dl_harq_buffer_pool dl_harq_buffers;

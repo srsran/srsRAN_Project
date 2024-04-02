@@ -253,8 +253,8 @@ private:
 
 // /////////////////////////
 
-dl_sch_pdu_assembler::dl_sch_pdu_assembler(dl_sch_logical_channel_mapper& ue_mng_,
-                                           cell_dl_harq_buffer_pool&      cell_dl_harq_buffers) :
+dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_repository&     ue_mng_,
+                                           cell_dl_harq_buffer_pool& cell_dl_harq_buffers) :
   ue_mng(ue_mng_), harq_buffers(cell_dl_harq_buffers), logger(srslog::fetch_basic_logger("MAC"))
 {
 }

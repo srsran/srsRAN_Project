@@ -54,33 +54,12 @@ private:
 };
 
 /// Repository used to map upper layer bearers to MAC DL-SCH logical channels.
-class dl_sch_logical_channel_mapper
+class mac_dl_ue_repository
 {
 public:
-  dl_sch_logical_channel_mapper(du_rnti_table& rnti_table_);
+  mac_dl_ue_repository(du_rnti_table& rnti_table_);
 
-  /// Check if UE with provided C-RNTI exists.
-  /// \param rnti C-RNTI of the UE.
-  /// \return True if UE exists. False, otherwise.
-  bool contains_rnti(rnti_t rnti) const
-  {
-    const du_ue_index_t ue_index = rnti_table[rnti];
-    if (is_du_ue_index_valid(ue_index)) {
-      return ue_db.contains(ue_index);
-    }
-    return false;
-  }
-
-  /// Checks if Logical Channel with provided C-RNTI and LCID exists.
-  bool contains_lcid(rnti_t rnti, lcid_t lcid) const
-  {
-    const du_ue_index_t ue_index = rnti_table[rnti];
-    if (is_du_ue_index_valid(ue_index)) {
-      return ue_db.contains(ue_index) and ue_db[ue_index].logical_channels().contains(lcid);
-    }
-    return false;
-  }
-
+  /// Lookup UE index based on RNTI.
   du_ue_index_t get_ue_index(rnti_t rnti) const
   {
     du_ue_index_t ue_index = rnti_table[rnti];
@@ -112,18 +91,52 @@ public:
   /// \return true if successfully added. False, otherwise.
   bool add_ue(mac_dl_ue_context ue_to_add);
 
+  /// \brief Remove a UE context from the mapper and its associated bearers.
+  /// \param[in] ue_index UE index to remove.
+  /// \return true if successfully removed. False, if UE did not exist.
   bool remove_ue(du_ue_index_t ue_index);
 
+  /// \brief Add/Modify bearers for an existing UE.
+  /// \param[in] ue_index UE index for which to add/modify bearers.
+  /// \param[in] dl_logical_channels New config of the logical channels to add/modify.
+  /// \return true if successfully modified. False, if the UE does not exist.
   bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
+  /// \brief Remove specified bearers for an existing UE.
+  /// \param[in] ue_index UE index for which to remove bearers.
+  /// \param[in] lcids LCIDs of the bearers to remove.
+  /// \return true if successfully removed. False, if the UE or bearers do not exist.
   bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
 
   /// \brief Returns UE Contention Resolution Id, which is derived from Msg3 bytes.
   ue_con_res_id_t get_con_res_id(rnti_t rnti);
 
+  /// Check if UE with provided C-RNTI exists.
+  /// \param rnti C-RNTI of the UE.
+  /// \return True if UE exists. False, otherwise.
+  bool contains_rnti(rnti_t rnti) const
+  {
+    const du_ue_index_t ue_index = rnti_table[rnti];
+    if (is_du_ue_index_valid(ue_index)) {
+      return ue_db.contains(ue_index);
+    }
+    return false;
+  }
+
+  /// Checks if Logical Channel with provided C-RNTI and LCID exists.
+  bool contains_lcid(rnti_t rnti, lcid_t lcid) const
+  {
+    const du_ue_index_t ue_index = rnti_table[rnti];
+    if (is_du_ue_index_valid(ue_index)) {
+      return ue_db.contains(ue_index) and ue_db[ue_index].logical_channels().contains(lcid);
+    }
+    return false;
+  }
+
 private:
   du_rnti_table& rnti_table;
 
+  // List of added UEs.
   du_ue_list<mac_dl_ue_context> ue_db;
 };
 

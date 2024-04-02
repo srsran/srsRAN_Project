@@ -8,7 +8,7 @@
  *
  */
 
-#include "dl_sch_logical_channel_mapper.h"
+#include "mac_dl_ue_repository.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/timers.h"
 
@@ -45,9 +45,9 @@ void mac_dl_ue_context::remove_logical_channels(span<const lcid_t> lcids_to_remo
 
 // ///////////////////////
 
-dl_sch_logical_channel_mapper::dl_sch_logical_channel_mapper(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
+mac_dl_ue_repository::mac_dl_ue_repository(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
 
-bool dl_sch_logical_channel_mapper::add_ue(mac_dl_ue_context ue_to_add)
+bool mac_dl_ue_repository::add_ue(mac_dl_ue_context ue_to_add)
 {
   const du_ue_index_t ue_index = ue_to_add.get_ue_index();
 
@@ -59,14 +59,14 @@ bool dl_sch_logical_channel_mapper::add_ue(mac_dl_ue_context ue_to_add)
   return true;
 }
 
-bool dl_sch_logical_channel_mapper::remove_ue(du_ue_index_t ue_index)
+bool mac_dl_ue_repository::remove_ue(du_ue_index_t ue_index)
 {
   // Erase UE from the repository.
   return ue_db.erase(ue_index);
 }
 
-bool dl_sch_logical_channel_mapper::addmod_bearers(du_ue_index_t                          ue_index,
-                                                   span<const mac_logical_channel_config> dl_logical_channels)
+bool mac_dl_ue_repository::addmod_bearers(du_ue_index_t                          ue_index,
+                                          span<const mac_logical_channel_config> dl_logical_channels)
 {
   if (not ue_db.contains(ue_index)) {
     return false;
@@ -77,7 +77,7 @@ bool dl_sch_logical_channel_mapper::addmod_bearers(du_ue_index_t                
   return true;
 }
 
-bool dl_sch_logical_channel_mapper::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+bool mac_dl_ue_repository::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
 {
   if (not ue_db.contains(ue_index)) {
     return false;
@@ -88,7 +88,7 @@ bool dl_sch_logical_channel_mapper::remove_bearers(du_ue_index_t ue_index, span<
   return true;
 }
 
-ue_con_res_id_t dl_sch_logical_channel_mapper::get_con_res_id(rnti_t rnti)
+ue_con_res_id_t mac_dl_ue_repository::get_con_res_id(rnti_t rnti)
 {
   const du_ue_index_t ue_index = rnti_table[rnti];
   if (not ue_db.contains(ue_index)) {
