@@ -93,7 +93,8 @@ void set_static_header_params(span<uint8_t> frame, header_parameters params, con
   std::memcpy(&frame[ETH_ADDR_LEN], cfg.ru_mac.data(), ETH_ADDR_LEN);
 
   // Set VLAN tag.
-  frame[15] = cfg.vlan_tag;
+  uint16_t net_bytes = htons(uint16_t(cfg.vlan_tag));
+  std::memcpy(&frame[14], &net_bytes, sizeof(net_bytes));
 
   // Set correct payload size.
   uint16_t payload_size = ::htons(params.payload_size);
