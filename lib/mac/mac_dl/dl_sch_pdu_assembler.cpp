@@ -232,7 +232,7 @@ public:
           fmtbuf, "{}SDU: lcid={} nof_sdus={} total_size={}", separator(), current_sdu_lcid, nof_sdus, sum_bytes);
     }
 
-    logger.info("DL PDU: ue={} rnti={} size={}:{}", ue_index, rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU: ue={} rnti={} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:
