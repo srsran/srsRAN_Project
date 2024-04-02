@@ -17,7 +17,6 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
 #include "srsran/scheduler/harq_id.h"
-#include <mutex>
 
 namespace srsran {
 
@@ -54,11 +53,11 @@ private:
   ue_con_res_id_t                                msg3_subpdu = {};
 };
 
-/// Repository of UE MAC DL contexts.
-class mac_dl_ue_manager
+/// Repository used to map upper layer bearers to MAC DL-SCH logical channels.
+class dl_sch_logical_channel_mapper
 {
 public:
-  mac_dl_ue_manager(du_rnti_table& rnti_table_);
+  dl_sch_logical_channel_mapper(du_rnti_table& rnti_table_);
 
   /// Check if UE with provided C-RNTI exists.
   /// \param rnti C-RNTI of the UE.
@@ -67,7 +66,6 @@ public:
   {
     const du_ue_index_t ue_index = rnti_table[rnti];
     if (is_du_ue_index_valid(ue_index)) {
-      std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
       return ue_db.contains(ue_index);
     }
     return false;
@@ -78,7 +76,6 @@ public:
   {
     const du_ue_index_t ue_index = rnti_table[rnti];
     if (is_du_ue_index_valid(ue_index)) {
-      std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
       return ue_db.contains(ue_index) and ue_db[ue_index].logical_channels().contains(lcid);
     }
     return false;
@@ -93,20 +90,26 @@ public:
     return ue_index;
   }
 
-  mac_sdu_tx_builder* get_bearer(rnti_t rnti, lcid_t lcid)
+  /// \brief Get the MAC SDU builder for a specific UE and DL-SCH LCID.
+  /// \param[in] rnti RNTI of the UE.
+  /// \param[in] lcid DL-SCH Logical Channel ID.
+  /// \return Pointer to the DL-SCH SDU builder. Nullptr if not found.
+  mac_sdu_tx_builder* get_lc_sdu_builder(rnti_t rnti, lcid_t lcid)
   {
+    // Lookup the UE index based on RNTI.
     du_ue_index_t ue_index = rnti_table[rnti];
-    if (not is_du_ue_index_valid(ue_index)) {
+    if (not is_du_ue_index_valid(ue_index) or not ue_db.contains(ue_index)) {
       return nullptr;
     }
-    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
-    if (not ue_db.contains(ue_index)) {
-      return nullptr;
-    }
+
+    // Return the MAC SDU builder for the specified LCID.
     auto& u = ue_db[ue_index];
     return u.logical_channels().contains(lcid) ? u.logical_channels()[lcid] : nullptr;
   }
 
+  /// \brief Add a new UE context to the mapper.
+  /// \param[in] ue_to_add UE context to add.
+  /// \return true if successfully added. False, otherwise.
   bool add_ue(mac_dl_ue_context ue_to_add);
 
   bool remove_ue(du_ue_index_t ue_index);
@@ -120,8 +123,6 @@ public:
 
 private:
   du_rnti_table& rnti_table;
-
-  mutable std::array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 
   du_ue_list<mac_dl_ue_context> ue_db;
 };

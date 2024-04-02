@@ -8,7 +8,7 @@
  *
  */
 
-#include "mac_dl_ue_manager.h"
+#include "dl_sch_logical_channel_mapper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/timers.h"
 
@@ -45,35 +45,29 @@ void mac_dl_ue_context::remove_logical_channels(span<const lcid_t> lcids_to_remo
 
 // ///////////////////////
 
-mac_dl_ue_manager::mac_dl_ue_manager(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
+dl_sch_logical_channel_mapper::dl_sch_logical_channel_mapper(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
 
-bool mac_dl_ue_manager::add_ue(mac_dl_ue_context ue_to_add)
+bool dl_sch_logical_channel_mapper::add_ue(mac_dl_ue_context ue_to_add)
 {
   const du_ue_index_t ue_index = ue_to_add.get_ue_index();
 
   // Register the UE in the repository.
-  {
-    const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
-    if (ue_db.contains(ue_index)) {
-      return false;
-    }
-    ue_db.emplace(ue_index, std::move(ue_to_add));
+  if (ue_db.contains(ue_index)) {
+    return false;
   }
-
+  ue_db.emplace(ue_index, std::move(ue_to_add));
   return true;
 }
 
-bool mac_dl_ue_manager::remove_ue(du_ue_index_t ue_index)
+bool dl_sch_logical_channel_mapper::remove_ue(du_ue_index_t ue_index)
 {
   // Erase UE from the repository.
-  const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
   return ue_db.erase(ue_index);
 }
 
-bool mac_dl_ue_manager::addmod_bearers(du_ue_index_t                          ue_index,
-                                       span<const mac_logical_channel_config> dl_logical_channels)
+bool dl_sch_logical_channel_mapper::addmod_bearers(du_ue_index_t                          ue_index,
+                                                   span<const mac_logical_channel_config> dl_logical_channels)
 {
-  const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
   if (not ue_db.contains(ue_index)) {
     return false;
   }
@@ -83,9 +77,8 @@ bool mac_dl_ue_manager::addmod_bearers(du_ue_index_t                          ue
   return true;
 }
 
-bool mac_dl_ue_manager::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+bool dl_sch_logical_channel_mapper::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
 {
-  const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
   if (not ue_db.contains(ue_index)) {
     return false;
   }
@@ -95,10 +88,9 @@ bool mac_dl_ue_manager::remove_bearers(du_ue_index_t ue_index, span<const lcid_t
   return true;
 }
 
-ue_con_res_id_t mac_dl_ue_manager::get_con_res_id(rnti_t rnti)
+ue_con_res_id_t dl_sch_logical_channel_mapper::get_con_res_id(rnti_t rnti)
 {
-  const du_ue_index_t               ue_index = rnti_table[rnti];
-  const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
+  const du_ue_index_t ue_index = rnti_table[rnti];
   if (not ue_db.contains(ue_index)) {
     return {};
   }

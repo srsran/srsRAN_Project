@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "mac_dl_ue_manager.h"
+#include "dl_sch_logical_channel_mapper.h"
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 #include "srsran/ran/du_types.h"

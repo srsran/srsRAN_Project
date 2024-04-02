@@ -174,14 +174,14 @@ public:
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }
 
 protected:
-  byte_buffer                  msg3_pdu;
-  mac_ue_create_request        req = test_helpers::make_default_ue_creation_request();
-  du_rnti_table                rnti_table;
-  mac_dl_ue_manager            ue_mng;
-  std::vector<dummy_dl_bearer> dl_bearers;
-  manual_task_worker           task_worker{16};
-  cell_dl_harq_buffer_pool     harqs;
-  dl_sch_pdu_assembler         dl_sch_enc;
+  byte_buffer                   msg3_pdu;
+  mac_ue_create_request         req = test_helpers::make_default_ue_creation_request();
+  du_rnti_table                 rnti_table;
+  dl_sch_logical_channel_mapper ue_mng;
+  std::vector<dummy_dl_bearer>  dl_bearers;
+  manual_task_worker            task_worker{16};
+  cell_dl_harq_buffer_pool      harqs;
+  dl_sch_pdu_assembler          dl_sch_enc;
 };
 
 TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)

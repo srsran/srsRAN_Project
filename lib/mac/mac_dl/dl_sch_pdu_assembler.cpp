@@ -253,7 +253,8 @@ private:
 
 // /////////////////////////
 
-dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers) :
+dl_sch_pdu_assembler::dl_sch_pdu_assembler(dl_sch_logical_channel_mapper& ue_mng_,
+                                           cell_dl_harq_buffer_pool&      cell_dl_harq_buffers) :
   ue_mng(ue_mng_), harq_buffers(cell_dl_harq_buffers), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
@@ -318,7 +319,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
 
   // Fetch RLC Bearer.
   const lcid_t        lcid   = lc_grant_info.lcid.to_lcid();
-  mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, lcid);
+  mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(rnti, lcid);
   srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
   const unsigned total_space =

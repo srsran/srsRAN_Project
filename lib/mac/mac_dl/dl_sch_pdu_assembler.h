@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "mac_dl_ue_manager.h"
+#include "dl_sch_logical_channel_mapper.h"
 #include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/scheduler/harq_id.h"
@@ -86,7 +86,7 @@ private:
 class dl_sch_pdu_assembler
 {
 public:
-  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers);
+  explicit dl_sch_pdu_assembler(dl_sch_logical_channel_mapper& ue_mng_, cell_dl_harq_buffer_pool& cell_dl_harq_buffers);
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
   /// \param rnti RNTI for which the MAC PDU was allocated.
@@ -119,8 +119,8 @@ private:
   /// Assemble MAC subPDU with a CE.
   void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, pdu_log_builder& pdu_logger);
 
-  mac_dl_ue_manager&        ue_mng;
-  cell_dl_harq_buffer_pool& harq_buffers;
+  dl_sch_logical_channel_mapper& ue_mng;
+  cell_dl_harq_buffer_pool&      harq_buffers;
 
   srslog::basic_logger& logger;
   // memory buffer to avoid allocations during formatting of pdus

@@ -372,7 +372,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
           }
 
           // Fetch RLC Bearer.
-          mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
+          mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
           srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
           // Update DL buffer state for the allocated logical channel.
