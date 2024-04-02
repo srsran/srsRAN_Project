@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ namespace srsran {
 
 /// RU emulator OFH configuration parameters.
 struct ru_emulator_ofh_appconfig {
-  /// Ethernet network interface PCI bus identifier.
+  /// Ethernet network interface name or PCI bus identifier.
   std::string network_interface;
   /// RU emulator MAC address.
   std::string ru_mac_address;
@@ -57,7 +58,7 @@ struct ru_emulator_appconfig {
   /// Individual RU emulators configurations.
   std::vector<ru_emulator_ofh_appconfig> ru_cfg = {{}};
   /// DPDK configuration.
-  ru_emulator_dpdk_appconfig dpdk_config;
+  optional<ru_emulator_dpdk_appconfig> dpdk_config;
 };
 
 } // namespace srsran
