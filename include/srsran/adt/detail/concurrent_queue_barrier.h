@@ -18,7 +18,7 @@
 namespace srsran {
 namespace detail {
 
-// Barrier implementation based on sleep.
+/// Queue barrier implementation based on sleep.
 struct queue_sleep_barrier {
 public:
   queue_sleep_barrier(std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) : sleep_time(sleep_time_) {}

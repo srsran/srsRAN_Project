@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../../srsran_assert.h"
-#include "../task_executor.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 

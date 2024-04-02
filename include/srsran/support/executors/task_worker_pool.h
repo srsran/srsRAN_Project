@@ -93,12 +93,15 @@ protected:
 class priority_task_worker_pool : public detail::base_priority_task_queue, public detail::base_worker_pool
 {
 public:
-  /// \brief Creates a task worker pool with multiple task priority levels.
-  /// \param pool_name String with the name for the worker pool. Individual workers of the pool will be assigned the
-  /// \param nof_workers Number of workers of the worker pool.
-  /// \param queue_size Size of the task queue.
-  /// name "<pool_name>#<worker index>". E.g. for pool_name="Pool", the second worker will be called "Pool#1".
+  /// \brief Creates a task worker pool that supports multiple priority levels for the dispatched tasks.
+  /// \param worker_pool_name String with the name for the worker pool. Individual workers of the pool will be assigned
+  /// a thread name equal to "worker_pool_name#<worker index>". E.g. for pool_name="Pool", the second worker will be
+  /// called "Pool#1".
+  /// \param nof_workers_ Number of workers of the worker pool.
+  /// \param queue_params Parameters of the task queue.
+  /// \param wait_sleep_time Time each worker waits sleeping before polling the task queue for new tasks.
   /// \param prio Workers realtime thread priority.
+  /// \param cpu_masks A list of CPU indexes to which the threads of the worker pool get pinned to.
   priority_task_worker_pool(std::string                           worker_pool_name,
                             unsigned                              nof_workers_,
                             span<const concurrent_queue_params>   queue_params,
