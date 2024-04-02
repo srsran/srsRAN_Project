@@ -12,6 +12,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "tests/unittests/scheduler/test_utils/result_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
@@ -232,7 +233,7 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
   gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
       cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
   gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++);
-  ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id, cell_index}));
+  EXPECT_TRUE(ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id, cell_index})).second);
 
   return ret;
 }
@@ -274,6 +275,19 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
   unsigned msg4_k1 = 4;
   for (unsigned i = 0; i != msg4_k1; ++i) {
     run_slot();
+  }
+
+  // Wait for CSI for UE to leave fallback mode.
+  // TODO. For now we just bypass by sending the RRC Setup Complete.
+  if (not run_until([&]() {
+        if (phy_cell.last_ul_res.has_value() and phy_cell.last_ul_res.value().ul_res != nullptr) {
+          if (find_ue_pucch_with_csi(rnti, phy_cell.last_ul_res.value().ul_res->pucchs) != nullptr) {
+            return true;
+          }
+        }
+        return false;
+      })) {
+    return false;
   }
 
   // UE sends RRC Setup Complete. Wait until F1AP forwards UL RRC Message to CU-CP.
