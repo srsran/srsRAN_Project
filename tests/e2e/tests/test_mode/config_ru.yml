@@ -53,3 +53,4 @@ expert_execution:
 expert_phy:
   max_request_headroom_slots: 3
   max_proc_delay: 6
+  pusch_dec_max_iterations: 2
