@@ -1242,7 +1242,7 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
-  /// CU-CP configuration.
+  /// CU-UP configuration.
   cu_up_appconfig cu_up_cfg;
   /// F1AP configuration.
   f1ap_cu_appconfig f1ap_cfg;

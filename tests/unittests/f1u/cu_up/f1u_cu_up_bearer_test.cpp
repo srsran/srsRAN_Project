@@ -92,11 +92,17 @@ protected:
       ue_inactivity_triggered = true;
     });
     ue_inactivity_timer.run();
+
+    // prepare F1-U config
+    f1u_cfg.warn_on_drop = false;
+
+    // create F1-U bearer
     f1u = std::make_unique<f1u_bearer_impl>(
         0,
         drb_id,
         up_transport_layer_info(transport_layer_address::create_from_string("127.0.0.1"),
                                 gtpu_teid_t{ul_teid_next.value()++}),
+        f1u_cfg,
         *tester,
         *tester,
         *tester,
@@ -127,6 +133,7 @@ protected:
   unique_timer                          ue_inactivity_timer;
   std::unique_ptr<f1u_cu_up_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>      f1u;
+  srs_cu_up::f1u_config                 f1u_cfg;
   gtpu_teid_t                           ul_teid_next{1234};
 
   bool ue_inactivity_triggered = false;

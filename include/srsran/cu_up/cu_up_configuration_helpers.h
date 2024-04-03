@@ -25,18 +25,22 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
   {
     // 5QI=7
     srs_cu_up::cu_up_qos_config cfg{};
-    cfg.pdcp_custom = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
-    cfg.pdcp_custom.metrics_period  = metrics_period;
-    cfg.pdcp_custom.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
+    cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+
+    cfg.f1u_cfg.warn_on_drop = true;
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
   {
     // 5QI=9
     srs_cu_up::cu_up_qos_config cfg{};
-    cfg.pdcp_custom = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
-    cfg.pdcp_custom.metrics_period  = metrics_period;
-    cfg.pdcp_custom.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+    cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
+    cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+
+    cfg.f1u_cfg.warn_on_drop = true;
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }

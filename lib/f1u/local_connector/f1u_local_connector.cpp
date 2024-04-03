@@ -19,6 +19,7 @@ using namespace srsran;
 std::unique_ptr<srs_cu_up::f1u_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                             ue_index,
                                       drb_id_t                             drb_id,
+                                      const srs_cu_up::f1u_config&         config,
                                       const up_transport_layer_info&       ul_up_tnl_info,
                                       srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                       srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
@@ -36,6 +37,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
   std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = srs_cu_up::create_f1u_bearer(ue_index,
                                                                                    drb_id,
                                                                                    ul_up_tnl_info,
+                                                                                   config,
                                                                                    *cu_tx,
                                                                                    rx_delivery_notifier,
                                                                                    rx_sdu_notifier,
