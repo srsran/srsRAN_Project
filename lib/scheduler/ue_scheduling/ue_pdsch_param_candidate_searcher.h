@@ -146,8 +146,8 @@ public:
           dl_harq_candidates.end(),
           [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
     } else if (ue_cc.is_active()) {
-      // If there are no pending new Tx bytes, return.
-      if (not ue_ref.has_pending_dl_newtx_bytes()) {
+      // If there are no pending new Tx bytes or UE in fallback, return.
+      if (ue_cc.is_in_fallback_mode() or (not ue_ref.has_pending_dl_newtx_bytes())) {
         return;
       }
 
@@ -199,10 +199,9 @@ private:
 
     // Check which RNTI Type is preferred for this UE and HARQ.
     optional<dci_dl_rnti_config_type> preferred_rnti_type;
+    // NOTE: At this point UE is no longer in fallback mode.
     if (is_retx) {
       preferred_rnti_type = harq_of_ss_list->last_alloc_params().dci_cfg_type;
-    } else if (ue_ref.is_conres_ce_pending()) {
-      preferred_rnti_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
     }
 
     if (prev_h != nullptr and preferred_rnti_type == current_rnti_type) {
@@ -248,14 +247,13 @@ private:
       generate_ss_candidates(current.harq_it);
 
       for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
-        if (not ue_cc.is_in_fallback_mode() and current_rnti_type != dci_dl_rnti_config_type::tc_rnti_f1_0 and
-            (*current.ss_it)
+        // NOTE: At this point UE is no longer in fallback mode.
+        if ((*current.ss_it)
                 ->get_pdcch_candidates(ue_cc.get_aggregation_level(
                                            ue_cc.channel_state_manager().get_wideband_cqi(), **current.ss_it, true),
                                        pdcch_slot)
                 .empty()) {
-          // For the case when dedicated UE config is used, skip SearchSpaces without PDCCH candidates being monitored
-          // in this slot.
+          // Skip SearchSpaces without PDCCH candidates to be monitored in this slot.
           continue;
         }
 
