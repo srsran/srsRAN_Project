@@ -25,7 +25,10 @@ dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
                              const std::string& filename,
                              task_executor&     backend_exec_) :
-  layer_name(layer_name_), logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, backend_exec_)
+  logger(srslog::fetch_basic_logger("ALL")),
+  layer_name(layer_name_),
+  path(filename),
+  writer(dlt, layer_name_, filename, backend_exec_)
 {
 }
 
@@ -37,6 +40,7 @@ dlt_pcap_impl::~dlt_pcap_impl()
 void dlt_pcap_impl::close()
 {
   writer.close();
+  fmt::print("{} PCAP stored in {}\n", layer_name, path);
 }
 
 void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)

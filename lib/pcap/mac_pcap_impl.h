@@ -29,26 +29,28 @@ constexpr uint8_t     MAC_NR_HARQID                  = 0x06;
 class mac_pcap_impl final : public mac_pcap
 {
 public:
-  explicit mac_pcap_impl(const std::string& filename, mac_pcap_type type, task_executor& backend_exec);
+  explicit mac_pcap_impl(const std::string& filename_, mac_pcap_type type, task_executor& backend_exec);
+
   ~mac_pcap_impl() override;
+
   mac_pcap_impl(const mac_pcap_impl& other)            = delete;
   mac_pcap_impl& operator=(const mac_pcap_impl& other) = delete;
   mac_pcap_impl(mac_pcap_impl&& other)                 = delete;
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
 
   void close() override;
+
   bool is_write_enabled() const override { return writer.is_write_enabled(); }
+
   void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) override;
+
   void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override;
 
 private:
-  byte_buffer pack_context(const mac_nr_context_info& context, const byte_buffer& pdu) const;
-
-  mac_pcap_type type;
-
   srslog::basic_logger& logger;
-
-  backend_pcap_writer writer;
+  std::string           filename;
+  mac_pcap_type         type;
+  backend_pcap_writer   writer;
 };
 
 } // namespace srsran

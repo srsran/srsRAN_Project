@@ -728,8 +728,8 @@ struct f1ap_cu_appconfig {
 struct cu_cp_appconfig {
   uint16_t           max_nof_dus               = 6;
   uint16_t           max_nof_cu_ups            = 6;
-  int                inactivity_timer          = 5; // in seconds
-  unsigned           pdu_session_setup_timeout = 3; // in seconds (must be larger than T310)
+  int                inactivity_timer          = 120; // in seconds
+  unsigned           pdu_session_setup_timeout = 3;   // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;

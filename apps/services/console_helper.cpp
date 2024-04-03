@@ -334,9 +334,11 @@ void console_helper::on_app_starting()
 void console_helper::on_app_running()
 {
   for (const auto& cell : cells) {
-    fmt::print("Cell pci={}, bw={} MHz, dl_arfcn={} (n{}), dl_freq={} MHz, dl_ssb_arfcn={}, ul_freq={} MHz\n",
+    fmt::print("Cell pci={}, bw={} MHz, {}T{}R, dl_arfcn={} (n{}), dl_freq={} MHz, dl_ssb_arfcn={}, ul_freq={} MHz\n",
                cell.pci,
                cell.dl_carrier.carrier_bw_mhz,
+               cell.dl_carrier.nof_ant,
+               cell.ul_carrier.nof_ant,
                cell.dl_carrier.arfcn,
                srsran::nr_band_to_uint(cell.dl_carrier.band),
                srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
