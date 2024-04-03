@@ -20,6 +20,16 @@
 
 using namespace srsran;
 
+static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_duration,
+                                               uint64_t                  nof_slots_per_system_frame)
+{
+  // Get the time since the epoch.
+  auto time_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::high_resolution_clock::now().time_since_epoch());
+
+  return (time_since_epoch / slot_duration) % nof_slots_per_system_frame;
+}
+
 ru_dummy_impl::ru_dummy_impl(const srsran::ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept
   :
   logger(*dependencies.logger),
@@ -49,6 +59,10 @@ ru_dummy_impl::ru_dummy_impl(const srsran::ru_dummy_configuration& config, ru_du
 
 void ru_dummy_impl::start()
 {
+  // Get initial system slot.
+  uint64_t initial_system_slot = get_current_system_slot(slot_duration, current_slot.nof_slots_per_system_frame());
+  current_slot                 = slot_point(current_slot.numerology(), initial_system_slot);
+
   state previous_state = current_state.exchange(state::running);
   srsran_assert(previous_state == state::idle, "Invalid state.");
   report_fatal_error_if_not(executor.execute([this]() { loop(); }), "Failed to execute loop method.");
@@ -74,17 +88,18 @@ void ru_dummy_impl::loop()
     return;
   }
 
-  // Get the time since the epoch.
-  auto time_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
-      std::chrono::high_resolution_clock::now().time_since_epoch());
+  // Get the current system slot from the system time.
+  uint64_t slot_count = get_current_system_slot(slot_duration, current_slot.nof_slots_per_system_frame());
 
-  // Calculate the number of slots passed since the epoch and wrap with the number of slots per system frame.
-  uint64_t slot_count = (time_since_epoch / slot_duration) % current_slot.nof_slots_per_system_frame();
+  // Make sure a minimum time between loop executions without crossing boundaries.
+  if (slot_count == current_slot.system_slot()) {
+    std::this_thread::sleep_for(minimum_loop_time);
+  }
 
-  // Check if the slot changed and notify the next slot.
-  if (slot_count != current_slot.system_slot()) {
-    // Prepare the current slot.
-    current_slot = slot_point(current_slot.scs(), slot_count);
+  // Advance the current slot until it is equal to the slot given by the system time.
+  while (slot_count != current_slot.system_slot()) {
+    // Increment current slot.
+    ++current_slot;
 
     // Notify new slot boundary.
     timing_notifier.on_tti_boundary(current_slot + max_processing_delay_slots);
@@ -99,9 +114,6 @@ void ru_dummy_impl::loop()
     for (auto& sector : sectors) {
       sector.new_slot_boundary(current_slot);
     }
-  } else {
-    // Make sure a minimum time between loop executions without crossing boundaries.
-    std::this_thread::sleep_for(minimum_loop_time);
   }
 
   // Feed back the execution of this task.
