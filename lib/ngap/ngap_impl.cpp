@@ -444,7 +444,6 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                                                               ue->get_rrc_ue_pdu_notifier(),
                                                               ue->get_du_processor_control_notifier(),
                                                               ngap_notifier,
-                                                              get_ngap_control_message_handler(),
                                                               ue_ctxt.logger));
 }
 
