@@ -53,7 +53,11 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
   auto fn = [this, m = std::move(msg)]() mutable { handle_pdu_impl(std::move(m)); };
   if (!ue_executor.execute(std::move(fn))) {
-    logger.log_warning("Dropped F1-U PDU, queue is full");
+    if (!cfg.warn_on_drop) {
+      logger.log_info("Dropped F1-U PDU, queue is full");
+    } else {
+      logger.log_warning("Dropped F1-U PDU, queue is full");
+    }
   }
 }
 

@@ -67,11 +67,12 @@ protected:
 
     // create tester and testee
     logger.info("Creating F1-U bearer");
-    tester            = std::make_unique<f1u_du_test_frame>();
-    f1u_config config = {};
-    config.t_notify   = f1u_ul_notif_time_ms;
-    drb_id_t drb_id   = drb_id_t::drb1;
-    f1u               = std::make_unique<f1u_bearer_impl>(
+    tester              = std::make_unique<f1u_du_test_frame>();
+    f1u_config config   = {};
+    config.t_notify     = f1u_ul_notif_time_ms;
+    config.warn_on_drop = true;
+    drb_id_t drb_id     = drb_id_t::drb1;
+    f1u                 = std::make_unique<f1u_bearer_impl>(
         0,
         drb_id,
         up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"),

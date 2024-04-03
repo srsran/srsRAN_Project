@@ -81,7 +81,8 @@ protected:
     ue_inactivity_timer = timers.create_timer();
 
     // prepare F1-U DU bearer config
-    f1u_du_config.t_notify = 10;
+    f1u_du_config.t_notify     = 10;
+    f1u_du_config.warn_on_drop = true;
 
     // prepare F1-U CU-UP bearer config
     f1u_cu_up_cfg.warn_on_drop = false;

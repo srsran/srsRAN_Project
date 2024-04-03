@@ -473,7 +473,15 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_par
       ->capture_default_str();
   app.add_option("--warn_on_drop",
                  cu_up_params.warn_on_drop,
-                 "Log a warning for dropped packets in GTP-U and PDCP due to full queues")
+                 "Log a warning for dropped packets in GTP-U, SDAP, PDCP and F1-U due to full queues")
+      ->capture_default_str();
+}
+
+static void configure_cli11_du_args(CLI::App& app, du_appconfig& du_params)
+{
+  app.add_option("--warn_on_drop",
+                 du_params.warn_on_drop,
+                 "Log a warning for dropped packets in F1-U, RLC and MAC due to full queues")
       ->capture_default_str();
 }
 
@@ -2480,6 +2488,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   // CU-UP section.
   CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
+
+  // DU section.
+  CLI::App* du_subcmd = app.add_subcommand("du", "DU parameters")->configurable();
+  configure_cli11_du_args(*du_subcmd, gnb_cfg.du_cfg);
 
   // NTN section.
   CLI::App*                    ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();

@@ -742,6 +742,10 @@ struct cu_up_appconfig {
   bool     warn_on_drop             = false;
 };
 
+struct du_appconfig {
+  bool warn_on_drop = false;
+};
+
 /// Configuration of logging functionalities.
 struct log_appconfig {
   /// Path to log file or "stdout" to print to console.
@@ -1244,6 +1248,8 @@ struct gnb_appconfig {
   cu_cp_appconfig cu_cp_cfg;
   /// CU-UP configuration.
   cu_up_appconfig cu_up_cfg;
+  /// DU configuration.
+  du_appconfig du_cfg;
   /// F1AP configuration.
   f1ap_cu_appconfig f1ap_cfg;
   /// \brief E2 configuration.
