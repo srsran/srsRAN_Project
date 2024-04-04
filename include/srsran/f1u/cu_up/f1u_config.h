@@ -18,7 +18,7 @@ namespace srs_cu_up {
 
 /// \brief Configurable parameters of the F1-U bearer in the CU-UP
 struct f1u_config {
-  bool warn_on_drop = false; ///< Log a warning instead of an info message whenever a PDU is dropped
+  bool warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
 };
 
 } // namespace srs_cu_up

@@ -19,8 +19,8 @@ namespace srs_du {
 
 /// \brief Configurable parameters of the F1-U bearer in the DU
 struct f1u_config {
-  uint32_t t_notify;             ///< Timer used for periodic transmission of uplink notifications
-  bool     warn_on_drop = false; ///< Log a warning instead of an info message whenever a PDU is dropped
+  uint32_t t_notify;            ///< Timer used for periodic transmission of uplink notifications
+  bool     warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
 };
 
 } // namespace srs_du
