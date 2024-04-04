@@ -174,7 +174,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     // [TS38.473, 8.4.2.2.] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established at reception of the DL RRC MESSAGE TRANSFER message.
     logger.warning(
-        "gNB-DU-UE-F1AP-ID={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
+        "du_ue_id={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
         gnb_du_ue_f1ap_id);
     // TODO.
     return;
@@ -288,7 +288,7 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
                  get_message_type_str(msg.pdu),
                  transaction_id.value());
   } else if (gnb_du_ue_f1ap_id.has_value()) {
-    logger.debug("Rx PDU \"{}::{}\" GNB-DU-UE-F1AP-ID={}",
+    logger.debug("Rx PDU \"{}::{}\" du_ue_id={}",
                  msg.pdu.type().to_string(),
                  get_message_type_str(msg.pdu),
                  gnb_du_ue_f1ap_id.value());

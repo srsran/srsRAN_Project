@@ -29,7 +29,7 @@ struct f1ap_ue_context {
   f1ap_ue_logger                logger;
 
   f1ap_ue_context(ue_index_t ue_index_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_factory timers_) :
-    ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_ids}, " ")
+    ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_ids}, ": ")
   {
   }
 };
@@ -119,7 +119,7 @@ public:
     ue.logger.log_debug("Adding du_ue_f1ap_id={}", du_ue_id);
     ue.ue_ids.du_ue_f1ap_id = du_ue_id;
 
-    ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id});
+    ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id}, ": ");
   }
 
   void remove_ue(ue_index_t ue_index)
