@@ -14,6 +14,7 @@
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -138,26 +139,22 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
     cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
-  // DU receives UE Context Release Request.
+  // DU receives F1AP UE Context Release Command.
   cu_notifier.last_f1ap_msgs.clear();
   f1ap_message msg = generate_ue_context_release_command();
   this->du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // Ensure the DU does not keep to schedule DRB PDUs.
-  unsigned bytes_sched = 0;
-  phy.cells[0].last_dl_data.reset();
-  while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
-    return phy.cells[0].last_dl_data.has_value() and not phy.cells[0].last_dl_data.value().ue_pdus.empty();
-  })) {
-    for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
-      if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
-      }
-    }
-    phy.cells[0].last_dl_data.reset();
+  // Ensure that once SRB1 (RRC Release) is scheduled.
+  EXPECT_TRUE(this->run_until([this, rnti]() {
+    return find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants) != nullptr;
+  }));
+
+  // Ensure that DRBs stop being scheduled at this point, even if it takes a while for the UE release to complete.
+  while (cu_notifier.last_f1ap_msgs.empty()) {
+    run_slot();
+    ASSERT_EQ(find_ue_pdsch_with_lcid(rnti, lcid_t::LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants),
+              nullptr);
   }
-  ASSERT_LT(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
-      << "Scheduler did not stop scheduling DRB after UE context release request reception";
 }
 
 TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)

@@ -364,10 +364,6 @@ void du_high_env_simulator::run_slot()
 
   // Advance to next slot.
   ++next_slot;
-
-  // Don't allow the test thread + du_cell threads to starve other threads.
-  // Note: This will emulate the behavior of the real application, where there is always a TTI between slot indications.
-  std::this_thread::yield();
 }
 
 void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
