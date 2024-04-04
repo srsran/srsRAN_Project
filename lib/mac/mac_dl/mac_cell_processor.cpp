@@ -57,12 +57,12 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 async_task<void> mac_cell_processor::start()
 {
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() { state = cell_state::active; });
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this]() { state = cell_state::active; });
 }
 
 async_task<void> mac_cell_processor::stop()
 {
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this]() {
     if (state == cell_state::inactive) {
       return;
     }
@@ -102,22 +102,12 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   // > Create a MAC UE DL context.
   mac_dl_ue_context ue_inst(request);
 
-  return launch_async(
-      [this, request, ue_inst = std::move(ue_inst), result = false](coro_context<async_task<bool>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-
-        // > Change to respective DL executor
-        CORO_AWAIT(execute_on(cell_exec));
-
-        // > Insert UE and DL bearers.
-        // Note: Ensure we only do so if the cell is active.
-        result = state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
-
-        // > Change back to CTRL executor before returning
-        CORO_AWAIT(execute_on(ctrl_exec));
-
-        CORO_RETURN(result);
-      });
+  // > Update the UE context inside the cell executor.
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_inst = std::move(ue_inst)]() mutable {
+    // > Insert UE and DL bearers.
+    // Note: Ensure we only do so if the cell is active.
+    return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
+  });
 }
 
 async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
@@ -125,14 +115,16 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
   return launch_async([this, request](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    // Change to respective DL executor
-    CORO_AWAIT(execute_on(cell_exec));
+    // Change to respective DL cell executor.
+    // Note: Caller (ctrl exec) blocks if the cell executor is full.
+    CORO_AWAIT(execute_on_blocking(cell_exec));
 
     // Remove UE associated DL channels
     ue_mng.remove_ue(request.ue_index);
 
     // Change back to CTRL executor before returning
-    CORO_AWAIT(execute_on(ctrl_exec));
+    // Note: Blocks if the executor is full (which should never happen).
+    CORO_AWAIT(execute_on_blocking(ctrl_exec));
 
     // Deallocate DL HARQ buffers back in the CTRL executor.
     dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
@@ -144,7 +136,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
                                                     const std::vector<mac_logical_channel_config>& logical_channels)
 {
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this, ue_index, logical_channels]() {
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_index, logical_channels]() {
     // Configure logical channels.
     return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
   });
@@ -153,7 +145,8 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
 async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
 {
   std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
+
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
     // Remove logical channels.
     return ue_mng.remove_bearers(ue_index, lcids);
   });
