@@ -277,5 +277,5 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
     std::vector<uint8_t> padding_bits(result.begin() + expected_result.length(), result.end());
     enc.pack_bytes(padding_bits);
   }
-  ASSERT_EQ(expected_result, result);
+  ASSERT_EQ(expected_result, byte_buffer::create(result).value());
 }
