@@ -30,8 +30,9 @@ static size_t min_mac_subhdr_and_sdu_space_required(lcid_t lcid)
 dl_sch_pdu::mac_sdu_encoder::mac_sdu_encoder(dl_sch_pdu& pdu_, lcid_t lcid_, unsigned max_sdu_size_) :
   pdu(&pdu_),
   lcid(lcid_),
-  // Determine whether a MAC subheader with 8-bit or 16-bit L field is required. Note: This value may be revisited
-  // later, if the MAC SDU ended up being shorter.
+  // Predict whether a MAC subheader with 8-bit or 16-bit L field is required based on the MAC opportunity size.
+  // Note: This L value may be revisited later, if the opportunity was larger than 256 bytes and the actual SDU
+  // provided by upper layers is shorter than 256 bytes.
   subhr_len(get_mac_sdu_subheader_size(max_sdu_size_)),
   max_sdu_size(max_sdu_size_)
 {
@@ -54,11 +55,15 @@ unsigned dl_sch_pdu::mac_sdu_encoder::encode_sdu(unsigned sdu_bytes_written)
   }
 
   // Check if we need to change the subheader size because the MAC SDU was smaller than expected.
+  // Note: This is important because some basebands reject the message if the PDU could be enclosed by the shorter
+  // subheader.
   if (get_mac_sdu_subheader_size(sdu_bytes_written) != subhr_len) {
     srsran_sanity_check(subhr_len == MAX_MAC_SDU_SUBHEADER_SIZE, "Unexpected subheader size change");
+
     // Shift bytes to the left by 1 position.
     uint8_t* new_start = pdu->pdu.data() + pdu->byte_offset + MIN_MAC_SDU_SUBHEADER_SIZE;
     memcpy(new_start, new_start + 1, sdu_bytes_written);
+
     // Update the subheader size.
     subhr_len = MIN_MAC_SDU_SUBHEADER_SIZE;
   }
@@ -345,32 +350,34 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
       std::min(get_mac_sdu_required_bytes(lc_grant_info.sched_bytes), ue_pdu.nof_empty_bytes());
   unsigned rem_bytes = total_space;
   while (rem_bytes >= MIN_MAC_SDU_SIZE) {
-    // Estimate the (offset,length) where the MAC SDU payload is going to be encoded in the MAC PDU.
-    // Note: The MAC at this point doesn't know what's gonna be the size of the next RLC PDU. So we start wi
-    unsigned                    max_mac_sdu_len = get_mac_sdu_payload_size(rem_bytes);
-    dl_sch_pdu::mac_sdu_encoder sdu_enc         = ue_pdu.get_sdu_encoder(lcid, max_mac_sdu_len);
+    // Get MAC opportunity size based on the remaining bytes to encode for this LCID.
+    const unsigned mac_opportunity_size = get_mac_sdu_payload_size(rem_bytes);
+
+    // Setup a SDU encoder.
+    dl_sch_pdu::mac_sdu_encoder sdu_enc = ue_pdu.get_sdu_encoder(lcid, mac_opportunity_size);
     if (not sdu_enc.valid()) {
-      logger.info("ue={} rnti={} lcid={}: Insufficient MAC SDU buffer length of size={}. rem_bytes={}",
+      logger.info("ue={} rnti={} lcid={}: Insufficient MAC opportunity size={}. Remaining space in PDU={}",
                   ue_mng.get_ue_index(rnti),
                   rnti,
                   lcid,
-                  max_mac_sdu_len,
+                  mac_opportunity_size,
                   rem_bytes);
       break;
     }
 
-    // Fetch MAC Tx SDU from upper layers and write it into the buffer provided by the SDU encoder.
+    // Fetch MAC Tx SDU from upper layers and write inplace, into the buffer provided by the SDU encoder.
     size_t sdu_actual_len = bearer->on_new_tx_sdu(sdu_enc.sdu_buffer());
     if (sdu_actual_len == 0) {
+      // The RLC Tx window is full or the RLC buffer is empty.
       logger.debug("ue={} rnti={} lcid={}: Unable to encode MAC SDU in MAC opportunity of size={}.",
                    ue_mng.get_ue_index(rnti),
                    rnti,
                    lcid,
-                   max_mac_sdu_len);
+                   mac_opportunity_size);
       break;
     }
 
-    // Encode MAC SDU (including subheader).
+    // Encode MAC subheader + SDU.
     size_t subh_and_sdu_size = sdu_enc.encode_sdu(sdu_actual_len);
     if (subh_and_sdu_size == 0) {
       logger.error("ue={} rnti={} lcid={}: Scheduled SDU with size={} cannot fit in scheduled DL grant",
